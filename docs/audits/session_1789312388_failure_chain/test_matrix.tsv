@@ -1,0 +1,21 @@
+id	entry	baseline_observed	witness_status	future_fix_acceptance	boundary
+T01	test_cross_layer_audit.py::test_T01_review_extra_issue_confidence_is_schema_error; graph[A]	首评有效JSON多字段拒收；同一次预检重评后 Commit=1	PASS_REPRODUCED	同层准确纠正且检查不重跑	provider 为 fake；真实 reviewer parser/gate/CommitStep；本次借既有 Recovery revalidate
+T02	graph[persistent]; graph[persistent_revalidate]	显式第二次 blocked 可结束并保留执行；持续 revalidate 三轮被接纳、无预算收敛、Commit=0	PASS_BOUNDED_WITNESS	持续 reviewer 故障在原层有界结束、原证据保留	第三轮是测试外部边界，非生产自动停止；不宣称无限
+T03	test_cross_layer_audit.py::test_T03_T07_T08_T09_publisher_cannot_confuse_blocked_with_produced; graph[A]	side-only blocked facts 被 publisher 拒绝；未伪造科学产物；依赖阶段不执行	PASS_DEFECT_REPRODUCED	标准 blocked 事实合法落盘，原rc保留，独立报告完成	组合A合法标准排放仍失败；后续 Recovery blocked 为显式 fake 决定
+T04	test_cross_layer_audit.py::test_T04_T05_capability_and_stage_checks_are_explicit_stubs	空隔离PATH无picard入口，但显式samtools dict stub 定义可完成字典分支	PASS_CONTROLLED_INTERFACE	已有批准且核验的相容实现由 Generate 明确选择	仅 stub 接口，不证明本机安装/版本/字典科学正确性
+T05	同T04/T05组件	过早检查后续缺失工具使前序未开始；阶段限定版本执行独立前序stub	PASS_CONTROLLED_INTERFACE	不把下游无关能力升级为前序必要条件	原事故实际 Picard 用于本步字典；本反例不是原事故同一触发
+T06	test_T06_T07_real_blocked_branch[False]	外层Bash valid；compile失败；真实新进程 SyntaxError→JSONDecodeError，rc1，0排放	PASS_DEFECT_REPRODUCED	限定可抽取片段/固定helper在审批执行前发现	未运行原脚本；无通用Bash语义推断
+T07	test_T06_T07_real_blocked_branch[True]; publisher组件	Python修正后新进程 identity set mismatch；精确 actual/expected，rc1	PASS_DEFECT_REPRODUCED	可保留合法受阻部分事实；未知身份依然拒绝	科学工具调用0；未填造产物
+T08	publisher组件; RuntimeEffectEvidenceTests::test_artifact_effect_retains_physical_and_provenance_validation	真实空目录带blocked可保存但matcher不完成；正式gate删除实际文件后拒绝既有有效provenance	PASS_SCOPED_COUNTEREXAMPLE	真实partial/旧文件不能当本次verified产物	未执行真实索引部分写入；非全产物生命周期穷举
+T09	publisher组件; RuntimeEffectEvidenceTests::test_plain_stdout_and_success_status_do_not_fabricate_observation	自由STAGE_BLOCKED无结构事实；普通stdout/成功码不能伪造observation	PASS_COUNTEREXAMPLE	可信身份来源必需，文本不可直接授权完成	不新增业务rc白名单
+T10	test_T10_response_completion_is_a_provider_fact[incomplete/format/valid]; graph[B]	三类经实际adapter/parser区分；后两拒收不进入批准或执行	PASS_BASELINE	同层有界纠正与provider完成属性分别可追踪	fake finish_reason；8192配置来源未实测
+T11	graph[B] 的实际 rejection producer 重投+load_plan_state	两个新事件ordinal1/2 limit1，重复同event两次均不加预算；最终仅一次进程	PASS_BASELINE	明确累计scope和类别，同事件去重，无无限reset	只在新合成任务使用生产状态加载器；原session只静态JSON
+T12	test_T12_legacy_primary_execution_flag_changes_scope; graph[B]	兼容旧failure混入execution_started=false；消费receipt保留原rc7但stop未投影attempt	PASS_DEFECT_REPRODUCED	causal_execution保留旧attempt/rc；current_candidate无执行	当前baseline终态仍缺原身份；未实施修复
+T13	test_T13_T14_report_atomic_ownership; graph[B]	旧报告hash不变；原目标保护拒写；无可用绝对目标内部fallback	PASS_BASELINE	有现存授权才给独立诊断路径；指定目标仍报告失败	未向原目标写入；组合B完整替代交付是待修目标
+T14	test_T13_T14_report_atomic_ownership	同receipt同内容幂等；异内容/无receipt/丢receipt孤立文件拒绝；三种报告均测	PASS_SCOPED_COUNTEREXAMPLE	可靠归属恢复可解释，重复终态不误写	合成部分写入后丢receipt；未做真实kill/powerloss/race穷举
+T15	test_T15_directory_is_unsupported_not_corrupt_text	真实Recovery dispatcher拒目录；已登记普通新日志inspect/read成功	PASS_BASELINE	准确能力错误与已有支持的定点读取选择	本事故目标是目录，不能自动改为artifact.read
+T16	test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]	缺schema_version反馈链保持；4fake provider、2tool stubs；公开输出无未分流长正文	PASS_EXISTING_REGRESSION	保持同源native schema/格式反馈/公开投影	复用已有安装依赖；非真实模型质量验收
+T17	静态evidence.json task_spec/plan_steps/approval/Planner最终messages	正式五输入无第六项；参数/确认/未决为空，后续含未确认倍性假设	STATIC_VERIFIED	正式输入不臆造；calling前明确科学决策或blocked	当前缺明确未决记录；真实倍性UNKNOWN；未写新业务状态
+T18	test_T18_actual_skill_registry_shared_publisher[mapping/GATK/snpeff]	真实registry→正式模板→publisher→parser→matcher成功/blocked；中文空格改名与sample_count变化	PASS_SHARED_CALLER_BOUNDARY	两个其他Skill共用接线不依赖事故ID；负面事实不误完成	仅机制边界；不是完整mapping/GATK/snpeff科学执行或模型自动选择证明
+COMBINED_A	graph[A]	新3输入真实mixed helper；一预检、二评审、Commit1；参考stub rc1 publisher拒绝；Recovery blocked；依赖0；新报告created	PASS_BASELINE_WITH_DEFECT	合法blocked标准排放成功；准确因果收尾与交付	当前合法排放目标未达；provider/能力结论fake，parser/graph/gate/Commit/审批hash/执行/报告真实
+COMBINED_B	graph[B]	新小进程rc7一次；Recovery1；Generate3含完整格式错和length；ordinal2/limit1；stop缺因果引用；旧报告保护	PASS_DEFECT_REPRODUCED	终態保留原attempt；未执行候选分开；已授权诊断实际交付	baseline因果投影与替代交付未达；不把witness PASS当FIX PASS

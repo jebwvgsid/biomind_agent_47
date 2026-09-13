@@ -1,0 +1,1763 @@
+{
+  "audit_status": "COMPLETE within static and bounded offline scope",
+  "production_fix_status": "NOT IMPLEMENTED",
+  "base_head": "60db1e4b8961d9eed7d36c312e79a75885e33dfa",
+  "base_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+  "head_at_verification": "5f89f1d633ce02d6cac5ac0b13e285168462ac9a",
+  "branch": "refactor/consultant-controller-authority",
+  "historical_loaded_revision": "UNKNOWN; captured disk HEAD and source hashes are independently available in evidence.json",
+  "owned_tests": [
+    "tests/export_cross_layer_audit.py",
+    "tests/test_cross_layer_audit.py",
+    "tests/test_cross_layer_graph_audit.py"
+  ],
+  "owned_docs": [
+    "docs/audits/session_1789312388_failure_chain/README.md",
+    "docs/audits/session_1789312388_failure_chain/findings.tsv",
+    "docs/audits/session_1789312388_failure_chain/test_matrix.tsv",
+    "docs/audits/session_1789312388_failure_chain/project_evidence.py",
+    "docs/audits/session_1789312388_failure_chain/evidence.json",
+    "docs/audits/session_1789312388_failure_chain/verification.json"
+  ],
+  "workspace_protection": {
+    "baseline_entries": 437,
+    "status_counts": {
+      " M": 36,
+      " D": 33,
+      "??": 368
+    },
+    "baseline_status_sha256": "27d1e4fe9727fa401eb805465d9ef713f0718e86c4a54fa97c783eaa7780c069",
+    "preexisting_status_unchanged": true,
+    "protected_source_sha256_unchanged": {
+      "bio_agents.py": "ee7336aa6493990f1fabc2e1b784089ef617c99b1c2f08f7bac37b80cee8fe6f",
+      "agent_core/inspection_readers.py": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+      "agent_core/action_runtime.py": "ca17f31c6f119405606932bfa9d26777240d53cb8d31fa4844d1ae2df08c2110",
+      "agent_core/recovery.py": "d201a16a2503f8663a451dc863b3d889dd80feb21c04d44939daa535e1b2e933",
+      "agent_core/workflow/recovery_agent.py": "5c772d76f50e4df81af60c7c01389eb2abfe67167db249ea1e4767cc21cfdaf1",
+      "execution/preflight.py": "78ee0aa4b319a6d223c1214e0f13c0bee1eea0b4df3634efcde8ed5e9d83741e",
+      "prompts/manager.py": "1b0bed78adc750d0dfb7ff0e39040bf395b963541f610c2cae25cecfe5c475a2",
+      "agent_core/node_context.py": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "agent_core/planner_context.py": "febb7b3a772b6532f0a0bffb83d6fde1fc67ff831ea7e4b3d05633690a40fa46",
+      "agent_core/provider_message_safety.py": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "agent_core/workflow/managed_stop.py": "efc58228de12539182acd348923955fb89c514e74ca0b5b749ff184af92d8414"
+    },
+    "explicit_preserved_existing_fixture": {
+      "tests/test_step_effect_runtime.py": "d59b7ac56c55fb2d5f69f27f3f9951056db9d6c4ef4f3dc6e282fe596ef0cc3a"
+    },
+    "incident_and_safe_source_hashes_rechecked": 80,
+    "original_reports_unchanged": {
+      "report.md": "56e0281f8a28b6489e425638801329371d9e90b71c3d7b8405028a97bf430153",
+      "stage_status.tsv": "e161ee9d2326b6c95c19a985486287e7aee8df9cbb8e669440b8fd39950ef21d",
+      "reproduce.sh": "5aef1f18531a47157c20e82ce20b1b813f2b1b3f92a01cd8584b83ac0073848d"
+    }
+  },
+  "isolation": {
+    "python": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "launcher": "tests/cli_model_progress_support.py::launch",
+    "guards": "existing offline subprocess/audit guards; original fd capture and persistent fatal outlet",
+    "real_components": [
+      "bounded mapping mixed reader and resource binding",
+      "approved hash and real middleware review_code via graph interrupt/resume y",
+      "run_script_path on explicitly granted NEW scripts",
+      "serializer/parser",
+      "typed graph and actual scoped persistence",
+      "semantic reviewer parser",
+      "CompletionGate",
+      "CommitStep",
+      "candidate budget producer/reload/dedup",
+      "Recovery native admission/runtime",
+      "terminal boundary and actual report writer"
+    ],
+    "fakes_or_disabled": [
+      "all providers including router/Consultant/Planner/Generate/Reviewer/Recovery",
+      "scientific capability results/commands",
+      "Consultant runtime preflight and environment readiness/future skill probes",
+      "memory observation/finalization/compression",
+      "terminal summary model disabled in graph finalization"
+    ],
+    "original_session": "Static allowlisted JSON/scripts/receipts only; never loaded through business loader",
+    "real_model_api_calls": 0,
+    "real_scientific_commands": 0,
+    "new_machine_capability_probes": 0,
+    "dependency_changes": 0
+  },
+  "runs": [
+    {
+      "name": "component-results-1",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/component-export-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/component-export-1",
+        "-q",
+        "tests/test_cross_layer_audit.py"
+      ],
+      "returncode": 0,
+      "summary": [
+        "11 passed in 20.19s"
+      ],
+      "call_outcomes": {
+        "passed": 11
+      },
+      "failures": [],
+      "failure_explanation": null,
+      "started_without_teardown": [],
+      "ledger_missing": false,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "ec5a97ff818365f29e61c007394c69b38e1d152e19db3cd5a79572f636031bfb",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 216,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 216,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T01-review-schema.json",
+          "bytes": 143,
+          "sha256": "7aa6a170cf658907bf403ffb456855a86b87c5aae3316cebcff08c504054b525"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T03-T09-publisher.json",
+          "bytes": 3652,
+          "sha256": "b35ca826478421ae94e6d68b88cf1ab1aaf75ca0b54588569f1c6d02ca34b81f"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T06-T07-False.json",
+          "bytes": 5515,
+          "sha256": "e69c8efec430ee1fc6311d0ce67906346617ae7fc65a2cfac4f6dcc733d16af3"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T06-T07-True.json",
+          "bytes": 4601,
+          "sha256": "a380b999008da061110cec4f6200bde47c025c8a60a6fb30b981fd1aec35340e"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T10-format.json",
+          "bytes": 110,
+          "sha256": "5b8ae542f806c6c15e73b71d9df11e87e48de5b3aeb77c7766292d3a98494001"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T10-incomplete.json",
+          "bytes": 185,
+          "sha256": "3a7c483d42310e5aa0f1e9f24ab65af5c636cc01d13126ae3396b374a34dcc93"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T10-valid.json",
+          "bytes": 110,
+          "sha256": "5b8ae542f806c6c15e73b71d9df11e87e48de5b3aeb77c7766292d3a98494001"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T13-T14-report.json",
+          "bytes": 961,
+          "sha256": "dff244ac7d473a8936c7fc1e8c40ec5ecb47ac5f567bc0c66b82602c67297724"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T18-snpeff-annotation.json",
+          "bytes": 3228,
+          "sha256": "07a7b1f52c45046b829aa5fda5b60c8f388e6b32814482dceb24fe5f5ef9966e"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T18-wgs-gatk-snp-indel.json",
+          "bytes": 2368,
+          "sha256": "4205c1356396318bc12755b571c1884d268965a704051d5b1765f720001c4e3c"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/T18-wgs-short-read-mapping.json",
+          "bytes": 2448,
+          "sha256": "9787b10f94a94acb6b474e0fbb86e085dfbe8cb8165eb02dec981d7fbf8deb15"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/fatal-outlet.json",
+          "bytes": 601,
+          "sha256": "70d56569ca8053ba8768a4aaea1503940f41d4c82d08461a2a89575e30062c31"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/fatal.txt",
+          "bytes": 503,
+          "sha256": "9ed0eb0d552493f4c150f87ca5038e2b5c4d1ae8330f9a7ca2fd6336f6dd86ec"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/invocation.json",
+          "bytes": 1175,
+          "sha256": "a969ca2fa71d6379cd1eb6ef60060fd6aeb8fb1cc194954aa9c051c8fd9ea4d5"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/pytest-results.json",
+          "bytes": 9064,
+          "sha256": "109406f5c984eb893aa9e8a77ed45a5376e85a4473821de51a9dd286d3c38f17"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-1/stdout.txt",
+          "bytes": 20624,
+          "sha256": "375dd28516c152bf6fc61cb9ea329d6811e10cadf27e21c405dddae4fbc15235"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    },
+    {
+      "name": "graph-results-1",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/graph-export-1/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/graph-export-1",
+        "-q",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "returncode": 1,
+      "summary": [
+        "3 failed in 41.24s"
+      ],
+      "call_outcomes": {
+        "failed": 3
+      },
+      "failures": [
+        {
+          "nodeid": "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[A]",
+          "phase": "call",
+          "failure_sha256": "d7147017c49142999a1cfe9c489cbe2a65b1535f3d168891fd901a6786fe127e"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[B]",
+          "phase": "call",
+          "failure_sha256": "0b17a9055215fdc8cd500722dcc5f831a29e1b5573ca8105de6beb6f51b0fa19"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[persistent]",
+          "phase": "call",
+          "failure_sha256": "817cf2943d88b573cd5c6a551cb102fd66860d19609e0963ce66938bb3278451"
+        }
+      ],
+      "failure_explanation": "Driver defects: missing current inspection evidence_refs for revalidate; B script omitted required input paths. Corrected new test only.",
+      "started_without_teardown": [],
+      "ledger_missing": false,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "c015a6194dc3eaafa8e750db6870e72ff0506644c2007b9f77d30eeed1cce3b5",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 216,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 216,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/fatal-outlet.json",
+          "bytes": 601,
+          "sha256": "70d56569ca8053ba8768a4aaea1503940f41d4c82d08461a2a89575e30062c31"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/fatal.txt",
+          "bytes": 503,
+          "sha256": "9ed0eb0d552493f4c150f87ca5038e2b5c4d1ae8330f9a7ca2fd6336f6dd86ec"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/graph-A-progress.json",
+          "bytes": 766064,
+          "sha256": "7f16389fbf5704afc07acefb48af5ffd513aa30d64f24b02f9093ac6c7b60095"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/graph-B-progress.json",
+          "bytes": 274416,
+          "sha256": "116c7c1f9cb94481182b24278a440f44277167b7f85febf09e456cd45d9e863b"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/graph-persistent-progress.json",
+          "bytes": 769365,
+          "sha256": "279a0cd8487febe38b2abdbe281d28a3bea161d80873fe94bcd61f5f1ec1b465"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/invocation.json",
+          "bytes": 1149,
+          "sha256": "d9b22e13ea49120095bac1ec47a23ad07f794606475759efbac1f845719dd72b"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/pytest-results-test_production_combination_baseline[A]-facts.json",
+          "bytes": 531565,
+          "sha256": "9d2e443f451af1d1af75e1d241cb96d383c8f4abc8845f8b392a8826a7aeb63f"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/pytest-results-test_production_combination_baseline[B]-facts.json",
+          "bytes": 135125,
+          "sha256": "902518043e51669f555ba3c3653e23b9503a6fc6d6c05c606acaf43586a45889"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/pytest-results-test_production_combination_baseline[persistent]-facts.json",
+          "bytes": 533995,
+          "sha256": "7d012a52e2c867969cef95f4df9ec006b7196cb7a04b95da7eff6920cf8ab6fd"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/pytest-results.json",
+          "bytes": 51358,
+          "sha256": "b4cb066ea70b4147fda4e61d5204ce9fa29316a588143924d5ed8db8d1796fd6"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-1/stdout.txt",
+          "bytes": 76494,
+          "sha256": "2e6182cfd9eaf829ef199eb88f8fbe05ad1772ff37e3a2c045fc64e72db97ff3"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    },
+    {
+      "name": "graph-results-2",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/graph-export-2/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/graph-export-2",
+        "-q",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "returncode": 1,
+      "summary": [
+        "1 failed, 2 passed in 50.52s"
+      ],
+      "call_outcomes": {
+        "passed": 2,
+        "failed": 1
+      },
+      "failures": [
+        {
+          "nodeid": "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[B]",
+          "phase": "call",
+          "failure_sha256": "c7a25a03d4fe3f2f042e45b3de2fe484b684c91f830d7d948fdf30ec5c926ba7"
+        }
+      ],
+      "failure_explanation": "Driver assumed an artifact reconciliation compatibility primary_failure in an observation-only fixture. Corrected assertion to authoritative causal packet.",
+      "started_without_teardown": [],
+      "ledger_missing": false,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "00d587ce758b7270b8452c4901f4378c9bf8f9ad698bfe9adfc2691a184ad776",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/fatal-outlet.json",
+          "bytes": 597,
+          "sha256": "a0882c194946e12298a4c82376354f4152946cdcfab20c02ddbaa5c253a9e851"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/fatal.txt",
+          "bytes": 499,
+          "sha256": "49d47d3727c3faa15fc4b0420d03069f75b589ec8b2bb8e22ca57e3fae2af5cf"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/graph-A-progress.json",
+          "bytes": 1298069,
+          "sha256": "da889909559d690dea9a65f8d86f836b71d8ee7432e9f6158fa3c38ed4c801ff"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/graph-A-result.json",
+          "bytes": 445801,
+          "sha256": "bbe32d5688d81d6b74cc41b1478a14657f21314ce6baea4fa787a165e41fcc83"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/graph-B-progress.json",
+          "bytes": 532551,
+          "sha256": "3a2a91e23c06dee9cd81fe7e2063002fc4c238d7e4fb9e6ceb898fa0adceedbf"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/graph-persistent-progress.json",
+          "bytes": 1017532,
+          "sha256": "20159910554d89f74242f3a714583a55c31e0f7c4bbafc7bbe0233180d74049c"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/graph-persistent-result.json",
+          "bytes": 415335,
+          "sha256": "69c9fa26c07b444a00e0acb5068eb4837e32274b380739b34924c58f1f356d1a"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/invocation.json",
+          "bytes": 1149,
+          "sha256": "bfbaa727c59538bf50755953f29bb7258a0e670a2eb8d11bd711f7e0071989cf"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/pytest-results-test_production_combination_baseline[B]-facts.json",
+          "bytes": 300989,
+          "sha256": "160fdbb8a849869595aa8d6c4cf6c76795b4e7c57a1bdb12f8329c390ea74467"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/pytest-results.json",
+          "bytes": 20263,
+          "sha256": "7e989bc6324d9c977d222721bb27d00b120c26c057517dae99571742e9dbf87d"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-2/stdout.txt",
+          "bytes": 39666,
+          "sha256": "1d74f2a168c9b8f54599b468072369e5c8e3d727f7156f24954807386f8061a8"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    },
+    {
+      "name": "component-results-2",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/final-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/final-export",
+        "-q",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]"
+      ],
+      "returncode": 0,
+      "summary": [
+        "14 passed in 4.53s"
+      ],
+      "call_outcomes": {
+        "passed": 14
+      },
+      "failures": [],
+      "failure_explanation": null,
+      "started_without_teardown": [],
+      "ledger_missing": false,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "8878cd6593cb67f120c51a418e0d3cc8985fd335b0701da61bb28efeb3582529",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T01-review-schema.json",
+          "bytes": 143,
+          "sha256": "7aa6a170cf658907bf403ffb456855a86b87c5aae3316cebcff08c504054b525"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T03-T09-publisher.json",
+          "bytes": 3652,
+          "sha256": "b35ca826478421ae94e6d68b88cf1ab1aaf75ca0b54588569f1c6d02ca34b81f"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T04-T05-stubs.json",
+          "bytes": 627,
+          "sha256": "cd00b4e4e73dd99ce205b7c7b144e196e717acd295fef5a340a7408c2d6d961b"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T06-T07-False.json",
+          "bytes": 5515,
+          "sha256": "b1dcace2d34d6b81f2b7df353057aa430b8b37dee2fc5cf2dab5919a046fccfe"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T06-T07-True.json",
+          "bytes": 4601,
+          "sha256": "54df13f6b3533deff4e46eb921f852572b23c900ae5e6d4ee8db910e0053f089"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T10-format.json",
+          "bytes": 110,
+          "sha256": "5b8ae542f806c6c15e73b71d9df11e87e48de5b3aeb77c7766292d3a98494001"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T10-incomplete.json",
+          "bytes": 185,
+          "sha256": "3a7c483d42310e5aa0f1e9f24ab65af5c636cc01d13126ae3396b374a34dcc93"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T10-valid.json",
+          "bytes": 110,
+          "sha256": "5b8ae542f806c6c15e73b71d9df11e87e48de5b3aeb77c7766292d3a98494001"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T13-T14-report.json",
+          "bytes": 961,
+          "sha256": "713507e3a8d9a06868cc0c433759d018f8678c0756f2b4aa533ea74a0dae3583"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T15-reader.json",
+          "bytes": 1938,
+          "sha256": "84b837f3ffa0a94ad0a186b3d8b7900f27a952b435964e61f5c7a627f1d7d301"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T18-snpeff-annotation.json",
+          "bytes": 3228,
+          "sha256": "07a7b1f52c45046b829aa5fda5b60c8f388e6b32814482dceb24fe5f5ef9966e"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T18-wgs-gatk-snp-indel.json",
+          "bytes": 2368,
+          "sha256": "4205c1356396318bc12755b571c1884d268965a704051d5b1765f720001c4e3c"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/T18-wgs-short-read-mapping.json",
+          "bytes": 2448,
+          "sha256": "9ed6bf70d7f32c81ac9b8b2b31c5a59287b1ad8035d9e66cdad3b67bb1b96e5e"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/fatal-outlet.json",
+          "bytes": 597,
+          "sha256": "a0882c194946e12298a4c82376354f4152946cdcfab20c02ddbaa5c253a9e851"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/fatal.txt",
+          "bytes": 499,
+          "sha256": "49d47d3727c3faa15fc4b0420d03069f75b589ec8b2bb8e22ca57e3fae2af5cf"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/invocation.json",
+          "bytes": 1265,
+          "sha256": "9515d64aaa952b9e0646a6e8cfd8e01e2db70c56c7900305ae8e213f9137e9d1"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/pytest-results.json",
+          "bytes": 11468,
+          "sha256": "79ff7b27068b4b38e55a1a7d7db9fdb9048fc3363603c8b5f255bdb9297ccc21"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/rejection-compact.json",
+          "bytes": 100169,
+          "sha256": "f89b989cd36973c568790c6a37a6b19fef216060cb396a447503d3267c6934ae"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/stdout.txt",
+          "bytes": 20319,
+          "sha256": "20be9ad9738de6916fe3883e9f17160390d237ce44db35618ae3a50c1ae5d45f"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    },
+    {
+      "name": "graph-results-3",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/final-graph-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/final-graph-export",
+        "-q",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "returncode": 1,
+      "summary": [
+        "1 failed, 3 passed in 45.10s"
+      ],
+      "call_outcomes": {
+        "passed": 3,
+        "failed": 1
+      },
+      "failures": [
+        {
+          "nodeid": "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[B]",
+          "phase": "call",
+          "failure_sha256": "95e1137ad7833a7678f6f00ebc168e66c9c708a18df476e3355096a2bb70c5da"
+        }
+      ],
+      "failure_explanation": "Driver assumed consumed failure packet remained active. Corrected assertion to consumed Recovery receipt reference.",
+      "started_without_teardown": [],
+      "ledger_missing": false,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "0191082260cad67edb940eb08db226d0b5671bf930298c51b0a54e542090f5a2",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/fatal-outlet.json",
+          "bytes": 597,
+          "sha256": "a0882c194946e12298a4c82376354f4152946cdcfab20c02ddbaa5c253a9e851"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/fatal.txt",
+          "bytes": 499,
+          "sha256": "49d47d3727c3faa15fc4b0420d03069f75b589ec8b2bb8e22ca57e3fae2af5cf"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-A-progress.json",
+          "bytes": 1298840,
+          "sha256": "a46d9a2d3dd6090ea1a51637dced27de1cd8c14731704fae8488f04bad718b55"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-A-result.json",
+          "bytes": 445894,
+          "sha256": "9fb368887db5aa43221e68287773f48c04c3b19a80e0f7b3e376b49d1469ab5e"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-A-stop.json",
+          "bytes": 29042,
+          "sha256": "0641f0b78c31cdb916afbba5517a896c5d723dc81911b8fb5328e3456dcc996f"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-B-progress.json",
+          "bytes": 532765,
+          "sha256": "9a6293830da11b04c2793212cbab41e0d2287276a913cf805ed935fd282015c9"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-B-stop.json",
+          "bytes": 16939,
+          "sha256": "9f726617655d08856ca5a7038131944cfe563e11348f907c58fcea314e4c9220"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-persistent-progress.json",
+          "bytes": 1018203,
+          "sha256": "71ffb0e2faf0c24b4af1f8fecf130e57f34fe12b401e9bb7aea1db7f2f5d8c6c"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-persistent-result.json",
+          "bytes": 415384,
+          "sha256": "9e8e70f3f2890c330d7d739d77f36afc7d0c77768943993fe1feb732f0562d6c"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-persistent-stop.json",
+          "bytes": 32887,
+          "sha256": "f85a98fb4600b7f1d061d1d3623fa14b89e02f099d6e31c95d85ebf62f6a94ae"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-persistent_revalidate-progress.json",
+          "bytes": 1243724,
+          "sha256": "0e652e27a5bb7ebfdff89e692f6142792da1d7e8d0fd4c18a0c6e2b4f301a518"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/graph-persistent_revalidate-result.json",
+          "bytes": 521555,
+          "sha256": "7e7e6f5bea1cb8bb457ea237bdafa325962fdf72bc149ca71910e2790220ae49"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/invocation.json",
+          "bytes": 1157,
+          "sha256": "b579d8300cd0ee7b5653128f0dda811d1909f0278797e4d806ee00971ca1ba1e"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/pytest-results-test_production_combination_baseline[B]-facts.json",
+          "bytes": 301059,
+          "sha256": "ab4ecf9ef12bc23ddb89b4816418dcab07b2baefd0befe7c08d78dbe883d3226"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/pytest-results.json",
+          "bytes": 23014,
+          "sha256": "ec5a4c9c1d061c0100d9d042a343f67d81dde2994ef496a795bf3f7db5e80645"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-3/stdout.txt",
+          "bytes": 42121,
+          "sha256": "3f7d1e12af3a1b28eed10456ac69cbcddea633de0651ad434cc1aa356b4ab3e0"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    },
+    {
+      "name": "graph-results-4",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/accepted-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/accepted-export",
+        "-q",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "returncode": 0,
+      "summary": [
+        "4 passed in 56.13s"
+      ],
+      "call_outcomes": {
+        "passed": 4
+      },
+      "failures": [],
+      "failure_explanation": null,
+      "started_without_teardown": [],
+      "ledger_missing": false,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "4f035339e98a28a70928e5d077ee749f6657282186f05ebe422f8e01ffa73330",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 6,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/fatal-outlet.json",
+          "bytes": 597,
+          "sha256": "a0882c194946e12298a4c82376354f4152946cdcfab20c02ddbaa5c253a9e851"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/fatal.txt",
+          "bytes": 499,
+          "sha256": "49d47d3727c3faa15fc4b0420d03069f75b589ec8b2bb8e22ca57e3fae2af5cf"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-A-progress.json",
+          "bytes": 1298254,
+          "sha256": "401ff4e2ced1eeccb24e3df5a57a7d00280e964c392ad3b92391b456b5c7220f"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-A-result.json",
+          "bytes": 445822,
+          "sha256": "04e7d482956791f29b8c813d1705e8bb2c55ff0de79f844a0c0402bb8a4d771d"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-A-stop.json",
+          "bytes": 29042,
+          "sha256": "ab0a85402a2da375b4a7348c51c98aaeb4999bd552f3e9e2e0563c765a3cd9eb"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-B-progress.json",
+          "bytes": 532605,
+          "sha256": "31bab90597f1373a7f5dafafa56a3a901693f312079b0b24f8210003155cfc9c"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-B-result.json",
+          "bytes": 249776,
+          "sha256": "9d70580283897bd829db12af28927ddce1474b8c4431d8a5f628bb0ce7327631"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-B-stop.json",
+          "bytes": 16939,
+          "sha256": "1bddb8c6442256e01cc51705acf0df019786e580edd7e3b0dadde80946cf069a"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-persistent-progress.json",
+          "bytes": 1017716,
+          "sha256": "430ae5218e9a562917949a9e06306a986879e2cfde8d3e5f87e2025619bd6cbf"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-persistent-result.json",
+          "bytes": 415355,
+          "sha256": "f3a97e7b328f87e1ed447633664d772a36b76ec7c3afae0b219119bbf5250b03"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-persistent-stop.json",
+          "bytes": 32889,
+          "sha256": "078602ba59eb143548c2c8f36c3e8ee9276b9c2d9dd80f3e1d3097e42a7c2d93"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-persistent_revalidate-progress.json",
+          "bytes": 1243226,
+          "sha256": "c39aa8df29fc713355b5dcdc9cc96dddde6e678693dc39ac17cf31f6cfe77c1a"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/graph-persistent_revalidate-result.json",
+          "bytes": 521519,
+          "sha256": "eb08b7a7b7a4dfca9019ac86899895a32a7e9faddfd6d9248cdbed4d01a042b4"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/invocation.json",
+          "bytes": 1151,
+          "sha256": "d7d8f44736c033ea3772ebf89cf61987f67398359785c1232d3d29c57465904d"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/pytest-results.json",
+          "bytes": 3122,
+          "sha256": "968825a46e3fa7febfa29b2d8be2350d7a35ba3cdc1e5c6ef1b81fbcfaad54fd"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/stdout.txt",
+          "bytes": 21025,
+          "sha256": "09e1a719c9667bcd42913cc07011c3d261363679a0ef4b1b2a429b8316b9af0e"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    },
+    {
+      "name": "scope-gate-results",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/accepted-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/accepted-export",
+        "-q",
+        "tests/test_cross_layer_audit.py::test_T12_legacy_primary_execution_flag_changes_scope",
+        "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_artifact_effect_retains_physical_and_provenance_validation",
+        "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_plain_stdout_and_success_status_do_not_fabricate_observation"
+      ],
+      "returncode": 4,
+      "summary": [
+        "no tests ran in 0.00s"
+      ],
+      "call_outcomes": {},
+      "failures": [],
+      "failure_explanation": "pytest usage error: existing regression file was untracked and absent from Git-tree export; zero tests ran. Explicit safe unchanged fixture overlay added in scope-export-2.",
+      "started_without_teardown": [],
+      "ledger_missing": true,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "4f035339e98a28a70928e5d077ee749f6657282186f05ebe422f8e01ffa73330",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 4,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 4,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results/fatal-outlet.json",
+          "bytes": 597,
+          "sha256": "9473545b1af4d5f06356da35ad3ee3b3ae5cd69d02cffda4b9ad2659cbf840af"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results/fatal.txt",
+          "bytes": 499,
+          "sha256": "bc3a7925103b3d2d1fc402f451b63fd1b151e0965f0923dc96538e14641f6216"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results/invocation.json",
+          "bytes": 1487,
+          "sha256": "e24fe84dd33f785bb0da9eacbbb969c43ab4073ac81515fdd8f448fcf8482ae3"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results/stdout.txt",
+          "bytes": 4719,
+          "sha256": "c14d2e7f87e5dca5be49c9f55caf614ba3d88319cb8717ace40c4b181ec939aa"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    },
+    {
+      "name": "scope-gate-results-2",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-audit-20260913/scope-export-2/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-audit-20260913/scope-export-2",
+        "-q",
+        "tests/test_cross_layer_audit.py::test_T12_legacy_primary_execution_flag_changes_scope",
+        "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_artifact_effect_retains_physical_and_provenance_validation",
+        "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_plain_stdout_and_success_status_do_not_fabricate_observation"
+      ],
+      "returncode": 0,
+      "summary": [
+        "3 passed in 6.20s"
+      ],
+      "call_outcomes": {
+        "passed": 3
+      },
+      "failures": [],
+      "failure_explanation": null,
+      "started_without_teardown": [],
+      "ledger_missing": false,
+      "source_tree": "e3def852be4cdca4bb328a1ddeea85f412d596a5",
+      "source_signature": "5ea247538b49fc147edf3d6b20c2410f9e2d6a2e692e9766403162ed95955ff7",
+      "worktree_overlay": [
+        "prompts/manager.py",
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "tests/export_cross_layer_audit.py",
+        "tests/test_cross_layer_audit.py",
+        "tests/test_cross_layer_graph_audit.py",
+        "tests/test_step_effect_runtime.py"
+      ],
+      "fatal_capture": [
+        {
+          "phase": "sessionstart_after_configure",
+          "pid": 4,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        },
+        {
+          "phase": "after_unconfigure",
+          "pid": 4,
+          "fd": 4,
+          "enabled": true,
+          "mode": "0600",
+          "capture": "fd",
+          "pytest_faulthandler_plugin": true,
+          "watchdog": "original bootstrap 70s; separate pre-existing destination",
+          "core_limit": [
+            0,
+            0
+          ]
+        }
+      ],
+      "fatal_signal_recorded": false,
+      "artifacts": [
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results-2/T12-flag-scope.json",
+          "bytes": 1505,
+          "sha256": "98effcbe133047f2aa163996a48d0e79fd6c087a4b595b7a58ce9ce27b1af51f"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results-2/fatal-outlet.json",
+          "bytes": 597,
+          "sha256": "9473545b1af4d5f06356da35ad3ee3b3ae5cd69d02cffda4b9ad2659cbf840af"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results-2/fatal.txt",
+          "bytes": 499,
+          "sha256": "bc3a7925103b3d2d1fc402f451b63fd1b151e0965f0923dc96538e14641f6216"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results-2/invocation.json",
+          "bytes": 1497,
+          "sha256": "823cd148bcd25eba862c881212684f5dc3b6a4bc04b378189ab58b65de26bd27"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results-2/pytest-results.json",
+          "bytes": 2691,
+          "sha256": "f2900887b0ba2f8f989106406627a8b05212cfc32e47695cacb6b59f657a0705"
+        },
+        {
+          "path": "/tmp/biomind-cross-layer-audit-20260913/scope-gate-results-2/stdout.txt",
+          "bytes": 13453,
+          "sha256": "62a6d5f95cb78b599b6d443544259e3045fd800abd842205b7bfbf4447020210"
+        }
+      ],
+      "meaning": "Baseline witness / existing safety regression, not production fix acceptance"
+    }
+  ],
+  "accepted_unique_test_count": 21,
+  "accepted_nodeids": [
+    "tests/test_cross_layer_audit.py::test_T01_review_extra_issue_confidence_is_schema_error",
+    "tests/test_cross_layer_audit.py::test_T03_T07_T08_T09_publisher_cannot_confuse_blocked_with_produced",
+    "tests/test_cross_layer_audit.py::test_T04_T05_capability_and_stage_checks_are_explicit_stubs",
+    "tests/test_cross_layer_audit.py::test_T06_T07_real_blocked_branch[False]",
+    "tests/test_cross_layer_audit.py::test_T06_T07_real_blocked_branch[True]",
+    "tests/test_cross_layer_audit.py::test_T10_response_completion_is_a_provider_fact[format]",
+    "tests/test_cross_layer_audit.py::test_T10_response_completion_is_a_provider_fact[incomplete]",
+    "tests/test_cross_layer_audit.py::test_T10_response_completion_is_a_provider_fact[valid]",
+    "tests/test_cross_layer_audit.py::test_T12_legacy_primary_execution_flag_changes_scope",
+    "tests/test_cross_layer_audit.py::test_T13_T14_report_atomic_ownership",
+    "tests/test_cross_layer_audit.py::test_T15_directory_is_unsupported_not_corrupt_text",
+    "tests/test_cross_layer_audit.py::test_T18_actual_skill_registry_shared_publisher[genomics/snpeff-annotation-check_contig_compatibility]",
+    "tests/test_cross_layer_audit.py::test_T18_actual_skill_registry_shared_publisher[genomics/wgs-gatk-snp-indel-inspect]",
+    "tests/test_cross_layer_audit.py::test_T18_actual_skill_registry_shared_publisher[genomics/wgs-short-read-mapping-prepare_reference]",
+    "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[A]",
+    "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[B]",
+    "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[persistent]",
+    "tests/test_cross_layer_graph_audit.py::test_production_combination_baseline[persistent_revalidate]",
+    "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+    "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_artifact_effect_retains_physical_and_provenance_validation",
+    "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_plain_stdout_and_success_status_do_not_fabricate_observation"
+  ],
+  "test_function_identity": [
+    {
+      "export": "final-export",
+      "file": "tests/test_cross_layer_audit.py",
+      "export_sha256": "cb8ab3d970727cb0b8745cc3bd9544a72d9517f6dc9a593e7b53eb945aaba54c",
+      "current_sha256": "fdedb8bde1d0d398459a75109ea4147ea13c30e118c5b1c6ba39ce6349366b03",
+      "all_exported_function_class_ast_unchanged": true,
+      "only_new_functions": [
+        "test_T12_legacy_primary_execution_flag_changes_scope"
+      ]
+    },
+    {
+      "export": "accepted-export",
+      "file": "tests/test_cross_layer_graph_audit.py",
+      "export_sha256": "a7a5372fa75b52a6560ac999b0bb69df4f26bf168f00e3efddd50789d4de61e5",
+      "current_sha256": "a7a5372fa75b52a6560ac999b0bb69df4f26bf168f00e3efddd50789d4de61e5",
+      "all_exported_function_class_ast_unchanged": true,
+      "only_new_functions": []
+    },
+    {
+      "export": "scope-export-2",
+      "file": "tests/test_cross_layer_audit.py",
+      "export_sha256": "fdedb8bde1d0d398459a75109ea4147ea13c30e118c5b1c6ba39ce6349366b03",
+      "current_sha256": "fdedb8bde1d0d398459a75109ea4147ea13c30e118c5b1c6ba39ce6349366b03",
+      "all_exported_function_class_ast_unchanged": true,
+      "only_new_functions": []
+    }
+  ],
+  "graph_baselines": [
+    {
+      "mode": "A",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 2,
+        "recovery": 2
+      },
+      "count_scope": "Explicit fake stage responses only; fake router not separately instrumented.",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "__interrupt__",
+        "execute",
+        "supervisor",
+        "recovery",
+        "supervisor",
+        "commit_step",
+        "generate",
+        "__interrupt__",
+        "execute",
+        "recovery"
+      ],
+      "executions": [
+        {
+          "attempt": "attempt_30b06b8371038999f50a",
+          "approved_sha256": "f3a0eea0c81f659e82d46fe5fb3309cd950c60acdd2f324975b21b15614ccfea",
+          "rc": 0,
+          "stdout_sha256": "0b6e18d4711b1790dd305d9019e9e6c1ab130b68003f49d19c85d72d8c9cd8eb",
+          "stderr_sha256": "00000d0206350a2cdf955870b301468b8fd1a74e5d2488fdb1786b6048c9080c",
+          "reader_processes": 3,
+          "bounded_observation": {
+            "total": 3,
+            "returned": 3,
+            "passed": 3,
+            "unstarted": 0,
+            "all_checks_passed": true,
+            "full_file_validated": false
+          }
+        },
+        {
+          "attempt": "attempt_12c6810911df55829c81",
+          "approved_sha256": "504e13c1370d4a094e84395d21ae32c7a731a7a2b3bae75c2147738a5222b1ca",
+          "rc": 1,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "64cfafee06110ada0c9c534ac5a62e293828cd091aaa1b721a4df8176e97b67c",
+          "reader_processes": 0
+        }
+      ],
+      "execution_count": 2,
+      "approval_count": 2,
+      "approval_hashes": [
+        "f3a0eea0c81f659e82d46fe5fb3309cd950c60acdd2f324975b21b15614ccfea",
+        "504e13c1370d4a094e84395d21ae32c7a731a7a2b3bae75c2147738a5222b1ca"
+      ],
+      "commit_count": 1,
+      "commit_receipts": {
+        "commit-step-f8584a0faeec6611756361f3": {
+          "schema_version": 1,
+          "request_fingerprint": "f8584a0faeec6611756361f374dd61ed0600a99cb6eb2858e9bd68a57a66e58c",
+          "outcome": {
+            "schema_version": 1,
+            "type": "next_step_ready",
+            "summary": "Verified step committed and one successor activated.",
+            "scope": {
+              "task_id": "new-cross-layer-A"
+            },
+            "payload": {
+              "commit_id": "commit-step-f8584a0faeec6611756361f3",
+              "receipt": "typed-step-commit:commit-step-f8584a0faeec6611756361f3",
+              "before_state_generation": 32,
+              "after_state_generation": 33,
+              "completed_step_id": "bounded-check",
+              "accepted_binding_refs": [],
+              "accepted_artifact_refs": [],
+              "accepted_effect_refs": [
+                "validation_observation",
+                "attempt_30b06b8371038999f50a",
+                "validation-39c9d764c475542eb632"
+              ],
+              "completion_report_ref": "completion-report-982ad04594dbd26629d4383ad8331493da311656395bc13216cd6054aeb070b4",
+              "semantic_decision_ref": "semantic-decision-e95e77228c7fab4d3cc679603ace32a0e02c5d16fe1a4272cadc92e43bac5262",
+              "semantic_consumption_ref": "completion-consumption-681a8ced025d829c5ba549e41b363a956b794a1f4eea3571a7a2d54bf963e589",
+              "successor_step_id": "prepare-stub"
+            },
+            "evidence_refs": [
+              "validation-39c9d764c475542eb632",
+              "completion-report-982ad04594dbd26629d4383ad8331493da311656395bc13216cd6054aeb070b4",
+              "semantic-decision-e95e77228c7fab4d3cc679603ace32a0e02c5d16fe1a4272cadc92e43bac5262",
+              "completion-consumption-681a8ced025d829c5ba549e41b363a956b794a1f4eea3571a7a2d54bf963e589"
+            ]
+          },
+          "successor_projection": {
+            "current_step_id": "prepare-stub",
+            "plan_id": "plan_c486e6e497b345f1685a",
+            "plan_version": "plan_v1",
+            "recovery_outcome": {},
+            "generate_seed": {}
+          }
+        }
+      },
+      "stop": {
+        "stop_id": "managed-stop:b842436d00f1e966dd73b7272631b90690cf0eb05c6f0c6a06c8e42ce9570afa",
+        "origin": {
+          "source_stage": "execute",
+          "source_owner": "GENERATED_ACTION",
+          "failure_id": "failure-b752cf55cddd40e44293b19f",
+          "failure_type": "execution_failed",
+          "error_code": "SYNTHETIC_FOLLOWUP",
+          "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：只在新建合成输入上检查前缀和参考头，然后用显式 stub 核对依赖受阻。输出诊断报告到 /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/report.md；输入 /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/变 样本 0.fq.gz, /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/变 样本 1.fq.gz, /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/参考 改名.fasta。\n\n当前步骤：prepare-stub；执行 attempt：attempt_12c6810911df55829c81。\n\n命令已执行，returncode=1。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\nSupervisor 待核实的疑虑：A launched command failed after immutable evidence persistence.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：SYNTHETIC_FOLLOWUP；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nSynthetic reviewer/schema/blocked branch follow-up.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：prepare-stub=running；dependent-never-runs=pending；reporting-not-reached=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\n\n本次尚未确认生成报告文件。",
+          "concerns": [],
+          "evidence_refs": [
+            "exec-attempt_12c6810911df55829c81"
+          ],
+          "returncode": 1,
+          "attempt_id": "attempt_12c6810911df55829c81",
+          "process_fact_scope": "original causal execution; no scientific validity inferred"
+        },
+        "execution": {
+          "attempt_id": "attempt_12c6810911df55829c81",
+          "step_id": "prepare-stub",
+          "executed": true,
+          "purpose": "analysis",
+          "returncode": 1,
+          "deterministic_passed": false,
+          "validation_status": "unknown",
+          "reviewer_disposition": "inspection_required",
+          "step_status": "running",
+          "committed": false,
+          "executed_script_ref": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/task_outputs/new-cross-layer-A/attempts/attempt_12c6810911df55829c81/executed.sh",
+          "command_body_available": true,
+          "stdout": "",
+          "stderr": "STAGE_BLOCKED: synthetic_dictionary unavailable\nTraceback (most recent call last):\n  File \"<stdin>\", line 48, in <module>\n  File \"<stdin>\", line 46, in emit_effect_evidence\n  File \"<stdin>\", line 21, in _emit_declared_rows\n  File \"<stdin>\", line 6, in reject\nValueError: {\"actual\": [], \"code\": \"EFFECT_FACT_IDENTITIES_MISMATCH\", \"expected\": [\"plan-artifact-e0540838f6dcfb2f4728ce24\"], \"field_path\": \"$.facts.produces_artifacts\"}\n",
+          "command_body": "set -euo pipefail\nmkdir -p /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/task_outputs/new-cross-layer-A/plan_artifacts/plan-artifact-e0540838f6dcfb2f4728ce24\necho \"STAGE_BLOCKED: synthetic_dictionary unavailable\" >&2\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if set(supplied) != set(expected):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [{\"identity\": \"plan-artifact-e0540838f6dcfb2f4728ce24\", \"required_fields\": []}], \"explicit_side_effects\": [{\"identity\": \"create_reference_indexes\", \"required_fields\": [\"reference_resource_ref\", \"index_artifacts\"]}], \"produces_observations\": []}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=')\n\nprint(emit_effect_evidence({'explicit_side_effects': {'create_reference_indexes': {'reference_resource_ref': '/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/参考 改名.fasta', 'index_artifacts': [], 'status': 'blocked', 'missing_commands': ['synthetic_dictionary']}}}))\nPY\nexit 1\n"
+        },
+        "associated_attempts": [],
+        "stop_reason": {
+          "error_code": "SYNTHETIC_FOLLOWUP",
+          "detail": "Synthetic reviewer/schema/blocked branch follow-up.",
+          "transport_receipt": {},
+          "failure_stage": "",
+          "no_progress_rounds": 0,
+          "model_turns": 1,
+          "tool_calls": 0,
+          "termination_reason": "",
+          "budget_receipt": {
+            "error_code": "SYNTHETIC_FOLLOWUP",
+            "detail": "Synthetic reviewer/schema/blocked branch follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0
+          }
+        },
+        "report_paths": {
+          "report.md": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/report.md"
+        },
+        "report_receipts": {
+          "stage_status.tsv": {
+            "status": "skipped",
+            "reason": "NO_APPROVED_OUTPUT"
+          },
+          "reproduce.sh": {
+            "status": "skipped",
+            "reason": "NO_APPROVED_OUTPUT"
+          },
+          "report.md": {
+            "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-549adnzs/report.md",
+            "sha256": "31d3ee4ce7fb54012cf11b70123c9f4770fb45e50303fdd48456277f31d51ff9",
+            "status": "created",
+            "stop_id": "managed-stop:b842436d00f1e966dd73b7272631b90690cf0eb05c6f0c6a06c8e42ce9570afa",
+            "task_id": "new-cross-layer-A"
+          }
+        },
+        "secondary_failures": []
+      },
+      "duplicate_rejections": [],
+      "externally_bounded_after": null,
+      "runtime_terminated": true,
+      "last_outcome_type": null,
+      "fix": false
+    },
+    {
+      "mode": "B",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3,
+        "reviewer": 0,
+        "recovery": 1
+      },
+      "count_scope": "Explicit fake stage responses only; fake router not separately instrumented.",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "__interrupt__",
+        "execute",
+        "recovery",
+        "generate",
+        "generate"
+      ],
+      "executions": [
+        {
+          "attempt": "attempt_3bc4072809f304e37aec",
+          "approved_sha256": "213abb463fa910b9e1b6fd37305081367a173561a2368c8f06cb7cf52f2b150c",
+          "rc": 7,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "3a8945e2f5711789799f141385fb72a7e04b845c2ce3aa4cd3d7911d5f110836",
+          "reader_processes": 0
+        }
+      ],
+      "execution_count": 1,
+      "approval_count": 1,
+      "approval_hashes": [
+        "213abb463fa910b9e1b6fd37305081367a173561a2368c8f06cb7cf52f2b150c"
+      ],
+      "commit_count": 0,
+      "commit_receipts": {},
+      "stop": {
+        "stop_id": "managed-stop:35089611cd25f0a14845807b7f8e7f9b0ffc824f3c43c3c7a2a31a39dcaa0ed3",
+        "origin": {
+          "source_stage": "recovery",
+          "source_owner": "semantic_review",
+          "failure_id": "",
+          "failure_type": "generated_action_contract_error",
+          "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+          "summary": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+          "concerns": [],
+          "evidence_refs": [],
+          "returncode": null,
+          "attempt_id": "",
+          "process_fact_scope": "original causal execution; no scientific validity inferred"
+        },
+        "execution": {
+          "attempt_id": "",
+          "step_id": "bounded-check",
+          "executed": false,
+          "purpose": "UNKNOWN",
+          "returncode": null,
+          "deterministic_passed": false,
+          "validation_status": "not_performed",
+          "reviewer_disposition": "not_performed",
+          "step_status": "failed",
+          "committed": false,
+          "executed_script_ref": "",
+          "command_body_available": false
+        },
+        "associated_attempts": [],
+        "stop_reason": {
+          "error_code": "GENERATE_REPAIR_BUDGET_EXHAUSTED",
+          "detail": "Generate encountered an internal protocol violation and failed closed.",
+          "transport_receipt": {},
+          "failure_stage": "",
+          "no_progress_rounds": 0,
+          "model_turns": 0,
+          "tool_calls": 0,
+          "termination_reason": "action_format_repair_budget_exhausted",
+          "budget_receipt": {
+            "repair_ordinal": 2,
+            "repair_limit": 1,
+            "event_id": "candidate-rejection:039d1085b37dc6bec0602217",
+            "scope": {
+              "task_id": "new-cross-layer-B",
+              "task_revision": 1,
+              "plan_id": "plan_8aa042a0a60eee865ead",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "bounded-check"
+            }
+          }
+        },
+        "report_paths": {},
+        "report_receipts": {
+          "stage_status.tsv": {
+            "status": "skipped",
+            "reason": "NO_APPROVED_OUTPUT"
+          },
+          "reproduce.sh": {
+            "status": "skipped",
+            "reason": "NO_APPROVED_OUTPUT"
+          },
+          "report.md": {
+            "status": "failed",
+            "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-xl81xcw0/report.md",
+            "task_id": "new-cross-layer-B",
+            "stop_id": "managed-stop:35089611cd25f0a14845807b7f8e7f9b0ffc824f3c43c3c7a2a31a39dcaa0ed3",
+            "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+          }
+        },
+        "secondary_failures": [
+          {
+            "stage": "execution.details",
+            "error_code": "EXECUTION_DETAILS_UNAVAILABLE",
+            "exception_type": "ValueError",
+            "detail": "EXECUTION_FACT_SCOPE_MISMATCH"
+          },
+          {
+            "stage": "report.report.md",
+            "error_code": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED",
+            "exception_type": "RuntimeReportError",
+            "detail": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+          }
+        ]
+      },
+      "duplicate_rejections": [
+        {
+          "candidate_event_id": "generate-candidate:sha256:e0d9aa4b8434f6fda6e26ccd1175a1f8ca566317e93f3ba77bbcfcc70217bbc0",
+          "same_event": true,
+          "charged_again": false
+        },
+        {
+          "candidate_event_id": "generate-candidate:sha256:414f9b5d827df8bc493422513e625e497e8bbed53bb1961778d7933a1d9d5aac",
+          "same_event": true,
+          "charged_again": false
+        }
+      ],
+      "externally_bounded_after": null,
+      "runtime_terminated": true,
+      "last_outcome_type": null,
+      "fix": false
+    },
+    {
+      "mode": "persistent",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 2,
+        "recovery": 2
+      },
+      "count_scope": "Explicit fake stage responses only; fake router not separately instrumented.",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "__interrupt__",
+        "execute",
+        "supervisor",
+        "recovery",
+        "supervisor",
+        "recovery"
+      ],
+      "executions": [
+        {
+          "attempt": "attempt_dcab09daaf53dc9a5ba5",
+          "approved_sha256": "92ebc6f73d2397ac48ff4ab8c4a925e596086a233aabd8bcce66e77fcf2b62b7",
+          "rc": 0,
+          "stdout_sha256": "ef69de941201c9848eb6f8739431b1753175e16a831065b96a1c4113db65c1a5",
+          "stderr_sha256": "fcc1b00190cdde8f9f679a2731f12a1acdd0b9786c59301aa17710d711b1377f",
+          "reader_processes": 3,
+          "bounded_observation": {
+            "total": 3,
+            "returned": 3,
+            "passed": 3,
+            "unstarted": 0,
+            "all_checks_passed": true,
+            "full_file_validated": false
+          }
+        }
+      ],
+      "execution_count": 1,
+      "approval_count": 1,
+      "approval_hashes": [
+        "92ebc6f73d2397ac48ff4ab8c4a925e596086a233aabd8bcce66e77fcf2b62b7"
+      ],
+      "commit_count": 0,
+      "commit_receipts": {},
+      "stop": {
+        "stop_id": "managed-stop:596e71f1c34acc2e99b3dfe3935c01ca54b7938af1a03308a21beda6f1a3de12",
+        "origin": {
+          "source_stage": "supervisor",
+          "source_owner": "semantic_review",
+          "failure_id": "failure-21f3b5b6fe7374d5161c7e3d",
+          "failure_type": "assessment_pending",
+          "error_code": "SYNTHETIC_FOLLOWUP",
+          "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：只在新建合成输入上检查前缀和参考头，然后用显式 stub 核对依赖受阻。输出诊断报告到 /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/report.md；输入 /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/变 样本 0.fq.gz, /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/变 样本 1.fq.gz, /tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/参考 改名.fasta。\n\n当前步骤：bounded-check；执行 attempt：attempt_dcab09daaf53dc9a5ba5。\n\n命令已执行，returncode=0。\n\n确定性检查：通过；步骤正式提交：未提交。\n\nSupervisor 待核实的疑虑：SEMANTIC_DECISION_ISSUE_DISPOSITION_INVALID。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：SYNTHETIC_FOLLOWUP；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nSynthetic reviewer/schema/blocked branch follow-up.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：bounded-check=verification_pending；prepare-stub=pending；dependent-never-runs=pending；reporting-not-reached=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\n\n本次尚未确认生成报告文件。",
+          "concerns": [
+            "SEMANTIC_DECISION_ISSUE_DISPOSITION_INVALID"
+          ],
+          "evidence_refs": [
+            "validation-77e05f5caaa809455217",
+            "completion-report-f7727ce4055a4df36044abe0efc2c83bee9b74ef3f7f0c271c553cd9a3eac191",
+            "semantic-decision-2c3042d02939423795ea53f4108dc50d35e923a56abf6369a3226a6758e64d0f"
+          ],
+          "returncode": null,
+          "attempt_id": "attempt_dcab09daaf53dc9a5ba5",
+          "process_fact_scope": "original causal execution; no scientific validity inferred"
+        },
+        "execution": {
+          "attempt_id": "attempt_dcab09daaf53dc9a5ba5",
+          "step_id": "bounded-check",
+          "executed": true,
+          "purpose": "validation",
+          "returncode": 0,
+          "deterministic_passed": true,
+          "validation_status": "VALID",
+          "reviewer_disposition": "assessment_pending",
+          "step_status": "verification_pending",
+          "committed": false,
+          "executed_script_ref": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/task_outputs/new-cross-layer-persistent/attempts/attempt_dcab09daaf53dc9a5ba5/executed.sh",
+          "command_body_available": true,
+          "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":3,\"returned\":3,\"passed\":3,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"改名0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68cbb06b4e02288084b4daed9b10778988db2a7533d512e3b49d6a2cf5df65c8\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":41,\"decoded_bytes\":23,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/task_outputs/new-cross-layer-persistent/attempts/attempt_dcab09daaf53dc9a5ba5/preflight/item-001.stdout.log\",\"stderr\":\"/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/task_outputs/new-cross-layer-persistent/attempts/attempt_dcab09daaf53dc9a5ba5/preflight/item-001.stderr.log\"},\"returncode\":0},{\"label\":\"改名1\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68cbb06b4e02288084b4daed9b10778988db2a7533d512e3b49d6a2cf5df65c8\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":41,\"decoded_bytes\":23,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_pref",
+          "stderr": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"改名0\",\"index\":1,\"total\":3,\"completed\":0,\"passed\":0,\"at_monotonic\":4204535.615223545}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"改名0\",\"index\":1,\"total\":3,\"completed\":0,\"passed\":0,\"at_monotonic\":4204535.61651309,\"pid\":56}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"改名0\",\"index\":1,\"total\":3,\"completed\":1,\"passed\":1,\"at_monotonic\":4204535.692764214,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"改名1\",\"index\":2,\"total\":3,\"completed\":1,\"passed\":1,\"at_monotonic\":4204535.692837159}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"改名1\",\"index\":2,\"total\":3,\"completed\":1,\"passed\":1,\"at_monotonic\":4204535.69363845,\"pid\":58}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"改名1\",\"index\":2,\"total\":3,\"completed\":2,\"passed\":2,\"at_monotonic\":4204535.769877739,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"REF\",\"index\":3,\"total\":3,\"completed\":2,\"passed\":2,\"at_monotonic\":4204535.769943644}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"REF\",\"index\":3,\"total\":3,\"completed\":2,\"passed\":2,\"at_monotonic\":4204535.770574093,\"pid\":60}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"REF\",\"index\":3,\"total\":3,\"completed\":3,\"passed\":3,\"at_monotonic\":4204535.845064052,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":3,\"total\":3,\"completed\":3,\"passed\":3,\"at_monotonic\":4204535.845096668,\"status\":\"returned\"}\n",
+          "command_body": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"${BIOMIND_SKILL_A363F1D9157F7CFC}\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq '改名0' '/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/变 样本 0.fq.gz' --fastq '改名1' '/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/变 样本 1.fq.gz' --reference REF '/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/参考 改名.fasta'\n"
+        },
+        "associated_attempts": [],
+        "stop_reason": {
+          "error_code": "SYNTHETIC_FOLLOWUP",
+          "detail": "Synthetic reviewer/schema/blocked branch follow-up.",
+          "transport_receipt": {},
+          "failure_stage": "",
+          "no_progress_rounds": 0,
+          "model_turns": 1,
+          "tool_calls": 0,
+          "termination_reason": "",
+          "budget_receipt": {
+            "error_code": "SYNTHETIC_FOLLOWUP",
+            "detail": "Synthetic reviewer/schema/blocked branch follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0
+          }
+        },
+        "report_paths": {
+          "report.md": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/report.md"
+        },
+        "report_receipts": {
+          "stage_status.tsv": {
+            "status": "skipped",
+            "reason": "NO_APPROVED_OUTPUT"
+          },
+          "reproduce.sh": {
+            "status": "skipped",
+            "reason": "NO_APPROVED_OUTPUT"
+          },
+          "report.md": {
+            "path": "/tmp/biomind-cross-layer-audit-20260913/graph-results-4/scratch/biomind-plan-local-graph-6lf3_u__/report.md",
+            "sha256": "c027c1855449c9e874ec15598b6b8bd44bded1564dfa833f1fff5684c05ecff4",
+            "status": "created",
+            "stop_id": "managed-stop:596e71f1c34acc2e99b3dfe3935c01ca54b7938af1a03308a21beda6f1a3de12",
+            "task_id": "new-cross-layer-persistent"
+          }
+        },
+        "secondary_failures": []
+      },
+      "duplicate_rejections": [],
+      "externally_bounded_after": null,
+      "runtime_terminated": true,
+      "last_outcome_type": null,
+      "fix": false
+    },
+    {
+      "mode": "persistent_revalidate",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 3,
+        "recovery": 3
+      },
+      "count_scope": "Explicit fake stage responses only; fake router not separately instrumented.",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "__interrupt__",
+        "execute",
+        "supervisor",
+        "recovery",
+        "supervisor",
+        "recovery",
+        "supervisor",
+        "recovery"
+      ],
+      "executions": [
+        {
+          "attempt": "attempt_07839a12c221de71d921",
+          "approved_sha256": "2b7fea1a0617413b44cea7e2f41cd5b484955580cee265f52620cc92140f6c97",
+          "rc": 0,
+          "stdout_sha256": "83ff2a6585ceefe2c4b0a6fadfacdabb0f113a76e2ae5c1cc3634f2690a29dd9",
+          "stderr_sha256": "7e635d6d99678a68ce4ca8539b944a2f8c296530d53e5db87ec3bbb78d6f0e7a",
+          "reader_processes": 3,
+          "bounded_observation": {
+            "total": 3,
+            "returned": 3,
+            "passed": 3,
+            "unstarted": 0,
+            "all_checks_passed": true,
+            "full_file_validated": false
+          }
+        }
+      ],
+      "execution_count": 1,
+      "approval_count": 1,
+      "approval_hashes": [],
+      "commit_count": 0,
+      "commit_receipts": {},
+      "stop": {},
+      "duplicate_rejections": [],
+      "externally_bounded_after": 3,
+      "runtime_terminated": false,
+      "last_outcome_type": "revalidation_required",
+      "fix": false
+    }
+  ],
+  "reused_native_rejection": {
+    "provider_calls": 4,
+    "tool_stub_calls": 2,
+    "source": {
+      "path": "/tmp/biomind-cross-layer-audit-20260913/component-results-2/rejection-compact.json",
+      "bytes": 100169,
+      "sha256": "f89b989cd36973c568790c6a37a6b19fef216060cb396a447503d3267c6934ae"
+    }
+  },
+  "component_small_processes": 6,
+  "limits": [
+    "No production patches or FIX PASS",
+    "T02 persistent revalidate externally bounded after three; no proof of automatic stop or infinite loop",
+    "T03/combined A standard blocked publisher still rejects; explicit fake Recovery blocked tests existing report route",
+    "Combined B terminal causal projection and authorized fallback delivery remain missing in baseline",
+    "T04/T05 controlled shell functions are not actual installed capability proof",
+    "T08/T14 scoped counterexamples, not all partial science output/crash/powerloss/concurrent write cases",
+    "T17 static evidence only; biological ploidy UNKNOWN",
+    "T18 two additional REAL Skill registries and common mechanism, not full scientific workflows",
+    "Historical SIGSEGV neither observed here nor declared fixed",
+    "Full raw synthetic test artifacts are retained under /tmp; fixture temporary task roots are cleaned by existing teardown"
+  ],
+  "commit_policy": "Only the listed new tests and audit files; no original dirty/staged/untracked content; no push",
+  "test_commit": "5f89f1d633ce02d6cac5ac0b13e285168462ac9a",
+  "document_commit_parent": "5f89f1d633ce02d6cac5ac0b13e285168462ac9a",
+  "static_artifact_checks": {
+    "python_ast": "PASS",
+    "independent_allowlisted_reprojection": "exact JSON equality",
+    "findings_rows": 18,
+    "test_matrix_rows": 20,
+    "raw_unsegregated_model_content": "not included; lengths/hashes/shape only"
+  }
+}
