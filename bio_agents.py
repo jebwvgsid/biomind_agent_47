@@ -3482,6 +3482,9 @@ class BioAnalystAgent:
                 "；后续由现有图路由处理。", source="runtime_fact", purpose="route_change", **display_scope)
             return
         if event == "recovery_response_received":
+            if bounded.get("public_status"):
+                emit_display("message", bounded["public_status"], source="runtime_fact",
+                    **{**display_scope, "item_id": display_scope["item_id"] + ":status" if display_scope["item_id"] else ""})
             emit_public(bounded.get("explanation"), **display_scope)
             emit_display("details", "Recovery response status: " + str(bounded.get("status") or "received"),
                          source="diagnostic", **{**display_scope, "item_id": ""})

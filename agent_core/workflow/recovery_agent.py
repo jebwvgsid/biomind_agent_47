@@ -1279,18 +1279,23 @@ class RecoveryAgentLoop:
                 assistant_content_public=assistant_content_public,
                 assistant_public_text=public_content,
             )
-            if receipt.get("status") == "candidate_validated" and receipt.get("transport") == "native_tool":
-                public_summary = (update.get("directive") or {}).get("summary")
-                if isinstance(public_summary, str) and public_summary.strip() and public_summary != current_explanation:
-                    if current_explanation:
-                        emit_display("details", current_explanation, source="model_public", purpose="details",
-                                     task_id=seed.failure_packet.task_id, node="recovery",
-                                     source_message_id=assistant.id)
-                    current_explanation = public_summary
+            public_status = ""
+            if raw_response_calls and receipt.get("status") == "not_accepted":
+                # Native submission diagnostics remain in original history.
+                # Content has no public contract on a rejected native round;
+                # do not forward it to either the main area or details.
+                current_explanation = ""
+                code = str(receipt.get("error_code") or "RECOVERY_RESPONSE_INVALID")
+                field = str(receipt.get("detail") or "").removeprefix("RecoveryDirective: ")
+                public_field = field if field in directive_schema().get("properties", {}) else ""
+                public_status = "恢复提案尚未接纳：" + code + ("（" + public_field + "）" if public_field else "") + "。"
+            elif receipt.get("status") == "candidate_validated" and receipt.get("transport") == "native_tool":
+                current_explanation = str((update.get("directive") or {}).get("summary") or "")
+                public_status = "恢复提案格式校验通过，尚待接纳。"
             await self._emit_event("recovery_response_received", {
                 **call_context, "event_id": f"{assistant.id}:reception", **receipt,
                 "source_message_id": assistant.id,
-                "explanation": current_explanation,
+                "explanation": current_explanation, "public_status": public_status,
             })
             if current_explanation and update.get("pending_tool_calls"):
                 # The terminal owner acknowledges actual write/flush. A closed
