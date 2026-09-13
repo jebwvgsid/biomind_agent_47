@@ -1,4 +1,4 @@
-"""Approved parent wrapper: bounded prefix checks with separate live progress."""
+"""FASTQ-only batch: repeated --item LABEL "BOUND_PATH"; never supply reference FASTA."""
 from pathlib import Path
 import argparse
 import asyncio
@@ -40,7 +40,7 @@ def main(argv=None):
     parser.add_argument("--item", nargs=2, action="append", metavar=("LABEL", "BOUND_PATH"), required=True)
     parser.add_argument("--observation-id", required=True)
     parser.add_argument("--evidence-dir", required=True,
-                        help="New directory in the approved execution-log area, not a formal result")
+                        help="Approved new leaf that must NOT exist; helper alone creates it; do not mkdir/reuse")
     parser.add_argument("--item-timeout-seconds", type=float,
                         help="Local short-inspection wall deadline; default 60 seconds per item")
     parser.add_argument("--records", type=int, default=32)

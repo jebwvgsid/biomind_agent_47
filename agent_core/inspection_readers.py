@@ -189,3 +189,63 @@ def inspect_stream(
         "full_scientific_validation": False, "prefix_valid": content_valid,
         "limits": dict(vars(limits)),
     }
+
+
+def inspect_fasta_header(stream: BinaryIO, *, limits: ReadLimits | None = None,
+                         clock: Any = time.monotonic) -> dict[str, Any]:
+    """Plain FASTA header and one sequence byte, never a whole sequence line.
+
+    Limits bound the header itself. A long sequence line is not scanned to find
+    its end. The executor owns cancellation of a blocked OS read, as for FASTQ.
+    """
+    limits = limits or ReadLimits(input_bytes=8192, line_bytes=4096)
+    bounded = _InputBudget(stream, limits, clock)
+    header = bytearray()
+    valid = None
+    error = None
+    sequence_bytes = 0
+    stop = ""
+    try:
+        while True:
+            byte = bounded.read(1)
+            if not byte:
+                valid = False
+                stop = "empty" if not header else "header_without_sequence"
+                break
+            if byte == b"\n":
+                break
+            header.extend(byte)
+            if header == b"\x1f\x8b":
+                raise InspectionReadError("READ_REPRESENTATION_UNSUPPORTED", "FASTA header reader supports plain bytes only")
+            if len(header) > limits.line_bytes:
+                raise InspectionReadError("READ_HEADER_LIMIT", "FASTA header coverage incomplete")
+            if len(header) > limits.decoded_bytes:
+                raise InspectionReadError("READ_DECODED_LIMIT", "FASTA header coverage incomplete")
+        if valid is None:
+            if header[:2] == b"\x1f\x8b":
+                raise InspectionReadError("READ_REPRESENTATION_UNSUPPORTED", "FASTA header reader supports plain bytes only")
+            try:
+                name = bytes(header).rstrip(b"\r").decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise InspectionReadError("READ_DECODE_ERROR", "FASTA header is not UTF-8") from exc
+            valid = name.startswith(">") and bool(name[1:].strip()) and "\x00" not in name
+            if valid:
+                byte = bounded.read(1)
+                sequence_bytes = len(byte)
+                valid = bool(byte) and byte.upper() in b"ACGTURYSWKMBDHVN.-*"
+                stop = "header_and_first_sequence_byte" if valid else "sequence_prefix_invalid_or_empty"
+            else:
+                stop = "header_format_mismatch"
+    except (InspectionReadError, OSError) as exc:
+        valid = None
+        error = {"code": getattr(exc, "code", "READ_IO_ERROR"),
+                 "detail": getattr(exc, "detail", type(exc).__name__)}
+        stop = "incomplete"
+    return {"schema_version": 1, "operation": "fasta_header", "representation": "plain",
+            "status": "error" if error else "observed", "error": error,
+            "scope": "fasta_header_and_first_sequence_byte", "prefix_valid": valid,
+            "full_file_validated": False, "checked_headers": int(valid is True),
+            "header_bytes": len(header), "sequence_bytes": sequence_bytes,
+            "scanned_input_bytes": bounded.consumed, "stop_reason": stop,
+            "limits": {"input_bytes": limits.input_bytes, "header_bytes": limits.line_bytes,
+                       "decoded_bytes": limits.decoded_bytes, "seconds": limits.seconds}}

@@ -1,7 +1,7 @@
 ---
 name: wgs-short-read-mapping
 description: Map paired-end short-read WGS resequencing FASTQ to a reference genome with BWA-MEM or BWA-MEM2, samtools, and duplicate marking, producing coordinate-sorted indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq, long-read, or assembly comparison data.
-version: "1.1.0"
+version: "1.1.1"
 tags: [WGS, resequencing, mapping, BWA, BWA-MEM2, samtools, Picard, sambamba, mark-duplicates, BAM]
 legacy_ids: [short-read-mapping, bwa-mapping, wgs-bwa-mem, resequencing-mapping, 双端WGS fastq, WGS fastq比对, 先比对再做GATK]
 task_types: [wgs_mapping]
@@ -55,6 +55,7 @@ generate:
       execution_guidance:
         - A formal input-check Plan step may declare outputs=[] and deliver validation_observation directly. Do not require a separate 00.input_check report merely because the overall workflow produces files.
         - Downstream reporting must consume the accepted observation from the same approved Plan and explicit predecessor dependency. Preserve the inspected scope; a prefix/header check is not full-file validation. Required final report, reproducibility script and stage status remain separate Plan results.
+        - FASTQ batch is FASTQ-only. For FASTQ plus plain reference, use the registered inspect_wgs_inputs.py composition with explicit --fastq/--reference, one validation_observation and the runtime BIOMIND_PREFLIGHT_EVIDENCE_DIR; helper alone creates its nonexistent leaf. Preserve per-item scopes and adverse/incomplete findings.
         - Use for input, reference, or BAM checks that produce no durable output file. Emit structured validation_observation evidence with a value, including an adverse value when the check fails.
         - Scientific success criteria and the existing verification layer judge the observation; the action claim alone does not establish success.
     - capability_id: genomics.wgs.short.read.mapping.prepare_reference
@@ -135,15 +136,46 @@ gzip integrity, every read, or all mate pairs. Its record/input/decoded-byte/tim
 limits and actual coverage are part of the result. A task requiring full checks
 still requires those checks; a prefix is evidence for investigation only.
 
-For a **new batch preflight candidate**, use this Skill's
-`scripts/inspect_fastq_batch.py` with repeated `--item LABEL BOUND_PATH`, one
-current StepEffect `--observation-id`, and a new `--evidence-dir` within the
-approved execution-log area. Resolve the concrete wrapper path through Skill
-inspection. The parent emits flushed, separate stderr progress at actual item
-and spawn/return boundaries; child stdout and stderr remain exact log files.
-It merges checked observations into one outer formal marker, never forwards
-nested markers. Include this wrapper invocation and its paths in the candidate
-before approval; do not patch a previously approved script.
+For a **new FASTQ-only batch candidate**, use `scripts/inspect_fastq_batch.py`.
+The correct interface is repeated `--item LABEL "BOUND_PATH"` (two arguments).
+`--item "LABEL BOUND_PATH"` is invalid: never combine the label and path.
+Reference FASTA does not belong in this FASTQ batch, regardless of extension.
+
+For a step checking FASTQ **and** a reference, explicitly choose
+`scripts/inspect_wgs_inputs.py`: repeat `--fastq LABEL "BOUND_PATH"`, then pass
+`--reference LABEL "BOUND_PATH"`. This thin composition delegates to the two
+readers and emits ONE current StepEffect `--observation-id` result, with per-item
+scopes and raw logs. It never overwrites four FASTQ observations with a fifth.
+`scripts/inspect_fasta_header.py` checks plain UTF-8 FASTA header and one sequence
+byte, default header limit 4096 bytes, input limit 8192 bytes, 2 seconds. It does
+not scan a long sequence line, all contigs, or the full reference; gzip reference
+is explicitly unsupported by this entry. Over-limit headers remain incomplete.
+FASTQ retains its existing prefix and gzip bounds; no full-file claim is valid.
+
+Resolve these resources through the selected Skill catalog. For the composition,
+declare all four handles in `skill_resources` so approval pins the wrapper and
+its delegated resources: `scripts/inspect_wgs_inputs.py`, `scripts/inspect_fastq.py`,
+`scripts/inspect_fasta_header.py`, `scripts/inspect_fastq_batch.py`, each prefixed
+by this Skill's exact ID and `#`. Use their supplied environment handles, not
+an installation root guessed from cwd. Read actual paths from current input
+bindings; labels and paths are distinct shell arguments, including spaces/中文.
+
+Pass `--evidence-dir "$BIOMIND_PREFLIGHT_EVIDENCE_DIR"`. The execution policy
+approves the existing internal attempt-log root and this controlled reference;
+the runtime resolves a NEW leaf for the actual attempt after approval and records
+its ownership. **The helper alone creates the final leaf.** Do not assign this
+variable, mkdir it, use `mktemp -d`, reuse a previous path, or invent an attempt ID.
+The leaf is internal evidence, not another required Plan output. Standalone
+approved invocations must likewise use a previously nonexistent approved leaf.
+The batch parent emits progress only at actual item/spawn/return boundaries.
+Child markers remain in exact raw logs; the parent emits one combined marker.
+Check all per-item findings and unstarted entries, not only rc=0. An adverse or
+technical result is not a successful preflight; preserve its partial evidence.
+
+During local Generate/Recovery correction, preserve the bound inputs and the
+approved checking goals. Do not mechanically freeze a mistaken parser choice,
+argument grouping, or historical diagnostic path. Correct the current candidate
+and use the existing approval/repair flow; do not edit a prior approved script.
 
 `--item-timeout-seconds` defaults to 60 seconds per short inspection (adjustable
 on the new approved candidate). The reader's existing `--seconds 2` limit bounds
