@@ -24,10 +24,12 @@ from __future__ import annotations
 
 import hashlib
 import inspect
+import io
 import json
 import math
 import re
 import shlex
+import tokenize
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
@@ -3383,8 +3385,74 @@ def _inline_interpreter_body(argv: Sequence[str]) -> tuple[int, str] | None:
     return None
 
 
+def _assert_python_helper_comment(body: str, marker_index: int) -> None:
+    """The marker must be Python source, not bytes inside a string literal."""
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(body).readline):
+            if (token.type == tokenize.COMMENT and token.start == (marker_index + 1, 0)
+                    and token.string == EFFECT_HELPER_MARKER):
+                return
+            if token.start[0] > marker_index + 1:
+                break
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        pass
+    raise ValueError("EFFECT_HELPER_REQUIRES_PYTHON_COMMENT_SCOPE")
+
+
+def _python_stdin_selector(args: Sequence[str]) -> bool:
+    """Recognize an explicit Python stdin operand, before any script or module."""
+    i = 1
+    while i < len(args):
+        option = args[i]
+        if option == "-":
+            return True  # All following words are script arguments, even '-'.
+        if option == "--":
+            return i + 1 < len(args) and args[i + 1] == "-"
+        if option == "--check-hash-based-pycs":
+            if i + 1 >= len(args) or args[i + 1] not in {"always", "default", "never"}:
+                return False
+            i += 2
+            continue
+        if not option.startswith("-") or option.startswith("--"):
+            return False
+        # Python short switches can be clustered. W/X consume the rest of
+        # their word or the next word; a '-' consumed there is not stdin.
+        skip = 1
+        for offset, flag in enumerate(option[1:], 1):
+            if flag in {"W", "X"}:
+                if offset == len(option) - 1:
+                    if i + 1 >= len(args):
+                        return False
+                    skip = 2
+                break
+            if flag not in "bBdEiIOPqRsSuvx":
+                return False  # Includes -c/-m, help/version and unknown modes.
+        i += skip
+    return False
+
+
+def _single_shell_command(prefix: str) -> bool:
+    """Reject unquoted shell operators without interpreting shell expressions."""
+    quote = ""
+    escaped = False
+    for char in prefix:
+        if escaped:
+            escaped = False
+        elif char == "\\" and quote != "'":
+            escaped = True
+        elif quote:
+            if char == quote:
+                quote = ""
+        elif char in {"'", '"'}:
+            quote = char
+        elif char in ";&|<>()\n":
+            return False
+    return not quote and not escaped
+
+
 def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
     if language in {"python", "py"}:
+        _assert_python_helper_comment(body, marker_index)
         return
     if language not in {"bash", "shell", "sh"}:
         raise ValueError("EFFECT_HELPER_REQUIRES_PYTHON_SCOPE")
@@ -3396,6 +3464,8 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
         match = re.fullmatch(r"\s*(.*?)\s*<<\s*'([A-Za-z_][A-Za-z_0-9]*)'\s*", lines[i])
         if not match:
             continue
+        if not _single_shell_command(match[1]):
+            break
         try:
             args = shlex.split(match[1])
         except ValueError:
@@ -3403,7 +3473,8 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
         executable = args[0].rsplit("/", 1)[-1] if args else ""
         closing = next((j for j in range(i + 1, len(lines)) if lines[j] == match[2]), None)
         if (re.fullmatch(r"(?:python|pypy)(?:\d+(?:\.\d+)*)?", executable)
-                and "-" in args[1:] and closing is not None and i < marker_index < closing):
+                and _python_stdin_selector(args) and closing is not None and i < marker_index < closing):
+            _assert_python_helper_comment("\n".join(lines[i + 1:closing]) + "\n", marker_index - i - 1)
             return
         break
     raise ValueError("EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC")
