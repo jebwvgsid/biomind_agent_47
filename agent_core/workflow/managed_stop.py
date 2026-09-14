@@ -351,6 +351,11 @@ def build_managed_stop(task_id, values, durable, boundary):
     if not packet:
         value["origin"].update(error_code=primary.get("error_code") or value["stop_reason"]["error_code"],
             summary=_safe(primary.get("message") or primary.get("summary") or outcome.get("summary")))
+        if boundary["node"] == "generate":
+            value["origin"].update(source_stage="generate", source_owner=_code(
+                primary.get("owner") or primary.get("error_owner"), "UNKNOWN"))
+            if outcome.get("type") == "blocked":
+                value["origin"]["failure_type"] = "blocked"
     if (boundary["node"] == "execute" and outcome.get("type") == "harness_error"
             and payload.get("error_code") in {
                 "DIAGNOSTIC_ACTION_CONTRACT_INVALID", "EXECUTE_ACTION_ROLE_MISSING"
