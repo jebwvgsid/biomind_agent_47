@@ -76,6 +76,7 @@ class Terminal:
         self.review_document = ''
         self.review_title = ''
         self.review_prompt = ''
+        self.review_kind = ''
         self.cancel_requested = False
         self.cancel_callback = None
         self.force_callback = None
@@ -135,12 +136,22 @@ class Terminal:
         def transcript(event):
             self.show_history()
 
-        @keys.add('pageup', filter=Condition(lambda: not self.modal))
+        @keys.add('pageup', filter=Condition(lambda: not self.modal and not self._plan_body_visible()))
         def browse(event):
             self.show_history()
 
+        @keys.add('pageup', filter=Condition(self._plan_body_visible))
+        def previous_plan_page(event):
+            self.details_view.buffer.cursor_up(count=max(1, min(12, self.app.output.get_size().rows - 8)))
+            self.app.invalidate()
+
+        @keys.add('pagedown', filter=Condition(self._plan_body_visible))
+        def next_plan_page(event):
+            self.details_view.buffer.cursor_down(count=max(1, min(12, self.app.output.get_size().rows - 8)))
+            self.app.invalidate()
+
         layout = HSplit([
-            ConditionalContainer(self.details_view, Condition(lambda: self.modal)),
+            ConditionalContainer(self.details_view, Condition(lambda: self.modal or self._plan_body_visible())),
             Window(FormattedTextControl(self.status_fragments), height=1, wrap_lines=False),
             ConditionalContainer(Window(FormattedTextControl(lambda: '\n'.join(self.model.tool_tail.splitlines()[-2:])), height=2, wrap_lines=True), Condition(lambda: self.model.verbosity == 'verbose' and bool(self.model.tool_tail))),
             ConditionalContainer(Window(FormattedTextControl(self.prompt_fragments), height=Dimension(min=1, max=3), wrap_lines=True), Condition(lambda: bool(self.prompt_text) and not self.modal)),
@@ -183,6 +194,8 @@ class Terminal:
                 'Enter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消')
         if not self.modal and self.pending is not None and self.context[1] in {'plan_review', 'code_review'}:
             text = 'Enter/y 批准 · n 拒绝 · q 退出 · F2 详情'
+            if self._plan_body_visible():
+                text = 'PgUp/PgDn 计划正文 · ' + text
         return self.fit_columns(text, self.app.output.get_size().columns)
 
     def _approval_style(self):
@@ -224,9 +237,17 @@ class Terminal:
         self.review_display = view
         self.review_title = safe_text(view.title)
         self.review_prompt = ''
+        self.review_kind = view.kind
+        if view.kind == 'plan':
+            self.details_view.text = self.review_document
+            self.details_view.buffer.cursor_position = 0
         self.review_hash = hashlib.sha256(view.body.encode('utf-8')).hexdigest()
         if self.plain_owner is None:
             self.receive('approval', view.summary, source='runtime_fact')
+
+    def _plan_body_visible(self):
+        return (not self.modal and self.review_kind == 'plan'
+                and self.context[1] == 'plan_review' and self.pending is not None)
 
     @staticmethod
     def item_attributes(item):
@@ -622,6 +643,9 @@ class Terminal:
     def close_details(self):
         def close():
             self.modal = False
+            if self._plan_body_visible():
+                self.details_view.text = self.review_document
+                self.details_view.buffer.cursor_position = 0
             self.app.layout.focus(self.input_control)
             self.buffer.cancel_completion()
             self._changed()

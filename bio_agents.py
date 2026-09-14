@@ -40895,6 +40895,7 @@ question. Never guess a scientific or database identity.
             wait_started = time.perf_counter()
             wait_started_at = timestamp_now()
             output.prepare_review("计划审批", review_content,
+                kind="plan",
                 plan_id=str(persisted_plan.get("plan_id") or "UNKNOWN"),
                 step_count=len(persisted_plan.get("steps") or []))
 

@@ -197,7 +197,7 @@ class PlainTerminal:
             parts.append(safe_document(notice))
         if view is not None:
             parts.append(safe_document(view.summary).replace('/details 或 F2', '/details'))
-            if details or self.model.verbosity == 'verbose':
+            if details or view.kind == 'plan' or self.model.verbosity == 'verbose':
                 parts.extend([safe_text(view.title), safe_document(view.body)])
             if details:
                 parts.append('详情结束；仍待审批。查看详情不构成批准。')

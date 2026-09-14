@@ -9,9 +9,10 @@ class ReviewDisplay:
     title: str
     body: str
     summary: str
+    kind: str = ""
 
 
-def review_display(title, content, *, language='', risk='', plan_id='', step_count=None):
+def review_display(title, content, *, language='', risk='', plan_id='', step_count=None, kind=''):
     body = str(content)
     identity = hashlib.sha256(body.encode('utf-8')).hexdigest()
     fields = [str(title)]
@@ -20,11 +21,15 @@ def review_display(title, content, *, language='', risk='', plan_id='', step_cou
     if language:
         fields.append(f'语言 {language} · 风险检查 {risk or "UNKNOWN"}')
     fields.append('审批显示正文 SHA-256: ' + identity)
-    fields.append('完整输入、输出、约束及执行作用范围见详情；摘要不能确认全部副作用。')
+    if kind == 'plan':
+        fields.append('下方为当前冻结计划的完整正文；可滚动查看后明确确认。')
+    else:
+        fields.append('完整输入、输出、约束及执行作用范围见详情；摘要不能确认全部副作用。')
     if language:
         fields.append('工作目录与实际写入目标以完整执行定义为准；无法从现有审批字段可靠概括，需查看完整代码。')
-    fields.append('/details 或 F2 查看完整对象；查看/返回不代表批准。')
-    return ReviewDisplay(str(title), body, '\n'.join(fields))
+    fields.append('/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。' if kind == 'plan'
+                  else '/details 或 F2 查看完整对象；查看/返回不代表批准。')
+    return ReviewDisplay(str(title), body, '\n'.join(fields), str(kind))
 
 
 def show_review(view):
