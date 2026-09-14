@@ -1,0 +1,255 @@
+[
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_existing_formal_resource_retains_explicit_role_associations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_existing_formal_resource_retains_explicit_role_associations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001589413732290268,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_existing_formal_resource_retains_explicit_role_associations",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.08378475345671177,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_existing_formal_resource_retains_explicit_role_associations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015004631131887436,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001147836446762085,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 16.132688307203352,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0017988327890634537,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003669383004307747,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004247194156050682,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010517332702875137,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017335359007120132,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003939196467399597,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010142102837562561,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017223041504621506,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0024140942841768265,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001224922016263008,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001849289983510971,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007534713484346867,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001282133162021637,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001832982525229454,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00034167058765888214,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.95853915810585e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001676175743341446,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003407970070838928,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.934138506650925e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017336104065179825,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009682448580861092,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001433761790394783,
+    "failure": ""
+  }
+]

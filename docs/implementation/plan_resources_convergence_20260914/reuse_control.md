@@ -1,0 +1,5 @@
+# Existing resource association control
+
+A separate existing-authority compiler control found that alias deduplication retained the authoritative row but erased its newly validated role_associations. The exact isolated pre-fix control failed with PLAN_RESOURCE_ROLE_ASSOCIATION_MISSING for all three consumers. The local merge now preserves those associations and version while retaining canonical identity, revision and existing resource authority. It creates no global role alias. This control is not C_FIX and is not used to claim a new workspace passed by pre-registration.
+
+Guarded Python/exports: /tmp/biomind-planfix-v1/reuse-before (rc=1, one expected witness failure); /tmp/biomind-planfix-v1/reuse-fix (rc=0: 9 passed, 4 subtests passed). Tests: test_plan_resource_fix.py::test_existing_formal_resource_retains_explicit_role_associations, test_plan_resource_fix.py::test_c_fix_full_admission, test_planner_resource_protocol_v2.py. Source/fixture/result hashes are attached. Only this association merge changed production code in this follow-up. The original NEW-workspace full C_FIX remains unchanged.

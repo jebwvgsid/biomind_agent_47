@@ -265,3 +265,22 @@ def test_role_reader_compatibility():
     with pytest.raises(ReaderCompatibilityError):
         assert_reader_compatible({'minimum_reader_version':'1.2.2'},reader_version='1.2.1')
     assert_reader_compatible({'minimum_reader_version':'1.2.2'})
+
+
+def test_existing_formal_resource_retains_explicit_role_associations():
+    """Existing-authority reuse control, separate from the NEW-workspace C_FIX."""
+    from agent_core.plan_bindings import compile_plan_resource_bindings,resource_bindings_for_step,instantiate_step_binding_contract
+    from agent_core.skill_manager import SkillManager
+    registry=SkillManager(str(Path(__file__).resolve().parents[1]/'skills')).get_execution_capability_registry(['genomics/snpeff-annotation'])
+    c=c_fix();workspace=next(x for x in c['proposed_artifacts'] if x['local_ref']=='plan.snpeff_data_dir')
+    workspace['resource_binding']={'resource_ref':'output.explicit_workspace'}
+    bindings=compile_plan_resource_bindings(c,candidate_scope_id='synthetic-reuse',
+        authoritative_handles={'output.explicit_workspace':'formal-existing-workspace'},
+        authoritative_bindings={'output.explicit_workspace':{'metadata':{'resource_kind':'mutable_workspace','contract_revision':'r7'}}},
+        capability_registry=registry)
+    for step in c['steps'][1:4]:
+        row=resource_bindings_for_step(bindings,step)['artifact.snpeff_data_dir']
+        assert row['canonical_resource_id']=='formal-existing-workspace'
+        assert row['contract_revision']=='r7'
+        assert row['role_association_version']==1
+    assert 'artifact.snpeff_data_dir' not in bindings

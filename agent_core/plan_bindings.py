@@ -517,6 +517,12 @@ def compile_plan_resource_bindings(
                 prior_identity.get("aliases") or [], row.get("aliases") or []
             )
             prior_identity["aliases"] = list(merged_aliases)
+            # Reuse of an authoritative resource merges exact aliases into its
+            # existing row. Keep the already validated local role associations
+            # as well; the authoritative row must not erase their scope.
+            if row.get("role_associations"):
+                prior_identity.setdefault("role_associations", []).extend(deepcopy(row["role_associations"]))
+                prior_identity["role_association_version"] = PLAN_RESOURCE_ROLE_VERSION
             prior_identity["binding_id"] = _resource_binding_id(prior_identity)
             row = prior_identity
         else:
