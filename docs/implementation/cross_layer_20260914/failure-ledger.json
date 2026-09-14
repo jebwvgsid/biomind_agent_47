@@ -1,0 +1,1500 @@
+{
+  "runs": [
+    {
+      "id": "acceptance-bare-AC-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "b14da3725e43a71a76b93e98c785c2d2867b90320ea085205735ea27a1594abc",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-AC-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-B-stop-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "45a5fa99d4140857ea8ad65df8a7fdf9c14711aa0748294079e8fbc2a672b964",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-B-stop-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-B-success-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "c2209797a43fb2898e28a5d341fef7e9c960efc7b6040bbb675d13434029b221",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-B-success-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-D-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "f33f14ad23e49165a8632714987254594bc54481aa74f893aeecd63244aa7a3d",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-D-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-approval-input-results",
+      "passed_calls": 30,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "eb4dd25b7997d8c8e56ed3b02f588127b6dd7e7ec927aff8def981df4e0619e2",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-approval-input-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_approval_owner_lifecycle.py",
+        "tests/test_input_boundary.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-cli-results",
+      "passed_calls": 24,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "45f71b0759ca4f3bc045021a2ae7517d43e7a531bbad9ead6dc1869ee1ee97e9",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-cli-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cli_v2_display.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-core-results",
+      "passed_calls": 25,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "67448b0def5e9511cd0abd9af255a99d64bded00f7eccc716e09bcac165fe816",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-core-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_publication.py",
+        "tests/test_cross_layer_delivery.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-gates-results",
+      "passed_calls": 6,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "470ba0fc26f47c456c67432f58acbe2a5125dfcfa75e485b20ae06f28978b10b",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-gates-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+        "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+        "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+        "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+        "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+        "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-last-veto-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "2f08bc10e54593da1c1d69fe5f7a13c786a64808171bf4ae88831258a5a5a7f6",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-last-veto-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A_last]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk_veto]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-names-results",
+      "passed_calls": 31,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "d528fcf6ffd1878128ea8dcb9c5a86abeaf20a9ab06b47474d593708dddde546",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-names-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_plan_results_name.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-planner-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "2eda553fcb436c1f0691fac5d26445459a222885e55a7905de42969f4035ec9a",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-planner-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_planner_boundary.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-preflight-recovery-results",
+      "passed_calls": 5,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "9a84b6d9a01bf259e4daa4fa1838e656b7f74fb414cd888cc1a0518136d9512a",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-preflight-recovery-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_preflight_types.py",
+        "tests/test_recovery_public_rejection.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-protocol-results",
+      "passed_calls": 14,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "2403a09b585eb4642772b31109c21dcc1bed7af3f9808916df0683d774381a56",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-protocol-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_cli_public_response.py::test_generate_unwrap_does_not_relax_existing_script_rejection",
+        "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity",
+        "tests/test_cli_public_response.py::test_generate_duplicate_business_transport_is_rejected"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-transport-results",
+      "passed_calls": 6,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "3da2a65323eb2d9eb2701a129ff8a937d256a107451d4321928fa248216de1a0",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-transport-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_a7_active_stream_still_hits_total_deadline",
+        "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_a8_timeout_cancellation_is_awaited_and_drained",
+        "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_a11_partial_response_is_diagnostic_never_executable",
+        "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_a12_provider_error_taxonomy_remains_distinct",
+        "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_a13_completed_malformed_response_is_not_transport_retry",
+        "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_p3_two_read_errors_exhaust_budget_without_action_or_execution"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-bare-writer-results",
+      "passed_calls": 19,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "1bd772e6b04d80307902de54483f7f87e37dd8a8b37a4f0c71bcacf0a0bcb3be",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-writer-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-bare-export",
+        "-q",
+        "tests/test_runtime_recovery_reporting.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "9e6f58babb41c419a48d6e212120e30631be5fe6d237b8191416660ab15fbc68"
+    },
+    {
+      "id": "acceptance-overlay-AC-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "1abd1ad0086efc6569f44ef3905507ffd129878c13445dc31637308018063f6e",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-AC-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "6a745aa9f5dfcde3b88cfd30cbb65ac3b992f41419b86503b32381779af5cc58"
+    },
+    {
+      "id": "acceptance-overlay-B-stop-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "3d1618703f6d057e7f3cdcc5efa7cd6bb8c8c0e7489914cafd933f2177f4c0de",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-B-stop-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "6a745aa9f5dfcde3b88cfd30cbb65ac3b992f41419b86503b32381779af5cc58"
+    },
+    {
+      "id": "acceptance-overlay-B-success-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "b8b50017103f35c0f9c3beacc66c2fc32e2a1424529afe296f0280aface05eab",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-B-success-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "6a745aa9f5dfcde3b88cfd30cbb65ac3b992f41419b86503b32381779af5cc58"
+    },
+    {
+      "id": "acceptance-overlay-D-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "3f6f1d3fc76ced499ecdb0fce36b8a9270f16c1bf1dc9c9a49976db42b86c325",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-D-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "6a745aa9f5dfcde3b88cfd30cbb65ac3b992f41419b86503b32381779af5cc58"
+    },
+    {
+      "id": "acceptance-overlay-core-results",
+      "passed_calls": 25,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "95b4087ec601ede906c6bb83088bda1474b30ac4fe5ea7e1a678247cdca4fc5d",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-core-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/acceptance-overlay-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_publication.py",
+        "tests/test_cross_layer_delivery.py"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "6a745aa9f5dfcde3b88cfd30cbb65ac3b992f41419b86503b32381779af5cc58"
+    },
+    {
+      "id": "delivery-final-bare-results",
+      "passed_calls": 9,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "2d9d5e5f84357ac186c8b814796f564de2b8eb0d1f88bab4fb64097a1f9620af",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/delivery-final-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/delivery-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/delivery-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+        "tests/test_cross_layer_delivery.py",
+        "tests/test_cross_layer_domain.py::test_F38_actual_loaded_candidate_sources"
+      ],
+      "loaded_tree": "052a3d1c0f254a2af7710b90b05da3ce40ffcbc2",
+      "source_signature": "e572dbddd39eb243a1b1f75cdb3f31c57009a76beb5278025be588d0798ed0df"
+    },
+    {
+      "id": "domain-2-bare-results",
+      "passed_calls": 2,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+          "phase": "call",
+          "failure_tail": "iscovery_exhausted,\n        normalize_skill_discovery_state,\n        record_capability_gap,\n        record_catalog_expansion,\n        record_excluded_skills,\n        record_loaded_skill_doc,\n        record_loaded_skill_docs,\n        record_observed_skill_mentions,\n        record_reasoning_escalation,\n        record_rejected_candidate,\n        record_selected_skills,\n        record_skill_search,\n        record_skill_search_batch,\n        reject_premature_finish,\n        selection_document_errors,\n    )\n    from agent_core.workflow_manager import (\n        WorkflowManager,\n        parse_workflow_handoff,\n        parse_workflow_state,\n        repair_workflow_handoff,\n        repair_workflow_state,\n        strip_workflow_activation,\n        validate_workflow_handoff,\n        validate_workflow_state,\n    )\n    from agent_core.middleware import HITLMiddleware, build_code_review_provenance\n>   from agent_core.active_state import (\n        ActiveStateInvariantError,\n        GenerationMode,\n        generation_provenance_for_dispatch,\n        current_generation_causal_reference,\n        normal_generation_provenance,\n        scoped_execution_evidence,\n    )\nE   ImportError: cannot import name 'current_generation_causal_reference' from 'agent_core.active_state' (/tmp/biomind-cross-layer-implementation-20260914/domain-2-bare-export/agent_core/active_state.py)\n\nbio_agents.py:386: ImportError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F38_actual_loaded_candidate_sources",
+          "phase": "call",
+          "failure_tail": "iscovery_exhausted,\n        normalize_skill_discovery_state,\n        record_capability_gap,\n        record_catalog_expansion,\n        record_excluded_skills,\n        record_loaded_skill_doc,\n        record_loaded_skill_docs,\n        record_observed_skill_mentions,\n        record_reasoning_escalation,\n        record_rejected_candidate,\n        record_selected_skills,\n        record_skill_search,\n        record_skill_search_batch,\n        reject_premature_finish,\n        selection_document_errors,\n    )\n    from agent_core.workflow_manager import (\n        WorkflowManager,\n        parse_workflow_handoff,\n        parse_workflow_state,\n        repair_workflow_handoff,\n        repair_workflow_state,\n        strip_workflow_activation,\n        validate_workflow_handoff,\n        validate_workflow_state,\n    )\n    from agent_core.middleware import HITLMiddleware, build_code_review_provenance\n>   from agent_core.active_state import (\n        ActiveStateInvariantError,\n        GenerationMode,\n        generation_provenance_for_dispatch,\n        current_generation_causal_reference,\n        normal_generation_provenance,\n        scoped_execution_evidence,\n    )\nE   ImportError: cannot import name 'current_generation_causal_reference' from 'agent_core.active_state' (/tmp/biomind-cross-layer-implementation-20260914/domain-2-bare-export/agent_core/active_state.py)\n\nbio_agents.py:386: ImportError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]",
+          "phase": "call",
+          "failure_tail": "iscovery_exhausted,\n        normalize_skill_discovery_state,\n        record_capability_gap,\n        record_catalog_expansion,\n        record_excluded_skills,\n        record_loaded_skill_doc,\n        record_loaded_skill_docs,\n        record_observed_skill_mentions,\n        record_reasoning_escalation,\n        record_rejected_candidate,\n        record_selected_skills,\n        record_skill_search,\n        record_skill_search_batch,\n        reject_premature_finish,\n        selection_document_errors,\n    )\n    from agent_core.workflow_manager import (\n        WorkflowManager,\n        parse_workflow_handoff,\n        parse_workflow_state,\n        repair_workflow_handoff,\n        repair_workflow_state,\n        strip_workflow_activation,\n        validate_workflow_handoff,\n        validate_workflow_state,\n    )\n    from agent_core.middleware import HITLMiddleware, build_code_review_provenance\n>   from agent_core.active_state import (\n        ActiveStateInvariantError,\n        GenerationMode,\n        generation_provenance_for_dispatch,\n        current_generation_causal_reference,\n        normal_generation_provenance,\n        scoped_execution_evidence,\n    )\nE   ImportError: cannot import name 'current_generation_causal_reference' from 'agent_core.active_state' (/tmp/biomind-cross-layer-implementation-20260914/domain-2-bare-export/agent_core/active_state.py)\n\nbio_agents.py:386: ImportError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "e7c40a8732847a93bbd5f682a8e72ed1e31f3fee9b2f1280ca0babcb3db25c5a",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-2-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-2-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-2-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]"
+      ],
+      "loaded_tree": "99d7f735ecc447120ab7ae562fae75db5cf247db",
+      "source_signature": "8ef59dbe796b4eae77e18f045137295b9896cf125454961a22b9f14fa22da246",
+      "classification": "candidate assembled while prior commit pending; invalid mixed provisional tree. Never counted as acceptance."
+    },
+    {
+      "id": "domain-3-bare-results",
+      "passed_calls": 3,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+          "phase": "call",
+          "failure_tail": ":[{'check_id':'explicit','description':'No guessed ploidy.'}],\n                    'metadata':{'schema_version':2,'planner_contract':'structured_plan_v2'}}))\n            assert stage=='generate' and 'sample_ploidy' in wire and '4' in wire\n            template=json.loads(next(m.content for m in messages if getattr(m,'name',None)=='approved_effect_emission_template'))\n            return AIMessage(content='<shell>python - <<\\'PY\\'\\n'+template['marker']+'\\nprint(emit_effect_evidence({\"produces_observations\":{\"validation_observation\":{\"value\":{\"sample_ploidy\":4}}}}))\\nPY\\n</shell>')\n        case.agent._ainvoke_node_llm=provider\n        try:\n            runner=case._runner_state(task);app=case.agent._app_for_task(task,runner);config={'configurable':{'thread_id':task},'recursion_limit':20}\n            events=[]\n            async for event in app.astream(runner,config=config,stream_mode='updates'):events.append(event)\n            snapshot=app.get_state(config)\n>           assert snapshot.tasks and snapshot.tasks[0].interrupts\nE           AssertionError: assert (())\nE            +  where () = StateSnapshot(values={'managed_run_boundary': {'node': 'consultant', 'field': 'consultant_outcome', 'outcome': {'schem...licit-ploidy', 'checkpoint_ns': '', 'checkpoint_id': '1f1aff45-decc-6d15-8001-191dc9c5c724'}}, tasks=(), interrupts=()).tasks\n\ntests/test_cross_layer_domain.py:84: AssertionError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F38_actual_loaded_candidate_sources",
+          "phase": "call",
+          "failure_tail": "                                                                       ^^^^^^^^^^^^^^^^^\n\ntests/test_cross_layer_domain.py:156: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1019: in read_bytes\n    with self.open(mode='rb') as f:\n         ^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-cross-layer-implementation-20260914/domain-3-bare-export/skills/genomics/wgs-variant-calling/SKILL.md')\nmode = 'rb', buffering = -1, encoding = None, errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-cross-layer-implementation-20260914/domain-3-bare-export/skills/genomics/wgs-variant-calling/SKILL.md'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "5432d34dde13bec701c846b9c704ab3eb17b0cd01f0ab379286eed058e44d459",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-3-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-3-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-3-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]"
+      ],
+      "loaded_tree": "18888b9762ccb44e01642c570321dfc7c0a7e337",
+      "source_signature": "0d78e888c1b42af33fb43fe889f69ecbd844ab876ab92b3101bc7d917561070f"
+    },
+    {
+      "id": "domain-4-bare-results",
+      "passed_calls": 3,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+          "phase": "call",
+          "failure_tail": "return AIMessage(content='<shell>python - <<\\'PY\\'\\n'+template['marker']+'\\nprint(emit_effect_evidence({\"produces_observations\":{\"validation_observation\":{\"value\":{\"sample_ploidy\":4}}}}))\\nPY\\n</shell>')\n        case.agent._ainvoke_node_llm=provider\n        try:\n            runner=case._runner_state(task);app=case.agent._app_for_task(task,runner);config={'configurable':{'thread_id':task},'recursion_limit':20}\n            events=[]\n            async for event in app.astream(runner,config=config,stream_mode='updates'):events.append(event)\n            snapshot=app.get_state(config)\n            save('F34-question-progress',{'counts':counts,'events':events,'requests':requests,'values':snapshot.values})\n>           assert snapshot.tasks and snapshot.tasks[0].interrupts,events\nE           AssertionError: [{'triage': {'task_mode': 'managed', 'retrieval_mode': 'kb', 'request_intent': {'schema_version': 1, 'request_kind': '...e': 'TASKSPEC_MUTATION_REJECTED', 'detail': 'TASKSPEC_MUTATION_STRUCTURE_INVALID: ambiguity must be an object'}, ...}}]\nE           assert (())\nE            +  where () = StateSnapshot(values={'managed_run_boundary': {'node': 'consultant', 'field': 'consultant_outcome', 'outcome': {'schem...licit-ploidy', 'checkpoint_ns': '', 'checkpoint_id': '1f1aff48-affd-6db2-8001-8cdc23734ab2'}}, tasks=(), interrupts=()).tasks\n\ntests/test_cross_layer_domain.py:85: AssertionError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "a2972671d7133e1f401c87745243c225b1b13cc30da13f4558ae291bfce7db80",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-4-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-4-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-4-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py"
+      ],
+      "loaded_tree": "0af5649de3b96f0253b6facc02a7c3d3a8e259d1",
+      "source_signature": "a70f1dbfc3952912bc2dbffa9d8dc15f4e7575f1854b87fa82272cc953463749"
+    },
+    {
+      "id": "domain-5-bare-results",
+      "passed_calls": 5,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+          "phase": "call",
+          "failure_tail": "return AIMessage(content='<shell>python - <<\\'PY\\'\\n'+template['marker']+'\\nprint(emit_effect_evidence({\"produces_observations\":{\"validation_observation\":{\"value\":{\"sample_ploidy\":4}}}}))\\nPY\\n</shell>')\n        case.agent._ainvoke_node_llm=provider\n        try:\n            runner=case._runner_state(task);app=case.agent._app_for_task(task,runner);config={'configurable':{'thread_id':task},'recursion_limit':20}\n            events=[]\n            async for event in app.astream(runner,config=config,stream_mode='updates'):events.append(event)\n            snapshot=app.get_state(config)\n            save('F34-question-progress',{'counts':counts,'events':events,'requests':requests,'values':snapshot.values})\n>           assert snapshot.tasks and snapshot.tasks[0].interrupts,events\nE           AssertionError: [{'triage': {'task_mode': 'managed', 'retrieval_mode': 'kb', 'request_intent': {'schema_version': 1, 'request_kind': '...ASK_UNKNOWN_SLOT', 'detail': 'ASK requires a missing, required, user-owned slot from the capability contract.'}, ...}}]\nE           assert (())\nE            +  where () = StateSnapshot(values={'managed_run_boundary': {'node': 'consultant', 'field': 'consultant_outcome', 'outcome': {'schem...licit-ploidy', 'checkpoint_ns': '', 'checkpoint_id': '1f1aff4b-0124-647f-8001-e0a6129ed0df'}}, tasks=(), interrupts=()).tasks\n\ntests/test_cross_layer_domain.py:85: AssertionError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "1d8971292ffcb951eef237f71ad6767ebd68848b84c7a1153ceaba5c26f0334b",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-5-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-5-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-5-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk_veto]"
+      ],
+      "loaded_tree": "4024da26792d3d385a357889dd1f0f7a8321938a",
+      "source_signature": "10e8e05535545e78c23cd38585baecdb033664aa4ef125b8ef28996666457e8b"
+    },
+    {
+      "id": "domain-6-bare-results",
+      "passed_calls": 5,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+          "phase": "call",
+          "failure_tail": "s':requests,'values':snapshot.values})\n            assert snapshot.tasks and snapshot.tasks[0].interrupts,events\n            assert counts=={'consultant':1,'planner':0,'generate':0,'calling':0},events\n            unknown=load_plan_state(case.root,task)\n            assert not unknown['provenance_state']['attempts']\n            stream=app.astream(bio_agents.Command(resume='四倍体，明确使用 4'),config=config,stream_mode='updates')\n            try:\n                async for event in stream:\n                    events.append(event)\n                    if 'generate' in event:break\n            finally:await stream.aclose()\n>           assert counts=={'consultant':2,'planner':1,'generate':1,'calling':0},events\nE           AssertionError: [{'triage': {'task_mode': 'managed', 'retrieval_mode': 'kb', 'request_intent': {'schema_version': 1, 'request_kind': '..._refs': {'consultant': 'phase-archive:sha256:fd637b4c1bd631b5dfa158fb1a3875712df973f2ca75c6afc8c80fc549c16aad'}, ...}}]\nE           assert {'consultant'... 'calling': 0} == {'consultant'... 'calling': 0}\nE             \nE             Omitting 1 identical items, use -vv to show\nE             Differing items:\nE             {'consultant': 1} != {'consultant': 2}\nE             {'planner': 0} != {'planner': 1}\nE             {'generate': 0} != {'generate': 1}\nE             Use -v to get more diff\n\ntests/test_cross_layer_domain.py:99: AssertionError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "69fc0f26cb4bb87a5520172ce5266276069bb0bd90adda0ab365ceff9e00572e",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-6-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-6-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-6-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A_last]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk_veto]"
+      ],
+      "loaded_tree": "9f26de238f8965cfe82054fa02c3249a0ca12cfb",
+      "source_signature": "6d3f2ac7830410847495f5eac462a0cc4ed29cb7e8083c22fc1b43073a32edfb"
+    },
+    {
+      "id": "domain-7-bare-results",
+      "passed_calls": 9,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+          "phase": "call",
+          "failure_tail": "te':0,'calling':0},events\n            unknown=load_plan_state(case.root,task)\n            assert not unknown['provenance_state']['attempts']\n            stream=app.astream(bio_agents.Command(resume='四倍体，明确使用 4'),config=config,stream_mode='updates')\n            try:\n                async for event in stream:\n                    events.append(event)\n                    if 'generate' in event:break\n            finally:await stream.aclose()\n            save('F34-answer-progress',{'counts':counts,'events':events,'requests':requests,'values':app.get_state(config).values,'durable':load_plan_state(case.root,task)})\n>           assert counts=={'consultant':2,'planner':1,'generate':1,'calling':0},events\nE           AssertionError: [{'triage': {'task_mode': 'managed', 'retrieval_mode': 'kb', 'request_intent': {'schema_version': 1, 'request_kind': '..._refs': {'consultant': 'phase-archive:sha256:0424272fbfda41a79fb3e83c094838ed918fffc25daf8e204e91368f327e9af8'}, ...}}]\nE           assert {'consultant'... 'calling': 0} == {'consultant'... 'calling': 0}\nE             \nE             Omitting 1 identical items, use -vv to show\nE             Differing items:\nE             {'generate': 0} != {'generate': 1}\nE             {'planner': 0} != {'planner': 1}\nE             {'consultant': 1} != {'consultant': 2}\nE             Use -v to get more diff\n\ntests/test_cross_layer_domain.py:100: AssertionError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_correction.py::test_F17_distinct_request_same_text_counts_once_then_no_progress",
+          "phase": "call",
+          "failure_tail": "tmp_path = PosixPath('/tmp/biomind-cross-layer-implementation-20260914/domain-7-bare-results/scratch/pytest-of-liusiqi/pytest-0/test_F17_distinct_request_same0')\n\n    def test_F17_distinct_request_same_text_counts_once_then_no_progress(tmp_path):\n>       from tests.test_generate_admission_typed_repair import CandidateRepairCommitTests\nE       ModuleNotFoundError: No module named 'tests.test_generate_admission_typed_repair'\n\ntests/test_cross_layer_correction.py:126: ModuleNotFoundError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "420c8764beecb5a28c1b00559e4c763ed00f65a93f0a339eba8be9765349fd03",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-7-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-7-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-7-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_correction.py"
+      ],
+      "loaded_tree": "352fedac0fc69bea9466c5daa8e5e3d37aacd704",
+      "source_signature": "1d9ce270a00e5398af62f315f3c317ddf8fb2a215ba7af028698a44809ae537e"
+    },
+    {
+      "id": "domain-8-bare-results",
+      "passed_calls": 9,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+          "phase": "call",
+          "failure_tail": "   assert counts=={'consultant':1,'planner':0,'generate':0,'calling':0},events\n            unknown=load_plan_state(case.root,task)\n            assert not unknown['provenance_state']['attempts']\n            stream=app.astream(bio_agents.Command(resume='四倍体，明确使用 4'),config=config,stream_mode='updates')\n            try:\n                async for event in stream:\n                    events.append(event)\n                    if 'generate' in event:break\n            finally:await stream.aclose()\n            save('F34-answer-progress',{'counts':counts,'events':events,'requests':requests,'values':app.get_state(config).values,'durable':load_plan_state(case.root,task)})\n>           assert counts=={'consultant':2,'planner':1,'generate':1,'calling':0},events\nE           AssertionError: [{'triage': {'task_mode': 'managed', 'retrieval_mode': 'kb', 'request_intent': {'schema_version': 1, 'request_kind': '...tep.', 'scope': {'task_id': 'new-explicit-ploidy', 'plan_id': '', 'plan_version': '', 'step_id': '', ...}, ...}, ...}}]\nE           assert {'consultant'... 'calling': 0} == {'consultant'... 'calling': 0}\nE             \nE             Omitting 2 identical items, use -vv to show\nE             Differing items:\nE             {'generate': 0} != {'generate': 1}\nE             {'planner': 2} != {'planner': 1}\nE             Use -v to get more diff\n\ntests/test_cross_layer_domain.py:100: AssertionError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_correction.py::test_F17_distinct_request_same_text_counts_once_then_no_progress",
+          "phase": "call",
+          "failure_tail": "tmp_path = PosixPath('/tmp/biomind-cross-layer-implementation-20260914/domain-8-bare-results/scratch/pytest-of-liusiqi/pytest-0/test_F17_distinct_request_same0')\n\n    def test_F17_distinct_request_same_text_counts_once_then_no_progress(tmp_path):\n>       from tests.test_generate_admission_typed_repair import CandidateRepairCommitTests\nE       ModuleNotFoundError: No module named 'tests.test_generate_admission_typed_repair'\n\ntests/test_cross_layer_correction.py:126: ModuleNotFoundError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "ed09aabd822281e1ff15bb775a777a044d6bb67768396df8584a026909fa6db2",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-8-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-8-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-8-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_correction.py"
+      ],
+      "loaded_tree": "e8c0de2ab98027589bdff534fd11a06e14694d8f",
+      "source_signature": "1fce558278d880550895b9be239eebc3491d29b097388f78e1e3f9058a1b88a5"
+    },
+    {
+      "id": "domain-9-bare-results",
+      "passed_calls": 10,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_correction.py::test_F17_distinct_request_same_text_counts_once_then_no_progress",
+          "phase": "call",
+          "failure_tail": "tmp_path = PosixPath('/tmp/biomind-cross-layer-implementation-20260914/domain-9-bare-results/scratch/pytest-of-liusiqi/pytest-0/test_F17_distinct_request_same0')\n\n    def test_F17_distinct_request_same_text_counts_once_then_no_progress(tmp_path):\n>       from tests.test_generate_admission_typed_repair import CandidateRepairCommitTests\nE       ModuleNotFoundError: No module named 'tests.test_generate_admission_typed_repair'\n\ntests/test_cross_layer_correction.py:126: ModuleNotFoundError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "4668b575734bab6eee58ab6b95861e3d844f11677c4b2ed91d6a7984010cda74",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-9-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-9-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-9-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_correction.py"
+      ],
+      "loaded_tree": "a35504bf0718970e27bdb84c63d74a0eaf220034",
+      "source_signature": "14901dafd798e4e4265d214d94df408eedfaca785a13fce75eac0d7dfd5cac96"
+    },
+    {
+      "id": "domain-final-bare-results",
+      "passed_calls": 25,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "fea0ff5dde1e347a481cdd47aa2d95bf58b26c86c4d10c0b36bdc1a765f0420d",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_publication.py",
+        "tests/test_cross_layer_delivery.py"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "b05f9364a3c77a5b384aa852e1a636c37542d2a14e08b2cbb8ed188c2458677a"
+    },
+    {
+      "id": "feedback-2-bare-results",
+      "passed_calls": 3,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "3137fac91ee3adfe01379fda1aace884fa5ddc1cedda1511dcb7f9b223e3589a",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/feedback-2-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/feedback-2-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/feedback-2-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+        "tests/test_cross_layer_domain.py::test_F38_actual_loaded_candidate_sources"
+      ],
+      "loaded_tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+      "source_signature": "56217eb4ea3c9dead08d0c0d4510e1de6857e9e5b8ed2eacd16968f4b3943575"
+    },
+    {
+      "id": "feedback-final-bare-results",
+      "passed_calls": 1,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+          "phase": "call",
+          "failure_tail": "ew_stopped'] is True\n                final_state=load_plan_state(root,task)\n                assert len(final_state['task_state']['semantic_review_receipts'])==1\n                save('graph-C-result',{'counts':counts,'executions':executions,'routes':[next(iter(e)) for e in events],\n                    'commits':commits,'verification_outcome':outcome,'revalidate_outcome':replay['recovery_outcome'],\n                    'repeated_verification':again['verification_outcome'],'review_receipts':final_state['task_state']['semantic_review_receipts'],\n                    'requests':requests,'fix':True})\n            if is_b:\n                repair=list(durable['task_state']['candidate_repair_state']['events'].values())\n                expected=2 if mode=='B_success' else 5 if b_exhausted else 4\n>               assert [r['repair_ordinal'] for r in repair]==list(range(1,expected+1)),repair\nE               AssertionError: [{'schema_version': 1, 'event_id': 'candidate-rejection:cac06dec0a7fe042a472b54f', 'candidate_event_id': 'generate-can...cross-layer-B_last', 'task_revision': 1, 'plan_id': 'plan_b0a22d64b8f2424f2d1d', 'plan_version': 'plan_v1', ...}, ...}]\nE               assert [1] == [1, 2, 3, 4]\nE                 \nE                 Right contains 3 more items, first extra item: 2\nE                 Use -v to get more diff\n\ntests/test_cross_layer_implementation_graph.py:317: AssertionError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+          "phase": "call",
+          "failure_tail": "stopped'] is True\n                final_state=load_plan_state(root,task)\n                assert len(final_state['task_state']['semantic_review_receipts'])==1\n                save('graph-C-result',{'counts':counts,'executions':executions,'routes':[next(iter(e)) for e in events],\n                    'commits':commits,'verification_outcome':outcome,'revalidate_outcome':replay['recovery_outcome'],\n                    'repeated_verification':again['verification_outcome'],'review_receipts':final_state['task_state']['semantic_review_receipts'],\n                    'requests':requests,'fix':True})\n            if is_b:\n                repair=list(durable['task_state']['candidate_repair_state']['events'].values())\n                expected=2 if mode=='B_success' else 5 if b_exhausted else 4\n>               assert [r['repair_ordinal'] for r in repair]==list(range(1,expected+1)),repair\nE               AssertionError: [{'schema_version': 1, 'event_id': 'candidate-rejection:e5546f4f95a2fa8357385c34', 'candidate_event_id': 'generate-can...ss-layer-B_archive', 'task_revision': 1, 'plan_id': 'plan_a63209a5c238de4a5b8f', 'plan_version': 'plan_v1', ...}, ...}]\nE               assert [1] == [1, 2, 3, 4, 5]\nE                 \nE                 Right contains 4 more items, first extra item: 2\nE                 Use -v to get more diff\n\ntests/test_cross_layer_implementation_graph.py:317: AssertionError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "4cf70f2f261b790fa4a680ecefaaeab160c37ae99e9cb2d44bbf23c90063a7ae",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/feedback-final-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/feedback-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/feedback-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+        "tests/test_cross_layer_domain.py::test_F38_actual_loaded_candidate_sources"
+      ],
+      "loaded_tree": "dfb756e5f65fb80d631958b5368bff358725abb5",
+      "source_signature": "a400aad1116a15d50a6d85c00e5ed6da7b30f87e35ba05e37a5e953d9237f2e3",
+      "classification": "driver asserted default source although actual ledger was task_state.budgets; source assertion corrected to compare actual receipt. Production feedback was already delivered."
+    },
+    {
+      "id": "final-bare-AC-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "4244c6436445317d87213d5861edfbc956bc4de8980320f849ab9e9868858fa6",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-bare-AC-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "b05f9364a3c77a5b384aa852e1a636c37542d2a14e08b2cbb8ed188c2458677a"
+    },
+    {
+      "id": "final-bare-Bstop-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "8ed3d70c56e512a7a40aad222d1cf9304d0853fbb0c68f3ffff9683e7cee71aa",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-bare-Bstop-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "b05f9364a3c77a5b384aa852e1a636c37542d2a14e08b2cbb8ed188c2458677a"
+    },
+    {
+      "id": "final-bare-Bsuccess-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "ceed9f6c72709d0a0f3b2263adcdb2e753cf1f2ef7168847ab52eeb466038e73",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-bare-Bsuccess-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "b05f9364a3c77a5b384aa852e1a636c37542d2a14e08b2cbb8ed188c2458677a"
+    },
+    {
+      "id": "final-bare-D-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "b230747e0db1a05a71bb4aec3c0694ed11b99c3acebd136b9ea587919fd373f4",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-bare-D-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "b05f9364a3c77a5b384aa852e1a636c37542d2a14e08b2cbb8ed188c2458677a"
+    },
+    {
+      "id": "final-bare-last-veto-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "400c285604fd41aeece43919ad0c115f89f2381d83c56de47c29bc6bbf0c7aca",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-bare-last-veto-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A_last]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk_veto]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "b05f9364a3c77a5b384aa852e1a636c37542d2a14e08b2cbb8ed188c2458677a"
+    },
+    {
+      "id": "final-overlay-AC-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "0dcb68c3f251a096b1cdbc9dd94511f945c4154954bb39c11980d382c53a6ab3",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-overlay-AC-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "4de448deabbf668afeda22f3035caeaee345c7154fd10d443cb0987b524db57e"
+    },
+    {
+      "id": "final-overlay-B-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "0c8eaf169557ffa9b4317f506b1bd3c57aa2b0833d63764b242133ea092838c6",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-overlay-B-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "4de448deabbf668afeda22f3035caeaee345c7154fd10d443cb0987b524db57e"
+    },
+    {
+      "id": "final-overlay-D-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "2938900e3628a7c7127be4c0c8ad309778bf453a596d7222f355dd7f7d1ad2fa",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-overlay-D-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "4de448deabbf668afeda22f3035caeaee345c7154fd10d443cb0987b524db57e"
+    },
+    {
+      "id": "final-overlay-domain-results",
+      "passed_calls": 11,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "8eca9b5507b929beb8945eaf24027b388bdad28fbfb939e9ae62aecacbbf5bce",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/final-overlay-domain-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/domain-final-overlay-export",
+        "-q",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_cross_layer_correction.py"
+      ],
+      "loaded_tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+      "source_signature": "4de448deabbf668afeda22f3035caeaee345c7154fd10d443cb0987b524db57e"
+    },
+    {
+      "id": "s1-1-results",
+      "passed_calls": 10,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "2a60fef9a36a786f6b36758fcb5c2715ee3176785d1c4c1d711020cc8de76836",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s1-1-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s1-1-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s1-1-export",
+        "-q",
+        "tests/test_cross_layer_publication.py",
+        "tests/test_cross_layer_implementation_graph.py"
+      ],
+      "loaded_tree": "19b858efc47d373ae62fe0ebca65227bd166d417",
+      "source_signature": "8b7bc268958b890275da87da1575a2e9e53099e88f4882e4e75c518a0eff2110"
+    },
+    {
+      "id": "s1-bare-results",
+      "passed_calls": 15,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "b49b73c1ee07d91fb7d28a314f9355f17f097b23e989af140b971266660c6443",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s1-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s1-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s1-bare-export",
+        "-q",
+        "tests/test_cross_layer_publication.py",
+        "tests/test_cross_layer_implementation_graph.py",
+        "tests/test_cross_layer_audit.py::test_T18_actual_skill_registry_shared_publisher",
+        "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_artifact_effect_retains_physical_and_provenance_validation",
+        "tests/test_step_effect_runtime.py::RuntimeEffectEvidenceTests::test_plain_stdout_and_success_status_do_not_fabricate_observation"
+      ],
+      "loaded_tree": "19b858efc47d373ae62fe0ebca65227bd166d417",
+      "source_signature": "4ba96e86d4612fc1fedf324f41e63b4765562648a30662ceff55a1be8edd6cbc"
+    },
+    {
+      "id": "s2-generate-1-exhausted-only",
+      "passed_calls": 1,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "1bc456885b72e14940e81f316c244188d574909f1932e582e09079837a5bc6c7",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-exhausted-only/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]"
+      ],
+      "loaded_tree": "f45d1760f57b5998fa46aab1a82948a8a5a933d1",
+      "source_signature": "e3a5e6e4cde832453d2f7a5fd2be36fd53de3d9a47d49ac66e3f9e0b22d6bd17"
+    },
+    {
+      "id": "s2-generate-1-overlay-results",
+      "passed_calls": 7,
+      "failed_phases": [],
+      "started_without_call_result": [
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]"
+      ],
+      "pytest_phase_ledger_sha256": "ca063e42aadd409755b97d9b7cb879b602b091463c2913cfa872c3c1a6912ad4",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-export",
+        "-q",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]"
+      ],
+      "loaded_tree": "f45d1760f57b5998fa46aab1a82948a8a5a933d1",
+      "source_signature": "e3a5e6e4cde832453d2f7a5fd2be36fd53de3d9a47d49ac66e3f9e0b22d6bd17",
+      "observed_process_returncode": -11,
+      "recorded_by": "original launch tool result; shell mapped exit245",
+      "status": "UNRESOLVED_NATIVE_CRASH",
+      "fatal_stack_available": false
+    },
+    {
+      "id": "s2-generate-2-bare-results",
+      "passed_calls": 6,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_correction.py::test_F19_actual_generate_transport_preserves_explicit_output_limit",
+          "phase": "call",
+          "failure_tail": "                     record.provider_trace_id = str(\n                            classification.diagnostic.get(\"provider_trace_id_from_headers\")\n                            or \"\"\n                        )\n                        if record.stream_started:\n                            record.partial_payload_disposition = \"discarded_before_parse\"\n                        record.cleanup_result = CLEANUP_CONFIRMED\n                        record.attempt_completed_at = utc_now()\n                        record.state = (\n                            \"FAILED_TRANSIENT\"\n                            if classification.retryable\n                            else \"FAILED_TERMINAL\"\n                        )\n                        _emit(progress_callback, \"attempt_failed\", record)\n                        failure_class = ProviderAttemptTimeout if isinstance(exc, TimeoutError) else ProviderAttemptFailure\n>                       raise failure_class(\n                            classification.error_code,\n                            record.failure_detail,\n                            record=record,\n                            retryable=classification.retryable,\n                        ) from exc\nE                       agent_core.provider_attempt.ProviderAttemptFailure: PROVIDER_SDK_ERROR: 'Transport' object has no attribute 'with_raw_response'\n\nagent_core/provider_attempt.py:1323: ProviderAttemptFailure"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "d48114436029b9e28078a7fff56dc9a1345cb7b28c8832f44a4720fd6173fb50",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-2-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-2-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-2-bare-export",
+        "-q",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]"
+      ],
+      "loaded_tree": "44bb49bbee63844ff00a4c02a25cc9cc4a2c1683",
+      "source_signature": "222b62d16e75be56f535e33ce0cb0d856d45eff77533764d8cc969cbae37b1e3"
+    },
+    {
+      "id": "s2-generate-3-bare-combos",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "77516c3c21743014a3f83d26e20b60bf8fb67d2e76642a68d2f14dbcf7df3b65",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-bare-combos/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]"
+      ],
+      "loaded_tree": "dc2e74e24c5544de89aef52058e757f6a0a79260",
+      "source_signature": "79a55362949d29b5566619ebbac9271f2f86ce3ecf60c36dd8e848891d9db824"
+    },
+    {
+      "id": "s2-generate-3-overlay-combos",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "e7885eff3007500ce5111f80afff064bd57595af208e1db8cba4deefc0fddca2",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-overlay-combos/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]"
+      ],
+      "loaded_tree": "dc2e74e24c5544de89aef52058e757f6a0a79260",
+      "source_signature": "bc0a6a0e7bd80ef1da5286be65b72ac94edf26f4520a6b2c9f9dec88101e5b7c"
+    },
+    {
+      "id": "s2-generate-3-transport-results",
+      "passed_calls": 6,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "e9ad4887371a33875f4b6c852f3789c791b9d47366c77407f5ae7b7a2a831fd7",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-transport-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-3-bare-export",
+        "-q",
+        "tests/test_cross_layer_correction.py"
+      ],
+      "loaded_tree": "dc2e74e24c5544de89aef52058e757f6a0a79260",
+      "source_signature": "79a55362949d29b5566619ebbac9271f2f86ce3ecf60c36dd8e848891d9db824"
+    },
+    {
+      "id": "s2-review-1-results",
+      "passed_calls": 3,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[publication]",
+          "phase": "call",
+          "failure_tail": "  assert not durable['task_state'].get('typed_recovery_budget')\n                save('graph-'+mode+'-result',{'counts':counts,'executions':executions,'routes':[next(iter(e)) for e in events],\n                    'commits':commits,'last_outcome':last,'externally_bounded_after':3,'runtime_terminated':False,\n                    'requests':requests,'fix':True,'limitation':'Witness of three admitted revalidations only; no claim of an infinite execution or effective global deadline.'})\n                return\n            if mode=='B':\n                assert counts['generate']==3 and counts['recovery']==1 and len(executions)==1 and executions[0]['rc']==7\n                repair=list(durable['task_state']['candidate_repair_state']['events'].values())\n                assert [r['repair_ordinal'] for r in repair]==[1,2] and all(r['repair_limit']==1 for r in repair)\n                assert len(duplicate)==2 and all(r['same_event'] for r in duplicate)\n                assert not commits\n                report.write_text('old unrelated synthetic stop\\n');old_hash=hashlib.sha256(report.read_bytes()).hexdigest()\n            elif mode in {'A','publication'}:\n                expected_reviews=1 if mode=='publication' else 2\n>               assert counts['reviewer']==expected_reviews and len(commits)==1\nE               assert (2 == 1)\n\ntests/test_cross_layer_implementation_graph.py:256: AssertionError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+          "phase": "call",
+          "failure_tail": "overy_budget')\n                save('graph-'+mode+'-result',{'counts':counts,'executions':executions,'routes':[next(iter(e)) for e in events],\n                    'commits':commits,'last_outcome':last,'externally_bounded_after':3,'runtime_terminated':False,\n                    'requests':requests,'fix':True,'limitation':'Witness of three admitted revalidations only; no claim of an infinite execution or effective global deadline.'})\n                return\n            if mode=='B':\n                assert counts['generate']==3 and counts['recovery']==1 and len(executions)==1 and executions[0]['rc']==7\n                repair=list(durable['task_state']['candidate_repair_state']['events'].values())\n                assert [r['repair_ordinal'] for r in repair]==[1,2] and all(r['repair_limit']==1 for r in repair)\n                assert len(duplicate)==2 and all(r['same_event'] for r in duplicate)\n                assert not commits\n                report.write_text('old unrelated synthetic stop\\n');old_hash=hashlib.sha256(report.read_bytes()).hexdigest()\n            elif mode in {'A','publication'}:\n                expected_reviews=1 if mode=='publication' else 2\n>               assert counts['reviewer']==expected_reviews and len(commits)==1\nE               assert (2 == 2 and 0 == 1)\nE                +  where 0 = len({})\n\ntests/test_cross_layer_implementation_graph.py:256: AssertionError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "e250cb298f2974f992d6055a38be40eeca5565f63d584d25d79ef9682297db06",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-review-1-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-1-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-1-export",
+        "-q",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_implementation_graph.py"
+      ],
+      "loaded_tree": "c36a5ee20fb68003098ca2cb45cb9327fb559996",
+      "source_signature": "f32cc8525af150a63459f5a579fdff3b37c9b0a99d87e350f826a412dc023e4b"
+    },
+    {
+      "id": "s2-review-2-bare-results",
+      "passed_calls": 14,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "8964f2884f4b44e1762ae173f09dac63b93b049d2f62b292b1c6262b72f46bb0",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-review-2-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-2-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-2-bare-export",
+        "-q",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_implementation_graph.py",
+        "tests/test_cross_layer_publication.py"
+      ],
+      "loaded_tree": "fb91e3c4fb97cf155b143353f5aa8054e2fc6543",
+      "source_signature": "9adb134575911e285b6c60ea3847d7743a406219321e5daea7be74598071a295"
+    },
+    {
+      "id": "s2-review-2-overlay-results",
+      "passed_calls": 5,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "e0b70225f79e23a97196216049e502addb3c6494e6990597f97498df1bc8eb5b",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-review-2-overlay-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-2-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-2-overlay-export",
+        "-q",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_implementation_graph.py"
+      ],
+      "loaded_tree": "fb91e3c4fb97cf155b143353f5aa8054e2fc6543",
+      "source_signature": "fd54269d2b94c895b3a80fd04cb3998b27e5913983100b6121af4b8d33e7c7b9"
+    },
+    {
+      "id": "s2-review-3-bare-results",
+      "passed_calls": 5,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "40521ef1e3a72d32e0a8f5126ef321b181230e384e83c65ad443aff8a4fdaaa7",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-review-3-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-3-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-3-bare-export",
+        "-q",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_implementation_graph.py"
+      ],
+      "loaded_tree": "6aec3836e04eb06ba672637c18dd35e0c289e7b3",
+      "source_signature": "9d5ab69cf270f0f6d5ec4b6ed71ba567bb71abf45744581f22feaaf69363886e"
+    },
+    {
+      "id": "s2-review-3-overlay-results",
+      "passed_calls": 5,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "39930cf2c779e6794af55432be40adc9b10999b374b4f5f846cb262a3078a06c",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s2-review-3-overlay-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-3-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s2-review-3-overlay-export",
+        "-q",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_implementation_graph.py"
+      ],
+      "loaded_tree": "6aec3836e04eb06ba672637c18dd35e0c289e7b3",
+      "source_signature": "9df0f55c429b1e690182024059c3994edf423ccefabcbadbfb6bf6bb7cb053cd"
+    },
+    {
+      "id": "s3-2-overlay-results",
+      "passed_calls": 4,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+          "phase": "call",
+          "failure_tail": "exhausted}\n            if b_exhausted:\n                counts['summary']=0\n                class SummaryModel:\n                    async def ainvoke(self,messages,**kwargs):\n                        counts['summary']+=1\n                        frozen=json.loads(messages[-1].content)\n                        assert frozen['causal_execution']['attempt_id']==executions[0]['attempt']\n                        assert frozen['current_candidate']['attempt_id']==''\n                        requests.append({'stage':'terminal_summary','frozen':frozen})\n                        if mode=='B_exhausted':raise RuntimeError('synthetic summary response failure')\n                        return AIMessage(content=json.dumps({'fact_ids':['causal_execution','current_candidate','stop_reason']}))\n                case.agent.terminal_summary_llm=SummaryModel()\n            stop=await finalize_managed_stop(case.agent,task,values,boundary)\n            save('graph-'+mode+'-stop',stop)\n            if b_exhausted:\n                assert stop['execution']['attempt_id']=='' and stop['execution']['executed'] is False\n>               assert stop['current_candidate']['attempt_id']=='' and stop['current_candidate']['cause_code']=='GENERATE_RESPONSE_INCOMPLETE'\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               KeyError: 'attempt_id'\n\ntests/test_cross_layer_implementation_graph.py:311: KeyError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+          "phase": "call",
+          "failure_tail": "exhausted}\n            if b_exhausted:\n                counts['summary']=0\n                class SummaryModel:\n                    async def ainvoke(self,messages,**kwargs):\n                        counts['summary']+=1\n                        frozen=json.loads(messages[-1].content)\n                        assert frozen['causal_execution']['attempt_id']==executions[0]['attempt']\n                        assert frozen['current_candidate']['attempt_id']==''\n                        requests.append({'stage':'terminal_summary','frozen':frozen})\n                        if mode=='B_exhausted':raise RuntimeError('synthetic summary response failure')\n                        return AIMessage(content=json.dumps({'fact_ids':['causal_execution','current_candidate','stop_reason']}))\n                case.agent.terminal_summary_llm=SummaryModel()\n            stop=await finalize_managed_stop(case.agent,task,values,boundary)\n            save('graph-'+mode+'-stop',stop)\n            if b_exhausted:\n                assert stop['execution']['attempt_id']=='' and stop['execution']['executed'] is False\n>               assert stop['current_candidate']['attempt_id']=='' and stop['current_candidate']['cause_code']=='GENERATE_RESPONSE_INCOMPLETE'\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               KeyError: 'attempt_id'\n\ntests/test_cross_layer_implementation_graph.py:311: KeyError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "ddcefbc6a0d023afabde2dc38d538189107fc772f204f851213aa1d40ce261fe",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-2-overlay-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-2-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-2-overlay-export",
+        "-q",
+        "tests/test_cross_layer_delivery.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "ea35563068f7a9343e2d5d13345337d1f8b71884",
+      "source_signature": "9c427d75b5b3f4537432230af8f99ca46374b6db5038102398e963ffc42fdac9"
+    },
+    {
+      "id": "s3-3-bare-results",
+      "passed_calls": 0,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+          "phase": "call",
+          "failure_tail": "exhausted}\n            if b_exhausted:\n                counts['summary']=0\n                class SummaryModel:\n                    async def ainvoke(self,messages,**kwargs):\n                        counts['summary']+=1\n                        frozen=json.loads(messages[-1].content)\n                        assert frozen['causal_execution']['attempt_id']==executions[0]['attempt']\n                        assert frozen['current_candidate']['attempt_id']==''\n                        requests.append({'stage':'terminal_summary','frozen':frozen})\n                        if mode=='B_exhausted':raise RuntimeError('synthetic summary response failure')\n                        return AIMessage(content=json.dumps({'fact_ids':['causal_execution','current_candidate','stop_reason']}))\n                case.agent.terminal_summary_llm=SummaryModel()\n            stop=await finalize_managed_stop(case.agent,task,values,boundary)\n            save('graph-'+mode+'-stop',stop)\n            if b_exhausted:\n                assert stop['execution']['attempt_id']=='' and stop['execution']['executed'] is False\n>               assert stop['current_candidate']['attempt_id']=='' and stop['current_candidate']['cause_code']=='GENERATE_RESPONSE_INCOMPLETE'\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               KeyError: 'attempt_id'\n\ntests/test_cross_layer_implementation_graph.py:311: KeyError"
+        },
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+          "phase": "call",
+          "failure_tail": "exhausted}\n            if b_exhausted:\n                counts['summary']=0\n                class SummaryModel:\n                    async def ainvoke(self,messages,**kwargs):\n                        counts['summary']+=1\n                        frozen=json.loads(messages[-1].content)\n                        assert frozen['causal_execution']['attempt_id']==executions[0]['attempt']\n                        assert frozen['current_candidate']['attempt_id']==''\n                        requests.append({'stage':'terminal_summary','frozen':frozen})\n                        if mode=='B_exhausted':raise RuntimeError('synthetic summary response failure')\n                        return AIMessage(content=json.dumps({'fact_ids':['causal_execution','current_candidate','stop_reason']}))\n                case.agent.terminal_summary_llm=SummaryModel()\n            stop=await finalize_managed_stop(case.agent,task,values,boundary)\n            save('graph-'+mode+'-stop',stop)\n            if b_exhausted:\n                assert stop['execution']['attempt_id']=='' and stop['execution']['executed'] is False\n>               assert stop['current_candidate']['attempt_id']=='' and stop['current_candidate']['cause_code']=='GENERATE_RESPONSE_INCOMPLETE'\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               KeyError: 'attempt_id'\n\ntests/test_cross_layer_implementation_graph.py:311: KeyError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "aed302e0582e52a82e37dce86b42ea7e702b474b6769a27ebfffcced0a61dabc",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-3-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-3-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-3-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "7d9ad2bd92526da4c1d297e1b31deab35554fc15",
+      "source_signature": "6953ede495199d58cdcf1544981a42db446913d15837ebe84b3c82d2b4bd9d70"
+    },
+    {
+      "id": "s3-4-bare-results",
+      "passed_calls": 6,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "02a9ffb442ea09bc2a446db42892d8aae94f5950e633d8214c28d64a03dc18f2",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-4-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-4-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-4-bare-export",
+        "-q",
+        "tests/test_cross_layer_delivery.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "be81b0aed5dc628b36b3907ce9c461156d7d0797",
+      "source_signature": "d404c63ac27128c5782b63e983ba63bb240f9324d56f94217db611358ccc504c"
+    },
+    {
+      "id": "s3-5-bare-results",
+      "passed_calls": 7,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "41ed09f87f6e14c25699542a2464d864d41e656e0ec5cb68e07a736353fd50a3",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-5-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-5-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-5-bare-export",
+        "-q",
+        "tests/test_cross_layer_delivery.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]"
+      ],
+      "loaded_tree": "58512f8338200966789a871fca6db6f81936ffd6",
+      "source_signature": "d804c4206d19e6cc75f3da159a3f7d669f374e3e39578acb7c1f78d5f1408950"
+    },
+    {
+      "id": "s3-5-overlay-results",
+      "passed_calls": 20,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_runtime_recovery_reporting.py::RuntimeRecoveryReportingTests::test_approved_exact_report_output_and_symlink_parent",
+          "phase": "call",
+          "failure_tail": "self = <test_runtime_recovery_reporting.RuntimeRecoveryReportingTests testMethod=test_approved_exact_report_output_and_symlink_parent>\n\n    async def test_approved_exact_report_output_and_symlink_parent(self):\n        outside = self.root / \"approved-report-dir\"\n        outside.mkdir()\n        output = outside / \"report.md\"\n        self.initialize(outputs=[str(output)], approve=True)\n        result = await self.recovered()\n        final = finalize_runtime_recovery_result(self.root, self.task_id, result)\n        self.assertEqual(final[\"report_paths\"], {\"report.md\": str(output)}, final)\n        self.assertIn(\"科学目标完成：否\", output.read_text())\n        output.unlink()\n>       outside.rmdir()\n\ntests/test_runtime_recovery_reporting.py:272: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-cross-layer-implementation-20260914/s3-5-overlay-results/scratch/runtime-reporting-test-s32h9nah/approved-report-dir')\n\n    def rmdir(self):\n        \"\"\"\n        Remove this directory.  The directory must be empty.\n        \"\"\"\n>       os.rmdir(self)\nE       OSError: [Errno 39] Directory not empty: '/tmp/biomind-cross-layer-implementation-20260914/s3-5-overlay-results/scratch/runtime-reporting-test-s32h9nah/approved-report-dir'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1351: OSError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "9cfcd241936932b7090f403f2dd3221e85af9215113b698efda659627eb78715",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-5-overlay-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-5-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-5-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+        "tests/test_runtime_recovery_reporting.py"
+      ],
+      "loaded_tree": "58512f8338200966789a871fca6db6f81936ffd6",
+      "source_signature": "804cd20c3ad077e77d128a22b9fe2522db6887d2b8de2a8f3fd8fbdd55746ac6"
+    },
+    {
+      "id": "s3-6-bare-results",
+      "passed_calls": 26,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "5cae2172d546c6384a6b801f7380bfdac264517ff80662ba1c7967bf20842fab",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-6-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-bare-export",
+        "-q",
+        "tests/test_cross_layer_delivery.py",
+        "tests/test_runtime_recovery_reporting.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]"
+      ],
+      "loaded_tree": "204ce84dfbd03c3533eb15eacab17b7009c6aca9",
+      "source_signature": "f24f1f911754886157a9363b1f7a7d36ea46604b663864489127e67e283dea7d"
+    },
+    {
+      "id": "s3-6-inspection-isolated-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "b4a4db75f47f6031493fcc432fefb3c2a35258ebdd15174395823dd0aaa3b4ca",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-6-inspection-isolated-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-overlay-export",
+        "-q",
+        "tests/test_inspection_terminal_workflow.py"
+      ],
+      "loaded_tree": "204ce84dfbd03c3533eb15eacab17b7009c6aca9",
+      "source_signature": "2f37f281504e0e2285755da1c4c5835d8f43321d6c264949e55541eb65e97a55"
+    },
+    {
+      "id": "s3-6-overlay-results",
+      "passed_calls": 2,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_inspection_terminal_workflow.py::test_inspection_graph_stop_outer_profiler_reports_and_reload[historical_request_shape]",
+          "phase": "call",
+          "failure_tail": "ask_state\"].get(\"typed_step_commit_receipts\")\n        assert set(stop[\"report_paths\"]) == {\"report.md\", \"reproduce.sh\", \"stage_status.tsv\"}, stop\n        for name, path in stop[\"report_paths\"].items():\n            assert Path(path).is_relative_to(tmp_path)\n            assert Path(path).is_file()\n        report = Path(stop[\"report_paths\"][\"report.md\"]).read_text()\n        assert \"RECOVERY_NO_PROGRESS_LIMIT\" in report and expected in report\n        assert \"未提交\" in report and \"returncode=0\" in report\n        script = Path(stop[\"report_paths\"][\"reproduce.sh\"]).read_text()\n        assert \"not available\" in script and \"exit 1\" in script\n        metrics = json.loads((tmp_path / \"task_outputs\" / fixture.task_id / \"run_metrics.json\").read_text())\n        diagnostic = metrics[\"final_result\"][\"terminal_diagnostic\"]\n        assert diagnostic[\"error_code\"] == result.failure_code\n        assert diagnostic[\"stage\"] == result.stage and diagnostic[\"error_owner\"] == \"recovery\"\n        assert diagnostic[\"stop_id\"] == stop[\"stop_id\"]\n        router = OutputRouter()\n        assert router.render_terminal_result(result)\n        assert not router.render_terminal_result(result)\n        rendered = capsys.readouterr().out\n>       assert \"Stage: recovery.inspection\" in rendered\nE       AssertionError: assert 'Stage: recovery.inspection' in ''\n\ntests/test_inspection_terminal_workflow.py:157: AssertionError"
+        },
+        {
+          "nodeid": "tests/test_inspection_terminal_workflow.py::test_inspection_graph_stop_outer_profiler_reports_and_reload[reader_io]",
+          "phase": "call",
+          "failure_tail": "ask_state\"].get(\"typed_step_commit_receipts\")\n        assert set(stop[\"report_paths\"]) == {\"report.md\", \"reproduce.sh\", \"stage_status.tsv\"}, stop\n        for name, path in stop[\"report_paths\"].items():\n            assert Path(path).is_relative_to(tmp_path)\n            assert Path(path).is_file()\n        report = Path(stop[\"report_paths\"][\"report.md\"]).read_text()\n        assert \"RECOVERY_NO_PROGRESS_LIMIT\" in report and expected in report\n        assert \"未提交\" in report and \"returncode=0\" in report\n        script = Path(stop[\"report_paths\"][\"reproduce.sh\"]).read_text()\n        assert \"not available\" in script and \"exit 1\" in script\n        metrics = json.loads((tmp_path / \"task_outputs\" / fixture.task_id / \"run_metrics.json\").read_text())\n        diagnostic = metrics[\"final_result\"][\"terminal_diagnostic\"]\n        assert diagnostic[\"error_code\"] == result.failure_code\n        assert diagnostic[\"stage\"] == result.stage and diagnostic[\"error_owner\"] == \"recovery\"\n        assert diagnostic[\"stop_id\"] == stop[\"stop_id\"]\n        router = OutputRouter()\n        assert router.render_terminal_result(result)\n        assert not router.render_terminal_result(result)\n        rendered = capsys.readouterr().out\n>       assert \"Stage: recovery.inspection\" in rendered\nE       AssertionError: assert 'Stage: recovery.inspection' in ''\n\ntests/test_inspection_terminal_workflow.py:157: AssertionError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "6598a4440679b7330d2643580af80943e488e53d7d1acc81dead8d264b0c0da4",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-6-overlay-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+        "tests/test_inspection_terminal_workflow.py"
+      ],
+      "loaded_tree": "204ce84dfbd03c3533eb15eacab17b7009c6aca9",
+      "source_signature": "2f37f281504e0e2285755da1c4c5835d8f43321d6c264949e55541eb65e97a55",
+      "limitation": "B combinations passed then two existing inspection rendered-output assertions failed; same fd capture isolated two pass, not a cleanup/crash fix."
+    },
+    {
+      "id": "s3-6-shared-skills-results",
+      "passed_calls": 1,
+      "failed_phases": [
+        {
+          "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]",
+          "phase": "call",
+          "failure_tail": "sk},'recursion_limit':45}\n            incoming=runner\n            externally_bounded=False\n            with patch.object(bio_agents,'run_script_path',execute):\n                for _ in range(4):\n                    stream=app.astream(incoming,config=config,stream_mode='updates')\n                    try:\n                        async for event in stream:\n                            events.append(event)\n                            if mode=='persistent_revalidate' and counts['reviewer']>=3 and 'recovery' in event:\n                                externally_bounded=True\n                                break\n                    finally:await stream.aclose()\n                    if externally_bounded:break\n                    snapshot=app.get_state(config)\n                    if not snapshot.next:break\n                    assert snapshot.tasks and snapshot.tasks[0].interrupts,str(events)[-1600:]\n                    assert len(executions)==len(approvals)\n                    incoming=bio_agents.Command(resume='y')\n            values=app.get_state(config).values;durable=load_plan_state(root,task)\n            commits=durable['task_state'].get('typed_step_commit_receipts',{})\n            if is_d:\n>               assert counts['generate']==1 and counts['reviewer']==1 and counts['recovery']==0\nE               assert (2 == 1)\n\ntests/test_cross_layer_implementation_graph.py:261: AssertionError"
+        }
+      ],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "14aac3e7779b4c2a4ed57f0c439235c6e0b9f1b8113a4c98942eec87c60f0a39",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-6-shared-skills-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-6-bare-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]"
+      ],
+      "loaded_tree": "204ce84dfbd03c3533eb15eacab17b7009c6aca9",
+      "source_signature": "f24f1f911754886157a9363b1f7a7d36ea46604b663864489127e67e283dea7d"
+    },
+    {
+      "id": "s3-final-bare-results",
+      "passed_calls": 26,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "a17dec1188eafa80ba771dd97d8f02f5f86c87d32e7dba8ef59e15acfd50120e",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-final-bare-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-final-bare-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-final-bare-export",
+        "-q",
+        "tests/test_cross_layer_delivery.py",
+        "tests/test_runtime_recovery_reporting.py",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]"
+      ],
+      "loaded_tree": "30d3c57ff21d640084cda7f94906513ab391f856",
+      "source_signature": "e5e678ebbbd039fdf8499a68e4eff4a5ae8f2937ada0a39326e0d1a6e1bf9eef"
+    },
+    {
+      "id": "s3-final-overlay-results",
+      "passed_calls": 2,
+      "failed_phases": [],
+      "started_without_call_result": [],
+      "pytest_phase_ledger_sha256": "c276db06f7e6f60362b545a045097558013ccbf8445fe07b1d2f25828edea95a",
+      "result_source": "/tmp/biomind-cross-layer-implementation-20260914/s3-final-overlay-results/pytest-results.json",
+      "final_fix_counted": false,
+      "actual_argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-final-overlay-export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-cross-layer-implementation-20260914/s3-final-overlay-export",
+        "-q",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+        "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]"
+      ],
+      "loaded_tree": "30d3c57ff21d640084cda7f94906513ab391f856",
+      "source_signature": "b092924b8cfe3847b61269f75336a88e0deb50c33a3505c5b39b31f7f92ed8d1"
+    }
+  ],
+  "artifact_formatting_note": "Initial documentation diff check reported trailing spaces in exact captured evidence. Scoped execution/** -whitespace preserves original bytes; production/test checks were not bypassed.",
+  "additional_build_failure": {
+    "s3-1": "initial original managed_stop hunk separation conflicted; exact two recorded original hunks subtracted after opening-minus-hunks == base proof; no user work reset"
+  },
+  "known_unresolved": [
+    "Original native SIGSEGV has no fatal stack; isolated later pass is not crash fix.",
+    "Legacy inspection output capture assertions depend on prior fixture order; files/receipts were valid and isolated same capture passed."
+  ],
+  "discipline": {
+    "capture_changed": false,
+    "assertions_skipped": false,
+    "business_cleanup_modified_for_crash": false
+  }
+}

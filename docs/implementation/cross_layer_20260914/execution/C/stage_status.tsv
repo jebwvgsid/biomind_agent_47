@@ -1,0 +1,6 @@
+stage	workflow_status	execution_status	committed	notes
+bounded-check	verification_pending	succeeded	False	latest attempt purpose=UNKNOWN; primary causal returncode=0; formal verification/commit remain authoritative
+prepare-stub	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+dependent-never-runs	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+reporting-not-reached	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+run	failed	stopped	false	SEMANTIC_REVIEW_PROTOCOL_EXHAUSTED

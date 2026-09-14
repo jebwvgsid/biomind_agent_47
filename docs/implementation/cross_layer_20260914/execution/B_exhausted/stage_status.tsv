@@ -1,0 +1,3 @@
+stage	workflow_status	execution_status	committed	notes
+bounded-check	failed	failed	False	latest attempt purpose=UNKNOWN; primary causal returncode=7; formal verification/commit remain authoritative
+run	failed	stopped	false	GENERATE_REPAIR_BUDGET_EXHAUSTED

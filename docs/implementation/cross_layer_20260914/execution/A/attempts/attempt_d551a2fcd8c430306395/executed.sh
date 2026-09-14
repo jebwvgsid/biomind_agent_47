@@ -1,0 +1,12 @@
+#!/bin/bash
+set +e
+: > /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/stdout.log
+: > /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/stderr.log
+printf 'runner=%s script=%s\n' '/usr/bin/bash -o pipefail' /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/approved.sh > /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/command_trace.log
+/usr/bin/bash -o pipefail /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/approved.sh > /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/stdout.log 2> /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/stderr.log
+rc=$?
+printf 'returncode=%s\n' "$rc" >> /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/command_trace.log
+finished_at=$(date -Iseconds 2>/dev/null || date)
+printf '{"attempt_id":"attempt_d551a2fcd8c430306395","returncode":%s,"finished_at":"%s"}\n' "$rc" "$finished_at" > '/tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/exit_status.json.tmp.$$'
+mv '/tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/exit_status.json.tmp.$$' /tmp/biomind-cross-layer-implementation-20260914/closure-bare-AC-results/scratch/biomind-plan-local-graph-axcd4aui/task_outputs/new-cross-layer-A/attempts/attempt_d551a2fcd8c430306395/exit_status.json
+exit "$rc"

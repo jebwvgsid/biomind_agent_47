@@ -1,0 +1,10 @@
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"item_started","item":"改名0","index":1,"total":3,"completed":0,"passed":0,"at_monotonic":4251399.737650573}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"process_started","item":"改名0","index":1,"total":3,"completed":0,"passed":0,"at_monotonic":4251399.748956572,"pid":72}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"item_returned","item":"改名0","index":1,"total":3,"completed":1,"passed":1,"at_monotonic":4251399.854463022,"returncode":0,"check_status":"returned"}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"item_started","item":"改名1","index":2,"total":3,"completed":1,"passed":1,"at_monotonic":4251399.854556423}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"process_started","item":"改名1","index":2,"total":3,"completed":1,"passed":1,"at_monotonic":4251399.855452627,"pid":74}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"item_returned","item":"改名1","index":2,"total":3,"completed":2,"passed":2,"at_monotonic":4251399.931258948,"returncode":0,"check_status":"returned"}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"item_started","item":"REF","index":3,"total":3,"completed":2,"passed":2,"at_monotonic":4251399.931341824}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"process_started","item":"REF","index":3,"total":3,"completed":2,"passed":2,"at_monotonic":4251399.932074927,"pid":76}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"item_returned","item":"REF","index":3,"total":3,"completed":3,"passed":3,"at_monotonic":4251400.007013821,"returncode":0,"check_status":"returned"}
+BIOMIND_PREFLIGHT_PROGRESS_JSON={"version":1,"event":"summary","item":"","index":3,"total":3,"completed":3,"passed":3,"at_monotonic":4251400.007064807,"status":"returned"}

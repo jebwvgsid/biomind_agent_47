@@ -1,0 +1,1 @@
+BIOMIND_EFFECT_EVIDENCE_JSON={"schema_version":1,"explicit_side_effects":[{"identity":"create_reference_indexes","reference_resource_ref":"/tmp/biomind-cross-layer-implementation-20260914/closure-bare-last-veto-results/scratch/biomind-plan-local-graph-j99isg2y/参考 改名.fasta","index_artifacts":[],"status":"blocked","missing_commands":["synthetic_dictionary"]}]}

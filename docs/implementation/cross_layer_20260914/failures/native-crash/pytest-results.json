@@ -1,0 +1,188 @@
+[
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F10_F13_parser_preserves_exact_errors_and_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F10_F13_parser_preserves_exact_errors_and_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017139222472906113,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F10_F13_parser_preserves_exact_errors_and_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006198212504386902,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F10_F13_parser_preserves_exact_errors_and_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001492723822593689,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F12_assessment_scope_ignores_wrappers_not_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F12_assessment_scope_ignores_wrappers_not_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011839158833026886,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F12_assessment_scope_ignores_wrappers_not_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11558124423027039,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F12_assessment_scope_ignores_wrappers_not_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013715866953134537,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F08_bounded_compile_checks_exact_static_source",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F08_bounded_compile_checks_exact_static_source",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.07893767673522234,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F08_bounded_compile_checks_exact_static_source",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3286587195470929,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F08_bounded_compile_checks_exact_static_source",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020078197121620178,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F14_F17_policy_scope_freeze_and_classification",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F14_F17_policy_scope_freeze_and_classification",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015881750732660294,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F14_F17_policy_scope_freeze_and_classification",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00036788731813430786,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F14_F17_policy_scope_freeze_and_classification",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010725576430559158,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F19_safe_output_policy_unknown_and_bound_override",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F19_safe_output_policy_unknown_and_bound_override",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010295026004314423,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F19_safe_output_policy_unknown_and_bound_override",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.258723199367523,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_correction.py::test_F19_safe_output_policy_unknown_and_bound_override",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019967369735240936,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002941163256764412,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 19.055581131018698,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0015369197353720665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00031720101833343506,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 22.323194352909923,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018219556659460068,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026627909392118454,
+    "failure": ""
+  }
+]

@@ -1,0 +1,105 @@
+[
+  {
+    "commit": "718adbcf7bb1537a7265ac4732bf15432d06e620",
+    "parent": "e09b39f8df0afdd87321464e17e7e2c8f3b2c67d",
+    "tree": "19b858efc47d373ae62fe0ebca65227bd166d417",
+    "subject": "fix: publish declared partial facts without granting scientific completion",
+    "files": [
+      "agent_core/step_effects.py",
+      "agent_core/workflow/recovery_agent.py",
+      "bio_agents.py",
+      "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "tests/export_cross_layer_implementation.py",
+      "tests/test_cross_layer_implementation_graph.py",
+      "tests/test_cross_layer_publication.py"
+    ]
+  },
+  {
+    "commit": "ff7c2b4e82439655483c92eb58084282b4068a29",
+    "parent": "718adbcf7bb1537a7265ac4732bf15432d06e620",
+    "tree": "6aec3836e04eb06ba672637c18dd35e0c289e7b3",
+    "subject": "fix: bound semantic review corrections to persistent assessment evidence",
+    "files": [
+      "agent_core/semantic_completion.py",
+      "agent_core/workflow/runtime_graph.py",
+      "agent_core/workflow/verifier.py",
+      "supervisor.py",
+      "tests/test_cross_layer_correction.py",
+      "tests/test_cross_layer_implementation_graph.py"
+    ]
+  },
+  {
+    "commit": "48f1fbe5b5c859f6762f2210fe999b75d65e53a2",
+    "parent": "ff7c2b4e82439655483c92eb58084282b4068a29",
+    "tree": "dc2e74e24c5544de89aef52058e757f6a0a79260",
+    "subject": "fix: share persistent candidate corrections and compile static Python before approval",
+    "files": [
+      "agent_core/candidate_repair_policy.py",
+      "agent_core/provider_attempt.py",
+      "agent_core/recovery.py",
+      "agent_core/workflow/candidate_repair.py",
+      "agent_core/workflow/execution.py",
+      "bio_agents.py",
+      "execution/script_validation.py",
+      "tests/offline_managed_bootstrap.py",
+      "tests/test_cross_layer_correction.py",
+      "tests/test_cross_layer_implementation_graph.py"
+    ]
+  },
+  {
+    "commit": "5d32783141944a9320dec46e09b1dc72ecbeda61",
+    "parent": "48f1fbe5b5c859f6762f2210fe999b75d65e53a2",
+    "tree": "30d3c57ff21d640084cda7f94906513ab391f856",
+    "subject": "fix: preserve consumed recovery causality and journal authorized report delivery",
+    "files": [
+      "agent_core/active_state.py",
+      "agent_core/plan_tracker.py",
+      "agent_core/workflow/execution.py",
+      "agent_core/workflow/inspection_stop.py",
+      "agent_core/workflow/managed_stop.py",
+      "agent_core/workflow/runtime_recovery_reporting.py",
+      "bio_agents.py",
+      "tests/test_cross_layer_delivery.py",
+      "tests/test_cross_layer_implementation_graph.py"
+    ]
+  },
+  {
+    "commit": "889ca966b16741afe6c73b7662bc22f42ea4bd67",
+    "parent": "5d32783141944a9320dec46e09b1dc72ecbeda61",
+    "tree": "c2476bbfef09175f75a3112dcd22ed42622ee3c1",
+    "subject": "fix: carry confirmed scientific choices and frozen helpers through shared skill callers",
+    "files": [
+      "agent_core/workflow/recovery_tools.py",
+      "bio_agents.py",
+      "prompts/manager.py",
+      "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+      "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "skills/genomics/wgs-variant-calling/SKILL.md",
+      "tests/export_cross_layer_implementation.py",
+      "tests/test_cross_layer_correction.py",
+      "tests/test_cross_layer_domain.py",
+      "tests/test_cross_layer_implementation_graph.py"
+    ]
+  },
+  {
+    "commit": "68bf745395ca2cce6ea0a91fe2981742985a079f",
+    "parent": "889ca966b16741afe6c73b7662bc22f42ea4bd67",
+    "tree": "78285f6dbbee9b61d19c57fdd104d7be5e29ddd0",
+    "subject": "fix: expose validated correction budgets and preserve syntax diagnostics in provider feedback",
+    "files": [
+      "bio_agents.py",
+      "tests/test_cross_layer_implementation_graph.py"
+    ]
+  },
+  {
+    "commit": "a500d2cacb37bc11636271aa9e24a132fb977df5",
+    "parent": "68bf745395ca2cce6ea0a91fe2981742985a079f",
+    "tree": "052a3d1c0f254a2af7710b90b05da3ce40ffcbc2",
+    "subject": "fix: distinguish frozen prepublication report snapshots from failed delivery",
+    "files": [
+      "agent_core/workflow/managed_stop.py",
+      "tests/test_cross_layer_delivery.py",
+      "tests/test_cross_layer_implementation_graph.py"
+    ]
+  }
+]

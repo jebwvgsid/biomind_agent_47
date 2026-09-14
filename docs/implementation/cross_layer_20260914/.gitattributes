@@ -1,0 +1,2 @@
+# Preserve exact captured execution/report bytes, including their whitespace.
+execution/** -whitespace

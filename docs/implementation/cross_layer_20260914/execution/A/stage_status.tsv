@@ -1,0 +1,6 @@
+stage	workflow_status	execution_status	committed	notes
+bounded-check	passed	completed	True	formal verification/commit remain authoritative
+prepare-stub	running	failed	False	latest attempt purpose=analysis; primary causal returncode=1; formal verification/commit remain authoritative
+dependent-never-runs	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+reporting-not-reached	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+run	blocked	stopped	false	SYNTHETIC_FOLLOWUP

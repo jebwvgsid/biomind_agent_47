@@ -1,0 +1,132 @@
+{
+  "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "python_version": "3.12.12 | packaged by conda-forge | (main, Oct 22 2025, 23:25:55) [GCC 14.3.0]",
+  "source_tree": "052a3d1c0f254a2af7710b90b05da3ce40ffcbc2",
+  "source_signature": "8bb806ee006f69318d67d87ad76a4a5ab708f371ee3f3788ea3c7d8a973c0ef2",
+  "mode": "candidate_tree_plus_explicit_overlay",
+  "loaded_modules": {
+    "bio_agents": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/bio_agents.py",
+      "relative": "bio_agents.py",
+      "sha256": "60cc22fd31ec84ea8fb0ed220bfa27bb8fe90b62ccf9a18aaa9f494c0d7971c0"
+    },
+    "supervisor": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/supervisor.py",
+      "relative": "supervisor.py",
+      "sha256": "e2e8f0eeb3a42353d84e100d8d6f7a4bcdb2612cfc411f524e2fe51ce7e164ef"
+    },
+    "prompts.manager": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/prompts/manager.py",
+      "relative": "prompts/manager.py",
+      "sha256": "ddfd3cc2ef40a686d75d5957f52dd9dc4ca31e032e5b030071f36446175f89d7"
+    },
+    "agent_core.step_effects": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/step_effects.py",
+      "relative": "agent_core/step_effects.py",
+      "sha256": "5af308232904fe0da1c82771a29edcb2ce3ab07314867436198f8222c3d30cab"
+    },
+    "agent_core.semantic_completion": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/semantic_completion.py",
+      "relative": "agent_core/semantic_completion.py",
+      "sha256": "28bf5cad6140996248e1715974cb8f9881b197d3e38eda6cf8ef54f0e9f7598f"
+    },
+    "agent_core.active_state": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/active_state.py",
+      "relative": "agent_core/active_state.py",
+      "sha256": "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105"
+    },
+    "agent_core.plan_tracker": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/plan_tracker.py",
+      "relative": "agent_core/plan_tracker.py",
+      "sha256": "3b475f10d0914c57efddc27e2247bddb9e9b35f2376fd2e2c72365ae6fc40bc4"
+    },
+    "agent_core.candidate_repair_policy": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/candidate_repair_policy.py",
+      "relative": "agent_core/candidate_repair_policy.py",
+      "sha256": "45bb6ee3aff8c2135ece783981c33493921226aec96a30a98b739bbac9502af3"
+    },
+    "agent_core.provider_attempt": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/provider_attempt.py",
+      "relative": "agent_core/provider_attempt.py",
+      "sha256": "22673124d88565e2c3331f8ba1345938a8aedf3e0af8e3d14646beca48487bcc"
+    },
+    "agent_core.workflow.execution": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/execution.py",
+      "relative": "agent_core/workflow/execution.py",
+      "sha256": "44a73f514aca43fa068e55d43f25e5f4026dc054a0ceb9ef66fda027983ff65c"
+    },
+    "agent_core.workflow.recovery_agent": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/recovery_agent.py",
+      "relative": "agent_core/workflow/recovery_agent.py",
+      "sha256": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c"
+    },
+    "agent_core.workflow.recovery_tools": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/recovery_tools.py",
+      "relative": "agent_core/workflow/recovery_tools.py",
+      "sha256": "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a"
+    },
+    "agent_core.workflow.managed_stop": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/managed_stop.py",
+      "relative": "agent_core/workflow/managed_stop.py",
+      "sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4"
+    },
+    "agent_core.workflow.inspection_stop": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/inspection_stop.py",
+      "relative": "agent_core/workflow/inspection_stop.py",
+      "sha256": "438aacac19969d0010b42616b5dc271f9c60bd38ac35cb10329d855cdd59ed6c"
+    },
+    "agent_core.workflow.runtime_recovery_reporting": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/runtime_recovery_reporting.py",
+      "relative": "agent_core/workflow/runtime_recovery_reporting.py",
+      "sha256": "d35947cbf386f4a934ca4a34fd071bb290e469c260617bb0c49aebfb9945e969"
+    },
+    "agent_core.workflow.verifier": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/verifier.py",
+      "relative": "agent_core/workflow/verifier.py",
+      "sha256": "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88"
+    },
+    "agent_core.workflow.runtime_graph": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/agent_core/workflow/runtime_graph.py",
+      "relative": "agent_core/workflow/runtime_graph.py",
+      "sha256": "d2d5f87d1886acd592a3f0dd8a054d281c8e24fe724eabe36897e49ee0c8147f"
+    },
+    "execution.script_validation": {
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-overlay-export/execution/script_validation.py",
+      "relative": "execution/script_validation.py",
+      "sha256": "4b5257b8668ba336340e7fcf7245f64740d1215239534716a9ccc847ac349387"
+    }
+  },
+  "skills": {
+    "wgs-short-read-mapping": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+    "wgs-gatk-snp-indel": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+    "wgs-variant-calling": "74a1e0abd8bc082a33b68197a416c0dd7f340df76bb8b185a8a038a999fdbefe",
+    "snpeff-annotation": "458a6d5648b0127ef8283e21af917af4bc4e5980a0355c9bd2235dc8e684ac26"
+  },
+  "overlays": {
+    "prompts/manager.py": {
+      "committed_sha256": "0f5b875f840eae067c77c630c8ca230a9a224166af9131a9eba0b848fbc3fc12",
+      "loaded_sha256": "ddfd3cc2ef40a686d75d5957f52dd9dc4ca31e032e5b030071f36446175f89d7",
+      "source": "explicit protected worktree overlay"
+    },
+    "agent_core/node_context.py": {
+      "committed_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+      "loaded_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "source": "explicit protected worktree overlay"
+    },
+    "agent_core/planner_context.py": {
+      "committed_sha256": "7df73992997946936c43275af713736eda860cdc0c99063904ca187665c28d2d",
+      "loaded_sha256": "febb7b3a772b6532f0a0bffb83d6fde1fc67ff831ea7e4b3d05633690a40fa46",
+      "source": "explicit protected worktree overlay"
+    },
+    "agent_core/provider_message_safety.py": {
+      "committed_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+      "loaded_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "source": "explicit protected worktree overlay"
+    },
+    "agent_core/workflow/managed_stop.py": {
+      "committed_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+      "loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+      "source": "explicit protected worktree overlay"
+    }
+  }
+}

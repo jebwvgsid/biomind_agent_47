@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-export/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-export",
+    "-q",
+    "tests/test_cross_layer_correction.py",
+    "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+    "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+    "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-results/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-results/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-results",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-results",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-results/scratch/executor-logs",
+    "BIOMIND_OFFLINE_FATAL_FILE": "/tmp/biomind-cross-layer-implementation-20260914/s2-generate-1-overlay-results/fatal.txt"
+  }
+}

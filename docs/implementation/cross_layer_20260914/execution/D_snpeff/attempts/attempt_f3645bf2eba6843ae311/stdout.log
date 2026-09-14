@@ -1,0 +1,13 @@
+welcome liusiqi to use agis hpc
+group name is zhangxingtan
+*****************************************************
+storage      used_cap_G   quota_cap_G  status      
+-----------------------------------------------------
+pub-home            43562        50000         WORK
+pub-share           47293        50011         WORK
+scr-share               0            9         WORK
+vol1-share              0            1         WORK
+vol2-share         129159       135000         WORK
+*****************************************************
+[31m vol2-share配额报警！ [0m
+BIOMIND_EFFECT_EVIDENCE_JSON={"schema_version":1,"produces_observations":[{"identity":"contigs_compatible","value":true}]}

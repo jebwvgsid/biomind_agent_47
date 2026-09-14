@@ -1,0 +1,164 @@
+[
+  {
+    "execution_id": "exec-attempt_f3645bf2eba6843ae311",
+    "action_id": "action_214c465ef5455583",
+    "step_id": "bounded-check",
+    "attempt_id": "attempt_f3645bf2eba6843ae311",
+    "execution_status": "succeeded",
+    "purpose": "validation",
+    "command_role": "required_validation",
+    "exit_code": 0,
+    "code_hash": "5745c2df9941432b883c84dda1b2505056783f9bf5f5ac644664bb1ba7c318e9",
+    "approved_script": {
+      "version": "approved",
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-bare-D-results/scratch/biomind-plan-local-graph-qaapdexb/task_outputs/new-cross-layer-D_snpeff/attempts/attempt_f3645bf2eba6843ae311/approved.sh",
+      "sha256": "5745c2df9941432b883c84dda1b2505056783f9bf5f5ac644664bb1ba7c318e9",
+      "producer": "hitl_approval",
+      "parent_script_ref": {
+        "version": "generated",
+        "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-bare-D-results/scratch/biomind-plan-local-graph-qaapdexb/task_outputs/new-cross-layer-D_snpeff/scripts/plan_ce1fc66ec99c63fdc846/plan_v1/bounded-check/action_214c465ef5455583/generated.sh",
+        "sha256": "5745c2df9941432b883c84dda1b2505056783f9bf5f5ac644664bb1ba7c318e9",
+        "producer": "generate",
+        "parent_script_ref": {},
+        "mutation_reason": "model_generation",
+        "created_at": "2026-09-14T13:13:43"
+      },
+      "mutation_reason": "user_approval_or_edit",
+      "created_at": "2026-09-14T13:13:44"
+    },
+    "executed_script": {
+      "version": "executed",
+      "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-bare-D-results/scratch/biomind-plan-local-graph-qaapdexb/task_outputs/new-cross-layer-D_snpeff/attempts/attempt_f3645bf2eba6843ae311/executed.sh",
+      "sha256": "af64743fe70e9abad08e9d4f3c5fbad36c7084cec2fbbff06d9140c770749689",
+      "producer": "executor_wrapper",
+      "parent_script_ref": {
+        "version": "approved",
+        "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-bare-D-results/scratch/biomind-plan-local-graph-qaapdexb/task_outputs/new-cross-layer-D_snpeff/attempts/attempt_f3645bf2eba6843ae311/approved.sh",
+        "sha256": "5745c2df9941432b883c84dda1b2505056783f9bf5f5ac644664bb1ba7c318e9",
+        "producer": "hitl_approval",
+        "parent_script_ref": {
+          "version": "generated",
+          "path": "/tmp/biomind-cross-layer-implementation-20260914/closure-bare-D-results/scratch/biomind-plan-local-graph-qaapdexb/task_outputs/new-cross-layer-D_snpeff/scripts/plan_ce1fc66ec99c63fdc846/plan_v1/bounded-check/action_214c465ef5455583/generated.sh",
+          "sha256": "5745c2df9941432b883c84dda1b2505056783f9bf5f5ac644664bb1ba7c318e9",
+          "producer": "generate",
+          "parent_script_ref": {},
+          "mutation_reason": "model_generation",
+          "created_at": "2026-09-14T13:13:43"
+        },
+        "mutation_reason": "user_approval_or_edit",
+        "created_at": "2026-09-14T13:13:44"
+      },
+      "mutation_reason": "durable_execution_wrapper",
+      "created_at": "2026-09-14T13:13:44"
+    },
+    "stdout_log": "/tmp/biomind-cross-layer-implementation-20260914/closure-bare-D-results/scratch/biomind-plan-local-graph-qaapdexb/task_outputs/new-cross-layer-D_snpeff/attempts/attempt_f3645bf2eba6843ae311/stdout.log",
+    "stderr_log": "/tmp/biomind-cross-layer-implementation-20260914/closure-bare-D-results/scratch/biomind-plan-local-graph-qaapdexb/task_outputs/new-cross-layer-D_snpeff/attempts/attempt_f3645bf2eba6843ae311/stderr.log",
+    "expected_runtime_contract": {
+      "status": "passed",
+      "coverage": {
+        "runtime_binding_structure_checked": true,
+        "scientific_executables_checked": false,
+        "scientific_versions_checked": false
+      },
+      "scientific_capability_status": "UNKNOWN",
+      "meaning": "Runtime binding structure passed; this is not scientific tool readiness.",
+      "bindings": {},
+      "executables": {},
+      "versions": {},
+      "runtime_snapshot_digest": "sha256:c57619a3c884d0db6542708e634aff428a8cf66ddfbaca6de09563744d8314df"
+    },
+    "actual_environment": {
+      "injected_bindings": {},
+      "resolved_executables": {}
+    },
+    "effect_evidence": {
+      "schema_version": 1,
+      "step_id": "bounded-check",
+      "action_id": "action_214c465ef5455583",
+      "attempt_id": "attempt_f3645bf2eba6843ae311",
+      "declared_step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [
+          {
+            "identity": "contigs_compatible",
+            "evidence_contract": {
+              "required_fields": [
+                "value"
+              ]
+            },
+            "predicate": {
+              "applicability": {
+                "execution_capability_ids": [
+                  "genomics.snpeff_annotation.prepare_database",
+                  "genomics.snpeff_annotation.build_database",
+                  "genomics.snpeff_annotation.annotate_variants",
+                  "genomics.snpeff_annotation.summarize_ann",
+                  "genomics.snpeff_annotation.finalize_outputs"
+                ],
+                "kind": "plan_contains_any_execution_capability",
+                "schema_version": 1
+              },
+              "expected": true,
+              "failure_disposition": "correction_required",
+              "missing_disposition": "inspection_required",
+              "operator": "boolean_equals",
+              "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+              "parser_id": "biomind.genomics.contig_compatibility.v1",
+              "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+            }
+          }
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "parser_receipt": {
+        "schema_version": 1,
+        "parser_id": "biomind.structured_effect_emission.v1",
+        "raw_stdout_sha256": "903c326037104d87bd34ed35d3f8ba005dfe6b1b773bcea704c3608970bae62e",
+        "emission_count": 1,
+        "status": "parsed",
+        "issues": [],
+        "emission_contract": {
+          "schema_version": 1,
+          "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+          "approved_observation_ids": [
+            "contigs_compatible"
+          ],
+          "examples": [
+            "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+          ],
+          "rules": [
+            "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+            "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+            "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+            "Reader errors and sampling limits do not establish absence or full scientific validity."
+          ]
+        },
+        "scope": {
+          "task_id": "new-cross-layer-D_snpeff",
+          "plan_id": "plan_ce1fc66ec99c63fdc846",
+          "plan_version": "plan_v1",
+          "step_id": "bounded-check",
+          "action_id": "action_214c465ef5455583",
+          "attempt_id": "attempt_f3645bf2eba6843ae311"
+        }
+      },
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "identity": "contigs_compatible",
+          "value": true
+        }
+      ],
+      "workspace_mutations": [],
+      "workspace_mutation_claims": [],
+      "workspace_mutation_receipt_validations": [],
+      "explicit_side_effects": [],
+      "status": "validated"
+    },
+    "preflight_evidence_binding": {}
+  }
+]
