@@ -321,6 +321,8 @@ def route_plan_review_outcome(state: Mapping[str, Any]) -> str:
 
 def route_ask_user_outcome(state: Mapping[str, Any]) -> str:
     outcome = AskUserOutcome.from_mapping(state.get("ask_user_outcome") or {})
+    if outcome.type == "harness_error":
+        return END
     semantic = str(outcome.payload.get("semantic_state") or "consultation_ready")
     return {
         "consultation_ready": "consultant",
