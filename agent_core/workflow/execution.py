@@ -6,6 +6,7 @@ the schema-2 graph boundary.
 """
 
 from __future__ import annotations
+from copy import deepcopy
 
 from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
 
@@ -177,7 +178,15 @@ def _internal_generate_failure_payload(
         payload["latest_failure"] = dict(primary.get("latest_failure") or primary)
     payload["termination_reason"] = str(value.get("termination_reason") or "")
     event = dict(value.get("candidate_rejection_event") or {})
-    payload["budget_receipt"] = {k: event[k] for k in ("repair_ordinal", "repair_limit", "event_id", "scope") if k in event}
+    payload["budget_receipt"] = {**dict(event.get("policy_receipt") or {}),
+        **{k: event[k] for k in ("repair_ordinal", "repair_limit", "event_id", "scope", "correction_category") if k in event}}
+    payload["causal_generation"] = deepcopy(dict(event.get("causal_generation") or {}))
+    payload["current_candidate"] = {"attempt_id":"", "execution_started":False, "approved":False,
+        "candidate_fingerprint":event.get("candidate_fingerprint",value.get("candidate_fingerprint","")),
+        "candidate_event_id":event.get("candidate_event_id",""),
+        "cause_code":next((str((r.get("protocol_error") or {}).get("cause_code") or r.get("cause_code") or r.get("code") or "")
+            for r in event.get("exact_violations",[]) if isinstance(r,Mapping)),error_code),
+        "correction_category":event.get("correction_category","UNKNOWN")}
     if secondary:
         payload["secondary_causes"] = secondary
     return payload
@@ -1074,6 +1083,7 @@ class TypedGenerate:
                     if not progress_proven or ordinal > effective_limit:
                         outcome_type = "internal_protocol_error"
                         payload = {
+                            **_internal_generate_failure_payload(value, exit_reason=exit_reason),
                             "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED" if not progress_proven else "GENERATE_REPAIR_BUDGET_EXHAUSTED",
                             "component": "typed_generate_repair_governance",
                             "candidate_fingerprint": candidate_fingerprint,

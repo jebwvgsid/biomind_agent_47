@@ -387,6 +387,7 @@ from agent_core.active_state import (
     ActiveStateInvariantError,
     GenerationMode,
     generation_provenance_for_dispatch,
+    current_generation_causal_reference,
     normal_generation_provenance,
     scoped_execution_evidence,
 )
@@ -16721,6 +16722,7 @@ class BioAnalystAgent:
                 "recovery_generation_rollover": deepcopy(
                     recovery_rollover
                 ),
+                "causal_generation": current_generation_causal_reference(durable) if recovery_generated else {},
                 "receipt_id": str(receipt.get("receipt_id") or ""),
                 "receipt_ref": str(receipt.get("receipt_ref") or ""),
                 "recorded_at": datetime.now().isoformat(timespec="seconds"),

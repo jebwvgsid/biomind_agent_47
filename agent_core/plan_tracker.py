@@ -4829,6 +4829,10 @@ def record_preaction_contract_failure(
         "message": latest_message,
         "fingerprint": str(error_fingerprint or ""),
         "candidate_fingerprint": str(candidate_fingerprint or ""),
+        "execution_started": False,
+        "attempt_id": "",
+        "scope": {"task_id": str(state.get("task_id") or ""), "plan_id": str(state.get("plan_id") or ""),
+                  "plan_version": str(state.get("plan_version") or ""), "step_id": str(state.get("current_step_id") or "")},
         "repair_attempt_count": int(repair_attempt_count or 0),
         "recorded_at": now,
     }
@@ -4883,7 +4887,8 @@ def record_preaction_contract_failure(
     prior["last_error_fingerprint"] = str(error_fingerprint or "")
     if termination_reason:
         prior["termination_reason"] = str(termination_reason)
-        prior["execution_started"] = False
+        # The original failure keeps its execution identity and execution flag.
+        # Only latest/terminal_failure describes this unexecuted candidate.
         prior["repair_exhausted"] = True
         prior["terminal_failure"] = {
             **deepcopy(latest_failure),

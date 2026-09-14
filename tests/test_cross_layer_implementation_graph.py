@@ -25,6 +25,8 @@ async def scenario(mode):
     sid='genomics/wgs-short-read-mapping';case.SKILL_ID=sid
     await case.asyncSetUp()
     is_b=mode.startswith('B_')
+    b_exhausted=mode in {'B_exhausted','B_archive'}
+    stop={}
     task='new-cross-layer-'+mode
     root=case.root
     files=[]
@@ -32,7 +34,10 @@ async def scenario(mode):
         path=root/f'变 样本 {i}.fq.gz';path.write_bytes(gzip.compress(b'@synthetic\nACGT\n+\nIIII\n',mtime=0));files.append(path)
     reference=root/'参考 改名.fasta';reference.write_text('>synthetic\nACGT\n')
     report=root/'report.md'
+    diagnostic_root=root/'authorized_diagnostics'
     goal='只在新建合成输入上检查前缀和参考头，然后用显式 stub 核对依赖受阻。输出诊断报告到 '+str(report)+'；输入 '+', '.join(map(str,[*files,reference]))
+    goal+='；另明确请求 '+str(root/'stage_status.tsv')+' 和 '+str(root/'reproduce.sh')+'。'
+    if mode=='B_archive':goal+='；明确允许在目录 '+str(diagnostic_root)+' 写本次内部诊断归档。'
     persist=case.agent._persist_user_submission
     case.agent._persist_user_submission=lambda tid,_prompt:persist(tid,goal)
     counts={'consultant':0,'planner':0,'generate':0,'reviewer':0,'recovery':0}
@@ -53,6 +58,11 @@ async def scenario(mode):
             for i,path in enumerate([*files,reference]):
                 operations.append({'operation':'upsert_input','input':{'role':'reference_fasta' if i==2 else f'fastq_{i}','path':str(path),'required':True},'supporting_evidence':['U1']})
             operations.append({'operation':'upsert_output_contract','output_contract':{'output_id':'report','role':'report','artifact_kind':'file','path':str(report),'required':not is_b},'supporting_evidence':['U1']})
+            for name in ('stage_status.tsv','reproduce.sh'):
+                operations.append({'operation':'upsert_output_contract','output_contract':{'output_id':name.replace('.','_'),'role':name.replace('.','_'),'artifact_kind':'file','path':str(root/name),'required':False},'supporting_evidence':['U1']})
+            if mode=='B_archive':
+                operations.append({'operation':'upsert_output_contract','output_contract':{'output_id':'diagnostic_archive','role':'diagnostic_root',
+                    'artifact_kind':'directory','path':str(diagnostic_root),'required':False},'supporting_evidence':['U1']})
             return AIMessage(content=json.dumps({'action_type':'submit_planning_handoff','summary':'Explicit synthetic task only.','selected_skills':[sid],
                 'task_spec_operations':operations,'unresolved_ambiguities':[],'planner_feedback':None}))
         if stage=='planner':
@@ -89,7 +99,7 @@ async def scenario(mode):
             if mode!='B_success' and ordinal==5:
                 assert 'GENERATE_SCRIPT_SYNTAX_INVALID' in str(messages)
                 return AIMessage(content=json.dumps({'another_incomplete_action':'not executed'}))
-            if mode=='B_exhausted':
+            if b_exhausted:
                 assert ordinal==6
                 return AIMessage(content='<shell>printf final-incomplete',response_metadata={'finish_reason':'length'})
             assert ordinal==(4 if mode=='B_success' else 6)
@@ -120,7 +130,7 @@ async def scenario(mode):
         body+='print(emit_effect_evidence(facts))\nPY\nexit 1\n'
         return AIMessage(content='<shell>'+body+'</shell>')
     case.agent._ainvoke_node_llm=provider
-    case.agent.supervisor_node.use_llm_review=mode!='B_exhausted'
+    case.agent.supervisor_node.use_llm_review=not b_exhausted
     async def reviewer(*args,completion_report,**kwargs):
         counts['reviewer']+=1
         # The real report/gate/parser/TypedSupervisor remain in use. Inject
@@ -250,18 +260,17 @@ async def scenario(mode):
                 'commits':commits,'verification_outcome':outcome,'revalidate_outcome':replay['recovery_outcome'],
                 'repeated_verification':again['verification_outcome'],'review_receipts':final_state['task_state']['semantic_review_receipts'],
                 'requests':requests,'fix':True})
-            return
         if is_b:
             repair=list(durable['task_state']['candidate_repair_state']['events'].values())
-            expected=2 if mode=='B_success' else 5 if mode=='B_exhausted' else 4
+            expected=2 if mode=='B_success' else 5 if b_exhausted else 4
             assert [r['repair_ordinal'] for r in repair]==list(range(1,expected+1)),repair
             assert all(r['repair_limit']==4 for r in repair)
             assert [r['correction_category'] for r in repair][:2]==['representation','response_completion'],repair
             assert len(duplicate)==expected and all(r['same_event'] for r in duplicate)
-            assert counts['recovery']==1 and counts['generate']==expected+1+(mode!='B_exhausted')
-            assert len(executions)==(1 if mode=='B_exhausted' else 2)
+            assert counts['recovery']==1 and counts['generate']==expected+1+(not b_exhausted)
+            assert len(executions)==(1 if b_exhausted else 2)
             assert executions[0]['rc']==7
-            if mode!='B_exhausted':
+            if not b_exhausted:
                 assert executions[1]['rc']==0 and len(commits)==1 and counts['reviewer']==1
                 save('graph-'+mode+'-result',{'counts':counts,'executions':executions,'approvals':approvals,
                     'routes':[next(iter(e)) for e in events],'commits':commits,'repair_events':repair,
@@ -269,6 +278,8 @@ async def scenario(mode):
                 return
             assert not commits
             report.write_text('old unrelated synthetic stop\n');old_hash=hashlib.sha256(report.read_bytes()).hexdigest()
+            if mode=='B_archive':
+                for name in ('stage_status.tsv','reproduce.sh'):(root/name).write_text('old unrelated '+name+'\n')
         elif mode in {'A','publication'}:
             expected_reviews=1 if mode=='publication' else 2
             assert counts['reviewer']==expected_reviews and len(commits)==1
@@ -279,32 +290,62 @@ async def scenario(mode):
             side=json.loads(executions[1]['stdout'].split('=',1)[1])['explicit_side_effects'][0]
             assert side['status']=='blocked' and side['index_artifacts']==[]
             assert not durable['provenance_state']['attempts'][executions[1]['attempt']]['produced_artifact_ids']
+        elif mode=='C':
+            assert counts['reviewer']==3 and counts['recovery']==1 and len(executions)==1 and not commits
         else:
             assert counts['reviewer']==2 and len(executions)==1 and not commits
             assert counts['recovery']==2
         assert all(a.get('step_id') not in {'dependent-never-runs','reporting-not-reached'} for a in durable['provenance_state']['attempts'].values())
         boundary=terminal_boundary(values);assert boundary
-        case.agent.terminal_summary_policy={'enabled':False}
+        case.agent.terminal_summary_policy={'enabled':b_exhausted}
+        if b_exhausted:
+            counts['summary']=0
+            class SummaryModel:
+                async def ainvoke(self,messages,**kwargs):
+                    counts['summary']+=1
+                    frozen=json.loads(messages[-1].content)
+                    assert frozen['causal_execution']['attempt_id']==executions[0]['attempt']
+                    assert frozen['current_candidate']['attempt_id']==''
+                    requests.append({'stage':'terminal_summary','frozen':frozen})
+                    if mode=='B_exhausted':raise RuntimeError('synthetic summary response failure')
+                    return AIMessage(content=json.dumps({'fact_ids':['causal_execution','current_candidate','stop_reason']}))
+            case.agent.terminal_summary_llm=SummaryModel()
         stop=await finalize_managed_stop(case.agent,task,values,boundary)
         save('graph-'+mode+'-stop',stop)
-        if mode=='B_exhausted':
-            assert stop['execution']['attempt_id']=='' and stop['associated_attempts']==[]
-            # This observation-only fixture has no artifact reconciliation
-            # primary_failure. The exact original execution is nevertheless
-            # present in the authoritative causal packet, as in the incident.
-            assert len(durable['task_state']['typed_recovery_receipts'])==1
+        if b_exhausted:
+            assert stop['execution']['attempt_id']=='' and stop['execution']['executed'] is False
+            assert stop['current_candidate']['attempt_id']=='' and stop['current_candidate']['cause_code']=='GENERATE_RESPONSE_INCOMPLETE'
+            assert stop['causal_execution']['attempt_id']==executions[0]['attempt'] and stop['causal_execution']['returncode']==7,stop
+            assert 'synthetic failure' in stop['causal_execution']['stderr']
+            assert stop['origin']['attempt_id']==executions[0]['attempt']
+            assert stop['associated_attempts'][-1]['attempt_id']==executions[0]['attempt']
             decision_id,reception=next(iter(durable['task_state']['typed_recovery_receipts'].items()))
             reference=reception['failure_packet_ref']
             assert durable['task_state']['consumed_failure_packet_refs'][reference]['decision_id']==decision_id
-            packet=durable['task_state']['causal_failure_packets'][reference]['failure_packet']
-            assert packet['attempt_ref']==executions[0]['attempt']
-            assert durable['provenance_state']['attempts'][packet['attempt_ref']]['returncode']==7
-            assert stop['origin']['attempt_id']==''
+            assert not load_plan_state(root,task)['task_state'].get('active_failure_packet_ref')
             assert stop['report_receipts']['report.md']['reason']=='RUNTIME_REPORT_EXISTING_FILE_PROTECTED'
             assert hashlib.sha256(report.read_bytes()).hexdigest()==old_hash
+            internal=stop['internal_diagnostic_delivery']
+            if mode=='B_archive':
+                assert internal['status']=='complete',internal
+                assert len(internal['paths'])==3 and stop['summary_status']=='COMPLETED'
+                for name,path in internal['paths'].items():
+                    assert Path(path).is_relative_to(diagnostic_root)
+                    assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==internal['receipts'][name]['sha256']
+            else:assert internal['status']=='not_authorized' and internal['paths']=={} and stop['summary_status']=='FAILED'
+            before=deepcopy(counts)
+            again=await finalize_managed_stop(case.agent,task,values,boundary)
+            assert counts==before and again==stop
+            assert counts['summary']==1
+            assert not diagnostic_root.exists() if mode!='B_archive' else diagnostic_root.exists()
         else:
-            assert stop['report_receipts']['report.md']['status']=='created',stop['secondary_failures']
-            assert report.is_file()
+            assert len(stop['report_receipts'])==3,stop
+            for name,receipt in stop['report_receipts'].items():
+                assert receipt['status']=='created',stop['secondary_failures']
+                assert (root/name).is_file() and hashlib.sha256((root/name).read_bytes()).hexdigest()==receipt['sha256']
+            if mode=='C':
+                assert stop['execution']['returncode']==0 and not stop['execution']['committed']
+                assert stop['scope']['step_id']=='bounded-check'
         save('graph-'+mode+'-result',{'counts':counts,'executions':executions,'approvals':approvals,'routes':[next(iter(e)) for e in events],
             'commits':commits,'stop':stop,'duplicate_rejections':duplicate,'requests':requests,'fix':True,
             'acceptance_note':'Production facts/gates/router and approved execution are real; Recovery decision alone is fake.'})
@@ -318,11 +359,14 @@ async def scenario(mode):
             for source in task_root.glob(pattern):
                 assert source.is_file() and not source.is_symlink()
                 target=keep/source.relative_to(task_root);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
-        if report.is_file():
-            keep.mkdir(parents=True,exist_ok=True);shutil.copyfile(report,keep/'report.md')
+        for name,path in (stop.get('internal_diagnostic_delivery') or {}).get('paths',{}).items():
+            target=keep/'internal_diagnostics'/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,target)
+        for name in ('report.md','stage_status.tsv','reproduce.sh'):
+            if (root/name).is_file():
+                keep.mkdir(parents=True,exist_ok=True);shutil.copyfile(root/name,keep/name)
         await case.asyncTearDown()
 
 
-@pytest.mark.parametrize('mode',['publication','A','C','B_success','B_last','B_exhausted'])
+@pytest.mark.parametrize('mode',['publication','A','C','B_success','B_last','B_exhausted','B_archive'])
 def test_production_combination_fix(mode):
     asyncio.run(scenario(mode))

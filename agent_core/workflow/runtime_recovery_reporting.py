@@ -7,6 +7,7 @@ Unlike the legacy blocked finalizer, report creation is opt-in and no-clobber.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import stat
@@ -94,7 +95,8 @@ def _file_metadata(path: Path):
         os.close(descriptor)
 
 
-def _write_report(path: Path, body: str, *, prior_receipt: Mapping[str, Any] | None = None):
+def _write_report(path: Path, body: str, *, prior_receipt: Mapping[str, Any] | None = None,
+                  publication: Mapping[str, Any] | None = None, record_prepared=None):
     """Publish a fully fsynced new file atomically; never replace unknown files."""
     path = _path(path)
     if path.name not in _REPORTS:
@@ -103,6 +105,8 @@ def _write_report(path: Path, body: str, *, prior_receipt: Mapping[str, Any] | N
     if len(content) > 1024 * 1024:
         raise RuntimeReportError("RUNTIME_REPORT_SIZE_LIMIT")
     fingerprint = hashlib.sha256(content).hexdigest()
+    if publication is not None:
+        return _write_owned_report(path, content, fingerprint, publication, record_prepared)
     parent = _open_directory(path.parent, create=True)
     temporary = ".runtime-recovery-" + uuid.uuid4().hex + ".tmp"
     created = False
@@ -143,6 +147,115 @@ def _write_report(path: Path, body: str, *, prior_receipt: Mapping[str, Any] | N
             except FileNotFoundError:
                 pass
         os.close(parent)
+
+
+
+def _write_owned_report(path, content, fingerprint, publication, record_prepared):
+    """Keep a durable prepared hardlink as proof across a lost final receipt.
+
+    An intent or equal body is insufficient: recovery requires the receipted
+    inode to be shared by the retained proof file and final target. Proofs are
+    scoped ancillary publication files; they never grant authorization.
+    """
+    intent=dict(publication); identity=str(intent.get("operation_id") or "")
+    if (not re.fullmatch(r"[a-f0-9]{64}",identity) or intent.get("path")!=str(path)
+            or intent.get("sha256")!=fingerprint or not callable(record_prepared)):
+        raise RuntimeReportError("RUNTIME_REPORT_INTENT_INVALID")
+    proof=".runtime-report-proof-"+identity
+    parent=_open_directory(path.parent,create=True)
+    prepared=dict(intent.get("prepared") or {})
+    def info(name):
+        try:return os.stat(name,dir_fd=parent,follow_symlinks=False)
+        except FileNotFoundError:return None
+    def valid(name, expected):
+        row=info(name)
+        if (row is None or not stat.S_ISREG(row.st_mode) or row.st_size!=len(content)
+                or expected.get("device")!=row.st_dev or expected.get("inode")!=row.st_ino):return False
+        fd=os.open(name,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=parent)
+        with os.fdopen(fd,"rb") as handle:return hashlib.sha256(handle.read(len(content)+1)).hexdigest()==fingerprint
+    try:
+        target=info(path.name)
+        if intent.get("status") == "published":
+            receipt = dict(intent.get("receipt") or {})
+            if (receipt.get("operation_id") != identity or receipt.get("path") != str(path)
+                    or receipt.get("sha256") != fingerprint or receipt.get("ownership") != prepared
+                    or not valid(path.name, prepared)):
+                raise RuntimeReportError("RUNTIME_REPORT_OWNED_FILE_CHANGED")
+            # A durably acknowledged receipt replaces the temporary inode
+            # proof. Never remove an unrecognized file at the proof name.
+            if info(proof) is not None:
+                if not valid(proof, prepared):
+                    raise RuntimeReportError("RUNTIME_REPORT_OWNERSHIP_PROOF_INVALID")
+                os.unlink(proof, dir_fd=parent)
+                os.fsync(parent)
+            return receipt
+        if prepared:
+            if (prepared.get("operation_id")!=identity or prepared.get("path")!=str(path)
+                    or prepared.get("proof_name")!=proof or prepared.get("sha256")!=fingerprint or not valid(proof,prepared)):
+                raise RuntimeReportError("RUNTIME_REPORT_OWNERSHIP_PROOF_INVALID")
+            if target is not None:
+                if not valid(path.name,prepared):raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED")
+                return {"path":str(path),"sha256":fingerprint,"operation_id":identity,
+                    "ownership":prepared,"recovered_from":"prepared_inode_hardlink"}
+        else:
+            if target is not None:raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED")
+            try:fd=os.open(proof,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600,dir_fd=parent)
+            except FileExistsError as exc:raise RuntimeReportError("RUNTIME_REPORT_UNCONFIRMED_PREPARATION") from exc
+            with os.fdopen(fd,"wb") as handle:
+                handle.write(content);handle.flush();os.fsync(handle.fileno());created=os.fstat(handle.fileno())
+            os.fsync(parent)
+            prepared={"operation_id":identity,"path":str(path),"sha256":fingerprint,
+                "proof_name":proof,"device":created.st_dev,"inode":created.st_ino}
+            record_prepared(prepared)  # Durable acknowledgement BEFORE link.
+        try:os.link(proof,path.name,src_dir_fd=parent,dst_dir_fd=parent,follow_symlinks=False)
+        except FileExistsError as exc:
+            if not valid(path.name,prepared):raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED") from exc
+        os.fsync(parent)
+        if not valid(path.name,prepared):raise RuntimeReportError("RUNTIME_REPORT_PUBLISH_VERIFICATION_FAILED")
+        return {"path":str(path),"sha256":fingerprint,"operation_id":identity,"ownership":prepared}
+    finally:os.close(parent)
+
+
+def publish_report(data_path, task_id, path, body, *, owner, authorization_ref, scope_guard):
+    """Journal one file in existing PlanState CAS and immutable object store.
+
+    Callers resolve authorization and freeze bodies. This function neither
+    chooses paths nor alters business status, and returns only durable receipts.
+    """
+    from agent_core.plan_tracker import StateCASConflict
+    from agent_core.state_contract_store import StateContractStore
+    path=_path(path);sha=hashlib.sha256(body.encode()).hexdigest()
+    identity=hashlib.sha256(json.dumps([task_id,owner,str(path)],ensure_ascii=False).encode()).hexdigest()
+    store=StateContractStore(data_path,task_id)
+    def update(prepared=None, receipt=None):
+        for _ in range(3):
+            state=load_plan_state(data_path,task_id)
+            if state.get('task_id')!=task_id or not scope_guard(state):raise RuntimeReportError('RUNTIME_REPORT_SCOPE_CHANGED')
+            rows=state.setdefault('task_state',{}).setdefault('report_publications',{})
+            row=rows.get(identity)
+            if row:
+                if any(row.get(k)!=v for k,v in {'owner':owner,'path':str(path),'sha256':sha,'authorization_ref':authorization_ref}.items()):
+                    raise RuntimeReportError('RUNTIME_REPORT_FROZEN_BODY_CONFLICT')
+            else:
+                ref=store.put_object('report_publication_body',{'task_id':task_id,'owner':owner,'body':body,'sha256':sha})
+                row={'operation_id':identity,'task_id':task_id,'owner':owner,'path':str(path),
+                    'sha256':sha,'body_ref':ref,'authorization_ref':authorization_ref,'status':'intended'}
+                rows[identity]=row
+            if prepared is not None:
+                if row.get('prepared') and row['prepared']!=prepared:raise RuntimeReportError('RUNTIME_REPORT_PREPARATION_CONFLICT')
+                row.update(prepared=deepcopy(prepared),status='prepared')
+            if receipt is not None:row.update(receipt=deepcopy(receipt),status='published')
+            try:save_plan_state(data_path,task_id,state)
+            except StateCASConflict:continue
+            return deepcopy(row)
+        raise RuntimeReportError('RUNTIME_REPORT_RECEIPT_CAS_CONFLICT')
+    row=update()
+    receipt=_write_report(path,body,publication=row,record_prepared=lambda prepared:update(prepared=prepared))
+    published = update(receipt=receipt)
+    # Verify the final target and retire the ancillary proof only after CAS
+    # has acknowledged ownership. A lost receipt leaves its proof recoverable.
+    return _write_report(path, body, publication=published,
+        record_prepared=lambda prepared: update(prepared=prepared))
 
 
 def _current_scope_matches(durable, request):
@@ -371,7 +484,9 @@ def finalize_runtime_recovery_result(data_path, task_id, result, *, state=None, 
                     fresh = load_plan_state(data_path, task_id)
                     if not _current_scope_matches(fresh, request):
                         raise RuntimeReportError("RUNTIME_REPORT_SCOPE_CHANGED")
-                    receipt = _write_report(path, bodies[name], prior_receipt=prior.get(str(path)))
+                    receipt = publish_report(data_path, task_id, path, bodies[name], owner="runtime:"+episode_id,
+                        authorization_ref=runtime_authorization_scope_digest(fresh),
+                        scope_guard=lambda state: _current_scope_matches(state,request))
                     receipts[str(path)] = {**receipt, "episode_id": episode_id}
                     report_paths[name] = str(path)
                 except Exception as exc:

@@ -17,10 +17,10 @@ from agent_core.plan_tracker import (load_plan_state, save_plan_state, set_task_
     canonical_task_spec_for_state, plan_approval_is_current, has_materialized_plan)
 from agent_core.workflow.inspection_stop import (
     _mapping, _safe, _code, _hash, _authority, _active_packet, _steps,
-    _report_targets, _report_bodies, _write_report, _secondary, _terminal_packet,
+    _report_targets, _internal_report_targets, _report_bodies, _write_report, _secondary, _terminal_packet,
     build_inspection_stop, inspection_stop_explanation,
 )
-from agent_core.workflow.runtime_recovery_reporting import _path
+from agent_core.workflow.runtime_recovery_reporting import _path, publish_report
 
 PRODUCER = "managed_run_stop_v1"
 SUMMARY_PROMPT = """优先返回 {"fact_ids": [冻结事实键]}，选择最能解释停止的事实。旧 explanation 为未验证表达，不作为正式事实采用。
@@ -247,7 +247,7 @@ def current_managed_stop(durable):
     return stop if stop.get("producer") == PRODUCER and stop.get("persistence_status") == "committed" and _matches(durable, stop) else {}
 
 
-def _associated_attempts(durable, packet):
+def _associated_attempts(durable, packet, packet_ref=""):
     """Project the current failure and its explicitly authorized retry parent.
 
     No latest/last attempt selection; historical rc never becomes current rc.
@@ -270,7 +270,7 @@ def _associated_attempts(durable, packet):
                 and _mapping(parent.get("plan_spec_ref")) == _mapping(packet.get("plan_spec_ref"))
                 and parent.get("task_id") == packet.get("task_id") and parent.get("step_id") == packet.get("step_id")):
             references.append((str(parent["attempt_ref"]), "historical_diagnostic", parent_ref))
-    references.append((str(packet.get("attempt_ref") or ""), "current_failure", ""))
+    references.append((str(packet.get("attempt_ref") or ""), "current_failure", packet_ref))
     for attempt_id, purpose, reference in references:
         if not attempt_id or any(row["attempt_id"] == attempt_id for row in rows):
             continue
@@ -313,6 +313,12 @@ def build_managed_stop(task_id, values, durable, boundary):
         # motivated its generation. Keep absent execution identity absent.
         record, packet = {}, {}
         fixed_scope.update(attempt_id="", episode_id="")
+        from agent_core.active_state import current_generation_causal_reference
+        parent = current_generation_causal_reference(durable)
+        if parent.get("status") == "verified" and parent == payload.get("causal_generation"):
+            _ref = parent["failure_packet_ref"]
+            record = _mapping(_mapping(_mapping(durable.get("task_state")).get("causal_failure_packets")).get(_ref))
+            packet = _mapping(record.get("failure_packet"))
     if durable.get("_load_failed"):
         fixed_scope.update({k: str(observed.get(k) or "") for k in ("task_id", "plan_id", "plan_version", "step_id", "attempt_id")})
     if packet and str(packet.get("step_id") or "") != fixed_scope["step_id"]:
@@ -355,7 +361,29 @@ def build_managed_stop(task_id, values, durable, boundary):
         if not packet:
             value["origin"].update(source_stage="execute", source_owner="internal_protocol",
                 summary=_safe(primary.get("detail") or payload.get("detail") or outcome.get("summary")))
-    value["associated_attempts"] = _associated_attempts(durable, packet)
+    value["associated_attempts"] = _associated_attempts(durable, packet, _ref)
+    value["current_candidate"] = deepcopy(_mapping(payload.get("current_candidate")))
+    value["causal_generation"] = deepcopy(_mapping(payload.get("causal_generation")))
+    value["causal_execution"] = deepcopy(value["execution"]) if packet else {"status":"UNKNOWN"}
+    if packet:
+        value["causal_execution"].update(scope={"task_id":task_id,"plan_id":durable.get("plan_id"),
+            "plan_version":durable.get("plan_version"),"step_id":packet.get("step_id"),"attempt_id":packet.get("attempt_ref")},
+            failure_packet_ref=_ref,read_only=True)
+    # Causal tool failures are already admitted observations, independent of
+    # the current local round's zero tool calls. Keep bounded exact references.
+    admitted = _mapping(_mapping(_mapping(durable.get("task_state")).get("typed_recovery_receipts")).get(
+        value["causal_generation"].get("recovery_decision_id")))
+    seen = {(row.get("tool_call_id"), row.get("error_code")) for row in value.get("inspection_failures",[])}
+    for row in admitted.get("causal_observation_receipts",[]) or []:
+        error = _mapping(row.get("error")); identity = (row.get("request_id"), error.get("code"))
+        if error and identity not in seen:
+            value["inspection_failures"].append({"tool_call_id":_code(row.get("request_id")),"tool":_code(row.get("tool")),
+                "error_code":_code(error.get("code")),"evidence_ref":_safe(row.get("source_ref")),"detail":_safe(error.get("detail")),
+                "scope":"admitted_causal_history"})
+            seen.add(identity)
+    value["inspection_failures"] = value.get("inspection_failures",[])[-20:]
+    value["inspection_count_scope"] = {"local_tool_calls":value["stop_reason"].get("tool_calls",0),
+        "known_causal_errors":len(value["inspection_failures"]),"history_coverage":"bounded_admitted_causal_chain"}
     value["primary_cause"] = deepcopy(primary or value["origin"])
     value["latest_failure"] = deepcopy(latest or value.get("latest_failure") or ((value.get("inspection_failures") or [{}])[-1]))
     if value["stop_reason"].get("error_code") == "RECOVERY_PROVIDER_TRANSPORT_FAILED":
@@ -389,7 +417,7 @@ def build_managed_stop(task_id, values, durable, boundary):
         if script and script != "[redacted]" and len(str(raw.get("code") or "")) <= 32000:
             value["execution"]["command_body"] = script
             value["execution"]["command_body_available"] = True
-    elif packet:
+    elif packet and not no_execution:
         facts = packet.get("diagnostic_facts") or []
         rc = next((_mapping(f.get("metadata")).get("return_code") for f in facts if f.get("kind") == "return_code"), None)
         if isinstance(rc, int):
@@ -418,6 +446,9 @@ def explanation(stop):
         return _planning_explanation(stop)
     base = inspection_stop_explanation(stop)
     origin = _mapping(stop.get("origin"))
+    causal = _mapping(stop.get("causal_execution"))
+    if causal.get("executed") and not _mapping(stop.get("execution")).get("executed"):
+        base = base.replace("没有可确认的命令执行记录。", "末次候选尚未执行；本轮已有真实因果执行记录。")
     base = base.replace("Supervisor 待核实的疑虑：", "原始起因（断言待核实）：").replace("仍需完成语义复核", "原因记录不完整")
     base += "\n\n文件交付：" + report_delivery_status(stop.get("report_receipts")) + "；" + "；".join(
         name + "=" + str((stop.get("report_receipts", {}).get(name) or {}).get("status", "not_attempted"))
@@ -425,6 +456,14 @@ def explanation(stop):
         for name in ("report.md", "stage_status.tsv", "reproduce.sh"))
     parts = [base, "来源阶段：" + str(origin.get("source_stage") or "unknown") + "；原始错误：" + str(origin.get("error_code") or "unknown") + "；停止阶段：" + str(stop.get("stage") or "outer") + "。"]
     execution = _mapping(stop.get("execution"))
+    if causal.get("attempt_id"):
+        parts.append("最近因果执行：attempt=" + str(causal["attempt_id"]) + "；rc=" + str(causal.get("returncode"))
+            + "；步骤=" + str(causal.get("step_id")) + "。已消费的证据只用于说明，未重新授权执行。")
+        if causal.get("stderr"):parts.append("因果执行 stderr：" + _safe(causal["stderr"],2000))
+    if stop.get("current_candidate"):
+        parts.append("末次候选：" + _safe(json.dumps(stop["current_candidate"],ensure_ascii=False),2000))
+    if stop.get("inspection_count_scope"):
+        parts.append("检查计数范围：" + json.dumps(stop["inspection_count_scope"],ensure_ascii=False))
     for attempt in stop.get("associated_attempts") or []:
         parts.append(("历史诊断 attempt：" if attempt["use"] == "historical_diagnostic" else "当前故障 attempt：")
             + attempt["attempt_id"] + "；rc=" + str(attempt["returncode"])
@@ -447,6 +486,9 @@ def explanation(stop):
         parts.append("Runtime 事实：" + _safe(json.dumps(stop["runtime"], ensure_ascii=False), 4000))
     if stop.get("summary_text"):
         parts.append("AI 辅助说明（不改变上述事实）：\n" + stop["summary_text"])
+    if stop.get("internal_diagnostic_delivery"):
+        parts.append("内部诊断归档：" + _safe(json.dumps(stop["internal_diagnostic_delivery"],ensure_ascii=False),3000)
+            + "。内部归档不等于指定文件交付成功。")
     parts.append("总结状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
     return "\n\n".join(parts)
 
@@ -513,7 +555,9 @@ def projection(stop):
          "reason": explanation(stop), "detail": explanation(stop), "stop_id": stop["stop_id"], "origin": stop["origin"],
          "primary_cause": stop.get("primary_cause", {}), "latest_failure": stop.get("latest_failure", {}),
          "prior_completed_work": stop.get("prior_completed_work", []),
-         "execution": stop["execution"], "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
+         "execution": stop["execution"], "causal_execution":stop.get("causal_execution",{}),
+         "current_candidate":stop.get("current_candidate",{}), "inspection_count_scope":stop.get("inspection_count_scope",{}), "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
+         "internal_diagnostic_delivery":deepcopy(stop.get("internal_diagnostic_delivery") or {}),
          "delivery_status": report_delivery_status(stop.get("report_receipts")), "report_paths": stop["report_paths"], "report_receipts": stop["report_receipts"], "persistence_status": stop["persistence_status"],
          "summary_status": stop["summary_status"], "summary_llm_calls": stop["summary_llm_calls"],
          "secondary_causes": stop["secondary_failures"]}
@@ -608,13 +652,15 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
             from agent_core.workflow.inspection_evidence import read_execution_facts
             store = StateContractStore(agent.data_path, task_id)
             facts = read_execution_facts(store, reference)
-            for key in ("plan_id", "plan_version", "step_id", "attempt_id"):
-                if str(facts.get(key) or "") != value["scope"][key]: raise ValueError("EXECUTION_FACT_SCOPE_MISMATCH")
+            target_execution = value.get("causal_execution") if value.get("current_candidate") and value.get("causal_execution",{}).get("attempt_id") else value["execution"]
+            detail_scope = target_execution.get("scope") or value["scope"]
+            for key in ("task_id", "plan_id", "plan_version", "step_id", "attempt_id"):
+                if str(facts.get(key) or "") != str(detail_scope[key]): raise ValueError("EXECUTION_FACT_SCOPE_MISMATCH")
             for key in ("stdout", "stderr"):
-                value["execution"][key] = _safe(facts.get(key), 2000)
+                target_execution[key] = _safe(facts.get("raw_"+key) or facts.get(key), 2000)
             code = _safe(facts.get("code"), 32000)
             if code and code != "[redacted]" and len(str(facts.get("code") or "")) <= 32000:
-                value["execution"].update(command_body=code, command_body_available=True)
+                target_execution.update(command_body=code, command_body_available=True)
         except Exception as exc:
             _secondary(value, "execution.details", "EXECUTION_DETAILS_UNAVAILABLE", exc)
     # Base exists before the first write; failures below never erase it.
@@ -658,6 +704,9 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                 "expected_type", "received_type", "position", "line", "column", "diagnostic_source", "position_source", "validator_id") if k in i}
                 for i in value["planning"].get("validation_issues") or []]}
     frozen["execution"] = {k:v for k,v in frozen["execution"].items() if k != "command_body"}
+    frozen["causal_execution"] = {k:v for k,v in value.get("causal_execution",{}).items() if k != "command_body"}
+    frozen["current_candidate"] = deepcopy(value.get("current_candidate") or {})
+    frozen["inspection_count_scope"] = deepcopy(value.get("inspection_count_scope") or {})
     frozen["base"] = explanation(value)
     frozen["associated_attempts"] = deepcopy(value.get("associated_attempts") or [])
     frozen["inspection_observations"] = deepcopy(value.get("inspection_observations") or [])
@@ -690,7 +739,8 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                     stage="terminal_summary", task_id=task_id, task_mode="readonly", llm_override=transport,
                     llm_policy={"sdk_max_retries": 0, "application_max_attempts": 1, "completion_cache_enabled": False,
                         "total_timeout_seconds": min(30, float(policy.get("timeout_seconds", 30)))},
-                    trace_metadata={"call_kind": "terminal_summary", "semantic_invocation_id": value["stop_id"]})
+                    trace_metadata={"call_kind": "terminal_summary", "semantic_invocation_id": value["stop_id"],
+                        "step_id":value["scope"].get("step_id",""), "frozen_stop_scope":deepcopy(value["scope"])})
             except asyncio.CancelledError: raise
             except Exception as exc:
                 value["summary_status"] = "FAILED"
@@ -742,7 +792,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
             targets = _report_targets(durable, Path(agent.data_path).absolute() / "task_outputs" / task_id)
         bodies = _report_bodies(value)
         rows = ["stage\tworkflow_status\texecution_status\tcommitted\tnotes"]
-        execution = value["execution"]
+        execution = value.get("causal_execution") if value.get("causal_execution",{}).get("attempt_id") else value["execution"]
         for stage in value["stages"]:
             current = stage["step_id"] == value["scope"]["step_id"]
             observed = ("failed" if execution.get("returncode") not in (None, 0) else "succeeded" if execution.get("returncode") == 0 else "not_started_or_unknown") if current else ("completed" if stage["status"] in {"done", "passed", "completed"} else "not_started_or_unknown")
@@ -750,8 +800,17 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         rows.append("run\t" + value["status"] + "\tstopped\tfalse\t" + value["stop_reason"]["error_code"])
         bodies["stage_status.tsv"] = "\n".join(rows) + "\n"
         bodies["report.md"] = "# BioMind managed run stop\n\nStop identity: " + value["stop_id"] + "\n\n" + explanation(value) + "\n"
-        if value["execution"].get("command_body_available"):
-            bodies["reproduce.sh"] = "#!/bin/sh\n# Latest recorded action only; not a complete workflow replay; not run by the reporter.\n# Stop identity: " + value["stop_id"] + "\n# Attempt: " + str(value["execution"].get("attempt_id") or "") + "; purpose: " + str(value["execution"].get("purpose") or "UNKNOWN") + "\n# Original causal attempt: " + str(value.get("origin", {}).get("attempt_id") or "") + "\n" + value["execution"]["command_body"] + "\n"
+        if execution.get("command_body_available"):
+            # Preserve the actual command as commented evidence. A failed
+            # action is never silently turned into a runnable success recipe.
+            bodies["reproduce.sh"] = "#!/bin/sh\n# Recorded action evidence; no replay is authorized by this report.\n# Stop: " + value["stop_id"]
+            bodies["reproduce.sh"] += "\n# Causal attempt: " + str(execution.get("attempt_id") or "") + "; rc=" + str(execution.get("returncode"))
+            bodies["reproduce.sh"] += "\n" + "\n".join("# | " + line for line in execution["command_body"].splitlines()) + "\nexit 1\n"
+        if value.get("frozen_report_bodies"):
+            bodies = deepcopy(value["frozen_report_bodies"])
+        else:
+            value["frozen_report_bodies"] = deepcopy(bodies)
+            durable = _save(agent.data_path, value, loader=loader, saver=saver)
         for name in ("stage_status.tsv", "reproduce.sh", "report.md"):
             path = targets.get(name)
             if not path:
@@ -759,9 +818,8 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                 continue
             try:
                 if not _matches(loader(agent.data_path, task_id), value): raise ValueError("MANAGED_STOP_STALE_SCOPE")
-                if name == "report.md":
-                    bodies[name] = "# BioMind managed run stop\n\nStop identity: " + value["stop_id"] + "\n\n" + explanation(value) + "\n"
-                receipt = _write_report(path, bodies[name], prior_receipt=value["report_receipts"].get(name))
+                receipt = publish_report(agent.data_path, task_id, path, bodies[name], owner=value["stop_id"],
+                    authorization_ref=_hash(value["authority"]), scope_guard=lambda fresh: _matches(fresh,value))
                 value["report_paths"][name] = str(path)
                 value["report_receipts"][name] = {**receipt, "status": "created", "stop_id": value["stop_id"], "task_id": task_id}
             except Exception as exc:
@@ -769,6 +827,29 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                 _secondary(value, "report." + name, value["report_receipts"][name]["reason"], exc)
     except Exception as exc:
         _secondary(value, "report.contract", "REPORT_CONTRACT_FAILED", exc)
+    value["internal_diagnostic_delivery"] = {"status":"not_needed","paths":{},"receipts":{}}
+    if report_delivery_status(value.get("report_receipts")) != "complete":
+        internal=value["internal_diagnostic_delivery"]
+        try:
+            fresh=loader(agent.data_path,task_id)
+            targets, authorization=_internal_report_targets(fresh, Path(agent.data_path).absolute()/"task_outputs"/task_id,value["stop_id"])
+            if not targets:
+                internal.update(status="not_authorized",reason=authorization)
+            else:
+                for name,path in targets.items():
+                    try:
+                        receipt=publish_report(agent.data_path,task_id,path,value["frozen_report_bodies"][name],
+                            owner=value["stop_id"]+":internal",authorization_ref=authorization,
+                            scope_guard=lambda current: _matches(current,value) and _internal_report_targets(current,
+                                Path(agent.data_path).absolute()/"task_outputs"/task_id,value["stop_id"])==(targets,authorization))
+                        internal["paths"][name]=str(path);internal["receipts"][name]={**receipt,"status":"created"}
+                    except Exception as exc:
+                        internal["receipts"][name]={"status":"failed","reason":_code(getattr(exc,"code",""),"INTERNAL_REPORT_WRITE_FAILED")}
+                        _secondary(value,"internal_report."+name,internal["receipts"][name]["reason"],exc)
+                internal["status"]=report_delivery_status(internal["receipts"])
+        except Exception as exc:
+            internal.update(status="failed",reason="INTERNAL_REPORT_AUTHORIZATION_OR_WRITE_FAILED")
+            _secondary(value,"internal_report",internal["reason"],exc)
     value["reports_status"] = "finalized"
     value["delivery_status"] = report_delivery_status(value.get("report_receipts"))
     value["explanation"] = explanation(value)

@@ -212,3 +212,40 @@ def scoped_execution_evidence(
             continue
         return deepcopy(record)
     return {}
+
+
+def current_generation_causal_reference(plan_state: Mapping[str, Any]) -> Dict[str, Any]:
+    """Read the current generation's admitted parent; never revive a packet.
+
+    No last-receipt fallback. Every link must agree with the current generation,
+    source attempt, admitted receipt and consumed packet in this task/plan/step.
+    This is a diagnostic projection and grants no action or route authority.
+    """
+    task=plan_state.get('task_state') or {}; recovery=task.get('recovery_state') or {}
+    active=recovery.get('active_recovery') or {}; claim=recovery.get('generation_claim') or {}
+    decision=active.get('recovery_id');receipt=(task.get('typed_recovery_receipts') or {}).get(decision) or {}
+    envelope=recovery.get('active_recovery_envelope') or {};source=envelope.get('source_scope') or {}
+    reference=receipt.get('failure_packet_ref');consumed=(task.get('consumed_failure_packet_refs') or {}).get(reference) or {}
+    packet=((task.get('causal_failure_packets') or {}).get(reference) or {}).get('failure_packet') or {}
+    expected={'task_id':plan_state.get('task_id'),'plan_id':plan_state.get('plan_id'),
+        'plan_version':plan_state.get('plan_version'),'step_id':plan_state.get('current_step_id')}
+    if not active or not receipt or not packet:return {'status':'UNKNOWN','reason':'CURRENT_GENERATION_CAUSAL_PARENT_MISSING'}
+    if (active.get('target_route')!='generate' or active.get('step_id')!=expected['step_id']
+            or active.get('plan_revision')!=plan_state.get('plan_revision')
+            or not claim.get('target_generation_id') or claim.get('target_generation_id')!=active.get('target_generation_id')
+            or claim.get('recovery_id')!=decision or envelope.get('recovery_decision_id')!=decision
+            or envelope!=receipt.get('execution_envelope')
+            or consumed.get('decision_id')!=decision or receipt.get('incident_id')!=packet.get('incident_id')
+            or any(not v or str(source.get(k) or '')!=str(v) for k,v in expected.items())
+            or packet.get('task_id')!=expected['task_id'] or packet.get('step_id')!=expected['step_id']
+            or any(str((packet.get('plan_spec_ref') or {}).get(k) or '')!=str(expected[k]) for k in ('plan_id','plan_version'))
+            or not active.get('source_attempt_id')
+            or active.get('source_attempt_id')!=source.get('attempt_id') or source.get('attempt_id')!=packet.get('attempt_ref')):
+        return {'status':'UNKNOWN','reason':'CURRENT_GENERATION_CAUSAL_LINK_MISMATCH'}
+    attempt=(plan_state.get('provenance_state') or {}).get('attempts',{}).get(source['attempt_id']) or {}
+    if any(str(attempt.get(k) or '')!=str(expected[k]) for k in ('plan_id','plan_version','step_id')):
+        return {'status':'UNKNOWN','reason':'CAUSAL_ATTEMPT_SCOPE_MISMATCH'}
+    return {'status':'verified','scope':{**expected,'attempt_id':source['attempt_id']},
+        'generation_id':claim['target_generation_id'],'recovery_decision_id':decision,
+        'failure_packet_ref':reference,'source_attempt_id':source['attempt_id'],
+        'authority':'read_only_consumed_causal_chain'}

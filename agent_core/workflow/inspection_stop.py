@@ -22,7 +22,7 @@ from agent_core.plan_tracker import (
 from agent_core.task_spec import effective_output_contracts
 from agent_core.approved_resource_locator import approved_resource_locator
 from agent_core.workflow.outcomes import RecoveryOutcome
-from agent_core.workflow.runtime_recovery_reporting import _path, _write_report
+from agent_core.workflow.runtime_recovery_reporting import _path, _write_report, publish_report
 
 
 PRODUCER = "supervisor_inspection_stop_v1"
@@ -415,6 +415,31 @@ def _report_targets(durable, task_root):
     return result
 
 
+
+def _internal_report_targets(durable, task_root, stop_id):
+    """Use an existing explicit diagnostic directory contract, never guess one.
+
+    A managed task store alone permits state/trace writes; it is not blanket
+    permission to invent delivered reports. Directory roles remain ordinary
+    canonical output contracts, approved through the existing handoff/Plan.
+    """
+    revision=int(_mapping(durable.get("current_task")).get("task_revision") or durable.get("task_revision") or 0)
+    if not plan_approval_is_current(durable,revision):return {}, "NO_CURRENT_DIAGNOSTIC_AUTHORIZATION"
+    spec=canonical_task_spec_for_state(durable)
+    roots=[row for row in effective_output_contracts(spec)
+        if row.get("artifact_kind")=="directory" and row.get("role") in {"diagnostic_root","diagnostic_directory","report_root"}
+        and str(row.get("source") or row.get("source_type")) in {"user_explicit","user_confirmed"}
+        and row.get("path_policy")=="managed_exact" and row.get("canonical_path")]
+    if len(roots)!=1:return {}, "NO_UNAMBIGUOUS_AUTHORIZED_DIAGNOSTIC_ROOT"
+    root=_path(roots[0]["canonical_path"])
+    for row in spec.get("inputs",[]) or []:
+        raw=row.get("canonical_path") or row.get("path")
+        if raw and (root==Path(raw) or (row.get("artifact_kind")=="directory" and root.is_relative_to(Path(raw)))):
+            raise ValueError("INTERNAL_REPORT_INPUT_OVERLAP")
+    target=root/"managed_stops"/_hash({"task_id":durable.get("task_id"),"stop_id":stop_id})
+    return {name:_path(target/name) for name in _REPORT_NAMES}, str(roots[0].get("artifact_id") or roots[0].get("output_id"))
+
+
 def _report_bodies(stop):
     # File bodies are stable across finalize/reload and do not claim the write
     # of their own files has completed before the writer returns its receipt.
@@ -496,7 +521,8 @@ def finalize_inspection_stop(data_path, stop, *, loader=load_plan_state, saver=s
                 fresh = loader(data_path, task_id)
                 if not _stop_matches(fresh, value):
                     raise ValueError("INSPECTION_STOP_STALE_SCOPE")
-                receipt = _write_report(path, bodies[name], prior_receipt=value["report_receipts"].get(str(path)))
+                receipt = publish_report(data_path, task_id, path, bodies[name], owner=value["stop_id"],
+                    authorization_ref=_hash(value["authority"]), scope_guard=lambda fresh: _stop_matches(fresh,value))
                 value["report_paths"][name] = str(path)
                 value["report_receipts"][str(path)] = {**receipt, "stop_id": value["stop_id"], "task_id": task_id}
             except Exception as exc:
