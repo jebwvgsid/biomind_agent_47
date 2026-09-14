@@ -1,0 +1,59 @@
+{
+  "audit_date": "2026-09-14",
+  "repo": "/public/home/liusiqi/03.毕设/Biomind_v1",
+  "os": "Linux",
+  "architecture": "x86_64",
+  "base_head": "d1f3779407e891d6fadf1778cd8e0ce7804b1630",
+  "branch": "refactor/consultant-controller-authority",
+  "source_basis": "BASE HEAD plus existing working-tree changes; static source inspection only",
+  "reference_commit": "c291e7961a515f6d7af9304e7fd1d257929aef26",
+  "reference_dynamic_reads": [
+    "AppFrame.module.css",
+    "ApprovalPanel.tsx",
+    "connection.ts"
+  ],
+  "attachment_sha256": "1a16606fe48468664ae6d98ae3420345f8522d3fe6a4779fc49e82654a58e044",
+  "source_sha256": {
+    "bio_agents.py": "60cc22fd31ec84ea8fb0ed220bfa27bb8fe90b62ccf9a18aaa9f494c0d7971c0",
+    "memory/persistence.py": "fc8cb41759b57e93d34ac35d1b8f28024ddd72777a39e8732643a99d43901a3d",
+    "memory/session_archive.py": "2ac2b70c6771dff7dd2041c1dd520da2d714628b6b58d24066a15a779c8eb495",
+    "memory/artifact_index.py": "2e59fa6f03867b8ce32cc23fdd77763d57569c72f95a5a034a1100dadf5dd40c",
+    "agent_core/human_io.py": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2",
+    "agent_core/plan_tracker.py": "3b475f10d0914c57efddc27e2247bddb9e9b35f2376fd2e2c72365ae6fc40bc4",
+    "agent_core/action_runtime.py": "ca17f31c6f119405606932bfa9d26777240d53cb8d31fa4844d1ae2df08c2110",
+    "agent_core/middleware.py": "182d9a9c70c565434076bf33f34d621a13ad57a1ac155660d0228c8cccfdd27c",
+    "agent_core/cli_display.py": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+    "agent_core/cli_activity.py": "32dc70a5f66375c72ec17a927e074cfc9d911c253c0a32cf1149fa95c258a188",
+    "agent_core/cli_terminal.py": "aa3519b4c65be87aaa21694fc09339e7f570ac8db1549440c9fb0ea23d375485",
+    "agent_core/provider_attempt.py": "22673124d88565e2c3331f8ba1345938a8aedf3e0af8e3d14646beca48487bcc",
+    "agent_core/workflow/managed_stop.py": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+    "agent_core/workflow/result_resolution.py": "dc5e037b54a9f51462defd5cd3dbc43fb98d57b20cfc1e2acff49ff09de602b5",
+    "agent_core/workflow/pi_rpc.py": "14747444e33ef98d1db433c8f21567f736c439b62406afcd92026a91cca13e88",
+    "agent_core/workflow/step_worker.py": "ce816aceee63691beaa56d2a4463679ab815d4dadc63d45f145fab2fb0e8478d",
+    "execution/executor.py": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+    "execution/profiling.py": "d73e89dbc1c92bf51c905db447226992cebc9528d0b910791a2cf8ae1faafba5",
+    "integrations/pi_step_worker/biomind_pi_rpc_poc.ts": "3902d0d91217baaf3792d662709074c860d1df202ba318775f50bb678c2acc04"
+  },
+  "protection_before_staging": {
+    "existing_tracked_changes_checked": 69,
+    "all_fingerprints_preserved": true,
+    "original_index_tree": "a3270220a1a3778b77a8abaf8c0e7a3d74c18e86",
+    "original_index_preserved": true,
+    "concurrent_untracked_entries_observed": [
+      "docs/audits/session_1789369423_plan_resource_cycle/",
+      "tests/export_plan_resource_cycle_audit.py",
+      "tests/test_plan_resource_cycle_audit.py"
+    ],
+    "concurrent_entries_action": "Unrelated concurrent additions; left unread and unstaged."
+  },
+  "scope": [
+    "apps/remote-workbench",
+    "docs/implementation/remote_workbench_20260914"
+  ],
+  "portable_preview": {
+    "path": "apps/remote-workbench/preview/BioMind-Workbench.html",
+    "bytes": 93328,
+    "sha256": "f63b878f4e2de651bc9b3e29ff350bf7dff08eb56012de3f768bca492ccd773a",
+    "identical_to_build": true
+  }
+}
