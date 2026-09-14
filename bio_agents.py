@@ -188,6 +188,7 @@ from agent_core.workflow.candidate_repair import (
     CandidateRepairReceiptError,
     candidate_repair_error_fingerprint,
     candidate_repair_fingerprint,
+    candidate_progress_view, candidate_progress_assessment,
     candidate_repair_rejection_event_id,
     candidate_repair_scope,
     latest_candidate_repair_receipt, claim_candidate_generation, complete_candidate_generation,
@@ -2530,6 +2531,7 @@ class StructuredActionParseResult:
     error: Dict[str, Any] = field(default_factory=dict)
     candidate: Any = None
     raw_candidate: str = ""
+    validated_targets: Tuple[str, ...] = ()
 
     @property
     def succeeded(self) -> bool:
@@ -12118,6 +12120,15 @@ class BioAnalystAgent:
                 "remaining_after_this_call": max(0, limit - ordinal),
                 "all_categories_share_total": True,
             }
+            progress = policy.get("progress_assessment")
+            if isinstance(progress, Mapping):
+                # Public correction targets, not ledger identity or authority.
+                projection["progress_assessment"] = {
+                    key: deepcopy(progress[key]) for key in (
+                        "basis", "newly_satisfied_targets", "resolved_targets",
+                        "pending_targets", "binding_axis", "scientific_success",
+                    ) if key in progress
+                }
         if protocol_error:
             projection["exact_error"] = deepcopy(dict(protocol_error))
         if exact_violations:
@@ -15976,6 +15987,7 @@ class BioAnalystAgent:
         visible_artifacts: Mapping[str, Mapping[str, Any]],
         repair_ordinal: Optional[int] = None,
         resolved_repair_limit: Optional[int] = None,
+        progress_assessment: Optional[Mapping[str, Any]] = None,
     ) -> Tuple[RecoveryContext, RecoveryDecision]:
         """Create one bounded, execution-free Generate repair transition."""
         task_state = dict(plan_state.get("task_state") or {})
@@ -16045,6 +16057,8 @@ class BioAnalystAgent:
             current_step=current_step,
         )
         context.validation["repair_domain"] = repair_domain
+        if progress_assessment is not None:
+            context.validation["candidate_progress"] = deepcopy(dict(progress_assessment))
         first_owner = str(
             (violations[0] if violations else {}).get("owner")
             or RecoveryFailureOwner.GENERATED_ACTION.value
@@ -16075,6 +16089,7 @@ class BioAnalystAgent:
                 "failure_owner": first_owner,
                 "candidate_fingerprint": candidate_fingerprint,
                 "previous_candidate_fingerprint": previous_candidate_fingerprint,
+                "candidate_progress": deepcopy(dict(progress_assessment)) if progress_assessment is not None else None,
                 "violations": [
                     str(item.get("code") or item.get("message") or "")
                     for item in violations
@@ -16118,9 +16133,20 @@ class BioAnalystAgent:
         candidate_event_id: str,
         recovery_generated: bool = False,
         revoke_pending_action_id: str = "",
+        validated_representation_targets: Sequence[str] = (),
     ) -> Dict[str, Any]:
         """CAS-commit one rejection, repair charge, and trusted receipt reference."""
 
+        # This is a diagnostic projection only. Re-run the existing pure parser
+        # to retain its passed checkpoints; never treat the envelope as an action.
+        progress_candidate = candidate_progress_view(candidate)
+        diagnostic_parse = self._structured_action_from_object_result(progress_candidate)
+        representation_targets = [*diagnostic_parse.validated_targets, *validated_representation_targets]
+        if (isinstance(candidate, Mapping)
+                and candidate.get("kind") == "malformed_generate_response"
+                and not isinstance(candidate.get("parsed_candidate"), Mapping)):
+            representation_targets = list(validated_representation_targets)
+        binding_comparable = bool(diagnostic_parse.succeeded)
         fixed_step = next((row for row in approved_plan_snapshot.get("steps", []) if row.get("step_id") == step_id), {})
         frozen_input = dict(fixed_step.get("generate_binding_input_contract") or {})
         if frozen_input:
@@ -16134,9 +16160,9 @@ class BioAnalystAgent:
                 derived_artifact_layout=dict(binding_contract.get("derived_artifact_layout") or {}))
             contract_ref = {**dict(contract_ref), "requirements": public_binding_requirements(frozen_input,
                 operation=fixed_operation, workspace_bindings=catalog)}
-        if frozen_input:
+        if frozen_input and binding_comparable:
             from agent_core.plan_bindings import public_binding_shape_violations
-            independent = public_binding_shape_violations(candidate, contract_ref.get("requirements") or {})
+            independent = public_binding_shape_violations(progress_candidate, contract_ref.get("requirements") or {})
             violations = list(violations)
             seen = {(item.get("code") or item.get("error_code"), item.get("field_path"))
                     for item in violations if isinstance(item, Mapping)}
@@ -16517,21 +16543,52 @@ class BioAnalystAgent:
                 key=lambda item: int(item.get("repair_ordinal") or 0),
                 default={},
             )
+            if prior_row and prior_row.get("status") != "repairable":
+                # Re-entry cannot revive a stopped or historically exhausted
+                # scope, even if this process has a newer default policy.
+                return _result_from_event(prior_row)
             durable_previous_fingerprint = str(
                 prior_row.get("candidate_fingerprint")
                 or previous_candidate_fingerprint
                 or ""
             )
-            progress_proven = bool(
-                not prior_row
-                or str(prior_row.get("candidate_fingerprint") or "")
-                != candidate_fingerprint
-                or str(prior_row.get("error_fingerprint") or "")
-                != error_fingerprint
+            public_valid_facts = sorted(binding_input_progress_facts(
+                progress_candidate, contract_ref.get("requirements") or {}
+            )) if frozen_input and binding_comparable else []
+            comparison_rows = []
+            for historical in scoped_rows:
+                comparable = deepcopy(historical)
+                if not comparable.get("progress_assessment"):
+                    recorded = ((historical.get("recovery_context") or {}).get("action_contract") or {}).get("structured_candidate")
+                    # Compatibility read only: re-check the exact recorded
+                    # candidate with today's parser. Never rewrite old facts,
+                    # limits, status, receipts, or claim consumption.
+                    if (recorded is not None and candidate_repair_fingerprint(recorded)
+                            == historical.get("candidate_fingerprint")):
+                        old_view = candidate_progress_view(recorded)
+                        old_parse = self._structured_action_from_object_result(old_view)
+                        old_targets = list(old_parse.validated_targets)
+                        if (isinstance(recorded, Mapping)
+                                and recorded.get("kind") == "malformed_generate_response"
+                                and not isinstance(recorded.get("parsed_candidate"), Mapping)):
+                            old_targets = []
+                        old_contract = dict(historical.get("contract_ref") or {})
+                        comparable["progress_assessment"] = candidate_progress_assessment(
+                            candidate=recorded, representation_targets=old_targets,
+                            binding_facts=sorted(binding_input_progress_facts(old_view,
+                                old_contract.get("requirements") or {}))
+                                if frozen_input and old_parse.succeeded else None,
+                            violations=historical.get("exact_violations") or [],
+                            prior_rows=[], contract_ref=old_contract,
+                        )
+                        comparable["progress_assessment"]["observation_basis"] = "current_parser_rechecks_recorded_candidate"
+                comparison_rows.append(comparable)
+            progress_assessment = candidate_progress_assessment(
+                candidate=candidate, representation_targets=representation_targets,
+                binding_facts=public_valid_facts if frozen_input and binding_comparable else None,
+                violations=normalized_violations, prior_rows=comparison_rows, contract_ref=contract_ref,
             )
-            public_valid_facts = sorted(binding_input_progress_facts(candidate, contract_ref.get("requirements") or {}))
-            if frozen_input and prior_row:
-                progress_proven = bool(set(public_valid_facts) - set(prior_row.get("public_valid_facts") or []))
+            progress_proven = progress_assessment["progress_proven"]
             budgets = dict(task_state.get("budgets") or {})
             resolved_policy = freeze_candidate_policy(repair_state, durable_scope, budgets)
             repair_limit = resolved_policy["limit"]
@@ -16540,7 +16597,8 @@ class BioAnalystAgent:
                 "corrections_authorized_before": min(repair_limit, repair_ordinal - 1),
                 "corrections_observed_before_rejection": min(repair_limit, repair_ordinal - 1),
                 "remaining_before_authorization": max(0, repair_limit - repair_ordinal + 1),
-                "category": correction_category(repair_stage, normalized_violations)}
+                "category": correction_category(repair_stage, normalized_violations),
+                "progress_assessment": deepcopy(progress_assessment)}
             recovery_context, policy_decision = self._managed_preaction_recovery(
                 task_id=task_id,
                 plan_state=durable,
@@ -16554,6 +16612,7 @@ class BioAnalystAgent:
                 visible_artifacts=visible_artifacts,
                 repair_ordinal=repair_ordinal,
                 resolved_repair_limit=repair_limit,
+                progress_assessment=progress_assessment,
             )
             format_repair_allowed = bool(
                 policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
@@ -16698,6 +16757,8 @@ class BioAnalystAgent:
                 secondary_failure_code
                 if secondary_failures
                 else "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED"
+                if no_progress and progress_assessment["basis"] == "recurrent_rejected_candidate"
+                else "GENERATE_REPAIR_NO_VALIDATED_PROGRESS"
                 if no_progress
                 else "GENERATE_REPAIR_BUDGET_EXHAUSTED"
                 if not repair_allowed
@@ -16720,6 +16781,7 @@ class BioAnalystAgent:
                     "remaining": max(0, repair_limit - (repair_ordinal if repair_allowed else repair_ordinal - 1))},
                 "correction_category": policy_receipt["category"],
                 "progress_proven": progress_proven,
+                "progress_assessment": deepcopy(progress_assessment),
                 "public_valid_facts": public_valid_facts,
                 "validation_source": validation_source,
                 "contract_ref": deepcopy(dict(contract_ref or {})),
@@ -21525,19 +21587,21 @@ class BioAnalystAgent:
             }, ""
 
         candidates: List[str] = []
+        candidate_sources: Dict[str, str] = {}
 
-        def add_candidate(candidate: str) -> None:
+        def add_candidate(candidate: str, source: str) -> None:
             value = str(candidate or "").strip()
             if value and value not in candidates:
                 candidates.append(value)
+                candidate_sources[value] = source
 
         fenced = re.search(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
         if fenced:
-            add_candidate(fenced.group(1))
-        add_candidate(raw)
+            add_candidate(fenced.group(1), "markdown_fence")
+        add_candidate(raw, "candidate_text")
         brace = re.search(r"\{.*\}", raw, re.DOTALL)
         if brace:
-            add_candidate(brace.group(0))
+            add_candidate(brace.group(0), "brace_scan")
 
         def reject_nonfinite_json_number(value: str) -> None:
             raise ValueError(f"non-finite JSON number is not allowed: {value}")
@@ -21564,6 +21628,7 @@ class BioAnalystAgent:
                     position=exc.pos,
                 )
                 errors.append(({
+                    "json_candidate_source": candidate_sources[candidate],
                     "stage": "json_decode",
                     "code": "JSON_DECODE_ERROR",
                     "message": str(exc.msg or "JSON decoding failed."),
@@ -21576,6 +21641,7 @@ class BioAnalystAgent:
             except Exception as exc:  # noqa: BLE001 - unexpected parser failures still fail closed.
                 excerpt = cls._bounded_protocol_excerpt(candidate)
                 errors.append(({
+                    "json_candidate_source": candidate_sources[candidate],
                     "stage": "json_decode",
                     "code": "JSON_PARSE_ERROR",
                     "message": f"{type(exc).__name__}: {exc}",
@@ -21586,6 +21652,7 @@ class BioAnalystAgent:
                 return parsed, {}, cls._bounded_protocol_excerpt(candidate)
             excerpt = cls._bounded_protocol_excerpt(candidate)
             errors.append(({
+                    "json_candidate_source": candidate_sources[candidate],
                 "stage": "action_schema",
                 "code": "ACTION_SCHEMA_TYPE_ERROR",
                 "field_path": "$",
@@ -21656,6 +21723,7 @@ class BioAnalystAgent:
         source: str = "action_json",
     ) -> StructuredActionParseResult:
         candidate = deepcopy(obj)
+        validated_targets: List[str] = []
 
         def fail(
             code: str,
@@ -21676,7 +21744,8 @@ class BioAnalystAgent:
                 error["expected"] = expected
             if actual:
                 error["actual"] = actual
-            return StructuredActionParseResult(error=error, candidate=candidate)
+            return StructuredActionParseResult(error=error, candidate=candidate,
+                validated_targets=tuple(validated_targets))
 
         if not isinstance(obj, dict):
             return fail(
@@ -21686,6 +21755,7 @@ class BioAnalystAgent:
                 expected="object",
                 actual=cls._json_value_type(obj),
             )
+        validated_targets.append("json_object")
         raw_action_type = obj.get("action_type") or obj.get("type") or obj.get("action") or ""
         action_type = cls._normalize_action_type(raw_action_type)
         if not action_type:
@@ -21708,6 +21778,7 @@ class BioAnalystAgent:
                 expected="supported action type",
                 actual=str(raw_action_type),
             )
+        validated_targets.append("action_type")
         action: Dict[str, Any] = {"type": action_type, "source": source}
         if action_type == "renderer_invocation":
             arguments = obj.get("arguments") or obj.get("args") or {}
@@ -21724,8 +21795,16 @@ class BioAnalystAgent:
                 "arguments": arguments,
                 "outdir": str(obj.get("outdir") or "").strip(),
             })
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "execute":
+            for code_field in ("code", "body", "command"):
+                if code_field in obj and not isinstance(obj[code_field], str):
+                    return fail(
+                        "ACTION_SCHEMA_TYPE_ERROR", f"execute.{code_field} must be a string.",
+                        field_path=code_field, expected="string",
+                        actual=cls._json_value_type(obj[code_field]),
+                    )
             code = str(obj.get("code") or obj.get("body") or obj.get("command") or "").strip()
             argv = obj.get("argv")
             if argv is not None and not isinstance(argv, list):
@@ -21762,6 +21841,7 @@ class BioAnalystAgent:
                             expected="non-empty string",
                             actual="empty string",
                         )
+            validated_targets.append("execute.argv_shape")
             if not code and not argv:
                 return fail(
                     "ACTION_SCHEMA_REQUIRED_FIELD",
@@ -21770,6 +21850,7 @@ class BioAnalystAgent:
                     expected="non-empty code or argv",
                     actual="missing",
                 )
+            validated_targets.append("execute.executable_body")
             raw_outputs = obj.get("outputs") or []
             if isinstance(raw_outputs, str):
                 raw_outputs = [raw_outputs]
@@ -21781,9 +21862,8 @@ class BioAnalystAgent:
                     expected="array or string",
                     actual=cls._json_value_type(raw_outputs),
                 )
+            validated_targets.append("execute.outputs_shape")
             env = obj.get("env") if "env" in obj else {}
-            if env is None:
-                env = {}
             if not isinstance(env, Mapping):
                 return fail(
                     "ACTION_SCHEMA_TYPE_ERROR",
@@ -21792,6 +21872,7 @@ class BioAnalystAgent:
                     expected="object",
                     actual=cls._json_value_type(env),
                 )
+            validated_targets.append("execute.env_object")
             for key, value in env.items():
                 if not isinstance(key, str) or not key:
                     return fail(
@@ -21809,6 +21890,8 @@ class BioAnalystAgent:
                         expected="string",
                         actual=cls._json_value_type(value),
                     )
+                validated_targets.append(f"execute.env.{key}")
+            validated_targets.append("execute.env_values")
             action.update({
                 "code": code,
                 "argv": deepcopy(argv) if isinstance(argv, list) else [],
@@ -21817,6 +21900,12 @@ class BioAnalystAgent:
                 "language": str(obj.get("language") or "").strip(),
             })
             if "operation" in obj:
+                if not isinstance(obj["operation"], str):
+                    return fail(
+                        "ACTION_SCHEMA_TYPE_ERROR", "execute.operation must be a string.",
+                        field_path="operation", expected="string",
+                        actual=cls._json_value_type(obj["operation"]),
+                    )
                 operation = str(obj.get("operation") or "").strip()
                 if not operation:
                     return fail(
@@ -21857,7 +21946,8 @@ class BioAnalystAgent:
                 "renderer_invocation",
             }:
                 action["command_role"] = command_role
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "ask_user":
             question = str(obj.get("question") or obj.get("body") or obj.get("prompt") or "").strip()
             if not question:
@@ -21869,7 +21959,8 @@ class BioAnalystAgent:
                     actual="missing",
                 )
             action["question"] = question
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "search":
             query = str(obj.get("query") or obj.get("question") or obj.get("body") or "").strip()
             if not query:
@@ -21881,7 +21972,8 @@ class BioAnalystAgent:
                     actual="missing",
                 )
             action["query"] = query
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "install_tool":
             tool = str(obj.get("tool") or obj.get("tool_name") or obj.get("body") or "").strip()
             if not tool:
@@ -21893,7 +21985,8 @@ class BioAnalystAgent:
                     actual="missing",
                 )
             action.update({"tool": tool, "env": str(obj.get("env") or "").strip()})
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "activate_batch":
             batch_id = str(obj.get("batch_id") or obj.get("batch") or "").strip()
             if not batch_id:
@@ -21905,7 +21998,8 @@ class BioAnalystAgent:
                     actual="missing",
                 )
             action["batch_id"] = batch_id
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "step_completion_candidate":
             step_id = str(obj.get("step_id") or "").strip()
             reason = str(obj.get("reason") or obj.get("body") or "").strip()
@@ -21926,7 +22020,8 @@ class BioAnalystAgent:
                     actual="one or more fields missing",
                 )
             action.update({"step_id": step_id, "reason": reason, "evidence_ids": evidence_ids})
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "plan_patch":
             reason = str(obj.get("reason") or obj.get("body") or "").strip()
             if not reason:
@@ -21942,7 +22037,8 @@ class BioAnalystAgent:
                 "patch": obj.get("patch") or {},
                 "failure_owner": str(obj.get("failure_owner") or "").strip().upper(),
             })
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "blocked":
             reason = str(obj.get("reason") or obj.get("body") or "").strip()
             if not reason:
@@ -21960,7 +22056,8 @@ class BioAnalystAgent:
                 "reason": reason,
                 "missing_evidence": [str(item).strip() for item in raw_missing if str(item).strip()],
             })
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         if action_type == "solution":
             text = str(obj.get("text") or obj.get("answer") or obj.get("body") or "").strip()
             if not text:
@@ -21972,7 +22069,8 @@ class BioAnalystAgent:
                     actual="missing",
                 )
             action["text"] = text
-            return StructuredActionParseResult(action=action, candidate=candidate)
+            return StructuredActionParseResult(action=action, candidate=candidate,
+                validated_targets=tuple([*validated_targets, "action_schema_complete"]))
         return fail(
             "ACTION_SCHEMA_VALUE_ERROR",
             f"Unsupported structured action type: {action_type!r}.",
@@ -21998,16 +22096,16 @@ class BioAnalystAgent:
                 "message": "Generate returned an empty response instead of a structured action.",
             })
 
-        json_candidates: List[str] = []
+        json_candidates: List[Tuple[str, str]] = []
         for match in re.finditer(r"<action_json>(.*?)</action_json>", raw, re.DOTALL | re.IGNORECASE):
-            json_candidates.append(match.group(1).strip())
+            json_candidates.append(("action_json_tag", match.group(1).strip()))
         fenced = re.search(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
         if fenced:
-            json_candidates.append(fenced.group(1).strip())
+            json_candidates.append(("markdown_fence", fenced.group(1).strip()))
         if raw.startswith("{"):
-            json_candidates.append(raw)
+            json_candidates.append(("raw_json", raw))
         parse_failures: List[StructuredActionParseResult] = []
-        for candidate in json_candidates:
+        for container_source, candidate in json_candidates:
             obj, json_error, raw_candidate = cls._extract_json_object_result(candidate)
             if obj or (not json_error and bool(raw_candidate)):
                 result = cls._structured_action_from_object_result(obj)
@@ -22016,15 +22114,17 @@ class BioAnalystAgent:
                         action=result.action,
                         candidate=result.candidate,
                         raw_candidate=raw_candidate,
+                        validated_targets=result.validated_targets,
                     )
                 parse_failures.append(StructuredActionParseResult(
-                    error=result.error,
+                    error={**result.error, "response_container_source": container_source},
                     candidate=result.candidate,
                     raw_candidate=raw_candidate,
+                    validated_targets=result.validated_targets,
                 ))
             elif json_error:
                 parse_failures.append(StructuredActionParseResult(
-                    error=json_error,
+                    error={**json_error, "response_container_source": container_source},
                     raw_candidate=raw_candidate,
                 ))
 
@@ -43705,6 +43805,7 @@ question. Never guess a scientific or database identity.
             }, raw_candidate=content) if generate_display.error
                 else self._extract_structured_action_result(content))
             structured_action = structured_parse_result.action
+            candidate_validated_representation_targets: List[str] = []
             action_parse_error = deepcopy(structured_parse_result.error)
             provider_candidate = deepcopy(structured_action)
             # Script mode may request a non-success stop through the existing
@@ -43730,6 +43831,7 @@ question. Never guess a scientific or database identity.
                     if generate_display.error:
                         raise ScriptBlockError(generate_display.error)
                     script_block = parse_executable_script_block(content)
+                    candidate_validated_representation_targets.append("executable_block")
                     # Freeze the framework helper into this complete candidate
                     # before adapting argv, hashing, validation or approval.
                     from dataclasses import replace
@@ -43737,6 +43839,7 @@ question. Never guess a scientific or database identity.
                     try:
                         script_block = replace(script_block, body=materialize_effect_template(
                             script_block.body, formal_emission_template, language=script_block.language))
+                        candidate_validated_representation_targets.append("effect_helper_materialization")
                     except ValueError as exc:
                         raise ScriptBlockError(str(exc)) from exc
                     structured_action = adapt_script_block_to_action(
@@ -43906,6 +44009,7 @@ question. Never guess a scientific or database identity.
                 from agent_core.step_effects import materialize_effect_action
                 try:
                     structured_action = materialize_effect_action(structured_action, formal_emission_template)
+                    candidate_validated_representation_targets.append("effect_helper_materialization")
                 except ValueError as exc:
                     structured_action = {}
                     action_parse_error = {"stage": "action_schema", "code": str(exc),
@@ -43986,7 +44090,7 @@ question. Never guess a scientific or database identity.
                 # executable parser (for example a rejected foreign task_id).
                 candidate_for_repair = deepcopy(structured_parse_result.candidate)
             candidate_fingerprint = (
-                managed_action_fingerprint(candidate_for_repair)
+                candidate_repair_fingerprint(candidate_for_repair)
                 if candidate_for_repair
                 else ""
             )
@@ -44055,6 +44159,7 @@ question. Never guess a scientific or database identity.
                     exit_reason=exit_reason,
                     candidate_event_id=candidate_event_id,
                     recovery_generated=recovery_generated,
+                    validated_representation_targets=candidate_validated_representation_targets,
                 )
 
             if str(structured_action.get("type") or "") == "execute" and structured_action.get("code"):
@@ -44067,118 +44172,12 @@ question. Never guess a scientific or database identity.
                         repair_stage="script_body_validation", validation_source="execution.script_validation.check_script_body",
                         contract_ref={"protocol": "exact_executable_body", "execution_started": False},
                         exit_reason="script_body_validation_rejected")}
+                if syntax["status"] == "valid":
+                    candidate_validated_representation_targets.append("executable_syntax")
 
-            active_candidate_repair = (
-                dict(state.get("action_format_repair") or {})
-                if isinstance(state.get("action_format_repair"), Mapping)
-                else {}
-            )
-            if (
-                candidate_for_repair
-                and str(active_candidate_repair.get("producer") or "")
-                == CANDIDATE_REPAIR_RECEIPT_PRODUCER
-                and candidate_repair_fingerprint(candidate_for_repair)
-                == str(
-                    active_candidate_repair.get("candidate_fingerprint") or ""
-                )
-            ):
-                # The receipt authorizes one *corrective* transition.  Reusing
-                # the exact rejected candidate is not progress even when the
-                # original dynamic gate happens to disappear before this turn.
-                # Re-submit the trusted validator identity to the central
-                # ledger so its normal no-progress rule terminalizes the loop.
-                repair_event_id = str(
-                    active_candidate_repair.get("rejection_event_id") or ""
-                )
-                repair_plan_state = load_plan_state(self.data_path, task_id)
-                repair_events = dict(
-                    (
-                        (repair_plan_state.get("task_state") or {}).get(
-                            "candidate_repair_state"
-                        )
-                        or {}
-                    ).get("events")
-                    or {}
-                )
-                prior_repair_event = dict(
-                    repair_events.get(repair_event_id) or {}
-                )
-                repeated_violations = [
-                    deepcopy(dict(item))
-                    for item in active_candidate_repair.get(
-                        "exact_violations"
-                    )
-                    or []
-                    if isinstance(item, Mapping)
-                ]
-                repeated_update = self._candidate_admission_rejection_update(
-                    task_id=task_id,
-                    plan_state=generate_invocation_plan_state,
-                    approved_plan_snapshot=(
-                        generate_approved_snapshot
-                        or load_approved_plan_snapshot(
-                            self.data_path,
-                            task_id,
-                            state=repair_plan_state,
-                        )
-                    ),
-                    step_id=str(
-                        (active_candidate_repair.get("scope") or {}).get(
-                            "step_id"
-                        )
-                        or current_step_id
-                    ),
-                    candidate=candidate_for_repair,
-                    candidate_fingerprint="",
-                    previous_candidate_fingerprint=str(
-                        active_candidate_repair.get("candidate_fingerprint")
-                        or ""
-                    ),
-                    violations=repeated_violations,
-                    visible_artifacts=generate_visible_artifacts,
-                    repair_domain=str(
-                        active_candidate_repair.get("repair_domain")
-                        or PreActionRepairDomain.GENERATED_SEMANTIC.value
-                    ),
-                    repair_stage=str(
-                        active_candidate_repair.get("repair_stage")
-                        or "pre_execution_candidate_admission"
-                    ),
-                    validation_source=str(
-                        active_candidate_repair.get("validation_source") or ""
-                    ),
-                    contract_ref=dict(
-                        active_candidate_repair.get("contract_ref") or {}
-                    ),
-                    exit_reason=str(
-                        prior_repair_event.get("exit_reason")
-                        or "candidate_repair_no_progress"
-                    ),
-                    candidate_event_id=candidate_event_id,
-                    recovery_generated=recovery_generated,
-                )
-                return {
-                    "messages": [
-                        response,
-                        SystemMessage(content=json.dumps(
-                            {
-                                "kind": "generate_candidate_no_progress",
-                                "reason_code": (
-                                    "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED"
-                                ),
-                                "execution_status": "not_started",
-                                "candidate_fingerprint": (
-                                    active_candidate_repair.get(
-                                        "candidate_fingerprint"
-                                    )
-                                ),
-                            },
-                            ensure_ascii=False,
-                            sort_keys=True,
-                        )),
-                    ],
-                    **repeated_update,
-                }
+            # Admission decides whether this response is valid. Rejected-candidate
+            # recurrence belongs to the shared ledger after the actual gate; a
+            # changed evidence context can make the same payload admissible.
 
             if str(structured_action.get("type") or "") == "execute":
                 try:
@@ -44194,7 +44193,7 @@ question. Never guess a scientific or database identity.
                         structured_action, frozen=generate_frozen_binding_input, scope=invocation_audit.scope,
                         workspace_bindings=generate_workspace_bindings, raw_public_candidate=structured_parse_result.candidate)
                 except PlanBindingError as exc:
-                    return {"messages": [response], **self._candidate_admission_rejection_update(
+                    return {"messages": [response], **self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
                         task_id=task_id, plan_state=generate_invocation_plan_state, approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id, candidate=candidate_for_repair, candidate_fingerprint="",
                         previous_candidate_fingerprint="", violations=[exc.to_dict()], visible_artifacts=generate_visible_artifacts,
@@ -44287,7 +44286,7 @@ question. Never guess a scientific or database identity.
                     }
                 if operation_admission.status == "candidate_rejected":
                     operation_violations = list(operation_admission.violations)
-                    rejection_update = self._candidate_admission_rejection_update(
+                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
                         task_id=task_id,
                         plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
@@ -44390,7 +44389,7 @@ question. Never guess a scientific or database identity.
                             "reason_code": failure["error_code"],
                             "next_step": "finish",
                         }
-                    rejection_update = self._candidate_admission_rejection_update(
+                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
                         task_id=task_id,
                         plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
@@ -44484,7 +44483,7 @@ question. Never guess a scientific or database identity.
                             "generate_exit_reason": "binding_dependency_unavailable",
                             "next_step": "supervisor",
                         }
-                    rejection_update = self._candidate_admission_rejection_update(
+                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
                         task_id=task_id,
                         plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
@@ -44863,7 +44862,7 @@ question. Never guess a scientific or database identity.
                             and recovery_context_obj.failure_stage == "pre_action_contract"
                             else ""
                         )
-                        rejection_update = self._candidate_admission_rejection_update(
+                        rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
                             task_id=task_id,
                             plan_state=generate_invocation_plan_state,
                             approved_plan_snapshot=approved_action_snapshot,
@@ -45075,7 +45074,7 @@ question. Never guess a scientific or database identity.
                         },
                     )
                     if exc.code == "EXTERNAL_SCRIPT_INVALID":
-                        rejection_update = self._candidate_admission_rejection_update(
+                        rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
                             task_id=task_id,
                             plan_state=generate_invocation_plan_state,
                             approved_plan_snapshot=generate_approved_snapshot,
@@ -45786,10 +45785,10 @@ question. Never guess a scientific or database identity.
                 previous_candidate: Any = (
                     deepcopy(structured_parse_result.candidate)
                     if repair_stage == "action_schema"
-                    and structured_parse_result.candidate not in (None, "", [], {})
+                    and isinstance(structured_parse_result.candidate, Mapping)
                     else structured_parse_result.raw_candidate
                 )
-                if previous_candidate in (None, "", [], {}):
+                if not isinstance(previous_candidate, Mapping) and previous_candidate in (None, "", [], {}):
                     previous_candidate = self._bounded_protocol_excerpt(str(content or ""))
                 current_step_state = load_plan_state(self.data_path, task_id)
                 _, format_step = current_plan_step_with_index(current_step_state)
@@ -45801,6 +45800,15 @@ question. Never guess a scientific or database identity.
                     str(content or ""),
                     parser_candidate=previous_candidate,
                 )
+                receipt_candidate["parser_selection"] = {
+                    "response_container_source": str(protocol_error.get("response_container_source") or "active_protocol_parser"),
+                    "stage": repair_stage,
+                    "json_candidate_source": str(protocol_error.get("json_candidate_source") or "decoded_candidate"),
+                    "excerpt_kind": "bounded_parser_excerpt",
+                    "excerpt_sha256": hashlib.sha256(
+                        str(structured_parse_result.raw_candidate or "").encode("utf-8", errors="replace")
+                    ).hexdigest(),
+                }
                 protocol_violation = {
                     "code": str(
                         protocol_error.get("code")
@@ -45820,10 +45828,12 @@ question. Never guess a scientific or database identity.
                     ),
                     "observed": deepcopy(
                         structured_parse_result.candidate
-                        if structured_parse_result.candidate not in (None, "", [], {})
+                        if isinstance(structured_parse_result.candidate, Mapping)
                         else self._bounded_protocol_excerpt(str(content or ""))
                     ),
-                    "expected": "one current-step action matching the active Generate protocol",
+                    "expected": str(protocol_error.get("expected") or
+                        "one current-step action matching the active Generate protocol"),
+                    "actual": deepcopy(protocol_error.get("actual")),
                     "protocol_error": deepcopy(protocol_error),
                     "failure_stage": "pre_execution_candidate_admission",
                 }
@@ -45861,6 +45871,7 @@ question. Never guess a scientific or database identity.
                     exit_reason="unrecognized_action",
                     candidate_event_id=candidate_event_id,
                     recovery_generated=recovery_generated,
+                    validated_representation_targets=candidate_validated_representation_targets,
                 )
                 repair_feedback = self._action_format_repair_feedback(
                     state,

@@ -42,6 +42,90 @@ def candidate_repair_fingerprint(candidate: Any) -> str:
     return _digest({"candidate": deepcopy(candidate)})
 
 
+def candidate_progress_view(candidate: Any) -> Any:
+    """Comparison only: unwrap our diagnostic envelope, never promote an action.
+
+    The complete candidate fingerprint/receipt remains untouched. Only identities
+    attached by the execution framework are omitted, and only at the action root;
+    resource IDs, evidence versions, parameters and nested values stay significant.
+    """
+    view = deepcopy(candidate)
+    if isinstance(view, Mapping) and view.get("kind") == "malformed_generate_response":
+        if isinstance(view.get("parsed_candidate"), Mapping):
+            view = deepcopy(dict(view["parsed_candidate"]))
+        else:
+            return {"unparsed_response_sha256": view.get("response_sha256")}
+    if isinstance(view, Mapping):
+        view = dict(view)
+        for name in ("action_id", "candidate_generation_event_id"):
+            view.pop(name, None)
+        provenance = view.get("generation_provenance")
+        if isinstance(provenance, Mapping):
+            view["generation_provenance"] = {
+                key: value for key, value in provenance.items()
+                if key not in {"recovery_id", "recovery_envelope_id", "source_route"}
+            }
+    return view
+
+
+def candidate_progress_assessment(
+    *, candidate: Any, representation_targets: Sequence[str],
+    binding_facts: Sequence[str] | None, violations: Sequence[Mapping[str, Any]],
+    prior_rows: Sequence[Mapping[str, Any]], contract_ref: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """One ledger decision from actual parser/validator observations.
+
+    Error-code changes are diagnostics, not progress. A rejected novel candidate
+    needs a newly satisfied target; no scientific success is inferred here. Full
+    admission runs before this function, so a now-valid candidate needs no extra
+    repair authorization. Historical rows without observations remain comparable
+    by full identity, but cannot supply invented validation facts.
+    """
+    view = candidate_progress_view(candidate)
+    representation = sorted(set(representation_targets))
+    bindings = sorted(set(binding_facts)) if binding_facts is not None else None
+    comparison = _digest({"candidate": view})
+    validation_signature = _digest({"representation": representation,
+        "binding": bindings, "contract_ref": dict(contract_ref or {})})
+    ordered = sorted(prior_rows, key=lambda row: int(row.get("repair_ordinal") or 0))
+    previous = dict((ordered[-1] if ordered else {}).get("progress_assessment") or {})
+    old_representation = set(previous.get("representation_targets") or [])
+    old_bindings = set(previous.get("binding_facts") or [])
+    gained_representation = sorted(set(representation) - old_representation)
+    gained_bindings = sorted(set(bindings or []) - old_bindings)
+    recurrence = any(
+        (row.get("progress_assessment") or {}).get("comparison_fingerprint") == comparison
+        and (row.get("progress_assessment") or {}).get("validation_signature") == validation_signature
+        for row in ordered
+    )
+    legacy_repeat = bool(ordered and not previous and
+        ordered[-1].get("candidate_fingerprint") == candidate_repair_fingerprint(candidate))
+    prior_targets = list(previous.get("pending_targets") or [])
+    pending_targets = sorted({str(item.get("field_path") or
+        (item.get("protocol_error") or {}).get("field_path") or "response")
+        for item in violations})
+    if not ordered:
+        proven, basis = True, "initial_rejection"
+    elif recurrence or legacy_repeat:
+        proven, basis = False, "recurrent_rejected_candidate"
+    elif previous and gained_representation and not (old_representation - set(representation)):
+        proven, basis = True, "validated_representation_target"
+    elif (previous and bindings is not None and gained_bindings
+          and not (old_representation - set(representation))
+          and not (old_bindings - set(bindings))):
+        proven, basis = True, "validated_binding_target"
+    else:
+        proven, basis = False, "no_validated_target_progress"
+    return {"schema_version": 1, "producer": CANDIDATE_REPAIR_RECEIPT_PRODUCER,
+        "progress_proven": proven, "basis": basis,
+        "comparison_fingerprint": comparison, "validation_signature": validation_signature,
+        "representation_targets": representation, "binding_facts": bindings,
+        "binding_axis": "evaluated" if bindings is not None else "not_evaluated",
+        "newly_satisfied_targets": gained_representation + gained_bindings if ordered else [],
+        "resolved_targets": sorted(set(prior_targets) - set(pending_targets)),
+        "pending_targets": pending_targets, "scientific_success": "not_assessed"}
+
+
 def candidate_repair_error_fingerprint(
     *,
     repair_stage: str,

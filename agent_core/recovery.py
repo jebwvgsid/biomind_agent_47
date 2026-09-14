@@ -4928,11 +4928,23 @@ class RecoveryPolicy:
                 previous_candidate_fingerprint = str(
                     pre.get("previous_candidate_fingerprint") or ""
                 )
-                if candidate_fingerprint and candidate_fingerprint == previous_candidate_fingerprint:
+                # The candidate ledger has the parser/binding observations and
+                # the full scoped history. Consume its trusted decision instead
+                # of silently replacing that metric with script identity.
+                progress = pre.get("candidate_progress")
+                trusted_progress = (
+                    isinstance(progress, Mapping)
+                    and progress.get("producer") == "biomind.generate_candidate_admission.v1"
+                    and isinstance(progress.get("progress_proven"), bool)
+                )
+                no_progress = (not progress["progress_proven"] if trusted_progress else
+                    bool(candidate_fingerprint and candidate_fingerprint == previous_candidate_fingerprint))
+                if no_progress:
                     return self._decision(
                         RecoveryDecisionKind.ESCALATE.value,
                         reason_code="corrective_generate_no_progress",
-                        reason="Corrective Generate reproduced the same invalid candidate.",
+                        reason=("The candidate ledger found no validated correction progress."
+                            if trusted_progress else "Corrective Generate reproduced the same invalid candidate."),
                         evidence=violations or missing,
                         failure_owner=pre_owner,
                         failure_class=RecoveryFailureClass.SCRIPT_BUG.value,
