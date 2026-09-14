@@ -1,0 +1,152 @@
+[
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[fourth_valid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[fourth_valid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00031037721782922745,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[fourth_valid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 19.001626266166568,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[fourth_valid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0010807877406477928,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[model_stop]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[model_stop]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00035289861261844635,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[model_stop]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.034185439348221,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[model_stop]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019586551934480667,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[failure]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[failure]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002543879672884941,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[failure]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.971003994345665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[failure]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017431005835533142,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[cancel]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[cancel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025705713778734207,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[cancel]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.0071576097980142,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[cancel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020489655435085297,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[bad_policy]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[bad_policy]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002626115456223488,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[bad_policy]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.138824070803821,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[bad_policy]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019136443734169006,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_constructor_uses_separate_no_retry_no_cache_planner_client",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_constructor_uses_separate_no_retry_no_cache_planner_client",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011194031685590744,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_constructor_uses_separate_no_retry_no_cache_planner_client",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2430332200601697,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_transport_fix.py::test_constructor_uses_separate_no_retry_no_cache_planner_client",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016306526958942413,
+    "failure": ""
+  }
+]

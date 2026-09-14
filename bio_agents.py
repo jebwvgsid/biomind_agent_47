@@ -1141,6 +1141,13 @@ def generate_client_kwargs(shared_kwargs: Mapping[str, Any]) -> Dict[str, Any]:
     return result
 
 
+def planner_client_kwargs(shared_kwargs: Mapping[str, Any]) -> Dict[str, Any]:
+    """One observable network attempt per charged Planner request; no SDK retry."""
+    result = dict(shared_kwargs)
+    result.update(max_retries=0, cache=False)
+    return result
+
+
 def recovery_client_kwargs(shared_kwargs: Mapping[str, Any]) -> Dict[str, Any]:
     """Return a Recovery transport with one observable network-attempt owner."""
 
@@ -2642,6 +2649,10 @@ class BioAnalystAgent:
         self.llm_reasoning_stream_adapter_active = (
             deepseek_reasoning_stream_enabled(self.llm)
         )
+        self.planner_llm = init_chat_model(**planner_client_kwargs(llm_kwargs))
+        self.planner_llm_sdk_max_retries = 0
+        if self.llm_provider_is_deepseek:
+            self.planner_llm = enable_deepseek_reasoning_stream(self.planner_llm)
         generate_transport_llm = init_chat_model(
             **generate_client_kwargs(llm_kwargs)
         )
@@ -2698,7 +2709,7 @@ class BioAnalystAgent:
             self.planner_correction_llm,
             self.planner_correction_llm_policy,
         ) = bind_planner_correction_llm(
-            self.llm,
+            self.planner_llm,
             model=llm_model,
             base_url=LLM_BASE_URL,
         )
@@ -17843,7 +17854,7 @@ class BioAnalystAgent:
             elif event == "phase_completed":
                 detail = f"{phase} 完成，耗时 {elapsed:.3f}s"
             elif event == "candidate_started":
-                detail = f"开始；已消耗 {ordinal} 次调用，名义阈值 {row.get('nominal_call_limit', '-')}，还需重复无进展才触发停止"
+                detail = f"开始；已占用 {ordinal} 次请求，总额上限 {row.get('nominal_call_limit', '-')}（含首轮）；每次只有一次 transport attempt"
             elif event == "attempt_cancelled":
                 detail = "调用取消；不接收部分候选"
             elif event == "attempt_failed":
@@ -17980,11 +17991,14 @@ class BioAnalystAgent:
                 "sdk_max_retries",
                 getattr(
                     self,
-                    "generate_llm_sdk_max_retries" if stage == "generate" else "llm_max_retries",
+                    "generate_llm_sdk_max_retries" if stage == "generate" else
+                    "planner_llm_sdk_max_retries" if stage in {"planner", "planner_repair"} else "llm_max_retries",
                     0,
                 ),
             )
         )
+        if stage in {"planner", "planner_repair"} and sdk_max_retries != 0:
+            raise RuntimeError("PLANNER_SDK_RETRY_POLICY_VIOLATION")
         if stage == "generate" and sdk_max_retries != 0:
             raise RuntimeError("GENERATE_SDK_RETRY_POLICY_VIOLATION")
         if recovery_single_attempt and sdk_max_retries != 0:
@@ -18035,7 +18049,8 @@ class BioAnalystAgent:
             )
         trace_data_path = str(getattr(self, "data_path", "") or "")
         trace_store = ContextLineageStore(trace_data_path, task_id) if task_id and trace_data_path else None
-        invocation_llm = llm_override or self.llm
+        invocation_llm = llm_override or (
+            getattr(self, "planner_llm", self.llm) if stage in {"planner", "planner_repair"} else self.llm)
         if planner_output_policy:
             base_compactor = getattr(self, "_schema2_phase_compactor", None)
             base_budget = getattr(base_compactor, "policy", None) or ContextBudgetPolicy()
@@ -18345,6 +18360,11 @@ class BioAnalystAgent:
                 )
 
                 async def invoke(observer: ProviderStreamObserver) -> Any:
+                    if stage in {"planner", "planner_repair"} and task_id and trace_data_path:
+                        from agent_core.plan_tracker import planner_admission_closed_reason, PlannerAdmissionClosed
+                        closed = planner_admission_closed_reason(load_plan_state(trace_data_path, task_id))
+                        if closed:
+                            raise PlannerAdmissionClosed(closed)
                     config = {
                         "callbacks": [observer],
                         "tags": ["provider-attempt", stage],
@@ -39112,6 +39132,9 @@ question. Never guess a scientific or database identity.
             except PlannerOutputPolicyError as exc:
                 return planner_policy_stop(exc)
             except Exception as exc:
+                closed = planner_closed_update(load_plan_state(self.data_path, task_id), "provider_error")
+                if closed:
+                    return closed
                 if is_transient_llm_failure(exc) and not is_llm_input_rejected(exc):
                     update = self._pause_retryable_llm_failure(state, task_id, "planner", exc)
                     output.print_ai(str(update["messages"][0].content))
