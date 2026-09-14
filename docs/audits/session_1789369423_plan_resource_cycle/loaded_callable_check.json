@@ -1,0 +1,48 @@
+{
+  "method": "Compile captured safe source without execution, using historical co_filename and Python 3.12.12; compare marshal_v2 to captured live callables",
+  "checks": {
+    "agent_core.plan_bindings.compile_plan_resource_bindings": {
+      "captured_loaded": "44400b1c465b4ea249276deae9a1fece84f3f461ccd9586bdb220dca9e9c304f",
+      "compiled_captured_source": "44400b1c465b4ea249276deae9a1fece84f3f461ccd9586bdb220dca9e9c304f",
+      "match": true
+    },
+    "agent_core.step_effects._canonical_resource_id": {
+      "captured_loaded": "90af5b2fa4226b626da12c2e5bb6b0cc1033c9dff104740aa6d3cf488cf1c697",
+      "compiled_captured_source": "90af5b2fa4226b626da12c2e5bb6b0cc1033c9dff104740aa6d3cf488cf1c697",
+      "match": true
+    },
+    "agent_core.step_effects._canonicalize_workspace_effects": {
+      "captured_loaded": "1660ee950d09ed794620003c1e382c7eb5a49627105a966264dc3a0db24fd794",
+      "compiled_captured_source": "1660ee950d09ed794620003c1e382c7eb5a49627105a966264dc3a0db24fd794",
+      "match": true
+    },
+    "agent_core.step_effects._unsupported_explicit_effects": {
+      "captured_loaded": "3f4a3e9f4909c1a9f18aec6277b5399595030783245206fda0fcf0745bddd449",
+      "compiled_captured_source": "3f4a3e9f4909c1a9f18aec6277b5399595030783245206fda0fcf0745bddd449",
+      "match": true
+    },
+    "agent_core.step_effects.compile_step_effect": {
+      "captured_loaded": "b9fa55031b7f7582179a256bff9b2287d43371a1a6fae2755dc775638ffe3bbf",
+      "compiled_captured_source": "b9fa55031b7f7582179a256bff9b2287d43371a1a6fae2755dc775638ffe3bbf",
+      "match": true
+    },
+    "agent_core.step_effects.compile_plan_dataflow": {
+      "captured_loaded": "fc5fbed760f8609355dccd5d60ada29d1f375f98ad5650bbc91d49e2d42918d9",
+      "compiled_captured_source": "fc5fbed760f8609355dccd5d60ada29d1f375f98ad5650bbc91d49e2d42918d9",
+      "match": true
+    },
+    "agent_core.plan_tracker.validate_output_contracts": {
+      "captured_loaded": "cdcc5e6b640697d96cd94f165f110d9ae084470a296eb4c32a1dc74390e1538b",
+      "compiled_captured_source": "cdcc5e6b640697d96cd94f165f110d9ae084470a296eb4c32a1dc74390e1538b",
+      "match": true
+    },
+    "agent_core.plan_tracker.record_planning_failure": {
+      "captured_loaded": "d7071bc1febedbb3e91b3ab921569a3e4e901e46c4adee63e6ad67cadef48d59",
+      "compiled_captured_source": "d7071bc1febedbb3e91b3ab921569a3e4e901e46c4adee63e6ad67cadef48d59",
+      "match": true
+    },
+    "bio_agents": {
+      "status": "UNKNOWN: no loaded-module callable receipt"
+    }
+  }
+}

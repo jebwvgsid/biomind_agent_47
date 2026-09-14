@@ -1,0 +1,83 @@
+{
+  "request_file": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789369423/context_trace/planner_initial-0007-411a4350e98a/request.json",
+  "sha256": "cfab4e9a5bfe353f901abc43fe18bde11a74179d17415d2cb6597e6fd2520000",
+  "excerpts": [
+    {
+      "message_index": 0,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:system",
+      "needle": "resource_binding",
+      "offset": 5229,
+      "excerpt": "eachable dependency.\n\nPlan resource protocol version 2: a capability ID names executable ability,\nnever a file or workspace. For a NEW resource, OMIT resource_binding. Declare\nlocal_ref, semantic_view and artifact_contract; the system creates its scoped\nidentity and revision. Set artifact_contract.resource_kind=mutable_workspace\nonly for an explicitly intended shared mutable directory. A directory can simply\ncontain independent file outputs; directory shape grants no mutation permission.\nFor an EXISTING resource use its current input/output handle directly. An exact\nalias, only when needed, is"
+    },
+    {
+      "message_index": 0,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:system",
+      "needle": "resource_binding",
+      "offset": 5680,
+      "excerpt": "tory shape grants no mutation permission.\nFor an EXISTING resource use its current input/output handle directly. An exact\nalias, only when needed, is resource_binding={\"resource_ref\":\"<current resource handle>\"};\nthe system copies identity, lifecycle and revision from that authoritative row.\nDo not manufacture canonical_resource_id, availability_origin or revision.\nWrong-domain, stale or unregistered references are rejected, never silently renamed.\nNever infer aliases from basename, suffix, path, role prose or similar spelling.\nOld approved snapshots retain their original reader semantics; new"
+    },
+    {
+      "message_index": 0,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:system",
+      "needle": "workspace_mutations",
+      "offset": 7286,
+      "excerpt": "te\na file. `outputs` describes only immutable-artifact production. Use `operation`\nplus one or more of `produces_bindings`, `produces_observations`,\n`workspace_mutations`, or `explicit_side_effects` for legitimate non-artifact\neffects. An empty `outputs` array is valid when another effect is declared.\nUse exact operation/effect identities from the selected Skill capability. If a\nvalidator reports PLAN_STEP_EFFECT_UNSPECIFIED, revise the complete candidate\nfrom that structured evidence; never invent a file merely to satisfy review.\nUse the actual declared capability/evidence schema, not invente"
+    },
+    {
+      "message_index": 0,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:system",
+      "needle": "workspace_mutations",
+      "offset": 8501,
+      "excerpt": "le mutations of one canonical workspace must be explicitly\nordered through dependencies; list order is not a dependency.\nMutable workspaces belong in workspace_mutations, never in outputs.\n\nSUBMIT_PLAN_FOR_REVIEW schema placeholders:\n{\n  \"public_message\": \"已根据当前证据形成计划候选，接下来提交原有审查。\",\n  \"outcome_type\": \"SUBMIT_PLAN_FOR_REVIEW\",\n  \"proposed_artifacts\": [{\n    \"local_ref\": \"plan.<task-specific-local-handle>\",\n    \"semantic_view\": {\"role\": \"<task-specific-role>\", \"format\": \"<format>\", \"description\": \"<description>\"},\n    \"artifact_contract\": {\"object_kind\": \"file|directory\", \"lifecycle\": \"plan_loca"
+    },
+    {
+      "message_index": 0,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:system",
+      "needle": "workspace_mutations",
+      "offset": 9851,
+      "excerpt": "tput-or-plan-handle>\"],\n    \"produces_bindings\": [\"<declared-semantic-binding-id>\"],\n    \"produces_observations\": [\"<declared-observation-id>\"],\n    \"workspace_mutations\": [{\"workspace_ref\": \"<declared-mutable-workspace-id>\", \"mutation\": \"<selected-capability-mutation>\", \"requires_available\": false, \"requires_state\": \"<required-prior-state-or-empty>\", \"available_after_success\": true, \"establishes_state\": \"<state-after-success>\", \"contract_source\": \"<selected-capability-contract-source>\", \"contract_revision\": \"<exact-capability-contract-revision>\"}],\n    \"explicit_side_effects\": [\"<declared-sup"
+    },
+    {
+      "message_index": 0,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:system",
+      "needle": "result_contract_version",
+      "offset": 3708,
+      "excerpt": "al user request, accepted clarifications, selected Skill\nand actual downstream needs. Preserve explicit user deliverables and names.\nDeclare metadata.result_contract_version=1. In each Plan artifact_contract or\ntask_output_materializations row, set required=true only for a necessary result;\nnew omitted required defaults to false. Omit unnecessary auxiliary files. An input,\nEXECUTE action, title, success_criteria path or template does not create a file duty.\nA mandatory consumer of an optional artifact is a candidate contradiction: decide\nwhether to make that result necessary or change the depe"
+    },
+    {
+      "message_index": 0,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:system",
+      "needle": "result_contract_version",
+      "offset": 10791,
+      "excerpt": "scription\": \"<semantic-self-check>\"}],\n  \"metadata\": {\"schema_version\": 2, \"planner_contract\": \"structured_plan_v2\", \"resource_contract_version\": 2, \"result_contract_version\": 1},\n  \"task_output_materializations\": [{\"output_ref\": \"<existing-output-handle>\", \"path\": \"<safe-relative-filename>\", \"required\": true, \"path_policy\": \"managed_exact|model_selectable\", \"description\": \"<result-necessity>\"}]\n}\n\nOmit proposed_artifacts and task_output_materializations when they are not needed.\nCurrent Plan result path_policy values are: managed_exact, model_selectable.\nFor managed_exact, preserve the declar"
+    },
+    {
+      "message_index": 1,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:seed",
+      "needle": "workspace_mutations",
+      "offset": 19333,
+      "excerpt": "     \"artifact.snpeff_config\"\n            ],\n            \"produces_observations\": [\n              \"snpeff_database_ready\"\n            ],\n            \"workspace_mutations\": [\n              {\n                \"workspace_ref\": \"artifact.snpeff_data_dir\",\n                \"mutation\": \"build_database\",\n                \"requires_available\": true,\n                \"requires_state\": \"database_layout_prepared\",\n                \"available_after_success\": true,\n                \"establishes_state\": \"snpeff_database_ready\",\n                \"contract_source\": \"genomics.snpeff_annotation.build_database.workspac"
+    },
+    {
+      "message_index": 1,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:seed",
+      "needle": "workspace_mutations",
+      "offset": 19775,
+      "excerpt": "s\": true,\n                \"establishes_state\": \"snpeff_database_ready\",\n                \"contract_source\": \"genomics.snpeff_annotation.build_database.workspace_mutations\",\n                \"contract_revision\": \"snpeff-workspace-transition-v1\",\n                \"evidence_contract\": {\n                  \"schema_version\": 1,\n                  \"collector\": \"bounded_filesystem_snapshot_v1\",\n                  \"allow_idempotent_revalidation\": true,\n                  \"postconditions\": [\n                    {\n                      \"kind\": \"file_nonempty\",\n                      \"relative_path\": \"data/{bind"
+    },
+    {
+      "message_index": 1,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:seed",
+      "needle": "workspace_mutations",
+      "offset": 25328,
+      "excerpt": "\n              \"snpeff_db\"\n            ],\n            \"produces_observations\": [\n              \"database_layout_prepared\"\n            ],\n            \"workspace_mutations\": [\n              {\n                \"workspace_ref\": \"artifact.snpeff_data_dir\",\n                \"mutation\": \"prepare_database\",\n                \"requires_available\": false,\n                \"available_after_success\": true,\n                \"establishes_state\": \"database_layout_prepared\",\n                \"contract_source\": \"genomics.snpeff_annotation.prepare_database.workspace_mutations\",\n                \"contract_revision\": \"sn"
+    },
+    {
+      "message_index": 1,
+      "message_id": "planner-8b95acc6ddfc649ba1c81a04:e1:seed",
+      "needle": "workspace_mutations",
+      "offset": 25716,
+      "excerpt": "rue,\n                \"establishes_state\": \"database_layout_prepared\",\n                \"contract_source\": \"genomics.snpeff_annotation.prepare_database.workspace_mutations\",\n                \"contract_revision\": \"snpeff-workspace-transition-v1\",\n                \"evidence_contract\": {\n                  \"schema_version\": 1,\n                  \"collector\": \"bounded_filesystem_snapshot_v1\",\n                  \"allow_idempotent_revalidation\": true,\n                  \"postconditions\": [\n                    {\n                      \"kind\": \"directory_exists\",\n                      \"relative_path\": \"data\"\n "
+    }
+  ]
+}

@@ -1,0 +1,350 @@
+diff --git a/agent_core/node_context.py b/agent_core/node_context.py
+index dd2bd98..ae5073c 100644
+--- a/agent_core/node_context.py
++++ b/agent_core/node_context.py
+@@ -68,6 +68,7 @@ _CONTROL_KEY_EXACT = {
+     "approval_ref",
+     "approval_scope_hash",
+     "projection_semantic_hash",
++    "output_policy_hash",
+     "node_context_hash",
+     "cas_token",
+     "content_ref",
+@@ -86,7 +87,6 @@ _CONTROL_KEY_EXACT = {
+     "validation_id",
+ }
+ _CONTROL_KEY_SUFFIXES = (
+-    "_hash",
+     "_generation",
+     "_cas",
+     "_cas_token",
+@@ -95,16 +95,11 @@ _CONTROL_KEY_SUFFIXES = (
+ )
+ # Content digests for immutable Skill source/excerpts are model-visible
+ # provenance, not task/plan concurrency tokens.  Keep this allowlist exact;
+-# all other ``*_hash`` fields remain control-plane only.
++# Business digest fields are not classified by their ``*_hash`` suffix.
+ _SEMANTIC_CONTENT_HASH_KEYS = {
+     "content_hash",
+     "resource_content_hash",
+ }
+-_CONTROL_VALUE_PATTERNS = (
+-    re.compile(r"^sha256:[0-9a-f]{32,}$", re.IGNORECASE),
+-    re.compile(r"^(?:object|audit|evidence):sha256:[0-9a-f]{16,}$", re.IGNORECASE),
+-    re.compile(r"^cas:[A-Za-z0-9._:-]+$"),
+-)
+ _HANDLE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,127}$")
+ _PLACEHOLDER_RE = re.compile(r"^\{(input|output):([A-Za-z][A-Za-z0-9_.-]*)\}$")
+ 
+@@ -249,16 +244,8 @@ def control_metadata_leaks(value: Any, path: str = "$LLMPayload") -> List[str]:
+     elif isinstance(value, (list, tuple)):
+         for index, item in enumerate(value):
+             leaks.extend(control_metadata_leaks(item, f"{path}[{index}]"))
+-    elif isinstance(value, str):
+-        stripped = value.strip()
+-        exact_user_turn = (
+-            ".semantic_history.conversation[" in path
+-            and path.endswith(".content")
+-        )
+-        if not exact_user_turn and any(
+-            pattern.match(stripped) for pattern in _CONTROL_VALUE_PATTERNS
+-        ):
+-            leaks.append(path)
++    # String values, including file digests, are business data. Only explicit
++    # structural control fields above can establish a metadata leak.
+     return sorted(set(leaks))
+ 
+ 
+diff --git a/agent_core/planner_context.py b/agent_core/planner_context.py
+index 6ee8147..9a9a53b 100644
+--- a/agent_core/planner_context.py
++++ b/agent_core/planner_context.py
+@@ -9,6 +9,58 @@ from typing import Any, Mapping, Sequence
+ from langchain_core.messages import AIMessage, SystemMessage, messages_from_dict, messages_to_dict
+ from agent_core.state_contract_store import StateContractStore
+ from agent_core.task_spec import task_semantic_hash
++from agent_core.node_context import _without_control_metadata
++from agent_core.provider_message_safety import assert_v2_llm_messages_clean
++
++
++_ISSUE_FIELDS = frozenset({
++    "code", "violation_code", "message", "severity", "disposition",
++    "field_path", "repair_target", "step_key", "affected_step_ids", "affected_fields",
++    "affected_artifact", "affected_output", "expected_identity", "observed_identity",
++    "expected", "actual", "machine_evidence", "violated_invariant",
++    "required_postcondition", "possible_effect_kinds", "normalization_source",
++    "expected_contract", "expected_type", "received_type", "received_excerpt",
++    "parser_message", "line", "column", "offset", "position", "response_excerpt",
++    "diagnostic_source", "position_source", "validator_id", "canonical_resource_id",
++    "constraint_source", "contract_revision",
++})
++
++
++def provider_correction_feedback(feedback: Mapping[str, Any]) -> dict[str, Any]:
++    """Project controller-authored repair facts; never rewrite model/user text.
++
++    The complete feedback remains in the immutable correction record. Internal
++    references are unnecessary for repairing a candidate and are not provider
++    content. Diagnostic text and business digests are preserved verbatim;
++    their spelling cannot establish that they are controller metadata.
++    """
++    result = {"code": "PLANNER_CANDIDATE_REJECTED", "validation_issues": []}
++    for issue in feedback.get("validation_issues") or []:
++        if not isinstance(issue, Mapping):
++            continue
++        row = {key: deepcopy(value) for key, value in issue.items() if key in _ISSUE_FIELDS}
++        if issue.get("step_id"):
++            row["step_key"] = str(issue["step_id"])
++        result["validation_issues"].append(row)
++    for key in ("requirements", "correction_budget", "response_completion", "length_recovery"):
++        if key in feedback:
++            result[key] = deepcopy(feedback[key])
++    def project_text(value):
++        if isinstance(value, Mapping):
++            # Reuse the existing control-key policy, retaining semantic empty
++            # lists/nulls (e.g. producer_step_ids=[] explains a missing output).
++            return {key: project_text(item) for key, item in value.items()
++                    if key in _without_control_metadata({key: True})}
++        if isinstance(value, (list, tuple)):
++            return [project_text(item) for item in value]
++        return value
++
++    result = project_text(result)
++    assert_v2_llm_messages_clean(
++        [SystemMessage(content=json.dumps(result, ensure_ascii=False, sort_keys=True))],
++        stage="planner.correction_feedback",
++    )
++    return result
+ 
+ 
+ def correction_feedback(state: Mapping[str, Any]) -> dict[str, Any]:
+@@ -59,7 +111,8 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
+                                           "response_integrity": deepcopy(integrity)})
+         attach_rejection_facts(state, integrity, call_claim or {}, remediation)
+     feedback = correction_feedback(state)
+-    complete = [*provider_messages, AIMessage(content=raw), SystemMessage(content=json.dumps(feedback, ensure_ascii=False, sort_keys=True))]
++    provider_feedback = provider_correction_feedback(feedback)
++    complete = [*provider_messages, AIMessage(content=raw), SystemMessage(content=json.dumps(provider_feedback, ensure_ascii=False, sort_keys=True))]
+     record = {
+         "schema_version": 2 if integrity else 1, "task_id": task_id,
+         "planning_epoch_id": (state.get("task_state") or {}).get("planning_epoch", {}).get("planning_epoch_id", ""),
+@@ -67,6 +120,7 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
+         "capability_digest": hashlib.sha256(json.dumps(capabilities, sort_keys=True).encode()).hexdigest(),
+         "raw_candidate": raw, "candidate": deepcopy(dict(candidate)),
+         "feedback": feedback, "messages": messages_to_dict(complete),
++        "provider_feedback": provider_feedback, "provider_feedback_version": 1,
+         "fixed_prefix_count": fixed_prefix_count,
+     }
+     baselines = [deepcopy(dict(row)) for row in consumption_review_baselines]
+@@ -92,7 +146,7 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
+     if primary.get("status") == "observed" and int(failure.get("attempt") or 0) == 1:
+         failure["primary_context_ref"] = ref
+         primary["candidate_source"] = deepcopy(failure["candidate_source"])
+-    return feedback
++    return provider_feedback
+ 
+ 
+ def load_correction_context(data_path: str, task_id: str, state: Mapping[str, Any], *,
+@@ -119,6 +173,20 @@ def load_correction_context(data_path: str, task_id: str, state: Mapping[str, An
+ 
+ def restore_correction_messages(context: Any, record: Mapping[str, Any]) -> list[Any]:
+     messages = messages_from_dict(record["messages"])
++    # Older immutable records serialized controller feedback directly. Project
++    # only these known SystemMessage envelopes; leave prompts and model replies
++    # intact, and never mutate the historical record to make it appear safe.
++    for index, message in enumerate(messages):
++        if not isinstance(message, SystemMessage):
++            continue
++        try:
++            feedback = json.loads(message.content)
++        except (TypeError, ValueError):
++            continue
++        if isinstance(feedback, dict) and feedback.get("code") == "PLANNER_CANDIDATE_REJECTED":
++            content = json.dumps(provider_correction_feedback(feedback), ensure_ascii=False, sort_keys=True)
++            if content != message.content:
++                messages[index] = message.model_copy(update={"content": content, "id": None})
+     # Direct producer callers may not have phase-assigned message IDs. These
+     # deterministic transport IDs do not change any provider-visible content.
+     for index, message in enumerate(messages):
+@@ -128,8 +196,8 @@ def restore_correction_messages(context: Any, record: Mapping[str, Any]) -> list
+     if context is not None and not context.messages and context.system_message is None:
+         count = int(record["fixed_prefix_count"])
+         # A fresh phase has new transport-channel IDs. Rebind only those local
+-        # IDs before initializing its fixed channels; provider-visible payload
+-        # and the saved immutable context remain byte-for-byte unchanged.
++        # IDs before initializing its fixed channels. Only legacy controller
++        # feedback is projected; the saved immutable context stays unchanged.
+         if getattr(context, "epoch_id", None):
+             messages[0] = messages[0].model_copy(update={"id": f"{context.epoch_id}:system"})
+             messages[1] = messages[1].model_copy(update={"id": f"{context.epoch_id}:seed"})
+diff --git a/agent_core/provider_message_safety.py b/agent_core/provider_message_safety.py
+index 836a79e..10da6cd 100644
+--- a/agent_core/provider_message_safety.py
++++ b/agent_core/provider_message_safety.py
+@@ -1,63 +1,16 @@
+-"""Complete-message control-metadata safety for provider dispatch."""
++"""Compatibility entry point for the retired full-message metadata scanner.
+ 
+-from __future__ import annotations
++Hash-looking text is valid task data. Model output guidance belongs in prompts;
++runtime identity, approval and integrity checks remain in their owning layers.
++"""
+ 
+-import re
+ from typing import Any, Sequence
+ 
+-from agent_core.node_context import ControlMetadataLeakError
+-
+-
+-_V2_MESSAGE_CONTROL_RULES = (
+-    (
+-        "CONTROL_OBJECT_DIGEST",
+-        re.compile(
+-            r"\b(?:object|audit|evidence):sha256:[0-9a-f]{16,}\b",
+-            re.IGNORECASE,
+-        ),
+-    ),
+-    (
+-        "RAW_SHA256_DIGEST",
+-        re.compile(r"\bsha256:[0-9a-f]{32,}\b", re.IGNORECASE),
+-    ),
+-    (
+-        "TASK_PLAN_SEMANTIC_HASH_KEY",
+-        re.compile(
+-            r'["\'](?:task|plan)_(?:semantic|record)_hash["\']\s*:',
+-            re.IGNORECASE,
+-        ),
+-    ),
+-    (
+-        "STATE_GENERATION_KEY",
+-        re.compile(r'["\']state_generation["\']\s*:', re.IGNORECASE),
+-    ),
+-    (
+-        "CONTROLLER_IDENTITY_KEY",
+-        re.compile(
+-            r'["\'](?:approval_ref|cas_token|node_context_hash|projection_semantic_hash)["\']\s*:',
+-            re.IGNORECASE,
+-        ),
+-    ),
+-)
+-
+ 
+ def assert_v2_llm_messages_clean(
+     messages: Sequence[Any],
+     *,
+     stage: str = "llm.provider_dispatch",
+ ) -> None:
+-    """Reject complete provider messages with typed, value-free evidence."""
+-    offending_paths = []
+-    matched_rule_ids = []
+-    for index, message in enumerate(messages):
+-        content = str(getattr(message, "content", message) or "")
+-        for rule_id, pattern in _V2_MESSAGE_CONTROL_RULES:
+-            if pattern.search(content):
+-                offending_paths.append(f"$messages[{index}].content")
+-                matched_rule_ids.append(rule_id)
+-    if matched_rule_ids:
+-        raise ControlMetadataLeakError(
+-            stage=stage,
+-            offending_paths=offending_paths,
+-            matched_rule_ids=matched_rule_ids,
+-        )
++    """Retained for callers; do not scan, rewrite or reject message content."""
++    return None
+diff --git a/agent_core/workflow/managed_stop.py b/agent_core/workflow/managed_stop.py
+index d5f3b2a..6521975 100644
+--- a/agent_core/workflow/managed_stop.py
++++ b/agent_core/workflow/managed_stop.py
+@@ -491,7 +491,8 @@ def explanation(stop):
+     if stop.get("internal_diagnostic_delivery"):
+         parts.append("内部诊断归档：" + _safe(json.dumps(stop["internal_diagnostic_delivery"],ensure_ascii=False),3000)
+             + "。内部归档不等于指定文件交付成功。")
+-    parts.append("总结状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
++    parts.append("任务状态：" + str(stop.get("status") or "unknown").upper() + "；自动执行已停止。")
++    parts.append("停止总结生成状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + "（仅表示总结处理状态，不代表任务成功）" + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
+     return "\n\n".join(parts)
+ 
+ 
+@@ -533,7 +534,8 @@ def _planning_explanation(stop):
+     parts.append("当前没有获批步骤或执行 attempt；后续科学流程尚未由本轮规划启动。预算结束或读取失败不能证明输入不兼容、资源不存在或依赖不可用。")
+     if stop.get("summary_text"):
+         parts.append("AI 辅助说明（不改变上述事实）：\n" + stop["summary_text"])
+-    parts.append("总结状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
++    parts.append("任务状态：" + str(stop.get("status") or "unknown").upper() + "；自动执行已停止。")
++    parts.append("停止总结生成状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + "（仅表示总结处理状态，不代表任务成功）" + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
+     if stop.get("persistence_status") != "committed":
+         parts.append("停止事实尚未确认持久化；本进程不会因此继续规划。")
+     if stop.get("report_paths"):
+diff --git a/prompts/manager.py b/prompts/manager.py
+index a3f7401..ef675ea 100644
+--- a/prompts/manager.py
++++ b/prompts/manager.py
+@@ -19,6 +19,17 @@ from agent_core.diagnostics import DiagnosticContext
+ logger = logging.getLogger("BioMind.PromptManager")
+ 
+ 
++HASH_OUTPUT_POLICY = """Hash output policy:
++Do not invent or echo internal task/plan hashes, audit digests or control
++fingerprints in plans, generated actions or explanations unless an explicit
++output protocol requires an exact supplied value. These values do not grant
++approval or prove completion. User-requested file/content checksum work is
++allowed: preserve supplied expected digests exactly, calculate actual digests
++with the appropriate tool, compare them and report the observed match or
++mismatch. Never fabricate a checksum or discard one merely because it looks
++like sha256 text."""
++
++
+ PUBLIC_MESSAGE_POLICY = """Optional public display field:
+ You may add one top-level public_message string to the JSON response, including
+ typed Skill decisions. In one to three natural sentences, explain the
+@@ -1604,7 +1615,7 @@ Consultant owns skill discovery and SELECTED_SKILLS is the full allowed pool. Pl
+             "targeted range. Never request writes, deletion, execution, absolute paths, "
+             "parent traversal, unrestricted cat/find behavior, or complete large-file dumps."
+         )
+-        return base_prompt + "\n\n" + evidence_protocol
++        return base_prompt + "\n\n" + HASH_OUTPUT_POLICY + "\n\n" + evidence_protocol
+ 
+     @staticmethod
+     def get_repair_generator_prompt(recovery_context: dict) -> str:
+@@ -2012,6 +2023,7 @@ revision, identity, status, reference, and shape invariants."""
+             + "\n\n" + PUBLIC_MESSAGE_POLICY
+             + "\n\n"
+             + INHERITED_SKILL_MATERIAL_POLICY_V1
++            + "\n\n" + HASH_OUTPUT_POLICY
+             + "\n\n"
+             + skill_protocol
+             + "\n\n"
+@@ -2121,6 +2133,7 @@ revision, identity, status, reference, and shape invariants."""
+         return f"""You are the BioMind Consultant: a local tool-using agent loop.
+ 
+ {INHERITED_SKILL_MATERIAL_POLICY_V1}
++{HASH_OUTPUT_POLICY}
+ 
+ {PUBLIC_MESSAGE_POLICY}
+ 
+@@ -2380,6 +2393,7 @@ for each deliverable and never mint Renderer-specific aliases.
+         return f"""You are BioMind's escalated Skill Discovery Consultant.
+ 
+ {INHERITED_SKILL_MATERIAL_POLICY_V1}
++{HASH_OUTPUT_POLICY}
+ 
+ {PUBLIC_MESSAGE_POLICY}
+ 
+@@ -2638,6 +2652,8 @@ repair attempt.
+ """
+             return f"""You are BioMind Generate. Write the executable script for exactly the current approved step.
+ 
++{HASH_OUTPUT_POLICY}
++
+ {PUBLIC_MESSAGE_POLICY}
+ 
+ Return exactly one of these three alternatives:
+@@ -2796,6 +2812,8 @@ StepEffect.
+         )
+         return f"""You are BioMind Generate. Propose one action or one typed Skill decision for the current step.
+ 
++{HASH_OUTPUT_POLICY}
++
+ {PUBLIC_MESSAGE_POLICY}
+ 
+ Return exactly one raw JSON object and no Markdown or prose. It must be either a

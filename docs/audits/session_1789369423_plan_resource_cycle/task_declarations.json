@@ -1,0 +1,246 @@
+{
+  "inputs": [
+    {
+      "artifact_id": "artifact-508d45c7878a6e80fe61",
+      "semantic_handle": "input.variant_vcf",
+      "direction": "input",
+      "role": "variant_vcf",
+      "format": "vcf",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/all.filtered.snp.vcf",
+      "required_basename": "all.filtered.snp.vcf",
+      "resolution_base": "/public/home/liusiqi/03.毕设",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    },
+    {
+      "artifact_id": "artifact-3249dbdf634c89efa2f1",
+      "semantic_handle": "input.reference_fasta",
+      "direction": "input",
+      "role": "reference_fasta",
+      "format": "fasta",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta",
+      "required_basename": "genome.fasta",
+      "resolution_base": "/public/home/liusiqi/03.毕设",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    },
+    {
+      "artifact_id": "artifact-8415fe22d2eb9615d68f",
+      "semantic_handle": "input.annotation_gtf",
+      "direction": "input",
+      "role": "annotation_gtf",
+      "format": "gtf",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf",
+      "required_basename": "genome.gtf",
+      "resolution_base": "/public/home/liusiqi/03.毕设",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    }
+  ],
+  "output_contracts": [
+    {
+      "artifact_id": "output_dir",
+      "output_id": "output_dir",
+      "semantic_handle": "output.output_dir",
+      "direction": "output",
+      "role": "output_dir",
+      "artifact_kind": "directory",
+      "format": "directory",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-ANNOT-007/medium",
+      "filename": "medium",
+      "required_basename": "medium",
+      "required": true,
+      "validation_contract_id": "directory-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "user_visible": false,
+      "producer_owner": "plan_step",
+      "relocatable": false,
+      "resolution_base": "/"
+    },
+    {
+      "artifact_id": "annotated_vcf",
+      "output_id": "annotated_vcf",
+      "semantic_handle": "output.annotated_vcf",
+      "direction": "output",
+      "role": "annotated_vcf",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "ann_summary",
+      "output_id": "ann_summary",
+      "semantic_handle": "output.ann_summary",
+      "direction": "output",
+      "role": "ann_summary",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "report",
+      "output_id": "report",
+      "semantic_handle": "output.report",
+      "direction": "output",
+      "role": "report",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "reproduce_script",
+      "output_id": "reproduce_script",
+      "semantic_handle": "output.reproduce_script",
+      "direction": "output",
+      "role": "reproduce_script",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "stage_status",
+      "output_id": "stage_status",
+      "semantic_handle": "output.stage_status",
+      "direction": "output",
+      "role": "stage_status",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa",
+          "source_id": "object:sha256:1f7a559ddfc26fa512f71f3d4befa37d533ae09dd38769bb2e81c29545fed8fa"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    }
+  ]
+}
