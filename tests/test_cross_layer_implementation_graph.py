@@ -115,6 +115,23 @@ async def scenario(mode):
                 return AIMessage(content='<shell>'+reads+'\nprintf "synthetic failure\\n" >&2\nexit 7</shell>')
             assert 'synthetic failure' in str(messages)
             if ordinal==2:return AIMessage(content=json.dumps({'script':'printf not-executed'}))
+            feedback=[]
+            for message in messages:
+                try:value=json.loads(message.content)
+                except (ValueError,TypeError):continue
+                if isinstance(value,dict) and value.get('kind')=='generate_validator_feedback':
+                    feedback.append(value['feedback']['action_repair'])
+            assert feedback
+            latest=feedback[-1];policy=latest['correction_policy']
+            assert policy['limit']==4 and policy['current_correction_number']==ordinal-2
+            assert policy['remaining_after_this_call']==4-(ordinal-2)
+            ledger=load_plan_state(root,task)['task_state']['candidate_repair_state']['events']
+            current=max(ledger.values(),key=lambda row:row['repair_ordinal'])
+            assert policy['source']==current['policy_receipt']['source']
+            assert policy['category']=={3:'representation',4:'response_completion',5:'static_syntax',6:'representation'}[ordinal]
+            if ordinal==5:
+                assert 'invalid artifact reference' not in str(latest)
+                assert latest['exact_violations'][0]['code']=='GENERATE_SCRIPT_SYNTAX_INVALID'
             if ordinal==3:
                 assert 'GENERATE_SCRIPT_BLOCK_INVALID' in str(messages)
                 return AIMessage(content='<shell>printf "not complete',response_metadata={'finish_reason':'length'})

@@ -12064,11 +12064,12 @@ class BioAnalystAgent:
                 script_candidate.get("controller_artifact_environment") or []
             )
             previous_candidate = project_script_repair_candidate(script_candidate)
-            exact_violations = project_script_artifact_repair_violations(
-                exact_violations,
-                artifact_environment,
-                language=script_language,
-            )
+            if repair_stage != "script_body_validation":
+                exact_violations = project_script_artifact_repair_violations(
+                    exact_violations,
+                    artifact_environment,
+                    language=script_language,
+                )
 
         if not repair_stage:
             repair_stage = "action_schema"
@@ -12087,6 +12088,25 @@ class BioAnalystAgent:
             "previous_candidate": previous_candidate or "<previous candidate unavailable>",
             "repair_instruction": cls._corrective_action_repair_instruction(),
         }
+        if receipt_authoritative:
+            # The caller has validated this exact durable receipt against the
+            # current Plan scope. Expose its budget meaning, never receipt IDs
+            # or a provider-controlled authority object.
+            policy = dict(format_state.get("policy_receipt") or {})
+            ordinal = int(format_state["repair_ordinal"])
+            limit = int(format_state["repair_limit"])
+            projection["correction_policy"] = {
+                "version": policy.get("version", "legacy-recorded"),
+                "source": ("validated_existing_candidate_receipt" if policy.get("version") == "legacy-recorded"
+                    else policy.get("source", "validated_existing_candidate_receipt")),
+                "scope": "current task and approved Plan revision and step; shared across invocations",
+                "category": policy.get("category") or correction_category(repair_stage, exact_violations),
+                "unit": "additional_candidate_calls",
+                "limit": limit,
+                "current_correction_number": ordinal,
+                "remaining_after_this_call": max(0, limit - ordinal),
+                "all_categories_share_total": True,
+            }
         if protocol_error:
             projection["exact_error"] = deepcopy(dict(protocol_error))
         if exact_violations:
