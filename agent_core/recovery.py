@@ -4608,7 +4608,7 @@ class RecoveryPolicy:
         max_same_action: int = 1,
         max_probe_attempts: int = 6,
         max_same_probe: int = 1,
-        max_format_repairs: int = 1,
+        max_format_repairs: int = DEFAULT_CANDIDATE_REPAIRS,
         max_candidate_repairs: int = DEFAULT_CANDIDATE_REPAIRS,
     ):
         self.max_attempts = max_attempts

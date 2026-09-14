@@ -22,6 +22,9 @@ def guard(event,args):
   return  # Explicitly registered tiny fixture; no ambient shell environment.
  if event=='subprocess.Popen' and ((args[1]==['bash','-n'] and not os.environ.get('BASH_ENV')) or (args[1] in [['/usr/bin/bash','--noprofile','--norc','-n'], ['/bin/bash','--noprofile','--norc','-n']] and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'})):
   return  # Parse synthetic stdin only; no script execution or filename.
+ if event=='subprocess.Popen' and len(args[1])==5 and args[1][:4]==[sys.executable,'-I','-S','-c']:
+  from execution.script_validation import PYTHON_COMPILE_DRIVER
+  if args[1][4]==PYTHON_COMPILE_DRIVER and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}:return
  if event in {'socket.connect','socket.getaddrinfo','subprocess.Popen','os.system','os.posix_spawn'}:raise RuntimeError('OFFLINE_EXTERNAL_DENIED '+event)
  if event=='open' and isinstance(args[0],(str,bytes)):
   p=os.fsdecode(args[0]);name=Path(p).name

@@ -10,7 +10,8 @@ bio_agents.py  ―  BioAnalyst Agent V4
 
 from __future__ import annotations
 
-from agent_core.candidate_repair_policy import DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit
+from agent_core.candidate_repair_policy import (DEFAULT_CANDIDATE_REPAIRS, candidate_repair_limit,
+    freeze_candidate_policy, correction_category)
 
 from agent_core.cli_display import display_print, emit as emit_display, terminal as active_terminal, interactive_terminal, emit_public, flush_public
 from agent_core.cli_review import review_display, show_review, show_review_body
@@ -2647,6 +2648,9 @@ class BioAnalystAgent:
             generate_transport_llm = enable_deepseek_reasoning_stream(
                 generate_transport_llm
             )
+        self.generate_requested_output_limits = {key: value for key, value in llm_kwargs.items()
+            if key in {"max_tokens", "max_completion_tokens", "max_output_tokens"}
+            and type(value) is int and value > 0}
         self.generate_llm, self.generate_llm_policy = bind_generate_llm(
             generate_transport_llm,
             model=llm_model,
@@ -15844,6 +15848,7 @@ class BioAnalystAgent:
         rejection_event_id: str,
         repair_limit: int,
         progress_proven: bool,
+        policy_receipt: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Issue one durable, scope-bound receipt from Controller facts."""
 
@@ -15877,6 +15882,7 @@ class BioAnalystAgent:
             rejection_event_id=rejection_event_id,
             repair_limit=repair_limit,
             progress_proven=progress_proven,
+            policy_receipt=policy_receipt,
         )
 
     def _commit_preaction_policy_decision(
@@ -15937,6 +15943,7 @@ class BioAnalystAgent:
         violations: Sequence[Mapping[str, Any]],
         visible_artifacts: Mapping[str, Mapping[str, Any]],
         repair_ordinal: Optional[int] = None,
+        resolved_repair_limit: Optional[int] = None,
     ) -> Tuple[RecoveryContext, RecoveryDecision]:
         """Create one bounded, execution-free Generate repair transition."""
         task_state = dict(plan_state.get("task_state") or {})
@@ -16026,8 +16033,8 @@ class BioAnalystAgent:
             ),
         }
         decision = RecoveryPolicy(
-            max_format_repairs=1,
-            max_candidate_repairs=candidate_repair_limit(budgets),
+            max_format_repairs=resolved_repair_limit if resolved_repair_limit is not None else candidate_repair_limit(budgets),
+            max_candidate_repairs=resolved_repair_limit if resolved_repair_limit is not None else candidate_repair_limit(budgets),
         ).decide(
             pre_action_evidence={
                 "valid": False,
@@ -16494,11 +16501,14 @@ class BioAnalystAgent:
             if frozen_input and prior_row:
                 progress_proven = bool(set(public_valid_facts) - set(prior_row.get("public_valid_facts") or []))
             budgets = dict(task_state.get("budgets") or {})
-            repair_limit = (
-                1
-                if repair_domain == PreActionRepairDomain.REPRESENTATION.value
-                else candidate_repair_limit(budgets)
-            )
+            resolved_policy = freeze_candidate_policy(repair_state, durable_scope, budgets)
+            repair_limit = resolved_policy["limit"]
+            policy_receipt = {**resolved_policy,
+                "rejection_ordinal": repair_ordinal,
+                "corrections_authorized_before": min(repair_limit, repair_ordinal - 1),
+                "corrections_observed_before_rejection": min(repair_limit, repair_ordinal - 1),
+                "remaining_before_authorization": max(0, repair_limit - repair_ordinal + 1),
+                "category": correction_category(repair_stage, normalized_violations)}
             recovery_context, policy_decision = self._managed_preaction_recovery(
                 task_id=task_id,
                 plan_state=durable,
@@ -16511,6 +16521,7 @@ class BioAnalystAgent:
                 violations=normalized_violations,
                 visible_artifacts=visible_artifacts,
                 repair_ordinal=repair_ordinal,
+                resolved_repair_limit=repair_limit,
             )
             format_repair_allowed = bool(
                 policy_decision.kind == RecoveryDecisionKind.FORMAT_REPAIR.value
@@ -16593,6 +16604,7 @@ class BioAnalystAgent:
                         rejection_event_id=event_id,
                         repair_limit=repair_limit,
                         progress_proven=True,
+                        policy_receipt=policy_receipt,
                     )
                 except (CandidateRepairReceiptError, OSError, ValueError) as exc:
                     repair_allowed = False
@@ -16670,6 +16682,11 @@ class BioAnalystAgent:
                 "repair_domain": repair_domain,
                 "repair_ordinal": repair_ordinal,
                 "repair_limit": repair_limit,
+                "policy_receipt": {**policy_receipt,
+                    "correction_authorized": repair_allowed,
+                    "corrections_authorized": min(repair_limit, repair_ordinal if repair_allowed else repair_ordinal - 1),
+                    "remaining": max(0, repair_limit - (repair_ordinal if repair_allowed else repair_ordinal - 1))},
+                "correction_category": policy_receipt["category"],
                 "progress_proven": progress_proven,
                 "public_valid_facts": public_valid_facts,
                 "validation_source": validation_source,
@@ -18012,6 +18029,11 @@ class BioAnalystAgent:
                 temperature=float(effective_temperature)
             )
 
+        if stage == "generate":
+            from agent_core.provider_attempt import output_policy_projection
+            trace_metadata["generate_output_policy"] = output_policy_projection(invocation_llm,
+                requested=getattr(self,"generate_requested_output_limits",{}),
+                provider=getattr(self,"llm_provider_id","unknown"),model=getattr(self,"llm_model_id","unknown"))
         total_timeout = min(
             float(legacy_timeout),
             float(getattr(self, "llm_total_timeout_seconds", legacy_timeout)),
@@ -18297,6 +18319,7 @@ class BioAnalystAgent:
                     sdk_max_retries=sdk_max_retries,
                     prompt_hash=prompt_hash,
                     model_parameter_hash=model_parameter_hash,
+                    output_policy=deepcopy(dict(metadata.get("generate_output_policy") or {})),
                 )
 
                 async def invoke(observer: ProviderStreamObserver) -> Any:
@@ -43525,6 +43548,9 @@ question. Never guess a scientific or database identity.
                 "stage": "script_block" if generate_script_protocol else "action_schema",
                 "code": ScriptBlockError.code,
                 "message": generate_display.error,
+                "cause_code": "GENERATE_RESPONSE_INCOMPLETE" if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ScriptBlockError.code,
+                "response_completion": {k:v for k,v in (getattr(response,"response_metadata",{}) or {}).items()
+                    if k in {"finish_reason","completion_integrity","provider_attempt_ref"}},
             }, raw_candidate=content) if generate_display.error
                 else self._extract_structured_action_result(content))
             structured_action = structured_parse_result.action
@@ -43718,7 +43744,7 @@ question. Never guess a scientific or database identity.
                     }
                 except ScriptBlockError as exc:
                     structured_action = {}
-                    action_parse_error = {
+                    action_parse_error = {**dict(action_parse_error or {}),
                         "stage": "script_block",
                         "code": ScriptBlockError.code,
                         "message": str(exc),

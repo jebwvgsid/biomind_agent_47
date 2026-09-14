@@ -24,6 +24,7 @@ async def scenario(mode):
     case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')
     sid='genomics/wgs-short-read-mapping';case.SKILL_ID=sid
     await case.asyncSetUp()
+    is_b=mode.startswith('B_')
     task='new-cross-layer-'+mode
     root=case.root
     files=[]
@@ -51,14 +52,14 @@ async def scenario(mode):
             operations=[{'operation':'set_goal','value':goal,'supporting_evidence':['U1']}]
             for i,path in enumerate([*files,reference]):
                 operations.append({'operation':'upsert_input','input':{'role':'reference_fasta' if i==2 else f'fastq_{i}','path':str(path),'required':True},'supporting_evidence':['U1']})
-            operations.append({'operation':'upsert_output_contract','output_contract':{'output_id':'report','role':'report','artifact_kind':'file','path':str(report),'required':True},'supporting_evidence':['U1']})
+            operations.append({'operation':'upsert_output_contract','output_contract':{'output_id':'report','role':'report','artifact_kind':'file','path':str(report),'required':not is_b},'supporting_evidence':['U1']})
             return AIMessage(content=json.dumps({'action_type':'submit_planning_handoff','summary':'Explicit synthetic task only.','selected_skills':[sid],
                 'task_spec_operations':operations,'unresolved_ambiguities':[],'planner_feedback':None}))
         if stage=='planner':
             spec=canonical_task_spec_for_state(load_plan_state(root,task));inputs=['input.'+x['role'] for x in spec['inputs']]
             observation=[{'identity':'validation_observation','evidence_contract':{'required_fields':['value']}}]
             first=step('bounded-check','genomics.wgs.short.read.mapping.inspect',purpose='validation',operation='inspect',inputs=inputs,produces_observations=observation)
-            if mode=='B':
+            if is_b:
                 steps=[first];artifacts=[];dependency='bounded-check'
             else:
                 second=step('prepare-stub','genomics.wgs.short.read.mapping.prepare_reference',operation='prepare_reference',
@@ -68,19 +69,35 @@ async def scenario(mode):
                 steps=[first,second,third];dependency='dependent-never-runs'
                 artifacts=[{'local_ref':'plan.bundle','semantic_view':{'role':'reference_index_bundle','format':'directory','description':'Synthetic dependency check bundle'},
                     'artifact_contract':{'object_kind':'directory','lifecycle':'plan_local','materialization_policy_id':'managed_intermediate_v1'}}]
-            steps.append(step('reporting-not-reached','genomics.wgs.short.read.mapping.execute',operation='produce_files',outputs=['output.report'],dependencies=[dependency]))
+            if not is_b:steps.append(step('reporting-not-reached','genomics.wgs.short.read.mapping.execute',operation='produce_files',outputs=['output.report'],dependencies=[dependency]))
             return AIMessage(content=json.dumps({'outcome_type':'SUBMIT_PLAN_FOR_REVIEW','proposed_artifacts':artifacts,'steps':steps,
                 'validation_checklist':[{'check_id':'scope','description':'Keep synthetic facts separate from scientific success'}],
                 'metadata':{'schema_version':2,'planner_contract':'structured_plan_v2'}}))
         ordinal=counts['generate']
-        if mode=='B':
+        if is_b:
             if ordinal==1:
                 reads='\n'.join('test -r '+shlex.quote(str(p)) for p in [*files,reference])
                 return AIMessage(content='<shell>'+reads+'\nprintf "synthetic failure\\n" >&2\nexit 7</shell>')
             assert 'synthetic failure' in str(messages)
             if ordinal==2:return AIMessage(content=json.dumps({'script':'printf not-executed'}))
-            assert ordinal==3 and 'GENERATE_SCRIPT_BLOCK_INVALID' in str(messages)
-            return AIMessage(content='<shell>printf "not complete',response_metadata={'finish_reason':'length'})
+            if ordinal==3:
+                assert 'GENERATE_SCRIPT_BLOCK_INVALID' in str(messages)
+                return AIMessage(content='<shell>printf "not complete',response_metadata={'finish_reason':'length'})
+            assert 'GENERATE_RESPONSE_INCOMPLETE' in str(messages)
+            if mode!='B_success' and ordinal==4:
+                return AIMessage(content="<shell>python - <<'PY'\nprint({'missing': 1)\nPY\n</shell>")
+            if mode!='B_success' and ordinal==5:
+                assert 'GENERATE_SCRIPT_SYNTAX_INVALID' in str(messages)
+                return AIMessage(content=json.dumps({'another_incomplete_action':'not executed'}))
+            if mode=='B_exhausted':
+                assert ordinal==6
+                return AIMessage(content='<shell>printf final-incomplete',response_metadata={'finish_reason':'length'})
+            assert ordinal==(4 if mode=='B_success' else 6)
+            template=json.loads(next(m.content for m in messages if getattr(m,'name','')=='approved_effect_emission_template'))
+            reads='\n'.join('test -r '+shlex.quote(str(p)) for p in [*files,reference])
+            body=reads+"\n"+shlex.quote(PYTHON)+" - <<'PY'\n"+template['marker']+"\n"
+            body+="print(emit_effect_evidence({'produces_observations':{'validation_observation':{'value':True}}}))\nPY\n"
+            return AIMessage(content='<shell>'+body+'</shell>',response_metadata={'finish_reason':'stop'})
         if ordinal==1:
             command=shlex.quote(PYTHON)+' "${'+resource_env(resources[0])+'}" --observation-id validation_observation --evidence-dir "$BIOMIND_PREFLIGHT_EVIDENCE_DIR"'
             for i,path in enumerate(files):command+=' --fastq '+shlex.quote(f'改名{i}')+' '+shlex.quote(str(path))
@@ -103,7 +120,7 @@ async def scenario(mode):
         body+='print(emit_effect_evidence(facts))\nPY\nexit 1\n'
         return AIMessage(content='<shell>'+body+'</shell>')
     case.agent._ainvoke_node_llm=provider
-    case.agent.supervisor_node.use_llm_review=mode!='B'
+    case.agent.supervisor_node.use_llm_review=mode!='B_exhausted'
     async def reviewer(*args,completion_report,**kwargs):
         counts['reviewer']+=1
         # The real report/gate/parser/TypedSupervisor remain in use. Inject
@@ -112,7 +129,7 @@ async def scenario(mode):
         payload={'report_id':completion_report['report_id'],'assessment':'ACCEPTABLE','disposition':'completion_accepted',
             'issue_dispositions':[{'issue_id':i,'disposition':'completion_accepted','explanation':'Synthetic bounded observation returned.'} for i in ids],
             'concerns':[],'suggestions':[],'confidence':0.9}
-        if (mode!='publication' and counts['reviewer']==1) or mode.startswith('persistent') or mode=='C':
+        if (mode in {'A','C'} and counts['reviewer']==1) or mode.startswith('persistent') or mode=='C':
             for row in payload['issue_dispositions']:row['confidence']=0.9
         requests.append({'stage':'reviewer','report':completion_report,'response':payload})
         return json.dumps(payload)
@@ -132,7 +149,7 @@ async def scenario(mode):
             counts['recovery']+=1
             wire=str(messages);durable=load_plan_state(root,task)
             step_id=durable['current_step_id']
-            action='retry_step' if mode=='B' else 'revalidate' if step_id=='bounded-check' and (counts['reviewer']<2 or mode in {'persistent_revalidate','C'}) else 'blocked'
+            action='retry_step' if is_b else 'revalidate' if step_id=='bounded-check' and (counts['reviewer']<2 or mode in {'persistent_revalidate','C'}) else 'blocked'
             directive={'schema_version':1,'directive_id':'synthetic-recovery-'+str(counts['recovery']),'task_id':task,
                 'action':action,'target_step_id':step_id,'summary':'Synthetic reviewer/schema/blocked branch follow-up.',
                 'reason_code':'SYNTHETIC_FOLLOWUP','instruction':'Use current evidence; never claim scientific completion.'}
@@ -234,21 +251,22 @@ async def scenario(mode):
                 'repeated_verification':again['verification_outcome'],'review_receipts':final_state['task_state']['semantic_review_receipts'],
                 'requests':requests,'fix':True})
             return
-        if mode=='persistent_revalidate':
-            assert externally_bounded and counts['reviewer']==3 and counts['recovery']==3
-            assert len(executions)==1 and executions[0]['rc']==0 and not commits
-            last=events[-1]['recovery']['recovery_outcome']
-            assert last['type']=='revalidation_required',last
-            assert not durable['task_state'].get('typed_recovery_budget')
-            save('graph-'+mode+'-result',{'counts':counts,'executions':executions,'routes':[next(iter(e)) for e in events],
-                'commits':commits,'last_outcome':last,'externally_bounded_after':3,'runtime_terminated':False,
-                'requests':requests,'fix':True,'limitation':'Witness of three admitted revalidations only; no claim of an infinite execution or effective global deadline.'})
-            return
-        if mode=='B':
-            assert counts['generate']==3 and counts['recovery']==1 and len(executions)==1 and executions[0]['rc']==7
+        if is_b:
             repair=list(durable['task_state']['candidate_repair_state']['events'].values())
-            assert [r['repair_ordinal'] for r in repair]==[1,2] and all(r['repair_limit']==1 for r in repair)
-            assert len(duplicate)==2 and all(r['same_event'] for r in duplicate)
+            expected=2 if mode=='B_success' else 5 if mode=='B_exhausted' else 4
+            assert [r['repair_ordinal'] for r in repair]==list(range(1,expected+1)),repair
+            assert all(r['repair_limit']==4 for r in repair)
+            assert [r['correction_category'] for r in repair][:2]==['representation','response_completion'],repair
+            assert len(duplicate)==expected and all(r['same_event'] for r in duplicate)
+            assert counts['recovery']==1 and counts['generate']==expected+1+(mode!='B_exhausted')
+            assert len(executions)==(1 if mode=='B_exhausted' else 2)
+            assert executions[0]['rc']==7
+            if mode!='B_exhausted':
+                assert executions[1]['rc']==0 and len(commits)==1 and counts['reviewer']==1
+                save('graph-'+mode+'-result',{'counts':counts,'executions':executions,'approvals':approvals,
+                    'routes':[next(iter(e)) for e in events],'commits':commits,'repair_events':repair,
+                    'requests':requests,'duplicate_rejections':duplicate,'fix':True})
+                return
             assert not commits
             report.write_text('old unrelated synthetic stop\n');old_hash=hashlib.sha256(report.read_bytes()).hexdigest()
         elif mode in {'A','publication'}:
@@ -269,7 +287,7 @@ async def scenario(mode):
         case.agent.terminal_summary_policy={'enabled':False}
         stop=await finalize_managed_stop(case.agent,task,values,boundary)
         save('graph-'+mode+'-stop',stop)
-        if mode=='B':
+        if mode=='B_exhausted':
             assert stop['execution']['attempt_id']=='' and stop['associated_attempts']==[]
             # This observation-only fixture has no artifact reconciliation
             # primary_failure. The exact original execution is nevertheless
@@ -305,6 +323,6 @@ async def scenario(mode):
         await case.asyncTearDown()
 
 
-@pytest.mark.parametrize('mode',['publication','A','C'])
+@pytest.mark.parametrize('mode',['publication','A','C','B_success','B_last','B_exhausted'])
 def test_production_combination_fix(mode):
     asyncio.run(scenario(mode))

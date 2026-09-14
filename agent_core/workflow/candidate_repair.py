@@ -143,6 +143,7 @@ def issue_candidate_repair_receipt(
     rejection_event_id: str,
     repair_limit: int,
     progress_proven: bool,
+    policy_receipt: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Persist and return one immutable Controller-produced rejection receipt."""
 
@@ -208,6 +209,8 @@ def issue_candidate_repair_receipt(
         "candidate_event_id": source_candidate_event,
         "rejection_event_id": rejection_id,
     }
+    if policy_receipt:
+        body["policy_receipt"] = deepcopy(dict(policy_receipt))
     body["receipt_id"] = "candidate-repair-receipt:" + _digest(body)[:24]
     receipt_ref = StateContractStore(data_path, task_id).put_object(
         CANDIDATE_REPAIR_RECEIPT_OBJECT_TYPE,
@@ -450,6 +453,8 @@ def claim_candidate_generation(data_path, task_id, scope, *, invocation_id, rece
         if receipt.get('receipt_id','') != receipt_id:
             raise CandidateRepairReceiptError('CANDIDATE_GENERATION_RECEIPT_NOT_IN_REQUEST')
         ledger = deepcopy(dict(task.get('candidate_repair_state') or {}))
+        from agent_core.candidate_repair_policy import freeze_candidate_policy
+        policy = freeze_candidate_policy(ledger, scope, task.get('budgets') or {})
         claims = ledger.setdefault('provider_claims', {})
         authorization = receipt_id or 'initial:' + _digest(scope)
         prior = [row for row in claims.values() if row['authorization'] == authorization]
@@ -469,7 +474,7 @@ def claim_candidate_generation(data_path, task_id, scope, *, invocation_id, rece
                     'cached_response_metadata':safe_metadata}
         claim_id = 'candidate-call:' + _digest({'authorization':authorization,'continuation':len(prior)})
         claim = {'claim_id':claim_id,'scope':deepcopy(scope),'authorization':authorization,'status':'claimed',
-            'invocation_id':invocation_id,'corrective_ordinal':int(receipt.get('repair_ordinal') or 0)}
+            'invocation_id':invocation_id,'corrective_ordinal':int(receipt.get('repair_ordinal') or 0),'policy_receipt':policy}
         claims[claim_id] = claim
         task['candidate_repair_state'] = ledger
         try:save_plan_state(data_path,task_id,state)

@@ -1069,7 +1069,7 @@ class TypedGenerate:
                     error_fingerprint = str(repair["error_fingerprint"])
                     ordinal = int(repair["repair_ordinal"])
                     receipt_limit = int(repair["repair_limit"])
-                    effective_limit = min(self.repair_limit, receipt_limit)
+                    effective_limit = receipt_limit  # Immutable producer policy owns this scope.
                     progress_proven = repair.get("progress_proven") is True
                     if not progress_proven or ordinal > effective_limit:
                         outcome_type = "internal_protocol_error"
@@ -1097,6 +1097,7 @@ class TypedGenerate:
                             "error_fingerprint": error_fingerprint,
                             "feedback": str(repair["feedback"]),
                             "budget_receipt": {
+                                **dict(repair.get("policy_receipt") or {}),
                                 "ordinal": ordinal,
                                 "limit": effective_limit,
                                 "remaining": effective_limit - ordinal,
