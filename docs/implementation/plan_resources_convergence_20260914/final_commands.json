@@ -1,0 +1,153 @@
+[
+  {
+    "name": "acceptance-current-combined",
+    "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+    "env_mode": "replace_environment",
+    "env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TMPDIR": "/tmp/biomind-planfix-v1/runtime",
+      "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-planfix-v1/results",
+      "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-planfix-v1/acceptance-current-combined-pytest.json"
+    },
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-planfix-v1/acceptance-current/tests/offline_managed_bootstrap.py",
+      "/tmp/biomind-planfix-v1/acceptance-current",
+      "-q",
+      "tests/test_plan_resource_fix.py",
+      "tests/test_plan_stop_fix.py",
+      "tests/test_plan_cancel_fix.py",
+      "tests/test_plan_lifecycle_scope_fix.py",
+      "tests/test_plan_transport_fix.py",
+      "tests/test_plan_epoch_reload_fix.py",
+      "tests/test_planner_resource_protocol_v2.py",
+      "tests/test_planner_full_replan_convergence_v2.py",
+      "tests/test_planner_feedback_boundary.py",
+      "tests/test_cross_layer_publication.py",
+      "tests/test_cross_layer_correction.py",
+      "tests/test_cross_layer_delivery.py",
+      "tests/test_cross_layer_domain.py",
+      "tests/test_cross_layer_implementation_graph.py",
+      "tests/test_preflight_types.py",
+      "tests/test_preflight_mapping_commit.py",
+      "tests/test_preflight_directory.py",
+      "tests/test_recovery_public_rejection.py",
+      "tests/test_planner_lifecycle_boundary.py",
+      "tests/test_input_boundary.py",
+      "tests/test_approval_owner_lifecycle.py",
+      "tests/test_cli_model_progress.py"
+    ],
+    "rc": 0,
+    "elapsed_seconds": 343.681,
+    "source_manifest": "/tmp/biomind-planfix-v1/acceptance-current/export_manifest.json",
+    "log": "/tmp/biomind-planfix-v1/acceptance-current-combined.log",
+    "results": "/tmp/biomind-planfix-v1/acceptance-current-combined-pytest.json"
+  },
+  {
+    "name": "acceptance-current-cli",
+    "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+    "env_mode": "replace_environment",
+    "env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TMPDIR": "/tmp/biomind-planfix-v1/runtime",
+      "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-planfix-v1/results",
+      "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-planfix-v1/acceptance-current-cli-pytest.json"
+    },
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-planfix-v1/acceptance-current/tests/offline_managed_bootstrap.py",
+      "/tmp/biomind-planfix-v1/acceptance-current",
+      "-q",
+      "tests/test_cli_model_display.py"
+    ],
+    "rc": 0,
+    "elapsed_seconds": 9.322,
+    "source_manifest": "/tmp/biomind-planfix-v1/acceptance-current/export_manifest.json",
+    "log": "/tmp/biomind-planfix-v1/acceptance-current-cli.log",
+    "results": "/tmp/biomind-planfix-v1/acceptance-current-cli-pytest.json"
+  },
+  {
+    "name": "acceptance-current-reload",
+    "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+    "env_mode": "replace_environment",
+    "env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TMPDIR": "/tmp/biomind-planfix-v1/runtime",
+      "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-planfix-v1/results",
+      "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-planfix-v1/acceptance-current-reload-pytest.json"
+    },
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-planfix-v1/acceptance-current/tests/offline_managed_bootstrap.py",
+      "/tmp/biomind-planfix-v1/acceptance-current",
+      "-q",
+      "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload"
+    ],
+    "rc": 0,
+    "elapsed_seconds": 9.518,
+    "source_manifest": "/tmp/biomind-planfix-v1/acceptance-current/export_manifest.json",
+    "log": "/tmp/biomind-planfix-v1/acceptance-current-reload.log",
+    "results": "/tmp/biomind-planfix-v1/acceptance-current-reload-pytest.json"
+  },
+  {
+    "name": "acceptance-current-epoch",
+    "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+    "env_mode": "replace_environment",
+    "env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TMPDIR": "/tmp/biomind-planfix-v1/runtime",
+      "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-planfix-v1/results",
+      "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-planfix-v1/acceptance-current-epoch-pytest.json"
+    },
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-planfix-v1/acceptance-current/tests/offline_managed_bootstrap.py",
+      "/tmp/biomind-planfix-v1/acceptance-current",
+      "-q",
+      "tests/test_plan_epoch_reload_fix.py::test_read_closed_epoch_without_refund_or_dispatch"
+    ],
+    "rc": 0,
+    "elapsed_seconds": 15.188,
+    "source_manifest": "/tmp/biomind-planfix-v1/acceptance-current/export_manifest.json",
+    "log": "/tmp/biomind-planfix-v1/acceptance-current-epoch.log",
+    "results": "/tmp/biomind-planfix-v1/acceptance-current-epoch-pytest.json"
+  },
+  {
+    "name": "acceptance-current-legacy",
+    "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+    "env_mode": "replace_environment",
+    "env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TMPDIR": "/tmp/biomind-planfix-v1/runtime",
+      "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-planfix-v1/results",
+      "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-planfix-v1/acceptance-current-artifacts",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-planfix-v1/acceptance-current-legacy-pytest.json"
+    },
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-planfix-v1/acceptance-current/tests/offline_managed_bootstrap.py",
+      "/tmp/biomind-planfix-v1/acceptance-current",
+      "-q",
+      "tests/test_planner_agent_loop.py"
+    ],
+    "rc": 1,
+    "elapsed_seconds": 14.679,
+    "source_manifest": "/tmp/biomind-planfix-v1/acceptance-current/export_manifest.json",
+    "log": "/tmp/biomind-planfix-v1/acceptance-current-legacy.log",
+    "results": "/tmp/biomind-planfix-v1/acceptance-current-legacy-pytest.json"
+  }
+]

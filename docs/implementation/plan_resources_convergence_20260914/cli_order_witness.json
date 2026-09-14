@@ -1,0 +1,63 @@
+{
+  "classification": "PREEXISTING_TEST_ORDER_FAILURE",
+  "files": {
+    "agent_core/cli_display.py": {
+      "before_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+      "final_loaded_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d"
+    },
+    "tests/test_cli_model_progress.py": {
+      "before_sha256": "6e6109a47a1c975e2c0464fbefa4d0d53a5b0c651f78fdd4dc60443061b91048",
+      "final_loaded_sha256": "6e6109a47a1c975e2c0464fbefa4d0d53a5b0c651f78fdd4dc60443061b91048"
+    },
+    "tests/test_cli_model_display.py": {
+      "before_sha256": "7fe909ccb71db53844874eb30073af10d18e8b7b6d6b56d0556705b1c34728ec",
+      "final_loaded_sha256": "7fe909ccb71db53844874eb30073af10d18e8b7b6d6b56d0556705b1c34728ec"
+    }
+  },
+  "before": {
+    "sha256": "b5f58bc44f42b040d8fa967b9f2ec014c322160b4b8469f68ff777c147f7f93b",
+    "call_outcomes": {
+      "passed": 1,
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_cli_model_display.py::test_context_local_confirmation_has_no_cross_call_wait"
+    ],
+    "summary": [
+      "1 failed, 1 passed in 19.24s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "after": {
+    "sha256": "bc3e2fa0a13682788b18b8a5be50b2c3b93aa33762308081484f09d819b63f66",
+    "call_outcomes": {
+      "passed": 1,
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_cli_model_display.py::test_context_local_confirmation_has_no_cross_call_wait"
+    ],
+    "summary": [
+      "1 failed, 1 passed in 19.24s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "final_isolated_module": {
+    "sha256": "c0bffc4e325412535ae8ef3690308ca3c12cc609a9389341450d268516c39436",
+    "call_outcomes": {
+      "passed": 15
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "15 passed in 1.83s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "fix_claim": "No CLI production or original CLI fixture changes; same source module independently passes."
+}

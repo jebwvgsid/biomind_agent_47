@@ -1,0 +1,301 @@
+{
+  "historical_audit_commit": "f78bb10bb3f12059efaf911916940440cecdd73d",
+  "original_ledger": "docs/audits/session_1789369423_plan_resource_cycle/verification.json",
+  "ledger_sha256": "19b2de5ea0f7cba57ebafbf789e30b1723b781778a0298e69296ce18a57ed8d7",
+  "unchanged_historical_results": {
+    "results_sha256": "ddb93519e27ad129144efc82870a406f3c1227566603a8ea0d4bf0133b5df7cb",
+    "call_outcomes": {
+      "passed": 34,
+      "failed": 9
+    },
+    "tests": [
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_original_loop_and_actual_feedback",
+        "outcome": "passed",
+        "duration": 15.064646382816136,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[C]",
+        "outcome": "passed",
+        "duration": 1.0914939753711224,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[role]",
+        "outcome": "passed",
+        "duration": 0.9997122958302498,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[inherited]",
+        "outcome": "passed",
+        "duration": 0.8526746472343802,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[renamed]",
+        "outcome": "passed",
+        "duration": 1.0556960552930832,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[new_protocol_example]",
+        "outcome": "passed",
+        "duration": 0.8930995650589466,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_same_candidate_reentry_is_not_new_progress",
+        "outcome": "passed",
+        "duration": 1.1911285677924752,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_late_cancel_response",
+        "outcome": "passed",
+        "duration": 1.1925956076011062,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_readonly_capability_positive_control",
+        "outcome": "passed",
+        "duration": 0.8081320375204086,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_late_valid_candidate_does_not_gain_approval",
+        "outcome": "passed",
+        "duration": 0.8906131461262703,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_rejection_keeps_old_plan_without_review_eligibility",
+        "outcome": "passed",
+        "duration": 0.7576015945523977,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_claim_replay_and_reload",
+        "outcome": "passed",
+        "duration": 0.014074823819100857,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_plan_resource_cycle_audit.py::test_reload_claim_in_fresh_process",
+        "outcome": "passed",
+        "duration": 0.0015294887125492096,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+        "outcome": "passed",
+        "duration": 0.00041417311877012253,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+        "outcome": "passed",
+        "duration": 0.0004164213314652443,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+        "outcome": "passed",
+        "duration": 0,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+        "outcome": "passed",
+        "duration": 0,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+        "outcome": "passed",
+        "duration": 0,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+        "outcome": "passed",
+        "duration": 0,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+        "outcome": "passed",
+        "duration": 0.0033382726833224297,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+        "outcome": "passed",
+        "duration": 0.007256622426211834,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+        "outcome": "passed",
+        "duration": 0.0003545684739947319,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+        "outcome": "passed",
+        "duration": 0.0003339676186442375,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+        "outcome": "passed",
+        "duration": 0.0009773168712854385,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_a_consultant_handoff_requires_planner_progress_receipt",
+        "outcome": "passed",
+        "duration": 0.608632130548358,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_b_skill_reference_result_is_an_observation_not_a_transition",
+        "outcome": "passed",
+        "duration": 0.002221358008682728,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_c_only_explicit_submission_reaches_plan_review",
+        "outcome": "failed",
+        "duration": 0.002256743609905243,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_c_only_explicit_submission_reaches_plan_review>\n\n    def test_c_only_explicit_submission_reaches_plan_review(self):\n        adapter = TypedPlanner(data_path=\"/unused\", source=None)\n        self.assertEqual(\n            adapter.classify({}, {}, base_state())[\"type\"],\n            \"planning_continues\",\n        )\n>       submitted = record_plan_review_submission(base_state())\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:187: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_d_submit_review_acceptance_chain_reaches_execution",
+        "outcome": "failed",
+        "duration": 0.0021047135815024376,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_d_submit_review_acceptance_chain_reaches_execution>\n\n    def test_d_submit_review_acceptance_chain_reaches_execution(self):\n>       submitted = record_plan_review_submission(base_state())\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:201: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e2_plan_review_revision_requires_durable_rejection_receipt",
+        "outcome": "failed",
+        "duration": 0.0019934996962547302,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_e2_plan_review_revision_requires_durable_rejection_receipt>\n\n    def test_e2_plan_review_revision_requires_durable_rejection_receipt(self):\n>       pending = record_plan_review_submission(base_state())\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:238: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e_output_identity_review_evidence_is_machine_addressable",
+        "outcome": "failed",
+        "duration": 0.0019344789907336235,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_e_output_identity_review_evidence_is_machine_addressable>\n\n    def test_e_output_identity_review_evidence_is_machine_addressable(self):\n        issue = {\n            \"code\": \"OUTPUT_IDENTITY_MISMATCH\",\n            \"field_path\": \"$.steps[1].outputs[0]\",\n            \"expected_identity\": \"output.annotated_vcf\",\n            \"observed_identity\": \"plan.annotation\",\n            \"constraint_source\": \"TaskSpec.outputs[0]\",\n        }\n        evidence = review_evidence_from_issues([issue])\n        self.assertEqual(evidence[0][\"json_path\"], \"$.steps[1].outputs[0]\")\n        self.assertEqual(evidence[0][\"expected\"], \"output.annotated_vcf\")\n        self.assertEqual(evidence[0][\"actual\"], \"plan.annotation\")\n        self.assertEqual(evidence[0][\"constraint_source\"], \"TaskSpec.outputs[0]\")\n        rejected = record_plan_review_rejection(\n>           record_plan_review_submission(base_state()), [issue]\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        )\n\ntests/test_planner_agent_loop.py:230: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_f_rejected_v1_returns_to_planner_and_v2_can_be_accepted",
+        "outcome": "failed",
+        "duration": 0.0019697006791830063,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_f_rejected_v1_returns_to_planner_and_v2_can_be_accepted>\n\n    def test_f_rejected_v1_returns_to_planner_and_v2_can_be_accepted(self):\n>       v1 = record_plan_review_submission(base_state())\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:273: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_g_missing_producer_evidence_names_resource_consumer_and_candidates",
+        "outcome": "passed",
+        "duration": 0.001849413849413395,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_h_transient_ready_poison_cannot_reach_generate",
+        "outcome": "failed",
+        "duration": 0.0018517421558499336,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_h_transient_ready_poison_cannot_reach_generate>\n\n    def test_h_transient_ready_poison_cannot_reach_generate(self):\n>       state = record_plan_review_submission(base_state())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:305: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_i_reverse_poison_cannot_divert_accepted_plan",
+        "outcome": "failed",
+        "duration": 0.0018775584176182747,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_i_reverse_poison_cannot_divert_accepted_plan>\n\n    def test_i_reverse_poison_cannot_divert_accepted_plan(self):\n>       state = accepted_state()\n                ^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:314: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/test_planner_agent_loop.py:115: in accepted_state\n    state = record_plan_review_submission(base_state())\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_j_distinct_multi_turn_progress_resets_repeat_counter",
+        "outcome": "passed",
+        "duration": 0.0026464639231562614,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k2_adapter_rejects_replayed_progress_receipt",
+        "outcome": "passed",
+        "duration": 0.0031632138416171074,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k2b_new_failure_is_not_shadowed_by_old_observation",
+        "outcome": "passed",
+        "duration": 0.0024786842986941338,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k3_stale_result_is_consumed_once",
+        "outcome": "failed",
+        "duration": 0.0025672391057014465,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_k3_stale_result_is_consumed_once>\n\n    async def test_k3_stale_result_is_consumed_once(self):\n        source_calls = 0\n    \n        async def source(_state):\n            nonlocal source_calls\n            source_calls += 1\n            if source_calls == 1:\n                return {\n                    \"stale_node_result\": {\n                        \"changed_preconditions\": [\"task_revision\"],\n                    }\n                }\n            return {}\n    \n        active = base_state()\n        active[\"steps\"] = []\n        active.pop(\"current_plan\")\n        active[\"task_state\"][\"planner_loop\"] = record_planner_observation(\n            None,\n            action_type=\"inspect_task_spec\",\n            action={\"task_revision\": 1},\n            observation={\"status\": \"inspected\"},\n        )\n>       submitted = record_plan_review_submission(base_state())\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:450: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k4_distinct_stale_invocations_are_not_false_replays",
+        "outcome": "passed",
+        "duration": 0.0032036900520324707,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k5_adapter_update_clears_consumed_stale_receipt",
+        "outcome": "failed",
+        "duration": 0.002259206958115101,
+        "failure": "self = <test_planner_agent_loop.PlannerAgentLoopTests testMethod=test_k5_adapter_update_clears_consumed_stale_receipt>\n\n    async def test_k5_adapter_update_clears_consumed_stale_receipt(self):\n        source_calls = 0\n    \n        async def source(_state):\n            nonlocal source_calls\n            source_calls += 1\n            if source_calls == 1:\n                return {\n                    \"stale_node_result\": {\n                        \"caller_node\": \"planner\",\n                        \"caller_invocation_id\": \"stale-once\",\n                        \"changed_preconditions\": [\"task_revision\"],\n                    }\n                }\n            return {}\n    \n        active = base_state()\n        active[\"steps\"] = []\n        active.pop(\"current_plan\")\n        active[\"task_state\"][\"planner_loop\"] = record_planner_observation(\n            None,\n            action_type=\"inspect_task_spec\",\n            action={\"task_revision\": 1},\n            observation={\"status\": \"inspected\"},\n        )\n>       submitted = record_plan_review_submission(base_state())\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_planner_agent_loop.py:534: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nplan_state = {'task_id': 'planner-loop', 'workflow_routing_schema_version': 2, 'plan_id': 'plan-1', 'plan_version': 'plan-v1', ...}\n\n    def record_plan_review_submission(\n        plan_state: Mapping[str, Any],\n    ) -> Dict[str, Any]:\n        \"\"\"Attach an Agent-initiated, plan-identity-bound review submission.\"\"\"\n    \n        updated = deepcopy(dict(plan_state or {}))\n        identity = _plan_identity(updated)\n        if not updated.get(\"steps\") or identity[\"plan_revision\"] <= 0:\n            raise ValueError(\"PLAN_REVIEW_SUBMISSION_CANDIDATE_INVALID\")\n        scope = plan_review_candidate_scope(updated)\n        # A successful newly compiled candidate clears the prior rejection below;\n        # the claim outcome, not a historical receipt, authorizes this submission.\n        task_state = dict(updated.get(\"task_state\") or {})\n        loop = dict(task_state.get(\"planner_loop\") or {})\n        if loop.get(\"phase\") == \"candidate_rejected\":\n            failure = dict(task_state.get(\"planning_failure\") or {})\n            if failure.get(\"status\") == \"resolved\":\n                loop[\"phase\"] = \"reasoning\"\n                task_state[\"planner_loop\"] = loop\n                updated[\"task_state\"] = task_state\n                scope = plan_review_candidate_scope(updated)\n        if not scope[\"eligible\"]:\n>           raise ValueError(\"PLAN_REVIEW_CANDIDATE_SCOPE_STALE\")\nE           ValueError: PLAN_REVIEW_CANDIDATE_SCOPE_STALE\n\nagent_core/planner_loop.py:327: ValueError"
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k_true_exact_repeat_is_bounded",
+        "outcome": "passed",
+        "duration": 0.0020955801010131836,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_l_compiled_schema2_graph_supports_repair_then_acceptance",
+        "outcome": "passed",
+        "duration": 0.5067764800041914,
+        "failure": ""
+      },
+      {
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_m_compiled_graph_fails_closed_on_route_only_planner_return",
+        "outcome": "passed",
+        "duration": 0.0300320191308856,
+        "failure": ""
+      }
+    ],
+    "runtime_log_sha256": "443fbfb0fe64462da69d25640ea912155eb9183fc79a2853325739f80aeb41a7",
+    "pytest_summary": [
+      "9 failed, 30 passed, 4 subtests passed in 31.60s"
+    ],
+    "unique_test_nodeids": 39,
+    "count_note": "call_outcomes includes pytest subtest reports; use pytest_summary for test/subtest distinction",
+    "command": {
+      "launcher": "env -i",
+      "python": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "bootstrap": "/tmp/biomind-resource-audit/current/tests/offline_managed_bootstrap.py",
+      "export": "/tmp/biomind-resource-audit/current",
+      "pytest_args": [
+        "-q",
+        "tests/test_plan_resource_cycle_audit.py",
+        "tests/test_planner_resource_protocol_v2.py",
+        "tests/test_planner_agent_loop.py"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "TMPDIR": "/tmp/biomind-resource-audit/runtime",
+        "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-resource-audit/results",
+        "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-resource-audit/pytest-final.json"
+      }
+    },
+    "loaded_python_source_signature": "6b0f4cb2dbf81b103db4bd191a006cb20ec39cd7c0a93f35264c372094053902",
+    "source_unchanged": "True",
+    "rc": "1"
+  },
+  "equivalents": "tests/test_plan_lifecycle_scope_fix.py; production graph candidate scope; original fixture file left unchanged"
+}

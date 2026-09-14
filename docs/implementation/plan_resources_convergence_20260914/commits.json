@@ -1,0 +1,124 @@
+{
+  "base": "f78bb10bb3f12059efaf911916940440cecdd73d",
+  "production_head": "9fc2081adbeedf93ba197209583dd807ea99551f",
+  "commits": [
+    {
+      "commit": "e83cec1ef2e8961805cd4099c71056340e308d40",
+      "parent": "f78bb10bb3f12059efaf911916940440cecdd73d",
+      "subject": "fix(plan): scope workspace roles through approval and runtime binding",
+      "files": [
+        "agent_core/action_runtime.py",
+        "agent_core/plan_bindings.py",
+        "agent_core/plan_contract.py",
+        "agent_core/plan_tracker.py",
+        "agent_core/skill_manager.py",
+        "agent_core/step_effects.py",
+        "agent_core/workspace_attestation.py",
+        "bio_agents.py",
+        "docs/implementation/plan_resources_convergence_20260914/baseline.json",
+        "docs/implementation/plan_resources_convergence_20260914/candidate_C_FIX.json",
+        "docs/implementation/plan_resources_convergence_20260914/resource_acceptance.md",
+        "docs/implementation/plan_resources_convergence_20260914/resource_export_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/resource_reload_tests.json",
+        "docs/implementation/plan_resources_convergence_20260914/resource_tests.json",
+        "prompts/manager.py",
+        "skills/genomics/snpeff-annotation/SKILL.md",
+        "tests/export_plan_resource_fix.py",
+        "tests/plan_resource_fix_support.py",
+        "tests/test_plan_resource_fix.py"
+      ]
+    },
+    {
+      "commit": "034194846b833467b90a7aaabf25eb6b9caa3a6b",
+      "parent": "e83cec1ef2e8961805cd4099c71056340e308d40",
+      "subject": "fix(planner): bound requests and admit explicit active stop",
+      "files": [
+        "agent_core/plan_contract.py",
+        "agent_core/plan_tracker.py",
+        "agent_core/planner_context.py",
+        "agent_core/planner_recovery.py",
+        "bio_agents.py",
+        "docs/implementation/plan_resources_convergence_20260914/stop_acceptance.md",
+        "docs/implementation/plan_resources_convergence_20260914/stop_export_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/stop_feedback_export_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/stop_feedback_tests.json",
+        "docs/implementation/plan_resources_convergence_20260914/stop_tests.json",
+        "prompts/manager.py",
+        "tests/export_plan_resource_fix.py",
+        "tests/plan_resource_fix_support.py",
+        "tests/test_plan_stop_fix.py"
+      ]
+    },
+    {
+      "commit": "0542eaf045950c24c3d58e32d6ac60706be1e0ce",
+      "parent": "034194846b833467b90a7aaabf25eb6b9caa3a6b",
+      "subject": "fix(planner): revoke late admission at cancellation boundaries",
+      "files": [
+        "agent_core/plan_tracker.py",
+        "agent_core/planner_recovery.py",
+        "bio_agents.py",
+        "docs/implementation/plan_resources_convergence_20260914/cancel_acceptance.md",
+        "docs/implementation/plan_resources_convergence_20260914/cancel_export_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/cancel_tests.json",
+        "tests/export_plan_resource_fix.py",
+        "tests/test_plan_cancel_fix.py",
+        "tests/test_plan_stop_fix.py"
+      ]
+    },
+    {
+      "commit": "683075a587d7e70c9e7dedb88470ce9c7a9874f1",
+      "parent": "0542eaf045950c24c3d58e32d6ac60706be1e0ce",
+      "subject": "fix(plan): retain scoped roles when reusing authoritative resources",
+      "files": [
+        "agent_core/plan_bindings.py",
+        "docs/implementation/plan_resources_convergence_20260914/reuse-before_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/reuse-before_tests.json",
+        "docs/implementation/plan_resources_convergence_20260914/reuse-fix_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/reuse-fix_tests.json",
+        "docs/implementation/plan_resources_convergence_20260914/reuse_control.md",
+        "tests/test_plan_resource_fix.py"
+      ]
+    },
+    {
+      "commit": "9167b207e27fe29b23ff486da0f846d6f04f3b04",
+      "parent": "683075a587d7e70c9e7dedb88470ce9c7a9874f1",
+      "subject": "fix(planner): preserve role step identity in public correction feedback",
+      "files": [
+        "agent_core/plan_bindings.py",
+        "docs/implementation/plan_resources_convergence_20260914/association_feedback.md",
+        "docs/implementation/plan_resources_convergence_20260914/association_feedback_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/association_feedback_tests.json",
+        "prompts/manager.py",
+        "tests/test_plan_stop_fix.py"
+      ]
+    },
+    {
+      "commit": "78eefd80ed4394c365d18ecbbe9753155a2cdb9c",
+      "parent": "9167b207e27fe29b23ff486da0f846d6f04f3b04",
+      "subject": "fix(planner): bound SDK transport attempts and guard final dispatch",
+      "files": [
+        "bio_agents.py",
+        "docs/implementation/plan_resources_convergence_20260914/transport_acceptance.md",
+        "docs/implementation/plan_resources_convergence_20260914/transport_export_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/transport_tests.json",
+        "tests/test_plan_transport_fix.py"
+      ]
+    },
+    {
+      "commit": "9fc2081adbeedf93ba197209583dd807ea99551f",
+      "parent": "78eefd80ed4394c365d18ecbbe9753155a2cdb9c",
+      "subject": "fix(planner): publish a concrete stop example and verify durable epoch reload",
+      "files": [
+        "agent_core/plan_contract.py",
+        "docs/implementation/plan_resources_convergence_20260914/epoch_independent_tests.json",
+        "docs/implementation/plan_resources_convergence_20260914/stop_example_and_reload.md",
+        "docs/implementation/plan_resources_convergence_20260914/stop_example_manifest.json",
+        "docs/implementation/plan_resources_convergence_20260914/stop_example_tests.json",
+        "docs/implementation/plan_resources_convergence_20260914/stop_reload_commands.json",
+        "tests/test_plan_epoch_reload_fix.py"
+      ]
+    }
+  ],
+  "materials_commit": "The commit containing this receipt; git log -1 --format=%H -- this file gives its full hash.",
+  "pushed": false
+}

@@ -92,7 +92,7 @@ async def scenario(candidates, name, *, late_cancel=False, readonly=False, after
     for x in declarations['output_contracts']:
         row={k:v for k,v in x.items() if k in ['output_id','role','artifact_kind','canonical_path','root_ref','path_policy','required','user_visible']}
         operations.append({'operation':'upsert_output_contract','output_contract':row,'supporting_evidence':['U1']})
-    counts={'consultant':0,'planner':0}; requests=[]; states=[]; calls=[]; events=[]
+    counts={'consultant':0,'planner':0}; requests=[]; responses=[]; states=[]; calls=[]; events=[]
     final_states=[]; external_stop=[]
     progress=case.agent._planner_progress
     def progress_observer(tid, event, payload):
@@ -126,7 +126,9 @@ async def scenario(candidates, name, *, late_cancel=False, readonly=False, after
         if before_dispatch is not None:
             await before_dispatch(case, task, counts, index)
         value=candidates[index]
-        return value if isinstance(value, AIMessage) else AIMessage(content=json.dumps(value), response_metadata={'finish_reason':'stop'})
+        response=value if isinstance(value, AIMessage) else AIMessage(content=json.dumps(value), response_metadata={'finish_reason':'stop'})
+        responses.append({'ordinal':counts['planner'],'raw':response.content,'metadata':deepcopy(response.response_metadata)})
+        return response
     case.agent._ainvoke_node_llm=provider
     def forbidden(*a, **k): raise AssertionError('Approval/execution forbidden in audit')
     case.agent._prompt_user=forbidden
@@ -149,7 +151,7 @@ async def scenario(candidates, name, *, late_cancel=False, readonly=False, after
         except asyncio.CancelledError:
             assert external_stop, 'Unexpected cancellation'
         if not final_states: final_states.append(deepcopy(load_plan_state(case.root,task)))
-        result={'counts':counts,'states':states,'requests':requests,'validator_calls':calls,'events':events,
+        result={'counts':counts,'states':states,'requests':requests,'responses':responses,'validator_calls':calls,'events':events,
             'final_states':final_states,'external_stop':external_stop,
             'production_source':'exact export; no validator mocked','stop':'external bounded witness ceiling' if external_stop else 'production routing',
             'registry':case.agent.skill_manager.get_execution_capability_registry([SID])}

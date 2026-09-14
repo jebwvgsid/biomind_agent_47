@@ -1,0 +1,72 @@
+{
+  "base": "f78bb10bb3f12059efaf911916940440cecdd73d",
+  "current_head": "9fc2081adbeedf93ba197209583dd807ea99551f",
+  "original_status_rows": 437,
+  "current_status_rows": 453,
+  "original_status_changes": [],
+  "additional_paths": [
+    "docs/implementation/plan_resources_convergence_20260914/README.md",
+    "docs/implementation/plan_resources_convergence_20260914/all_test_results.json.gz",
+    "docs/implementation/plan_resources_convergence_20260914/chain_index.json",
+    "docs/implementation/plan_resources_convergence_20260914/chains.json.gz",
+    "docs/implementation/plan_resources_convergence_20260914/cli_order_witness.json",
+    "docs/implementation/plan_resources_convergence_20260914/commits.json",
+    "docs/implementation/plan_resources_convergence_20260914/final_commands.json",
+    "docs/implementation/plan_resources_convergence_20260914/final_export_manifest.json",
+    "docs/implementation/plan_resources_convergence_20260914/final_fixture_provenance.json",
+    "docs/implementation/plan_resources_convergence_20260914/final_logs.json.gz",
+    "docs/implementation/plan_resources_convergence_20260914/preserved_nine_fixture_failures.json",
+    "docs/implementation/plan_resources_convergence_20260914/protection.json",
+    "docs/implementation/plan_resources_convergence_20260914/verification_ledger.json",
+    "tests/export_plan_resource_fix.py",
+    "tests/plan_resource_fix_support.py",
+    "tests/test_plan_lifecycle_scope_fix.py"
+  ],
+  "original_index_changes_outside_owned_commits": [],
+  "staged_diff_bytes": 0,
+  "protected_overlays": {
+    "prompts/manager.py": {
+      "initial_head_sha256": "0f5b875f840eae067c77c630c8ca230a9a224166af9131a9eba0b848fbc3fc12",
+      "initial_worktree_sha256": "ddfd3cc2ef40a686d75d5957f52dd9dc4ca31e032e5b030071f36446175f89d7",
+      "current_commit_sha256": "9655e6e4b8e6fe55217542bfc7390ba299cfbc7c73ec3bbdcdd7cd7528d9bdba",
+      "current_worktree_sha256": "107fa92e5ac91d04b840285e277cc06f12c307bced6ccbafadd5787073c66dc6",
+      "reapplied_original_overlay_rc": 0,
+      "exactly_original_overlay_plus_committed_changes": true
+    },
+    "agent_core/node_context.py": {
+      "initial_head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+      "initial_worktree_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "current_commit_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+      "current_worktree_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "reapplied_original_overlay_rc": 0,
+      "exactly_original_overlay_plus_committed_changes": true
+    },
+    "agent_core/planner_context.py": {
+      "initial_head_sha256": "7df73992997946936c43275af713736eda860cdc0c99063904ca187665c28d2d",
+      "initial_worktree_sha256": "febb7b3a772b6532f0a0bffb83d6fde1fc67ff831ea7e4b3d05633690a40fa46",
+      "current_commit_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d",
+      "current_worktree_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+      "reapplied_original_overlay_rc": 0,
+      "exactly_original_overlay_plus_committed_changes": true
+    },
+    "agent_core/provider_message_safety.py": {
+      "initial_head_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+      "initial_worktree_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "current_commit_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+      "current_worktree_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "reapplied_original_overlay_rc": 0,
+      "exactly_original_overlay_plus_committed_changes": true
+    },
+    "agent_core/workflow/managed_stop.py": {
+      "initial_head_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+      "initial_worktree_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+      "current_commit_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+      "current_worktree_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+      "reapplied_original_overlay_rc": 0,
+      "exactly_original_overlay_plus_committed_changes": true
+    }
+  },
+  "original_audit_ledger_sha256": "19b2de5ea0f7cba57ebafbf789e30b1723b781778a0298e69296ce18a57ed8d7",
+  "original_session_read_or_mutated": false,
+  "no_push": true
+}

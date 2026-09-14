@@ -1,0 +1,744 @@
+{
+  "acceptance-current-cli-pytest.json": {
+    "sha256": "c0bffc4e325412535ae8ef3690308ca3c12cc609a9389341450d268516c39436",
+    "call_outcomes": {
+      "passed": 15
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "15 passed in 1.83s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "acceptance-current-combined-pytest.json": {
+    "sha256": "1f62fb200ce9bbda7d1146f34efa600f61227c17b1455f41e3b888eabb0e2fe9",
+    "call_outcomes": {
+      "passed": 188
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "184 passed, 3 warnings, 4 subtests passed in 329.07s (0:05:29)"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "acceptance-current-epoch-pytest.json": {
+    "sha256": "c98bb1ec13538f9e996d78aa7f4df8ebdd840811ec7dbf32a42e60f4eca77af7",
+    "call_outcomes": {
+      "passed": 1
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "1 passed in 5.29s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "acceptance-current-legacy-pytest.json": {
+    "sha256": "9707d1f77541bd38f6735c6a44a1030bea5f4e7563db55b31c8a9dbf835a807e",
+    "call_outcomes": {
+      "passed": 10,
+      "failed": 9
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_c_only_explicit_submission_reaches_plan_review",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_d_submit_review_acceptance_chain_reaches_execution",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e2_plan_review_revision_requires_durable_rejection_receipt",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e_output_identity_review_evidence_is_machine_addressable",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_f_rejected_v1_returns_to_planner_and_v2_can_be_accepted",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_h_transient_ready_poison_cannot_reach_generate",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_i_reverse_poison_cannot_divert_accepted_plan",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k3_stale_result_is_consumed_once",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k5_adapter_update_clears_consumed_stale_receipt"
+    ],
+    "summary": [
+      "9 failed, 10 passed in 5.25s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "acceptance-current-reload-pytest.json": {
+    "sha256": "5d17b182e31943af77657e81dafd1c41b9537e62ddf83001bcc2190fd36bbba7",
+    "call_outcomes": {
+      "passed": 1
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "1 passed in 0.45s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "association-feedback-fix-pytest.json": {
+    "sha256": "50cf62416abb6998d5220aeec1ad458874e8094e6f0ae2cbb5e821a3db2e78c1",
+    "call_outcomes": {
+      "passed": 23
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "23 passed in 49.68s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/association-feedback-fix/export_manifest.json"
+  },
+  "cancel-final-pytest.json": {
+    "sha256": "2fb4c6a58b42c94d41ca8bb78ab4cfd4a9d83b80d3dabd3716b0bb3b64d903eb",
+    "call_outcomes": {
+      "passed": 10
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "10 passed in 26.76s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/cancel-final/export_manifest.json"
+  },
+  "cancel-r1-pytest.json": {
+    "sha256": "33dbf4ccf8b1eefbece3850b49081672d57838adaa4f190d8c5c4f402d0c18a8",
+    "call_outcomes": {
+      "failed": 6,
+      "passed": 3
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]"
+    ],
+    "summary": [
+      "6 failed, 3 passed in 27.47s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/cancel-r1/export_manifest.json"
+  },
+  "cancel-reload-final-pytest.json": {
+    "sha256": "f8359d856e5b1400ac432a1fef975a1d78d5031c6d1cf8d67042f02f8ec891de",
+    "call_outcomes": {
+      "passed": 10
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "10 passed in 25.55s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/cancel-reload-final/export_manifest.json"
+  },
+  "cli-isolated-current-pytest.json": {
+    "sha256": "c5eeeb1f11adf4053347c0a915f89f8f972db86f6fc3ed3a783f09307aa4d03f",
+    "call_outcomes": {
+      "passed": 15
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "15 passed in 4.27s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "cli-order-after-pytest.json": {
+    "sha256": "bc3e2fa0a13682788b18b8a5be50b2c3b93aa33762308081484f09d819b63f66",
+    "call_outcomes": {
+      "passed": 1,
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_cli_model_display.py::test_context_local_confirmation_has_no_cross_call_wait"
+    ],
+    "summary": [
+      "1 failed, 1 passed in 19.24s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "cli-order-before-pytest.json": {
+    "sha256": "b5f58bc44f42b040d8fa967b9f2ec014c322160b4b8469f68ff777c147f7f93b",
+    "call_outcomes": {
+      "passed": 1,
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_cli_model_display.py::test_context_local_confirmation_has_no_cross_call_wait"
+    ],
+    "summary": [
+      "1 failed, 1 passed in 19.24s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "combined-final-pytest.json": {
+    "sha256": "dbbac4c543dc737d8f903fe3f27587a18e48d5221b370386bbe68adc1c8ab983",
+    "call_outcomes": {
+      "passed": 156,
+      "failed": 37
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_cross_layer_publication.py::test_F01_F02_publication_and_completion_are_distinct",
+      "tests/test_cross_layer_publication.py::test_F06_F07_frozen_helper_executes_without_nested_json",
+      "tests/test_cross_layer_correction.py::test_F19_actual_generate_transport_preserves_explicit_output_limit",
+      "tests/test_cross_layer_correction.py::test_F17_distinct_request_same_text_counts_once_then_no_progress",
+      "tests/test_cross_layer_delivery.py::test_F25_F26_real_journal_recovers_lost_receipt_not_unowned_content",
+      "tests/test_cross_layer_delivery.py::test_F28_two_real_processes_race_without_overwrite",
+      "tests/test_cross_layer_delivery.py::test_F22_two_failure_parents_exclude_input_and_foreign_history",
+      "tests/test_cross_layer_domain.py::test_F35_registered_directory_feedback_and_log_reader",
+      "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+      "tests/test_cross_layer_domain.py::test_F32_F33_approved_explicit_runtime_stub_and_capability_boundary",
+      "tests/test_cross_layer_domain.py::test_F38_actual_loaded_candidate_sources",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[publication]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A_last]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk_veto]",
+      "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+      "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+      "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+      "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+      "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+      "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+      "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+      "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+      "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution",
+      "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+      "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+      "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+      "tests/test_cli_model_display.py::test_context_local_confirmation_has_no_cross_call_wait"
+    ],
+    "summary": [
+      "37 failed, 152 passed, 3 warnings, 4 subtests passed in 276.60s (0:04:36)"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/combined-final/export_manifest.json"
+  },
+  "combined-final2-pytest.json": {
+    "sha256": "0e9c1a03b749041fd5b3041768d9546f25577d1242d5165168bc42358e73b588",
+    "call_outcomes": {
+      "passed": 193,
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_cli_model_display.py::test_context_local_confirmation_has_no_cross_call_wait"
+    ],
+    "summary": [
+      "1 failed, 189 passed, 3 warnings, 4 subtests passed in 356.66s (0:05:56)"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/combined-final2/export_manifest.json"
+  },
+  "epoch-independent-pytest.json": {
+    "sha256": "f26c7981baf9b863879a3cd12a26499fb35f92a254fb13715f7d64a1d1b336ab",
+    "call_outcomes": {
+      "passed": 1
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "1 passed in 6.23s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "epoch-independent-r2-pytest.json": {
+    "sha256": "e768d4b51b36e72c1e932a1f8bb5eb3e5ba08077d00299c12fdcdded0587f790",
+    "call_outcomes": {
+      "passed": 1
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "1 passed in 2.00s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "final-cli-pytest.json": {
+    "sha256": "cdeb6a2322028383c0212bb5bc61307935b01ac6abca1856e049a340b00fe33b",
+    "call_outcomes": {
+      "passed": 15
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "15 passed in 3.54s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "final-verification-pytest.json": {
+    "sha256": "167963b6c13ad3bac577d4c9774392172223192567bd31d9bab19d6834bdfd98",
+    "call_outcomes": {
+      "passed": 179
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "175 passed, 3 warnings, 4 subtests passed in 315.11s (0:05:15)"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/final-verification/export_manifest.json"
+  },
+  "fix-final-cli-pytest.json": {
+    "sha256": "2227669ee4a16381ce094c79e4c04aa755d5af3f7693e30f4cfd695909e2ab81",
+    "call_outcomes": {
+      "passed": 15
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "15 passed in 1.59s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "fix-final-combined-pytest.json": {
+    "sha256": "3923d6388c6dfbcb6bfcaf43d96f76894d9ffc52e72e02c2274bb4ea95b3d51a",
+    "call_outcomes": {
+      "passed": 149,
+      "failed": 36
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_cross_layer_publication.py::test_F01_F02_publication_and_completion_are_distinct",
+      "tests/test_cross_layer_publication.py::test_F06_F07_frozen_helper_executes_without_nested_json",
+      "tests/test_cross_layer_correction.py::test_F19_actual_generate_transport_preserves_explicit_output_limit",
+      "tests/test_cross_layer_correction.py::test_F17_distinct_request_same_text_counts_once_then_no_progress",
+      "tests/test_cross_layer_delivery.py::test_F25_F26_real_journal_recovers_lost_receipt_not_unowned_content",
+      "tests/test_cross_layer_delivery.py::test_F28_two_real_processes_race_without_overwrite",
+      "tests/test_cross_layer_delivery.py::test_F22_two_failure_parents_exclude_input_and_foreign_history",
+      "tests/test_cross_layer_domain.py::test_F35_registered_directory_feedback_and_log_reader",
+      "tests/test_cross_layer_domain.py::test_F34_actual_question_answer_and_next_candidate",
+      "tests/test_cross_layer_domain.py::test_F32_F33_approved_explicit_runtime_stub_and_capability_boundary",
+      "tests/test_cross_layer_domain.py::test_F38_actual_loaded_candidate_sources",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[publication]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[C]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_success]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_last]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_exhausted]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[B_archive]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_snpeff]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[A_last]",
+      "tests/test_cross_layer_implementation_graph.py::test_production_combination_fix[D_gatk_veto]",
+      "tests/test_preflight_types.py::test_real_mixed_inputs_and_counterexamples",
+      "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+      "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit",
+      "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+      "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+      "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[compact]",
+      "tests/test_recovery_public_rejection.py::test_native_rejection_projection_and_history[off]",
+      "tests/test_recovery_public_rejection.py::test_cancelled_native_provider_does_not_admit",
+      "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution",
+      "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+      "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+      "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute"
+    ],
+    "summary": [
+      "36 failed, 145 passed, 3 warnings, 4 subtests passed in 312.18s (0:05:12)"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "fix-final-legacy-pytest.json": {
+    "sha256": "f8dfe61c38924ca3a1994f3bbde1d5338cb02c909aa2cbcec670ab532825c053",
+    "call_outcomes": {
+      "passed": 10,
+      "failed": 9
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_c_only_explicit_submission_reaches_plan_review",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_d_submit_review_acceptance_chain_reaches_execution",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e2_plan_review_revision_requires_durable_rejection_receipt",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e_output_identity_review_evidence_is_machine_addressable",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_f_rejected_v1_returns_to_planner_and_v2_can_be_accepted",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_h_transient_ready_poison_cannot_reach_generate",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_i_reverse_poison_cannot_divert_accepted_plan",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k3_stale_result_is_consumed_once",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k5_adapter_update_clears_consumed_stale_receipt"
+    ],
+    "summary": [
+      "9 failed, 10 passed in 2.40s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "fix-final-reload-pytest.json": {
+    "sha256": "7907368cfb5e2082ec3ef32b406f726ad141230d51e69d84c97fa9962f612ada",
+    "call_outcomes": {
+      "passed": 1
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "1 passed in 0.37s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "legacy-controls-current-pytest.json": {
+    "sha256": "342f7cf98b398c3f5e4b77f0372226463e3896003375963b609e24ca6da42095",
+    "call_outcomes": {
+      "passed": 10,
+      "failed": 9
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_c_only_explicit_submission_reaches_plan_review",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_d_submit_review_acceptance_chain_reaches_execution",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e2_plan_review_revision_requires_durable_rejection_receipt",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e_output_identity_review_evidence_is_machine_addressable",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_f_rejected_v1_returns_to_planner_and_v2_can_be_accepted",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_h_transient_ready_poison_cannot_reach_generate",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_i_reverse_poison_cannot_divert_accepted_plan",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k3_stale_result_is_consumed_once",
+      "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k5_adapter_update_clears_consumed_stale_receipt"
+    ],
+    "summary": [
+      "9 failed, 10 passed in 5.63s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "life-r1-pytest.json": {
+    "sha256": "2197f8763217ec61c73323dd5a4a294d61e72932e5cf448e9703c3d198545df2",
+    "call_outcomes": {
+      "passed": 9
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "9 passed in 33.59s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/life-r1/export_manifest.json"
+  },
+  "resource-final-pytest.json": {
+    "sha256": "5085994b6e4c8005efc9a9d83d45665a998f7169240b3b062ef8be0f80d0c99b",
+    "call_outcomes": {
+      "passed": 29
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "25 passed, 4 subtests passed in 37.90s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-final/export_manifest.json"
+  },
+  "resource-r1-pytest.json": {
+    "sha256": "2b9a0b374cdf4fa2f5b267936aabc1439739d9f3432f8227d29b2c0cbc4c00e9",
+    "call_outcomes": {
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_resource_fix.py::test_c_fix_full_admission"
+    ],
+    "summary": [
+      "1 failed in 35.59s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r1/export_manifest.json"
+  },
+  "resource-r2-pytest.json": {
+    "sha256": "a5f0b543b85c8d7aa812be834bed9a623fae284e509e9a25a864398457c62523",
+    "call_outcomes": {
+      "passed": 1
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "1 passed in 16.21s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r2/export_manifest.json"
+  },
+  "resource-r3-pytest.json": {
+    "sha256": "80bfab0c5e192ac68cebba0e8621dd62b79b769875c87ae059d261aea6f8c08c",
+    "call_outcomes": {
+      "passed": 23,
+      "failed": 2
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_resource_fix.py::test_freeze_reload_and_artifact_binding",
+      "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload"
+    ],
+    "summary": [
+      "2 failed, 19 passed, 4 subtests passed in 30.11s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r3/export_manifest.json"
+  },
+  "resource-r4-pytest.json": {
+    "sha256": "819d0fb0b460b4a50493cf6771e807cc93b6960c0d6cfbeb5a3d83417d69d75b",
+    "call_outcomes": {
+      "passed": 15,
+      "failed": 3
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_resource_fix.py::test_freeze_reload_and_artifact_binding",
+      "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+      "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization"
+    ],
+    "summary": [
+      "3 failed, 15 passed in 35.31s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r4/export_manifest.json"
+  },
+  "resource-r5-pytest.json": {
+    "sha256": "69d19e2c9b7dc859204508e87fd245d7d44d8cb3c43a7946afc616df51568092",
+    "call_outcomes": {
+      "passed": 3
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "3 passed in 23.47s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r5/export_manifest.json"
+  },
+  "resource-r6-pytest.json": {
+    "sha256": "d5d426b0bcdf71240a696378b2309a42ab3f13f7c755197f735ea11219ea9b67",
+    "call_outcomes": {
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization"
+    ],
+    "summary": [
+      "1 failed in 17.48s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r6/export_manifest.json"
+  },
+  "resource-r7-pytest.json": {
+    "sha256": "870713284d7212dd2a08dc4c6d439a546607170488957a30e203078fea808ae4",
+    "call_outcomes": {
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization"
+    ],
+    "summary": [
+      "1 failed in 22.00s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r7/export_manifest.json"
+  },
+  "resource-r8-pytest.json": {
+    "sha256": "da075f7fd59e6177730d05b6a639875d83571eaf0f2b21dca4129e05b487e491",
+    "call_outcomes": {
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization"
+    ],
+    "summary": [
+      "1 failed in 24.09s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/resource-r8/export_manifest.json"
+  },
+  "resource-reload-pytest.json": {
+    "sha256": "92bf88f7614b5f89fb3be5cbeda58dfe88a7be0235631f229c99fb13460f014a",
+    "call_outcomes": {
+      "passed": 1
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "1 passed in 0.58s"
+    ],
+    "source_manifest": "see slice receipt / command ledger"
+  },
+  "reuse-before-pytest.json": {
+    "sha256": "958ffc131600dec2c574d8a529f5c46efb12bb0f613f67c5e86511246fc788b0",
+    "call_outcomes": {
+      "failed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_resource_fix.py::test_existing_formal_resource_retains_explicit_role_associations"
+    ],
+    "summary": [
+      "1 failed in 0.33s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/reuse-before/export_manifest.json"
+  },
+  "reuse-fix-pytest.json": {
+    "sha256": "cfeb6b809979c12b4b91f1f0ad21af35f1dc81b071d0b02bf512c0209f761c78",
+    "call_outcomes": {
+      "passed": 13
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "9 passed, 4 subtests passed in 16.85s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/reuse-fix/export_manifest.json"
+  },
+  "stop-example-final-pytest.json": {
+    "sha256": "a46dc8e3103c121c810b1beafe37b8ea7fd5b4eeedd5a5456880f7f7bae44d90",
+    "call_outcomes": {
+      "passed": 17
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "17 passed in 47.32s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/stop-example-final/export_manifest.json"
+  },
+  "stop-example-r2-pytest.json": {
+    "sha256": "fb7207dd7ba519f0297b89bd2f64843a451c04822bc652d1c7ae5e20315c14c9",
+    "call_outcomes": {
+      "passed": 17
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "17 passed in 47.02s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/stop-example-r2/export_manifest.json"
+  },
+  "stop-feedback-final-pytest.json": {
+    "sha256": "bbee205d9efc0214143525f0887d090374db1b487b4be5f03e9527467fa74aa8",
+    "call_outcomes": {
+      "passed": 10
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "10 passed in 17.32s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/stop-feedback-final/export_manifest.json"
+  },
+  "stop-final2-pytest.json": {
+    "sha256": "eac31de922610695a7647fbf57dc6593e11f3b22836289d558b786ee402225b2",
+    "call_outcomes": {
+      "passed": 37,
+      "failed": 3
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_lifecycle_resolve_and_task_revision_supersede",
+      "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_no_progress_uses_validator_affected_structure_not_superficial_edits",
+      "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_terminalization_preserves_last_real_failure_and_repeat_evidence"
+    ],
+    "summary": [
+      "3 failed, 37 passed in 43.54s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/stop-final2/export_manifest.json"
+  },
+  "stop-final3-pytest.json": {
+    "sha256": "eded83b71d339fa02d1dd7c788e33fa0c70afc3f0f1d12ff8dac2eaf655b9fcf",
+    "call_outcomes": {
+      "passed": 40
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "40 passed in 44.09s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/stop-final3/export_manifest.json"
+  },
+  "stop-isolated-final-pytest.json": {
+    "sha256": "01aafecf74f5efcf9c56f0837d336439ecb69f2f96d0c2becb1627e51202ffc2",
+    "call_outcomes": {
+      "passed": 10
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "10 passed in 15.99s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/stop-isolated-final/export_manifest.json"
+  },
+  "stop-r1-pytest.json": {
+    "sha256": "4a1f70e0596b5dd31b4fc8e127fc7b13b8d5d17bc748039d55d1dcb097f42039",
+    "call_outcomes": {
+      "passed": 12
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "12 passed in 44.08s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/stop-r1/export_manifest.json"
+  },
+  "transport-r1-pytest.json": {
+    "sha256": "2052eb8fbd2774f15b72b101b988d6efad8bba7d259744b4901e0d095f8a601c",
+    "call_outcomes": {
+      "failed": 4,
+      "passed": 1
+    },
+    "rc": 1,
+    "source_unchanged": true,
+    "failed_nodeids": [
+      "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[fourth_valid]",
+      "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[failure]",
+      "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[cancel]",
+      "tests/test_plan_transport_fix.py::test_real_provider_boundary_cannot_add_hidden_planner_requests[bad_policy]"
+    ],
+    "summary": [
+      "4 failed, 1 passed in 21.47s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/transport-r1/export_manifest.json"
+  },
+  "transport-r2-pytest.json": {
+    "sha256": "1b6b42d6366fa80a890c1968fd3dd796efabf7cd17cc345a775911bb55e7d95e",
+    "call_outcomes": {
+      "passed": 6
+    },
+    "rc": 0,
+    "source_unchanged": true,
+    "failed_nodeids": [],
+    "summary": [
+      "6 passed in 24.67s"
+    ],
+    "source_manifest": "/tmp/biomind-planfix-v1/transport-r2/export_manifest.json"
+  }
+}

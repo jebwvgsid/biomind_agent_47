@@ -9,8 +9,8 @@ import subprocess
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import export_plan_resource_cycle_audit as audit
 
-FIX_TESTS = ('tests/test_plan_resource_fix.py', 'tests/plan_resource_fix_support.py', 'tests/export_plan_resource_fix.py', 'tests/test_plan_stop_fix.py', 'tests/test_plan_cancel_fix.py')
-audit.base.TEST_FILES += FIX_TESTS + ('tests/test_planner_full_replan_convergence_v2.py', 'tests/test_planner_feedback_boundary.py')
+FIX_TESTS = ('tests/test_plan_resource_fix.py', 'tests/plan_resource_fix_support.py', 'tests/export_plan_resource_fix.py', 'tests/test_plan_stop_fix.py', 'tests/test_plan_cancel_fix.py', 'tests/test_plan_lifecycle_scope_fix.py', 'tests/test_plan_transport_fix.py', 'tests/test_plan_epoch_reload_fix.py')
+audit.base.TEST_FILES += FIX_TESTS + ('tests/test_planner_full_replan_convergence_v2.py', 'tests/test_planner_feedback_boundary.py', 'tests/test_planner_lifecycle_boundary.py', 'tests/test_input_boundary.py', 'tests/test_approval_owner_lifecycle.py')
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -22,6 +22,16 @@ def main():
     manifest = (audit.previous.export(repo, args.destination, args.tree, args.overlay)
                 if args.tree else audit.base.export(repo, args.destination))
     manifest['worktree_base_head'] = subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()
+    if not args.tree:
+        manifest['production_source_mode'] = 'exact_worktree'
+        protected = ('prompts/manager.py','agent_core/node_context.py','agent_core/planner_context.py',
+                     'agent_core/provider_message_safety.py','agent_core/workflow/managed_stop.py')
+        manifest['protected_overlays'] = {}
+        for name in protected:
+            committed = subprocess.check_output(['git','show',manifest['worktree_base_head']+':'+name],cwd=repo)
+            manifest['protected_overlays'][name] = {'committed_sha256':hashlib.sha256(committed).hexdigest(),
+                'loaded_sha256':manifest['files'][name], 'source':'preserved worktree overlay'}
+
     prefix = 'docs/audits/session_1789369423_plan_resource_cycle/'
     for name in [prefix + 'candidate_C_rejected.json', prefix + 'task_declarations.json',
                  *[prefix + f'candidate_{i:02d}.json' for i in range(1, 8)]]:

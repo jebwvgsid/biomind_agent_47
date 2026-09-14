@@ -1,0 +1,646 @@
+{
+  "tests/cli_fatal_plugin.py": {
+    "loaded_sha256": "7dc46109a8e07bacc8bed52625366bfc9088d1d5be2e1818f792c50b571c4464",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 2021195489be40f05da37694772685f6a505fa8f\ttests/cli_fatal_plugin.py",
+    "initial_safe_baseline_sha256": "7dc46109a8e07bacc8bed52625366bfc9088d1d5be2e1818f792c50b571c4464",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/cli_model_progress_support.py": {
+    "loaded_sha256": "a50d07e38d4204d1f8faf236b5bb31890dd7c47564e453feeea9672ae2fe33d7",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 3387b7e8dc9dd41bc6a74447b1e83fb3966b9625\ttests/cli_model_progress_support.py",
+    "initial_safe_baseline_sha256": "a50d07e38d4204d1f8faf236b5bb31890dd7c47564e453feeea9672ae2fe33d7",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/cli_v2_support.py": {
+    "loaded_sha256": "727f3246458e9ffbd81ad951499394521af77c5f3ff41121f02843bf57b525bc",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob fb60bc500f058c60a1539ca4ef156cf3ca550e43\ttests/cli_v2_support.py",
+    "initial_safe_baseline_sha256": "727f3246458e9ffbd81ad951499394521af77c5f3ff41121f02843bf57b525bc",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_cli_deployment_fixture.py": {
+    "loaded_sha256": "2160b4423a5508abb96a5f805d799c0231c87db89f34a076ca8e3577c8cf168d",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 82d483f4ad45d74aa5d2e6bf98b86bfde315ba7b\ttests/export_cli_deployment_fixture.py",
+    "initial_safe_baseline_sha256": "2160b4423a5508abb96a5f805d799c0231c87db89f34a076ca8e3577c8cf168d",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_cli_model_progress_fixture.py": {
+    "loaded_sha256": "69789f738d6e1fefd17c8772e30529672c36f86b7879be9b9e4ea57d0e31ff3c",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob cf0fac889a1d7da92b656579fc6e82660e9af943\ttests/export_cli_model_progress_fixture.py",
+    "initial_safe_baseline_sha256": "69789f738d6e1fefd17c8772e30529672c36f86b7879be9b9e4ea57d0e31ff3c",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_cli_v2_fixture.py": {
+    "loaded_sha256": "98cb81825e943b463bbf72af075fa38c5a1ab3d3d6c02fc6c35bd880c6b5bb0c",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob efae56d624d27f1722d57752c788860e27105165\ttests/export_cli_v2_fixture.py",
+    "initial_safe_baseline_sha256": "98cb81825e943b463bbf72af075fa38c5a1ab3d3d6c02fc6c35bd880c6b5bb0c",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_consultant_handoff_fixture.py": {
+    "loaded_sha256": "d2beb6a97415562eeba569a23c1700117c73dae3d804b537232cea2c839e987c",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob b1b67a5b0ec39614281416c8ec743a453408a8be\ttests/export_consultant_handoff_fixture.py",
+    "initial_safe_baseline_sha256": "d2beb6a97415562eeba569a23c1700117c73dae3d804b537232cea2c839e987c",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_cross_layer_audit.py": {
+    "loaded_sha256": "5e7e1a8048b10dfd7b12f02af5026a7733729646dc8a26661fedd8b8453b1620",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 22f4a6a5c8d7b9566075dc0e47958c3f5e40c20c\ttests/export_cross_layer_audit.py",
+    "initial_safe_baseline_sha256": "5e7e1a8048b10dfd7b12f02af5026a7733729646dc8a26661fedd8b8453b1620",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_cross_layer_implementation.py": {
+    "loaded_sha256": "5faff672a73521e79ba619a7f2323b42a6ff97236c41a81ea013660af665bbe4",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 2c44761e25bf3688d2282e88a2464477ab9def00\ttests/export_cross_layer_implementation.py",
+    "initial_safe_baseline_sha256": "5faff672a73521e79ba619a7f2323b42a6ff97236c41a81ea013660af665bbe4",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_plan_resource_fix.py": {
+    "loaded_sha256": "afb076ade9bcc8a04eb2b22a128a80be1f2e220c39f2ab6c62744ab71401c1cf",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 8ab6aa324275954861941d6faf246ac7d1977032\ttests/export_plan_resource_fix.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/export_plan_results_fixture.py": {
+    "loaded_sha256": "22793b7921c36bcdbed40fc3058e0fc7b272b59dfeae674615ba96167e1fe854",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 281e635272f26f660cfb4f83853b9755633d4558\ttests/export_plan_results_fixture.py",
+    "initial_safe_baseline_sha256": "22793b7921c36bcdbed40fc3058e0fc7b272b59dfeae674615ba96167e1fe854",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_planner_boundary_fixture.py": {
+    "loaded_sha256": "c3ccc3f6c326684b454179a3cfa67f12c7137f8797ebff793f70a75814363b66",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 29763e49ef37ca2132d2c3628d0dbebc5599a5ce\ttests/export_planner_boundary_fixture.py",
+    "initial_safe_baseline_sha256": "c3ccc3f6c326684b454179a3cfa67f12c7137f8797ebff793f70a75814363b66",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_preflight_implementation.py": {
+    "loaded_sha256": "82031fb489f8c72fc0c1e013d18a5a278a622cb391a747bb725775dce49a9a47",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob a203e8cb9b650fa5c3d30f1753b9e23800922c25\ttests/export_preflight_implementation.py",
+    "initial_safe_baseline_sha256": "82031fb489f8c72fc0c1e013d18a5a278a622cb391a747bb725775dce49a9a47",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/export_preflight_recovery_audit.py": {
+    "loaded_sha256": "41ea0389ad7b9e50429c76ad65dae05a22e2f8b31e8d6278812b160ba7c9606c",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 9de332e3da5d799fadaf195b8823bd9ea8e2e563\ttests/export_preflight_recovery_audit.py",
+    "initial_safe_baseline_sha256": "41ea0389ad7b9e50429c76ad65dae05a22e2f8b31e8d6278812b160ba7c9606c",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/ger_fixture_support.py": {
+    "loaded_sha256": "72568d2b46d6897a5fbbf989603dd1fb4cf1801f2e06713ac2a641b92946fa33",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 06bbf88da14017dcfaa9854bf5e160a3625dbcca\ttests/ger_fixture_support.py",
+    "initial_safe_baseline_sha256": "72568d2b46d6897a5fbbf989603dd1fb4cf1801f2e06713ac2a641b92946fa33",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/offline_managed_bootstrap.py": {
+    "loaded_sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob e1bc0d416369f2390620a346a0916501e4652822\ttests/offline_managed_bootstrap.py",
+    "initial_safe_baseline_sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/plan_resource_fix_support.py": {
+    "loaded_sha256": "c7ca098d587fdc9361a30a40494ed9a3a5e4926637408ef741e3a6b12a6c8d13",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob d69bc8c38295d4a762c2b50a873dcd110c6c051b\ttests/plan_resource_fix_support.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/replay_approval_visibility_pty.py": {
+    "loaded_sha256": "614539b638a7468c0b662732e6bd31a13e14719bffbb7ff4b7f85ccfbf9f1ae7",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 7cbaf5751cb284944d7e5ef21c23fd97d91dc29b\ttests/replay_approval_visibility_pty.py",
+    "initial_safe_baseline_sha256": "614539b638a7468c0b662732e6bd31a13e14719bffbb7ff4b7f85ccfbf9f1ae7",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/replay_cli_deployment.py": {
+    "loaded_sha256": "d75ca3ddc48961859326abd095986e79492ac9835bfa6b279d064ed9f38c6595",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob ed8d93611ba3ba4e48111aeb43dda4317570055d\ttests/replay_cli_deployment.py",
+    "initial_safe_baseline_sha256": "d75ca3ddc48961859326abd095986e79492ac9835bfa6b279d064ed9f38c6595",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/replay_cli_v2_pty.py": {
+    "loaded_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 17f2d6a01f0c9513c9a0d8888a679aea553592b2\ttests/replay_cli_v2_pty.py",
+    "initial_safe_baseline_sha256": "3706a4babdff488f0e68eb7b9cdcaf68478b71eb9fc893a3668af731b217f856",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/replay_input_boundary_pty.py": {
+    "loaded_sha256": "af62553e2705404f278288fd002457081d4c26256d8377df515a128aab4bc6f2",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob ebfdee58b4c778b5fce1e673361c77f2f2fc2e55\ttests/replay_input_boundary_pty.py",
+    "initial_safe_baseline_sha256": "af62553e2705404f278288fd002457081d4c26256d8377df515a128aab4bc6f2",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/run_cli_fatal_diagnostics.py": {
+    "loaded_sha256": "5fb1857032084d3bc197d23e78d4bf1972d857037db8906fb51fa3582571c196",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 8bfc12b33d58cd39bdf538cff8f9769ddccdb5c2\ttests/run_cli_fatal_diagnostics.py",
+    "initial_safe_baseline_sha256": "5fb1857032084d3bc197d23e78d4bf1972d857037db8906fb51fa3582571c196",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_approval_owner_lifecycle.py": {
+    "loaded_sha256": "a413f113819efcfc4c843b038e4073b3241ecf100115223ae502140aae446745",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob a165661600cb8e66bdb25d238fd34ca3b97eace0\ttests/test_approval_owner_lifecycle.py",
+    "initial_safe_baseline_sha256": "a413f113819efcfc4c843b038e4073b3241ecf100115223ae502140aae446745",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_approval_visibility.py": {
+    "loaded_sha256": "c2427bfe7bb8d30d55637e991868fd02abaa9e05c2c346879274b1b987efef4a",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 7a616dcd5bf10da354af8dfa6b8aa3a46fc18f69\ttests/test_approval_visibility.py",
+    "initial_safe_baseline_sha256": "c2427bfe7bb8d30d55637e991868fd02abaa9e05c2c346879274b1b987efef4a",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_cp_public_integration.py": {
+    "loaded_sha256": "5c2e0bca6cad1cf044d1bad9d22a7ec25ca448a73c6e723b1bfd35f9a3243e2f",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 424dad82d541e8e244a98625aea1dbcb5cc2274b\ttests/test_cli_cp_public_integration.py",
+    "initial_safe_baseline_sha256": "5c2e0bca6cad1cf044d1bad9d22a7ec25ca448a73c6e723b1bfd35f9a3243e2f",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_deployment_receipts.py": {
+    "loaded_sha256": "365dc36cefba6208f1e5e0c0329ddb4f586adfe7915e1a7ff65507a0301dbee2",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 895a10a27d9a5925bc578dfc6e30beeab92d44c3\ttests/test_cli_deployment_receipts.py",
+    "initial_safe_baseline_sha256": "365dc36cefba6208f1e5e0c0329ddb4f586adfe7915e1a7ff65507a0301dbee2",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_fatal_outlet.py": {
+    "loaded_sha256": "3595d964f1a5af0c22a0bf4cf363e481bebc991c24c39022344dde93f42baf90",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 9a6bcbc18c3d9b33d81d7b63b33fa1adfe373adc\ttests/test_cli_fatal_outlet.py",
+    "initial_safe_baseline_sha256": "3595d964f1a5af0c22a0bf4cf363e481bebc991c24c39022344dde93f42baf90",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_final_response_regression.py": {
+    "loaded_sha256": "0a96372acfa7ff5c03c6b4c43fe3e6f5b728200d9f3564cc434163577a91b64d",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 866e7996aacd5d7ab9d8a622ea3a3ac5922b2312\ttests/test_cli_final_response_regression.py",
+    "initial_safe_baseline_sha256": "0a96372acfa7ff5c03c6b4c43fe3e6f5b728200d9f3564cc434163577a91b64d",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_generate_integrity.py": {
+    "loaded_sha256": "57e6470f5958609416b021874acd365fe888fb8a7e1c02cf2afe65e6995e9ed9",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob b06848f4c30023da8471d70d9bb3c25ad49bf1e9\ttests/test_cli_generate_integrity.py",
+    "initial_safe_baseline_sha256": "57e6470f5958609416b021874acd365fe888fb8a7e1c02cf2afe65e6995e9ed9",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_generate_public_integration.py": {
+    "loaded_sha256": "0484646dd19f4773ddc627bfa1e95ea31059f6d0efaf2ca9aad6ba6b6b6d1104",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 1c9f63ad15a00bfa165bf0f9a4ecafe391a454e3\ttests/test_cli_generate_public_integration.py",
+    "initial_safe_baseline_sha256": "0484646dd19f4773ddc627bfa1e95ea31059f6d0efaf2ca9aad6ba6b6b6d1104",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_model_display.py": {
+    "loaded_sha256": "7fe909ccb71db53844874eb30073af10d18e8b7b6d6b56d0556705b1c34728ec",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob d42ff5ce71dccc25234513d259cffa5f1eab7d4c\ttests/test_cli_model_display.py",
+    "initial_safe_baseline_sha256": "7fe909ccb71db53844874eb30073af10d18e8b7b6d6b56d0556705b1c34728ec",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_model_progress.py": {
+    "loaded_sha256": "6e6109a47a1c975e2c0464fbefa4d0d53a5b0c651f78fdd4dc60443061b91048",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob d72e5958f896a21f0898df37a4ef74dbbec39277\ttests/test_cli_model_progress.py",
+    "initial_safe_baseline_sha256": "6e6109a47a1c975e2c0464fbefa4d0d53a5b0c651f78fdd4dc60443061b91048",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_model_progress_integration.py": {
+    "loaded_sha256": "dc1a7c1f352628e7a12a9344c9cef5f6cefc8f60561c3659e79ff059c6f3fdc6",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob a50d634dea6b5c9d45c8cf435f524cccf913759a\ttests/test_cli_model_progress_integration.py",
+    "initial_safe_baseline_sha256": "dc1a7c1f352628e7a12a9344c9cef5f6cefc8f60561c3659e79ff059c6f3fdc6",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_model_recovery_tools.py": {
+    "loaded_sha256": "2e15ca25ddae6f8edc14448e4ab2e70ce88f057ae5457bf30e4a37fcfaeecc11",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 4f88ff47c7722eb7e512b209dbe833e62e28302f\ttests/test_cli_model_recovery_tools.py",
+    "initial_safe_baseline_sha256": "2e15ca25ddae6f8edc14448e4ab2e70ce88f057ae5457bf30e4a37fcfaeecc11",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_public_response.py": {
+    "loaded_sha256": "7978bc392aa6ce3d85b0a2d82cb4ef00ad58f5f1d064d86d70dcb786e99ea894",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob ed1201b5199e04d9d071eb9a82671c8716b687a6\ttests/test_cli_public_response.py",
+    "initial_safe_baseline_sha256": "7978bc392aa6ce3d85b0a2d82cb4ef00ad58f5f1d064d86d70dcb786e99ea894",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_semantic_styles.py": {
+    "loaded_sha256": "e6219d1ddadfa399d71170da9e5f2ab7ca5d0602c8a3a2cade31d7fbce534d9f",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob afb4a571aa86e3d4829f783fe2c69c93892043ad\ttests/test_cli_semantic_styles.py",
+    "initial_safe_baseline_sha256": "e6219d1ddadfa399d71170da9e5f2ab7ca5d0602c8a3a2cade31d7fbce534d9f",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_business.py": {
+    "loaded_sha256": "3b4e585694b85582a6bdc92237b550973787980f21bbf6a53f0250fbce6e0f6d",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob ffe08ce6a75fe931386703f926dd5cf9a4116ed2\ttests/test_cli_v2_business.py",
+    "initial_safe_baseline_sha256": "3b4e585694b85582a6bdc92237b550973787980f21bbf6a53f0250fbce6e0f6d",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_display.py": {
+    "loaded_sha256": "06e9951ef0ebffde632d34f0f63c24f586d70554b81581d20310573a9ea1d72b",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob aadf9c700d71275abaa378c6aee22581f5852e4d\ttests/test_cli_v2_display.py",
+    "initial_safe_baseline_sha256": "06e9951ef0ebffde632d34f0f63c24f586d70554b81581d20310573a9ea1d72b",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_integration.py": {
+    "loaded_sha256": "b6709e9b646303500fd5605e76991054d9ab3afbe9c674048107524f4f49054e",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 9e5213c6a9d35d257cf0bd2993de91dfa35decd7\ttests/test_cli_v2_integration.py",
+    "initial_safe_baseline_sha256": "b6709e9b646303500fd5605e76991054d9ab3afbe9c674048107524f4f49054e",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_output.py": {
+    "loaded_sha256": "f3fb6075ec55caf79a0068a36e0bb292e7952efff231137c707578e2d93a238c",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 947f3406aecb260cd72ba7357f94d58d0fb3fbb1\ttests/test_cli_v2_output.py",
+    "initial_safe_baseline_sha256": "f3fb6075ec55caf79a0068a36e0bb292e7952efff231137c707578e2d93a238c",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_plain_stage.py": {
+    "loaded_sha256": "25b2dd35cbb90a36a43881a89468a01f5bfbe41d129bed04e8019b2cac41bf51",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 1f14ab4810646f71d1690eb3eef6eb2a1aea905b\ttests/test_cli_v2_plain_stage.py",
+    "initial_safe_baseline_sha256": "25b2dd35cbb90a36a43881a89468a01f5bfbe41d129bed04e8019b2cac41bf51",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_public_style.py": {
+    "loaded_sha256": "769769d94df017ce0006eedd103d5ee105913616087970216c244254c3dede5e",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob e4e6a9c6af8e8aba33a1447c25b7f4a67fbe7749\ttests/test_cli_v2_public_style.py",
+    "initial_safe_baseline_sha256": "769769d94df017ce0006eedd103d5ee105913616087970216c244254c3dede5e",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_recovery_route.py": {
+    "loaded_sha256": "e4b8b948c3b6c137c4fe58194d3e3a086372e6322f680240af9e40061bae8c4f",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 370b4153ab68612a2b1ab9b60ce1cf95c1d98d9d\ttests/test_cli_v2_recovery_route.py",
+    "initial_safe_baseline_sha256": "e4b8b948c3b6c137c4fe58194d3e3a086372e6322f680240af9e40061bae8c4f",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cli_v2_terminal_fallback.py": {
+    "loaded_sha256": "97a618c2679da3a8582bf3e4c86e32b441c5e230ef660ce4cb861b42db6dbd5b",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob aae8bf08aba48df10d261c3745182d3634c23a0c\ttests/test_cli_v2_terminal_fallback.py",
+    "initial_safe_baseline_sha256": "97a618c2679da3a8582bf3e4c86e32b441c5e230ef660ce4cb861b42db6dbd5b",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_consultant_skill_handoff.py": {
+    "loaded_sha256": "0df1ee68e6bf66c63afe082f36cf16e3daaec16965ff778ea3dd30f9917532a0",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 1d7a7e331de97e687065a3aca76f898d61524d68\ttests/test_consultant_skill_handoff.py",
+    "initial_safe_baseline_sha256": "0df1ee68e6bf66c63afe082f36cf16e3daaec16965ff778ea3dd30f9917532a0",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_consultant_stop_resume.py": {
+    "loaded_sha256": "9dd504a89a788941bf44370db6aae4dba211fc652886f91900768c8dc1ab86c4",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob a27bc583db10befa6097e52ab3d6e7ae571ce246\ttests/test_consultant_stop_resume.py",
+    "initial_safe_baseline_sha256": "9dd504a89a788941bf44370db6aae4dba211fc652886f91900768c8dc1ab86c4",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cross_layer_audit.py": {
+    "loaded_sha256": "fdedb8bde1d0d398459a75109ea4147ea13c30e118c5b1c6ba39ce6349366b03",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 9ec27b097df43f7c1266c57275e216feae63ce55\ttests/test_cross_layer_audit.py",
+    "initial_safe_baseline_sha256": "fdedb8bde1d0d398459a75109ea4147ea13c30e118c5b1c6ba39ce6349366b03",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cross_layer_correction.py": {
+    "loaded_sha256": "9b88563ff8f5caae7518cff442a4faebbc9fe1e523962fc3dd162f5edeb79c22",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob a0bfacb9955bb1d11d0096452f062be6db407cc5\ttests/test_cross_layer_correction.py",
+    "initial_safe_baseline_sha256": "9b88563ff8f5caae7518cff442a4faebbc9fe1e523962fc3dd162f5edeb79c22",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cross_layer_delivery.py": {
+    "loaded_sha256": "0398176596a82e3d2684f30ae16fc9a20c89fd0cb6febcabf35fabb03e791b56",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 686c9ecd5c27f5fd3452d20d364aa4ea712198fa\ttests/test_cross_layer_delivery.py",
+    "initial_safe_baseline_sha256": "0398176596a82e3d2684f30ae16fc9a20c89fd0cb6febcabf35fabb03e791b56",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cross_layer_domain.py": {
+    "loaded_sha256": "b27aad9ad92697e4e0ef3057e8b6a28f88202d08d89f4ecbe319f7221a6f975e",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 2f45feca8f7a8836891a8e10039244db08cac1d2\ttests/test_cross_layer_domain.py",
+    "initial_safe_baseline_sha256": "b27aad9ad92697e4e0ef3057e8b6a28f88202d08d89f4ecbe319f7221a6f975e",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cross_layer_graph_audit.py": {
+    "loaded_sha256": "a7a5372fa75b52a6560ac999b0bb69df4f26bf168f00e3efddd50789d4de61e5",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob c65ddf527d62110ec9e211be84e9c6fcf76f2f25\ttests/test_cross_layer_graph_audit.py",
+    "initial_safe_baseline_sha256": "a7a5372fa75b52a6560ac999b0bb69df4f26bf168f00e3efddd50789d4de61e5",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cross_layer_implementation_graph.py": {
+    "loaded_sha256": "e890218399e0b26803939efcf195e5bcfcbc72d027eb6d367f30b5b437e26fe8",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 214dc04e592cf4a41556710a33f24319308ad473\ttests/test_cross_layer_implementation_graph.py",
+    "initial_safe_baseline_sha256": "e890218399e0b26803939efcf195e5bcfcbc72d027eb6d367f30b5b437e26fe8",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_cross_layer_publication.py": {
+    "loaded_sha256": "21ef38c21aadca40fcbc55c39861810baff69bf3bb85bea80037c78148892fd8",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob e9c50d2ea55228c1f3ff1a589117822f4074ae5c\ttests/test_cross_layer_publication.py",
+    "initial_safe_baseline_sha256": "21ef38c21aadca40fcbc55c39861810baff69bf3bb85bea80037c78148892fd8",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_generate_admission_typed_repair.py": {
+    "loaded_sha256": "7d6fcb8571e04aa122c98ea4f16eba70dd27f20537d121be9a9f4174aa321163",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": "7d6fcb8571e04aa122c98ea4f16eba70dd27f20537d121be9a9f4174aa321163",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_ger_combined_workflow.py": {
+    "loaded_sha256": "fb8f4d44c2c805a97e086102d7847ac98e163f5672415e543bfb74918d0c5a8f",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob a32c4e059875e6bb7cd43670e311b9ce792ce3da\ttests/test_ger_combined_workflow.py",
+    "initial_safe_baseline_sha256": "fb8f4d44c2c805a97e086102d7847ac98e163f5672415e543bfb74918d0c5a8f",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_ger_observation_boundary.py": {
+    "loaded_sha256": "2aaf533c0d592e2354c7dc846c6699493bc9150650f22b3dbb4b3d0f0319733a",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob ff3fcff1094d30e667ee229212f0904bf55a70a9\ttests/test_ger_observation_boundary.py",
+    "initial_safe_baseline_sha256": "2aaf533c0d592e2354c7dc846c6699493bc9150650f22b3dbb4b3d0f0319733a",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_input_boundary.py": {
+    "loaded_sha256": "73d72071c1f398b277b18332ad799bf014136fc22c95d20981c8416b30d3c5df",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 0b971171d93e987d9a70d2ecba71da139e57efd4\ttests/test_input_boundary.py",
+    "initial_safe_baseline_sha256": "73d72071c1f398b277b18332ad799bf014136fc22c95d20981c8416b30d3c5df",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_inspection_terminal_workflow.py": {
+    "loaded_sha256": "0812c0bba699063b21a219366cdc106ee7242269269acbfc03ba8abde40fc947",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": "0812c0bba699063b21a219366cdc106ee7242269269acbfc03ba8abde40fc947",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_inspection_workflow.py": {
+    "loaded_sha256": "9677446fc8cb258da22fe07b4eebeb032915db4740da1362372d6875ac9a1f22",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 2bd91ef1c6ea3488bb7a41c69ad27cd2bdca1ace\ttests/test_inspection_workflow.py",
+    "initial_safe_baseline_sha256": "9677446fc8cb258da22fe07b4eebeb032915db4740da1362372d6875ac9a1f22",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_cancel_fix.py": {
+    "loaded_sha256": "0367e87606240d6ea6512f42b14495c3e096ba487e7b1bfeeaf15568101b2c1d",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 022d67d533c5a2f06c018f8b92cbf5d461824179\ttests/test_plan_cancel_fix.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/test_plan_epoch_reload_fix.py": {
+    "loaded_sha256": "447172ca4aa750250cfd30d468c4f0d6a58d211bdd68bb512fe7d736b3d79234",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob b3bd3bf76df714b6044ae09a0cf36dc7978e06e0\ttests/test_plan_epoch_reload_fix.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/test_plan_lifecycle_scope_fix.py": {
+    "loaded_sha256": "cd10be82d7e694d4204ebc9283d356317d58897814f128e07b3b19788fe89f4e",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/test_plan_local_preaction_convergence_v2.py": {
+    "loaded_sha256": "2084e2e6c57fde49b710a53bc8ceb593572d927c036f87849eba4f7bb7577988",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 5cbe5a3cc02a324e7c7d1b8c9b38f32146d7c4cb\ttests/test_plan_local_preaction_convergence_v2.py",
+    "initial_safe_baseline_sha256": "2084e2e6c57fde49b710a53bc8ceb593572d927c036f87849eba4f7bb7577988",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_resource_cycle_audit.py": {
+    "loaded_sha256": "141a4b1fbaa4c98a06da82275b024b3be027a5788259b215f5deeb244eafa525",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 4e08b54e71aa1189bc1cf78335f0d55209dd9bc0\ttests/test_plan_resource_cycle_audit.py",
+    "initial_safe_baseline_sha256": "141a4b1fbaa4c98a06da82275b024b3be027a5788259b215f5deeb244eafa525",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_resource_fix.py": {
+    "loaded_sha256": "462b4fabd8e9291b45856a8e64de9f1a6bc5e2350308c9a44aa5b5235e29dbde",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob e875444c38a69691a364d91f24b566d26ade9b5f\ttests/test_plan_resource_fix.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/test_plan_result_contract_v1.py": {
+    "loaded_sha256": "9284d3fac4ade168d0ff8e06ba465180ea8f87ef6cb7ceffa3aca06027ea1089",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 5d1299e855b968739379a0eeca2ce3d66116f483\ttests/test_plan_result_contract_v1.py",
+    "initial_safe_baseline_sha256": "9284d3fac4ade168d0ff8e06ba465180ea8f87ef6cb7ceffa3aca06027ea1089",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_results_evidence.py": {
+    "loaded_sha256": "876fef4a8ad2e79ae800383cb2b5222fac9a311cc2ba437499149c61112829fc",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 2fcaec103e928cb30cda93b1d6f853bc2b7d046a\ttests/test_plan_results_evidence.py",
+    "initial_safe_baseline_sha256": "876fef4a8ad2e79ae800383cb2b5222fac9a311cc2ba437499149c61112829fc",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_results_managed.py": {
+    "loaded_sha256": "8b2b0204b6a9990626eefb0e3af9817881dd5fa4118b07abcb3e57e38b84becf",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 17b199f1155a977f731c0d35b610a144bcc4e862\ttests/test_plan_results_managed.py",
+    "initial_safe_baseline_sha256": "8b2b0204b6a9990626eefb0e3af9817881dd5fa4118b07abcb3e57e38b84becf",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_results_name.py": {
+    "loaded_sha256": "d8fe3a4f4086af73d1620e16466a48c5560ac7d9d28359e666ca269d65f66881",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob a7a0dae97e4a10071d7efefc873639f435b28087\ttests/test_plan_results_name.py",
+    "initial_safe_baseline_sha256": "d8fe3a4f4086af73d1620e16466a48c5560ac7d9d28359e666ca269d65f66881",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_results_purpose.py": {
+    "loaded_sha256": "a3d2f543fbdbca5e335f7afd0ec40163b33f0d7bedcbdb623f3c56795468fca3",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 511ec01611bd09bb3ee12c09102b7df30cc76f6a\ttests/test_plan_results_purpose.py",
+    "initial_safe_baseline_sha256": "a3d2f543fbdbca5e335f7afd0ec40163b33f0d7bedcbdb623f3c56795468fca3",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_revision_handoff.py": {
+    "loaded_sha256": "c753af43c2362967c22081bf900c0ec2db365c762df45bda0d682ac7e187fe00",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 0d8c1594b14d97a1b56ef906bf011a4befccf389\ttests/test_plan_revision_handoff.py",
+    "initial_safe_baseline_sha256": "c753af43c2362967c22081bf900c0ec2db365c762df45bda0d682ac7e187fe00",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_plan_stop_fix.py": {
+    "loaded_sha256": "b87104da8159f178a2f6c234ae6a63fa159db1f9e8288ef31dad1a174c6e1568",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob ccb2daef5852ca306d026ab1546d476edd0220fb\ttests/test_plan_stop_fix.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/test_plan_transport_fix.py": {
+    "loaded_sha256": "5a23d68229b5e7d8858c155c5ea4a4c3853a5880e589987656d0a04f82d72824",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 7fd0955226bf14d54dcb3355c2579c2f72669fc7\ttests/test_plan_transport_fix.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "this implementation owned fixture"
+  },
+  "tests/test_planner_agent_loop.py": {
+    "loaded_sha256": "bd2bcb6b6af3c32fd2cd9acb61c8a138e92b88d2e5d20d23a39d07cd9a7e26bc",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": "bd2bcb6b6af3c32fd2cd9acb61c8a138e92b88d2e5d20d23a39d07cd9a7e26bc",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_planner_boundary.py": {
+    "loaded_sha256": "93714498df0a49b191e1de723a86b145867111bdd79a8662a8172deac67b92ad",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob c3e16ec9f3e548fe326355ff9d2bd88784367c56\ttests/test_planner_boundary.py",
+    "initial_safe_baseline_sha256": "93714498df0a49b191e1de723a86b145867111bdd79a8662a8172deac67b92ad",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_planner_feedback_boundary.py": {
+    "loaded_sha256": "7aeecf2d7895c1e8439068d90982ca9066b2b7792f744c184397cc8d80fb1e02",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": null,
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_planner_full_replan_convergence_v2.py": {
+    "loaded_sha256": "2bbf261affca3291f58eaa39859583e19e2192163f02eef17dcbaf432df1a0a9",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob d1c4af871a5e7adb55fd7fca7e59643b04bf5b7e\ttests/test_planner_full_replan_convergence_v2.py",
+    "initial_safe_baseline_sha256": null,
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_planner_lifecycle_boundary.py": {
+    "loaded_sha256": "8fc349ae9728c45f251b4c807c0ca1f05b09ba85d7b3c07045bcf4383fab2b52",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 3851513d9537abfd6b7ad6e504a11f68e093f2b8\ttests/test_planner_lifecycle_boundary.py",
+    "initial_safe_baseline_sha256": "8fc349ae9728c45f251b4c807c0ca1f05b09ba85d7b3c07045bcf4383fab2b52",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_planner_resource_protocol_v2.py": {
+    "loaded_sha256": "6f5ee8906efebd21bbdbd1abf7503b9420ad5b1d501b72c93d5f27f84ee7f580",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 9b7abebae1f1d928fc3b014a120fd8ae6cf876db\ttests/test_planner_resource_protocol_v2.py",
+    "initial_safe_baseline_sha256": "6f5ee8906efebd21bbdbd1abf7503b9420ad5b1d501b72c93d5f27f84ee7f580",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_preflight_directory.py": {
+    "loaded_sha256": "d6a616f7c39259e361facd8c1ae42ed843e66c400ea8253d529abdfb3992c92a",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 028e6b53cf53e930e851fcbf5ca3ebcaccc3654c\ttests/test_preflight_directory.py",
+    "initial_safe_baseline_sha256": "d6a616f7c39259e361facd8c1ae42ed843e66c400ea8253d529abdfb3992c92a",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_preflight_mapping_commit.py": {
+    "loaded_sha256": "7dce14c3a2518865e21f002cf9369cac0b5712726f2d722099513f2d7b3e2cd8",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 7eabc13e6eceeaa329d1da5d39bdfa6b42457aa6\ttests/test_preflight_mapping_commit.py",
+    "initial_safe_baseline_sha256": "7dce14c3a2518865e21f002cf9369cac0b5712726f2d722099513f2d7b3e2cd8",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_preflight_recovery_audit.py": {
+    "loaded_sha256": "9119860ea4521439000f33ae4696b75b0b98c76c68df072b98d5eab6dc5e6dd8",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 40907be9352ea9fef95c1af907f424147fe3619b\ttests/test_preflight_recovery_audit.py",
+    "initial_safe_baseline_sha256": "9119860ea4521439000f33ae4696b75b0b98c76c68df072b98d5eab6dc5e6dd8",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_preflight_types.py": {
+    "loaded_sha256": "ca931c42c3e5496de826c4430c999ce917847f5c164aeb8d8c7d00520ebad957",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 8c734be5fe380171fb96a52b54b1d4955cc2dc4d\ttests/test_preflight_types.py",
+    "initial_safe_baseline_sha256": "ca931c42c3e5496de826c4430c999ce917847f5c164aeb8d8c7d00520ebad957",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_recovery_agent_loop.py": {
+    "loaded_sha256": "18391b5528afba7cbf4aa9b2989908d784752f6da61c0f2419c2e9ef17d76aed",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob f7f0bd60f95f498690cca070c5dacaf24f7ba667\ttests/test_recovery_agent_loop.py",
+    "initial_safe_baseline_sha256": "18391b5528afba7cbf4aa9b2989908d784752f6da61c0f2419c2e9ef17d76aed",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_recovery_projection.py": {
+    "loaded_sha256": "51f0ffe02106e290cc7ca0a58ecac6262c13df79e0a44aa71e198397065916bb",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob d0e0459ca313d01238f042dabac1af3d0d242558\ttests/test_recovery_projection.py",
+    "initial_safe_baseline_sha256": "51f0ffe02106e290cc7ca0a58ecac6262c13df79e0a44aa71e198397065916bb",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_recovery_public_rejection.py": {
+    "loaded_sha256": "aba090340a78148adc24c28f6586d08152cff37282537650c939540b66b7407a",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 27e20beca8b74461263993a8ee683983dd709197\ttests/test_recovery_public_rejection.py",
+    "initial_safe_baseline_sha256": "aba090340a78148adc24c28f6586d08152cff37282537650c939540b66b7407a",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_recovery_reception.py": {
+    "loaded_sha256": "27641bcaff0986fe3c33655466e1ee28604644691411e92e018379bc774d1564",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob bd76b0e402a4442544612f293980e0878c1c6a20\ttests/test_recovery_reception.py",
+    "initial_safe_baseline_sha256": "27641bcaff0986fe3c33655466e1ee28604644691411e92e018379bc774d1564",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_runtime_recovery_reporting.py": {
+    "loaded_sha256": "a063b6d81af86d5ae761bf46ac1c068ff3d553abd0352581d68a2aa44849490d",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob 8606cf0da7d95aa183650b53212ad25aae3e0943\ttests/test_runtime_recovery_reporting.py",
+    "initial_safe_baseline_sha256": "a063b6d81af86d5ae761bf46ac1c068ff3d553abd0352581d68a2aa44849490d",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_semantic_completion.py": {
+    "loaded_sha256": "ac9760003739930821c06bb1472fbc798e48d17f38a50973afd21afc55d72303",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": "ac9760003739930821c06bb1472fbc798e48d17f38a50973afd21afc55d72303",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_semantic_completion_workflow.py": {
+    "loaded_sha256": "06198eb2f7c56aced45dc5aa5935a6aa824deed0c3d8a832f658a04818bbe1ca",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": "06198eb2f7c56aced45dc5aa5935a6aa824deed0c3d8a832f658a04818bbe1ca",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_skill_resource_binding.py": {
+    "loaded_sha256": "50860e3994857ef212236c3da2d6e304143b824f0e09850e963d8e98a46a6d7f",
+    "committed_at_production_head": true,
+    "git_tree_entry": "100644 blob cff301b16ec2f454bf5e20c3d13c836313da7e3c\ttests/test_skill_resource_binding.py",
+    "initial_safe_baseline_sha256": "50860e3994857ef212236c3da2d6e304143b824f0e09850e963d8e98a46a6d7f",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  },
+  "tests/test_step_effect_runtime.py": {
+    "loaded_sha256": "d59b7ac56c55fb2d5f69f27f3f9951056db9d6c4ef4f3dc6e282fe596ef0cc3a",
+    "committed_at_production_head": false,
+    "git_tree_entry": "",
+    "initial_safe_baseline_sha256": "d59b7ac56c55fb2d5f69f27f3f9951056db9d6c4ef4f3dc6e282fe596ef0cc3a",
+    "origin": "preexisting safe allowlisted fixture; not newly acquired by this implementation"
+  }
+}
