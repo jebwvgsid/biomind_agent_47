@@ -3156,7 +3156,7 @@ def emit_observation(identity: str, value: Any) -> str:
     }, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
 
 
-def _emit_declared_rows(declarations, facts, prefix):
+def _emit_declared_rows(declarations, facts, prefix, *, publication=False):
     """Standalone serializer kernel: no filesystem, inference or execution."""
     def reject(code, path, actual, expected):
         raise ValueError(json.dumps({"code": code, "field_path": path,
@@ -3173,11 +3173,13 @@ def _emit_declared_rows(declarations, facts, prefix):
         if not isinstance(supplied, dict):
             reject("EFFECT_FACTS_REQUIRED", "$.facts." + field, type(supplied).__name__, "identity-keyed object")
         expected = [row["identity"] for row in rows]
-        if set(supplied) != set(expected):
+        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):
             reject("EFFECT_FACT_IDENTITIES_MISMATCH", "$.facts." + field, sorted(supplied), expected)
         emitted = []
         for row in rows:
             identity = row["identity"]
+            if identity not in supplied:
+                continue  # No observed fact; never infer absence or success.
             value = supplied[identity]
             path = "$.facts." + field + "." + identity
             if not isinstance(value, dict) or not value:
@@ -3208,13 +3210,44 @@ def _declared_emission_rows(effect: Any) -> Dict[str, Any]:
     }
 
 
-def emit_declared_effects(effect: Any, facts: Dict[str, Any]) -> str:
+def emit_declared_effects(effect: Any, facts: Dict[str, Any], *, publication: bool = False) -> str:
     """Serialize caller-observed facts under exact declarations, never verify them.
 
     This helper grants no completion authority. Execute/parser/verification and
     CommitStep still validate identities, provenance, paths and actual results.
     """
-    return _emit_declared_rows(_declared_emission_rows(effect), facts, STRUCTURED_EFFECT_EVIDENCE_PREFIX)
+    # Existing completion/adoption callers retain exact-set validation. Only
+    # the controlled execution template selects publication of partial facts.
+    return _emit_declared_rows(_declared_emission_rows(effect), facts,
+        STRUCTURED_EFFECT_EVIDENCE_PREFIX, publication=publication)
+
+
+EFFECT_HELPER_MARKER = "# BIOMIND_EFFECT_HELPER"
+
+
+def effect_template_provider_view(template: Mapping[str, Any]) -> Dict[str, Any]:
+    """Provider names the marker; framework code is frozen and inserted locally."""
+    return {key: deepcopy(value) for key, value in template.items() if key != "python_template"}
+
+
+def materialize_effect_template(body: str, template: Mapping[str, Any]) -> str:
+    """Expand one exact marker BEFORE validation, candidate identity and approval.
+
+    This is a byte substitution of the already frozen standalone helper, not
+    execution, Bash interpretation, or a repair of incomplete provider output.
+    Bash/Python syntax checks still validate the resulting complete candidate.
+    """
+    lines = body.splitlines(keepends=True)
+    markers = [i for i, line in enumerate(lines) if line.rstrip("\r\n") == EFFECT_HELPER_MARKER]
+    if not markers:
+        return body
+    if len(markers) != 1 or not template.get("available"):
+        raise ValueError("EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE")
+    code = str(template.get("python_template") or "")
+    if not code or hashlib.sha256(code.encode()).hexdigest() != template.get("template_sha256"):
+        raise ValueError("EFFECT_HELPER_TEMPLATE_DIGEST_MISMATCH")
+    lines[markers[0]] = code.rstrip() + "\n"
+    return "".join(lines)
 
 
 def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step_id: str) -> Dict[str, Any]:
@@ -3238,13 +3271,19 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
         code = "import json\n\n" + inspect.getsource(_emit_declared_rows)
         code += "\n_DECLARED_EFFECT_ROWS = json.loads(" + repr(json.dumps(declarations, ensure_ascii=False)) + ")\n"
         code += "\ndef emit_effect_evidence(actual_facts):\n"
-        code += "    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, " + repr(STRUCTURED_EFFECT_EVIDENCE_PREFIX) + ")\n"
+        code += "    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, " + repr(STRUCTURED_EFFECT_EVIDENCE_PREFIX) + ", publication=True)\n"
         return {"available": True, "schema_version": STRUCTURED_EFFECT_EMISSION_VERSION,
                 "step_id": step_id,
                 "declarations": declarations, "python_template": code,
+                "publication_mode": "declared_observed_subset",
+                "marker": EFFECT_HELPER_MARKER,
+                "template_sha256": hashlib.sha256(code.encode()).hexdigest(),
                 "rules": [
-                    "Use this exact serializer in the approved script; do not handwrite machine identities or canonical groups.",
+                    "Return ONE complete executable block for this step and only the protocol's short public explanation. Never repeat the framework helper or emit multiple alternative blocks.",
+                    "In one Python script or one single-quoted Python heredoc, put the exact marker # BIOMIND_EFFECT_HELPER on its own unindented line. BioMind expands its frozen code before checking and approval. Do not expand or rewrite the helper yourself.",
+                    "Call print(emit_effect_evidence(actual_facts)) with a native Python data object. Pass paths/labels as argv, not Python source interpolation; avoid nested python -c / json.dumps / command substitution / json.loads.",
                     "Supply identity-keyed actual_facts only after performing the real checks or operations. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.",
+                    "Publication accepts a subset of the approved declarations. Omit artifacts that were not produced; do not create a path or placeholder to publish blocked facts. Omission itself asserts nothing. All supplied identities and required fields remain checked.",
                     "Artifact facts require the actual path. Side-effect and observation facts require every declared field; observations carry the actual value, including failure or unknown. Declarations alone are not evidence.",
                     "Historical failed scripts/stdout are diagnostic evidence; their failed machine emission must not be reused. This current template takes precedence.",
                     "No emission or rc=0 alone grants completion; Execute, verification and CommitStep remain authoritative.",

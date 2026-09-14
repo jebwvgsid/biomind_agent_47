@@ -42079,7 +42079,8 @@ question. Never guess a scientific or database identity.
                     )
                     from agent_core.workflow.diagnostic_admission import public_diagnostic_request
                     from agent_core.step_effects import (observation_emission_contract,
-                        declared_effect_emission_contract, assert_declared_emission_current)
+                        declared_effect_emission_contract, assert_declared_emission_current,
+                        effect_template_provider_view)
                     approved_emission_contract = observation_emission_contract(approved_step)
                     formal_emission_template = declared_effect_emission_contract(
                         generate_approved_snapshot, current_step_id
@@ -42089,7 +42090,7 @@ question. Never guess a scientific or database identity.
                             (current_step_id + json.dumps(formal_emission_template, sort_keys=True)).encode("utf-8")
                         ).hexdigest(),
                         name="approved_effect_emission_template",
-                        content=json.dumps(formal_emission_template, ensure_ascii=False, sort_keys=True),
+                        content=json.dumps(effect_template_provider_view(formal_emission_template), ensure_ascii=False, sort_keys=True),
                     ))
                     seed_message = generate_seed_messages[0]
                     if existing_episode is None:
@@ -43552,6 +43553,15 @@ question. Never guess a scientific or database identity.
                     if generate_display.error:
                         raise ScriptBlockError(generate_display.error)
                     script_block = parse_executable_script_block(content)
+                    # Freeze the framework helper into this complete candidate
+                    # before adapting argv, hashing, validation or approval.
+                    from dataclasses import replace
+                    from agent_core.step_effects import materialize_effect_template
+                    try:
+                        script_block = replace(script_block, body=materialize_effect_template(
+                            script_block.body, formal_emission_template))
+                    except ValueError as exc:
+                        raise ScriptBlockError(str(exc)) from exc
                     structured_action = adapt_script_block_to_action(
                         script_block,
                         generate_artifact_environment,
@@ -49312,6 +49322,10 @@ question. Never guess a scientific or database identity.
                 }
             expected_runtime_contract = {
                 "status": "passed",
+                "coverage": {"runtime_binding_structure_checked": True,
+                    "scientific_executables_checked": False, "scientific_versions_checked": False},
+                "scientific_capability_status": "UNKNOWN",
+                "meaning": "Runtime binding structure passed; this is not scientific tool readiness.",
                 "bindings": dict(runtime_bindings),
                 "executables": {},
                 "versions": {},
