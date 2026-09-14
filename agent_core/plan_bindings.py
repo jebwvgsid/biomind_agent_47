@@ -560,6 +560,8 @@ def compile_plan_resource_bindings(
                     code = "PLAN_RESOURCE_ROLE_READ_MISSING"
                 if code:
                     role_issues.append({"code": code, "owner": "planner", "disposition": "PROTOCOL_INVALID",
+                        "step_id": str(step.get("step_id") or ""),
+                        "message": "Use this issue's step_key as role_associations[].step_id, with the exact expected capability_id and role on the chosen resource declaration.",
                         "field_path": f"$.steps[{step_index}]", "actual": {"step_id": step.get("step_id"), "role": role, "inputs": step.get("inputs", [])},
                         "expected": {"role_association": {"step_id": step.get("step_id"), "capability_id": capability_id, "role": role},
                             "resource_local_refs": sorted({str(raw.get("local_ref")) for raw in candidate.get("proposed_artifacts", [])

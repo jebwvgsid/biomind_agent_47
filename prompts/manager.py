@@ -1874,7 +1874,9 @@ For a new workspace implementing a frozen capability role, add role_associations
 to that same proposed_artifacts declaration. Each item has exactly step_id,
 capability_id and role; use only the workspace roles enumerated in the resource
 requirements for that step's selected capability. This explicit association is
-local to that step/capability and grants only its declared access. Repeat it for
+local to that step/capability and grants only its declared access. In correction
+feedback, step_key names the value to put in the association's step_id; combine
+it with the exact expected capability_id and role. Repeat it for
 each sharing step, including artifact-backed read consumers; no global alias is
 created. Keep workspace_mutations and inputs referring to the chosen plan.*
 resource. For snpEff, a plan.snpeff_data_dir declaration can carry:

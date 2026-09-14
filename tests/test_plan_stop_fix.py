@@ -41,6 +41,18 @@ def test_active_model_stop_with_budget_remaining():
     assert f['actual_issues'][0]['not_evaluated']==['step_effects','dataflow','required_workspace_coverage']
     text=json.dumps(result['requests'][1],ensure_ascii=False)
     assert 'STOP_PLANNING' in text and 'attempted_changes' in text and 'remaining_requests' in text
+    feedback=[]
+    for message in result['requests'][1]:
+        try: value=json.loads(message['content'])
+        except (ValueError,TypeError): continue
+        if value.get('code')=='PLANNER_CANDIDATE_REJECTED': feedback=value['validation_issues']
+    assert [row['step_key'] for row in feedback]==['prepare_database','build_database','annotate_variants']
+    for row in feedback:
+        expected=row['expected']['role_association']
+        assert expected['capability_id']=='genomics.snpeff_annotation.'+row['step_key']
+        assert expected['role']=='artifact.snpeff_data_dir'
+        assert "step_key as role_associations[].step_id" in row['message']
+
 
 
 def test_first_response_active_stop():
