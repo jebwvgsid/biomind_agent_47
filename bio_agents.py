@@ -21873,24 +21873,34 @@ class BioAnalystAgent:
                     actual=cls._json_value_type(env),
                 )
             validated_targets.append("execute.env_object")
+            env_error = None
+            valid_env_targets = []
+            env_keys_valid = True
             for key, value in env.items():
                 if not isinstance(key, str) or not key:
-                    return fail(
-                        "ACTION_SCHEMA_TYPE_ERROR",
-                        "execute.env keys must be non-empty strings.",
-                        field_path="env",
-                        expected="non-empty string keys",
-                        actual=cls._json_value_type(key),
-                    )
-                if not isinstance(value, str):
-                    return fail(
-                        "ACTION_SCHEMA_TYPE_ERROR",
-                        "execute.env values must be strings.",
-                        field_path=f"env.{key}",
-                        expected="string",
-                        actual=cls._json_value_type(value),
-                    )
-                validated_targets.append(f"execute.env.{key}")
+                    env_keys_valid = False
+                    if env_error is None:
+                        env_error = {
+                            "message": "execute.env keys must be non-empty strings.",
+                            "field_path": "env", "expected": "non-empty string keys",
+                            "actual": cls._json_value_type(key),
+                        }
+                elif not isinstance(value, str):
+                    if env_error is None:
+                        env_error = {
+                            "message": "execute.env values must be strings.",
+                            "field_path": f"env.{key}", "expected": "string",
+                            "actual": cls._json_value_type(value),
+                        }
+                else:
+                    valid_env_targets.append(f"execute.env.{key}")
+            # Diagnose every valid field independent of JSON key order, while
+            # retaining the original first parser failure for provider feedback.
+            validated_targets.extend(sorted(valid_env_targets))
+            if env_keys_valid:
+                validated_targets.append("execute.env_keys")
+            if env_error is not None:
+                return fail("ACTION_SCHEMA_TYPE_ERROR", **env_error)
             validated_targets.append("execute.env_values")
             action.update({
                 "code": code,

@@ -87,6 +87,8 @@ def candidate_progress_assessment(
     comparison = _digest({"candidate": view})
     validation_signature = _digest({"representation": representation,
         "binding": bindings, "contract_ref": dict(contract_ref or {})})
+    comparison_context = _digest({"binding": bindings,
+        "contract_ref": dict(contract_ref or {})})
     ordered = sorted(prior_rows, key=lambda row: int(row.get("repair_ordinal") or 0))
     previous = dict((ordered[-1] if ordered else {}).get("progress_assessment") or {})
     old_representation = set(previous.get("representation_targets") or [])
@@ -95,7 +97,9 @@ def candidate_progress_assessment(
     gained_bindings = sorted(set(bindings or []) - old_bindings)
     recurrence = any(
         (row.get("progress_assessment") or {}).get("comparison_fingerprint") == comparison
-        and (row.get("progress_assessment") or {}).get("validation_signature") == validation_signature
+        and ((row.get("progress_assessment") or {}).get("comparison_context_fingerprint")
+             or _digest({"binding": (row.get("progress_assessment") or {}).get("binding_facts"),
+                         "contract_ref": dict(row.get("contract_ref") or {})})) == comparison_context
         for row in ordered
     )
     legacy_repeat = bool(ordered and not previous and
@@ -104,14 +108,31 @@ def candidate_progress_assessment(
     pending_targets = sorted({str(item.get("field_path") or
         (item.get("protocol_error") or {}).get("field_path") or "response")
         for item in violations})
+    prior_pending = {str(target).removeprefix("$.") for target in prior_targets}
+    # Per-key env facts describe optional fields, not extra repair obligations.
+    # Adding an unrelated valid field cannot fix the previous rejection, and
+    # dropping such a field cannot negate a demonstrated pending-value repair.
+    gained_representation = [target for target in gained_representation
+        if not target.startswith("execute.env.")
+        or target.removeprefix("execute.") in prior_pending]
+    lost_representation = {target for target in old_representation - set(representation)
+        if not target.startswith("execute.env.")}
+    current_env = view.get("env", {}) if isinstance(view, Mapping) else None
+    removed_env_targets = sorted(target for target in prior_pending
+        if target.startswith("env.") and isinstance(current_env, Mapping)
+        and "execute.env_object" in representation and target[len("env."):] not in current_env)
+    resolved_targets = sorted(target for target in set(prior_targets) - set(pending_targets)
+        if not str(target).removeprefix("$.").startswith("env.")
+        or "execute." + str(target).removeprefix("$.") in representation
+        or str(target).removeprefix("$.") in removed_env_targets)
     if not ordered:
         proven, basis = True, "initial_rejection"
     elif recurrence or legacy_repeat:
         proven, basis = False, "recurrent_rejected_candidate"
-    elif previous and gained_representation and not (old_representation - set(representation)):
+    elif previous and (gained_representation or removed_env_targets) and not lost_representation:
         proven, basis = True, "validated_representation_target"
     elif (previous and bindings is not None and gained_bindings
-          and not (old_representation - set(representation))
+          and not lost_representation
           and not (old_bindings - set(bindings))):
         proven, basis = True, "validated_binding_target"
     else:
@@ -119,10 +140,12 @@ def candidate_progress_assessment(
     return {"schema_version": 1, "producer": CANDIDATE_REPAIR_RECEIPT_PRODUCER,
         "progress_proven": proven, "basis": basis,
         "comparison_fingerprint": comparison, "validation_signature": validation_signature,
+        "comparison_context_fingerprint": comparison_context,
         "representation_targets": representation, "binding_facts": bindings,
         "binding_axis": "evaluated" if bindings is not None else "not_evaluated",
-        "newly_satisfied_targets": gained_representation + gained_bindings if ordered else [],
-        "resolved_targets": sorted(set(prior_targets) - set(pending_targets)),
+        "newly_satisfied_targets": (gained_representation + gained_bindings
+            + ["removed_optional_field:" + target for target in removed_env_targets]) if ordered else [],
+        "resolved_targets": resolved_targets,
         "pending_targets": pending_targets, "scientific_success": "not_assessed"}
 
 
