@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016205385327339172,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.28787578642368317,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001583453267812729,
+    "failure": ""
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "base": "f78bb10bb3f12059efaf911916940440cecdd73d",
+  "branch": "refactor/consultant-controller-authority",
+  "status_entries": 437,
+  "staged_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "protected_overlay_files": [
+    "prompts/manager.py",
+    "agent_core/node_context.py",
+    "agent_core/planner_context.py",
+    "agent_core/provider_message_safety.py",
+    "agent_core/workflow/managed_stop.py"
+  ],
+  "original_session_access": "none this implementation round",
+  "prior_audit": "f78bb10bb3f12059efaf911916940440cecdd73d"
+}

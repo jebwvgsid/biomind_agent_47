@@ -261,6 +261,10 @@ def normalize_capability_contract(
                 applicability.get("produces_bindings")
             ),
         }
+        if applicability.get("artifact_binding_requirements"):
+            normalized["binding_applicability"]["artifact_binding_requirements"] = deepcopy(
+                dict(applicability["artifact_binding_requirements"])
+            )
     return normalized
 
 

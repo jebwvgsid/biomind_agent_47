@@ -1,0 +1,655 @@
+[
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001681949943304062,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 16.896225201897323,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_c_fix_full_admission",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0008101947605609894,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_role]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_role]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003730049356818199,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_role]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7843237714841962,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_role]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021156854927539825,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unknown_role]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unknown_role]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003125108778476715,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unknown_role]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7844702154397964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unknown_role]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019857753068208694,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_step]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_step]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026928726583719254,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_step]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7510883072391152,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_step]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002756398171186447,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_capability]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_capability]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002970965579152107,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_capability]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.0964819565415382,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[wrong_capability]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019220169633626938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[ambiguous_role]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[ambiguous_role]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002782456576824188,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[ambiguous_role]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7154029933735728,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[ambiguous_role]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019636284559965134,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_prepare]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_prepare]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027732737362384796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_prepare]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8191521251574159,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_prepare]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002142246812582016,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unordered]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unordered]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002974383533000946,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unordered]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.0307839084416628,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[unordered]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00023290980607271194,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[early_read]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[early_read]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00029260292649269104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[early_read]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8698121272027493,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[early_read]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019165314733982086,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_state]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_state]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002867896109819412,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_state]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.9360363846644759,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_state]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019138026982545853,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[invalid_evidence]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[invalid_evidence]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027892831712961197,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[invalid_evidence]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.1001470517367125,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[invalid_evidence]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019557680934667587,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_final]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_final]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002782372757792473,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_final]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8199056768789887,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_resource_negative_full_admission[missing_final]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001936713233590126,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_freeze_reload_and_artifact_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_freeze_reload_and_artifact_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011677108705043793,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_freeze_reload_and_artifact_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.6837550178170204,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_freeze_reload_and_artifact_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018822494894266129,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012654345482587814,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04934661742299795,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_independent_process_frozen_reload",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015802308917045593,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011256244033575058,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 5.115886270068586,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015820004045963287,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_two_scoped_workspaces_do_not_alias",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_two_scoped_workspaces_do_not_alias",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012046750634908676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_two_scoped_workspaces_do_not_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.6111233439296484,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_two_scoped_workspaces_do_not_alias",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018756557255983353,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_annotation_cannot_read_other_associated_workspace",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_annotation_cannot_read_other_associated_workspace",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012951064854860306,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_annotation_cannot_read_other_associated_workspace",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8525200597941875,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_annotation_cannot_read_other_associated_workspace",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015780050307512283,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_role_reader_compatibility",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_role_reader_compatibility",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012142118066549301,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_role_reader_compatibility",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00017695222049951553,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_resource_fix.py::test_role_reader_compatibility",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001043388620018959,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034575629979372025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004395563155412674,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011226441711187363,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020023994147777557,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004009706899523735,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011022016406059265,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018657464534044266,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.003737441264092922,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001230817288160324,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018819328397512436,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007117258384823799,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012762192636728287,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019364897161722183,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005608489736914635,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011388678103685379,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018216297030448914,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00034443940967321396,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010777730494737625,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000179375521838665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009942827746272087,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001536644995212555,
+    "failure": ""
+  }
+]

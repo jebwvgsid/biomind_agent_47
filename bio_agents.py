@@ -39550,6 +39550,7 @@ question. Never guess a scientific or database identity.
                             validate_dataflow=False,
                             require_declared_references=True,
                             capability_ids=tuple(planner_effect_registry),
+                            capability_registry=planner_effect_registry,
                         )
                         if not deterministic_issues and restored_planner_context:
                             from agent_core.plan_contract import validate_planner_consumption_correction
@@ -39572,6 +39573,7 @@ question. Never guess a scientific or database identity.
                                 self._planner_observed_call(task_id, planner_observation, "compile_resource_bindings", compile_plan_resource_bindings,
                                     plan_proposal,
                                     require_declared_references=True,
+                                    capability_registry=planner_effect_registry,
                                     candidate_scope_id=(
                                         planner_node_context.binding.candidate_scope_id
                                     ),
@@ -39722,6 +39724,7 @@ question. Never guess a scientific or database identity.
                 renderer_records=renderer_records,
                 output_contracts=canonical_output_contracts,
                 task_spec=task_spec,
+                defer_workspace_coverage=True,
             )
             effect_capability_registry = (
                 self.skill_manager.get_execution_capability_registry(selected_skills)
@@ -39762,6 +39765,8 @@ question. Never guess a scientific or database identity.
             candidate_for_repair["plan_dataflow_receipt"] = deepcopy(
                 dataflow_compilation_receipt
             )
+            from agent_core.plan_tracker import validate_required_workspace_coverage
+            violations.extend(normalize_validation_issue(issue) for issue in validate_required_workspace_coverage(candidate_for_repair))
             violations.extend(
                 normalize_validation_issue(issue)
                 for issue in dataflow_compilation_issues

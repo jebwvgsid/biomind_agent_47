@@ -258,18 +258,30 @@ def project_current_action_workspace_bindings(
     from source text or a path basename.
     """
 
+    from agent_core.plan_bindings import resource_bindings_for_step
+    if approved_plan_snapshot.get("resource_role_protocol_version") not in (None, 1):
+        raise WorkspaceAttestationError("WORKSPACE_ROLE_PROTOCOL_UNSUPPORTED")
+    if approved_plan_snapshot.get("resource_role_protocol_version") == 1:
+        approved_step = next((row for row in approved_plan_snapshot.get("steps", [])
+            if row.get("step_id") == current_step.get("step_id")), {})
+        if not approved_step or approved_step.get("execution_capability_id") != capability_contract.get("capability_id"):
+            raise WorkspaceAttestationError("WORKSPACE_ROLE_APPROVAL_SCOPE_MISMATCH")
+        current_step = approved_step
+        resource_bindings = resource_bindings_for_step(approved_plan_snapshot.get("plan_resource_bindings") or {}, current_step)
+    else:
+        resource_bindings = dict(plan_state.get("plan_resource_bindings") or {})
     capability_mutations = _mutation_rows(
         capability_contract.get("workspace_mutations") or []
     )
     projection_requirements = list(capability_mutations)
     projected_identities = {
-        _workspace_identity(item) for item in capability_mutations
+        str((resource_bindings.get(_workspace_identity(item)) or {}).get("canonical_resource_id") or _workspace_identity(item)) for item in capability_mutations
     }
     raw_artifact_requirements = dict(
         (binding_rule or {}).get("artifact_binding_requirements") or {}
     )
     explicit_capability_artifacts = {
-        str(item)
+        str((resource_bindings.get(str(item)) or {}).get("canonical_resource_id") or item)
         for item in [
             *(capability_contract.get("required_artifact_binding_ids") or []),
             *(capability_contract.get("consumes_artifacts") or []),
@@ -310,11 +322,6 @@ def project_current_action_workspace_bindings(
         or current_step.get("workspace_mutations")
         or []
     )
-    resource_bindings = {
-        str(key): dict(value)
-        for key, value in dict(plan_state.get("plan_resource_bindings") or {}).items()
-        if isinstance(value, Mapping)
-    }
     ledger = {
         str(key): dict(value)
         for key, value in dict(

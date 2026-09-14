@@ -48,6 +48,7 @@ from agent_core.active_state import (
 from agent_core.recovery_contract import recovery_route_for_disposition
 from agent_core.plan_contract import (
     MINIMUM_PLAN_READER_VERSION,
+    minimum_reader_for_plan,
     PLAN_CONTRACT_VERSION,
     PermanentInfrastructureError,
     ReaderCompatibilityError,
@@ -8629,7 +8630,7 @@ def approve_plan_state(
     state["approval_record"] = {
         "schema_version": 1,
         "plan_contract_version": PLAN_CONTRACT_VERSION,
-        "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+        "minimum_reader_version": minimum_reader_for_plan(state),
         "approval_id": "approval-" + hashlib.sha256(approval_seed.encode("utf-8")).hexdigest()[:20],
         "plan_snapshot_id": str(
             (state.get("current_plan") or {}).get("plan_snapshot_id") or ""
@@ -9167,6 +9168,7 @@ def validate_output_contracts(
     output_contracts: List[Dict[str, Any]],
     *,
     canonical_output_dir: str | Path = "",
+    defer_workspace_coverage: bool = False,
 ) -> List[Dict[str, Any]]:
     """Validate exact required coverage and single materializable ownership."""
     from .plan_contract import plan_result_contracts, plan_uses_explicit_results
@@ -9230,6 +9232,8 @@ def validate_output_contracts(
             continue
         if str(contract.get("role") or "") == "output_dir":
             continue
+        if contract.get("resource_kind") == "mutable_workspace":
+            continue  # State/evidence coverage is checked below, never PRODUCE.
         logical_id = str(contract.get("artifact_id") or contract.get("output_id") or "")
         identity = (
             _output_identity(contract, output_dir)
@@ -9291,7 +9295,39 @@ def validate_output_contracts(
                 "field": "outputs",
                 "reason": f"Output `{common['path_or_name'] or identity}` has multiple active producers: {', '.join(owner_ids)}.",
             })
+    if not defer_workspace_coverage:
+        violations.extend(validate_required_workspace_coverage(state))
     return violations
+
+
+def validate_required_workspace_coverage(state: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """Require a sealed valid state chain, not merely the presence of MUTATE."""
+    from .plan_contract import plan_result_contracts
+    from .step_effects import validate_plan_dataflow_receipt
+    required = {ref: row for ref, row in plan_result_contracts(state).items()
+        if row.get("required") and row.get("resource_kind") == "mutable_workspace"}
+    if not required:
+        return []
+    resources = dict(state.get("plan_resource_bindings") or {})
+    receipt = dict(state.get("plan_dataflow_receipt") or {})
+    checked = validate_plan_dataflow_receipt(receipt, state, resources)
+    valid = checked["valid"] and receipt.get("status") == "compiled" and receipt.get("review_compatible") is True
+    edges = list((state.get("compiled_dataflow") or {}).get("edges") or [])
+    issues = []
+    for ref in required:
+        resource = resources.get(ref) or {}
+        identity = str(resource.get("canonical_resource_id") or "")
+        sources = [edge for edge in edges if edge.get("canonical_resource_id") == identity
+            and edge.get("effect_kind") == "MUTATE" and edge.get("available_after_success") is True
+            and edge.get("establishes_state")]
+        if not valid or not identity or not sources:
+            issues.append({"violation_code": "REQUIRED_WORKSPACE_UNCOVERED", "field": "workspace_mutations",
+                "field_path": "$.proposed_artifacts", "affected_output_ids": [ref],
+                "actual": {"resource_ref": ref, "dataflow_status": receipt.get("status"), "state_sources": sources},
+                "expected": "A valid sealed dataflow with ordered, evidenced MUTATE state sources and all consumer prerequisites satisfied.",
+                "check_status": "failed" if valid else "not_evaluated", "depends_on": "plan_dataflow",
+                "reason": "Required mutable workspace has no verified planning state chain; this does not assert runtime completion."})
+    return issues
 
 
 def normalize_task_output_materializations(
@@ -10099,6 +10135,7 @@ def normalize_plan_contracts(
     renderer_records: Optional[List[Dict[str, Any]]] = None,
     output_contracts: Optional[List[Dict[str, Any]]] = None,
     task_spec: Optional[Dict[str, Any]] = None,
+    defer_workspace_coverage: bool = False,
 ) -> Tuple[PlanState, List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run the shared pre-review normalization and output validation pipeline."""
     legacy_renderer_mode = bool(
@@ -10157,6 +10194,7 @@ def normalize_plan_contracts(
         normalized,
         list(output_contracts or []),
         canonical_output_dir=_canonical_output_dir(list(output_contracts or []), task_spec),
+        defer_workspace_coverage=defer_workspace_coverage,
     ))
     normalized = derive_plan_validation_state(
         normalized,
@@ -10649,7 +10687,7 @@ def refresh_state_contract_v2(state: PlanState) -> PlanState:
     compatibility["read_aliases_enabled"] = False
     state["compatibility"] = compatibility
     state["plan_contract_version"] = PLAN_CONTRACT_VERSION
-    state["minimum_reader_version"] = MINIMUM_PLAN_READER_VERSION
+    state["minimum_reader_version"] = minimum_reader_for_plan(state)
     return state
 
 
@@ -11377,6 +11415,15 @@ def _rewrite_plan_resource_bindings_after_allocation(
             if str(value)
         }
         aliases.update({alias, identity})
+        if row.get("role_associations") and row.get("binding_source") == "candidate_local_artifact":
+            allocated = {str(value) for local, value in allocation_mapping.items() if str(local) in aliases}
+            if len(allocated) != 1:
+                raise ValueError("PLAN_RESOURCE_ROLE_ALLOCATION_AMBIGUOUS")
+            previous_identity = identity
+            identity = next(iter(allocated))
+            row["canonical_resource_id"] = identity
+            aliases.discard(previous_identity)
+            aliases.add(identity)
         for local_ref, allocated_ref in allocation_mapping.items():
             if str(local_ref) in aliases:
                 aliases.add(str(allocated_ref))
@@ -11444,9 +11491,14 @@ def _prepare_atomic_plan_objects(
             task_id=str(state.get("task_id") or path.parent.name),
             managed_root=managed_root,
         )
+        effect_mapping = dict(allocation_mapping)
+        for local, allocated in allocation_mapping.items():
+            resource = dict((state.get("plan_resource_bindings") or {}).get(local) or {})
+            if resource.get("role_associations") and resource.get("binding_source") == "candidate_local_artifact":
+                effect_mapping[str(resource["canonical_resource_id"])] = allocated
         rewritten = rewrite_candidate_local_refs(
             {"steps": state.get("steps", []) or []},
-            allocation_mapping,
+            effect_mapping,
         )
         state["steps"] = list(rewritten.get("steps") or [])
         state["artifact_usage"] = _rewrite_usage_after_allocation(
@@ -11576,7 +11628,7 @@ def _prepare_atomic_plan_objects(
         snapshot = {
             "schema_version": 1,
             "plan_contract_version": PLAN_CONTRACT_VERSION,
-            "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+            "minimum_reader_version": minimum_reader_for_plan(state),
             "plan_snapshot_id": snapshot_id,
             **snapshot_identity_payload,
             "plan_record_hash": str(
@@ -11585,6 +11637,8 @@ def _prepare_atomic_plan_objects(
             "steps": _immutable_plan_steps(state),
             "resolved_artifact_refs": deepcopy(list(state.get("artifact_usage") or [])),
             "plan_local_artifacts": deepcopy(dict(state.get("plan_artifacts") or {})),
+            **({"plan_resource_bindings": deepcopy(state["plan_resource_bindings"]), "resource_role_protocol_version": 1}
+               if any(row.get("role_associations") for row in dict(state.get("plan_resource_bindings") or {}).values()) else {}),
             "artifact_allocation_mapping": deepcopy(dict(
                 state.get("artifact_allocation_mapping") or {}
             )),
@@ -11602,7 +11656,7 @@ def _prepare_atomic_plan_objects(
         pending_approval = {
             "schema_version": 1,
             "plan_contract_version": PLAN_CONTRACT_VERSION,
-            "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+            "minimum_reader_version": minimum_reader_for_plan(state),
             "approval_id": pending_id,
             "plan_snapshot_id": snapshot_id,
             "plan_snapshot_ref": snapshot_ref,
@@ -11621,7 +11675,7 @@ def _prepare_atomic_plan_objects(
             "plan_snapshot_id": snapshot_id,
             "plan_snapshot_ref": snapshot_ref,
             "plan_contract_version": PLAN_CONTRACT_VERSION,
-            "minimum_reader_version": MINIMUM_PLAN_READER_VERSION,
+            "minimum_reader_version": minimum_reader_for_plan(state),
         })
         state["current_plan"] = current_plan
         state["plan_snapshot_ref"] = snapshot_ref

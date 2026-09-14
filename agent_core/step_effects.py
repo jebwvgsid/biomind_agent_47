@@ -714,6 +714,11 @@ def _canonicalize_workspace_effects(
                     row.pop(key, None)
             if declared != identity:
                 row.setdefault("declared_resource_ref", declared)
+            if (resource_bindings or {}).get(declared, {}).get("role_associations"):
+                # Both public aliases now denote the same scoped instance.
+                # Their spelling is source provenance, not conflicting effect
+                # metadata; the original candidate remains in its receipt.
+                row["declared_resource_ref"] = identity
             canonical.append(row)
         elif declared != identity:
             canonical.append({
@@ -1197,6 +1202,8 @@ def compile_step_effect(
         }
 
     source_step = deepcopy(dict(step))
+    from agent_core.plan_bindings import resource_bindings_for_step
+    resource_bindings = resource_bindings_for_step(resource_bindings or {}, source_step)
     compiled_step = deepcopy(source_step)
     step_id = str(source_step.get("step_id") or source_step.get("id") or "")
     field_root = f"$.steps[{step_index}]"
@@ -2113,6 +2120,7 @@ def compile_plan_dataflow(
         )
         return {}, {}, [issue]
 
+    from agent_core.plan_bindings import capability_workspace_roles, resource_bindings_for_step
     source_plan = deepcopy(dict(plan_state))
     binding_issues: list[Dict[str, Any]] = []
     compiled_bindings: Dict[str, Dict[str, Any]]
@@ -2129,6 +2137,7 @@ def compile_plan_dataflow(
                 authoritative_handles=dict(authoritative_handles or {}),
                 availability_origins=dict(availability_origins or {}),
                 authoritative_bindings=dict(authoritative_bindings or {}),
+                capability_registry=capability_registry,
             )
         except PlanBindingError as exc:
             diagnostic = (
@@ -2167,7 +2176,7 @@ def compile_plan_dataflow(
                 continue
             try:
                 raw_step["step_effect"] = _canonicalize_workspace_effects(
-                    canonical_step_effect(raw_step), compiled_bindings
+                    canonical_step_effect(raw_step), resource_bindings_for_step(compiled_bindings, raw_step)
                 )
             except StepEffectProtocolError as exc:
                 effect_issues.append(_step_protocol_issue(
@@ -2217,6 +2226,8 @@ def compile_plan_dataflow(
             continue
         step = dict(raw_step)
         step_id = str(step.get("step_id") or "")
+        scoped_bindings = resource_bindings_for_step(compiled_bindings, step)
+        step_roles = capability_workspace_roles(dict((capability_registry or {}).get(step.get("execution_capability_id")) or {}))
         for field, effect_kind in (("inputs", "READ"), ("outputs", "PRODUCE")):
             for ref_index, raw_ref in enumerate(step.get(field, []) or []):
                 resource_ref = str(raw_ref or "")
@@ -2264,6 +2275,11 @@ def compile_plan_dataflow(
                     "field_path": field_path,
                     "establishes_state": "available" if effect_kind == "PRODUCE" else "",
                 }
+                if effect_kind == "READ":
+                    required_states = {role["required_state"] for name, role in step_roles.items()
+                        if role.get("required_state") and (scoped_bindings.get(name) or {}).get("canonical_resource_id") == edge["canonical_resource_id"]}
+                    if len(required_states) == 1:
+                        edge["requires_state"] = next(iter(required_states))
                 edges.append(edge)
                 if (
                     effect_kind == "PRODUCE"

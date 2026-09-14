@@ -149,6 +149,7 @@ metadata:
             snpeff_db:
               canonical_resource_id: artifact.snpeff_data_dir
               resource_kind: mutable_workspace
+              required_state: snpeff_database_ready
           required_binding_env:
             GENOME_VERSION: {source: accepted_binding, name: genome_version}
             SNPEFF_DB: {source: accepted_binding, name: snpeff_db}

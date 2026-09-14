@@ -2147,6 +2147,10 @@ class SkillManager:
                             else []
                         ),
                     }
+                    if rule.get("artifact_binding_requirements"):
+                        normalized_input["binding_applicability"]["artifact_binding_requirements"] = deepcopy(
+                            dict(rule["artifact_binding_requirements"])
+                        )
                 contract = normalize_capability_contract(
                     {**normalized_input, "selected_skill_id": sid},
                     selected_skill_id=sid,
@@ -2234,10 +2238,12 @@ class SkillManager:
                 meta = self.get_skill_meta(str(contract.get("selected_skill_id") or ""))
                 binding = dict((meta.get("generate") or {}).get("binding_contract") or {})
                 if binding.get("public_input_protocol"):
+                    from agent_core.plan_bindings import instantiate_step_binding_contract
                     raw["generate_binding_input_contract"] = {
                         "protocol": str(binding["public_input_protocol"]),
                         "capability_id": capability_id,
-                        "binding_contract": deepcopy(binding),
+                        "binding_contract": instantiate_step_binding_contract(binding, raw,
+                            candidate.get("plan_resource_bindings") or {}, operation=str(contract.get("operation") or "")),
                     }
                 else:
                     raw.pop("generate_binding_input_contract", None)

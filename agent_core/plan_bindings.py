@@ -20,6 +20,7 @@ _ENV_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 _VALUE_TYPES = {"string", "integer", "number", "boolean", "json", "artifact_ref"}
 _RESOURCE_KINDS = {"immutable_artifact", "mutable_workspace"}
 PLAN_RESOURCE_PROTOCOL_VERSION = 2
+PLAN_RESOURCE_ROLE_VERSION = 1
 _INITIALLY_AVAILABLE_ORIGINS = {
     "external",
     "verified_task_input",
@@ -148,6 +149,11 @@ def planner_resource_requirements(authoritative_bindings: Mapping[str, Any], cap
                 "materialization_policy_id": "managed_intermediate_v1",
             },
             "resource_binding": "omit for a new resource; the binder creates identity",
+            "role_associations": {
+                "optional": True, "schema_version": PLAN_RESOURCE_ROLE_VERSION,
+                "item": {"step_id": "one declared step", "capability_id": "that step's selected capability", "role": "one role enumerated below"},
+                "meaning": "This resource implements the exact role only for that step/capability. Repeat explicitly for each sharing step. This is not an existing resource_binding or a global alias.",
+            },
         },
         "existing_resource_reference": {"resource_ref": "exact current resource handle"},
         "resources": [{
@@ -156,6 +162,8 @@ def planner_resource_requirements(authoritative_bindings: Mapping[str, Any], cap
             "contract_revision": str((row.get("metadata") or {}).get("contract_revision") or row.get("contract_revision") or ""),
         } for handle, row in sorted(authoritative_bindings.items()) if isinstance(row, Mapping) and row.get("object_type") == "artifact"],
         "execution_capabilities": deepcopy(dict(capability_registry)),
+        "workspace_roles_by_capability": {str(key): capability_workspace_roles(row)
+            for key, row in capability_registry.items() if isinstance(row, Mapping) and capability_workspace_roles(row)},
         "invariants": [
             "capability identity is not resource identity",
             "directory shape does not confer mutable permission",
@@ -164,6 +172,65 @@ def planner_resource_requirements(authoritative_bindings: Mapping[str, Any], cap
             "inline typed evidence_contract is supported for otherwise undeclared side effects",
         ],
     }
+
+
+def capability_workspace_roles(capability: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Exact roles from the one frozen capability and binding sub-contract."""
+    roles: Dict[str, Dict[str, Any]] = {}
+    for mutation in capability.get("workspace_mutations", []) or []:
+        if isinstance(mutation, Mapping):
+            role = str(mutation.get("workspace_ref") or mutation.get("identity") or "")
+            if role:
+                roles[role] = {"resource_kind": "mutable_workspace", "access": "mutate"}
+    applicability = dict(capability.get("binding_applicability") or {})
+    for requirement in dict(applicability.get("artifact_binding_requirements") or {}).values():
+        if not isinstance(requirement, Mapping) or requirement.get("resource_kind") != "mutable_workspace":
+            continue
+        role = str(requirement.get("canonical_resource_id") or "")
+        if role:
+            roles.setdefault(role, {"resource_kind": "mutable_workspace", "access": "read"})
+            if requirement.get("required_state"):
+                roles[role]["required_state"] = str(requirement["required_state"])
+    return roles
+
+
+def resource_bindings_for_step(bindings: Mapping[str, Any], step: Mapping[str, Any]) -> Dict[str, Any]:
+    """Ephemeral exact role lookup. Never add role aliases to the Plan registry."""
+    result = dict(bindings)
+    matches: Dict[str, Mapping[str, Any]] = {}
+    for row in bindings.values():
+        if not isinstance(row, Mapping):
+            continue
+        if row.get("role_associations") and row.get("role_association_version") != PLAN_RESOURCE_ROLE_VERSION:
+            raise PlanBindingError("PLAN_RESOURCE_ROLE_VERSION_UNSUPPORTED")
+        for association in row.get("role_associations", []) or []:
+            if association.get("step_id") != step.get("step_id") or association.get("capability_id") != step.get("execution_capability_id"):
+                continue
+            role = str(association["role"])
+            prior = matches.get(role) or result.get(role)
+            if prior and prior.get("canonical_resource_id") != row.get("canonical_resource_id"):
+                raise PlanBindingError("PLAN_RESOURCE_ROLE_AMBIGUOUS", step_id=step.get("step_id"), role=role)
+            matches[role] = row
+    result.update(matches)
+    return result
+
+
+def instantiate_step_binding_contract(binding: Mapping[str, Any], step: Mapping[str, Any], resources: Mapping[str, Any], *, operation: str) -> Dict[str, Any]:
+    """Freeze only explicitly associated requirements of the selected operation."""
+    result = deepcopy(dict(binding))
+    scoped = resource_bindings_for_step(resources, step)
+    rule = dict((result.get("operations") or {}).get(operation) or {})
+    for requirement in dict(rule.get("artifact_binding_requirements") or {}).values():
+        if not isinstance(requirement, dict):
+            continue
+        role = str(requirement.get("canonical_resource_id") or "")
+        row = scoped.get(role) or {}
+        if any(a.get("role") == role and a.get("step_id") == step.get("step_id")
+               and a.get("capability_id") == step.get("execution_capability_id") for a in row.get("role_associations", [])):
+            requirement["canonical_resource_id"] = row["canonical_resource_id"]
+    if operation in result.get("operations", {}):
+        result["operations"][operation] = rule
+    return result
 
 
 def compile_plan_resource_bindings(
@@ -175,6 +242,7 @@ def compile_plan_resource_bindings(
     authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
     require_declared_references: bool = False,
     capability_ids: Sequence[str] = (),
+    capability_registry: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Compile exact Plan handles into one canonical resource registry.
 
@@ -200,6 +268,8 @@ def compile_plan_resource_bindings(
     metadata = dict(candidate.get("metadata") or (candidate.get("plan_document") or {}).get("metadata") or {})
     strict_references = require_declared_references or metadata.get("resource_contract_version") == PLAN_RESOURCE_PROTOCOL_VERSION
     records: list[Dict[str, Any]] = []
+    scoped_roles: Dict[Tuple[str, str, str], str] = {}
+    steps = {str(step.get("step_id") or ""): step for step in candidate.get("steps", []) or [] if isinstance(step, Mapping)}
 
     for handle, raw_identity in sorted(authoritative_handles.items()):
         identity = str(raw_identity or "").strip()
@@ -389,6 +459,34 @@ def compile_plan_resource_bindings(
             "candidate_scope_id": str(candidate_scope_id or ""),
             "initial_state": initial_state,
         }
+        associations = raw.get("role_associations", [])
+        role_path = f"$.proposed_artifacts[{index}].role_associations"
+        if not isinstance(associations, list):
+            raise PlanBindingError("PLAN_RESOURCE_ROLE_INVALID", field_path=role_path, actual=associations, expected="array")
+        for offset, association in enumerate(associations):
+            path = f"{role_path}[{offset}]"
+            if (not isinstance(association, Mapping) or set(association) != {"step_id", "capability_id", "role"}
+                    or not all(isinstance(v, str) and v for v in association.values())):
+                raise PlanBindingError("PLAN_RESOURCE_ROLE_INVALID", field_path=path, actual=association,
+                    expected={"step_id": "declared step", "capability_id": "selected capability", "role": "declared workspace role"},
+                    not_evaluated=["step_effects", "dataflow", "required_workspace_coverage"])
+            step = steps.get(association["step_id"], {})
+            capability = dict((capability_registry or {}).get(association["capability_id"]) or {})
+            roles = capability_workspace_roles(capability)
+            if (step.get("execution_capability_id") != association["capability_id"]
+                    or capability.get("selected_skill_id") not in (step.get("skill_ids") or [])
+                    or association["role"] not in roles or roles[association["role"]]["resource_kind"] != kind):
+                raise PlanBindingError("PLAN_RESOURCE_ROLE_SCOPE_INVALID", field_path=path, actual=dict(association),
+                    expected={"capability_id": step.get("execution_capability_id"), "roles": roles, "resource_kind": kind},
+                    not_evaluated=["step_effects", "dataflow", "required_workspace_coverage"])
+            key = (association["step_id"], association["capability_id"], association["role"])
+            if key in scoped_roles:
+                raise PlanBindingError("PLAN_RESOURCE_ROLE_AMBIGUOUS", field_path=path, actual=dict(association),
+                    first_resource=scoped_roles[key], second_resource=local_ref)
+            scoped_roles[key] = local_ref
+        if associations:
+            row["role_associations"] = deepcopy(associations)
+            row["role_association_version"] = PLAN_RESOURCE_ROLE_VERSION
         row["binding_id"] = _resource_binding_id(row)
         records.append(row)
 
@@ -440,6 +538,31 @@ def compile_plan_resource_bindings(
             by_alias[str(alias)] = row
         # The canonical ID is always an exact alias, never a guessed one.
         by_alias[identity] = row
+    role_issues = []
+    if capability_registry is not None:
+        for step_index, step in enumerate(candidate.get("steps", []) or []):
+            if not isinstance(step, Mapping):
+                continue
+            capability_id = str(step.get("execution_capability_id") or "")
+            scoped = resource_bindings_for_step(by_alias, step)
+            for role, requirement in capability_workspace_roles(dict(capability_registry.get(capability_id) or {})).items():
+                target = scoped.get(role) or {}
+                code = ""
+                if not target:
+                    code = "PLAN_RESOURCE_ROLE_ASSOCIATION_MISSING"
+                elif requirement["access"] == "read" and not any(ref in target.get("aliases", []) for ref in step.get("inputs", [])):
+                    code = "PLAN_RESOURCE_ROLE_READ_MISSING"
+                if code:
+                    role_issues.append({"code": code, "owner": "planner", "disposition": "PROTOCOL_INVALID",
+                        "field_path": f"$.steps[{step_index}]", "actual": {"step_id": step.get("step_id"), "role": role, "inputs": step.get("inputs", [])},
+                        "expected": {"role_association": {"step_id": step.get("step_id"), "capability_id": capability_id, "role": role},
+                            "resource_local_refs": sorted({str(raw.get("local_ref")) for raw in candidate.get("proposed_artifacts", [])
+                                if isinstance(raw, Mapping) and (raw.get("artifact_contract") or {}).get("resource_kind") == requirement["resource_kind"]}),
+                            "resource_binding": "omit for NEW; use role_associations on the chosen declaration", "access": requirement["access"]},
+                        "validator_id": "compile_plan_resource_bindings", "constraint_source": "plan_resource_roles_v1",
+                        "not_evaluated": ["step_effects", "dataflow", "required_workspace_coverage"]})
+    if role_issues:
+        raise PlanBindingError(role_issues[0]["code"], validation_issues=role_issues)
     return {alias: deepcopy(by_alias[alias]) for alias in sorted(by_alias)}
 
 

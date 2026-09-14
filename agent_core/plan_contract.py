@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 PLAN_CONTRACT_VERSION = "1.2.1"
 MINIMUM_PLAN_READER_VERSION = "1.2.1"
+PLAN_READER_VERSION = "1.2.2"
 RECONCILIATION_FINGERPRINT_SCHEMA_VERSION = 1
 PLANNING_EPOCH_SCHEMA_VERSION = 1
 MAX_RECONCILIATION_NONPROGRESS = 2
@@ -292,7 +293,7 @@ def _version_tuple(value: Any) -> Tuple[int, ...]:
 def assert_reader_compatible(
     value: Mapping[str, Any],
     *,
-    reader_version: str = PLAN_CONTRACT_VERSION,
+    reader_version: str = PLAN_READER_VERSION,
 ) -> None:
     minimum = str(value.get("minimum_reader_version") or "").strip()
     if not minimum:
@@ -301,6 +302,13 @@ def assert_reader_compatible(
         raise ReaderCompatibilityError(
             f"PLAN_READER_TOO_OLD: reader={reader_version}, minimum={minimum}"
         )
+
+
+def minimum_reader_for_plan(value: Mapping[str, Any]) -> str:
+    """Only the additive scoped-role surface requires the new reader."""
+    if any(row.get("role_associations") for row in dict(value.get("plan_resource_bindings") or {}).values() if isinstance(row, Mapping)):
+        return PLAN_READER_VERSION
+    return str(value.get("minimum_reader_version") or MINIMUM_PLAN_READER_VERSION)
 
 
 @dataclass(frozen=True)
@@ -1563,6 +1571,7 @@ def validate_planner_candidate_deterministically(
     validate_dataflow: bool = True,
     require_declared_references: bool = False,
     capability_ids: Sequence[str] = (),
+    capability_registry: Optional[Mapping[str, Any]] = None,
 ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run the shared schema/identity path and, by default, dataflow admission.
 
@@ -1624,6 +1633,7 @@ def validate_planner_candidate_deterministically(
             authoritative_bindings=authoritative_bindings,
             require_declared_references=require_declared_references,
             capability_ids=capability_ids,
+            capability_registry=capability_registry,
         )
     except PlanBindingError as exc:
         diagnostic = (
@@ -1777,6 +1787,7 @@ def prepare_allocation_intent(
             "semantic_view": deepcopy(dict(semantic_view)),
             "artifact_contract": deepcopy(dict(contract)),
             "resource_binding": deepcopy(dict(raw.get("resource_binding") or {})),
+            **({"role_associations": deepcopy(raw["role_associations"])} if raw.get("role_associations") else {}),
         })
     return {
         "schema_version": 1,
@@ -1837,6 +1848,8 @@ def promote_allocation_intent(
                 or logical_id
             ),
             "resource_binding": deepcopy(resource_binding),
+            **({"role_associations": deepcopy(declaration["role_associations"]), "role_association_version": 1}
+               if declaration.get("role_associations") else {}),
             "semantic_view": deepcopy(dict(declaration.get("semantic_view") or {})),
             "candidate_scope_id": scope,
             "local_ref": local_ref,
@@ -1915,6 +1928,14 @@ def rewrite_candidate_local_refs(
                 for value in effect.get("workspace_mutations", []) or []
             ]
             step["step_effect"] = effect
+        frozen = step.get("generate_binding_input_contract")
+        if isinstance(frozen, dict):
+            for rule in dict((frozen.get("binding_contract") or {}).get("operations") or {}).values():
+                for requirement in dict((rule or {}).get("artifact_binding_requirements") or {}).values():
+                    if isinstance(requirement, dict):
+                        ref = str(requirement.get("canonical_resource_id") or "")
+                        if ref in mapping:
+                            requirement["canonical_resource_id"] = mapping[ref]
     for declaration in result.get("proposed_artifacts", []) or []:
         if not isinstance(declaration, dict):
             continue

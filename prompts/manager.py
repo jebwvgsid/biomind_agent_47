@@ -1845,7 +1845,10 @@ Artifact namespace is closed: input.* consumes existing inputs, output.* reuses
 existing output handles, and plan.* names Plan-owned intermediate or final results.
 Use an existing output handle directly in step.outputs; do not redeclare it as
 proposed_artifacts or invent another writable TaskSpec. Each required Plan result
-has exactly one producer. proposed_artifacts declares new Plan-owned results, and each declaration
+that is immutable has exactly one producer. A required mutable workspace instead
+needs a valid ordered mutation/state/evidence chain satisfying every consumer;
+never list that workspace in outputs or make it optional to evade coverage.
+proposed_artifacts declares new Plan-owned results, and each declaration
 has local_ref=plan.<task-specific-local-handle>, an object semantic_view, and an
 artifact_contract with object_kind=file|directory, lifecycle=plan_local, and
 materialization_policy_id=managed_intermediate_v1. Inputs consume; outputs produce;
@@ -1866,6 +1869,23 @@ Wrong-domain, stale or unregistered references are rejected, never silently rena
 Never infer aliases from basename, suffix, path, role prose or similar spelling.
 Old approved snapshots retain their original reader semantics; new candidates
 must satisfy this current admission contract.
+
+For a new workspace implementing a frozen capability role, add role_associations
+to that same proposed_artifacts declaration. Each item has exactly step_id,
+capability_id and role; use only the workspace roles enumerated in the resource
+requirements for that step's selected capability. This explicit association is
+local to that step/capability and grants only its declared access. Repeat it for
+each sharing step, including artifact-backed read consumers; no global alias is
+created. Keep workspace_mutations and inputs referring to the chosen plan.*
+resource. For snpEff, a plan.snpeff_data_dir declaration can carry:
+"role_associations": [
+  {"step_id":"prepare_database","capability_id":"genomics.snpeff_annotation.prepare_database","role":"artifact.snpeff_data_dir"},
+  {"step_id":"build_database","capability_id":"genomics.snpeff_annotation.build_database","role":"artifact.snpeff_data_dir"},
+  {"step_id":"annotate_variants","capability_id":"genomics.snpeff_annotation.annotate_variants","role":"artifact.snpeff_data_dir"}
+]
+Use your actual declared step IDs. Preserve prepare -> build -> annotation and
+their required states/evidence; annotation receives read permission only. Planned
+state availability is not evidence of an existing directory or successful build.
 
 Use path_policy=managed_exact for a user-specified delivery name; use
 model_selectable when the logical result is required but its final filename may
