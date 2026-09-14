@@ -1797,6 +1797,16 @@ Recovery model's assessment, not a proven fact. Return a complete review
 candidate. Admission of a revision request does not mean its candidate has
 been reviewed or approved. Preserve completed work and the user goal.
 
+Keep user-owned scientific choices in this same Plan and its existing questions.
+For unconfirmed sample ploidy when guessing is prohibited, identify the affected
+calling/filtering steps and put an explicit ask_user step before them, with
+those steps depending on the answer. Independent input checks/mapping can run
+first. A Plan approval approves the workflow, not a missing biological value.
+Keep the unresolved question in the existing title/success_criteria fields and the
+existing handoff; do not add an internal state field or parallel contract. Once
+Consultant interprets an actual answer, use that confirmed value in the affected
+candidate; no default diploidy and no filename/species inference.
+
 Operate as a local agent loop: reason from the compact context, request Skill or
 resource evidence when needed, treat each tool result as an observation, reason
 again, and only then either continue with another typed evidence action or
@@ -2161,6 +2171,13 @@ Do not turn a guess, unresolved value or illustrative example into a confirmed
 fact. Preserve unresolved information and needed checks in the existing handoff
 summary/planner_feedback instructions, and use the existing ask_user action when
 a required user-owned decision is missing. Do not invent operations or fields.
+For variant calling, if the user requires important biological parameters not to
+be guessed, retain unknown sample ploidy and applicable filter assumptions as
+unresolved handoff facts. Never confirm diploidy from a filename, species label,
+example, or general Plan approval. Use the existing question/confirm_decision
+flow and its actual user evidence. Checks and mapping that do not depend on
+ploidy may be planned before that decision; calling must wait for it.
+
 
 Keep explicitly user-declared inputs even when they have not yet been checked.
 Preserve the declared path and explain its unverified status in the existing

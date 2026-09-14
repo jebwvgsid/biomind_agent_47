@@ -120,3 +120,25 @@ def test_F19_actual_generate_transport_preserves_explicit_output_limit():
                 'response_metadata':result.response_metadata,'snapshots':policies})
         finally:await case.asyncTearDown()
     asyncio.run(run())
+
+
+def test_F17_distinct_request_same_text_counts_once_then_no_progress(tmp_path):
+    from tests.test_generate_admission_typed_repair import CandidateRepairCommitTests
+    from agent_core.plan_tracker import load_plan_state
+    from tests.test_preflight_recovery_audit import save
+    fixture=CandidateRepairCommitTests()
+    agent,state=fixture._agent(str(tmp_path))
+    candidate={'type':'execute','operation':'wrong'}
+    first=fixture._reject(agent,state,'new-request-1',candidate)
+    current=load_plan_state(tmp_path,'commit-task')
+    second=fixture._reject(agent,current,'new-request-2',candidate)
+    after=load_plan_state(tmp_path,'commit-task')
+    rows=after['task_state']['candidate_repair_state']['events']
+    assert len(rows)==2 and sorted(row['repair_ordinal'] for row in rows.values())==[1,2]
+    assert second['reason_code']=='GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED'
+    assert not second.get('candidate_repair_receipt') and second['execution_status']=='not_started'
+    again=fixture._reject(agent,load_plan_state(tmp_path,'commit-task'),'new-request-2',candidate)
+    reloaded=load_plan_state(tmp_path,'commit-task')
+    assert reloaded['task_state']['candidate_repair_state']['events']==rows
+    assert reloaded['task_state']['budgets']==after['task_state']['budgets']
+    save('F17-distinct-same-text',{'first':first,'second':second,'replayed':again,'events':rows,'executions':0})

@@ -639,7 +639,24 @@ class RecoveryLocalToolDispatcher:
             if not path.exists():
                 raise RecoveryToolError("ARTIFACT_FILE_NOT_FOUND", entry.ref_id)
             if not path.is_file():
-                raise RecoveryToolError("ARTIFACT_FORMAT_UNSUPPORTED", entry.ref_id)
+                alternatives=[]
+                for registered in self.registry.provider_manifest()[:32]:
+                    if len(alternatives)>=8:break
+                    ref=str(registered.get("ref_id") or "")
+                    if ref==entry.ref_id or registered.get("kind")!="artifact" or not registered.get("readable"):continue
+                    try:
+                        _, other=self.registry.resolve(ref,kinds=("artifact",))
+                        checked_other=approved_resource_locator({"canonical_path":str(other.get("path") or "")})
+                        other_path=Path(checked_other["path"])
+                        if not other_path.is_file():continue
+                        with open_approved_resource(other_path):pass
+                    except (OSError,ValueError):continue
+                    alternatives.append({"ref_id":ref,"resource_kind":"regular_file","operation":"artifact.inspect",
+                        "readability":"registered_regular_file_openable","text_representation":"NOT_CHECKED"})
+                raise RecoveryToolError("ARTIFACT_FORMAT_UNSUPPORTED", _canonical({
+                    "ref_id":entry.ref_id,"actual_resource_kind":"directory" if path.is_dir() else "non_regular_file",
+                    "supported_resource_kind":"regular_file","boundary":"artifact.inspect/read do not traverse directories",
+                    "registered_alternatives":alternatives,"automatic_followup":False}))
         except PermissionError as exc:
             raise RecoveryToolError("ARTIFACT_PERMISSION_DENIED", entry.ref_id) from exc
         return entry, locator, path

@@ -46,6 +46,8 @@ Aliases and trigger phrases: `gatk-wgs`, `wgs-gatk`, `resequencing-variant-calli
 - Generate scripts first, inspect them, then submit to the scheduler or run them. Do not execute a full many-sample WGS pipeline in one opaque command.
 - Keep comments off line-continuation lines in Bash commands; `\ # comment` breaks PLINK/GATK commands.
 - Treat all paths, containers, species labels, annotation database names, ploidy, and filtering thresholds as project parameters unless the user explicitly provides them.
+- If key biological parameters must not be guessed, unknown ploidy stays in the existing unresolved handoff and the same Plan's question dependency. No HaplotypeCaller/corresponding filters before the current user decision; ordinary Plan approval does not fill it. Generate passes the explicitly confirmed value as `--sample-ploidy`; do not rely on a legacy helper's implicit caller default.
+
 
 ## Generate-Owned Execution (V2)
 

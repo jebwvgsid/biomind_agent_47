@@ -15,10 +15,12 @@ import export_cross_layer_audit as previous
 base = previous.base
 NEW_TESTS = ('tests/export_cross_layer_implementation.py',
     'tests/test_cross_layer_publication.py', 'tests/test_cross_layer_implementation_graph.py',
-    'tests/test_cross_layer_correction.py', 'tests/test_cross_layer_delivery.py')
+    'tests/test_cross_layer_correction.py', 'tests/test_cross_layer_delivery.py', 'tests/test_cross_layer_domain.py')
 EXISTING_FIXTURES = ('tests/test_step_effect_runtime.py', 'tests/test_semantic_completion.py',
-    'tests/test_semantic_completion_workflow.py', 'tests/test_inspection_terminal_workflow.py')
+    'tests/test_semantic_completion_workflow.py', 'tests/test_inspection_terminal_workflow.py',
+    'tests/test_generate_admission_typed_repair.py')
 base.TEST_FILES += NEW_TESTS + EXISTING_FIXTURES
+base.RESOURCE_FILES += ('skills/genomics/wgs-variant-calling/SKILL.md',)
 
 
 def export(repo, destination, tree, overlays=()):

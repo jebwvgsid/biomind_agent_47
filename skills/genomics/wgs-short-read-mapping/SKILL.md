@@ -1,7 +1,7 @@
 ---
 name: wgs-short-read-mapping
 description: Map paired-end short-read WGS resequencing FASTQ to a reference genome with BWA-MEM or BWA-MEM2, samtools, and duplicate marking, producing coordinate-sorted indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq, long-read, or assembly comparison data.
-version: "1.1.2"
+version: "1.1.3"
 tags: [WGS, resequencing, mapping, BWA, BWA-MEM2, samtools, Picard, sambamba, mark-duplicates, BAM]
 legacy_ids: [short-read-mapping, bwa-mapping, wgs-bwa-mem, resequencing-mapping, 双端WGS fastq, WGS fastq比对, 先比对再做GATK]
 task_types: [wgs_mapping]
@@ -232,6 +232,11 @@ was found. Do not ignore every 141 or disable pipefail. Empty/invalid observed
 data, unsupported representation, decoding errors, and resource limits have
 different meanings. Reader failures must retain their technical errors.
 
+Unknown ploidy need not block these mapping/input checks. Carry it as an
+unresolved user-owned decision to the calling Skill and the same Plan's
+ask_user dependency; a mapping receipt or general Plan approval cannot confirm
+ploidy or validate downstream genotype filters.
+
 ## 调用的参数
 
 Required:
@@ -246,7 +251,7 @@ Recommended:
 
 | Parameter | Default | Notes |
 |---|---|---|
-| `ALIGNER` | `bwa-mem2` if available, else `bwa mem` | keep command in report |
+| `ALIGNER` | explicitly selected, verified compatible implementation | keep its binding and command in the approved action |
 | `THREADS` | 8 or cluster-provided value | mapping and sorting |
 | `SORT_MEM` | `1G` per thread | reduce on memory-limited nodes |
 | `PLATFORM` | `illumina` | read group `PL` |

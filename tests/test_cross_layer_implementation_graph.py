@@ -22,9 +22,10 @@ async def scenario(mode):
     from agent_core.workflow.managed_stop import terminal_boundary, finalize_managed_stop
     from agent_core.skill_resource_binding import resource_env
     case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')
-    sid='genomics/wgs-short-read-mapping';case.SKILL_ID=sid
+    is_d=mode.startswith('D_')
+    sid={'D_gatk':'genomics/wgs-gatk-snp-indel','D_gatk_veto':'genomics/wgs-gatk-snp-indel','D_snpeff':'genomics/snpeff-annotation'}.get(mode,'genomics/wgs-short-read-mapping');case.SKILL_ID=sid
     await case.asyncSetUp()
-    is_b=mode.startswith('B_')
+    is_b=mode.startswith('B_') or is_d
     b_exhausted=mode in {'B_exhausted','B_archive'}
     stop={}
     task='new-cross-layer-'+mode
@@ -33,6 +34,10 @@ async def scenario(mode):
     for i in range(2):
         path=root/f'变 样本 {i}.fq.gz';path.write_bytes(gzip.compress(b'@synthetic\nACGT\n+\nIIII\n',mtime=0));files.append(path)
     reference=root/'参考 改名.fasta';reference.write_text('>synthetic\nACGT\n')
+    if mode=='D_snpeff':
+        variant=root/'改名 新样本.vcf';variant.write_text('##fileformat=VCFv4.2\n##contig=<ID=synthetic,length=4>\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nsynthetic\t1\t.\tA\tC\t.\tPASS\t.\n')
+        annotation=root/'新 注释.gtf';annotation.write_text('synthetic\tfixture\tgene\t1\t4\t.\t+\t.\tgene_id "synthetic";\n')
+        files=[variant,annotation]
     report=root/'report.md'
     diagnostic_root=root/'authorized_diagnostics'
     goal='只在新建合成输入上检查前缀和参考头，然后用显式 stub 核对依赖受阻。输出诊断报告到 '+str(report)+'；输入 '+', '.join(map(str,[*files,reference]))
@@ -56,7 +61,7 @@ async def scenario(mode):
         if stage=='consultant':
             operations=[{'operation':'set_goal','value':goal,'supporting_evidence':['U1']}]
             for i,path in enumerate([*files,reference]):
-                operations.append({'operation':'upsert_input','input':{'role':'reference_fasta' if i==2 else f'fastq_{i}','path':str(path),'required':True},'supporting_evidence':['U1']})
+                operations.append({'operation':'upsert_input','input':{'role':'reference_fasta' if i==2 else ('variant_vcf' if i==0 else 'annotation_gtf') if mode=='D_snpeff' else f'fastq_{i}','path':str(path),'required':True},'supporting_evidence':['U1']})
             operations.append({'operation':'upsert_output_contract','output_contract':{'output_id':'report','role':'report','artifact_kind':'file','path':str(report),'required':not is_b},'supporting_evidence':['U1']})
             for name in ('stage_status.tsv','reproduce.sh'):
                 operations.append({'operation':'upsert_output_contract','output_contract':{'output_id':name.replace('.','_'),'role':name.replace('.','_'),'artifact_kind':'file','path':str(root/name),'required':False},'supporting_evidence':['U1']})
@@ -69,6 +74,12 @@ async def scenario(mode):
             spec=canonical_task_spec_for_state(load_plan_state(root,task));inputs=['input.'+x['role'] for x in spec['inputs']]
             observation=[{'identity':'validation_observation','evidence_contract':{'required_fields':['value']}}]
             first=step('bounded-check','genomics.wgs.short.read.mapping.inspect',purpose='validation',operation='inspect',inputs=inputs,produces_observations=observation)
+            if is_d:
+                registry=case.agent.skill_manager.get_execution_capability_registry([sid])
+                operation='inspect' if mode.startswith('D_gatk') else 'check_contig_compatibility'
+                capability=next(r for r in registry.values() if r['operation']==operation)
+                first.update(execution_capability_id=capability['capability_id'],operation=operation,
+                    produces_observations=deepcopy(capability['produces_observations']))
             if is_b:
                 steps=[first];artifacts=[];dependency='bounded-check'
             else:
@@ -84,6 +95,20 @@ async def scenario(mode):
                 'validation_checklist':[{'check_id':'scope','description':'Keep synthetic facts separate from scientific success'}],
                 'metadata':{'schema_version':2,'planner_contract':'structured_plan_v2'}}))
         ordinal=counts['generate']
+        if is_d:
+            assert ordinal==1
+            template=json.loads(next(m.content for m in messages if getattr(m,'name','')=='approved_effect_emission_template'))
+            facts={'produces_observations':{}}
+            for declaration in template['declarations']['produces_observations']:
+                facts['produces_observations'][declaration['identity']]={key:(True if mode=='D_snpeff' else {'bounded_synthetic':True,'samples':2}) for key in declaration['required_fields']}
+            reads='\n'.join('test -r '+shlex.quote(str(p)) for p in [*files,reference])
+            body=reads+'\n'+shlex.quote(PYTHON)+" - <<'PY'\n"+template['marker']+'\n'
+            body+='print(emit_effect_evidence('+repr(facts)+'))\nPY\n'
+            if mode=='D_snpeff':
+                body='test "$BIOMIND_SYNTHETIC_RUNTIME_SCOPE" = explicit-approved-scope\n'+body
+                return AIMessage(content=json.dumps({'type':'execute','language':'bash','operation':'check_contig_compatibility','code':body,
+                    'env':{'BIOMIND_SYNTHETIC_RUNTIME_SCOPE':'explicit-approved-scope'}}))
+            return AIMessage(content='<shell>'+body+'</shell>')
         if is_b:
             if ordinal==1:
                 reads='\n'.join('test -r '+shlex.quote(str(p)) for p in [*files,reference])
@@ -113,7 +138,7 @@ async def scenario(mode):
             for i,path in enumerate(files):command+=' --fastq '+shlex.quote(f'改名{i}')+' '+shlex.quote(str(path))
             command+=' --reference REF '+shlex.quote(str(reference))
             return AIMessage(content='<shell skill_resources="'+';'.join(resources)+'">\n'+command+'\n</shell>')
-        assert mode in {'A','publication'} and ordinal==2
+        assert mode in {'A','A_last','publication'} and ordinal==2
         template=json.loads(next(m.content for m in messages if getattr(m,'name','')=='approved_effect_emission_template'))
         assert len(template['declarations']['produces_artifacts'])==1
         # Missing capability is an explicit controlled stub result, not a
@@ -139,15 +164,18 @@ async def scenario(mode):
         payload={'report_id':completion_report['report_id'],'assessment':'ACCEPTABLE','disposition':'completion_accepted',
             'issue_dispositions':[{'issue_id':i,'disposition':'completion_accepted','explanation':'Synthetic bounded observation returned.'} for i in ids],
             'concerns':[],'suggestions':[],'confidence':0.9}
-        if (mode in {'A','C'} and counts['reviewer']==1) or mode.startswith('persistent') or mode=='C':
+        if (mode in {'A','C'} and counts['reviewer']==1) or (mode=='A_last' and counts['reviewer']<=2) or mode.startswith('persistent') or mode=='C':
             for row in payload['issue_dispositions']:row['confidence']=0.9
+        if mode=='D_gatk_veto':
+            payload.update(assessment='CONCERN',disposition='inspection_required')
+            for row in payload['issue_dispositions']:row['disposition']='inspection_required'
         requests.append({'stage':'reviewer','report':completion_report,'response':payload})
         return json.dumps(payload)
     class ReviewerModel:
         async def ainvoke(self,messages,**kwargs):
             seed=next(m.content for m in messages if getattr(m,'name','')=='supervisor_advisory_seed')
             report_value=json.loads(seed.split('<completion_report>\n',1)[1].split('\n</completion_report>',1)[0])
-            if counts['reviewer'] and mode in {'A','C'}:
+            if counts['reviewer'] and mode in {'A','A_last','C'}:
                 feedback=[m for m in messages if getattr(m,'name','')=='reviewer_protocol_correction']
                 assert feedback and '$.issue_dispositions[0].confidence' in feedback[-1].content
             requests.append({'stage':'reviewer_actual_request','messages':[{'type':m.type,'name':getattr(m,'name',None),'content':m.content} for m in messages]})
@@ -159,7 +187,7 @@ async def scenario(mode):
             counts['recovery']+=1
             wire=str(messages);durable=load_plan_state(root,task)
             step_id=durable['current_step_id']
-            action='retry_step' if is_b else 'revalidate' if step_id=='bounded-check' and (counts['reviewer']<2 or mode in {'persistent_revalidate','C'}) else 'blocked'
+            action='blocked' if mode=='D_gatk_veto' else 'retry_step' if is_b else 'revalidate' if step_id=='bounded-check' and (counts['reviewer']<2 or mode in {'persistent_revalidate','C'}) else 'blocked'
             directive={'schema_version':1,'directive_id':'synthetic-recovery-'+str(counts['recovery']),'task_id':task,
                 'action':action,'target_step_id':step_id,'summary':'Synthetic reviewer/schema/blocked branch follow-up.',
                 'reason_code':'SYNTHETIC_FOLLOWUP','instruction':'Use current evidence; never claim scientific completion.'}
@@ -192,6 +220,9 @@ async def scenario(mode):
         approved=Path(path).with_name('approved.sh').read_bytes()
         assert hashlib.sha256(approved).hexdigest()==approvals[-1]['sha256']
         clean={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}
+        if mode=='D_snpeff':
+            assert env['BIOMIND_SYNTHETIC_RUNTIME_SCOPE']=='explicit-approved-scope'
+            clean['BIOMIND_SYNTHETIC_RUNTIME_SCOPE']=env['BIOMIND_SYNTHETIC_RUNTIME_SCOPE']
         policy=json.loads(Path(path).with_name('execution_policy_manifest.json').read_text())
         for resource in policy.get('skill_resources',[]):
             key=resource['environment_variable'];assert env[key]==resource['canonical_path'];clean[key]=env[key]
@@ -240,6 +271,11 @@ async def scenario(mode):
                 incoming=bio_agents.Command(resume='y')
         values=app.get_state(config).values;durable=load_plan_state(root,task)
         commits=durable['task_state'].get('typed_step_commit_receipts',{})
+        if is_d:
+            assert counts['generate']==1 and counts['reviewer']==1 and counts['recovery']==int(mode=='D_gatk_veto')
+            assert len(executions)==1 and executions[0]['rc']==0 and len(commits)==int(mode!='D_gatk_veto')
+            save('graph-'+mode+'-result',{'counts':counts,'executions':executions,'approvals':approvals,'commits':commits,'requests':requests,'fix':True})
+            return
         if mode=='C':
             assert counts['reviewer']==3 and counts['recovery']==0
             assert len(executions)==1 and executions[0]['rc']==0 and not commits
@@ -280,8 +316,8 @@ async def scenario(mode):
             report.write_text('old unrelated synthetic stop\n');old_hash=hashlib.sha256(report.read_bytes()).hexdigest()
             if mode=='B_archive':
                 for name in ('stage_status.tsv','reproduce.sh'):(root/name).write_text('old unrelated '+name+'\n')
-        elif mode in {'A','publication'}:
-            expected_reviews=1 if mode=='publication' else 2
+        elif mode in {'A','A_last','publication'}:
+            expected_reviews=1 if mode=='publication' else 3 if mode=='A_last' else 2
             assert counts['reviewer']==expected_reviews and len(commits)==1
             assert counts['recovery']==1
             assert len(executions)==2 and [r['rc'] for r in executions]==[0,1]
@@ -299,6 +335,13 @@ async def scenario(mode):
         boundary=terminal_boundary(values);assert boundary
         case.agent.terminal_summary_policy={'enabled':b_exhausted}
         if b_exhausted:
+            real_invoke=case.agent._ainvoke_llm
+            async def traced_invoke(messages,**kwargs):
+                if kwargs.get('stage')=='terminal_summary':
+                    assert kwargs['trace_metadata']['step_id']==durable['current_step_id']
+                    requests.append({'stage':'terminal_summary_metadata','metadata':deepcopy(kwargs['trace_metadata'])})
+                return await real_invoke(messages,**kwargs)
+            case.agent._ainvoke_llm=traced_invoke
             counts['summary']=0
             class SummaryModel:
                 async def ainvoke(self,messages,**kwargs):
@@ -327,12 +370,18 @@ async def scenario(mode):
             assert hashlib.sha256(report.read_bytes()).hexdigest()==old_hash
             internal=stop['internal_diagnostic_delivery']
             if mode=='B_archive':
+                for name in ('stage_status.tsv','reproduce.sh'):
+                    assert (root/name).read_text()=='old unrelated '+name+'\n'
+                assert stop['delivery_status']=='failed'
                 assert internal['status']=='complete',internal
                 assert len(internal['paths'])==3 and stop['summary_status']=='COMPLETED'
                 for name,path in internal['paths'].items():
                     assert Path(path).is_relative_to(diagnostic_root)
                     assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==internal['receipts'][name]['sha256']
-            else:assert internal['status']=='not_authorized' and internal['paths']=={} and stop['summary_status']=='FAILED'
+            else:
+                assert internal['status']=='not_authorized' and internal['paths']=={} and stop['summary_status']=='FAILED'
+                assert stop['delivery_status']=='partial'
+                assert sum(r['status']=='created' for r in stop['report_receipts'].values())==2
             before=deepcopy(counts)
             again=await finalize_managed_stop(case.agent,task,values,boundary)
             assert counts==before and again==stop
@@ -367,6 +416,6 @@ async def scenario(mode):
         await case.asyncTearDown()
 
 
-@pytest.mark.parametrize('mode',['publication','A','C','B_success','B_last','B_exhausted','B_archive'])
+@pytest.mark.parametrize('mode',['publication','A','C','B_success','B_last','B_exhausted','B_archive','D_gatk','D_snpeff','A_last','D_gatk_veto'])
 def test_production_combination_fix(mode):
     asyncio.run(scenario(mode))

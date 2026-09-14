@@ -1,7 +1,7 @@
 ---
 name: wgs-gatk-snp-indel
 description: Call short-read WGS SNPs and InDels with the GATK HaplotypeCaller GVCF workflow, including per-sample GVCFs, GenomicsDBImport or CombineGVCFs, joint genotyping, hard filtering, validation, and summary counts. Use for high-confidence cohort resequencing variant calling from duplicate-marked BAMs. Do not use for RNA-seq, long-read SV, CNV, or assembly comparison.
-version: "1.1.0"
+version: "1.1.1"
 tags: [WGS, GATK, HaplotypeCaller, GVCF, GenomicsDBImport, SNP, InDel, joint-genotyping, hard-filtering]
 legacy_ids: [gatk-wgs, wgs-gatk, gatk-snp-indel, resequencing-gatk, GATK SNP和InDel检测, GATK SNP InDel, 双端WGS GATK SNP InDel, WGS fastq GATK]
 task_types: [wgs_snp_indel_calling]
@@ -24,6 +24,7 @@ generate:
       workspace_mutations: []
       explicit_side_effects: []
       execution_guidance:
+        - If ploidy or filter applicability remains a required unresolved user decision, use the existing ask_user/blocked outcome before calling; Plan approval alone does not confirm it. Pass the explicitly confirmed sample ploidy to HaplotypeCaller.
         - Bind each concrete GVCF, combined GVCF, VCF, index, or statistics file through step.outputs using a distinct candidate-local artifact declaration. generated_artifact names an effect kind, not a resource to alias.
         - Read actual upstream products through step.inputs and explicit producer dependencies. GenotypeGVCFs consumes a combined GVCF or a declared GenomicsDB bundle; bcftools stats consumes the actual VCF it reports.
         - Use a new explicitly declared immutable directory artifact for a one-shot GenomicsDB bundle. An output container does not authorize incremental workspace mutations or supply another file's state.
@@ -57,7 +58,7 @@ runtime:
 
 # WGS GATK SNP/InDel Calling
 
-Use this skill for the GATK best-practice style short-read WGS GVCF workflow. For large crop/non-model projects, prefer reusing the existing `genomics/wgs-variant-calling` renderer because it already creates interval plans and reproducible scripts.
+Use this skill for the GATK best-practice style short-read WGS GVCF workflow. In schema-2, Generate owns the current approved action. Consult `genomics/wgs-variant-calling` for interval planning and documented interfaces; do not assume a legacy helper supplies an unresolved biological parameter.
 
 ## Formal planning contract
 
@@ -65,7 +66,7 @@ The versioned `generate.execution_capabilities` above is the formal effect
 declaration. Use `.execute` with `operation: produce_files` for new file/bundle
 products and `.inspect` with `operation: inspect` for observation-only checks.
 Retain HaplotypeCaller, joint genotyping, filtering, and other scientific choices
-in the title, description, parameters, and success criteria. An execution
+in the existing title and success_criteria, with user decisions carried from the canonical task. An execution
 capability ID is not a resource identity or an alias for its output files.
 
 Assign each new file or one-shot GenomicsDB bundle its own candidate-local ref,
@@ -107,7 +108,13 @@ Do not use this skill for:
 - SV/CNV; use LUMPY/CNVnator/long-read skills.
 - BAMs without read groups; go back to mapping/preparation.
 
-For polyploid crops, confirm ploidy and interpretation assumptions before treating diploid genotype filters as final truth.
+Confirm sample ploidy before HaplotypeCaller when the user prohibits guessing
+critical scientific parameters. Preserve an unknown value in Consultant's
+existing unresolved handoff and the same Plan's ask_user dependency. Input
+checks and mapping need not wait, but calling/filter decisions that depend on
+this value must wait for the existing user-decision flow. General Plan approval
+is not biological confirmation. Use only the answer interpreted through the
+existing confirm_decision evidence; never infer from names or species labels.
 
 ## 调用的参数
 
@@ -128,7 +135,7 @@ Recommended:
 | `MEMORY` | choose per interval and sample count |
 | `TMPDIR` | fast local scratch if available |
 | `JOINT_MODE` | `GenomicsDBImport` for many samples, `CombineGVCFs` for small cohorts |
-| `PLOIDY` | default diploid only if biologically appropriate |
+| `PLOIDY` | explicit confirmed sample ploidy; unresolved means ask before calling, no implicit 2 |
 
 Preflight:
 
@@ -147,6 +154,7 @@ gatk --java-options "-Xmx${MEMORY} -Djava.io.tmpdir=${TMPDIR}" HaplotypeCaller \
   -R "${REFERENCE_FASTA}" \
   -I "${bam}" \
   -L "${interval}" \
+  --sample-ploidy "${PLOIDY:?Confirmed sample ploidy is required}" \
   -ERC GVCF \
   -O "${OUTDIR}/03.variant_calling/gvcf/${sample}/${sample}.${interval}.g.vcf.gz"
 ```
@@ -193,7 +201,7 @@ Rule of thumb:
   a sample map where a GVCF path was expected; switch to one of the two valid
   patterns above instead of retrying the same shape.
 
-Hard-filter defaults for diploid short-read WGS:
+Illustrative hard filters for a confirmed diploid short-read WGS setting only; unresolved ploidy/filter applicability requires the existing user-decision flow before use:
 
 ```bash
 gatk VariantFiltration -R "${REFERENCE_FASTA}" -V all.raw.snp.vcf.gz \
@@ -245,7 +253,7 @@ Do not concatenate VCF text by hand. Use GATK `MergeVcfs`, Picard, or bcftools-a
 
 ## 相似的 skills
 
-- `genomics/wgs-variant-calling` - existing robust GATK script renderer; prefer for large multi-sample crop runs.
+- `genomics/wgs-variant-calling` - related interfaces and interval planning; legacy renderer examples do not supply unresolved parameters.
 - `genomics/wgs-short-read-mapping` - prepare BAMs from FASTQ.
 - `genomics/wgs-bcftools-snp-indel` - faster lightweight SNP/InDel workflow.
 - `genomics/rnaseq-variant-calling` - RNA-seq variant workflow.

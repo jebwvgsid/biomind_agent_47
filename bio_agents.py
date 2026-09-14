@@ -33947,7 +33947,12 @@ question. Never guess a scientific or database identity.
                     ),
                     feedback={
                         "consultation": {
-                            key: deepcopy(consultation_state.get(key))
+                            key: ({
+                                field: deepcopy(consultation_state[key][field])
+                                for field in ("question", "requested_slots", "expected_type", "status")
+                                if field in consultation_state[key]
+                            } if key == "pending_question" and isinstance(consultation_state.get(key), Mapping)
+                                else deepcopy(consultation_state.get(key)))
                             for key in (
                                 "phase", "consultation_status", "completion_decision",
                                 "completion_reason", "unresolved_requirement_ids",
@@ -43751,6 +43756,28 @@ question. Never guess a scientific or database identity.
                         "code": ScriptBlockError.code,
                         "message": str(exc),
                     }
+            if (not generate_script_protocol
+                    and structured_action.get("type") == "execute"
+                    and isinstance(structured_action.get("code"), str)):
+                # Native actions share the same frozen framework source as
+                # script blocks. Expand before authority attachment, argv
+                # adaptation, syntax checks, candidate hashing and approval.
+                from agent_core.step_effects import materialize_effect_template
+                try:
+                    original_body = structured_action["code"]
+                    expanded_body = materialize_effect_template(original_body, formal_emission_template)
+                    if expanded_body != original_body:
+                        supplied_argv = structured_action.get("argv")
+                        if supplied_argv and (not isinstance(supplied_argv, list)
+                                or supplied_argv[-1] != original_body):
+                            raise ValueError("EFFECT_TEMPLATE_NATIVE_BODY_ARGV_MISMATCH")
+                        if supplied_argv:
+                            structured_action["argv"] = [*supplied_argv[:-1], expanded_body]
+                        structured_action["code"] = expanded_body
+                except ValueError as exc:
+                    structured_action = {}
+                    action_parse_error = {"stage": "action_schema", "code": str(exc),
+                        "field_path": "$.code", "message": str(exc)}
             if (
                 recovery_semantic_action_protocol
                 and str(structured_action.get("type") or "") == "execute"
