@@ -47,6 +47,11 @@ SEMANTIC_DISPOSITIONS = frozenset({
 NON_COMMIT_DISPOSITIONS = SEMANTIC_DISPOSITIONS - {COMPLETION_ACCEPTED}
 ISSUE_DISPOSITIONS = SEMANTIC_DISPOSITIONS | {"advisory_only"}
 REVIEW_ASSESSMENTS = frozenset({"ACCEPTABLE", "CONCERN", "UNKNOWN"})
+REVIEWER_PROTOCOL_CORRECTIONS = 2
+REVIEWER_POLICY_VERSION = "semantic-review-correction-v1"
+REVIEWER_ISSUE_FIELDS = frozenset({"issue_id", "disposition", "explanation"})
+REVIEWER_RESPONSE_FIELDS = frozenset({"assessment", "disposition", "concerns",
+    "suggestions", "confidence", "report_id", "issue_dispositions"})
 _REVIEW_DISPOSITIONS = {
     "ACCEPTABLE": frozenset({COMPLETION_ACCEPTED}),
     "CONCERN": frozenset({
@@ -77,10 +82,15 @@ _SCOPE_KEYS = (
 class SemanticCompletionError(ValueError):
     """Stable failure for malformed report, decision, or predicate contracts."""
 
-    def __init__(self, code: str, detail: str = "") -> None:
+    def __init__(self, code: str, detail: str = "", *, path: str = "$", actual: Any = None, expected: Any = None) -> None:
         self.code = str(code or "SEMANTIC_COMPLETION_INVALID")
         self.detail = str(detail or "")
+        self.path, self.actual, self.expected = path, actual, expected
         super().__init__(self.code if not self.detail else f"{self.code}: {self.detail}")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"code":self.code, "detail":self.detail, "field_path":self.path,
+                "actual":self.actual, "expected":self.expected}
 
 
 def _json_value(value: Any) -> Any:
@@ -129,12 +139,18 @@ def _issue_disposition_list(
         raise SemanticCompletionError("SEMANTIC_DECISION_FIELD_INVALID", field)
     normalized: list[Dict[str, str]] = []
     seen: set[str] = set()
-    required = {"issue_id", "disposition", "explanation"}
-    for raw in value:
+    required = REVIEWER_ISSUE_FIELDS
+    for index, raw in enumerate(value):
         if not isinstance(raw, Mapping) or set(raw) != required:
+            extras = sorted(set(raw)-required) if isinstance(raw, Mapping) else []
             raise SemanticCompletionError(
-                "SEMANTIC_DECISION_ISSUE_DISPOSITION_INVALID", field
+                "SEMANTIC_DECISION_ISSUE_DISPOSITION_INVALID", "Issue row must use exactly the declared string fields.",
+                path=f"$.{field}[{index}]" + ("."+extras[0] if extras else ""),
+                actual=sorted(raw) if isinstance(raw, Mapping) else type(raw).__name__, expected=sorted(required),
             )
+        if any(not isinstance(raw[key], str) for key in required):
+            raise SemanticCompletionError("SEMANTIC_DECISION_ISSUE_DISPOSITION_INVALID", "Issue values must be strings.",
+                path=f"$.{field}[{index}]", actual={k:type(raw[k]).__name__ for k in required}, expected="string values")
         issue_id = str(raw.get("issue_id") or "").strip()
         disposition = str(raw.get("disposition") or "").strip().lower()
         explanation = str(raw.get("explanation") or "").strip()[:1000]
@@ -453,7 +469,13 @@ def reviewer_decision(
     try:
         parse_status = str(advisory.get("parse_status") or "valid").strip()
         if parse_status != "valid":
-            raise SemanticCompletionError("SEMANTIC_REVIEW_NOT_VALID", parse_status)
+            # Preserve the local lifecycle's failure class and precise cause;
+            # a provider cannot set these fields through the strict parser.
+            return SemanticDecision.create(scope=scope, reviewed_report_id=report_id,
+                source="reviewer_transport" if parse_status=='request_failed_ignored' else "reviewer_protocol",
+                assessment="UNKNOWN",disposition="assessment_pending",
+                concerns=tuple(str(x) for x in advisory.get('concerns') or ["SEMANTIC_REVIEW_NOT_VALID"]),
+                parse_status=parse_status)
         normalized = validate_reviewer_payload(
             advisory,
             allow_parse_status=True,
@@ -497,21 +519,16 @@ def validate_reviewer_payload(
 
     if not isinstance(value, Mapping):
         raise SemanticCompletionError("SEMANTIC_REVIEW_OBJECT_REQUIRED")
-    allowed = {
-        "assessment",
-        "disposition",
-        "concerns",
-        "suggestions",
-        "confidence",
-        "report_id",
-        "issue_dispositions",
-    }
+    allowed = set(REVIEWER_RESPONSE_FIELDS)
     if allow_parse_status:
-        allowed.add("parse_status")
+        # These are attached only by the local Reviewer lifecycle. They are
+        # forbidden in provider payloads (the default parser path).
+        allowed.update({"parse_status", "review_policy_receipt", "review_error"})
     extras = sorted(set(value) - allowed)
     if extras:
         raise SemanticCompletionError(
-            "SEMANTIC_REVIEW_FIELD_UNKNOWN", ",".join(extras)
+            "SEMANTIC_REVIEW_FIELD_UNKNOWN", ",".join(extras),
+            path="$."+extras[0],actual=extras,expected=sorted(allowed),
         )
     required_fields = {
         "assessment", "disposition", "concerns", "suggestions", "confidence"
@@ -597,6 +614,37 @@ def validate_reviewer_payload(
         "confidence": confidence,
         "parse_status": "valid",
     }
+
+
+def reviewer_response_schema() -> Dict[str, Any]:
+    """Documentation and correction schema built from the parser's constants."""
+    return {"schema":"biomind.semantic_decision.v1", "fields":sorted(REVIEWER_RESPONSE_FIELDS),
+        "issue_fields":sorted(REVIEWER_ISSUE_FIELDS), "additional_fields":False,
+        "issue_values":"strings", "assessments":sorted(REVIEW_ASSESSMENTS),
+        "assessment_dispositions":{k:sorted(v) for k,v in _REVIEW_DISPOSITIONS.items()},
+        "issue_dispositions":sorted(ISSUE_DISPOSITIONS), "confidence":"top-level null or number in [0,1]"}
+
+
+def reviewer_assessment_identity(report: Mapping[str, Any], plan_state: Mapping[str, Any],
+                                 source_hashes: Mapping[str, str]) -> Dict[str, Any]:
+    """Stable formal facts, not report/inspection wrappers or natural language inference."""
+    scope={k:str((report.get("scope") or {}).get(k) or "")
+           for k in ("task_id","plan_id","plan_version","step_id","action_id","attempt_id")}
+    step=_current_step(plan_state,scope['step_id'])
+    facts={"scope":scope,"plan_revision":plan_state.get('plan_revision'),
+        "obligations":{"step_effect":canonical_step_effect(step),
+            "success_criteria":deepcopy(step.get('success_criteria') or []),
+            "completion_predicates":deepcopy(step.get('completion_predicates') or [])},
+        "source_hashes":dict(source_hashes),
+        "process":{k:v for k,v in (report.get('process_outcome') or {}).items()
+                   if k not in {'runtime_observations'}},
+        "effects":{k:deepcopy((report.get('effect_presence') or {}).get(k))
+                   for k in ('declared','observed','missing','unexpected','invalid','file_collection')},
+        "predicates":[{k:deepcopy(row.get(k)) for k in (
+            'predicate_id','operator','authoritative_actual','expected','passed','status','reason_code','disposition')}
+            for row in report.get('predicate_results') or []]}
+    return {"assessment_id":"assessment:"+_digest(facts),"scope":scope,
+            "facts_sha256":_digest(facts),"policy_version":REVIEWER_POLICY_VERSION}
 
 
 def _current_step(plan_state: Mapping[str, Any], step_id: str) -> Mapping[str, Any]:
@@ -1761,8 +1809,30 @@ def build_completion_report(
     review_contract = report_facts["semantic_review_requirements"]
     allowed_issue_ids = tuple(review_contract["allowed_issue_ids"])
     required_issue_ids = tuple(review_contract["required_issue_ids"])
+    advisory = validation.get("llm_advisory")
+    # A persisted review request/response advances PlanState's CAS generation.
+    # Rebind only a locally receipted valid response whose *complete* report
+    # facts hash is unchanged except that bookkeeping generation. Never edit
+    # the provider response or relax old-report / stale-evidence validation.
+    if isinstance(advisory, Mapping) and advisory.get("parse_status") == "valid":
+        receipt = advisory.get("review_policy_receipt") or {}
+        assessment = (plan_state.get("task_state") or {}).get("semantic_review_receipts", {}).get(
+            receipt.get("assessment_id"), {})
+        if assessment.get("producer") == REVIEWER_POLICY_VERSION:
+            for request in (assessment.get("requests") or {}).values():
+                original_scope = request.get("report_scope") or {}
+                if (request.get("status") != "valid"
+                        or request.get("decision") != {k:v for k,v in advisory.items() if k not in {"review_policy_receipt", "review_error"}}
+                        or any(original_scope.get(k) != scope.get(k) for k in scope if k != "state_generation")):
+                    continue
+                original_id = _completion_report_id(scope=original_scope,
+                    validation_digest=validation_digest, predicate_results=predicate_results,
+                    completion_gate=gate_value, **report_facts)
+                if original_id == request.get("report_id") == advisory.get("report_id"):
+                    advisory = {**dict(advisory), "report_id": report_id}
+                    break
     reviewer = reviewer_decision(
-        validation.get("llm_advisory"),
+        advisory,
         scope=scope,
         report_id=report_id,
         allowed_issue_ids=allowed_issue_ids,

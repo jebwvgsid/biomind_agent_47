@@ -49,6 +49,8 @@ from agent_core.semantic_completion import (
     SemanticCompletionError,
     build_completion_report,
     validate_reviewer_payload,
+    reviewer_response_schema, reviewer_assessment_identity,
+    REVIEWER_PROTOCOL_CORRECTIONS, REVIEWER_POLICY_VERSION,
 )
 from agent_core.skill_access import (
     normalize_skill_access_state,
@@ -63,6 +65,7 @@ from agent_core.plan_tracker import (
     canonical_task_spec_for_state,
     load_plan_state,
     record_provenance_event,
+    save_plan_state, StateCASConflict,
 )
 from agent_core.node_context import (
     InvocationRegistry,
@@ -73,7 +76,7 @@ from agent_core.node_context import (
 logger = logging.getLogger("BioMind.Supervisor")
 
 
-SUPERVISOR_REVIEW_SYSTEM_V2 = """You are BioMind's policy-selected one-shot semantic reviewer.
+SUPERVISOR_REVIEW_SYSTEM_V2 = """You are BioMind's policy-selected semantic reviewer.
 
 Your schema-validated decision is consumed by the completion controller. It is
 not ignorable commentary, but it has no authority to rewrite runtime facts,
@@ -95,7 +98,10 @@ Authority boundary:
 
 Return exactly one JSON object that repeats the supplied CompletionReport report_id,
 disposes report issue_ids structurally, and includes assessment, disposition,
-concerns, suggestions, and confidence.
+concerns, suggestions, and confidence. Follow the supplied reviewer_response_schema:
+issue rows contain exactly issue_id, disposition and explanation (string values).
+Protocol correction requests ask for a complete valid decision over the SAME
+execution, not another scientific run or a decision that must agree with us.
 """
 
 
@@ -627,6 +633,7 @@ class LLMReviewer:
         context_compaction_enabled: Optional[bool] = None,
     ):
         self.llm = llm
+        self._review_receipts: Dict[str, Any] = {}
         self.data_path = str(data_path or "")
         self._invocations = InvocationRegistry(max_entries=128, max_stale_signatures=128)
         self._context_policy = context_policy
@@ -658,18 +665,19 @@ class LLMReviewer:
         expected_report_id: str = "",
         allowed_issue_ids: Sequence[str] = (),
         required_issue_ids: Sequence[str] = (),
+        include_error: bool = False,
     ) -> Dict[str, Any]:
         raw = str(text or "").strip()
-        fenced = re.search(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
+        fenced = re.fullmatch(r"```(?:json)?\s*(.*?)```", raw, re.DOTALL | re.IGNORECASE)
         candidates = [fenced.group(1).strip()] if fenced else []
         candidates.append(raw)
-        brace = re.search(r"\{.*\}", raw, re.DOTALL)
-        if brace:
-            candidates.append(brace.group(0))
+        error = {"code":"SEMANTIC_REVIEW_JSON_INVALID", "field_path":"$", "expected":"one complete JSON object"}
         for candidate in candidates:
             try:
                 value = json.loads(candidate)
-            except (TypeError, json.JSONDecodeError):
+            except (TypeError, json.JSONDecodeError) as exc:
+                if isinstance(exc,json.JSONDecodeError):
+                    error.update(line=exc.lineno,column=exc.colno,detail=exc.msg)
                 continue
             if not isinstance(value, dict):
                 continue
@@ -680,12 +688,13 @@ class LLMReviewer:
                     allowed_issue_ids=allowed_issue_ids,
                     required_issue_ids=required_issue_ids,
                 )
-            except SemanticCompletionError:
+            except SemanticCompletionError as exc:
+                error=exc.to_dict()
                 continue
             normalized["concerns"] = normalized["concerns"][:20]
             normalized["suggestions"] = normalized["suggestions"][:20]
             return normalized
-        return {}
+        return {"_validation_error":error} if include_error else {}
 
     @staticmethod
     def _source_scope(
@@ -960,6 +969,8 @@ class LLMReviewer:
                 )
                 + "\n</completion_report>\n<review_instructions>\n"
                 + SUPERVISOR_REVIEW_INSTRUCTIONS_V2
+                + "\n<reviewer_response_schema>" + json.dumps(reviewer_response_schema(),sort_keys=True)
+                + "</reviewer_response_schema>"
                 + "\n</review_instructions>\n</supervisor_advisory_request>"
             ),
         )
@@ -1118,6 +1129,77 @@ class LLMReviewer:
             )),
         )
 
+    @staticmethod
+    def _review_policy_view(row):
+        requests=list((row.get('requests') or {}).values())
+        return {**{k:deepcopy(row[k]) for k in ('producer','assessment_id','scope','policy') if k in row},
+            'requests_reserved':len(requests),
+            'responses_received':sum(item.get('status') in {'valid','invalid'} for item in requests),
+            'corrections_authorized':max(0,len(requests)-1),
+            'remaining_requests':max(0,int(row['policy']['max_requests'])-len(requests))}
+
+    def _claim_review(self, task_id, identity, report_id, report_scope):
+        """Reserve at most one request via the existing PlanState CAS store.
+
+        A new invocation/report/inspection wrapper never resets an assessment.
+        A reserved request without a response is not blindly dispatched again.
+        """
+        for _ in range(4):
+            durable=load_plan_state(self.data_path,task_id)
+            for key in ('task_id','plan_id','plan_version'):
+                if str(durable.get(key) or '') != identity['scope'][key]:
+                    raise SemanticCompletionError('SEMANTIC_REVIEW_SCOPE_CHANGED',key)
+            if str(durable.get('current_step_id') or '') != identity['scope']['step_id']:
+                raise SemanticCompletionError('SEMANTIC_REVIEW_SCOPE_CHANGED','step_id')
+            task_state=durable.setdefault('task_state',{})
+            receipts=task_state.setdefault('semantic_review_receipts',{})
+            key=identity['assessment_id']; row=receipts.get(key)
+            if row is None:
+                limit=(task_state.get('budgets') or {}).get('max_semantic_review_corrections',REVIEWER_PROTOCOL_CORRECTIONS)
+                if type(limit) is not int or not 0 <= limit <= 10:
+                    raise SemanticCompletionError('SEMANTIC_REVIEW_POLICY_INVALID')
+                row={**deepcopy(identity),'producer':REVIEWER_POLICY_VERSION,
+                    'policy':{'version':REVIEWER_POLICY_VERSION,'max_protocol_corrections':limit,
+                        'max_requests':limit+1,'source':'task_state.budgets.max_semantic_review_corrections'
+                        if 'max_semantic_review_corrections' in (task_state.get('budgets') or {}) else 'semantic_completion.REVIEWER_PROTOCOL_CORRECTIONS'},
+                    'requests':{}}
+                receipts[key]=row
+            requests=row['requests']
+            for request in requests.values():
+                if request.get('status')=='valid':
+                    return {'mode':'cached','row':deepcopy(row),'decision':deepcopy(request['decision'])}
+            if any(r.get('status')=='reserved' for r in requests.values()):
+                return {'mode':'unresolved_request','row':deepcopy(row)}
+            if len(requests)>=row['policy']['max_requests']:
+                return {'mode':'exhausted','row':deepcopy(row)}
+            ordinal=len(requests)+1
+            request_id=key+':request:'+str(ordinal)
+            requests[request_id]={'request_id':request_id,'ordinal':ordinal,'report_id':report_id,'report_scope':deepcopy(report_scope),'status':'reserved'}
+            try:
+                save_plan_state(self.data_path,task_id,durable)
+            except StateCASConflict:
+                continue
+            return {'mode':'send','row':deepcopy(row),'request_id':request_id}
+        raise SemanticCompletionError('SEMANTIC_REVIEW_CAS_CONFLICT')
+
+    def _finish_review(self,task_id,claim,*,decision=None,error=None,response_sha256=''):
+        for _ in range(4):
+            durable=load_plan_state(self.data_path,task_id)
+            row=durable['task_state']['semantic_review_receipts'][claim['row']['assessment_id']]
+            request=row['requests'][claim['request_id']]
+            value={**request,'status':'valid' if decision else 'request_failed' if (error or {}).get('code')=='SEMANTIC_REVIEW_REQUEST_FAILED' else 'invalid',
+                   'response_sha256':response_sha256,'decision':deepcopy(decision),'error':deepcopy(error)}
+            if request.get('status')!='reserved':
+                if request!=value:raise SemanticCompletionError('SEMANTIC_REVIEW_RESPONSE_REPLAY_MISMATCH')
+                return deepcopy(row)
+            row['requests'][claim['request_id']]=value
+            try:
+                save_plan_state(self.data_path,task_id,durable)
+            except StateCASConflict:
+                continue
+            return deepcopy(row)
+        raise SemanticCompletionError('SEMANTIC_REVIEW_CAS_CONFLICT')
+
     async def review(
         self,
         code: str,
@@ -1190,7 +1272,7 @@ class LLMReviewer:
             current_step_id=str(metadata.get("step_id") or ""),
             runtime={
                 "return_code": int(returncode),
-                "advisory_authority": "non_authoritative_one_shot",
+                "advisory_authority": "non_authoritative_bounded_review",
                 "execution_facts": {
                     "action_sha256": source_scopes["executed_action"][
                         "provided_content_sha256"
@@ -1257,96 +1339,117 @@ class LLMReviewer:
                 )
             )
             self._invocations.register(reviewer_context.binding)
-            r, first_snapshot = await ainvoke_with_snapshot(
-                self.llm,
-                call_messages,
-                data_path=self.data_path,
-                task_id=task_id,
-                metadata={
-                    "node_name": "supervisor",
-                    "call_kind": "supervisor_reviewer",
-                    "controller_binding": reviewer_context.binding.to_dict(),
-                    "advisory_authority": "non_authoritative_one_shot",
-                    "selected_material_ids": [
-                        str(item.get("material_id") or "")
-                        for item in carried_materials
-                    ],
-                    "supervisor_context_budget": context_telemetry,
-                    "completion_report_id": expected_report_id,
-                    "semantic_issue_ids": list(allowed_issue_ids),
-                    **metadata,
-                },
-            )
-            self._invocations.consume(reviewer_context.binding.invocation_id)
-            latest_plan_state = (
-                load_plan_state(self.data_path, task_id)
-                if self.data_path and task_id else plan_state
-            )
-            latest_task_spec = (
-                canonical_task_spec_for_state(latest_plan_state)
-                if latest_plan_state
-                else task_spec
-            )
-            latest_binding = build_node_context(
-                node_type="supervisor",
-                task_spec=latest_task_spec,
-                plan_state=latest_plan_state,
-                state_generation=int(latest_plan_state.get("state_generation") or 0),
-                current_step_id=str(metadata.get("step_id") or ""),
-                attempt_id=str(metadata.get("attempt_id") or ""),
-                action_identity=str(metadata.get("action_id") or ""),
-                evidence_identity=reviewer_context.binding.evidence_identity,
-            ).binding
-            staleness = evaluate_node_staleness(
-                reviewer_context.binding,
-                latest_binding.to_dict(),
-            )
-            if not staleness.usable:
-                self._invocations.mark_stale_signature_handled(
-                    staleness.stale_signature
+            identity = reviewer_assessment_identity(report_value,plan_state,
+                {key:source_scopes[key]['provided_content_sha256'] for key in ('executed_action','stdout','stderr')}) if report_value and self.data_path and task_id else None
+            claim = None
+            while True:
+                if identity:
+                    claim=self._claim_review(task_id,identity,expected_report_id,report_value["scope"])
+                    receipt=self._review_policy_view(claim['row'])
+                    if claim['mode']=='cached':
+                        self._invocations.consume(reviewer_context.binding.invocation_id)
+                        return json.dumps({**claim['decision'],'review_policy_receipt':{**receipt,'cached':True,
+                            'automatic_review_stopped':True},'review_error':{'code':'SEMANTIC_REVIEW_ALREADY_DECIDED'}},ensure_ascii=False,sort_keys=True)
+                    if claim['mode']!='send':
+                        reason='SEMANTIC_REVIEW_PROTOCOL_EXHAUSTED' if claim['mode']=='exhausted' else 'SEMANTIC_REVIEW_REQUEST_UNRESOLVED'
+                        self._invocations.consume(reviewer_context.binding.invocation_id)
+                        return json.dumps({'assessment':'UNKNOWN','disposition':'assessment_pending',
+                            'report_id':expected_report_id,'issue_dispositions':[], 'concerns':[reason],
+                            'suggestions':[],'confidence':None,'parse_status':'automatic_review_stopped',
+                            'review_error':{'code':reason},'review_policy_receipt':{**receipt,'automatic_review_stopped':True}},ensure_ascii=False,sort_keys=True)
+                r, first_snapshot = await ainvoke_with_snapshot(
+                    self.llm,
+                    call_messages,
+                    data_path=self.data_path,
+                    task_id=task_id,
+                    metadata={
+                        "node_name": "supervisor",
+                        "review_request_id": claim["request_id"] if claim else "",
+                        "review_policy": self._review_policy_view(claim["row"]) if claim else {},
+                        "call_kind": "supervisor_reviewer",
+                        "controller_binding": reviewer_context.binding.to_dict(),
+                        "advisory_authority": "non_authoritative_bounded_review",
+                        "selected_material_ids": [
+                            str(item.get("material_id") or "")
+                            for item in carried_materials
+                        ],
+                        "supervisor_context_budget": context_telemetry,
+                        "completion_report_id": expected_report_id,
+                        "semantic_issue_ids": list(allowed_issue_ids),
+                        **metadata,
+                    },
                 )
-                return json.dumps({
-                    "assessment": "UNKNOWN",
-                    "disposition": "assessment_pending",
-                    "report_id": expected_report_id,
-                    "issue_dispositions": [],
-                    "concerns": ["Supervisor advisory became stale and was ignored."],
-                    "suggestions": [],
-                    "confidence": None,
-                    "parse_status": "stale_ignored",
-                }, ensure_ascii=False, sort_keys=True)
-            decision = self._parse_decision(
-                r.content,
-                expected_report_id=expected_report_id,
-                allowed_issue_ids=allowed_issue_ids,
-                required_issue_ids=required_issue_ids,
-            )
-            if not decision:
-                # A malformed advisory is non-authoritative.  Treat it as
-                # unavailable instead of paying for an equivalent rerender.
-                decision = {
-                    "assessment": "UNKNOWN",
-                    "disposition": "assessment_pending",
-                    "report_id": expected_report_id,
-                    "issue_dispositions": [],
-                    "concerns": ["Supervisor advisory failed schema validation and was ignored."],
-                    "suggestions": [],
-                    "confidence": None,
-                    "parse_status": "invalid_ignored",
-                }
-            if not decision:
-                decision = {
-                    "assessment": "UNKNOWN",
-                    "disposition": "assessment_pending",
-                    "report_id": expected_report_id,
-                    "issue_dispositions": [],
-                    "concerns": ["Supervisor advisory failed schema validation and was ignored."],
-                    "suggestions": [],
-                    "confidence": None,
-                    "parse_status": "invalid_ignored",
-                }
-            return json.dumps(decision, ensure_ascii=False, sort_keys=True)
+                latest_plan_state = (
+                    load_plan_state(self.data_path, task_id)
+                    if self.data_path and task_id else plan_state
+                )
+                latest_task_spec = (
+                    canonical_task_spec_for_state(latest_plan_state)
+                    if latest_plan_state
+                    else task_spec
+                )
+                latest_binding = build_node_context(
+                    node_type="supervisor",
+                    task_spec=latest_task_spec,
+                    plan_state=latest_plan_state,
+                    state_generation=int(latest_plan_state.get("state_generation") or 0),
+                    current_step_id=str(metadata.get("step_id") or ""),
+                    attempt_id=str(metadata.get("attempt_id") or ""),
+                    action_identity=str(metadata.get("action_id") or ""),
+                    evidence_identity=reviewer_context.binding.evidence_identity,
+                ).binding
+                staleness = evaluate_node_staleness(
+                    reviewer_context.binding,
+                    latest_binding.to_dict(),
+                )
+                if not staleness.usable:
+                    self._invocations.mark_stale_signature_handled(
+                        staleness.stale_signature
+                    )
+                    stale_decision = {
+                        "assessment": "UNKNOWN",
+                        "disposition": "assessment_pending",
+                        "report_id": expected_report_id,
+                        "issue_dispositions": [],
+                        "concerns": ["Supervisor advisory became stale and was ignored."],
+                        "suggestions": [],
+                        "confidence": None,
+                        "parse_status": "stale_ignored",
+                    }
+                    if claim:
+                        self._finish_review(task_id,claim,error={"code":"STALE_SUPERVISOR_CONTEXT"})
+                    return json.dumps(stale_decision, ensure_ascii=False, sort_keys=True)
+                decision=self._parse_decision(r.content,expected_report_id=expected_report_id,
+                    allowed_issue_ids=allowed_issue_ids,required_issue_ids=required_issue_ids,include_error=True)
+                error=decision.pop('_validation_error',None)
+                finish_reason=str((getattr(r,'response_metadata',{}) or {}).get('finish_reason') or '')
+                if finish_reason in {'length','max_tokens','content_filter'}:
+                    decision={};error={'code':'SEMANTIC_REVIEW_RESPONSE_INCOMPLETE','field_path':'$',
+                        'finish_reason':finish_reason,'expected':'complete reviewer JSON'}
+                if claim:
+                    row=self._finish_review(task_id,claim,decision=decision or None,error=error,
+                        response_sha256=hashlib.sha256(str(r.content).encode()).hexdigest())
+                if decision:
+                    self._invocations.consume(reviewer_context.binding.invocation_id)
+                    return json.dumps({**decision,**({'review_policy_receipt':self._review_policy_view(row)} if claim else {})},ensure_ascii=False,sort_keys=True)
+                if not claim:
+                    self._invocations.consume(reviewer_context.binding.invocation_id)
+                    return json.dumps({'assessment':'UNKNOWN','disposition':'assessment_pending','report_id':expected_report_id,
+                        'issue_dispositions':[],'concerns':[error['code']],'suggestions':[],'confidence':None,
+                        'parse_status':'protocol_invalid','review_error':error},ensure_ascii=False,sort_keys=True)
+                call_messages=[*call_messages,HumanMessage(name='reviewer_protocol_correction',content=json.dumps({
+                    'request_id':claim['request_id'],'response_sha256':hashlib.sha256(str(r.content).encode()).hexdigest(),
+                    'error':error,'report_id':expected_report_id,'schema':reviewer_response_schema(),
+                    'policy':self._review_policy_view(row),'execution_returncode':returncode,
+                    'instruction':'Return one complete decision for these same execution facts. No scientific rerun; a valid negative decision is final, not a protocol retry.'},ensure_ascii=False,sort_keys=True))]
+
         except Exception as e:
+            if locals().get('claim',{} ) and claim.get('mode')=='send':
+                try:
+                    self._finish_review(task_id,claim,error={'code':'SEMANTIC_REVIEW_REQUEST_FAILED','exception_class':type(e).__name__})
+                except (ValueError,OSError,KeyError):
+                    pass  # Original request failure remains visible; no new request is sent.
+
             for context in (locals().get("reviewer_context"), locals().get("repair_context")):
                 if context is None:
                     continue

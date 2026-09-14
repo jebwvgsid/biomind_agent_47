@@ -104,6 +104,8 @@ def route_execute_outcome(state: Mapping[str, Any]) -> str:
 
 def route_verification_outcome(state: Mapping[str, Any]) -> str:
     outcome = VerificationOutcome.from_mapping(state.get("verification_outcome") or {})
+    if outcome.type == "assessment_pending" and outcome.payload.get("automatic_review_stopped") is True:
+        return END  # Existing pending assessment, explicit local policy stop.
     return {
         "verified": "commit_step",
         "verified_with_warnings": "commit_step",

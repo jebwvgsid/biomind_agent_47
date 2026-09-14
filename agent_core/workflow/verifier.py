@@ -312,6 +312,22 @@ class TypedSupervisor:
             payload["completion_report"] = producer_report
             payload["semantic_decision"] = deepcopy(producer_report.get("effective_decision") or {})
 
+        # The local Reviewer owns its persistent request limit. Re-entering
+        # Supervisor through a fresh inspection wrapper grants no new quota.
+        advisory=dict(validation_value.get('llm_advisory') or {})
+        review_receipt=dict(advisory.get('review_policy_receipt') or {})
+        assessment=(durable.get('task_state') or {}).get('semantic_review_receipts',{}).get(
+            str(review_receipt.get('assessment_id') or ''),{})
+        if outcome_type=='assessment_pending' and review_receipt.get('automatic_review_stopped') and assessment:
+            from agent_core.semantic_completion import REVIEWER_POLICY_VERSION
+            if (assessment.get('producer')==REVIEWER_POLICY_VERSION
+                    and all(str((assessment.get('scope') or {}).get(key) or '')==str(scope[key])
+                            for key in ('task_id','plan_id','plan_version','step_id','action_id','attempt_id'))):
+                payload.update(automatic_review_stopped=True,review_policy_receipt=review_receipt,
+                    error_code=str((advisory.get('review_error') or {}).get('code') or 'SEMANTIC_REVIEW_PROTOCOL_EXHAUSTED'),
+                    execution_record=deepcopy(execution))
+                summary='Execution evidence retained; automatic semantic review stopped without step commit.'
+
         if execution.get("result_resolution_receipt"):
             payload["result_resolution_ref"] = str(execution["result_resolution_receipt"]["decision_id"])
             payload["result_resolution_source_attempt_id"] = str(execution["result_resolution_receipt"]["source_attempt_id"])

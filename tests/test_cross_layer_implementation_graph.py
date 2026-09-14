@@ -112,17 +112,27 @@ async def scenario(mode):
         payload={'report_id':completion_report['report_id'],'assessment':'ACCEPTABLE','disposition':'completion_accepted',
             'issue_dispositions':[{'issue_id':i,'disposition':'completion_accepted','explanation':'Synthetic bounded observation returned.'} for i in ids],
             'concerns':[],'suggestions':[],'confidence':0.9}
-        if (mode!='publication' and counts['reviewer']==1) or mode.startswith('persistent'):
+        if (mode!='publication' and counts['reviewer']==1) or mode.startswith('persistent') or mode=='C':
             for row in payload['issue_dispositions']:row['confidence']=0.9
         requests.append({'stage':'reviewer','report':completion_report,'response':payload})
         return json.dumps(payload)
-    case.agent.supervisor_node._llm_reviewer.review=reviewer
+    class ReviewerModel:
+        async def ainvoke(self,messages,**kwargs):
+            seed=next(m.content for m in messages if getattr(m,'name','')=='supervisor_advisory_seed')
+            report_value=json.loads(seed.split('<completion_report>\n',1)[1].split('\n</completion_report>',1)[0])
+            if counts['reviewer'] and mode in {'A','C'}:
+                feedback=[m for m in messages if getattr(m,'name','')=='reviewer_protocol_correction']
+                assert feedback and '$.issue_dispositions[0].confidence' in feedback[-1].content
+            requests.append({'stage':'reviewer_actual_request','messages':[{'type':m.type,'name':getattr(m,'name',None),'content':m.content} for m in messages]})
+            text=await reviewer(completion_report=report_value)
+            return AIMessage(content=text,response_metadata={'finish_reason':'stop'})
+    case.agent.supervisor_node._llm_reviewer.llm=ReviewerModel()
     class RecoveryModel:
         async def ainvoke(self,messages,**kwargs):
             counts['recovery']+=1
             wire=str(messages);durable=load_plan_state(root,task)
             step_id=durable['current_step_id']
-            action='retry_step' if mode=='B' else 'revalidate' if step_id=='bounded-check' and (counts['reviewer']<2 or mode=='persistent_revalidate') else 'blocked'
+            action='retry_step' if mode=='B' else 'revalidate' if step_id=='bounded-check' and (counts['reviewer']<2 or mode in {'persistent_revalidate','C'}) else 'blocked'
             directive={'schema_version':1,'directive_id':'synthetic-recovery-'+str(counts['recovery']),'task_id':task,
                 'action':action,'target_step_id':step_id,'summary':'Synthetic reviewer/schema/blocked branch follow-up.',
                 'reason_code':'SYNTHETIC_FOLLOWUP','instruction':'Use current evidence; never claim scientific completion.'}
@@ -203,6 +213,27 @@ async def scenario(mode):
                 incoming=bio_agents.Command(resume='y')
         values=app.get_state(config).values;durable=load_plan_state(root,task)
         commits=durable['task_state'].get('typed_step_commit_receipts',{})
+        if mode=='C':
+            assert counts['reviewer']==3 and counts['recovery']==0
+            assert len(executions)==1 and executions[0]['rc']==0 and not commits
+            outcome=values['verification_outcome']
+            assert outcome['payload']['automatic_review_stopped'] is True,outcome
+            receipt=outcome['payload']['review_policy_receipt']
+            assert receipt['requests_reserved']==3 and receipt['remaining_requests']==0
+            # New native revalidate with current inspection refs, then the
+            # actual Supervisor again; wrapper identity must grant no quota.
+            replay=await recovery.run(values)
+            assert replay['recovery_outcome']['type']=='revalidation_required',replay
+            again=await case.agent._schema2_runtime_node_handlers['supervisor']({**values,**replay})
+            assert counts['reviewer']==3 and len(executions)==1
+            assert again['verification_outcome']['payload']['automatic_review_stopped'] is True
+            final_state=load_plan_state(root,task)
+            assert len(final_state['task_state']['semantic_review_receipts'])==1
+            save('graph-C-result',{'counts':counts,'executions':executions,'routes':[next(iter(e)) for e in events],
+                'commits':commits,'verification_outcome':outcome,'revalidate_outcome':replay['recovery_outcome'],
+                'repeated_verification':again['verification_outcome'],'review_receipts':final_state['task_state']['semantic_review_receipts'],
+                'requests':requests,'fix':True})
+            return
         if mode=='persistent_revalidate':
             assert externally_bounded and counts['reviewer']==3 and counts['recovery']==3
             assert len(executions)==1 and executions[0]['rc']==0 and not commits
@@ -223,7 +254,7 @@ async def scenario(mode):
         elif mode in {'A','publication'}:
             expected_reviews=1 if mode=='publication' else 2
             assert counts['reviewer']==expected_reviews and len(commits)==1
-            assert counts['recovery']==(1 if mode=='publication' else 2)
+            assert counts['recovery']==1
             assert len(executions)==2 and [r['rc'] for r in executions]==[0,1]
             assert 'EFFECT_FACT_IDENTITIES_MISMATCH' not in executions[1]['stderr']
             assert 'BIOMIND_EFFECT_EVIDENCE_JSON=' in executions[1]['stdout']
@@ -274,6 +305,6 @@ async def scenario(mode):
         await case.asyncTearDown()
 
 
-@pytest.mark.parametrize('mode',['publication'])
+@pytest.mark.parametrize('mode',['publication','A','C'])
 def test_production_combination_fix(mode):
     asyncio.run(scenario(mode))
