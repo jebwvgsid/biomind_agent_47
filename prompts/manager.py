@@ -2555,13 +2555,21 @@ document and keep selected/excluded decision sets disjoint.
                     )
 
         semantic_for_prompt = deepcopy(dict(semantic))
-        from agent_core.step_effects import observation_emission_contract
+        from agent_core.step_effects import observation_emission_contract, generate_output_examples
         current_effect_step = focus_for_prompt.get("current_step") or {}
         emission_contract = observation_emission_contract(current_effect_step)
         emission_section = (
             "\n<observation_emission_contract>\n"
             + json.dumps(emission_contract, ensure_ascii=False, indent=2)
             + "\n</observation_emission_contract>\n"
+        )
+        emission_section += (
+            "\n<current_generate_output_protocol>\n"
+            + json.dumps(generate_output_examples(current_effect_step,
+                script_protocol=script_output_protocol,
+                binding_requirements=runtime_contract.get("binding_input_requirements") or {}),
+                ensure_ascii=False, indent=2)
+            + "\n</current_generate_output_protocol>\n"
         )
         if script_output_protocol:
             def strip_controller_placeholder_fields(value: Any) -> Any:
@@ -2707,8 +2715,7 @@ future tense for its checks; do not say inputs passed or were inspected from the
 script text alone. Earlier observed evidence may be cited with its original scope,
 without presenting it as the result of this unexecuted candidate.
 For the decision alternative,
-do not return an executable block or any surrounding text. The Controller parses
-and audits an executable script but never rewrites it.
+do not return an executable block or any surrounding text. The runtime parses and audits the executable script. It only materializes the declared frozen helper marker before approval; it never repairs scientific logic.
 
 The semantic payload is the read-only canonical context for this current
 session and task. Do not modify the Task, Plan, approval, budgets, validation
@@ -2789,35 +2796,11 @@ StepEffect.
             ensure_ascii=False,
             separators=(",", ":"),
         )
-        canonical_execute_example = json.dumps(
-            {
-                "action_type": "execute",
-                "action_kind": "primary|diagnostic|required_validation|recovery",
-                "purpose": "analysis|probe|validation|record_failure",
-                "argv": ["/absolute/path/to/tool", "/absolute/input/path", "-o", "/absolute/output/path"],
-                "env": {},
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        observation_execute_example = json.dumps(
-            {
-                "action_type": "execute",
-                "operation": "<approved-observation-operation>",
-                "purpose": "validation",
-                "argv": [
-                    "bash",
-                    "-lc",
-                    "<run-check>; printf '%s\\n' "
-                    "'BIOMIND_EFFECT_EVIDENCE_JSON={\"produces_observations\":"
-                    "[{\"observation_id\":\"<declared-id>\",\"value\":false}]}'",
-                ],
-                "env": {},
-                "outputs": [],
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
+        current_examples = generate_output_examples(current_effect_step,
+            script_protocol=False,
+            binding_requirements=runtime_contract.get("binding_input_requirements") or {})
+        canonical_execute_example = json.dumps(current_examples["action_example"], ensure_ascii=False, indent=2)
+        observation_execute_example = canonical_execute_example
         return f"""You are BioMind Generate. Propose one action or one typed Skill decision for the current step.
 
 {PUBLIC_MESSAGE_POLICY}
@@ -2872,9 +2855,7 @@ obtained. Whether `false` satisfies completion is governed only by an explicit
 structured `predicate` on the current StepEffect, never by tool names or task
 prose. Emit the actual typed result on stdout as exactly one
 `BIOMIND_EFFECT_EVIDENCE_JSON=<json>` line and do not create a marker file.
-Workspace mutations must emit a matching row with `changed=true`,
-`applied=true`, `postcondition_satisfied=true`, or a scoped receipt/evidence
-reference. Explicit side effects must emit a scoped receipt/evidence reference.
+Workspace mutation evidence and produced bindings are established by the runtime attester and Commit from actual execution; the helper cannot grant those states. Explicit side effects must emit their declared scoped receipt/evidence reference.
 Plain success exit status is never evidence for those effects:
 <action_json_example name="observation_only_execute">
 {observation_execute_example}

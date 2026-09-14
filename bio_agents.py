@@ -41907,7 +41907,7 @@ question. Never guess a scientific or database identity.
                                 "explicitly. Controller validates but never substitutes them."
                                 if generate_script_protocol
                                 else (
-                                    "Return one action_json execute object with code or argv plus "
+                                    "Return one raw JSON object with action_type=execute, code or argv plus "
                                     "typed produced_bindings and any declared operation, "
                                     "consumed_bindings, and binding_env fields. Use exactly the "
                                     "binding identities declared by the approved StepEffect. "
@@ -42240,11 +42240,22 @@ question. Never guess a scientific or database identity.
                     from agent_core.workflow.diagnostic_admission import public_diagnostic_request
                     from agent_core.step_effects import (observation_emission_contract,
                         declared_effect_emission_contract, assert_declared_emission_current,
-                        effect_template_provider_view)
+                        effect_template_provider_view, generate_output_examples)
                     approved_emission_contract = observation_emission_contract(approved_step)
                     formal_emission_template = declared_effect_emission_contract(
                         generate_approved_snapshot, current_step_id
                     )
+                    current_output_protocol = generate_output_examples(
+                        approved_step, script_protocol=generate_script_protocol,
+                        template=formal_emission_template,
+                        binding_requirements=generate_binding_requirements,
+                    )
+                    generate_material_messages.insert(0, HumanMessage(
+                        id="generate-output-protocol:" + hashlib.sha256(
+                            json.dumps(current_output_protocol, sort_keys=True).encode("utf-8")).hexdigest(),
+                        name="current_generate_output_protocol",
+                        content=json.dumps(current_output_protocol, ensure_ascii=False, sort_keys=True),
+                    ))
                     generate_material_messages.insert(0, HumanMessage(
                         id="generate-effect-template:" + hashlib.sha256(
                             (current_step_id + json.dumps(formal_emission_template, sort_keys=True)).encode("utf-8")
@@ -42281,6 +42292,7 @@ question. Never guess a scientific or database identity.
                                     "task_policy_instructions": lightweight_policy,
                                     "diagnostic_request": public_diagnostic_request(state.get("typed_diagnostic_request") or {}),
                                     "observation_emission_contract": deepcopy(approved_emission_contract),
+                                    "current_generate_output_protocol": deepcopy(current_output_protocol),
                                 },
                                 inherited_materials=generate_material_messages,
                             )
@@ -42308,6 +42320,7 @@ question. Never guess a scientific or database identity.
                                 "task_policy_instructions": lightweight_policy,
                                 "diagnostic_request": public_diagnostic_request(state.get("typed_diagnostic_request") or {}),
                                     "observation_emission_contract": deepcopy(approved_emission_contract),
+                                    "current_generate_output_protocol": deepcopy(current_output_protocol),
                             },
                             inherited_materials=generate_material_messages,
                         )
@@ -43722,7 +43735,7 @@ question. Never guess a scientific or database identity.
                     from agent_core.step_effects import materialize_effect_template
                     try:
                         script_block = replace(script_block, body=materialize_effect_template(
-                            script_block.body, formal_emission_template))
+                            script_block.body, formal_emission_template, language=script_block.language))
                     except ValueError as exc:
                         raise ScriptBlockError(str(exc)) from exc
                     structured_action = adapt_script_block_to_action(
@@ -43886,28 +43899,16 @@ question. Never guess a scientific or database identity.
                         "code": ScriptBlockError.code,
                         "message": str(exc),
                     }
-            if (not generate_script_protocol
-                    and structured_action.get("type") == "execute"
-                    and isinstance(structured_action.get("code"), str)):
-                # Native actions share the same frozen framework source as
-                # script blocks. Expand before authority attachment, argv
-                # adaptation, syntax checks, candidate hashing and approval.
-                from agent_core.step_effects import materialize_effect_template
+            if not generate_script_protocol and structured_action.get("type") == "execute":
+                # Resolve the actual native interpreter operand before any
+                # approval/candidate identity; code and argv share one definition.
+                from agent_core.step_effects import materialize_effect_action
                 try:
-                    original_body = structured_action["code"]
-                    expanded_body = materialize_effect_template(original_body, formal_emission_template)
-                    if expanded_body != original_body:
-                        supplied_argv = structured_action.get("argv")
-                        if supplied_argv and (not isinstance(supplied_argv, list)
-                                or supplied_argv[-1] != original_body):
-                            raise ValueError("EFFECT_TEMPLATE_NATIVE_BODY_ARGV_MISMATCH")
-                        if supplied_argv:
-                            structured_action["argv"] = [*supplied_argv[:-1], expanded_body]
-                        structured_action["code"] = expanded_body
+                    structured_action = materialize_effect_action(structured_action, formal_emission_template)
                 except ValueError as exc:
                     structured_action = {}
                     action_parse_error = {"stage": "action_schema", "code": str(exc),
-                        "field_path": "$.code", "message": str(exc)}
+                        "field_path": "$.code|argv", "message": str(exc)}
             if (
                 recovery_semantic_action_protocol
                 and str(structured_action.get("type") or "") == "execute"

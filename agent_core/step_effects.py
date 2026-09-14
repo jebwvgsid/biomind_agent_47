@@ -27,6 +27,7 @@ import inspect
 import json
 import math
 import re
+import shlex
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
@@ -3246,7 +3247,113 @@ def effect_template_provider_view(template: Mapping[str, Any]) -> Dict[str, Any]
     return {key: deepcopy(value) for key, value in template.items() if key != "python_template"}
 
 
-def materialize_effect_template(body: str, template: Mapping[str, Any]) -> str:
+def generate_output_examples(step: Mapping[str, Any], *, script_protocol: bool,
+                             template: Mapping[str, Any] | None = None,
+                             binding_requirements: Mapping[str, Any] | None = None) -> Dict[str, Any]:
+    """One current-mode projection shared by ordinary, Recovery and local requests.
+
+    Examples describe representation only. The executable example deliberately
+    fails until the model supplies the actual approved computation: an example
+    must never manufacture a scientific observation or workspace state.
+    """
+    declarations = (template or {}).get("declarations") or _declared_emission_rows(step)
+    facts = {field: {row["identity"]: {
+        key: ("actual output path" if key == "path" else "actual observed value")
+        for key in dict.fromkeys([*(row.get("required_fields") or []),
+            *( ["path"] if field == "produces_artifacts" else ["value"] if field == "produces_observations" else [])])}
+        for row in rows} for field, rows in declarations.items() if rows}
+    body = (EFFECT_HELPER_MARKER + "\n"
+        "# Replace this failure with the approved computation and actual_facts.\n"
+        "raise RuntimeError('The protocol example has not performed the approved operation')\n"
+        "actual_facts = " + repr(facts) + "\n"
+        "print(emit_effect_evidence(actual_facts))\n")
+    blocked = {"action_type": "blocked", "reason":
+        "The current rejection remains unresolved after the attempted correction. No new evidence supports another candidate; the unresolved requirement must be checked before continuing. This does not complete the scientific step."}
+    requirements = binding_requirements or {}
+    action = {"action_type": "execute", "operation": str(step.get("operation") or requirements.get("operation") or ""),
+        "language": "python", "code": body, "env": {}, "outputs": []}
+    if not action["operation"]:
+        action.pop("operation")
+    if requirements.get("protocol") == "public_handle_v2":
+        action["binding_input_protocol"] = "public_handle_v2"
+        action["consumed_bindings"] = deepcopy(requirements.get("consumed_bindings") or {})
+        produced = {}
+        for name, row in (requirements.get("produced_bindings") or {}).items():
+            kind = row.get("type")
+            value = {"string": "actual semantic value", "integer": 0, "number": 0,
+                     "boolean": False, "json": {}}.get(kind)
+            if kind == "artifact_ref":
+                handles = row.get("allowed_handles") or []
+                value = {"handle": handles[0]} if len(handles) == 1 else {"handle": "select one of the published allowed_handles"}
+            produced[name] = {"type": kind, "value": value}
+        action["produced_bindings"] = produced
+    return {"mode": "script_block_v1" if script_protocol else "native_action_json",
+        "top_level": ("Return one supported executable block/display envelope or the complete blocked JSON."
+            if script_protocol else "Return exactly one raw JSON object with action_type; no prose, Markdown, action_json wrapper or multiple actions."),
+        "action_example": ({"response_type": "biomind_generate_display_v1",
+            "public_message": "候选已形成，等待检查与审批。", "payload": "<python>\n" + body + "</python>"}
+            if script_protocol else action),
+        "facts_example": facts, "blocked_example": blocked,
+        "example_scope": "Representation example only; implement this step's real obligations and use its current paths/handles before proposing execution. Placeholder values are not evidence. The example fails explicitly until implemented.",
+        "feedback_rule": "Correct the precise current representation or binding error in this node. If there is no new basis after attempted corrections, submit blocked before the remaining budget is exhausted. Changing an error code or script alone proves neither progress nor success.",
+        "facts_rule": "action JSON precedes approval; categorized actual_facts is helper input inside the Python process; BIOMIND_EFFECT_EVIDENCE_JSON is execution stdout. Workspace mutations and produced binding acceptance belong to their attester and Commit, not this serializer."}
+
+
+def _inline_interpreter_body(argv: Sequence[str]) -> tuple[int, str] | None:
+    """Locate only explicit interpreter command operands; never evaluate shell text."""
+    if not argv:
+        return None
+    executable = argv[0].rsplit("/", 1)[-1]
+    shell = executable in {"bash", "sh", "dash"}
+    python = bool(re.fullmatch(r"(?:python|pypy)(?:\d+(?:\.\d+)*)?", executable))
+    if not shell and not python and executable != "Rscript":
+        return None
+    i = 1
+    while i < len(argv):
+        option = argv[i]
+        if shell and option in {"-o", "+o", "-O", "+O", "--rcfile", "--init-file"}:
+            i += 2
+            continue
+        if python and option in {"-W", "-X"}:
+            i += 2
+            continue
+        command = (shell and option.startswith("-") and not option.startswith("--") and "c" in option[1:])
+        command = command or (python and option == "-c") or (executable == "Rscript" and option == "-e")
+        if command:
+            return (i + 1, "bash" if shell else "python" if python else "r") if i + 1 < len(argv) else None
+        if option == "--" or not option.startswith(("-", "+")):
+            return None
+        i += 1
+    return None
+
+
+def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
+    if language in {"python", "py"}:
+        return
+    if language not in {"bash", "shell", "sh"}:
+        raise ValueError("EFFECT_HELPER_REQUIRES_PYTHON_SCOPE")
+    # The existing public Bash form is a single quoted Python heredoc. Only
+    # recognize that literal carrier; nested -c strings and dynamic shell are
+    # not decoded or rewritten by the framework.
+    lines = body.splitlines()
+    for i in range(marker_index - 1, -1, -1):
+        match = re.fullmatch(r"\s*(.*?)\s*<<\s*'([A-Za-z_][A-Za-z_0-9]*)'\s*", lines[i])
+        if not match:
+            continue
+        try:
+            args = shlex.split(match[1])
+        except ValueError:
+            break
+        executable = args[0].rsplit("/", 1)[-1] if args else ""
+        closing = next((j for j in range(i + 1, len(lines)) if lines[j] == match[2]), None)
+        if (re.fullmatch(r"(?:python|pypy)(?:\d+(?:\.\d+)*)?", executable)
+                and "-" in args[1:] and closing is not None and i < marker_index < closing):
+            return
+        break
+    raise ValueError("EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC")
+
+
+def materialize_effect_template(body: str, template: Mapping[str, Any], *, language: str = "python") -> str:
     """Expand one exact marker BEFORE validation, candidate identity and approval.
 
     This is a byte substitution of the already frozen standalone helper, not
@@ -3256,14 +3363,45 @@ def materialize_effect_template(body: str, template: Mapping[str, Any]) -> str:
     lines = body.splitlines(keepends=True)
     markers = [i for i, line in enumerate(lines) if line.rstrip("\r\n") == EFFECT_HELPER_MARKER]
     if not markers:
+        if EFFECT_HELPER_MARKER in body:
+            raise ValueError("EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE")
         return body
     if len(markers) != 1 or not template.get("available"):
         raise ValueError("EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE")
+    _assert_helper_scope(body, language, markers[0])
     code = str(template.get("python_template") or "")
     if not code or hashlib.sha256(code.encode()).hexdigest() != template.get("template_sha256"):
         raise ValueError("EFFECT_HELPER_TEMPLATE_DIGEST_MISMATCH")
+    if code.rstrip() in body:
+        raise ValueError("EFFECT_HELPER_ALREADY_EXPANDED_WITH_MARKER")
     lines[markers[0]] = code.rstrip() + "\n"
     return "".join(lines)
+
+
+def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, Any]) -> Dict[str, Any]:
+    """Materialize the actual native carrier before its approval identity exists."""
+    result = deepcopy(dict(action))
+    argv = list(result.get("argv") or [])
+    code = str(result.get("code") or "")
+    carrier = _inline_interpreter_body(argv)
+    if argv and code:
+        if carrier is None and code.strip() == shlex.join(argv) and EFFECT_HELPER_MARKER not in code:
+            return result  # Exact display of the native non-script command.
+        if carrier is None or argv[carrier[0]].strip() != code.strip():
+            raise ValueError("EFFECT_TEMPLATE_NATIVE_BODY_ARGV_MISMATCH")
+    if argv and carrier is None:
+        if any(EFFECT_HELPER_MARKER in arg for arg in argv):
+            raise ValueError("EFFECT_HELPER_ARGV_CARRIER_UNSUPPORTED_USE_PYTHON_C_OR_QUOTED_HEREDOC")
+        return result
+    body = argv[carrier[0]] if carrier else code
+    language = carrier[1] if carrier else str(result.get("language") or "bash").lower()
+    expanded = materialize_effect_template(body, template, language=language)
+    if carrier:
+        argv[carrier[0]] = expanded
+        result["argv"] = argv
+    if code:
+        result["code"] = expanded
+    return result
 
 
 def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step_id: str) -> Dict[str, Any]:
@@ -3295,10 +3433,10 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
                 "marker": EFFECT_HELPER_MARKER,
                 "template_sha256": hashlib.sha256(code.encode()).hexdigest(),
                 "rules": [
-                    "Return ONE complete executable block for this step and only the protocol's short public explanation. Never repeat the framework helper or emit multiple alternative blocks.",
+                    "This contract describes execution stdout facts, not the top-level action response. Follow the current Generate output protocol; never wrap a native action in action_json or a script fence.",
                     "In one Python script or one single-quoted Python heredoc, put the exact marker # BIOMIND_EFFECT_HELPER on its own unindented line. BioMind expands its frozen code before checking and approval. Do not expand or rewrite the helper yourself.",
                     "Call print(emit_effect_evidence(actual_facts)) with a native Python data object. Pass paths/labels as argv, not Python source interpolation; avoid nested python -c / json.dumps / command substitution / json.loads.",
-                    "Supply identity-keyed actual_facts only after performing the real checks or operations. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.",
+                    "Supply categorized actual_facts, for example {'produces_observations': {'an exact declared identity': {'value': actual_value}}}, only after performing the real checks or operations. A flat identity map is invalid. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.",
                     "Publication accepts a subset of the approved declarations. Omit artifacts that were not produced; do not create a path or placeholder to publish blocked facts. Omission itself asserts nothing. All supplied identities and required fields remain checked.",
                     "Artifact facts require the actual path. Side-effect and observation facts require every declared field; observations carry the actual value, including failure or unknown. Declarations alone are not evidence.",
                     "Historical failed scripts/stdout are diagnostic evidence; their failed machine emission must not be reused. This current template takes precedence.",
