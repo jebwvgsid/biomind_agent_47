@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "audit_id": "execution_architecture_20260914_unified_a1",
+  "status": {
+    "AUDIT_STATUS": "COMPLETE_WITH_EXPLICIT_LIMITS",
+    "CURRENT_INTEGRATION_STATUS": "PARTIAL; KNOWN_DEFECTS_REPRODUCED",
+    "PRODUCTION_FIX_STATUS": "NOT_IMPLEMENTED",
+    "REAL_MODEL_VALIDATION": "NOT_RUN",
+    "REAL_SCIENTIFIC_E2E": "NOT_RUN"
+  },
+  "baseline": {
+    "test_head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+    "test_tree": "25ff28413ba16553ad9f44d1a88956da48e2cd57",
+    "branch": "refactor/consultant-controller-authority",
+    "commit_parent": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+    "loaded_revision_policy": "New guarded imports + exact per-run bytes; never infer historical full revision from disk HEAD",
+    "start_manifest": "baseline/start.json",
+    "protection": "baseline/precommit_protection.json",
+    "canonical_inventory": "runs/inventory-04/registry_inventory.json",
+    "canonical_safe_export": "runs/inventory-04/export_manifest.json",
+    "five_semantic_overlays_plus_raw_eol_file": {
+      "agent_core/node_context.py": {
+        "head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+        "export_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2"
+      },
+      "agent_core/planner_context.py": {
+        "head_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d",
+        "export_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8"
+      },
+      "agent_core/provider_message_safety.py": {
+        "head_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+        "export_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+      },
+      "agent_core/retriever.py": {
+        "head_sha256": "993ed60bd900a76aad0d00a1c3e782fc9cdb5d97aef6bcc5c62c80dc1a4184de",
+        "export_sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9"
+      },
+      "agent_core/workflow/managed_stop.py": {
+        "head_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+        "export_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4"
+      },
+      "prompts/manager.py": {
+        "head_sha256": "9655e6e4b8e6fe55217542bfc7390ba299cfbc7c73ec3bbdcdd7cd7528d9bdba",
+        "export_sha256": "107fa92e5ac91d04b840285e277cc06f12c307bced6ccbafadd5787073c66dc6"
+      }
+    }
+  },
+  "coverage_denominator": {
+    "interface_rows": 58,
+    "guard_groups": 57,
+    "typed_and_resume_worker_branches": 112,
+    "public_skills_loaded": 88,
+    "capability_declarations_loaded": 96,
+    "shared_mutable_skills": [
+      "genomics/snpeff-annotation"
+    ],
+    "denominator_is_not_test_count": true
+  },
+  "scenarios": {
+    "W0": {
+      "status": "NEW_FORENSIC+WITNESS",
+      "evidence": "incident/evidence.json;incident/verification.json",
+      "limits": "historical full loaded revision and finish metadata UNKNOWN"
+    },
+    "W1": {
+      "status": "NEW_GRAPH_PARTIAL",
+      "evidence": "downstream/six_success.json;downstream/workspace_prepare.json",
+      "limits": "6 inspect mechanism, separate prepare; not six snpEff operations; no required normal physical report"
+    },
+    "W2": {
+      "status": "PRIOR_VERIFIED_UNCHANGED",
+      "evidence": "baseline/prior_evidence_reuse.json;../../implementation/plan_resources_convergence_20260914/verification_ledger.json",
+      "limits": "B_success/B_last fixed-provider graph reused; incident native chain still defective"
+    },
+    "W3": {
+      "status": "NEW+PRIOR_VERIFIED_UNCHANGED",
+      "evidence": "incident/verification.json;downstream/voluntary_stop.json;baseline/prior_evidence_reuse.json",
+      "limits": "all scientific meanings not evaluated"
+    },
+    "W4": {
+      "status": "PRIOR_VERIFIED_UNCHANGED+NEW_PARSER",
+      "evidence": "baseline/prior_evidence_reuse.json;downstream/six_success.json",
+      "limits": "real model reviewer not called"
+    },
+    "W5": {
+      "status": "NEW_DEFECT_AND_POSITIVE+PRIOR",
+      "evidence": "incident/progress_refinement.json;downstream/progress_policy_conflict.json;downstream/voluntary_stop.json",
+      "limits": "no production repair; recurrence/last-call Plan evidence reused"
+    },
+    "W6": {
+      "status": "NEW_DEDUP+PRIOR_RELOAD",
+      "evidence": "downstream/progress_policy_conflict.json;baseline/prior_evidence_reuse.json",
+      "limits": "new cross-process execution loss/Commit crash windows NOT_RUN"
+    },
+    "W7": {
+      "status": "NEW_GENERATE_AWAIT+PRIOR_PLAN",
+      "evidence": "incident/late_result.json;baseline/prior_evidence_reuse.json",
+      "limits": "late Execute/Commit OS cleanup windows STATIC/NOT_RUN"
+    },
+    "W8": {
+      "status": "NEW_ASSEMBLY_COMPONENTS+PRIOR_REPORT",
+      "evidence": "entry/evidence.json;downstream/voluntary_stop.json",
+      "limits": "enabled schema2 phase compaction and complete finalizer hook fault composition NOT_RUN"
+    },
+    "W9": {
+      "status": "NEW_DEFAULT_BODY_BLOCKER+PRIOR_CLI",
+      "evidence": "entry/evidence.json;baseline/prior_evidence_reuse.json",
+      "limits": "no new PTY run; historical PTY versioned evidence only, new UI not implemented"
+    },
+    "W10": {
+      "status": "NEW_REGISTRY+LANGUAGE_REPRESENTATIVES",
+      "evidence": "runs/inventory-04/registry_inventory.json;incident/verification.json;downstream/workspace_prepare.json",
+      "limits": "R/TAD external libraries/real scientific tool availability NOT_RUN"
+    },
+    "W11": {
+      "status": "STATIC_SUPPORTED+NEW_ERROR_BOUNDARY",
+      "evidence": "entry/interfaces.tsv;runs/route-02/ask_user_route_failure.json",
+      "limits": "no full CLI no-execution answer/reconsultation integration run"
+    }
+  },
+  "new_witnesses": {
+    "unique_cases": 25,
+    "counting": "inventory 1 + incident 7 (repair refinement replaces same case) + late-result 2 + downstream 4 + hook/display 10 + AskUser producer contrast 1; previous runs/reuse not counted",
+    "witness_not_fix": true,
+    "inventories": [
+      "runs/inventory-01",
+      "runs/inventory-02",
+      "runs/inventory-03",
+      "runs/inventory-04"
+    ],
+    "incident": "incident/verification.json",
+    "late_result": "incident/late_result.json",
+    "progress_refinement": "incident/progress_refinement.json",
+    "downstream": "downstream/evidence.json",
+    "hooks_cli": "entry/evidence.json",
+    "ask_user": "runs/route-02/pytest-results.json"
+  },
+  "reused_evidence": {
+    "byte_comparison": "baseline/prior_evidence_reuse.json",
+    "latest_plan_manifest_same_files": 237,
+    "old_legacy_failures_retained": "../../implementation/plan_resources_convergence_20260914/preserved_nine_fixture_failures.json",
+    "scope_limit": "Some previous fixtures directly set scientific prerequisite state; those remain component tests, never promoted to graph E2E"
+  },
+  "failures_and_corrections": [
+    {
+      "evidence": "runs/inventory-01/pytest-results.json",
+      "class": "NEW_AUDIT_FIXTURE_ERROR",
+      "reason": "catalog incorrectly passed all Skill IDs into task selection API capped at12; new audit iterates one Skill at a time; no production change"
+    },
+    {
+      "evidence": "runs/route-01/pytest-results.json",
+      "class": "DISPROVEN_AUDIT_HYPOTHESIS",
+      "reason": "missing-answer semantic harness correctly END; callback-exception factory independently confirmed by route-02"
+    },
+    {
+      "evidence": "incident/verification.json#/runs",
+      "class": "RETAINED_INITIAL_TEST_ERRORS_AND_CURRENT_DEFECTS",
+      "reason": "method-name fixture correction; env-list exposed real extra defect; nested login shell unsafe for full isolation claim"
+    },
+    {
+      "evidence": "downstream/evidence.json#/new_test_failures_retained",
+      "class": "NEW_AUDIT_FIXTURE_ERRORS",
+      "reason": "wrong durable field assertion and missing mutable resource_kind rejected by real Plan; fixed only new test"
+    },
+    {
+      "evidence": "entry/evidence.json#/prior_attempts",
+      "class": "WATCHDOG_AND_NEW_FIXTURE_TRIGGER_ERRORS",
+      "reason": "three180s timeouts/selector wake; independent cases service existing callbacks with test loop pulse; wrong summary-error expectations and not-triggered compression retained"
+    }
+  ],
+  "substitution_boundary": {
+    "real": [
+      "public parser",
+      "Skill registry/declaration normalization",
+      "Plan/resource/effect/dataflow compiler",
+      "typed graph and routing",
+      "formal Plan/script approvals via synthetic explicit user decisions",
+      "execution.executor for registered tiny scripts",
+      "effect parser/publisher",
+      "workspace attester",
+      "Reviewer parser",
+      "CompletionGate",
+      "CommitStep",
+      "PlanState/CAS/StateContractStore",
+      "report publication",
+      "registered hook owners and callbacks as per entry components"
+    ],
+    "replaced": [
+      "provider/scientific decisions fixed and explicit",
+      "scientific computation bounded tiny counter/layout scripts",
+      "host config inert synthetic",
+      "scientific runtime readiness observations fixture",
+      "some legacy fixture memory hooks disabled; separately tested actual assembly"
+    ],
+    "not_claimed": [
+      "true model understanding",
+      "host dependency availability",
+      "full scientific E2E",
+      "full live configuration equivalence",
+      "all hooks in one graph run"
+    ]
+  },
+  "safety": {
+    "original_session_business_loaded": false,
+    "original_approved_script_executed": false,
+    "formal_scientific_input_read": false,
+    "real_provider_api_calls": 0,
+    "real_scientific_tool_calls": 0,
+    "installation": false,
+    "push": false,
+    "workspace_production_mutated": false,
+    "old_test_assertions_mutated": false,
+    "explicit_sensitive_file_reads": false,
+    "guard": "existing cli_model_progress_support+offline_managed_bootstrap Python file/network/process audit guards; only individually registered new scripts; synthetic env",
+    "material_limit": "incident run03 nested bash -lc executed host login profile; indirect profile-introduced reads UNKNOWN; final run04 nonlogin same-body component only. Initial host exec login banner also recorded in README. Do not claim entire run zero host profile access.",
+    "watchdogs": "standard launch180s; bootstrap traceback70s; entry launcher per-case bounded. External timeout is not business stop."
+  },
+  "commit": {
+    "scope": [
+      "docs/audits/execution_architecture_20260914_unified_a1/",
+      "tests/execution_architecture_audit_a1/"
+    ],
+    "hash_resolution": "git log -1 --format=%H -- docs/audits/execution_architecture_20260914_unified_a1/README.md",
+    "parent_is_test_baseline": true,
+    "push": false,
+    "full_hash_returned_to_user": true,
+    "clean_clone_reproducibility": "NOT_CLAIMED: depends on explicitly manifested pre-existing dirty/untracked safe fixtures"
+  },
+  "reviewable_design": "fix_plan.md"
+}

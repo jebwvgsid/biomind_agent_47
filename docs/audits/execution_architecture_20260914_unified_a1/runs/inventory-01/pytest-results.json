@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016443151980638504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 5.296814238652587,
+    "failure": "def test_current_registry_and_loaded_bytes():\n        from agent_core.skill_manager import SkillManager\n        from agent_core.workflow import runtime_graph, outcomes\n        from agent_core import step_effects, plan_contract, candidate_repair_policy\n        from prompts import manager\n        root = Path(__file__).resolve().parents[2]\n        sm = SkillManager(str(root / 'skills'))\n        ids = [s['_skill_id'] for s in sm.discovered_skills]\n        registry = sm.get_execution_capability_registry(ids)\n        rows = []\n        for capability, declaration in sorted(registry.items()):\n            rows.append({'capability': capability, 'declaration': declaration})\n        modules = {}\n        for name, module in list(sys.modules.items()):\n            raw = getattr(module, '__file__', None)\n            if raw and Path(raw).is_relative_to(root) and Path(raw).is_file():\n                modules[name] = {'file': raw, 'sha256': hashlib.sha256(Path(raw).read_bytes()).hexdigest()}\n        result = {'catalog': sm.catalog_status(), 'skill_count': len(ids), 'capability_count': len(rows),\n                  'skills': [{'id': s['_skill_id'], 'path': s['_skill_md'], 'sha256': s['_skill_content_hash']}\n                             for s in sm.discovered_skills],\n                  'capabilities': rows, 'loaded_modules': modules,\n                  'runtime_registry': 'rebuilt from public Skill declarations; host installation registry not loaded',\n                  'real_provider_calls': 0, 'scientific_processes': 0,\n                  'coverage': 'CURRENT_BEHAVIOR_VERIFIED: actual SkillManager declaration consumer; no capability availability claim'}\n        out = Path(os.environ['BIOMIND_GER_ARTIFACTS']) / 'registry_inventory.json'\n        out.write_text(json.dumps(result, ensure_ascii=False, indent=2, default=str) + '\\n')\n        assert sm.catalog_complete, sm.catalog_errors\n>       assert 'genomics.snpeff_annotation.check_contig_compatibility' in registry\nE       AssertionError: assert 'genomics.snpeff_annotation.check_contig_compatibility' in {'3d.dna.3d.dna.analysis.execute': {'schema_version': 1, 'capability_id': '3d.dna.3d.dna.analysis.execute', 'selected_...rtment.execute', 'selected_skill_id': '3d-dna/differential-compartment', 'required_runtime_binding_ids': [], ...}, ...}\n\ntests/execution_architecture_audit_a1/test_inventory.py:35: AssertionError"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00023111794143915176,
+    "failure": ""
+  }
+]

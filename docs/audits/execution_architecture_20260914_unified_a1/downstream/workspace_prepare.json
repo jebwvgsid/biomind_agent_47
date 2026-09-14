@@ -1,0 +1,555 @@
+{
+  "run": "d",
+  "witness_pass": true,
+  "fix_pass": false,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 1
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "final_audit"
+  ],
+  "task_status": "completed",
+  "plan_approval": {
+    "approval_id": "approval-a070320343008d94287b",
+    "status": "approved",
+    "plan_version": null,
+    "snapshot_ref": null
+  },
+  "attempts": [
+    {
+      "attempt": "attempt_32fb4fe0681fff84a5c6",
+      "stdout": "welcome liusiqi to use agis hpc\ngroup name is zhangxingtan\n*****************************************************\nstorage      used_cap_G   quota_cap_G  status      \n-----------------------------------------------------\npub-home            43605        50000         WORK\npub-share           47293        50011         WORK\nscr-share               0            9         WORK\nvol1-share              0            1         WORK\nvol2-share         129159       135000         WORK\n*****************************************************\n\u001b[31m vol2-share配额报警！ \u001b[0m\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\": 1, \"produces_artifacts\": [{\"identity\": \"plan-artifact-75ae62f79140e8622b5317c8\", \"path\": \"/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-75ae62f79140e8622b5317c8\"}], \"produces_observations\": [{\"identity\": \"database_layout_prepared\", \"value\": true}]}\n",
+      "stderr": "",
+      "rc": 0,
+      "approved_sha256": "c962ed33eddc0fe74b61ef2b4747d596b720b42c35b462b53ec814f13696dc0f",
+      "executed_sha256": "14905c9ba34c8c088ed69bb93d34a7dc3bf9375c6497b95d0694c59d62ccec40"
+    }
+  ],
+  "commit_receipts": {
+    "commit-step-6fda293737ee57f4f60d0217": {
+      "schema_version": 1,
+      "request_fingerprint": "6fda293737ee57f4f60d0217d5601d908f40fbecda2f96f543c1f1872de9f0ec",
+      "outcome": {
+        "schema_version": 1,
+        "type": "plan_complete",
+        "summary": "Verified final step committed; final audit is required.",
+        "scope": {
+          "task_id": "a1-downstream-workspace_prepare"
+        },
+        "payload": {
+          "commit_id": "commit-step-6fda293737ee57f4f60d0217",
+          "receipt": "typed-step-commit:commit-step-6fda293737ee57f4f60d0217",
+          "before_state_generation": 34,
+          "after_state_generation": 35,
+          "completed_step_id": "prepare_database",
+          "accepted_binding_refs": [
+            "plan-binding-d4b7ea89dbfc5a7a8bd4",
+            "plan-binding-0e3abf8b109b61ece3a0"
+          ],
+          "accepted_artifact_refs": [
+            "artifact_9884e782d49582a0bd52@attempt_32fb4fe0681fff84a5c6"
+          ],
+          "accepted_effect_refs": [
+            "genome_version",
+            "snpeff_db",
+            "database_layout_prepared",
+            "workspace-receipt-155b0ac28263ecdfeb93f448",
+            "attempt_32fb4fe0681fff84a5c6",
+            "validation-a0efe47db1087d52f359",
+            "action_04c59d6377f0e75c",
+            "artifact_9884e782d49582a0bd52@attempt_32fb4fe0681fff84a5c6",
+            "plan-artifact-75ae62f79140e8622b5317c8"
+          ],
+          "completion_report_ref": "completion-report-d37da05750fa3df653fef4b1c460f5361db3d878b3390e3119e27348379a1070",
+          "semantic_decision_ref": "semantic-decision-e8de668f0b08aaad2e6e1a8f534ca33d98915069a579bdb43b3a9c246e6a2a08",
+          "semantic_consumption_ref": "completion-consumption-2a144b78994c081da00dfc9c17d99c5226a93abb21357a366eb1d6bad4ec2ab5"
+        },
+        "evidence_refs": [
+          "validation-a0efe47db1087d52f359",
+          "completion-report-d37da05750fa3df653fef4b1c460f5361db3d878b3390e3119e27348379a1070",
+          "semantic-decision-e8de668f0b08aaad2e6e1a8f534ca33d98915069a579bdb43b3a9c246e6a2a08",
+          "completion-consumption-2a144b78994c081da00dfc9c17d99c5226a93abb21357a366eb1d6bad4ec2ab5"
+        ]
+      },
+      "successor_projection": {
+        "current_step_id": "",
+        "plan_id": "plan_b26db9b451e2557c2d57",
+        "plan_version": "plan_v1",
+        "recovery_outcome": {},
+        "generate_seed": {}
+      }
+    }
+  },
+  "current_validation_id": "validation-a0efe47db1087d52f359",
+  "current_verification": "verified",
+  "final_audit_type": "task_verified",
+  "parser_receipt": {
+    "schema_version": 1,
+    "parser_id": "biomind.structured_effect_emission.v1",
+    "raw_stdout_sha256": "f38b41ed84f9acbd2af324b6cd2999f425da414302352915dcb0b7893ebdebea",
+    "emission_count": 1,
+    "status": "parsed",
+    "issues": [],
+    "emission_contract": {
+      "schema_version": 1,
+      "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+      "approved_observation_ids": [
+        "database_layout_prepared"
+      ],
+      "examples": [
+        "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"database_layout_prepared\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+      ],
+      "rules": [
+        "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+        "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+        "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+        "Reader errors and sampling limits do not establish absence or full scientific validity."
+      ]
+    },
+    "scope": {
+      "task_id": "a1-downstream-workspace_prepare",
+      "plan_id": "plan_b26db9b451e2557c2d57",
+      "plan_version": "plan_v1",
+      "step_id": "prepare_database",
+      "action_id": "action_04c59d6377f0e75c",
+      "attempt_id": "attempt_32fb4fe0681fff84a5c6"
+    }
+  },
+  "observations": [
+    {
+      "identity": "database_layout_prepared",
+      "value": true
+    }
+  ],
+  "accepted_binding_refs": {
+    "genome_version": "plan-binding-d4b7ea89dbfc5a7a8bd4",
+    "snpeff_db": "plan-binding-0e3abf8b109b61ece3a0"
+  },
+  "workspace_attestation": {
+    "attempt_id": "attempt_32fb4fe0681fff84a5c6",
+    "finished_at": "2026-09-14T13:21:55.165+00:00",
+    "intents": [
+      {
+        "action_digest": "e6975050253321972ddca4f3e83a30527361295aac8fc5281e8fbd1eea880dea",
+        "action_id": "action_04c59d6377f0e75c",
+        "after_evidence": {
+          "entries": [
+            {
+              "exists": true,
+              "inode": 10383968,
+              "kind": "directory",
+              "mtime_ns": 1789392114991470044,
+              "relative_path": "data",
+              "size": 4096,
+              "symlink": false
+            },
+            {
+              "exists": true,
+              "inode": 10383969,
+              "kind": "directory",
+              "mtime_ns": 1789392114992470045,
+              "relative_path": "data/genomes",
+              "size": 4096,
+              "symlink": false
+            },
+            {
+              "exists": true,
+              "inode": 10383970,
+              "kind": "directory",
+              "mtime_ns": 1789392114993470046,
+              "relative_path": "data/synthetic_v1",
+              "size": 4096,
+              "symlink": false
+            },
+            {
+              "content_hash": "sha256:a9d8ad545289bb206855d1e56c20e011ed05bb9cf0d430f67a25243b4c4c224f",
+              "exists": true,
+              "inode": 10383971,
+              "kind": "file",
+              "mtime_ns": 1789392114992470045,
+              "relative_path": "data/genomes/synthetic_v1.fa",
+              "size": 16,
+              "symlink": false
+            },
+            {
+              "content_hash": "sha256:24d8c46d05d4aef1e5858d8c75ec45068c64472b342b951ac56861c32ab59e10",
+              "exists": true,
+              "inode": 10383972,
+              "kind": "file",
+              "mtime_ns": 1789392114993470046,
+              "relative_path": "data/synthetic_v1/genes.gtf",
+              "size": 54,
+              "symlink": false
+            }
+          ],
+          "limits": {
+            "hash_file_limit": 1048576,
+            "max_depth": 8,
+            "max_entries": 512
+          },
+          "reliable": true,
+          "root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+          "root_state": {
+            "exists": true,
+            "inode": 10383967,
+            "kind": "directory",
+            "mtime_ns": 1789392114991470044,
+            "size": 4096,
+            "symlink": false
+          },
+          "snapshot_digest": "sha256:98849a296d47185bc33c65584b7c6af189b2b21491905e31998b003fcbb56d42",
+          "truncated": false
+        },
+        "allow_idempotent_revalidation": true,
+        "attempt_id": "attempt_32fb4fe0681fff84a5c6",
+        "before_evidence": {
+          "entries": [],
+          "limits": {
+            "hash_file_limit": 1048576,
+            "max_depth": 8,
+            "max_entries": 512
+          },
+          "reliable": true,
+          "root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+          "root_state": {
+            "exists": false,
+            "kind": "missing",
+            "symlink": false
+          },
+          "snapshot_digest": "sha256:465753f3bcb2ac8a77f6f6c24a7e67ea27577047f462e71be327e0e8f6ebf40b",
+          "truncated": false
+        },
+        "binding_revision": 1,
+        "canonical_resource_id": "plan-artifact-ca2d16a76f8500945e981367",
+        "effect_contract_hash": "sha256:906ff68357a80c5db759ddbfbcf7631269d736b9504af4ae0b47850806393784",
+        "evidence_contract": {
+          "allow_idempotent_revalidation": true,
+          "collector": "bounded_filesystem_snapshot_v1",
+          "postconditions": [
+            {
+              "kind": "directory_exists",
+              "relative_path": "data"
+            },
+            {
+              "kind": "file_nonempty",
+              "relative_path": "data/genomes/{binding:genome_version}.fa"
+            },
+            {
+              "kind": "file_nonempty",
+              "relative_path": "data/{binding:genome_version}/genes.gtf"
+            }
+          ],
+          "schema_version": 1
+        },
+        "formal_concrete_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+        "intent_contract_hash": "sha256:b0946747a2606e648c5cc347754cab403d9d2c3509671572673cd8224bdae17d",
+        "intent_id": "mutation-intent-810db3b088ea7915a1625242",
+        "mutation": "prepare_database",
+        "operation": "prepare_database",
+        "plan_handle": "plan-artifact-ca2d16a76f8500945e981367",
+        "plan_id": "plan_b26db9b451e2557c2d57",
+        "plan_revision": 1,
+        "postcondition_results": [
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "directory_exists",
+            "observed_state": {
+              "exists": true,
+              "inode": 10383968,
+              "kind": "directory",
+              "mtime_ns": 1789392114991470044,
+              "size": 4096,
+              "symlink": false
+            },
+            "postcondition_index": 0,
+            "relative_path": "data",
+            "status": "satisfied"
+          },
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data/genomes/synthetic_v1.fa",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "file_nonempty",
+            "observed_state": {
+              "exists": true,
+              "inode": 10383971,
+              "kind": "file",
+              "mtime_ns": 1789392114992470045,
+              "size": 16,
+              "symlink": false
+            },
+            "postcondition_index": 1,
+            "relative_path": "data/genomes/synthetic_v1.fa",
+            "status": "satisfied"
+          },
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data/synthetic_v1/genes.gtf",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "file_nonempty",
+            "observed_state": {
+              "exists": true,
+              "inode": 10383972,
+              "kind": "file",
+              "mtime_ns": 1789392114993470046,
+              "size": 54,
+              "symlink": false
+            },
+            "postcondition_index": 2,
+            "relative_path": "data/synthetic_v1/genes.gtf",
+            "status": "satisfied"
+          }
+        ],
+        "producer": "biomind.runtime_attester.v1",
+        "receipt_id": "workspace-receipt-155b0ac28263ecdfeb93f448",
+        "resolved_postconditions": [
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "directory_exists",
+            "postcondition_index": 0,
+            "relative_path": "data"
+          },
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data/genomes/synthetic_v1.fa",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "file_nonempty",
+            "postcondition_index": 1,
+            "relative_path": "data/genomes/synthetic_v1.fa"
+          },
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data/synthetic_v1/genes.gtf",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "file_nonempty",
+            "postcondition_index": 2,
+            "relative_path": "data/synthetic_v1/genes.gtf"
+          }
+        ],
+        "resource_kind": "mutable_workspace",
+        "schema_version": 1,
+        "status": "mutated_and_validated",
+        "step_id": "prepare_database",
+        "task_id": "a1-downstream-workspace_prepare"
+      }
+    ],
+    "journal_digest": "sha256:8835c0562bfa1234daa21a119d022d5a6417dc89fc502d5f3bd3ead0abc2b454",
+    "producer": "biomind.runtime_attester.v1",
+    "receipts": [
+      {
+        "action_digest": "e6975050253321972ddca4f3e83a30527361295aac8fc5281e8fbd1eea880dea",
+        "action_id": "action_04c59d6377f0e75c",
+        "after_evidence": {
+          "entries": [
+            {
+              "exists": true,
+              "inode": 10383968,
+              "kind": "directory",
+              "mtime_ns": 1789392114991470044,
+              "relative_path": "data",
+              "size": 4096,
+              "symlink": false
+            },
+            {
+              "exists": true,
+              "inode": 10383969,
+              "kind": "directory",
+              "mtime_ns": 1789392114992470045,
+              "relative_path": "data/genomes",
+              "size": 4096,
+              "symlink": false
+            },
+            {
+              "exists": true,
+              "inode": 10383970,
+              "kind": "directory",
+              "mtime_ns": 1789392114993470046,
+              "relative_path": "data/synthetic_v1",
+              "size": 4096,
+              "symlink": false
+            },
+            {
+              "content_hash": "sha256:a9d8ad545289bb206855d1e56c20e011ed05bb9cf0d430f67a25243b4c4c224f",
+              "exists": true,
+              "inode": 10383971,
+              "kind": "file",
+              "mtime_ns": 1789392114992470045,
+              "relative_path": "data/genomes/synthetic_v1.fa",
+              "size": 16,
+              "symlink": false
+            },
+            {
+              "content_hash": "sha256:24d8c46d05d4aef1e5858d8c75ec45068c64472b342b951ac56861c32ab59e10",
+              "exists": true,
+              "inode": 10383972,
+              "kind": "file",
+              "mtime_ns": 1789392114993470046,
+              "relative_path": "data/synthetic_v1/genes.gtf",
+              "size": 54,
+              "symlink": false
+            }
+          ],
+          "limits": {
+            "hash_file_limit": 1048576,
+            "max_depth": 8,
+            "max_entries": 512
+          },
+          "reliable": true,
+          "root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+          "root_state": {
+            "exists": true,
+            "inode": 10383967,
+            "kind": "directory",
+            "mtime_ns": 1789392114991470044,
+            "size": 4096,
+            "symlink": false
+          },
+          "snapshot_digest": "sha256:98849a296d47185bc33c65584b7c6af189b2b21491905e31998b003fcbb56d42",
+          "truncated": false
+        },
+        "attempt_id": "attempt_32fb4fe0681fff84a5c6",
+        "attestation_status": "mutated_and_validated",
+        "attested": true,
+        "before_evidence": {
+          "entries": [],
+          "limits": {
+            "hash_file_limit": 1048576,
+            "max_depth": 8,
+            "max_entries": 512
+          },
+          "reliable": true,
+          "root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+          "root_state": {
+            "exists": false,
+            "kind": "missing",
+            "symlink": false
+          },
+          "snapshot_digest": "sha256:465753f3bcb2ac8a77f6f6c24a7e67ea27577047f462e71be327e0e8f6ebf40b",
+          "truncated": false
+        },
+        "binding_revision": 1,
+        "canonical_resource_id": "plan-artifact-ca2d16a76f8500945e981367",
+        "changed_during_attempt": true,
+        "effect": "mutation",
+        "effect_contract_hash": "sha256:906ff68357a80c5db759ddbfbcf7631269d736b9504af4ae0b47850806393784",
+        "finished_at": "2026-09-14T13:21:55.165+00:00",
+        "formal_concrete_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+        "immutable_hash": "sha256:bea8210d87a47d6281593f3318eeb2f6cf4cf5b854462eaa6839db1132b60266",
+        "intent_id": "mutation-intent-810db3b088ea7915a1625242",
+        "mutation": "prepare_database",
+        "operation": "prepare_database",
+        "plan_handle": "plan-artifact-ca2d16a76f8500945e981367",
+        "plan_id": "plan_b26db9b451e2557c2d57",
+        "plan_revision": 1,
+        "postcondition_results": [
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "directory_exists",
+            "observed_state": {
+              "exists": true,
+              "inode": 10383968,
+              "kind": "directory",
+              "mtime_ns": 1789392114991470044,
+              "size": 4096,
+              "symlink": false
+            },
+            "postcondition_index": 0,
+            "relative_path": "data",
+            "status": "satisfied"
+          },
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data/genomes/synthetic_v1.fa",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "file_nonempty",
+            "observed_state": {
+              "exists": true,
+              "inode": 10383971,
+              "kind": "file",
+              "mtime_ns": 1789392114992470045,
+              "size": 16,
+              "symlink": false
+            },
+            "postcondition_index": 1,
+            "relative_path": "data/genomes/synthetic_v1.fa",
+            "status": "satisfied"
+          },
+          {
+            "formal_target_path": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367/data/synthetic_v1/genes.gtf",
+            "formal_workspace_root": "/tmp/biomind-a1-downstream-0914-d/results/scratch/biomind-plan-local-graph-4pgmbgp2/task_outputs/a1-downstream-workspace_prepare/plan_artifacts/plan-artifact-ca2d16a76f8500945e981367",
+            "kind": "file_nonempty",
+            "observed_state": {
+              "exists": true,
+              "inode": 10383972,
+              "kind": "file",
+              "mtime_ns": 1789392114993470046,
+              "size": 54,
+              "symlink": false
+            },
+            "postcondition_index": 2,
+            "relative_path": "data/synthetic_v1/genes.gtf",
+            "status": "satisfied"
+          }
+        ],
+        "postcondition_satisfied": true,
+        "process_exit_code": 0,
+        "producer": "biomind.runtime_attester.v1",
+        "receipt_id": "workspace-receipt-155b0ac28263ecdfeb93f448",
+        "resource_kind": "mutable_workspace",
+        "runtime_access_evidence": {},
+        "runtime_access_evidence_validation": {
+          "code": "RUNTIME_ACCESS_EVIDENCE_MISSING",
+          "valid": false
+        },
+        "schema_version": 1,
+        "step_id": "prepare_database",
+        "task_id": "a1-downstream-workspace_prepare",
+        "unknown_reason": "",
+        "workspace_ref": "plan-artifact-ca2d16a76f8500945e981367"
+      }
+    ],
+    "schema_version": 1,
+    "started_at": "2026-09-14T13:21:54.616+00:00",
+    "status": "completed"
+  },
+  "workspace_receipt_validations": [
+    {
+      "receipt_id": "workspace-receipt-155b0ac28263ecdfeb93f448",
+      "valid": true,
+      "code": "WORKSPACE_MUTATION_RECEIPT_VALID",
+      "mismatches": {},
+      "producer": "biomind.runtime_attester.v1",
+      "immutable_hash_valid": true
+    }
+  ],
+  "report_receipts": {},
+  "stop_reason": {},
+  "candidate_repair_events": 0,
+  "source_scope": {
+    "task_id": "a1-downstream-workspace_prepare",
+    "plan_id": "plan_b26db9b451e2557c2d57",
+    "plan_version": "plan_v1",
+    "plan_revision": 1,
+    "state_generation": 36
+  },
+  "production_scope": "formal prepare_database, real isolated files and attester",
+  "physical_report": "NOT_PRODUCED_OPTIONAL_OUTPUT; successful FinalAudit does not mean file delivery",
+  "published_generate_fragments": [
+    {
+      "type": "human",
+      "name": "approved_effect_emission_template",
+      "content": "{\"available\": true, \"declarations\": {\"explicit_side_effects\": [], \"produces_artifacts\": [{\"identity\": \"plan-artifact-75ae62f79140e8622b5317c8\", \"required_fields\": []}], \"produces_observations\": [{\"identity\": \"database_layout_prepared\", \"required_fields\": []}]}, \"marker\": \"# BIOMIND_EFFECT_HELPER\", \"publication_mode\": \"declared_observed_subset\", \"rules\": [\"Return ONE complete executable block for this step and only the protocol's short public explanation. Never repeat the framework helper or emit multiple alternative blocks.\", \"In one Python script or one single-quoted Python heredoc, put the exact marker # BIOMIND_EFFECT_HELPER on its own unindented line. BioMind expands its frozen code before checking and approval. Do not expand or rewrite the helper yourself.\", \"Call print(emit_effect_evidence(actual_facts)) with a native Python data object. Pass paths/labels as argv, not Python source interpolation; avoid nested python -c / json.dumps / command substitution / json.loads.\", \"Supply identity-keyed actual_facts only after performing the real checks or operations. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.\", \"Publication accepts a subset of the approved declarations. Omit artifacts that were not produced; do not create a path or placeholder to publish blocked facts. Omission itself asserts nothing. All supplied identities and required fields remain checked.\", \"Artifact facts require the actual path. Side-effect and observation facts require every declared field; observations carry the actual value, including failure or unknown. Declarations alone are not evidence.\", \"Historical failed scripts/stdout are diagnostic evidence; their failed machine emission must not be reused. This current template takes precedence.\", \"No emission or rc=0 alone grants completion; Execute, verification and CommitStep remain authoritative.\"], \"schema_version\": 1, \"step_id\": \"prepare_database\", \"template_sha256\": \"a7c4b651d5bf37c174d3c85f729ca7a86976e9953e49010c6bd8799d9a3281df\"}"
+    }
+  ],
+  "artifact_and_handle_visibility_asserted_in_executed_test": true
+}

@@ -1,0 +1,81 @@
+{
+  "invocation": {
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/tests/execution_architecture_audit_a1/run_entry_guarded.py",
+      "--child",
+      "/tmp/biomind-a1-entry-20260914-6/export",
+      "-s",
+      "-vv",
+      "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]"
+    ],
+    "environment": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "PYTHONPATH": "",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+      "TMPDIR": "/tmp/biomind-a1-entry-memory-final-normal/scratch",
+      "BIOMIND_WIKI_ENABLED": "0",
+      "LOG_LEVEL": "CRITICAL",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-a1-entry-memory-final-normal/pytest-results.json",
+      "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-a1-entry-memory-final-normal",
+      "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-a1-entry-memory-final-normal",
+      "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-a1-entry-memory-final-normal/scratch/executor-logs"
+    },
+    "guard": "unchanged cli_model_progress_support.guarded_child + offline_managed_bootstrap",
+    "timeout_seconds": 120,
+    "returncode": 0
+  },
+  "pytest": [
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.03867729380726814,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 7.885160623118281,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00040842778980731964,
+      "failure": ""
+    }
+  ],
+  "source_unchanged": true,
+  "observations": [
+    {
+      "source": "/tmp/biomind-a1-entry-memory-final-normal/entry-memory-normal.json",
+      "sha256": "021f502cf7e5ec4d52c5afada5adc82760c9dca248145991460b528bacfaa783",
+      "observed": {
+        "scope": "isolated component witness, not FIX PASS or E2E",
+        "mode": "normal",
+        "provider_calls": 1,
+        "registration": "BioAnalystAgent._profile_node consultant → real MemoryManager.maybe_compress → real _summarize_with_prompt",
+        "fallback_excerpt_present": false,
+        "compression_count": 1,
+        "synthetic_trigger": {
+          "max_tokens": 20,
+          "keep_recent_tokens": 40,
+          "user_messages": 1,
+          "assistant_messages": 40
+        },
+        "upstream_node": "synthetic component NodeResult; no approved/ready/succeeded state inserted",
+        "incident_legacy_or_compaction_enabled": "UNKNOWN"
+      }
+    }
+  ],
+  "source_signature": "8d285792bc4dfb40189ac6773b9825dedbb564912357f8449e3847f47efa66c4"
+}

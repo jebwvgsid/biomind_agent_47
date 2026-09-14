@@ -1,0 +1,96 @@
+{
+  "witness_pass": true,
+  "fix_pass": false,
+  "component_only": true,
+  "execution_count": 0,
+  "same_candidate": true,
+  "different_error": true,
+  "events": [
+    {
+      "candidate_event_id": "a1-request-1",
+      "candidate_fingerprint": "3b0fdcf729d3f2479c157a5c5a78030bc399d4f19141b6e587388d41c2e361d7",
+      "error_fingerprint": "c2f19db25e9434936d02adac21232e4be7daad5ecf5fe3613357f7f7e31cdb34",
+      "repair_ordinal": 1,
+      "repair_limit": 4,
+      "progress_proven": true,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "commit-task",
+          "task_revision": 1,
+          "plan_id": "plan_80d6d459041acc58f401",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-1"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 1,
+        "corrections_authorized_before": 0,
+        "corrections_observed_before_rejection": 0,
+        "remaining_before_authorization": 4,
+        "category": "candidate_contract",
+        "correction_authorized": true,
+        "corrections_authorized": 1,
+        "remaining": 3
+      },
+      "termination_reason": "",
+      "reason_code": "ACTION_OPERATION_SCOPE_MISMATCH",
+      "terminal_reason_code": "",
+      "scope": {
+        "task_id": "commit-task",
+        "task_revision": 1,
+        "plan_id": "plan_80d6d459041acc58f401",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-1"
+      }
+    },
+    {
+      "candidate_event_id": "a1-request-2",
+      "candidate_fingerprint": "3b0fdcf729d3f2479c157a5c5a78030bc399d4f19141b6e587388d41c2e361d7",
+      "error_fingerprint": "afa2256d75ec00206c7e3794d038ef6bc972a962f563246161ceb5869ef92196",
+      "repair_ordinal": 2,
+      "repair_limit": 4,
+      "progress_proven": true,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "commit-task",
+          "task_revision": 1,
+          "plan_id": "plan_80d6d459041acc58f401",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-1"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 2,
+        "corrections_authorized_before": 1,
+        "corrections_observed_before_rejection": 1,
+        "remaining_before_authorization": 3,
+        "category": "candidate_contract",
+        "correction_authorized": false,
+        "corrections_authorized": 1,
+        "remaining": 3
+      },
+      "termination_reason": "repair_no_progress",
+      "reason_code": "ADDITIONAL_BINDING_ERROR",
+      "terminal_reason_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+      "scope": {
+        "task_id": "commit-task",
+        "task_revision": 1,
+        "plan_id": "plan_80d6d459041acc58f401",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-1"
+      }
+    }
+  ],
+  "policy_reason": "corrective_generate_no_progress",
+  "replay_idempotent": true
+}

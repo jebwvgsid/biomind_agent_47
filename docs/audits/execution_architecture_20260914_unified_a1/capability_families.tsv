@@ -1,0 +1,97 @@
+skill	capability	operation	produces_artifacts	produces_observations	produces_bindings	workspace_mutations	explicit_side_effects	required_runtime	coverage
+3d-dna/3d-dna-analysis	3d.dna.3d.dna.analysis.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/calder2-subcompartment	3d.dna.calder2.subcompartment.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/compartment-calling	3d.dna.compartment.calling.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/differential-compartment	3d.dna.differential.compartment.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/differential-tad	3d.dna.differential.tad.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/loop-calling	3d.dna.loop.calling.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/loop-classification	3d.dna.loop.classification.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/tad-boundary-change	3d.dna.tad.boundary.change.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+3d-dna/tad-calling	3d.dna.tad.calling.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-cnn-attention-genomic-prediction	crop.breeding.crop.cnn.attention.genomic.prediction.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-conserved-transcriptome-ml	crop.breeding.crop.conserved.transcriptome.ml.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-diff-visualizer	crop.breeding.crop.diff.visualizer.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-dnngp-multiomics-prediction	crop.breeding.crop.dnngp.multiomics.prediction.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-genomic-prediction	crop.breeding.crop.genomic.prediction.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gp-waiter-transformer	crop.breeding.crop.gp.waiter.transformer.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gs-bglr-bayesian	crop.breeding.crop.gs.bglr.bayesian.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gs-rrblup-gblup	crop.breeding.crop.gs.rrblup.gblup.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gs-sommer-multikernel-gxe	crop.breeding.crop.gs.sommer.multikernel.gxe.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gwas-gapit3-model-compare	crop.breeding.crop.gwas.gapit3.model.compare.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gwas-gemma-lmm	crop.breeding.crop.gwas.gemma.lmm.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gwas-pav-sv-pangenome	crop.breeding.crop.gwas.pav.sv.pangenome.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gwas-pipeline	crop.breeding.crop.gwas.pipeline.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gwas-qc-plink2-vcftools	crop.breeding.crop.gwas.qc.plink2.vcftools.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gwas-rmvp-large-scale	crop.breeding.crop.gwas.rmvp.large.scale.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-gxe-environmental-index-prediction	crop.breeding.crop.gxe.environmental.index.prediction.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-pangenome-sv-genomic-selection	crop.breeding.crop.pangenome.sv.genomic.selection.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-popgen-dnasp	crop.breeding.crop.popgen.dnasp.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-rnaseq-de	crop.breeding.crop.rnaseq.de.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-rnaseq-pipeline	crop.breeding.crop.rnaseq.pipeline.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-smart-breeding-strategy	crop.breeding.crop.smart.breeding.strategy.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+crop-breeding/crop-wgs-to-marker-score	crop.breeding.crop.wgs.to.marker.score.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+databases/ensembl/ensembl-database	databases.ensembl.ensembl.database.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+databases/ncbi/entrez-fetch	databases.ncbi.entrez.fetch.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+databases/ncbi/entrez-link	databases.ncbi.entrez.link.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+databases/ncbi/entrez-search	databases.ncbi.entrez.search.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+databases/ncbi/geo-data	databases.ncbi.geo.data.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+enrichment-analysis	enrichment.analysis.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+epigenomics/methylation/aporec-methylation-workflow	epigenomics.methylation.aporec.methylation.workflow.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+epigenomics/methylation/aporec-porec-contact	epigenomics.methylation.aporec.porec.contact.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+epigenomics/methylation/dorado-modbase-prep	epigenomics.methylation.dorado.modbase.prep.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+epigenomics/methylation/gene-plot	epigenomics.methylation.gene.plot.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+epigenomics/methylation/modkit-dmr	epigenomics.methylation.modkit.dmr.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+epigenomics/methylation/modkit-pileup	epigenomics.methylation.modkit.pileup.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/assembly	genomics.assembly.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/assembly-variant-assemblytics	genomics.assembly.variant.assemblytics.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/assembly-variant-svim-asm	genomics.assembly.variant.svim.asm.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/assembly-variant-syri	genomics.assembly.variant.syri.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/long-read-sv-cutesv	genomics.long.read.sv.cutesv.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/long-read-sv-sniffles-survivor	genomics.long.read.sv.sniffles.survivor.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/long-read-sv-sniffles2	genomics.long.read.sv.sniffles2.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/pacbio-sv-pbsv	genomics.pacbio.sv.pbsv.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/reseq-variant-workflow	genomics.reseq.variant.workflow.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/rnaseq-variant-calling	genomics.rnaseq.variant.calling.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/snpeff-annotation	genomics.snpeff_annotation.annotate_variants	annotate_variants	"[""artifact.annotated_vcf""]"	[]	[]	[]	[]	"[""runtime.java.bin"", ""runtime.snpeff.jar""]"	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/snpeff-annotation	genomics.snpeff_annotation.build_database	build_database	[]	"[""snpeff_database_ready""]"	[]	"[{""workspace_ref"": ""artifact.snpeff_data_dir"", ""mutation"": ""build_database"", ""requires_available"": true, ""requires_state"": ""database_layout_prepared"", ""available_after_success"": true, ""establishes_state"": ""snpeff_database_ready"", ""contract_source"": ""genomics.snpeff_annotation.build_database.workspace_mutations"", ""contract_revision"": ""snpeff-workspace-transition-v1"", ""evidence_contract"": {""schema_version"": 1, ""collector"": ""bounded_filesystem_snapshot_v1"", ""allow_idempotent_revalidation"": true, ""postconditions"": [{""kind"": ""file_nonempty"", ""relative_path"": ""data/{binding:genome_version}/snpEffectPredictor.bin""}]}}]"	[]	"[""runtime.java.bin"", ""runtime.snpeff.jar""]"	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/snpeff-annotation	genomics.snpeff_annotation.check_contig_compatibility	check_contig_compatibility	[]	"[{""observation_id"": ""contigs_compatible"", ""predicate"": {""predicate_id"": ""genomics.snpeff.contigs_compatible.v1"", ""operator"": ""boolean_equals"", ""expected"": true, ""parser_id"": ""biomind.genomics.contig_compatibility.v1"", ""parser_entrypoint"": ""agent_core.genomics_contig_parser:build_contig_compatibility_receipt"", ""failure_disposition"": ""correction_required"", ""missing_disposition"": ""inspection_required"", ""applicability"": {""schema_version"": 1, ""kind"": ""plan_contains_any_execution_capability"", ""execution_capability_ids"": [""genomics.snpeff_annotation.prepare_database"", ""genomics.snpeff_annotation.build_database"", ""genomics.snpeff_annotation.annotate_variants"", ""genomics.snpeff_annotation.summarize_ann"", ""genomics.snpeff_annotation.finalize_outputs""]}}, ""evidence_contract"": {""required_fields"": [""value""]}}]"	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/snpeff-annotation	genomics.snpeff_annotation.finalize_outputs	finalize_outputs	"[""artifact.report"", ""artifact.reproduce_script"", ""artifact.stage_status""]"	"[""final_outputs_recorded""]"	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/snpeff-annotation	genomics.snpeff_annotation.prepare_database	prepare_database	"[""artifact.snpeff_config""]"	"[""database_layout_prepared""]"	"[""genome_version"", ""snpeff_db""]"	"[{""workspace_ref"": ""artifact.snpeff_data_dir"", ""mutation"": ""prepare_database"", ""requires_available"": false, ""available_after_success"": true, ""establishes_state"": ""database_layout_prepared"", ""contract_source"": ""genomics.snpeff_annotation.prepare_database.workspace_mutations"", ""contract_revision"": ""snpeff-workspace-transition-v1"", ""evidence_contract"": {""schema_version"": 1, ""collector"": ""bounded_filesystem_snapshot_v1"", ""allow_idempotent_revalidation"": true, ""postconditions"": [{""kind"": ""directory_exists"", ""relative_path"": ""data""}, {""kind"": ""file_nonempty"", ""relative_path"": ""data/genomes/{binding:genome_version}.fa""}, {""kind"": ""file_nonempty"", ""relative_path"": ""data/{binding:genome_version}/genes.gtf""}]}}]"	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/snpeff-annotation	genomics.snpeff_annotation.summarize_ann	summarize_ann	"[""artifact.ann_summary""]"	"[""ann_summary_completed""]"	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-bcftools-snp-indel	genomics.wgs.bcftools.snp.indel.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-cnvnator-cnv	genomics.wgs.cnvnator.cnv.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-gatk-snp-indel	genomics.wgs.gatk.snp.indel.execute	produce_files	"[{""artifact_id"": ""generated_artifact"", ""resource_kind"": ""immutable_artifact""}]"	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-gatk-snp-indel	genomics.wgs.gatk.snp.indel.inspect	inspect	[]	"[{""observation_id"": ""validation_observation"", ""evidence_contract"": {""required_fields"": [""value""]}}]"	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-lumpy-sv	genomics.wgs.lumpy.sv.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-manta-sv	genomics.wgs.manta.sv.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-short-read-mapping	genomics.wgs.short.read.mapping.execute	produce_files	"[{""artifact_id"": ""generated_artifact"", ""resource_kind"": ""immutable_artifact""}]"	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-short-read-mapping	genomics.wgs.short.read.mapping.inspect	inspect	[]	"[{""observation_id"": ""validation_observation"", ""evidence_contract"": {""required_fields"": [""value""]}}]"	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-short-read-mapping	genomics.wgs.short.read.mapping.prepare_reference	prepare_reference	"[{""artifact_id"": ""reference_indexes"", ""resource_kind"": ""immutable_artifact""}]"	[]	[]	[]	"[{""effect_id"": ""create_reference_indexes"", ""evidence_contract"": {""required_fields"": [""reference_resource_ref"", ""index_artifacts""]}}]"	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+genomics/wgs-variant-calling	genomics.wgs.variant.calling.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+open-chromatin/modkit-cpu	open.chromatin.modkit.cpu.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+population-genetics/gwas-emmax-association	population.genetics.gwas.emmax.association.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+population-genetics/gwas-ldblock-candidate-region	population.genetics.gwas.ldblock.candidate.region.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+population-genetics/gwas-manhattan-qq-plot	population.genetics.gwas.manhattan.qq.plot.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+population-genetics/gwas-tassel-glm-mlm	population.genetics.gwas.tassel.glm.mlm.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+population-genetics/gwas-vcf-prep-qc	population.genetics.gwas.vcf.prep.qc.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+population-genetics/popgen-gwas-workflow	population.genetics.popgen.gwas.workflow.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/annotate/basic	scrna.annotate.basic.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/cluster/basic	scrna.cluster.basic.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/de/contrast	scrna.de.contrast.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/de/pseudobulk	scrna.de.pseudobulk.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/enrichment/marker-de	scrna.enrichment.marker.de.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/env/bootstrap	scrna.env.bootstrap.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/ingest/data-download	scrna.ingest.data.download.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/integration/batch-correction	scrna.integration.batch.correction.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/markers/conserved	scrna.markers.conserved.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/markers/find	scrna.markers.find.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/preprocess/basic	scrna.preprocess.basic.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/preprocess/sctransform	scrna.preprocess.sctransform.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/qc/cell-cycle-doublet	scrna.qc.cell.cycle.doublet.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/qc/filter	scrna.qc.filter.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/report/summary	scrna.report.summary.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/trajectory/pseudotime	scrna.trajectory.pseudotime.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+scrna/workflows/ingest-qc	scrna.workflows.ingest.qc.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+sequence/search/local-blast	sequence.search.local.blast.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+sequence/search/remote-blast	sequence.search.remote.blast.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN
+sequence/search/sequence-similarity	sequence.search.sequence.similarity.execute		[]	[]	[]	[]	[]	[]	DECLARATION_LOADED; scientific runtime NOT_RUN

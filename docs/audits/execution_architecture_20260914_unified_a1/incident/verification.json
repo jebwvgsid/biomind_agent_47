@@ -1,0 +1,568 @@
+{
+  "production_modified": false,
+  "historical_business_load": false,
+  "original_script_execution": false,
+  "real_provider_calls": 0,
+  "real_scientific_calls": 0,
+  "runs": [
+    {
+      "root": "/tmp/biomind-a1-incident-01",
+      "source_signature": "bc2c131f9580d1b9e18f7d75d3961f5fe9be0e2d1bf4a71c92d8bb8e52241027",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "source_files": 392,
+      "export_manifest_sha256": "6a31d1f5bd34d709af5b4f4010f0ce537a1b9d70538af25c05ca2285eedb73c6",
+      "pytest_results_sha256": "20b7759a1ed5e19f5a8c32b2d66dee0ec023905fdf1066e9ae4b60e941b35f52",
+      "tests": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_parser_preserves_distinct_representation_candidates",
+          "outcome": "failed",
+          "duration": 0.0066634127870202065
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[bash]",
+          "outcome": "passed",
+          "duration": 0.10755081195384264
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[python]",
+          "outcome": "passed",
+          "duration": 0.07556947227567434
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[argv]",
+          "outcome": "passed",
+          "duration": 2.3496691891923547
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[code]",
+          "outcome": "passed",
+          "duration": 1.9916565576568246
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[repair]",
+          "outcome": "failed",
+          "duration": 3.4188431091606617
+        }
+      ],
+      "status": "FAILURE_RETAINED",
+      "failures": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_parser_preserves_distinct_representation_candidates",
+          "phase": "call",
+          "outcome": "failed",
+          "diagnostic": "def test_parser_preserves_distinct_representation_candidates():\n        script=\"# BIOMIND_EFFECT_HELPER\\nvalues = {str(n) for n in (1, 2)}\\nprint(emit_effect_evidence({'renamed_observation': {'value': False}}))\"\n        fenced='```bash\\n'+script+'\\n```\\nSynthetic public description.'\n        wrapped=json.dumps({'action_json': {'operation':'synthetic_check','code':script}})\n        first=BioAnalystAgent._extract_structured_action_result(fenced)\n        second=BioAnalystAgent._extract_structured_action_result(wrapped)\n        assert first.error['code']=='JSON_DECODE_ERROR'\n        assert first.error['raw_excerpt'].startswith('{str(n)')\n        assert second.error['code']=='ACTION_SCHEMA_REQUIRED_FIELD'\n        assert second.error['field_path']=='action_type'\n        assert candidate_repair_fingerprint(first.candidate)!=candidate_repair_fingerprint(second.candidate)\n        requirements={'operation':'synthetic_check','produced_bindings':{},'consumed_bindings':{},'binding_env':{'declared_mapping':{}}}\n        # Current frozen binding progress does not see JSON decoding/envelope repair.\n>       identities=[BioAnalystAgent._malformed_generate_candidate_identity(fenced,parser_candidate=first.candidate),second.candidate]\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       AttributeError: type object 'BioAnalystAgent' has no attribute '_malformed_generate_candidate_identity'. Did you mean: '_malformed_candidate_receipt_identity'?\n\ntests/execution_architecture_audit_a1/test_incident_generate.py:34: AttributeError"
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[repair]",
+          "phase": "call",
+          "outcome": "failed",
+          "diagnostic": "mode = 'repair'\n\n    @pytest.mark.parametrize('mode',['argv','code','repair'])\n    def test_current_native_generate_and_progress_witness(mode):\n>       asyncio.run(native_scenario(mode))\n\ntests/execution_architecture_audit_a1/test_incident_generate.py:121: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nmode = 'repair'\n\n    async def native_scenario(mode):\n        from tests.test_plan_local_preaction_convergence_v2 import PlanLocalRealGraphTests\n        from tests.ger_fixture_support import configure_protocol,generate_until_ready_or_stopped\n        from agent_core.plan_tracker import load_plan_state\n        case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')\n        case.SKILL_ID='genomics/snpeff-annotation'\n        await case.asyncSetUp()\n        try:\n            configure_protocol(case);case._configure_one_step_no_output_plan()\n            original=case._planner_payload\n            def plan():\n                p=original();s=p['steps'][0]\n                s.update(execution_capability_id='genomics.snpeff_annotation.check_contig_compatibility',operation='check_contig_compatibility',\n                         produces_observations=[{'identity':'contigs_compatible','evidence_contract':{'required_fields':['value']}}])\n                return p\n            case._planner_payload=plan\n            body=shlex.quote(PYTHON)+\" - <<'PY'\\n# BIOMIND_EFFECT_HELPER\\nprint(emit_effect_evidence({'produces_observations': {'contigs_compatible': {'value': False}}}))\\nPY\\n\"\n            def response(payload,ordinal):\n                if mode=='repair':\n                    if ordinal==1:return json.dumps({'operation':'check_contig_compatibility','code':body})\n                    if ordinal==2:return json.dumps({'action_type':'execute','operation':'check_contig_compatibility','code':body,'env':['invalid-parent']})\n                    raise AssertionError('Unexpected third provider call')\n                raw={'action_type':'execute','operation':'check_contig_compatibility','env':{},'outputs':[]}\n                if mode=='argv':raw['argv']=['bash','-lc',body]\n                else:raw.update(code=body,language='bash')\n                return json.dumps(raw)\n            events,requests,state=await generate_until_ready_or_stopped(case,'audit-native-'+mode,response)\n            durable=load_plan_state(case.root,'audit-native-'+mode)\n            outcomes=[v.get('generate_outcome') for e in events for v in e.values() if isinstance(v,dict) and v.get('generate_outcome')]\n            pending=durable['task_state'].get('pending_action') or {}\n            evidence={'mode':mode,'routes':[next(iter(e)) for e in events],'outcomes':outcomes,\n              'provider_calls':len(requests),'first_protocol_has_json':bool(requests and 'Return exactly one raw JSON' in requests[0]['_provider_request']),\n              'helper_rule_says_block':bool(requests and 'Return ONE complete executable block' in requests[0]['_provider_request']),\n              'pending_code':pending.get('code'),'pending_argv':pending.get('argv'),\n              'events':durable['task_state'].get('candidate_repair_state',{}).get('events'),\n              'loaded_source':{'file':str(Path(__import__('bio_agents').__file__)), 'sha256':hashlib.sha256(Path(__import__('bio_agents').__file__).read_bytes()).hexdigest()},\n              'coverage':'real production Consultant/Planner/Plan approval/Generate/parser/candidate ledger; fixture model and CLI approval; stops before Execute'}\n            save('incident-native-'+mode,evidence)\n            if mode=='repair':\n                assert len(requests)==2,outcomes\n                rows=list(evidence['events'].values())\n>               assert len(rows)==2 and rows[0]['candidate_fingerprint']!=rows[1]['candidate_fingerprint']\nE               AssertionError: assert (1 == 2)\nE                +  where 1 = len([{'schema_version': 1, 'event_id': 'candidate-rejection:b3d72b4cb29ada7b88fdc763', 'candidate_event_id': 'candidate-ca...udit-native-repair', 'task_revision': 1, 'plan_id': 'plan_d60bb1c95a8fc56ee09f', 'plan_version': 'plan_v1', ...}, ...}])\n\ntests/execution_architecture_audit_a1/test_incident_generate.py:108: AssertionError"
+        }
+      ],
+      "failure_classification": [
+        "audit test method typo corrected only in new test",
+        "production env-list fingerprint ValueError; independently preserved as new witness"
+      ],
+      "command": "python tests/execution_architecture_audit_a1/export_and_run.py /tmp/biomind-a1-incident-01 --test tests/ger_fixture_support.py --run -q tests/execution_architecture_audit_a1/test_incident_generate.py"
+    },
+    {
+      "root": "/tmp/biomind-a1-incident-02",
+      "source_signature": "dff5ed5a4a7eaf368fafa5c60219f09587182710987519e1f856097721c8f021",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "source_files": 392,
+      "export_manifest_sha256": "9eec798cfc7d6020ad14ed3964e877ae2e33c8c2081be35c887bb11d58fcce6f",
+      "pytest_results_sha256": "c8b88b1e1e0f27907ad98fb94392be8680ced25b5fe9de04c8dfb3ed1ba3918b",
+      "tests": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_parser_preserves_distinct_representation_candidates",
+          "outcome": "passed",
+          "duration": 0.032068231143057346
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[bash]",
+          "outcome": "passed",
+          "duration": 0.1549437679350376
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[python]",
+          "outcome": "passed",
+          "duration": 0.06930385995656252
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[argv]",
+          "outcome": "passed",
+          "duration": 2.303544206544757
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[code]",
+          "outcome": "passed",
+          "duration": 2.0281537864357233
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[repair]",
+          "outcome": "passed",
+          "duration": 3.255620939657092
+        }
+      ],
+      "status": "WITNESS_PASS",
+      "failures": [],
+      "command": "python tests/execution_architecture_audit_a1/export_and_run.py /tmp/biomind-a1-incident-02 --test tests/ger_fixture_support.py --run -q tests/execution_architecture_audit_a1/test_incident_generate.py"
+    },
+    {
+      "root": "/tmp/biomind-a1-incident-03",
+      "source_signature": "38d465c4662b393a2d38824773024142930a3a40ee52d1b7db6912468525575e",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "source_files": 392,
+      "export_manifest_sha256": "728e84bbae55432498b2b9b1fecee242ac69c56b7e6902b7c5356346b8e6e60b",
+      "pytest_results_sha256": "d8ab026021823248f43d2ff45f99a04169ade5016096d36bd1d6330c3e83eac1",
+      "tests": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_parser_preserves_distinct_representation_candidates",
+          "outcome": "passed",
+          "duration": 0.006684795953333378
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[bash]",
+          "outcome": "passed",
+          "duration": 0.09874909278005362
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[python]",
+          "outcome": "passed",
+          "duration": 0.07347054872661829
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[argv]",
+          "outcome": "failed",
+          "duration": 2.364405581727624
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[code]",
+          "outcome": "passed",
+          "duration": 2.489863715134561
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[repair]",
+          "outcome": "passed",
+          "duration": 3.1958329547196627
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[malformed_env]",
+          "outcome": "passed",
+          "duration": 2.8066332805901766
+        }
+      ],
+      "status": "FAILURE_RETAINED",
+      "failures": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[argv]",
+          "phase": "call",
+          "outcome": "failed",
+          "diagnostic": "      case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')\n        case.SKILL_ID='genomics/snpeff-annotation'\n        await case.asyncSetUp()\n        try:\n            configure_protocol(case);case._configure_one_step_no_output_plan()\n            original=case._planner_payload\n            def plan():\n                p=original();s=p['steps'][0]\n                s.update(execution_capability_id='genomics.snpeff_annotation.check_contig_compatibility',operation='check_contig_compatibility',\n                         produces_observations=[{'identity':'contigs_compatible','evidence_contract':{'required_fields':['value']}}])\n                return p\n            case._planner_payload=plan\n            body=shlex.quote(PYTHON)+\" - <<'PY'\\n# BIOMIND_EFFECT_HELPER\\nprint(emit_effect_evidence({'produces_observations': {'contigs_compatible': {'value': False}}}))\\nPY\\n\"\n            def response(payload,ordinal):\n                if mode in ('repair','malformed_env'):\n                    if ordinal==1:return json.dumps({'operation':'check_contig_compatibility','code':body})\n                    if ordinal==2:return json.dumps({'action_type':'execute','operation':'check_contig_compatibility','code':body,'env':['invalid-parent'] if mode=='malformed_env' else {'SYNTHETIC_VALUE': 7}})\n                    raise AssertionError('Unexpected third provider call')\n                raw={'action_type':'execute','operation':'check_contig_compatibility','env':{},'outputs':[]}\n                if mode=='argv':raw['argv']=['bash','-lc',body]\n                else:raw.update(code=body,language='bash')\n                return json.dumps(raw)\n            events,requests,state=await generate_until_ready_or_stopped(case,'audit-native-'+mode,response)\n            durable=load_plan_state(case.root,'audit-native-'+mode)\n            outcomes=[v.get('generate_outcome') for e in events for v in e.values() if isinstance(v,dict) and v.get('generate_outcome')]\n            pending=durable['task_state'].get('pending_action') or {}\n            evidence={'mode':mode,'routes':[next(iter(e)) for e in events],'outcomes':outcomes,\n              'provider_calls':len(requests),'first_protocol_has_json':bool(requests and 'Return exactly one raw JSON' in requests[0]['_provider_request']),\n              'helper_rule_says_block':bool(requests and 'Return ONE complete executable block' in requests[0]['_provider_request']),\n              'pending_code':pending.get('code'),'pending_argv':pending.get('argv'),\n              'events':durable['task_state'].get('candidate_repair_state',{}).get('events'),\n              'loaded_source':{'file':str(Path(__import__('bio_agents').__file__)), 'sha256':hashlib.sha256(Path(__import__('bio_agents').__file__).read_bytes()).hexdigest()},\n              'coverage':'real production Consultant/Planner/Plan approval/Generate/parser/candidate ledger; fixture model and CLI approval; stops before Execute'}\n            save('incident-native-'+mode,evidence)\n            if mode=='malformed_env':\n                assert len(requests)==2 and len(evidence['events'])==1\n                assert outcomes[-1]['payload']['error_code']=='generate_exception'\n            elif mode=='repair':\n                assert len(requests)==2,outcomes\n                rows=list(evidence['events'].values())\n                assert len(rows)==2 and rows[0]['candidate_fingerprint']!=rows[1]['candidate_fingerprint']\n                assert rows[1]['termination_reason']=='repair_no_progress',rows\n                assert rows[1]['policy_receipt']['remaining']==3\n            else:\n                assert outcomes[-1]['type']=='action_ready',outcomes\n                executable='\\n'.join(pending.get('argv') or [])\n                if mode=='argv':assert '# BIOMIND_EFFECT_HELPER' in executable and 'def emit_effect_evidence' not in executable\n                else:assert '# BIOMIND_EFFECT_HELPER' not in executable and 'def emit_effect_evidence' in executable\n                # Mechanism witness: run the fresh approved candidate argv as a registered\n                # tiny process. This is not the production action Execute gate.\n                out,err,rc=await approved_tiny(case.root/'new-candidate-process.sh',shlex.join(pending['argv']))\n                assert rc==(1 if mode=='argv' else 0),(out,err,rc)\n>               if mode=='argv':assert 'NameError' in err and not out\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               assert ('NameError' in 'Traceback (most recent call last):\\n  File \"<stdin>\", line 2, in <module>\\nNameError: name \\'emit_effect_evidence\\' is not defined\\n' and not 'welcome liusiqi to use agis hpc\\ngroup name is zhangxingtan\\n*****************************************************\\ns...9       135000         WORK\\n*****************************************************\\n\\x1b[31m vol2-share配额报警！ \\x1b[0m\\n')\n\ntests/execution_architecture_audit_a1/test_incident_generate.py:123: AssertionError"
+        }
+      ],
+      "failure_classification": [
+        "harness safety/launch deviation: nested bash -lc read host login profile; indirect .env/credentials reads UNKNOWN; stopped and nonlogin-body component used subsequently"
+      ],
+      "command": "python tests/execution_architecture_audit_a1/export_and_run.py /tmp/biomind-a1-incident-03 --test tests/ger_fixture_support.py --run -q tests/execution_architecture_audit_a1/test_incident_generate.py"
+    },
+    {
+      "root": "/tmp/biomind-a1-incident-04",
+      "source_signature": "6cced3d45ca1e4a8119efc3da5ce4bd055d312549737c6c0e209ac9a25775867",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "source_files": 431,
+      "export_manifest_sha256": "a5e1032ce9c94512284b252b00648e98f1a426d41c5e7bb2ba5a5921dddee371",
+      "pytest_results_sha256": "2349bf4ae932da036f19ac79d7f9a9171e854f2e6d407dc25d67abeeaa144621",
+      "tests": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_parser_preserves_distinct_representation_candidates",
+          "outcome": "passed",
+          "duration": 0.013923702761530876
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[bash]",
+          "outcome": "passed",
+          "duration": 0.24113204143941402
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_actual_serialized_negative_fact_and_bad_fact_shape[python]",
+          "outcome": "passed",
+          "duration": 0.07089956197887659
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[argv]",
+          "outcome": "passed",
+          "duration": 2.4517822191119194
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[code]",
+          "outcome": "passed",
+          "duration": 2.0164599595591426
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[repair]",
+          "outcome": "passed",
+          "duration": 3.490850114263594
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[malformed_env]",
+          "outcome": "passed",
+          "duration": 2.819716985337436
+        }
+      ],
+      "status": "WITNESS_PASS",
+      "failures": [],
+      "command": "python tests/execution_architecture_audit_a1/export_and_run.py /tmp/biomind-a1-incident-04 --test tests/ger_fixture_support.py --run -q tests/execution_architecture_audit_a1/test_incident_generate.py"
+    }
+  ],
+  "current_witnesses": {
+    "incident-helper-bash": {
+      "classification": "CURRENT_BEHAVIOR_VERIFIED",
+      "language": "bash",
+      "rc": 0,
+      "parsed": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [
+          {
+            "identity": "renamed_observation",
+            "value": false
+          }
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "invalid_shape_rc": 1,
+      "invalid_shape_error": "EFFECT_FIELD_UNDECLARED",
+      "template_sha256": "a4f2889ca04d4f8cab0ddb35c9b1082a57e74c18e782cdec06bafca7249d59fd",
+      "execution_engine": "real execution.executor.run_command; fresh registered synthetic script; no scientific tools"
+    },
+    "incident-helper-python": {
+      "classification": "CURRENT_BEHAVIOR_VERIFIED",
+      "language": "python",
+      "rc": 0,
+      "parsed": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [
+          {
+            "identity": "renamed_observation",
+            "value": false
+          }
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "invalid_shape_rc": 1,
+      "invalid_shape_error": "EFFECT_FIELD_UNDECLARED",
+      "template_sha256": "a4f2889ca04d4f8cab0ddb35c9b1082a57e74c18e782cdec06bafca7249d59fd",
+      "execution_engine": "real execution.executor.run_command; fresh registered synthetic script; no scientific tools"
+    },
+    "incident-native-argv": {
+      "mode": "argv",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate"
+      ],
+      "provider_calls": 1,
+      "first_protocol_has_json": true,
+      "helper_rule_says_block": true,
+      "loaded_source": {
+        "file": "/tmp/biomind-a1-incident-04/export/bio_agents.py",
+        "sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+      },
+      "synthetic_candidate_process": {
+        "rc": 1,
+        "stdout": "",
+        "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 2, in <module>\nNameError: name 'emit_effect_evidence' is not defined\n",
+        "gate": "separate executor component, not full action approval; native login argv replaced by guarded non-login execution of identical synthetic body"
+      },
+      "coverage": "real production Consultant/Planner/Plan approval/Generate/parser/candidate ledger; fixture model and CLI approval; stops before Execute",
+      "outcomes": [
+        {
+          "type": "action_ready",
+          "error_code": null,
+          "summary": "A validated action candidate is ready for Execute."
+        }
+      ],
+      "candidate_markers": {
+        "marker_in_argv": true,
+        "definition_in_argv": false
+      },
+      "rejections": []
+    },
+    "incident-native-code": {
+      "mode": "code",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate"
+      ],
+      "provider_calls": 1,
+      "first_protocol_has_json": true,
+      "helper_rule_says_block": true,
+      "loaded_source": {
+        "file": "/tmp/biomind-a1-incident-04/export/bio_agents.py",
+        "sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+      },
+      "synthetic_candidate_process": {
+        "rc": 0,
+        "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}\n",
+        "stderr": "",
+        "gate": "separate executor component, not full action approval; native login argv replaced by guarded non-login execution of identical synthetic body"
+      },
+      "coverage": "real production Consultant/Planner/Plan approval/Generate/parser/candidate ledger; fixture model and CLI approval; stops before Execute",
+      "outcomes": [
+        {
+          "type": "action_ready",
+          "error_code": null,
+          "summary": "A validated action candidate is ready for Execute."
+        }
+      ],
+      "candidate_markers": {
+        "marker_in_argv": false,
+        "definition_in_argv": true
+      },
+      "rejections": []
+    },
+    "incident-native-malformed_env": {
+      "mode": "malformed_env",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "generate"
+      ],
+      "provider_calls": 2,
+      "first_protocol_has_json": true,
+      "helper_rule_says_block": true,
+      "loaded_source": {
+        "file": "/tmp/biomind-a1-incident-04/export/bio_agents.py",
+        "sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+      },
+      "coverage": "real production Consultant/Planner/Plan approval/Generate/parser/candidate ledger; fixture model and CLI approval; stops before Execute",
+      "outcomes": [
+        {
+          "type": "candidate_rejected",
+          "error_code": null,
+          "summary": "A bounded generated candidate defect can be corrected."
+        },
+        {
+          "type": "internal_protocol_error",
+          "error_code": "generate_exception",
+          "summary": "Generate encountered an internal protocol violation and failed closed."
+        }
+      ],
+      "candidate_markers": {
+        "marker_in_argv": false,
+        "definition_in_argv": false
+      },
+      "rejections": [
+        {
+          "candidate_fingerprint": "1368c96a59c7b529524208127bbf58a11191cbcbbdf8696375bf3cc9876daa19",
+          "error_fingerprint": "b5ceb2c0db3abe0c43e3bb4da55292b1017993315838b870357671ac491a07c1",
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "termination_reason": "",
+          "public_valid_facts": [
+            "binding_env"
+          ],
+          "progress_proven": true,
+          "policy_receipt": {
+            "version": "candidate-corrections-v2",
+            "scope": {
+              "task_id": "audit-native-malformed_env",
+              "task_revision": 1,
+              "plan_id": "plan_33798d7a3b8a74004505",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "limit": 4,
+            "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+            "unit": "additional_candidate_calls",
+            "categories_share_total": true,
+            "rejection_ordinal": 1,
+            "corrections_authorized_before": 0,
+            "corrections_observed_before_rejection": 0,
+            "remaining_before_authorization": 4,
+            "category": "representation",
+            "correction_authorized": true,
+            "corrections_authorized": 1,
+            "remaining": 3
+          },
+          "status": "repairable"
+        }
+      ]
+    },
+    "incident-native-repair": {
+      "mode": "repair",
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "generate"
+      ],
+      "provider_calls": 2,
+      "first_protocol_has_json": true,
+      "helper_rule_says_block": true,
+      "loaded_source": {
+        "file": "/tmp/biomind-a1-incident-04/export/bio_agents.py",
+        "sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+      },
+      "coverage": "real production Consultant/Planner/Plan approval/Generate/parser/candidate ledger; fixture model and CLI approval; stops before Execute",
+      "outcomes": [
+        {
+          "type": "candidate_rejected",
+          "error_code": null,
+          "summary": "A bounded generated candidate defect can be corrected."
+        },
+        {
+          "type": "internal_protocol_error",
+          "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+          "summary": "Generate encountered an internal protocol violation and failed closed."
+        }
+      ],
+      "candidate_markers": {
+        "marker_in_argv": false,
+        "definition_in_argv": false
+      },
+      "rejections": [
+        {
+          "candidate_fingerprint": "1368c96a59c7b529524208127bbf58a11191cbcbbdf8696375bf3cc9876daa19",
+          "error_fingerprint": "b5ceb2c0db3abe0c43e3bb4da55292b1017993315838b870357671ac491a07c1",
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "termination_reason": "",
+          "public_valid_facts": [
+            "binding_env"
+          ],
+          "progress_proven": true,
+          "policy_receipt": {
+            "version": "candidate-corrections-v2",
+            "scope": {
+              "task_id": "audit-native-repair",
+              "task_revision": 1,
+              "plan_id": "plan_d60bb1c95a8fc56ee09f",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "limit": 4,
+            "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+            "unit": "additional_candidate_calls",
+            "categories_share_total": true,
+            "rejection_ordinal": 1,
+            "corrections_authorized_before": 0,
+            "corrections_observed_before_rejection": 0,
+            "remaining_before_authorization": 4,
+            "category": "representation",
+            "correction_authorized": true,
+            "corrections_authorized": 1,
+            "remaining": 3
+          },
+          "status": "repairable"
+        },
+        {
+          "candidate_fingerprint": "b4e2331f57fd0be023e573f2fa949e6abf558da0700f81a2f6c76a63174689be",
+          "error_fingerprint": "afff96ef3bf44c1cd18121dad94d6b8877e452f7b8779cc5469258c6c86b0df2",
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "termination_reason": "repair_no_progress",
+          "public_valid_facts": [
+            "binding_env"
+          ],
+          "progress_proven": false,
+          "policy_receipt": {
+            "version": "candidate-corrections-v2",
+            "scope": {
+              "task_id": "audit-native-repair",
+              "task_revision": 1,
+              "plan_id": "plan_d60bb1c95a8fc56ee09f",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "limit": 4,
+            "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+            "unit": "additional_candidate_calls",
+            "categories_share_total": true,
+            "rejection_ordinal": 2,
+            "corrections_authorized_before": 1,
+            "corrections_observed_before_rejection": 1,
+            "remaining_before_authorization": 3,
+            "category": "representation",
+            "correction_authorized": false,
+            "corrections_authorized": 1,
+            "remaining": 3
+          },
+          "status": "internal_error"
+        }
+      ]
+    },
+    "incident-parser": {
+      "classification": "DEFECT_REPRODUCED_COMPONENT",
+      "errors": [
+        {
+          "stage": "json_decode",
+          "code": "JSON_DECODE_ERROR",
+          "message": "Expecting property name enclosed in double quotes",
+          "line": 1,
+          "column": 2,
+          "position": 1,
+          "raw_excerpt": "{str(n) for n in (1, 2)}\nprint(emit_effect_evidence({'renamed_observation': {'value': False}}"
+        },
+        {
+          "stage": "action_schema",
+          "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "message": "A structured action requires action_type.",
+          "field_path": "action_type",
+          "expected": "supported action type",
+          "actual": "missing"
+        }
+      ],
+      "candidate_digests": [
+        "7840b0aeee8ae78a778fb5b294b53f22d0ce03e07605c9d20904c15b021cc938",
+        "a9adad82b955a202f706234970d0d7b8cea87d79c9dab682062e983909dacb7a"
+      ],
+      "public_valid_facts": [
+        [
+          "binding_env"
+        ],
+        [
+          "binding_env"
+        ]
+      ],
+      "executions": 0
+    }
+  },
+  "fixture_boundaries": [
+    "PlanLocalRealGraphTests real BioAnalystAgent graph/parser/compiler/approval/CAS, fixed provider and explicit yes input.",
+    "Existing fixture disables memory observe/finalize/compression, runtime readiness/environment checks, and middleware action review uses approve callback.",
+    "No Execute/Commit full-chain claim. Small helper process uses real execution.executor.run_command under existing registered-script guard.",
+    "run04 native argv body is identical, but login argv is replaced by nonlogin synthetic launcher. Bash/Python only; R NOT_RUN.",
+    "Shell grandchildren do not inherit Python audit guard; run03 host profile indirect reads UNKNOWN. No active read of credentials performed."
+  ],
+  "late_result_supplement": {
+    "path": "late_result.json",
+    "sha256": "f2c67fbe454d67fc2fcae041d6f87f9c2da62313121051a806e7a461e828c041",
+    "status": "CURRENT_BEHAVIOR_VERIFIED",
+    "latest_tests_passed": 2,
+    "scope": "post-await cancellation and benign state_generation write; full graph cancellation to terminal"
+  },
+  "progress_refinement": {
+    "path": "progress_refinement.json",
+    "sha256": "e71510c14fa82f9de1c3c9459ac39cf6ed9e00c7a2c5c05a52b5d940a8b70e29",
+    "status": "DEFECT_REPRODUCED",
+    "witness": "PASS",
+    "supersedes": "run04 repair synthetic candidate construction only; other current scenarios unchanged"
+  }
+}

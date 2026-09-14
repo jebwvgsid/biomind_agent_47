@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_route_failures.py::test_ask_user_error_producers_have_different_real_exits",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_route_failures.py::test_ask_user_error_producers_have_different_real_exits",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.03541509062051773,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_route_failures.py::test_ask_user_error_producers_have_different_real_exits",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05803897976875305,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_route_failures.py::test_ask_user_error_producers_have_different_real_exits",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020778179168701172,
+    "failure": ""
+  }
+]

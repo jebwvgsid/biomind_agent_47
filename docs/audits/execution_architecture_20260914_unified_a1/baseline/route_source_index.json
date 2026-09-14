@@ -1,0 +1,297 @@
+{
+  "source": "agent_core/workflow/runtime_graph.py",
+  "sha256": "d2d5f87d1886acd592a3f0dd8a054d281c8e24fe724eabe36897e49ee0c8147f",
+  "level": "CURRENT_STATIC; dynamic witnesses linked separately",
+  "functions": [
+    {
+      "function": "route_generate_outcome",
+      "line": 32,
+      "returns": [
+        {
+          "line": 53,
+          "expression": "{'action_ready': 'execute', 'runtime_evidence_required': 'recovery', 'runtime_recovery_stopped': END, 'completion_claimed': 'supervisor', 'user_input_needed': 'ask_user', 'plan_revision_needed': 'planner', 'skill_context_served': 'generate', 'skill_search_result_ready': 'generate', 'skill_binding_review_needed': 'consultant', 'skill_context_needed': 'consultant', 'provider_failed': END, 'internal_protocol_error': END, 'blocked': END, 'cancelled': END, 'harness_error': END}[outcome.type]"
+        },
+        {
+          "line": 43,
+          "expression": "END"
+        },
+        {
+          "line": 52,
+          "expression": "'planner'"
+        },
+        {
+          "line": 42,
+          "expression": "'generate'"
+        },
+        {
+          "line": 47,
+          "expression": "'consultant'"
+        },
+        {
+          "line": 51,
+          "expression": "'generate'"
+        }
+      ]
+    },
+    {
+      "function": "route_execute_outcome",
+      "line": 74,
+      "returns": [
+        {
+          "line": 91,
+          "expression": "{'execution_succeeded': 'supervisor', 'execution_failed': 'recovery', 'diagnostic_completed': 'recovery', 'user_input_needed': 'ask_user', 'installation_requested': 'install_subagent', 'approval_rejected': 'generate', 'lightweight_completed': END, 'blocked': END, 'cancelled': END, 'harness_error': END}[outcome.type]"
+        },
+        {
+          "line": 87,
+          "expression": "END"
+        },
+        {
+          "line": 90,
+          "expression": "'consultant' if changed & {'task_revision', 'authoritative_user_turn_revision'} else 'planner'"
+        },
+        {
+          "line": 80,
+          "expression": "'generate'"
+        },
+        {
+          "line": 82,
+          "expression": "'planner'"
+        },
+        {
+          "line": 84,
+          "expression": "'ask_user'"
+        },
+        {
+          "line": 86,
+          "expression": "'recovery'"
+        }
+      ]
+    },
+    {
+      "function": "route_verification_outcome",
+      "line": 105,
+      "returns": [
+        {
+          "line": 109,
+          "expression": "{'verified': 'commit_step', 'verified_with_warnings': 'commit_step', 'rejected': 'recovery', 'incomplete_evidence': 'recovery', 'diagnostic_evidence_recorded': 'recovery', 'verification_error': 'recovery', 'inspection_required': 'recovery', 'correction_required': 'recovery', 'plan_revision_required': 'planner', 'user_information_required': 'ask_user', 'assessment_pending': 'recovery', 'harness_error': END}[outcome.type]"
+        },
+        {
+          "line": 108,
+          "expression": "END"
+        }
+      ]
+    },
+    {
+      "function": "route_commit_step_outcome",
+      "line": 125,
+      "returns": [
+        {
+          "line": 127,
+          "expression": "{'next_step_ready': 'generate', 'plan_complete': 'final_audit', 'commit_conflict': 'recovery', 'contract_rejected': 'recovery', 'harness_error': END}[outcome.type]"
+        }
+      ]
+    },
+    {
+      "function": "route_recovery_outcome",
+      "line": 136,
+      "returns": [
+        {
+          "line": 138,
+          "expression": "{'candidate_repair_required': 'generate', 'runtime_evidence_ready': 'generate', 'runtime_recovery_stopped': END, 'plan_revision_required': 'planner', 'reconsultation_required': 'consultant', 'revalidation_required': 'supervisor', 'user_input_required': 'ask_user', 'blocked': END, 'internal_protocol_error': END, 'harness_error': END}[outcome.type]"
+        }
+      ]
+    },
+    {
+      "function": "route_final_audit_outcome",
+      "line": 152,
+      "returns": [
+        {
+          "line": 154,
+          "expression": "END"
+        }
+      ]
+    },
+    {
+      "function": "build_schema2_runtime_graph",
+      "line": 160,
+      "returns": [
+        {
+          "line": 238,
+          "expression": "graph"
+        },
+        {
+          "line": 180,
+          "expression": "{}"
+        },
+        {
+          "line": 186,
+          "expression": "route_generate_outcome(state)"
+        },
+        {
+          "line": 189,
+          "expression": "route_execute_outcome(state)"
+        },
+        {
+          "line": 192,
+          "expression": "route_verification_outcome(state)"
+        },
+        {
+          "line": 195,
+          "expression": "route_commit_step_outcome(state)"
+        },
+        {
+          "line": 198,
+          "expression": "route_recovery_outcome(state)"
+        },
+        {
+          "line": 201,
+          "expression": "route_final_audit_outcome(state)"
+        }
+      ]
+    },
+    {
+      "function": "route_triage_outcome",
+      "line": 241,
+      "returns": [
+        {
+          "line": 258,
+          "expression": "{'direct_response_ready': 'direct_response', 'consultation_ready': 'consultant', 'step_execution_ready': 'generate', 'harness_error': END}[outcome.type]"
+        },
+        {
+          "line": 245,
+          "expression": "{'awaiting_user_input': 'ask_user', 'consultation_ready': 'consultant', 'planning_ready': 'planner', 'plan_review_pending': 'plan_review', 'step_execution_ready': 'generate', 'action_execution_ready': 'execute', 'verification_pending': 'supervisor', 'recovery_pending': 'recovery', 'installation_pending': 'install_subagent', 'final_audit_pending': 'final_audit', 'terminal': END}[semantic]"
+        }
+      ]
+    },
+    {
+      "function": "route_consultant_outcome",
+      "line": 266,
+      "returns": [
+        {
+          "line": 279,
+          "expression": "{'planning_ready': 'planner', 'answer_ready': END, 'consultation_continues': 'consultant', 'user_input_needed': 'ask_user', 'task_skill_commit_required': 'consultant', 'skill_plan_impact_ready': 'planner', 'stale_result': 'consultant', 'terminal': END, 'harness_error': END}[outcome.type]"
+        },
+        {
+          "line": 273,
+          "expression": "{'action_generation': 'generate', 'plan_authoring': 'planner', 'failure_verification': 'supervisor', 'semantic_consultation': 'consultant'}[requester_role]"
+        }
+      ]
+    },
+    {
+      "function": "route_planner_outcome",
+      "line": 292,
+      "returns": [
+        {
+          "line": 294,
+          "expression": "{'plan_review_ready': 'plan_review', 'consultation_required': 'consultant', 'planning_continues': 'planner', 'stale_result': 'planner', 'terminal': END, 'harness_error': END}[outcome.type]"
+        }
+      ]
+    },
+    {
+      "function": "route_plan_review_outcome",
+      "line": 304,
+      "returns": [
+        {
+          "line": 312,
+          "expression": "{'revision_required': 'planner', 'reconsultation_required': 'consultant', 'user_input_needed': 'ask_user', 'approval_pending': END, 'terminal': END, 'harness_error': END}[outcome.type]"
+        },
+        {
+          "line": 307,
+          "expression": "'step_worker' if str(outcome.payload.get('execution_backend') or '') == 'external_worker' else 'generate'"
+        }
+      ]
+    },
+    {
+      "function": "route_ask_user_outcome",
+      "line": 322,
+      "returns": [
+        {
+          "line": 325,
+          "expression": "{'consultation_ready': 'consultant', 'planning_ready': 'planner', 'step_execution_ready': 'generate', 'verification_pending': 'supervisor', 'recovery_pending': 'recovery'}.get(semantic, END)"
+        }
+      ]
+    },
+    {
+      "function": "route_install_outcome",
+      "line": 334,
+      "returns": [
+        {
+          "line": 338,
+          "expression": "{'capability_available': 'generate', 'installation_failed': 'recovery', 'terminal': END, 'harness_error': END}[outcome.type]"
+        }
+      ]
+    },
+    {
+      "function": "route_step_worker_outcome",
+      "line": 346,
+      "returns": [
+        {
+          "line": 348,
+          "expression": "{'completion_claimed': 'supervisor', 'needs_replan': 'planner', 'blocked': END, 'harness_error': END, 'cancelled': END}[outcome.type]"
+        }
+      ]
+    },
+    {
+      "function": "build_schema2_production_graph",
+      "line": 357,
+      "returns": [
+        {
+          "line": 443,
+          "expression": "graph"
+        },
+        {
+          "line": 376,
+          "expression": "route_triage_outcome(state)"
+        },
+        {
+          "line": 379,
+          "expression": "route_consultant_outcome(state)"
+        },
+        {
+          "line": 382,
+          "expression": "route_planner_outcome(state)"
+        },
+        {
+          "line": 385,
+          "expression": "route_plan_review_outcome(state)"
+        },
+        {
+          "line": 388,
+          "expression": "route_ask_user_outcome(state)"
+        },
+        {
+          "line": 391,
+          "expression": "route_install_outcome(state)"
+        },
+        {
+          "line": 394,
+          "expression": "route_step_worker_outcome(state)"
+        },
+        {
+          "line": 397,
+          "expression": "route_generate_outcome(state)"
+        },
+        {
+          "line": 400,
+          "expression": "route_execute_outcome(state)"
+        },
+        {
+          "line": 403,
+          "expression": "route_verification_outcome(state)"
+        },
+        {
+          "line": 406,
+          "expression": "route_commit_step_outcome(state)"
+        },
+        {
+          "line": 409,
+          "expression": "route_recovery_outcome(state)"
+        },
+        {
+          "line": 412,
+          "expression": "route_final_audit_outcome(state)"
+        }
+      ]
+    }
+  ]
+}

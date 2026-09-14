@@ -1,0 +1,186 @@
+{
+  "status": "AUDIT_WITNESSES_COMPLETE_WITH_DECLARED_LIMITS",
+  "static_interfaces": 19,
+  "static_guard_groups": 16,
+  "new_tests_passed": 4,
+  "runs": [
+    {
+      "id": "a",
+      "source_signature": "2edf3f212117213c670b4f9b63b31ad59899d5388ea55701a8ff482fa75b67c1",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "manifest": {
+        "path": "archives/run-a-export-manifest.json.gz",
+        "sha256": "ae1ec325e22894f919007d6dab459bf210725fce8bd532a794b64786db19d9c7",
+        "uncompressed_sha256": "725ea7b36f2b2e5122d94afcceb234d4c185187781d8c23f8a16955743151a03",
+        "uncompressed_bytes": 111778,
+        "compressed_bytes": 32598
+      },
+      "calls": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_downstream_graph.py::test_actual_six_step_or_voluntary_stop[six_success]",
+          "outcome": "failed",
+          "duration_seconds": 56.71055501047522,
+          "failure_tail": "ble = load_plan_state(root, task)\n            commits = durable['task_state'].get('typed_step_commit_receipts', {})\n            if mode == 'six_success':\n                assert len(commits) == len(executions) == len(approvals) == 6\n                assert [e['rc'] for e in executions] == [0] * 6\n                assert values['final_audit_outcome']['type'] == 'task_verified'\n>               assert durable['task_status'] == 'completed'\n                       ^^^^^^^^^^^^^^^^^^^^^^\nE               KeyError: 'task_status'\n\ntests/execution_architecture_audit_a1/test_downstream_graph.py:154: KeyError"
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_downstream_graph.py::test_actual_six_step_or_voluntary_stop[voluntary_stop]",
+          "outcome": "passed",
+          "duration_seconds": 8.500989298336208,
+          "failure_tail": ""
+        }
+      ],
+      "tested_sources": {
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py": "08a5d82f9e070c260190a0ccf2055b38942fe1b905b939a664cad50c103de446"
+      },
+      "source_identity_line": "SOURCE_IDENTITY 7eed606de3465943b2fe9063a9ac9c967654118a85996591d675999b1414491c",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-a1-downstream-0914-a/export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-a1-downstream-0914-a/export",
+        "-q",
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py"
+      ]
+    },
+    {
+      "id": "b",
+      "source_signature": "be9e3546e75040d9687dd4d1a37c6e0767e719ce5bcb6d54d3100c9d5591afc5",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "manifest": {
+        "path": "archives/run-b-export-manifest.json.gz",
+        "sha256": "79306a163fd45c5fb4c8fbe2599005a18185002605f226911837b9c2fa414840",
+        "uncompressed_sha256": "0d520aefa691bf8c07d535e9b16bfd866419b412ae5e920374058674a41205e7",
+        "uncompressed_bytes": 113698,
+        "compressed_bytes": 32892
+      },
+      "calls": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_downstream_graph.py::test_actual_six_step_or_voluntary_stop[workspace_prepare]",
+          "outcome": "failed",
+          "duration_seconds": 10.763657750561833,
+          "failure_tail": "upts\n                    incoming = bio_agents.Command(resume='y')\n            values = app.get_state(config).values\n            durable = load_plan_state(root, task)\n            commits = durable['task_state'].get('typed_step_commit_receipts', {})\n            if mode in {'six_success', 'workspace_prepare'}:\n                expected = 1 if workspace_mode else 6\n>               assert len(commits) == len(executions) == len(approvals) == expected\nE               assert 0 == 1\nE                +  where 0 = len([])\n\ntests/execution_architecture_audit_a1/test_downstream_graph.py:214: AssertionError"
+        }
+      ],
+      "tested_sources": {
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py": "642e949a38e209a4b3c3935b8aa51fba635c958ac2b3c57383b55f1ad1f02446"
+      },
+      "source_identity_line": "SOURCE_IDENTITY 6cfe63b43aa94edbbb199392413bc1437b63f8fdddf8fff2143a8b282bcdba28",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-a1-downstream-0914-b/export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-a1-downstream-0914-b/export",
+        "-q",
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py",
+        "-k",
+        "workspace_prepare"
+      ]
+    },
+    {
+      "id": "c",
+      "source_signature": "f1e93ca4ca00ef5a1f7adf91f5efdb2c09421a5a63dba3e8db13583fa17a0e6c",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "manifest": {
+        "path": "archives/run-c-export-manifest.json.gz",
+        "sha256": "a5c27be71f03939a80883741cf1055e0620ffb198bdd1dac0ff8f2ecf19b1c93",
+        "uncompressed_sha256": "0030d248420897e480167ddb70cb2e1f650d3a4b2b72d9e8942c53a132db9cd0",
+        "uncompressed_bytes": 119029,
+        "compressed_bytes": 34729
+      },
+      "calls": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_downstream_graph.py::test_actual_six_step_or_voluntary_stop[six_success]",
+          "outcome": "passed",
+          "duration_seconds": 54.031576838344336,
+          "failure_tail": ""
+        }
+      ],
+      "tested_sources": {
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py": "642e949a38e209a4b3c3935b8aa51fba635c958ac2b3c57383b55f1ad1f02446",
+        "tests/execution_architecture_audit_a1/test_downstream_progress.py": "26a6447e715c53b00dbb0b057d5470d46534122ecabaab1a200469c97c66c9ae"
+      },
+      "source_identity_line": "SOURCE_IDENTITY 14ba591cbbf7ad7d22d73e70297678c714aa75b2e7f5e561234f1f542330c76a",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-a1-downstream-0914-c/export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-a1-downstream-0914-c/export",
+        "-q",
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py",
+        "-k",
+        "six_success",
+        "tests/execution_architecture_audit_a1/test_downstream_progress.py"
+      ]
+    },
+    {
+      "id": "d",
+      "source_signature": "d1aa8529be4db2c7698b39153bbe8b87c29caa3b81d3eded21b7cbda80d3f57e",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "manifest": {
+        "path": "archives/run-d-export-manifest.json.gz",
+        "sha256": "9bea6c02312db987b3c8594975999164465d5d7a8fe3fb003728e8637dab2ac2",
+        "uncompressed_sha256": "35c7d31d6f24fe5a28bd4405c2937b1f53d7e3ce988f301bb28ee61ed2a8e5a8",
+        "uncompressed_bytes": 119784,
+        "compressed_bytes": 34870
+      },
+      "calls": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_downstream_graph.py::test_actual_six_step_or_voluntary_stop[workspace_prepare]",
+          "outcome": "passed",
+          "duration_seconds": 18.049440298229456,
+          "failure_tail": ""
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_downstream_progress.py::test_identical_semantic_candidate_has_two_incompatible_progress_results",
+          "outcome": "passed",
+          "duration_seconds": 0.12453525606542826,
+          "failure_tail": ""
+        }
+      ],
+      "tested_sources": {
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py": "5fc8e452b9aedcee173370ec5a082a1fc7bce9e44a33d7bf07d5f57bbcf315ec",
+        "tests/execution_architecture_audit_a1/test_downstream_progress.py": "26a6447e715c53b00dbb0b057d5470d46534122ecabaab1a200469c97c66c9ae"
+      },
+      "source_identity_line": "SOURCE_IDENTITY 123ef1915b04dc16a270faade21a6d283e71202d75c5980445c49356506083eb",
+      "command": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/tmp/biomind-a1-downstream-0914-d/export/tests/cli_model_progress_support.py",
+        "--guarded-child",
+        "/tmp/biomind-a1-downstream-0914-d/export",
+        "-q",
+        "tests/execution_architecture_audit_a1/test_downstream_graph.py::test_actual_six_step_or_voluntary_stop[workspace_prepare]",
+        "tests/execution_architecture_audit_a1/test_downstream_progress.py"
+      ]
+    }
+  ],
+  "common_production_export_files_byte_identical": 308,
+  "export_scope_expansion": "c/d additionally export safe public R/sh/yaml Skill resources, never executed by these tests; common production source unchanged.",
+  "new_test_failures_retained": [
+    {
+      "run": "a",
+      "mode": "six_success",
+      "cause": "New test read nonexistent durable.task_status; real six commits and FinalAudit already passed; corrected to task_state.status in new test only."
+    },
+    {
+      "run": "b",
+      "mode": "workspace_prepare",
+      "cause": "New fixed candidate omitted artifact_contract.resource_kind=mutable_workspace; actual Plan guard rejected as immutable; corrected new fixture, no production change."
+    }
+  ],
+  "evidence_files": [
+    "six_success.json",
+    "workspace_prepare.json",
+    "voluntary_stop.json",
+    "progress_policy_conflict.json",
+    "archive_index.json"
+  ],
+  "production_files_modified": false,
+  "old_tests_modified": false,
+  "reused_evidence": "../baseline/prior_evidence_reuse.json; only exact-byte unchanged prior acceptance",
+  "scientific_E2E": "NOT_RUN",
+  "real_provider": "NOT_RUN",
+  "normal_success_physical_report": "NOT_PRODUCED_OPTIONAL",
+  "workspace_build_annotate": "STATIC_INTERFACE_AND_PRIOR_COMPONENT_ONLY; no public real-scientific capability supplied",
+  "hook_scope": "Production graph constructed, but fixture session memory/compression/runtime readiness substitutes remain explicit; dedicated enabled-hook audit in parent",
+  "commit_baseline": "Tests run on current safe worktree export; eventual audit commit parent recorded independently by parent"
+}

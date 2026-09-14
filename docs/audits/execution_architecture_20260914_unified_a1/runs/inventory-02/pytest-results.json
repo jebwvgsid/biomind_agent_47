@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001559155061841011,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.700025213882327,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_inventory.py::test_current_registry_and_loaded_bytes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020154379308223724,
+    "failure": ""
+  }
+]

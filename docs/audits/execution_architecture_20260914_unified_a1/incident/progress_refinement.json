@@ -1,0 +1,102 @@
+{
+  "classification": "DEFECT_REPRODUCED",
+  "witness_status": "PASS",
+  "run": "/tmp/biomind-a1-incident-progress-01",
+  "source_signature": "2d711d415b80a9cdc54c36338334abb31094eb6fcc3e43ce1f0bd29b78c5620e",
+  "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+  "command": "python tests/execution_architecture_audit_a1/export_and_run.py /tmp/biomind-a1-incident-progress-01 --test tests/ger_fixture_support.py --run -q tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[repair]",
+  "test_source_sha256": "a6ec192b2eb29d3d88498e4b52f909adda668d059dced4a09e4bb0580ec7c8a8",
+  "public_candidate_delta": {
+    "added": {
+      "action_type": "execute"
+    },
+    "removed": [],
+    "changed": [],
+    "unchanged_invalid_env": {
+      "SYNTHETIC_VALUE": 7
+    },
+    "same_code_sha256": "08229664b4b2438b72c9755252aca48b80d2d0bc9e7ffde162efb60779d92a5d"
+  },
+  "rejections": [
+    {
+      "candidate_fingerprint": "8873e7936b538265aee2a50c694178713f75dc967d70abd0a792392d3fc09db9",
+      "error_fingerprint": "8315a46f5fa8aed26dac97d5a9bfbe18498e5c076ff22b9c02dd4921f508b3c9",
+      "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+      "status": "repairable",
+      "public_valid_facts": [
+        "binding_env"
+      ],
+      "progress_proven": true,
+      "termination_reason": "",
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "audit-native-repair",
+          "task_revision": 1,
+          "plan_id": "plan_d60bb1c95a8fc56ee09f",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 1,
+        "corrections_authorized_before": 0,
+        "corrections_observed_before_rejection": 0,
+        "remaining_before_authorization": 4,
+        "category": "representation",
+        "correction_authorized": true,
+        "corrections_authorized": 1,
+        "remaining": 3
+      }
+    },
+    {
+      "candidate_fingerprint": "b4e2331f57fd0be023e573f2fa949e6abf558da0700f81a2f6c76a63174689be",
+      "error_fingerprint": "afff96ef3bf44c1cd18121dad94d6b8877e452f7b8779cc5469258c6c86b0df2",
+      "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+      "status": "internal_error",
+      "public_valid_facts": [
+        "binding_env"
+      ],
+      "progress_proven": false,
+      "termination_reason": "repair_no_progress",
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "audit-native-repair",
+          "task_revision": 1,
+          "plan_id": "plan_d60bb1c95a8fc56ee09f",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 2,
+        "corrections_authorized_before": 1,
+        "corrections_observed_before_rejection": 1,
+        "remaining_before_authorization": 3,
+        "category": "representation",
+        "correction_authorized": false,
+        "corrections_authorized": 1,
+        "remaining": 3
+      }
+    }
+  ],
+  "counts": {
+    "provider": 2,
+    "executions": 0
+  },
+  "test_results": [
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_incident_generate.py::test_current_native_generate_and_progress_witness[repair]",
+      "outcome": "passed",
+      "duration": 3.2963297963142395
+    }
+  ],
+  "interpretation": "Second wire only fixes missing action_type; same env value remains invalid. Parser resolves one defect and reveals the next; no binding-fact increment, false identical stop with remaining3. Malformed-candidate wrapper top level masks operation in both progress sets."
+}

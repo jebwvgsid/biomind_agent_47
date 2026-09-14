@@ -1,0 +1,190 @@
+{
+  "run": "a",
+  "witness_pass": true,
+  "fix_pass": false,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 1
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate"
+  ],
+  "task_status": "blocked",
+  "plan_approval": {
+    "approval_id": "approval-a43efbb8c5bc6decda24",
+    "status": "approved",
+    "plan_version": null,
+    "snapshot_ref": null
+  },
+  "attempts": [
+    {
+      "attempt": "attempt_780eef7d45e622485dec",
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"previous\":0,\"current\":1,\"scientific_stub\":true}}]}\n",
+      "stderr": "",
+      "rc": 0,
+      "approved_sha256": "5c4353382e3bbce8ad7cc071f6728cc8b41b87ed744a215987a530f718d01946",
+      "executed_sha256": "84fe7c02783366ee190322a5a784c08960fcb2a625b2ea885288be800484fba8"
+    }
+  ],
+  "commit_receipts": {
+    "commit-step-fedc42caf8a375d9db3814c2": {
+      "schema_version": 1,
+      "request_fingerprint": "fedc42caf8a375d9db3814c243cc9fe1e5c4c270b028fc2494fe67185dad4dba",
+      "outcome": {
+        "schema_version": 1,
+        "type": "next_step_ready",
+        "summary": "Verified step committed and one successor activated.",
+        "scope": {
+          "task_id": "a1-downstream-voluntary_stop"
+        },
+        "payload": {
+          "commit_id": "commit-step-fedc42caf8a375d9db3814c2",
+          "receipt": "typed-step-commit:commit-step-fedc42caf8a375d9db3814c2",
+          "before_state_generation": 32,
+          "after_state_generation": 33,
+          "completed_step_id": "mechanism-1",
+          "accepted_binding_refs": [],
+          "accepted_artifact_refs": [],
+          "accepted_effect_refs": [
+            "validation_observation",
+            "attempt_780eef7d45e622485dec",
+            "validation-b290e85b16bf0cf1dab8"
+          ],
+          "completion_report_ref": "completion-report-0dc58754f8860f402fe6e088eeca6bf2847d02f8eeb4365e0a786923e80690fc",
+          "semantic_decision_ref": "semantic-decision-2d7efac9ca56c8bfa7a9f0ddf09a16beec6f94241f7837a43dd392697e2f6582",
+          "semantic_consumption_ref": "completion-consumption-bcb02a05d043797f194f536e60033b69fe370392b982662b86a8da963f355583",
+          "successor_step_id": "mechanism-2"
+        },
+        "evidence_refs": [
+          "validation-b290e85b16bf0cf1dab8",
+          "completion-report-0dc58754f8860f402fe6e088eeca6bf2847d02f8eeb4365e0a786923e80690fc",
+          "semantic-decision-2d7efac9ca56c8bfa7a9f0ddf09a16beec6f94241f7837a43dd392697e2f6582",
+          "completion-consumption-bcb02a05d043797f194f536e60033b69fe370392b982662b86a8da963f355583"
+        ]
+      },
+      "successor_projection": {
+        "current_step_id": "mechanism-2",
+        "plan_id": "plan_f87bf147d86b167820cc",
+        "plan_version": "plan_v1",
+        "recovery_outcome": {},
+        "generate_seed": {}
+      }
+    }
+  },
+  "current_validation_id": "validation-b290e85b16bf0cf1dab8",
+  "current_verification": "verified",
+  "final_audit_type": null,
+  "parser_receipt": {
+    "schema_version": 1,
+    "parser_id": "biomind.structured_effect_emission.v1",
+    "raw_stdout_sha256": "05860a09e6307fbd0087d4b857947c531b8574a6107c0cda649913df87c413b4",
+    "emission_count": 1,
+    "status": "parsed",
+    "issues": [],
+    "emission_contract": {
+      "schema_version": 1,
+      "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+      "approved_observation_ids": [
+        "validation_observation"
+      ],
+      "examples": [
+        "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+      ],
+      "rules": [
+        "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+        "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+        "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+        "Reader errors and sampling limits do not establish absence or full scientific validity."
+      ]
+    },
+    "scope": {
+      "task_id": "a1-downstream-voluntary_stop",
+      "plan_id": "plan_f87bf147d86b167820cc",
+      "plan_version": "plan_v1",
+      "step_id": "mechanism-1",
+      "action_id": "action_a63e7ab9f7bb5734",
+      "attempt_id": "attempt_780eef7d45e622485dec"
+    }
+  },
+  "observations": [
+    {
+      "identity": "validation_observation",
+      "value": {
+        "current": 1,
+        "previous": 0,
+        "scientific_stub": true
+      }
+    }
+  ],
+  "accepted_binding_refs": {},
+  "workspace_attestation": {
+    "attempt_id": "attempt_780eef7d45e622485dec",
+    "finished_at": "2026-09-14T13:16:17.981+00:00",
+    "intents": [],
+    "journal_digest": "sha256:b414036abe5ae68428d9bfb5840275e011fc1152f36d4ffc0f1a3f5cf3e816c3",
+    "producer": "biomind.runtime_attester.v1",
+    "receipts": [],
+    "schema_version": 1,
+    "started_at": "2026-09-14T13:16:17.483+00:00",
+    "status": "completed"
+  },
+  "workspace_receipt_validations": [],
+  "report_receipts": {
+    "stage_status.tsv": {
+      "status": "skipped",
+      "reason": "NO_APPROVED_OUTPUT"
+    },
+    "reproduce.sh": {
+      "status": "skipped",
+      "reason": "NO_APPROVED_OUTPUT"
+    },
+    "report.md": {
+      "path": "/tmp/biomind-a1-downstream-0914-a/results/scratch/biomind-plan-local-graph-zbd3lkgt/report.md",
+      "sha256": "ce43478b2eeaa0fc66612d5e0c91a5bbd36df9e21925fc8745d9b8599cacfd4f",
+      "operation_id": "002cb8fb838859772e2feee9f32f0d7d5c69640626848c47d88f63b825120b6a",
+      "ownership": {
+        "operation_id": "002cb8fb838859772e2feee9f32f0d7d5c69640626848c47d88f63b825120b6a",
+        "path": "/tmp/biomind-a1-downstream-0914-a/results/scratch/biomind-plan-local-graph-zbd3lkgt/report.md",
+        "sha256": "ce43478b2eeaa0fc66612d5e0c91a5bbd36df9e21925fc8745d9b8599cacfd4f",
+        "proof_name": ".runtime-report-proof-002cb8fb838859772e2feee9f32f0d7d5c69640626848c47d88f63b825120b6a",
+        "device": 2051,
+        "inode": 10378500
+      },
+      "status": "created",
+      "stop_id": "managed-stop:b125ae33b6ce34bf2cbfc857ea35a3dca5458ce0cb8cd64dcae38b2b6d8e3e69",
+      "task_id": "a1-downstream-voluntary_stop"
+    }
+  },
+  "stop_reason": {
+    "error_code": "GENERATE_STOP_REQUESTED",
+    "detail": "One real synthetic transition completed; no new grounded action is available.",
+    "transport_receipt": {},
+    "failure_stage": "",
+    "no_progress_rounds": 0,
+    "model_turns": 0,
+    "tool_calls": 0,
+    "termination_reason": "",
+    "budget_receipt": {}
+  },
+  "candidate_repair_events": 0,
+  "source_scope": {
+    "task_id": "a1-downstream-voluntary_stop",
+    "plan_id": "plan_f87bf147d86b167820cc",
+    "plan_version": "plan_v1",
+    "plan_revision": 1,
+    "state_generation": 48
+  },
+  "production_scope": "real first Commit then declared non-success stop",
+  "physical_report": "created via real managed_stop"
+}

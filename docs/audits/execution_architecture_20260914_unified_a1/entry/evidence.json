@@ -1,0 +1,1545 @@
+{
+  "scope": "component witnesses only; WITNESS PASS != FIX PASS; no full graph/model/scientific E2E claim",
+  "historical_loaded_revision": "UNKNOWN",
+  "historical_enabled_flags": "UNKNOWN; no config/process environment read",
+  "tests": [
+    {
+      "case": "plan-default",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/plan-default.json",
+      "source_signature": "fe51f68034c374a34174f567bb3ec78c5700e7794b5e0c3dbb9882dbf00b1b6e",
+      "loaded_test_sha256": "7d960efa8246aae6ea9a2e0ffa70254c1d8777e3769b2b357f3c2134ef472697"
+    },
+    {
+      "case": "assembly",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/assembly.json",
+      "source_signature": "2db27ad4a334ac706968ded6e9f64a976402980d3c29ff60d73282154840cace",
+      "loaded_test_sha256": "379a35af4de27ccbc2cd9821a93d98cd3e7002aede63f61859f611cd2d62c1e5"
+    },
+    {
+      "case": "summary-normal",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/summary-normal.json",
+      "source_signature": "2db27ad4a334ac706968ded6e9f64a976402980d3c29ff60d73282154840cace",
+      "loaded_test_sha256": "379a35af4de27ccbc2cd9821a93d98cd3e7002aede63f61859f611cd2d62c1e5"
+    },
+    {
+      "case": "summary-exception",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/summary-exception.json",
+      "source_signature": "7e45c646d8d8809aebad645ef6321b42164a0880405a60493a725abdb4575cb3",
+      "loaded_test_sha256": "4030119e308cbc2ca9396294a00a17b01fac701f75aeffc62ac45e71785f6dd9"
+    },
+    {
+      "case": "summary-none",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/summary-none.json",
+      "source_signature": "7e45c646d8d8809aebad645ef6321b42164a0880405a60493a725abdb4575cb3",
+      "loaded_test_sha256": "4030119e308cbc2ca9396294a00a17b01fac701f75aeffc62ac45e71785f6dd9"
+    },
+    {
+      "case": "summary-timeout",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/summary-timeout.json",
+      "source_signature": "2db27ad4a334ac706968ded6e9f64a976402980d3c29ff60d73282154840cace",
+      "loaded_test_sha256": "379a35af4de27ccbc2cd9821a93d98cd3e7002aede63f61859f611cd2d62c1e5"
+    },
+    {
+      "case": "summary-cancel",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/summary-cancel.json",
+      "source_signature": "2db27ad4a334ac706968ded6e9f64a976402980d3c29ff60d73282154840cace",
+      "loaded_test_sha256": "379a35af4de27ccbc2cd9821a93d98cd3e7002aede63f61859f611cd2d62c1e5"
+    },
+    {
+      "case": "memory-normal",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/memory-normal.json",
+      "source_signature": "8d285792bc4dfb40189ac6773b9825dedbb564912357f8449e3847f47efa66c4",
+      "loaded_test_sha256": "0a4d56135fc3bb3ef2557e914d35fccdab8da0a3287100a66f2e65384da1c917"
+    },
+    {
+      "case": "memory-exception",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/memory-exception.json",
+      "source_signature": "8d285792bc4dfb40189ac6773b9825dedbb564912357f8449e3847f47efa66c4",
+      "loaded_test_sha256": "0a4d56135fc3bb3ef2557e914d35fccdab8da0a3287100a66f2e65384da1c917"
+    },
+    {
+      "case": "memory-none",
+      "status": "WITNESS_PASS",
+      "process_rc": 0,
+      "receipt": "receipts/memory-none.json",
+      "source_signature": "8d285792bc4dfb40189ac6773b9825dedbb564912357f8449e3847f47efa66c4",
+      "loaded_test_sha256": "0a4d56135fc3bb3ef2557e914d35fccdab8da0a3287100a66f2e65384da1c917"
+    }
+  ],
+  "source_manifests": {
+    "fe51f68034c374a34174f567bb3ec78c5700e7794b5e0c3dbb9882dbf00b1b6e": {
+      "path": "/tmp/biomind-a1-entry-20260914-3/export/export_manifest.json",
+      "sha256": "b3905bade2315c8d1fa4ebf0df1a313863c1940bf6a121cc9f4cc73539ab66be",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "tree": "25ff28413ba16553ad9f44d1a88956da48e2cd57",
+      "overlay": {
+        "agent_core/node_context.py": {
+          "head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+          "export_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2"
+        },
+        "agent_core/planner_context.py": {
+          "head_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d",
+          "export_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8"
+        },
+        "agent_core/provider_message_safety.py": {
+          "head_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+          "export_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+        },
+        "agent_core/retriever.py": {
+          "head_sha256": "993ed60bd900a76aad0d00a1c3e782fc9cdb5d97aef6bcc5c62c80dc1a4184de",
+          "export_sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9"
+        },
+        "agent_core/workflow/managed_stop.py": {
+          "head_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+          "export_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4"
+        },
+        "prompts/manager.py": {
+          "head_sha256": "9655e6e4b8e6fe55217542bfc7390ba299cfbc7c73ec3bbdcdd7cd7528d9bdba",
+          "export_sha256": "107fa92e5ac91d04b840285e277cc06f12c307bced6ccbafadd5787073c66dc6"
+        }
+      },
+      "test_sha256": "7d960efa8246aae6ea9a2e0ffa70254c1d8777e3769b2b357f3c2134ef472697",
+      "reused_verified_export": null
+    },
+    "2db27ad4a334ac706968ded6e9f64a976402980d3c29ff60d73282154840cace": {
+      "path": "/tmp/biomind-a1-entry-20260914-4/export/export_manifest.json",
+      "sha256": "5436e44a8f2966bc35444c2f28f5733e459e01faf1aec52bb1e5e8b0f776a586",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "tree": "25ff28413ba16553ad9f44d1a88956da48e2cd57",
+      "overlay": {
+        "agent_core/node_context.py": {
+          "head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+          "export_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2"
+        },
+        "agent_core/planner_context.py": {
+          "head_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d",
+          "export_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8"
+        },
+        "agent_core/provider_message_safety.py": {
+          "head_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+          "export_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+        },
+        "agent_core/retriever.py": {
+          "head_sha256": "993ed60bd900a76aad0d00a1c3e782fc9cdb5d97aef6bcc5c62c80dc1a4184de",
+          "export_sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9"
+        },
+        "agent_core/workflow/managed_stop.py": {
+          "head_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+          "export_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4"
+        },
+        "prompts/manager.py": {
+          "head_sha256": "9655e6e4b8e6fe55217542bfc7390ba299cfbc7c73ec3bbdcdd7cd7528d9bdba",
+          "export_sha256": "107fa92e5ac91d04b840285e277cc06f12c307bced6ccbafadd5787073c66dc6"
+        }
+      },
+      "test_sha256": "379a35af4de27ccbc2cd9821a93d98cd3e7002aede63f61859f611cd2d62c1e5",
+      "reused_verified_export": null
+    },
+    "7e45c646d8d8809aebad645ef6321b42164a0880405a60493a725abdb4575cb3": {
+      "path": "/tmp/biomind-a1-entry-20260914-7/export/export_manifest.json",
+      "sha256": "5ea89ed3d71c18ecb7682f4f8d4f8b83d8655db36451328bda7bf352f73069be",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "tree": "25ff28413ba16553ad9f44d1a88956da48e2cd57",
+      "overlay": {
+        "agent_core/node_context.py": {
+          "head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+          "export_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2"
+        },
+        "agent_core/planner_context.py": {
+          "head_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d",
+          "export_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8"
+        },
+        "agent_core/provider_message_safety.py": {
+          "head_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+          "export_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+        },
+        "agent_core/retriever.py": {
+          "head_sha256": "993ed60bd900a76aad0d00a1c3e782fc9cdb5d97aef6bcc5c62c80dc1a4184de",
+          "export_sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9"
+        },
+        "agent_core/workflow/managed_stop.py": {
+          "head_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+          "export_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4"
+        },
+        "prompts/manager.py": {
+          "head_sha256": "9655e6e4b8e6fe55217542bfc7390ba299cfbc7c73ec3bbdcdd7cd7528d9bdba",
+          "export_sha256": "107fa92e5ac91d04b840285e277cc06f12c307bced6ccbafadd5787073c66dc6"
+        }
+      },
+      "test_sha256": "4030119e308cbc2ca9396294a00a17b01fac701f75aeffc62ac45e71785f6dd9",
+      "reused_verified_export": "/tmp/biomind-a1-entry-20260914-6/export"
+    },
+    "8d285792bc4dfb40189ac6773b9825dedbb564912357f8449e3847f47efa66c4": {
+      "path": "/tmp/biomind-a1-entry-20260914-6/export/export_manifest.json",
+      "sha256": "532d9506024b0902a0c20532106d19dea6d715a1e068b9fa44dfd8b7b5ec0d07",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "tree": "25ff28413ba16553ad9f44d1a88956da48e2cd57",
+      "overlay": {
+        "agent_core/node_context.py": {
+          "head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+          "export_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2"
+        },
+        "agent_core/planner_context.py": {
+          "head_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d",
+          "export_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8"
+        },
+        "agent_core/provider_message_safety.py": {
+          "head_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a",
+          "export_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+        },
+        "agent_core/retriever.py": {
+          "head_sha256": "993ed60bd900a76aad0d00a1c3e782fc9cdb5d97aef6bcc5c62c80dc1a4184de",
+          "export_sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9"
+        },
+        "agent_core/workflow/managed_stop.py": {
+          "head_sha256": "4c136dd31db60b8c548e6c0d77ceee20a2304cc8e179d14f9bd18b666de8bd97",
+          "export_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4"
+        },
+        "prompts/manager.py": {
+          "head_sha256": "9655e6e4b8e6fe55217542bfc7390ba299cfbc7c73ec3bbdcdd7cd7528d9bdba",
+          "export_sha256": "107fa92e5ac91d04b840285e277cc06f12c307bced6ccbafadd5787073c66dc6"
+        }
+      },
+      "test_sha256": "0a4d56135fc3bb3ef2557e914d35fccdab8da0a3287100a66f2e65384da1c917",
+      "reused_verified_export": "/tmp/biomind-a1-entry-20260914-5/export"
+    }
+  },
+  "loaded": {
+    "agent_core": {
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": [
+        "/tmp/biomind-a1-entry-20260914-3/export/agent_core/__init__.py",
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/__init__.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/__init__.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/__init__.py"
+      ]
+    },
+    "agent_core.cli_display": {
+      "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d": [
+        "/tmp/biomind-a1-entry-20260914-3/export/agent_core/cli_display.py",
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/cli_display.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/cli_display.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/cli_display.py"
+      ]
+    },
+    "agent_core.cli_plain": {
+      "798b83d83fc775d0811c8335c9a7a2f614a4f08c8427940f5bf40742848afbc6": [
+        "/tmp/biomind-a1-entry-20260914-3/export/agent_core/cli_plain.py"
+      ]
+    },
+    "agent_core.cli_review": {
+      "6018410048326d97a5088a048f3e9d3679590e8d1da096c74c6f1db44d226267": [
+        "/tmp/biomind-a1-entry-20260914-3/export/agent_core/cli_review.py",
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/cli_review.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/cli_review.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/cli_review.py"
+      ]
+    },
+    "agent_core.human_io": {
+      "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2": [
+        "/tmp/biomind-a1-entry-20260914-3/export/agent_core/human_io.py",
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/human_io.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/human_io.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/human_io.py"
+      ]
+    },
+    "agent_core.execution_authority": {
+      "2ab26ebe38dae92011956d653a896bfc0f0f7ad55dcce7b4bd7a92a08c31239d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/execution_authority.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/execution_authority.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/execution_authority.py"
+      ]
+    },
+    "agent_core.candidate_repair_policy": {
+      "45bb6ee3aff8c2135ece783981c33493921226aec96a30a98b739bbac9502af3": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/candidate_repair_policy.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/candidate_repair_policy.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/candidate_repair_policy.py"
+      ]
+    },
+    "agent_core.task_spec": {
+      "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/task_spec.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/task_spec.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/task_spec.py"
+      ]
+    },
+    "agent_core.state_contract_store": {
+      "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/state_contract_store.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/state_contract_store.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/state_contract_store.py"
+      ]
+    },
+    "agent_core.phase_timing": {
+      "59b69c848c2f05a8db568a6fe420b69771292d8173d0b4420db1aee3750b984d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/phase_timing.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/phase_timing.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/phase_timing.py"
+      ]
+    },
+    "agent_core.runtime_evidence": {
+      "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/runtime_evidence.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/runtime_evidence.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/runtime_evidence.py"
+      ]
+    },
+    "agent_core.active_state": {
+      "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/active_state.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/active_state.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/active_state.py"
+      ]
+    },
+    "agent_core.recovery_contract": {
+      "34a7cd4631ce4f3f68cd342006ed6c7dc5e4349922915d821b991467dfc0a13e": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/recovery_contract.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/recovery_contract.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/recovery_contract.py"
+      ]
+    },
+    "agent_core.plan_contract": {
+      "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/plan_contract.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/plan_contract.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/plan_contract.py"
+      ]
+    },
+    "agent_core.workspace_attestation": {
+      "9feac7e99dd99304e23472c60c1a0d115e25fe93b70e257539ae93cfe86176cd": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workspace_attestation.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workspace_attestation.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workspace_attestation.py"
+      ]
+    },
+    "agent_core.plan_tracker": {
+      "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/plan_tracker.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/plan_tracker.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/plan_tracker.py"
+      ]
+    },
+    "agent_core.cli_activity": {
+      "32dc70a5f66375c72ec17a927e074cfc9d911c253c0a32cf1149fa95c258a188": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/cli_activity.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/cli_activity.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/cli_activity.py"
+      ]
+    },
+    "agent_core.public_response": {
+      "260f6c77c1271c52e4f014a8eef07dd9bbbb219522dcadfd5f970de36dacd692": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/public_response.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/public_response.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/public_response.py"
+      ]
+    },
+    "agent_core.context_budget": {
+      "181bebc8844b393a2ee715f51af88ab3139272452e54b895d597d117568caea0": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/context_budget.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/context_budget.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/context_budget.py"
+      ]
+    },
+    "agent_core.context_lineage": {
+      "2be1761ded59e3220ae91a71e911a1793792c4ba812ea35c7ce8e7033a8d6d79": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/context_lineage.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/context_lineage.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/context_lineage.py"
+      ]
+    },
+    "agent_core.managed_artifacts": {
+      "a5119a0f2d7677e36f601a577301def890ae67ee5767c6f6f16041f0f8917bf6": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/managed_artifacts.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/managed_artifacts.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/managed_artifacts.py"
+      ]
+    },
+    "agent_core.controller_audit": {
+      "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/controller_audit.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/controller_audit.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/controller_audit.py"
+      ]
+    },
+    "agent_core.root_cause": {
+      "fa3291f87291777cc51ea2537c171ffcc981ae408836ce0769e69c1d592e9a23": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/root_cause.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/root_cause.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/root_cause.py"
+      ]
+    },
+    "agent_core.diagnostics": {
+      "3be6dcf23934f0ce44de2aaa4577861b48b35919c9dd634876eeef4f7e80b029": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/diagnostics.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/diagnostics.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/diagnostics.py"
+      ]
+    },
+    "prompts.templates": {
+      "c8af0020f47de9b28439156bffaffd44d678872c17cc9f970a0b832b7016431d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/prompts/templates.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/prompts/templates.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/prompts/templates.py"
+      ]
+    },
+    "prompts.manager": {
+      "107fa92e5ac91d04b840285e277cc06f12c307bced6ccbafadd5787073c66dc6": [
+        "/tmp/biomind-a1-entry-20260914-4/export/prompts/manager.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/prompts/manager.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/prompts/manager.py"
+      ]
+    },
+    "execution.profiling": {
+      "d73e89dbc1c92bf51c905db447226992cebc9528d0b910791a2cf8ae1faafba5": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/profiling.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/profiling.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/profiling.py"
+      ]
+    },
+    "execution.runtime_contract": {
+      "fa410e2dfd8f59614c44e9de924e5e65c61a65217f989b57da6109efb1c083c2": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/runtime_contract.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/runtime_contract.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/runtime_contract.py"
+      ]
+    },
+    "execution.shell_safety": {
+      "7cdf784a7a4510b2667aff9b3fa596430694cc5e9fdf2c28d049dc751d34648a": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/shell_safety.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/shell_safety.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/shell_safety.py"
+      ]
+    },
+    "execution.executor": {
+      "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/executor.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/executor.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/executor.py"
+      ]
+    },
+    "execution.validator": {
+      "9255efdf2276eadb5ca62eab3baed7a8a99a35e6c17287019392bce90add4dc9": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/validator.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/validator.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/validator.py"
+      ]
+    },
+    "execution.monitoring": {
+      "c671ef9c84b89f488304e0f2c9ddf14c87f2e8d0a79aae89adcf1684431b9ebe": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/monitoring.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/monitoring.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/monitoring.py"
+      ]
+    },
+    "execution.confirmation": {
+      "4a94f445c1b2ac30247f37859d4b8aae113cca463596e71e24fec1b2e8659ae9": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/confirmation.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/confirmation.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/confirmation.py"
+      ]
+    },
+    "agent_core.state": {
+      "af4f504c0b61267659d3d554b27f9a9eec92a48b35143fbe838e4450ac8c4565": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/state.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/state.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/state.py"
+      ]
+    },
+    "agent_core.plan_bindings": {
+      "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/plan_bindings.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/plan_bindings.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/plan_bindings.py"
+      ]
+    },
+    "agent_core.workflow.phase_archive": {
+      "7a3587589f52db7f51435e277928204120cf55c1bccdf51be7ab577be3c538e0": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/phase_archive.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/phase_archive.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/phase_archive.py"
+      ]
+    },
+    "agent_core.workflow.step_worker": {
+      "ce816aceee63691beaa56d2a4463679ab815d4dadc63d45f145fab2fb0e8478d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/step_worker.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/step_worker.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/step_worker.py"
+      ]
+    },
+    "agent_core.workflow.pi_rpc": {
+      "14747444e33ef98d1db433c8f21567f736c439b62406afcd92026a91cca13e88": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/pi_rpc.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/pi_rpc.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/pi_rpc.py"
+      ]
+    },
+    "agent_core.workflow.outcomes": {
+      "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/outcomes.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/outcomes.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/outcomes.py"
+      ]
+    },
+    "agent_core.workflow.typed_node": {
+      "41a87dee3256ecb4f1dfc7bca05b91279413e32ea548882db82b38b67f57b1c2": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/typed_node.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/typed_node.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/typed_node.py"
+      ]
+    },
+    "agent_core.step_effects": {
+      "4abd8a1493e013c345f40cfc82e5ffb46a627fcfdb822e020a04cae9f5404dc3": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/step_effects.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/step_effects.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/step_effects.py"
+      ]
+    },
+    "agent_core.completion_gate": {
+      "9612cda9a880357e9a584301abc2c29f30a554d30f8496209f1c75ba907cc15d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/completion_gate.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/completion_gate.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/completion_gate.py"
+      ]
+    },
+    "agent_core.recovery": {
+      "7a4bd9bfc0633d9983c0c58665243c88787cc5ae9aa8bc24a5833d0f346b7d6d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/recovery.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/recovery.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/recovery.py"
+      ]
+    },
+    "agent_core.genomics_contig_parser": {
+      "2c5a3521736ee808598a5c0a9252a2227611f90441d6537e0424b424e98c3423": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/genomics_contig_parser.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/genomics_contig_parser.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/genomics_contig_parser.py"
+      ]
+    },
+    "agent_core.evidence_projection": {
+      "9fd951c6a132c1cb76c62b4790c12e33d512801d6b4282946db4de66eac5c526": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/evidence_projection.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/evidence_projection.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/evidence_projection.py"
+      ]
+    },
+    "agent_core.semantic_completion": {
+      "28bf5cad6140996248e1715974cb8f9881b197d3e38eda6cf8ef54f0e9f7598f": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/semantic_completion.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/semantic_completion.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/semantic_completion.py"
+      ]
+    },
+    "agent_core.workflow.commit_step": {
+      "8de2a56381adad243824d4866beb1104b3c7a5eb408fc2769b787795a2340cb4": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/commit_step.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/commit_step.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/commit_step.py"
+      ]
+    },
+    "agent_core.approved_resource_locator": {
+      "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/approved_resource_locator.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/approved_resource_locator.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/approved_resource_locator.py"
+      ]
+    },
+    "agent_core.action_runtime": {
+      "5cef4102ba4f8b4a3183314dda845d8c92cd5ebbb0b845276c16e1d786618122": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/action_runtime.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/action_runtime.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/action_runtime.py"
+      ]
+    },
+    "agent_core.workflow.runtime_evidence_recovery": {
+      "80e7b63f6a06ea1409b4b3e3ca7e8ee08dc93a6f1ba29243aed33b67eb782e44": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/runtime_evidence_recovery.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/runtime_evidence_recovery.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/runtime_evidence_recovery.py"
+      ]
+    },
+    "agent_core.workflow.runtime_recovery_reporting": {
+      "d35947cbf386f4a934ca4a34fd071bb290e469c260617bb0c49aebfb9945e969": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/runtime_recovery_reporting.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/runtime_recovery_reporting.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/runtime_recovery_reporting.py"
+      ]
+    },
+    "agent_core.workflow.inspection_stop": {
+      "438aacac19969d0010b42616b5dc271f9c60bd38ac35cb10329d855cdd59ed6c": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/inspection_stop.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/inspection_stop.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/inspection_stop.py"
+      ]
+    },
+    "agent_core.workflow.managed_stop": {
+      "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/managed_stop.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/managed_stop.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/managed_stop.py"
+      ]
+    },
+    "agent_core.workflow.runtime_graph": {
+      "d2d5f87d1886acd592a3f0dd8a054d281c8e24fe724eabe36897e49ee0c8147f": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/runtime_graph.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/runtime_graph.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/runtime_graph.py"
+      ]
+    },
+    "agent_core.workflow.verifier": {
+      "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/verifier.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/verifier.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/verifier.py"
+      ]
+    },
+    "agent_core.workflow.candidate_repair": {
+      "dfaffdf32938c0a2729756dfa8edf7a94342910a33e8d0e25742af306ddb6df9": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/candidate_repair.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/candidate_repair.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/candidate_repair.py"
+      ]
+    },
+    "agent_core.workflow.scoped_context": {
+      "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/scoped_context.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/scoped_context.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/scoped_context.py"
+      ]
+    },
+    "agent_core.workflow.stage_contracts": {
+      "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/stage_contracts.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/stage_contracts.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/stage_contracts.py"
+      ]
+    },
+    "agent_core.workflow.generate_handoff": {
+      "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/generate_handoff.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/generate_handoff.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/generate_handoff.py"
+      ]
+    },
+    "agent_core.workflow.execution": {
+      "44a73f514aca43fa068e55d43f25e5f4026dc054a0ceb9ef66fda027983ff65c": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/execution.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/execution.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/execution.py"
+      ]
+    },
+    "agent_core.workflow.inspection_evidence": {
+      "e3e128e0937bbf0996853ae95d0948850c99d687b8fce2ca55d3e6a221f8aff0": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/inspection_evidence.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/inspection_evidence.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/inspection_evidence.py"
+      ]
+    },
+    "agent_core.workflow.recovery_projection": {
+      "c7e16187e7a6e76d28ac17fe00974b5e1d1933f17d7c8bd8b51b9b31b922134d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/recovery_projection.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/recovery_projection.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/recovery_projection.py"
+      ]
+    },
+    "agent_core.workflow.recovery_runtime": {
+      "bc64bf5e1c5f60f4861ff3c1d1bf47670efe34ce01742b79514d923c8c7a424f": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/recovery_runtime.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/recovery_runtime.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/recovery_runtime.py"
+      ]
+    },
+    "agent_core.committed_observations": {
+      "17a02c12d0323f5bc1e74f97ff90362866e1bfe68e5935693c0382816a138884": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/committed_observations.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/committed_observations.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/committed_observations.py"
+      ]
+    },
+    "agent_core.workflow.final_audit": {
+      "05f7564381653aaebb73051b1d91ac6e7c14850fbf778a5559c431fe1fd0717b": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/final_audit.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/final_audit.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/final_audit.py"
+      ]
+    },
+    "agent_core.workflow": {
+      "53c2997ceadcc125740b6e42ff4dc9380cdccafc0c337882d4e843909976e585": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/__init__.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/__init__.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/__init__.py"
+      ]
+    },
+    "agent_core.skill_access": {
+      "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/skill_access.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/skill_access.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/skill_access.py"
+      ]
+    },
+    "agent_core.consultant_binding": {
+      "d359659fb23000de7228df34aab446fb1b253bb53dd34569289bd6313bea0637": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/consultant_binding.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/consultant_binding.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/consultant_binding.py"
+      ]
+    },
+    "agent_core.skill_discovery": {
+      "8552c165a255b962d5be9fe5aa3d0e8ebd21ebe9bc02d051ad595f6fbc980b82": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/skill_discovery.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/skill_discovery.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/skill_discovery.py"
+      ]
+    },
+    "agent_core.consultation_state": {
+      "2dcd0daa49783aab020d91282db5056803ab1b48ab515c27add6f64d46444b2c": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/consultation_state.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/consultation_state.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/consultation_state.py"
+      ]
+    },
+    "agent_core.planner_loop": {
+      "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/planner_loop.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/planner_loop.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/planner_loop.py"
+      ]
+    },
+    "agent_core.workflow.early_nodes": {
+      "cabf181201849b0fe2c4e6fd7ed0caeb441cefde23f54ca57d7a0277e98b55c9": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/early_nodes.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/early_nodes.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/early_nodes.py"
+      ]
+    },
+    "agent_core.recovery_evidence": {
+      "febe265f9d000477d87511010e2b807de70d1d585814717ae330b4e82c3b2846": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/recovery_evidence.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/recovery_evidence.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/recovery_evidence.py"
+      ]
+    },
+    "prompts.context_compaction": {
+      "c22928f281543fdb7df2a35464f8bd44e212eb10203b92586f2b268cfb581feb": [
+        "/tmp/biomind-a1-entry-20260914-4/export/prompts/context_compaction.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/prompts/context_compaction.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/prompts/context_compaction.py"
+      ]
+    },
+    "agent_core.workflow.context_compaction": {
+      "18c6d74884996e88fcb8ff920cc1dfe15db7c795be3b73f42be30581d97a1e6e": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/context_compaction.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/context_compaction.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/context_compaction.py"
+      ]
+    },
+    "agent_core.workflow.recovery_context": {
+      "9fe3239a72e8f8d5c2d26758c47b115ec223071825065e55b2d5496b2a912480": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/recovery_context.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/recovery_context.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/recovery_context.py"
+      ]
+    },
+    "agent_core.workflow.recovery_reception": {
+      "d2874b5c7b7432b6db9a0e5c728f661f72ade3c711ee40fafdaaa3eb7e7b16fc": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/recovery_reception.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/recovery_reception.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/recovery_reception.py"
+      ]
+    },
+    "agent_core.workflow.recovery_agent": {
+      "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/recovery_agent.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/recovery_agent.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/recovery_agent.py"
+      ]
+    },
+    "agent_core.workflow.phase_inspection": {
+      "f8be1e09d038f02a2d59cfca20d6e997425549434641b53beb53d90bd4b84eab": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/phase_inspection.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/phase_inspection.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/phase_inspection.py"
+      ]
+    },
+    "agent_core.workflow.recovery_tools": {
+      "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/recovery_tools.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/recovery_tools.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/recovery_tools.py"
+      ]
+    },
+    "agent_core.workflow.recovery_node": {
+      "39fa29f3232c68d3ccf85f1ebb68089a28f2489dad98de50f94a84ff1a57ee63": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/recovery_node.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/recovery_node.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/recovery_node.py"
+      ]
+    },
+    "agent_core.workflow.context_activation": {
+      "5025aab95377469cdbcf3903258581caf521b79b775f1e52a86699bb834d2704": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/context_activation.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/context_activation.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/context_activation.py"
+      ]
+    },
+    "agent_core.workflow.phase_compaction": {
+      "f73a7fac6a9b5d78d8520d079a8f424981fda680a69abfac5596e8a279515640": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/phase_compaction.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/phase_compaction.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/phase_compaction.py"
+      ]
+    },
+    "agent_core.planner_revision": {
+      "97d01a83695b0b41cbf90e046a43205c91e3fc11fc92b0f5a12256f77e5dd44e": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/planner_revision.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/planner_revision.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/planner_revision.py"
+      ]
+    },
+    "execution.preflight_progress": {
+      "dd4651f3062d6615673aa81338d240beb0b344454152dce1d61c217d033f5a67": [
+        "/tmp/biomind-a1-entry-20260914-4/export/execution/preflight_progress.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/execution/preflight_progress.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/execution/preflight_progress.py"
+      ]
+    },
+    "agent_core.node_context": {
+      "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/node_context.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/node_context.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/node_context.py"
+      ]
+    },
+    "agent_core.provider_message_safety": {
+      "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/provider_message_safety.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/provider_message_safety.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/provider_message_safety.py"
+      ]
+    },
+    "agent_core.workflow.phase_subgraph": {
+      "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow/phase_subgraph.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow/phase_subgraph.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow/phase_subgraph.py"
+      ]
+    },
+    "agent_core.deepseek_stream": {
+      "2da1f92d742d1b249f8beb35114317189db7a7f413c1805a8d1c5c8625bd4f94": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/deepseek_stream.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/deepseek_stream.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/deepseek_stream.py"
+      ]
+    },
+    "agent_core.consultant_continuation": {
+      "dbf65f17015470d316bc34b7076973480c181b3a44440924b53df40732dd1544": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/consultant_continuation.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/consultant_continuation.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/consultant_continuation.py"
+      ]
+    },
+    "agent_core.llm_safety": {
+      "ee97e68b5ec55c72ff08cf01bea2ddfd563aec6211ed2a20ba19a7d27835ec94": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/llm_safety.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/llm_safety.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/llm_safety.py"
+      ]
+    },
+    "agent_core.recovery_provider": {
+      "8fc7bcc76f25609149c92c47aed7797939440feb961aa756a66389ed5d9d215e": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/recovery_provider.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/recovery_provider.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/recovery_provider.py"
+      ]
+    },
+    "agent_core.knowledge_conflicts": {
+      "b4c14042cac8219f65c80aa5095357ab8cf9578ae3abd4a0965d71d6514aa46b": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/knowledge_conflicts.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/knowledge_conflicts.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/knowledge_conflicts.py"
+      ]
+    },
+    "agent_core.middleware": {
+      "182d9a9c70c565434076bf33f34d621a13ad57a1ac155660d0228c8cccfdd27c": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/middleware.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/middleware.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/middleware.py"
+      ]
+    },
+    "agent_core.retriever": {
+      "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/retriever.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/retriever.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/retriever.py"
+      ]
+    },
+    "agent_core.installer": {
+      "1c4b40eb49944d14c45591993aaa501de489769298b7e7438f1459487d287891": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/installer.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/installer.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/installer.py"
+      ]
+    },
+    "agent_core.router": {
+      "aaf2b7889f4a183961da99ed6dcb7230fdaaa9b6b44642eecb79138d3dc07760": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/router.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/router.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/router.py"
+      ]
+    },
+    "agent_core.skill_manager": {
+      "18f742c69745a4a0133cb16b7a9ec42b09b474aefb01e586979cb524d6c9932e": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/skill_manager.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/skill_manager.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/skill_manager.py"
+      ]
+    },
+    "agent_core.workflow_manager": {
+      "2c250c2f86d5aea2da7e450ccd90cc98c0d583812aa22b005768ff9dae9fdc19": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/workflow_manager.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/workflow_manager.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/workflow_manager.py"
+      ]
+    },
+    "agent_core.wiki_lifecycle": {
+      "36ad90e542ddf86d45b4173301c8dd422e9a21441529e6d4c678321916be4c3b": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/wiki_lifecycle.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/wiki_lifecycle.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/wiki_lifecycle.py"
+      ]
+    },
+    "agent_core.consultant_finalize": {
+      "95622ed70f84e107a3d11d6095df6f0d1d3819975ca90953e7f076640a1e1b17": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/consultant_finalize.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/consultant_finalize.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/consultant_finalize.py"
+      ]
+    },
+    "agent_core.provider_attempt": {
+      "22673124d88565e2c3331f8ba1345938a8aedf3e0af8e3d14646beca48487bcc": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/provider_attempt.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/provider_attempt.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/provider_attempt.py"
+      ]
+    },
+    "agent_core.planner_output_policy": {
+      "9d937db3705bbda6f18b5e4344a125ab226870c1e7af7b283c925b5f1a5871e2": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/planner_output_policy.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/planner_output_policy.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/planner_output_policy.py"
+      ]
+    },
+    "memory.persistence": {
+      "fc8cb41759b57e93d34ac35d1b8f28024ddd72777a39e8732643a99d43901a3d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/persistence.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/persistence.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/persistence.py"
+      ]
+    },
+    "memory.patch_validator": {
+      "b3bab8cf5c55abb3d4d017a84e73ad70437d555d67d564f91e0209c8388449e3": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/patch_validator.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/patch_validator.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/patch_validator.py"
+      ]
+    },
+    "memory.utils": {
+      "12d6b9e6c1a175ed7c8140e5a1697b953741f0016b01783b23797c7aa975a01c": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/utils.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/utils.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/utils.py"
+      ]
+    },
+    "memory.session_archive": {
+      "2ac2b70c6771dff7dd2041c1dd520da2d714628b6b58d24066a15a779c8eb495": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/session_archive.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/session_archive.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/session_archive.py"
+      ]
+    },
+    "memory.task_summary": {
+      "f758f3416ed9d0f6647e50f2c3d39c194a6d295715d5541faf9441a568eda891": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/task_summary.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/task_summary.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/task_summary.py"
+      ]
+    },
+    "memory.policy": {
+      "a3d478c0204daac64138397bc7814c27689fda8c52b9891cb37dacf364134ec0": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/policy.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/policy.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/policy.py"
+      ]
+    },
+    "memory.task_semantics": {
+      "13b273b90334b5dfb595524b17bcc90038c0579cb31dba60bb00cf762bc1fa54": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/task_semantics.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/task_semantics.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/task_semantics.py"
+      ]
+    },
+    "memory.wiki_memory": {
+      "c919c7ba3faaf7ee14b5cebdbc92bff0ec7abde2c7cee3d364459dcec1e4285d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/wiki_memory.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/wiki_memory.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/wiki_memory.py"
+      ]
+    },
+    "agent_core.formal_artifact_resolver": {
+      "3f6c2e0c9a3d84c05fa26202b5875a1a37bd8cb5b8abbbcb86488fe32adff1ba": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/formal_artifact_resolver.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/formal_artifact_resolver.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/formal_artifact_resolver.py"
+      ]
+    },
+    "agent_core.planner_context": {
+      "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/planner_context.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/planner_context.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/agent_core/planner_context.py"
+      ]
+    },
+    "memory.core_store": {
+      "4c08d070b9ee52e85cb31d52fadaa52863bdfe69960ad8464a424cce32f0fc2e": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/core_store.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/core_store.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/core_store.py"
+      ]
+    },
+    "memory.session_archive_writer": {
+      "14d0c054ddc61d61158cb101ce9509c2bacd91c2930a65a3366659afeb874754": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/session_archive_writer.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/session_archive_writer.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/session_archive_writer.py"
+      ]
+    },
+    "memory.artifact_index": {
+      "2e59fa6f03867b8ce32cc23fdd77763d57569c72f95a5a034a1100dadf5dd40c": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory/artifact_index.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory/artifact_index.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory/artifact_index.py"
+      ]
+    },
+    "memory_manager": {
+      "9ac2ee7690587557de55138886003cbc44b0a85abcd6855769de60e200cca4af": [
+        "/tmp/biomind-a1-entry-20260914-4/export/memory_manager.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/memory_manager.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/memory_manager.py"
+      ]
+    },
+    "bio_agents": {
+      "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d": [
+        "/tmp/biomind-a1-entry-20260914-4/export/bio_agents.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/bio_agents.py",
+        "/tmp/biomind-a1-entry-20260914-6/export/bio_agents.py"
+      ]
+    },
+    "agent_core.runtime_identity": {
+      "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8": [
+        "/tmp/biomind-a1-entry-20260914-4/export/agent_core/runtime_identity.py",
+        "/tmp/biomind-a1-entry-20260914-7/export/agent_core/runtime_identity.py"
+      ]
+    }
+  },
+  "static_sources": {
+    "agent_core/cli_plain.py": {
+      "sha256": "798b83d83fc775d0811c8335c9a7a2f614a4f08c8427940f5bf40742848afbc6",
+      "anchors": {
+        "178": {
+          "text": "        try:",
+          "line_sha256": "da488a04cf2e34b42ea314cac71e0c659a722f8c6694e21c099e610287f5bcfd"
+        },
+        "199": {
+          "text": "            parts.append(safe_document(view.summary).replace('/details 或 F2', '/details'))",
+          "line_sha256": "798508f62f4f554e3f2c2b550f0f854aa0bde0e21b085b79e0f1d3729bdf5965"
+        }
+      }
+    },
+    "agent_core/cli_review.py": {
+      "sha256": "6018410048326d97a5088a048f3e9d3679590e8d1da096c74c6f1db44d226267",
+      "anchors": {
+        "14": {
+          "text": "def review_display(title, content, *, language='', risk='', plan_id='', step_count=None):",
+          "line_sha256": "25ce1ed12096414cbff546ba392756ffa772a8758ef10db01391ec07d227ed7a"
+        }
+      }
+    },
+    "agent_core/cli_terminal.py": {
+      "sha256": "aa3519b4c65be87aaa21694fc09339e7f570ac8db1549440c9fb0ea23d375485",
+      "anchors": {
+        "215": {
+          "text": "    def prepare_review(self, view):",
+          "line_sha256": "191c8abe1348ac75d9bc980fc0c16654e004335344c75e4ce450303dc5d802d7"
+        },
+        "230": {
+          "text": "",
+          "line_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "458": {
+          "text": "    async def _present_input(self, request):",
+          "line_sha256": "f5c777e55c9e2bab65aa72c7830b030e41b6aee0d7c55a35a490a7dff12366fe"
+        }
+      }
+    },
+    "agent_core/workflow/early_nodes.py": {
+      "sha256": "cabf181201849b0fe2c4e6fd7ed0caeb441cefde23f54ca57d7a0277e98b55c9",
+      "anchors": {
+        "1048": {
+          "text": "        if approval in {\"approved\", \"accepted\"}:",
+          "line_sha256": "27833ee99482866b44c4ca11393ec9361e2e7c9fd256a1c8e885ce978c5dd075"
+        },
+        "1113": {
+          "text": "class TypedAskUser(_TypedEarlyNode):",
+          "line_sha256": "6a5fabc8a91533ea39d2928d4d1df4bb2a9ba2f7eaa9db818d65aaaa55a7492d"
+        },
+        "353": {
+          "text": "class TypedTriage(_TypedEarlyNode):",
+          "line_sha256": "a0fe321ffc167c36f5c4f9d8f31ab22743279dde11bad2df74239273311ca9aa"
+        },
+        "653": {
+          "text": "            )",
+          "line_sha256": "8ce8689be42237098be02105417221113f6cfad95aebf6d032bf4aa84f2336e6"
+        },
+        "661": {
+          "text": "        readiness = consultant_planning_readiness(",
+          "line_sha256": "f33c72a4d1fee104087a3441623358a806c8a324573b1817dd520a345955b4fd"
+        },
+        "690": {
+          "text": "            return _outcome(self.contract, \"answer_ready\", state, durable, {",
+          "line_sha256": "48a21f67c172f4dcbd6357fbc2292f4be0604c6429e101a9d07a473f412b276f"
+        },
+        "798": {
+          "text": "class TypedPlanner(_TypedEarlyNode):",
+          "line_sha256": "b00487fe7ceda78da909eaca90ad8ca64778bc9158fc10129f3f7b5b9d407ce0"
+        },
+        "981": {
+          "text": "class TypedPlanReview(_TypedEarlyNode):",
+          "line_sha256": "693b07ebb4b9526321aa7fa89ca9b25cec35d2c314fe46dff1bb3eca57f3c5c8"
+        },
+        "991": {
+          "text": "        task = dict(durable.get(\"task_state\") or {})",
+          "line_sha256": "6cbc16f13a49f791ba0a8399cc5386c4ebd487d89df5ccaeb059ae41e741a076"
+        }
+      }
+    },
+    "agent_core/workflow/managed_stop.py": {
+      "sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+      "anchors": {
+        "35": {
+          "text": "def observe_managed_node(name, handler):",
+          "line_sha256": "45ca5fac187c2b424ceec80a70e4a297779a8caa9b2a8c1dfc5b534e90ea4c71"
+        },
+        "607": {
+          "text": "async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load_plan_state, saver=save_plan_state):",
+          "line_sha256": "d311f35c33b015d88bcee1df35c2191c877171341333865ab7c980392d3b6515"
+        },
+        "680": {
+          "text": "    policy = dict(getattr(agent, \"terminal_summary_policy\", {}) or {})",
+          "line_sha256": "4e848e47053b266c5f7d44f9768e3742783926c0b4dd9841a5dff946aab5b814"
+        },
+        "783": {
+          "text": "    except Exception as exc: _secondary(value, \"summary.persist\", \"SUMMARY_RECEIPT_PERSIST_FAILED\", exc)",
+          "line_sha256": "fa5995ab2eb454a8b941b48885d73c592df3c7ca95a47771983664673ff8578b"
+        }
+      }
+    },
+    "agent_core/workflow/outcomes.py": {
+      "sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+      "anchors": {
+        "523": {
+          "text": "def workflow_routing_schema_version(*states: Mapping[str, Any] | None) -> int:",
+          "line_sha256": "8cfa729722ec63327411e3da53870ade2db85c1ffd428785b30e79377d45b0d6"
+        },
+        "554": {
+          "text": "    return WORKFLOW_ROUTING_SCHEMA_LEGACY",
+          "line_sha256": "ab0c006a3360acdd1d665816c04768d2163b01158b584c5c09fd824274911bb4"
+        }
+      }
+    },
+    "agent_core/workflow/runtime_graph.py": {
+      "sha256": "d2d5f87d1886acd592a3f0dd8a054d281c8e24fe724eabe36897e49ee0c8147f",
+      "anchors": {
+        "267": {
+          "text": "    outcome = ConsultantOutcome.from_mapping(state.get(\"consultant_outcome\") or {})",
+          "line_sha256": "e9170ae3b1e1e37798282aa139c9f078929ff538228b13867b8ab66add21031e"
+        },
+        "304": {
+          "text": "def route_plan_review_outcome(state: Mapping[str, Any]) -> str:",
+          "line_sha256": "414b8ab78913402b581973f88f98ef8924164b3d7da6cd754c2ee92ada29c5cd"
+        },
+        "324": {
+          "text": "    semantic = str(outcome.payload.get(\"semantic_state\") or \"consultation_ready\")",
+          "line_sha256": "157b4143b6259fce133763019e4164522eafc25ba532f4c63953f350d50d9100"
+        }
+      }
+    },
+    "agent_core/workflow/runtime_recovery_reporting.py": {
+      "sha256": "d35947cbf386f4a934ca4a34fd071bb290e469c260617bb0c49aebfb9945e969",
+      "anchors": {
+        "106": {
+          "text": "        raise RuntimeReportError(\"RUNTIME_REPORT_SIZE_LIMIT\")",
+          "line_sha256": "b0c679d08674486f44f637afaf255254e932471bed6c0a94eda5ecf237d10041"
+        },
+        "127": {
+          "text": "        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent)",
+          "line_sha256": "66ef310c85115f5bd0e5c0d6bd4d98238149fd8f54ac7605f11ddc4824399005"
+        }
+      }
+    },
+    "bio_agents.py": {
+      "sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d",
+      "anchors": {
+        "17974": {
+          "text": "        )",
+          "line_sha256": "ab38e8d6689d452b1150728fe140e960372d5a87a7688cf51b03f0996608b842"
+        },
+        "18002": {
+          "text": "        if stage == \"generate\" and sdk_max_retries != 0:",
+          "line_sha256": "5ca2dd326c5eb7e7dbade5bfab4fcf242b1bdb34b717e9c29b59bf956d462307"
+        },
+        "18078": {
+          "text": "        if stage == \"terminal_summary\":",
+          "line_sha256": "788c8340d19cd0d337b7b01da9232e586b3444bf23cce8d22f645fb46077277a"
+        },
+        "18198": {
+          "text": "            latest_attempt_progress.clear()",
+          "line_sha256": "2a75103a0f6d083a42f4f1b09a18d8d34f2a639cd88c07ebbfc73f183540ac86"
+        },
+        "24894": {
+          "text": "    def _profile_node(self, node_name: str, func):",
+          "line_sha256": "d67edb041c6e14b275bf557a2bbe72d68c5bb22ec8cb9aaa5a20ff967e6fe0b9"
+        },
+        "2509": {
+          "text": "class VibeThinkingHandler(BaseCallbackHandler):",
+          "line_sha256": "f59a733575084509b022f9b3fae271129ca79c1c9249febbff1b579cd3f4e066"
+        },
+        "2627": {
+          "text": "            \"callbacks\": [VibeThinkingHandler(), ProfilingCallbackHandler(self.profiler)],",
+          "line_sha256": "439a36411269c3ae985eb2fa59d013651df01fb86016162f72c1df583bc73df6"
+        },
+        "2687": {
+          "text": "        self.terminal_summary_llm = recovery_transport_llm.bind(max_tokens=1500)",
+          "line_sha256": "cf529f4361601c09a0e2a2a5a01f46f49fa7153e902d24f263136b27f42254af"
+        },
+        "2890": {
+          "text": "        self._schema2_phase_compactor = PhaseContextCompactor(",
+          "line_sha256": "59035f28b16442617bf936a74b9a4daecf9468dcc306f62c66de866915e6e5d0"
+        },
+        "2926": {
+          "text": "            context_compaction_enabled=SCHEMA2_CONTEXT_COMPACTION_ENABLED,",
+          "line_sha256": "aedd24793c468fccb02e4ebd6494af371a436aadca6f6406dfb4631410d45768"
+        },
+        "3030": {
+          "text": "                TypedTriage(data_path=self.data_path, source=self._schema2_early_sources[\"triage\"]),",
+          "line_sha256": "2f73c3765f7e29f8c230ddc516b4079a6bda4312a1c6b4c408d984b3cc8231d1"
+        },
+        "31520": {
+          "text": "    def _build_graph(self):",
+          "line_sha256": "d24181987357e4a0da89f38233b2597953bd4afd021c9759b58aac8288e2a206"
+        },
+        "3295": {
+          "text": "                    compaction_handler=(",
+          "line_sha256": "1787bd0e771bc2ea4630e5f78a75df341aff13d1b56035be2a69aac8d42667e6"
+        },
+        "3954": {
+          "text": "    async def _observe_session_memory(",
+          "line_sha256": "6408487f64b19801af86c67b062041b14febc2687c549a114599f32365fea8ca"
+        },
+        "4000": {
+          "text": "                source_refs=[f\"task:{task_id}\"],",
+          "line_sha256": "be8813be09da09d8fbde416cd5bbd3cbc5d76d6ae7da906a9aea0e020e6f958e"
+        },
+        "4034": {
+          "text": "        task_id: str,",
+          "line_sha256": "8ceed178a83d345073a8ac40bf991a41ba5b12aea2dadd0de3f9970013471bec"
+        },
+        "40515": {
+          "text": "            schema2_review = (",
+          "line_sha256": "635d38313bb6ddb1e587849b866b7fcd5f44d825dd8bdf42e9b1da3d1a97c5ad"
+        },
+        "40743": {
+          "text": "                    \"plan_progress\": plan_progress,",
+          "line_sha256": "5212c2fafc2bd69fca33ef735c916b5dd19ce4c2e4944f778439f798fe3441f3"
+        },
+        "40827": {
+          "text": "            if blocking_conflicts:",
+          "line_sha256": "1d1f77c319542791f7f02d3fd641192b01bf549bf4d95ee79dad955e661e5594"
+        },
+        "40888": {
+          "text": "            review_content = render_plan_review_content(persisted_plan, plan)",
+          "line_sha256": "222d9cab96072ecb4501bd3472fb5f4bd5d7d911cc3ef3234a1ad206f7315126"
+        },
+        "40938": {
+          "text": "                current_submission = plan_review_submission_readiness(plan_state)",
+          "line_sha256": "0cf178dd077467396f267fdfbf46ce1684f5b42e2066b25e1511396a4ba9b1ac"
+        },
+        "52941": {
+          "text": "        self._schema2_early_sources = {",
+          "line_sha256": "dbd4d20316783994c107955bb4368c1c84cab44a6d5c823916563512b2f35d62"
+        },
+        "53142": {
+          "text": "    def _app_for_task(",
+          "line_sha256": "7eb4dec45a3a61b25a14f33e3dc8c528e362778d664041bcbd331af151b8a6f4"
+        },
+        "53153": {
+          "text": "        return self.schema2_app if version == WORKFLOW_ROUTING_SCHEMA_TYPED else self.app",
+          "line_sha256": "a3c06b755ba29912e436cb4237186c8a7e5ace00ed3ba625b9c6195550f7941e"
+        },
+        "53838": {
+          "text": "            except (asyncio.CancelledError, KeyboardInterrupt) as exc:",
+          "line_sha256": "5814b5cdee9c25a7d9544dc78b97652c161569149aaee06a5f680e74519cf296"
+        },
+        "53884": {
+          "text": "    async def _finalize_managed_terminal(self, task_id, snapshot, *, exception=None, include_stale_diagnostic=False):",
+          "line_sha256": "892dc8644605b98861cb08b2c1591138d01f5a2c771234614d5c6cc3e2453506"
+        },
+        "53909": {
+          "text": "            self.profiler.finish_task(task_id, status, terminal_projection=terminal or None)",
+          "line_sha256": "58c5b5df652a3964f7979291df1cb157525657a62c4b6c353b6029f1c8dbe940"
+        },
+        "54195": {
+          "text": "                    continue",
+          "line_sha256": "d3e6c2c1ec6bfe3fa4036f06aa478ab9951c36c7283127eea253a2a0eda31457"
+        },
+        "54704": {
+          "text": "async def _runtime_main():",
+          "line_sha256": "93309ae15b953283b95d4ea78ea7d6f9fe2e49f2c624f07a8c51767f9fe4fba0"
+        },
+        "54707": {
+          "text": "    if command == \"interactive\" and not sys.stdin.isatty():",
+          "line_sha256": "77af29e26dc3a0bd4896199804c8ffbd9eb8d0755efa50fb2e42abc8305f13c6"
+        }
+      }
+    },
+    "memory/session_archive_writer.py": {
+      "sha256": "14d0c054ddc61d61158cb101ce9509c2bacd91c2930a65a3366659afeb874754",
+      "anchors": {
+        "327": {
+          "text": "def acquire_observation_writer(db_path: str | Path, **kwargs: Any) -> SessionArchiveObservationWriter:",
+          "line_sha256": "d548bbe8639a57bedc88e52e729afbf627eb5072be4e02509d4c675cec7878b1"
+        }
+      }
+    },
+    "memory_manager.py": {
+      "sha256": "9ac2ee7690587557de55138886003cbc44b0a85abcd6855769de60e200cca4af",
+      "anchors": {
+        "149": {
+          "text": "    async def maybe_compress(",
+          "line_sha256": "fab883203e2914377fd3b55ff84fa7bffbb8ad6073029b229a87c9f0918284f7"
+        },
+        "413": {
+          "text": "    async def _summarize_with_prompt(self, messages: List[Any], task_id: str) -> Tuple[str, str]:",
+          "line_sha256": "de77f3e1873aee1c35e587c0a00d9e8cb47dfc0dcd331e51e9811e49a17bdb24"
+        }
+      }
+    }
+  },
+  "prior_attempts": [
+    {
+      "path": "/tmp/biomind-a1-entry-20260914-1/results",
+      "classification": "TIMEOUT_NO_COMPLETED_PYTEST",
+      "files": {
+        "stdout.txt": {
+          "sha256": "4aa574ac64be849786e8c3eb28c2565b017e2e9273ae715164088e1b5236afcd",
+          "bytes": 4019
+        },
+        "pytest-results.json": {
+          "sha256": "ba4e99a2b2bc2b7d94bb7d57999c20db379f90bbe098289d4c7f6d6043f3f4a5",
+          "bytes": 434
+        },
+        "invocation.json": {
+          "sha256": "4a016a1beaaf7ba71b49f2e73a42f37dab52002e65d2b3fb618aa4b7f0ae9020",
+          "bytes": 961
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-20260914-2/results",
+      "classification": "TIMEOUT_NO_COMPLETED_PYTEST",
+      "files": {
+        "stdout.txt": {
+          "sha256": "372a3041d330d0c17673d0ff8abbafd74f9fcccb95aeb666965df5efc5b44f42",
+          "bytes": 4019
+        },
+        "pytest-results.json": {
+          "sha256": "b4cd1205f7f1a93b160030ce6a99e2ceb07c270cd053e92a9941934d87452f39",
+          "bytes": 434
+        },
+        "invocation.json": {
+          "sha256": "3b1e7761f1c57ed8ccc27468836161a51fa461142c504026558539029ee91a76",
+          "bytes": 961
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-20260914-3/results",
+      "classification": "TIMEOUT_ASYNC_CLOSE_CALLBACK_WAIT",
+      "files": {
+        "stdout.txt": {
+          "sha256": "7dc1047886cc65927c616338379849daa85bbb54e37b53dc4ac2760b912ba192",
+          "bytes": 10363
+        },
+        "pytest-results.json": {
+          "sha256": "16c90e50f09f6e365cf21fe7858f71d41f76cd9f1d4573c7d058cc74bf866903",
+          "bytes": 434
+        },
+        "invocation.json": {
+          "sha256": "f7af3558f415b670850f6227d32117f28beb504bcc99f054376406fb073a907e",
+          "bytes": 1013
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-single-exception",
+      "classification": "NEW_TEST_EXPECTATION_TOO_NARROW_CONNECTIONERROR",
+      "files": {
+        "stdout.txt": {
+          "sha256": "1a504d9491b3dd78bca7b5fdb558fb0b00878ccc0c3e943b29cb916dad081eca",
+          "bytes": 60961
+        },
+        "pytest-results.json": {
+          "sha256": "85f5cba02d30a945280b46a93a3835ed81fc5091a80894dc827a27c7b491a0bf",
+          "bytes": 44564
+        },
+        "invocation.json": {
+          "sha256": "e935c86a13977470667f9846ccfdd740d29a03182f6a6539ad9cc353a96154c2",
+          "bytes": 1212
+        },
+        "early-stack.txt": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-single-none",
+      "classification": "NEW_TEST_EXPECTED_ERROR_BUT_TRANSPORT_RETURNS_NONE",
+      "files": {
+        "stdout.txt": {
+          "sha256": "0cf476b138a5eb2f21f0268f918b9f4ec29c87050486825ecbe275bbef06db71",
+          "bytes": 24446
+        },
+        "pytest-results.json": {
+          "sha256": "7711e3c3e3da0266afdff7e09c02a5e49fd635290291662e2482895de6aa29f7",
+          "bytes": 6769
+        },
+        "invocation.json": {
+          "sha256": "ec40bc0b7287b781c271b21edff392e9022ca4c7c761241196452f58fee4a428",
+          "bytes": 1182
+        },
+        "early-stack.txt": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-single-memory-normal",
+      "classification": "FIXTURE_NOT_TRIGGERED_RECENT_MESSAGES_PROTECTED",
+      "files": {
+        "stdout.txt": {
+          "sha256": "34697bfbac8068253dcc2343357e48319690e023b0e8b47c021a3465b243c8bd",
+          "bytes": 23660
+        },
+        "pytest-results.json": {
+          "sha256": "3f167d0059438ece4b1765211591bc0fee56d10d6e6e005deea7083d7ba6478a",
+          "bytes": 5847
+        },
+        "invocation.json": {
+          "sha256": "22124e08a796f3d31c7c78961aa6695c1e6af62971b64efc1f557b5c54afa39c",
+          "bytes": 1215
+        },
+        "early-stack.txt": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-memory-normal",
+      "classification": "FIXTURE_NOT_TRIGGERED_RECENT_MESSAGES_PROTECTED",
+      "files": {
+        "stdout.txt": {
+          "sha256": "710ff429b6c75fd6af1523450239627e9b053048715b36cfa4173408bcec20bc",
+          "bytes": 23573
+        },
+        "pytest-results.json": {
+          "sha256": "3950fa85cd2e92c01500876a7680baa27ac59a20b36af7d14898cf6e78f973ae",
+          "bytes": 5795
+        },
+        "invocation.json": {
+          "sha256": "8f2473eca0dd6628b8a8890706a1eac1772eeda1f422f0f4176c8034e9214b77",
+          "bytes": 1180
+        },
+        "early-stack.txt": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-memory-exception",
+      "classification": "FIXTURE_NOT_TRIGGERED_RECENT_MESSAGES_PROTECTED",
+      "files": {
+        "stdout.txt": {
+          "sha256": "825aa19546d3fba752fa13ff3385e62a5c63dbc475edff053c6781b5564350ab",
+          "bytes": 23600
+        },
+        "pytest-results.json": {
+          "sha256": "61a114e4fa2903fee35fb0e57d184bdd202f24eebc1963bd9c51a1bd60b2860e",
+          "bytes": 5811
+        },
+        "invocation.json": {
+          "sha256": "dc262bf428c5e3b63f4f7a4247616b9ffaef9cbff8ea311b0b335d32bd06c999",
+          "bytes": 1198
+        },
+        "early-stack.txt": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    {
+      "path": "/tmp/biomind-a1-entry-memory-none",
+      "classification": "FIXTURE_NOT_TRIGGERED_RECENT_MESSAGES_PROTECTED",
+      "files": {
+        "stdout.txt": {
+          "sha256": "86e9872fd6185d5f2b3061ba6901890c861e0fe749d094f9e22ce2cbeb7e9ee7",
+          "bytes": 23555
+        },
+        "pytest-results.json": {
+          "sha256": "7c2c886eac9b654cf43e1db13297c707d9e1af11dd9e8b0295549d66e48c7883",
+          "bytes": 5780
+        },
+        "invocation.json": {
+          "sha256": "dcf1d378bb56678c054d955c72c6163f77d5256ffbf818647500a11c285da314",
+          "bytes": 1168
+        },
+        "early-stack.txt": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    }
+  ],
+  "passed_cases": 10,
+  "current_test_sha256": "4030119e308cbc2ca9396294a00a17b01fac701f75aeffc62ac45e71785f6dd9",
+  "diagnostic_launcher_sha256": "ccacbd0b97c1018076366a8fa8c1b3d33beeef4f7368f3f04dafbb9aa9fa39c2"
+}

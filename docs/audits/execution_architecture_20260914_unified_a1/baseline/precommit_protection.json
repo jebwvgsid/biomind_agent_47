@@ -1,0 +1,22 @@
+{
+  "test_baseline_head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+  "current_head_before_commit": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+  "index_unchanged_before_commit": true,
+  "other_status_unchanged": true,
+  "protected_safe_source_test_hashes_unchanged": true,
+  "all_exported_production_bytes_unchanged": true,
+  "production_drift": [],
+  "sensitive_config": "metadata only; content NOT_READ",
+  "owned_roots": [
+    "docs/audits/execution_architecture_20260914_unified_a1/",
+    "tests/execution_architecture_audit_a1/"
+  ],
+  "no_push": true,
+  "retriever_byte_difference": {
+    "head_bytes": 2336,
+    "worktree_bytes": 2404,
+    "worktree_crlf_count": 68,
+    "LF_normalized_equal": true,
+    "git_attributes": "text set,eol lf"
+  }
+}

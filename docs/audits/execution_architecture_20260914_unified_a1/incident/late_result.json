@@ -1,0 +1,625 @@
+{
+  "schema_version": 1,
+  "scope": "W7 Generate post-await (not all cancellation windows)",
+  "status": "CURRENT_BEHAVIOR_VERIFIED",
+  "executions": 0,
+  "real_provider_calls": 0,
+  "scientific_calls": 0,
+  "runs": [
+    {
+      "run": "/tmp/biomind-a1-incident-late-01",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "source_signature": "940d82e5d98c293379fca09447c77abfe59a9a9e4c823dcaf1e7a28dc2913cc2",
+      "command": "python tests/execution_architecture_audit_a1/export_and_run.py /tmp/biomind-a1-incident-late-01 --test tests/ger_fixture_support.py --run -q tests/execution_architecture_audit_a1/test_incident_late_result.py",
+      "test_results": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_late_result.py::test_current_generate_post_await_boundary[cancel]",
+          "outcome": "passed",
+          "duration": 18.21688638255,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_late_result.py::test_current_generate_post_await_boundary[nonsemantic]",
+          "outcome": "passed",
+          "duration": 2.052587687037885,
+          "failure": ""
+        }
+      ],
+      "classification": "CURRENT_BEHAVIOR_VERIFIED",
+      "cases": {
+        "cancel": {
+          "counts": {
+            "consultant": 1,
+            "planner": 1,
+            "generate": 1,
+            "action_approval": 0
+          },
+          "routes_observed": [
+            "triage",
+            "consultant",
+            "planner",
+            "plan_review",
+            "generate"
+          ],
+          "next_route": "planner",
+          "outcome": {
+            "type": "stale_result",
+            "scope": {
+              "task_id": "audit-late-generate-cancel",
+              "task_revision": 1,
+              "plan_id": "plan_491b2dc8024bd00d8903",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "changed_preconditions": [
+              "approval_applicability"
+            ],
+            "counts_as_failure": false
+          },
+          "post_cancel_outcomes": [],
+          "barrier": {
+            "binding": {
+              "invocation_id": "inv-63dcd3a7-360f-450c-a6c4-c6954868553a",
+              "node_type": "generate",
+              "staleness_domain": "generate-v1",
+              "state_generation": 20,
+              "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+              "task_record_hash": "sha256:93c538aaa98545414164cc53c128819e76b2045f66f6023e96cb13fe247be5ad",
+              "plan_semantic_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+              "plan_record_hash": "sha256:b99af5bd0b56489986278b0ea37325f48a1c364ee8dcb17018e8c8bf9a47b3fe",
+              "task_revision": 1,
+              "plan_revision": 1,
+              "authoritative_user_turn_revision": 1,
+              "continuation_id": "",
+              "approval_ref": "object:sha256:19e6187645a5116075a28b5796b1ab7b4cefeab31f8f7704695f707e24d6f8bf",
+              "approval_applicability": "applicable",
+              "step_id": "step-direct",
+              "execution_epoch": "0",
+              "attempt_id": "",
+              "failure_fingerprint": "",
+              "violation_set_identity": "",
+              "action_identity": "",
+              "evidence_identity": "",
+              "candidate_scope_id": "",
+              "touched_entity_versions": {
+                "selected_skill_revision": "sha256:c21306e3b4835c96fb1755e48aec2fec15b548698e1dbf969fbed7938838f9e6"
+              },
+              "semantic_handle_map": {
+                "step.step-direct": {
+                  "semantic_handle": "step.step-direct",
+                  "object_type": "plan_step",
+                  "stable_identity": "step-direct",
+                  "direction": "",
+                  "allowed_usage": [
+                    "reference",
+                    "replace",
+                    "execute",
+                    "review"
+                  ],
+                  "metadata": {
+                    "index": 1
+                  }
+                }
+              }
+            },
+            "before": {
+              "state_generation": 20,
+              "plan_id": "plan_491b2dc8024bd00d8903",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved"
+            },
+            "cancellation_receipt": {
+              "schema_version": 2,
+              "initiator_kind": "user",
+              "owner": "interactive_user",
+              "source_evidence": {
+                "kind": "interactive_cancellation_choice",
+                "source": "audit_generate_provider_await"
+              },
+              "attribution_reason": "independent_cancellation_request",
+              "scope": {
+                "task_id": "audit-late-generate-cancel",
+                "task_revision": 1,
+                "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+                "plan_id": "plan_491b2dc8024bd00d8903",
+                "plan_version": "plan_v1",
+                "step_id": "step-direct",
+                "planning_epoch_id": "planning-epoch-21a717e2-edc7-48da-8ea7-3f33ab7c9f97"
+              },
+              "request_scope": {
+                "task_id": "audit-late-generate-cancel"
+              },
+              "receipt_id": "cancel-491b2dc8024bd00d8903ea56",
+              "task_id": "audit-late-generate-cancel",
+              "source": "audit_generate_provider_await",
+              "reason": "Explicit synthetic user cancellation during awaited provider",
+              "requested_at": "2026-09-14T21:30:00+08:00",
+              "command_started": false,
+              "active_provider_ref": "",
+              "state_generation_before": 20,
+              "state_generation_after": 21
+            },
+            "after_mutation": {
+              "state_generation": 21,
+              "plan_id": "plan_491b2dc8024bd00d8903",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved",
+              "task_status": "cancelled"
+            }
+          },
+          "durable_status": "cancelled",
+          "pending_action": {},
+          "claims": [
+            {
+              "claim_id": "candidate-call:56d35db9d91e90f1a58049ddbcdd647379a1a73d4afa54b72cb111c13e35b520",
+              "invocation_id": "generate-9028ab9461f74d22b14f6d6807e490e1",
+              "scope": {
+                "task_id": "audit-late-generate-cancel",
+                "task_revision": 1,
+                "plan_id": "plan_491b2dc8024bd00d8903",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "step-direct"
+              },
+              "status": "completed",
+              "response_ref": "object:sha256:360c30b4aac93fe27c1dae8e1734f26c8b1bc14825b147b29da53e65537563cd"
+            }
+          ],
+          "candidate_rejections": 0,
+          "attempts": 0,
+          "loaded_source": {
+            "bio_agents": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+          },
+          "fixture_boundary": "fixed provider and Plan yes input; runtime readiness/memory hooks are existing fixture stubs; actual TypedGenerate/parser/CAS/staleness and route; no Execute dispatched"
+        },
+        "nonsemantic": {
+          "counts": {
+            "consultant": 1,
+            "planner": 1,
+            "generate": 1,
+            "action_approval": 0
+          },
+          "routes_observed": [
+            "triage",
+            "consultant",
+            "planner",
+            "plan_review",
+            "generate"
+          ],
+          "next_route": "execute",
+          "outcome": {
+            "type": "action_ready",
+            "scope": {
+              "task_id": "audit-late-generate-nonsemantic",
+              "task_revision": 1,
+              "plan_id": "plan_cda2200491b0bcbab8c7",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "changed_preconditions": null,
+            "counts_as_failure": null
+          },
+          "post_cancel_outcomes": [],
+          "barrier": {
+            "binding": {
+              "invocation_id": "inv-54ca7d0e-a18f-4009-9325-165f0fa4b03a",
+              "node_type": "generate",
+              "staleness_domain": "generate-v1",
+              "state_generation": 20,
+              "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+              "task_record_hash": "sha256:6753ce6337dbe0a422ea65d3cadc3e8492c88bd720bb956e5a1f9edcebf57098",
+              "plan_semantic_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+              "plan_record_hash": "sha256:2e06cb264f3dbd4d339a02a988f07a889b7bd764d5594b0a5f930dfb34261b9c",
+              "task_revision": 1,
+              "plan_revision": 1,
+              "authoritative_user_turn_revision": 1,
+              "continuation_id": "",
+              "approval_ref": "object:sha256:430366d22bdb3e72f131d401a57436d0034153aca33ea3af69026e3ff235d567",
+              "approval_applicability": "applicable",
+              "step_id": "step-direct",
+              "execution_epoch": "0",
+              "attempt_id": "",
+              "failure_fingerprint": "",
+              "violation_set_identity": "",
+              "action_identity": "",
+              "evidence_identity": "",
+              "candidate_scope_id": "",
+              "touched_entity_versions": {
+                "selected_skill_revision": "sha256:c21306e3b4835c96fb1755e48aec2fec15b548698e1dbf969fbed7938838f9e6"
+              },
+              "semantic_handle_map": {
+                "step.step-direct": {
+                  "semantic_handle": "step.step-direct",
+                  "object_type": "plan_step",
+                  "stable_identity": "step-direct",
+                  "direction": "",
+                  "allowed_usage": [
+                    "reference",
+                    "replace",
+                    "execute",
+                    "review"
+                  ],
+                  "metadata": {
+                    "index": 1
+                  }
+                }
+              }
+            },
+            "before": {
+              "state_generation": 20,
+              "plan_id": "plan_cda2200491b0bcbab8c7",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved"
+            },
+            "after_mutation": {
+              "state_generation": 21,
+              "plan_id": "plan_cda2200491b0bcbab8c7",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved",
+              "task_status": "running"
+            }
+          },
+          "durable_status": "running",
+          "pending_action": {
+            "action_id": "action_d77e25a1695669b6",
+            "operation": "check_contig_compatibility",
+            "plan_id": "plan_cda2200491b0bcbab8c7",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct"
+          },
+          "claims": [
+            {
+              "claim_id": "candidate-call:5cb01877ef96deed80ab6ab8afc3ce576558b1c66526f5e5dffc9ab0aa7f6031",
+              "invocation_id": "generate-6fb59d11de414b4a9dfada1f4f896160",
+              "scope": {
+                "task_id": "audit-late-generate-nonsemantic",
+                "task_revision": 1,
+                "plan_id": "plan_cda2200491b0bcbab8c7",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "step-direct"
+              },
+              "status": "completed",
+              "response_ref": "object:sha256:360c30b4aac93fe27c1dae8e1734f26c8b1bc14825b147b29da53e65537563cd"
+            }
+          ],
+          "candidate_rejections": 0,
+          "attempts": 0,
+          "loaded_source": {
+            "bio_agents": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+          },
+          "fixture_boundary": "fixed provider and Plan yes input; runtime readiness/memory hooks are existing fixture stubs; actual TypedGenerate/parser/CAS/staleness and route; no Execute dispatched"
+        }
+      }
+    },
+    {
+      "run": "/tmp/biomind-a1-incident-late-02",
+      "head": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+      "source_signature": "997e7527b5f5ee628fc0ed4965ff2d842c424046cda4b7a69e8f8de284206407",
+      "command": "python tests/execution_architecture_audit_a1/export_and_run.py /tmp/biomind-a1-incident-late-02 --test tests/ger_fixture_support.py --run -q tests/execution_architecture_audit_a1/test_incident_late_result.py",
+      "test_results": [
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_late_result.py::test_current_generate_post_await_boundary[cancel]",
+          "outcome": "passed",
+          "duration": 15.416843421757221,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/execution_architecture_audit_a1/test_incident_late_result.py::test_current_generate_post_await_boundary[nonsemantic]",
+          "outcome": "passed",
+          "duration": 2.029964949004352,
+          "failure": ""
+        }
+      ],
+      "classification": "CURRENT_BEHAVIOR_VERIFIED",
+      "cases": {
+        "cancel": {
+          "counts": {
+            "consultant": 1,
+            "planner": 1,
+            "generate": 1,
+            "action_approval": 0
+          },
+          "routes_observed": [
+            "triage",
+            "consultant",
+            "planner",
+            "plan_review",
+            "generate",
+            "planner"
+          ],
+          "next_route": "planner",
+          "outcome": {
+            "type": "stale_result",
+            "scope": {
+              "task_id": "audit-late-generate-cancel",
+              "task_revision": 1,
+              "plan_id": "plan_491b2dc8024bd00d8903",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "changed_preconditions": [
+              "approval_applicability"
+            ],
+            "counts_as_failure": false
+          },
+          "post_cancel_outcomes": [
+            {
+              "schema_version": 1,
+              "type": "terminal",
+              "summary": "Planner reached a terminal business state.",
+              "scope": {
+                "task_id": "audit-late-generate-cancel",
+                "plan_id": "plan_491b2dc8024bd00d8903",
+                "plan_version": "plan_v1",
+                "step_id": "step-direct"
+              },
+              "payload": {
+                "status": "cancelled",
+                "reason_code": "planning_terminal"
+              },
+              "evidence_refs": []
+            }
+          ],
+          "barrier": {
+            "binding": {
+              "invocation_id": "inv-a45629bd-524d-407f-9150-b624fb3ec188",
+              "node_type": "generate",
+              "staleness_domain": "generate-v1",
+              "state_generation": 20,
+              "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+              "task_record_hash": "sha256:cc90b2c40c660ffb5a0066dc57485d89191781fb1aefdbdd546d17f9a2b6739b",
+              "plan_semantic_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+              "plan_record_hash": "sha256:1d34092aaca2b38fa8b79dc617f423f886bfa790d5e515c6b8c49df807ff02e5",
+              "task_revision": 1,
+              "plan_revision": 1,
+              "authoritative_user_turn_revision": 1,
+              "continuation_id": "",
+              "approval_ref": "object:sha256:fe3c407b749ecd2442fcd0cd76fa56efef5f311e4dfa3937758087007069d351",
+              "approval_applicability": "applicable",
+              "step_id": "step-direct",
+              "execution_epoch": "0",
+              "attempt_id": "",
+              "failure_fingerprint": "",
+              "violation_set_identity": "",
+              "action_identity": "",
+              "evidence_identity": "",
+              "candidate_scope_id": "",
+              "touched_entity_versions": {
+                "selected_skill_revision": "sha256:650839be757fa682d9603926ac6781ee465f2b9404c960658aeae29afe9953d5"
+              },
+              "semantic_handle_map": {
+                "step.step-direct": {
+                  "semantic_handle": "step.step-direct",
+                  "object_type": "plan_step",
+                  "stable_identity": "step-direct",
+                  "direction": "",
+                  "allowed_usage": [
+                    "reference",
+                    "replace",
+                    "execute",
+                    "review"
+                  ],
+                  "metadata": {
+                    "index": 1
+                  }
+                }
+              }
+            },
+            "before": {
+              "state_generation": 20,
+              "plan_id": "plan_491b2dc8024bd00d8903",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved"
+            },
+            "cancellation_receipt": {
+              "schema_version": 2,
+              "initiator_kind": "user",
+              "owner": "interactive_user",
+              "source_evidence": {
+                "kind": "interactive_cancellation_choice",
+                "source": "audit_generate_provider_await"
+              },
+              "attribution_reason": "independent_cancellation_request",
+              "scope": {
+                "task_id": "audit-late-generate-cancel",
+                "task_revision": 1,
+                "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+                "plan_id": "plan_491b2dc8024bd00d8903",
+                "plan_version": "plan_v1",
+                "step_id": "step-direct",
+                "planning_epoch_id": "planning-epoch-adf440c5-d8c6-4d81-80ca-32bde21ad13e"
+              },
+              "request_scope": {
+                "task_id": "audit-late-generate-cancel"
+              },
+              "receipt_id": "cancel-491b2dc8024bd00d8903ea56",
+              "task_id": "audit-late-generate-cancel",
+              "source": "audit_generate_provider_await",
+              "reason": "Explicit synthetic user cancellation during awaited provider",
+              "requested_at": "2026-09-14T21:31:29+08:00",
+              "command_started": false,
+              "active_provider_ref": "",
+              "state_generation_before": 20,
+              "state_generation_after": 21
+            },
+            "after_mutation": {
+              "state_generation": 21,
+              "plan_id": "plan_491b2dc8024bd00d8903",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved",
+              "task_status": "cancelled"
+            }
+          },
+          "durable_status": "cancelled",
+          "pending_action": {},
+          "claims": [
+            {
+              "claim_id": "candidate-call:56d35db9d91e90f1a58049ddbcdd647379a1a73d4afa54b72cb111c13e35b520",
+              "invocation_id": "generate-5723487f6c754c09ac8e171384a300cf",
+              "scope": {
+                "task_id": "audit-late-generate-cancel",
+                "task_revision": 1,
+                "plan_id": "plan_491b2dc8024bd00d8903",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "step-direct"
+              },
+              "status": "completed",
+              "response_ref": "object:sha256:360c30b4aac93fe27c1dae8e1734f26c8b1bc14825b147b29da53e65537563cd"
+            }
+          ],
+          "candidate_rejections": 0,
+          "attempts": 0,
+          "loaded_source": {
+            "bio_agents": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+          },
+          "fixture_boundary": "fixed provider and Plan yes input; runtime readiness/memory hooks are existing fixture stubs; actual TypedGenerate/parser/CAS/staleness and route; no Execute dispatched"
+        },
+        "nonsemantic": {
+          "counts": {
+            "consultant": 1,
+            "planner": 1,
+            "generate": 1,
+            "action_approval": 0
+          },
+          "routes_observed": [
+            "triage",
+            "consultant",
+            "planner",
+            "plan_review",
+            "generate"
+          ],
+          "next_route": "execute",
+          "outcome": {
+            "type": "action_ready",
+            "scope": {
+              "task_id": "audit-late-generate-nonsemantic",
+              "task_revision": 1,
+              "plan_id": "plan_cda2200491b0bcbab8c7",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "changed_preconditions": null,
+            "counts_as_failure": null
+          },
+          "post_cancel_outcomes": [],
+          "barrier": {
+            "binding": {
+              "invocation_id": "inv-7099d251-9f80-4070-9e93-8104668426e6",
+              "node_type": "generate",
+              "staleness_domain": "generate-v1",
+              "state_generation": 20,
+              "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+              "task_record_hash": "sha256:16c38879d6e63114e66a24c999a6b241a0501bd7ff549e2ad05a1972288590c7",
+              "plan_semantic_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+              "plan_record_hash": "sha256:9b475ff3d8d147fae8b1c92d1e5fe229e3cf7ae4698789d960ce219a63fe0804",
+              "task_revision": 1,
+              "plan_revision": 1,
+              "authoritative_user_turn_revision": 1,
+              "continuation_id": "",
+              "approval_ref": "object:sha256:8ba9c347627efc39cfcc1c112c92b71403fc6053b54c316499a0f2ef1820314e",
+              "approval_applicability": "applicable",
+              "step_id": "step-direct",
+              "execution_epoch": "0",
+              "attempt_id": "",
+              "failure_fingerprint": "",
+              "violation_set_identity": "",
+              "action_identity": "",
+              "evidence_identity": "",
+              "candidate_scope_id": "",
+              "touched_entity_versions": {
+                "selected_skill_revision": "sha256:650839be757fa682d9603926ac6781ee465f2b9404c960658aeae29afe9953d5"
+              },
+              "semantic_handle_map": {
+                "step.step-direct": {
+                  "semantic_handle": "step.step-direct",
+                  "object_type": "plan_step",
+                  "stable_identity": "step-direct",
+                  "direction": "",
+                  "allowed_usage": [
+                    "reference",
+                    "replace",
+                    "execute",
+                    "review"
+                  ],
+                  "metadata": {
+                    "index": 1
+                  }
+                }
+              }
+            },
+            "before": {
+              "state_generation": 20,
+              "plan_id": "plan_cda2200491b0bcbab8c7",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved"
+            },
+            "after_mutation": {
+              "state_generation": 21,
+              "plan_id": "plan_cda2200491b0bcbab8c7",
+              "plan_revision": 1,
+              "plan_version": "plan_v1",
+              "current_step_id": "step-direct",
+              "approval_status": "approved",
+              "task_status": "running"
+            }
+          },
+          "durable_status": "running",
+          "pending_action": {
+            "action_id": "action_d77e25a1695669b6",
+            "operation": "check_contig_compatibility",
+            "plan_id": "plan_cda2200491b0bcbab8c7",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct"
+          },
+          "claims": [
+            {
+              "claim_id": "candidate-call:5cb01877ef96deed80ab6ab8afc3ce576558b1c66526f5e5dffc9ab0aa7f6031",
+              "invocation_id": "generate-70ac0ef25e4740cf9930dd747c643e44",
+              "scope": {
+                "task_id": "audit-late-generate-nonsemantic",
+                "task_revision": 1,
+                "plan_id": "plan_cda2200491b0bcbab8c7",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "step-direct"
+              },
+              "status": "completed",
+              "response_ref": "object:sha256:360c30b4aac93fe27c1dae8e1734f26c8b1bc14825b147b29da53e65537563cd"
+            }
+          ],
+          "candidate_rejections": 0,
+          "attempts": 0,
+          "loaded_source": {
+            "bio_agents": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d"
+          },
+          "fixture_boundary": "fixed provider and Plan yes input; runtime readiness/memory hooks are existing fixture stubs; actual TypedGenerate/parser/CAS/staleness and route; no Execute dispatched"
+        }
+      }
+    }
+  ],
+  "retained_protection": "Task cancelled -> validate_plan_for_generate terminal check -> approval_applicability stale -> TypedGenerate stale_result -> route planner -> TypedPlanner terminal(cancelled). Provider claim completed only archives late content; no pending action/approval/attempt. Nonsemantic save is accepted."
+}

@@ -1,0 +1,125 @@
+{
+  "invocation": {
+    "command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/tests/execution_architecture_audit_a1/run_entry_guarded.py",
+      "--child",
+      "/tmp/biomind-a1-entry-20260914-4/export",
+      "-s",
+      "-vv",
+      "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults"
+    ],
+    "environment": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "PYTHONPATH": "",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+      "TMPDIR": "/tmp/biomind-a1-entry-single-assembly/scratch",
+      "BIOMIND_WIKI_ENABLED": "0",
+      "LOG_LEVEL": "CRITICAL",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-a1-entry-single-assembly/pytest-results.json",
+      "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-a1-entry-single-assembly",
+      "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-a1-entry-single-assembly",
+      "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-a1-entry-single-assembly/scratch/executor-logs"
+    },
+    "guard": "unchanged cli_model_progress_support.guarded_child + offline_managed_bootstrap",
+    "timeout_seconds": 120,
+    "returncode": 0
+  },
+  "pytest": [
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.030452143400907516,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 7.622391540557146,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0003314623609185219,
+      "failure": ""
+    }
+  ],
+  "source_unchanged": true,
+  "observations": [
+    {
+      "source": "/tmp/biomind-a1-entry-single-assembly/entry-assembly-archive.json",
+      "sha256": "4b2dfa120ba74527992d775ccc9edad5647c58b283a5f93d377888acc37c2263",
+      "observed": {
+        "scope": "isolated component witness, not FIX PASS or E2E",
+        "callbacks": [
+          "VibeThinkingHandler",
+          "ProfilingCallbackHandler"
+        ],
+        "summary_policy": {
+          "enabled": true,
+          "timeout_seconds": 30
+        },
+        "graph_handlers": [
+          "ask_user",
+          "commit_step",
+          "consultant",
+          "direct_response",
+          "execute",
+          "final_audit",
+          "generate",
+          "install_subagent",
+          "plan_review",
+          "planner",
+          "recovery",
+          "step_worker",
+          "supervisor",
+          "triage"
+        ],
+        "archive_snapshots": [
+          {
+            "scope": "PER_PROCESS",
+            "capacity": 1024,
+            "enqueued_count": 1,
+            "written_count": 1,
+            "dropped_count": 0,
+            "coalesced_count": 0,
+            "retry_count": 0,
+            "write_failure_count": 0,
+            "remaining_not_durable_count": 0,
+            "last_success_at": "2026-09-14T13:23:04.633545+00:00",
+            "last_failure_at": "",
+            "last_failure_type": "",
+            "last_enqueue_latency_ms": 0.088,
+            "last_queue_delay_ms": 28.551,
+            "last_write_latency_ms": 33.559,
+            "started_at": "2026-09-14T13:23:04.253077+00:00",
+            "stopped_at": "",
+            "queue_depth": 0,
+            "oldest_event_age_ms": 0.0,
+            "accepting": true,
+            "writer_alive": true
+          }
+        ],
+        "faults": [
+          "none",
+          "dropped",
+          "OSError"
+        ],
+        "business_state_unchanged": true,
+        "models_called": 0,
+        "construction": "BioAnalystAgent.__init__, no graph/memory methods replaced"
+      }
+    }
+  ],
+  "source_signature": "2db27ad4a334ac706968ded6e9f64a976402980d3c29ff60d73282154840cace"
+}

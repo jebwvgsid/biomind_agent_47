@@ -1,0 +1,516 @@
+{
+  "files": [
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/README.md",
+      "bytes": 18359,
+      "sha256": "0d6c9417eee6fac94796e6799a75fdf24c1d4c9e3ea0cf853df2ba0f2b7cb339"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/baseline/artifact_integrity.json",
+      "bytes": 549,
+      "sha256": "b5f75cb559cc428743f2dc58b14b7d76a4f224e6e7c5c8545a8ad383fe2228e1"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/baseline/precommit_protection.json",
+      "bytes": 756,
+      "sha256": "b34d74d4900347a703631077d182e348ae4c27ba3961145fa40540c769f52dfc"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/baseline/prior_evidence_reuse.json",
+      "bytes": 132817,
+      "sha256": "feb8d32ca9e3419d587ea36f9bc5ba938be7f2d26d3bf5844346cb1da1779748"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/baseline/root_interfaces.tsv",
+      "bytes": 4581,
+      "sha256": "deddb99c9e0f4465e18947fa23610f51b78f688963a27a51fd1360c682724b4d"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/baseline/route_source_index.json",
+      "bytes": 9735,
+      "sha256": "8ba113ef4ba79ce9cf83dbd4584fcb3167a0a3f0ca037ea546d2ab32dc12ac19"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/baseline/start.json",
+      "bytes": 48706,
+      "sha256": "b89b9330cf9326b5b0ba87bd809dd1a785fb3d6d4c57a4efab66b27a84aab5da"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/branches.tsv",
+      "bytes": 29940,
+      "sha256": "391bd88ddeff2c867212ca96942304180b7448e447c294fc19ef79e89f9bc23a"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/capability_families.tsv",
+      "bytes": 16942,
+      "sha256": "7d8ad4b25499be70931ca213bf85d99e5241196d665cf4462f823bdfe349a872"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archive_index.json",
+      "bytes": 4921,
+      "sha256": "28f64b44b21f05be3779fcab7809458c96a74595d092213124cfbb8d1e0c1f0d"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-a-a1-six_success-progress.json.gz",
+      "bytes": 242076,
+      "sha256": "4baeb1402d9383ca861d09546a50f7efa1e867ddb453d5e3ebbfd618543b04f0"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-a-a1-voluntary_stop.json.gz",
+      "bytes": 119943,
+      "sha256": "68ad20114970a3cdeb4352dcf3bb1f3550be085c703104622bf3a24c1c9c11a6"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-a-export-manifest.json.gz",
+      "bytes": 32598,
+      "sha256": "ae1ec325e22894f919007d6dab459bf210725fce8bd532a794b64786db19d9c7"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-a-pytest-results.json.gz",
+      "bytes": 3909,
+      "sha256": "f532b5a9bdd60865febe7713e50077f9386dc162706b09ab9ddd869c3c397dea"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-b-a1-workspace_prepare-progress.json.gz",
+      "bytes": 59506,
+      "sha256": "96f50a5fab9e389c4a89cf3e5bba062168bd553c597ad956f5710ca7df253670"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-b-export-manifest.json.gz",
+      "bytes": 32892,
+      "sha256": "79306a163fd45c5fb4c8fbe2599005a18185002605f226911837b9c2fa414840"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-b-pytest-results.json.gz",
+      "bytes": 5496,
+      "sha256": "a15b797c15bfb6b9113749bf3093c69ed90f05d8111f372b11cdd1f1d0b3685a"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-c-a1-six_success-progress.json.gz",
+      "bytes": 242050,
+      "sha256": "02509c37a549cde01ad9e3329b8ffe1912f253bac0d1e42bf849ee3865943f0c"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-c-a1-six_success.json.gz",
+      "bytes": 192233,
+      "sha256": "1eb9b2e485c357aa066820189dc014296701759b6b7cdbd0eb2f1bd18eaf9354"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-c-export-manifest.json.gz",
+      "bytes": 34729,
+      "sha256": "a5c27be71f03939a80883741cf1055e0620ffb198bdd1dac0ff8f2ecf19b1c93"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-c-pytest-results.json.gz",
+      "bytes": 253,
+      "sha256": "a6e4163e8a1a71ca92dc565ad88586e45361848bb0d5568a420ace4d9eee18f0"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-d-a1-progress-policy-conflict.json.gz",
+      "bytes": 11269,
+      "sha256": "a7e5887f51109db4019ae336be629276d5092b62a961a3c88bbd149cf6a51388"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-d-a1-workspace_prepare-progress.json.gz",
+      "bytes": 103149,
+      "sha256": "dc99240a5658d3372c962a7ad78ec8e6cf02bd7489afa2d34b59a133a6c87ba1"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-d-a1-workspace_prepare.json.gz",
+      "bytes": 146053,
+      "sha256": "c6f7eae717bcf943540bce494b1019165312a807cfbbed2e5b858e07fd13a56a"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-d-export-manifest.json.gz",
+      "bytes": 34870,
+      "sha256": "9bea6c02312db987b3c8594975999164465d5d7a8fe3fb003728e8637dab2ac2"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/archives/run-d-pytest-results.json.gz",
+      "bytes": 365,
+      "sha256": "6424bd90f8b3c2e2cdcba5bf7d5a933bd60f238a199f28e91046625c276d8e05"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/evidence.json",
+      "bytes": 9990,
+      "sha256": "eea697379bf8399d86145c86bf71acd106899d3bf89ec9f5ab90366e6d47712d"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/findings.md",
+      "bytes": 6395,
+      "sha256": "9d1e04c366d2a12ea445a38ffef52197db1a8622c0faee1d1af4608ca55e925b"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/guards.tsv",
+      "bytes": 5175,
+      "sha256": "9b39d4afdac08c6394aedc6c0afd1090634f81ce4b71eb8d56a8965595b193fe"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/interfaces.tsv",
+      "bytes": 9223,
+      "sha256": "195bd8aec0484aa19368cbdfb2101b43caf1ab12f3bd85edff61c3e7c365a123"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/progress_policy_conflict.json",
+      "bytes": 3300,
+      "sha256": "1e80e280777fd20cd96f80d41a3cab6ef6408ba5de8c1c9f0cd7553ab05d85e1"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/six_success.json",
+      "bytes": 18524,
+      "sha256": "cabb048d3506e4db987eb1b418a505d4aa80ad6ee3f6a0f24f2b4950d0d64358"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/voluntary_stop.json",
+      "bytes": 7138,
+      "sha256": "a7a62fac361c3b9ce9c2524dd4056b8eb9305ee8a196f912209b4bf3162a585c"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/downstream/workspace_prepare.json",
+      "bytes": 27142,
+      "sha256": "0318d00cbd07458397f77bf38da30403a8f79537c1968539d8e80d5dab412a2e"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/evidence.json",
+      "bytes": 76191,
+      "sha256": "d2a25396154990c88e8083f18dde0957684f50b3ee673dd4eae4b42c14994170"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/findings.md",
+      "bytes": 9730,
+      "sha256": "76ccd90ceaeafdc91ed380fa51b78eb53c4c2a904b9738316347608df2a3aa38"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/guards.tsv",
+      "bytes": 5235,
+      "sha256": "9d2539e3a84789c325ae6fe61d6dc2a34964a5b5439ae3fb2a3c09a9ef51c2c9"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/interfaces.tsv",
+      "bytes": 5645,
+      "sha256": "e75433fbd69870e93e250860fc41176052f830b3a74e4c1914eaba90c067aff4"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/assembly.json",
+      "bytes": 4387,
+      "sha256": "fa8081bbc384c5b3baaeeab105edce32253c20b5f7045d5abab03924409e4d7c"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/memory-exception.json",
+      "bytes": 3360,
+      "sha256": "7c4ba210a20f104c8830a07516a1af8c2ef72dd263bb40540467aaf33363093b"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/memory-none.json",
+      "bytes": 3297,
+      "sha256": "baf79bb44b0ea05522d42d3195dad861bb8dfe40f7c2045e61cd6e5fee5a561c"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/memory-normal.json",
+      "bytes": 3323,
+      "sha256": "b4aba56da718ebd1aa93d7a9450e0d2350ffbf596f3cbd29bd9888dade19ba36"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/plan-default.json",
+      "bytes": 2923,
+      "sha256": "5e5ee273639b1c21b00b3d06504ee53717b717bc98821da9c5d016c3f8a34d69"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/summary-cancel.json",
+      "bytes": 8843,
+      "sha256": "73f692b92b49f58138197e1bd91770e5fcce3833e8eb6be2519e2ad25625eb1f"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/summary-exception.json",
+      "bytes": 10944,
+      "sha256": "c88a5c19a946eb74a80deea57c80f7064dbc15712cfab0a33ebed0526da19d38"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/summary-none.json",
+      "bytes": 8653,
+      "sha256": "6518134846eefcabb2238cb105b8e2f1397fda193d3d4218c9a2aca691b5fad3"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/summary-normal.json",
+      "bytes": 8604,
+      "sha256": "6b2d50b0bd4ee8dda5d5f8b16c7c7cbcd5dc33a5c9a02940a72c547ce25ca5f3"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/entry/receipts/summary-timeout.json",
+      "bytes": 9298,
+      "sha256": "33ed34789a0b8f77b9de25453028055fb080b9f3dbb7b0b4f8d5fe2b18554bbd"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/fix_plan.md",
+      "bytes": 13095,
+      "sha256": "f931069d731167de9187d84284e88541dc9f2a3d9a1fe137b1f9d6f4afced438"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/guards_and_exits.tsv",
+      "bytes": 26672,
+      "sha256": "27c8e4e1acce0c7a193707ae4ba4b1ea33041ff6d2783c69a4144ef7a5bf47a8"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/evidence.json",
+      "bytes": 62612,
+      "sha256": "4f0be483e7ea5fdf6f8d609c75b9d9d5d31938751feaf4fb5637ce81722bd420"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/final_export_manifest.json",
+      "bytes": 122229,
+      "sha256": "a5e1032ce9c94512284b252b00648e98f1a426d41c5e7bb2ba5a5921dddee371"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/findings.md",
+      "bytes": 12127,
+      "sha256": "6a858df2c83e67d325fd6fd905d44c6683deb46667624c4c02f1e2559386699e"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/guards.tsv",
+      "bytes": 6331,
+      "sha256": "d95255984b99aef34523e8a366baada5de20ff5dd58b8551aeb15a8045d043fd"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/interfaces.tsv",
+      "bytes": 9412,
+      "sha256": "1fe4a5f24a7ae9481cac83372054236422fb3f579bc65cdefe919e772dfb2c09"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/late_export_manifest.json",
+      "bytes": 126710,
+      "sha256": "44bd44e49f43c715936232277999aef8566ded0f67d893390c0c43169312a054"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/late_result.json",
+      "bytes": 26159,
+      "sha256": "f2c67fbe454d67fc2fcae041d6f87f9c2da62313121051a806e7a461e828c041"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/progress_export_manifest.json",
+      "bytes": 128077,
+      "sha256": "d03d272ddee31fce1d37746390cb46e91f1e6f8b28e0c1640258c0a003cb63b7"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/progress_refinement.json",
+      "bytes": 4034,
+      "sha256": "e71510c14fa82f9de1c3c9459ac39cf6ed9e00c7a2c5c05a52b5d940a8b70e29"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/incident/verification.json",
+      "bytes": 35476,
+      "sha256": "9282b56a1df6300852094a8c9aa89913214934e65447c773d9a1cddae0de184e"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/interfaces.tsv",
+      "bytes": 54072,
+      "sha256": "54a321f8173902f3a8bbd92bc078fb46bcd366c33ee185f51b8e2846b130f075"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-01/export_manifest.json",
+      "bytes": 111277,
+      "sha256": "04c187f15d42f2ed4f1c83d1fd11ec4abb8f495055e59c61202015ab50238f09"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-01/invocation.json",
+      "bytes": 931,
+      "sha256": "0a723b52b35fb0d6c2e5b7f037da7dc384296817d3ab3bd4d8bd977d0e21a8f1"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-01/pytest-results.json",
+      "bytes": 3232,
+      "sha256": "e0b83286e058b239dd821caf685265a7fee8d53a5de797dc813dad3c80d58c34"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-01/registry_inventory.json",
+      "bytes": 39768,
+      "sha256": "2f09fb16bf70fcfc3077ae09f76a97757c5ecedb0c26c625945d1fbde498e56c"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-01/stdout.txt",
+      "bytes": 13025,
+      "sha256": "010d0aa3676a74b187db9650c49295b511528d310af39954d51ca956a74c0e07"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-02/export_manifest.json",
+      "bytes": 112162,
+      "sha256": "05fbb5bb5be3eb22f31f0b2ae50c4e8fc3051e1d7723008dbbe6dd4aea28dc8b"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-02/invocation.json",
+      "bytes": 931,
+      "sha256": "ac7796fa3d23869977329f43a83aa707f9bf527133f493bd2337fd47d60edcf6"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-02/pytest-results.json",
+      "bytes": 822,
+      "sha256": "a5673ef7d9bc4345ac278d442845d9fff02d5a5985938e728817a7af2b734635"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-02/registry_inventory.json",
+      "bytes": 97822,
+      "sha256": "340eedef116a3bf88f3da9270bd21f5c0f89274c2e04d6788426821819b44bbc"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-02/stdout.txt",
+      "bytes": 10295,
+      "sha256": "784e6e5311c31a5eb85c47307fb3ee2a9aa23d2d25e743122bdb04db4f53b611"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-03/export_manifest.json",
+      "bytes": 118621,
+      "sha256": "64120957fe49242572a3305bd47d899c93ee44bf90c2f64eb231ba0a6491b7bc"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-03/invocation.json",
+      "bytes": 931,
+      "sha256": "b774dc94d47c09b83ddc30b8289e0b83a3e08ba7e7ea40eb7959326c253a6000"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-03/pytest-results.json",
+      "bytes": 824,
+      "sha256": "0f31d2a92ee190f5d6ae194d3e4cd62872fd3083286a68ef37313e11459b400a"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-03/registry_inventory.json",
+      "bytes": 106511,
+      "sha256": "1f4e8f9eef345c73ab54dfd7294ed127a98a36792a975011249f0300fbba8a3d"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-03/stdout.txt",
+      "bytes": 10295,
+      "sha256": "121da0b35e743168aa25ae96c68e8b98137eaf3a13ebd077feb632aac4721e06"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-04/export_manifest.json",
+      "bytes": 119784,
+      "sha256": "b3905bade2315c8d1fa4ebf0df1a313863c1940bf6a121cc9f4cc73539ab66be"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-04/invocation.json",
+      "bytes": 931,
+      "sha256": "6d898f6db495b8d8feae5b1f8015633cb6dc7955e51314a373f1637370bbdac3"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-04/pytest-results.json",
+      "bytes": 824,
+      "sha256": "e4a77eed0dcba7087a8a46cc7eedf65c3fe59e32ac6e3d1104a7d553d471afe7"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-04/registry_inventory.json",
+      "bytes": 107865,
+      "sha256": "8f27eea91f5ea491d9d943aef4a737ea1448f4ec070af6e9b70960480c683d55"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/inventory-04/stdout.txt",
+      "bytes": 10295,
+      "sha256": "6b337b0c365f973af366601d040a708fcd0a951bdd6a1d91f866e10e579b92dd"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-01/ask_user_route_failure.json",
+      "bytes": 1910,
+      "sha256": "6cf35fc6ee3755d5cea9f2ba99484ba0463a7813929badf8446ed21c0596d510"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-01/export_manifest.json",
+      "bytes": 121955,
+      "sha256": "16d6329c40374e77f2af93a3a824ffc14b18f5ee1c41c94e26a6d8730e860921"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-01/invocation.json",
+      "bytes": 908,
+      "sha256": "76761ab2f20043e8ad9693354b376315e41e26ab9f7ec6f9f2f0319822c2f146"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-01/pytest-results.json",
+      "bytes": 5722,
+      "sha256": "d7be017d8d8d4966483ac3b12c998f7f5a3b400468ba9803c4720c35921b4073"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-01/stdout.txt.gz",
+      "bytes": 3488,
+      "sha256": "44bcaafc11ebdbbe3bc909f9e604b5bd5e45f37334cc2d70414138f9459b1a30"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-02/ask_user_route_failure.json",
+      "bytes": 2562,
+      "sha256": "425b3b54cd4cd633dddbaf46a30419e61b557ddb4070097524ac52c071881e24"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-02/export_manifest.json",
+      "bytes": 126710,
+      "sha256": "0a0cac308d2f09d6a3abe226a98f5e851c66e2f5aabf9a23cc617bf4b58da6fe"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-02/invocation.json",
+      "bytes": 908,
+      "sha256": "935d4a784846b653aeb80f88ca518d3f70001dcc231ad49bfcfe63250a5d33b6"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-02/pytest-results.json",
+      "bytes": 910,
+      "sha256": "19045389b0592ba858c864b4ad13f0c9ef2fb874ae0c3cda11863b0e54550b72"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/runs/route-02/stdout.txt",
+      "bytes": 10401,
+      "sha256": "becc17b47f426619785626eb9f80b02d98bf235df0677eb81de87d6ef29c543d"
+    },
+    {
+      "path": "docs/audits/execution_architecture_20260914_unified_a1/verification.json",
+      "bytes": 10937,
+      "sha256": "be498144f8672e6b3d79ee0dad2c033dd5388aef9586deec57e2d73b65bde20e"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/export_and_run.py",
+      "bytes": 5705,
+      "sha256": "ddd254af53171dd4527957197fc5e10af97cfffb1dff8d5016d1d1593e41dba9"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/export_incident_evidence.py",
+      "bytes": 8074,
+      "sha256": "c1eb70daf91a41098da416cac3db74e0e2c51f213676b2fe3b26ae211156d224"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/run_entry_guarded.py",
+      "bytes": 2808,
+      "sha256": "ccacbd0b97c1018076366a8fa8c1b3d33beeef4f7368f3f04dafbb9aa9fa39c2"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/test_downstream_graph.py",
+      "bytes": 18591,
+      "sha256": "5fc8e452b9aedcee173370ec5a082a1fc7bce9e44a33d7bf07d5f57bbcf315ec"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/test_downstream_progress.py",
+      "bytes": 2691,
+      "sha256": "26a6447e715c53b00dbb0b057d5470d46534122ecabaab1a200469c97c66c9ae"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/test_entry_hooks.py",
+      "bytes": 12965,
+      "sha256": "4030119e308cbc2ca9396294a00a17b01fac701f75aeffc62ac45e71785f6dd9"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/test_incident_generate.py",
+      "bytes": 9518,
+      "sha256": "a6ec192b2eb29d3d88498e4b52f909adda668d059dced4a09e4bb0580ec7c8a8"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/test_incident_late_result.py",
+      "bytes": 7088,
+      "sha256": "8a3242d3148d7e1b5bb0b96d91caff67ee283bd8cdb9c3b684e26b655a597f11"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/test_inventory.py",
+      "bytes": 3472,
+      "sha256": "9fb52f50298228b28bc593d5aa7ba9e88ecdc23e2ab124552457f2ab8c8ce88e"
+    },
+    {
+      "path": "tests/execution_architecture_audit_a1/test_route_failures.py",
+      "bytes": 3645,
+      "sha256": "f5129736f0af76bfd07d29cc57d69bf23dde5b7d50db9ac53ea4f1e3a1e0728f"
+    }
+  ],
+  "total_bytes": 3631137,
+  "excludes": "this self-referential inventory and ignored __pycache__"
+}

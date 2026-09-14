@@ -1,0 +1,81 @@
+{
+  "missing_receipt": {
+    "outcome": {
+      "schema_version": 1,
+      "type": "harness_error",
+      "summary": "The typed adapter failed closed on ambiguous semantic state.",
+      "scope": {
+        "task_id": "a1-ask-fault",
+        "plan_id": "plan_3e508053e6103edc1e10",
+        "plan_version": "plan_v1",
+        "step_id": ""
+      },
+      "payload": {
+        "error_code": "ASK_USER_ANSWER_RECEIPT_MISSING",
+        "exception_class": "SemanticCoverageError",
+        "detail": "AskUser returned without a matching durable answer-turn receipt.",
+        "source_node": "askuser",
+        "semantic_state": {
+          "phase": "",
+          "task_status": ""
+        }
+      },
+      "evidence_refs": []
+    },
+    "route": "__end__",
+    "terminal_boundary": {
+      "node": "ask_user",
+      "status": "failed",
+      "outcome": {
+        "schema_version": 1,
+        "type": "harness_error",
+        "summary": "The typed adapter failed closed on ambiguous semantic state.",
+        "scope": {
+          "task_id": "a1-ask-fault",
+          "plan_id": "plan_3e508053e6103edc1e10",
+          "plan_version": "plan_v1",
+          "step_id": ""
+        },
+        "payload": {
+          "error_code": "ASK_USER_ANSWER_RECEIPT_MISSING",
+          "exception_class": "SemanticCoverageError",
+          "detail": "AskUser returned without a matching durable answer-turn receipt.",
+          "source_node": "askuser",
+          "semantic_state": {
+            "phase": "",
+            "task_status": ""
+          }
+        },
+        "evidence_refs": []
+      }
+    }
+  },
+  "source_exception": {
+    "outcome": {
+      "schema_version": 1,
+      "type": "harness_error",
+      "summary": "Front-half node harness failed closed.",
+      "scope": {
+        "task_id": "a1-ask-fault"
+      },
+      "payload": {
+        "error_code": "FRONT_HALF_NODE_HARNESS_ERROR",
+        "exception_class": "OSError",
+        "detail": "synthetic source callback failure"
+      },
+      "evidence_refs": []
+    },
+    "route": "consultant",
+    "terminal_boundary": {}
+  },
+  "real_producer": "TypedAskUser.run -> _semantic_harness_error",
+  "real_consumers": [
+    "route_ask_user_outcome",
+    "terminal_boundary"
+  ],
+  "substitute": "source returns empty dict or raises OSError; profiler disabled, same assembly/factories",
+  "scope": "component failure witness, no graph/user-input E2E claim",
+  "classification": "Missing receipt correctly stops; source exception DEFECT_REPRODUCED routes consultant",
+  "scientific_execution": 0,
+  "real_provider_calls": 0
+}

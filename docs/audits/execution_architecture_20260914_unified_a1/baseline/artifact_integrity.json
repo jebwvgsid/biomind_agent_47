@@ -1,0 +1,15 @@
+{
+  "json_files": 53,
+  "gzip_json_files": 16,
+  "test_python_ast": 10,
+  "tsv_files": 11,
+  "readme_links": 11,
+  "schema_errors": [],
+  "status": "PASS",
+  "meaning": "Artifact integrity only, not implementation correctness or FIX PASS",
+  "raw_failure_log_preservation": {
+    "path": "runs/route-01/stdout.txt.gz",
+    "uncompressed_sha256": "84051ef45e4864e72d2c3d9f6d5e56a533c24976e9ed4cd0b8fb7748ea6bc354",
+    "reason": "Raw pytest traceback contains trailing spaces; preserved byte-for-byte compressed rather than rewriting evidence"
+  }
+}
