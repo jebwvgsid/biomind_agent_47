@@ -9,7 +9,7 @@ import subprocess
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import export_plan_resource_cycle_audit as audit
 
-FIX_TESTS = ('tests/test_plan_resource_fix.py', 'tests/plan_resource_fix_support.py', 'tests/export_plan_resource_fix.py', 'tests/test_plan_stop_fix.py')
+FIX_TESTS = ('tests/test_plan_resource_fix.py', 'tests/plan_resource_fix_support.py', 'tests/export_plan_resource_fix.py', 'tests/test_plan_stop_fix.py', 'tests/test_plan_cancel_fix.py')
 audit.base.TEST_FILES += FIX_TESTS + ('tests/test_planner_full_replan_convergence_v2.py', 'tests/test_planner_feedback_boundary.py')
 
 def main():

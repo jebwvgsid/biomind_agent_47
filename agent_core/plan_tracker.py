@@ -10937,6 +10937,28 @@ def bind_plan_to_task_revision(state: PlanState, revision: int) -> PlanState:
     return state
 
 
+class PlannerAdmissionClosed(ValueError):
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__("PLANNER_ADMISSION_CLOSED: " + reason)
+
+
+def planner_admission_closed_reason(state: Mapping[str, Any]) -> str:
+    """Existing terminal/cancellation facts revoke this task's Planner authority."""
+    task = dict(state.get("task_state") or {})
+    status = task_status(dict(state))
+    if status in TASK_TERMINAL_STATUSES:
+        return status
+    revision = int((state.get("current_task") or {}).get("task_revision") or state.get("task_revision") or 0)
+    cancellation = dict(task.get("cancellation_receipt") or {})
+    if cancellation and int((cancellation.get("scope") or {}).get("task_revision") or 0) == revision:
+        return "cancelled"
+    failure = dict(task.get("planning_failure") or {})
+    if failure.get("status") == "terminal" and int(failure.get("task_spec_revision") or 0) == revision:
+        return "planning_terminal"
+    return ""
+
+
 def save_plan_state(
     data_path: str | Path,
     task_id: str,
@@ -10944,6 +10966,7 @@ def save_plan_state(
     *,
     allow_canonical_task_write: bool = False,
     step_effect_capability_registry: Any = None,
+    require_planner_active: bool = False,
 ) -> Path:
     path = plan_state_path(data_path, task_id)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -10972,6 +10995,7 @@ def save_plan_state(
             or "promote_legacy_taskspec_to_current_task_v8" in migrations
         ),
         step_effect_capability_registry=step_effect_capability_registry,
+        require_planner_active=require_planner_active,
     )
     return path
 
@@ -11532,6 +11556,10 @@ def _prepare_atomic_plan_objects(
     step_effect_capability_registry: Any = None,
 ) -> Dict[str, str]:
     """Prewrite one unreachable snapshot/approval pair under the state lock."""
+    if state.get("allocation_intent") or state.get("plan_commit_requested"):
+        reason = planner_admission_closed_reason(current_value)
+        if reason:
+            raise PlannerAdmissionClosed(reason)
     previous_plan_hash = str(
         ((current_value.get("current_plan") or {}).get("plan_semantic_hash")) or ""
     )
@@ -11804,6 +11832,7 @@ def _atomic_write_plan_state(
     advance_generation: bool = False,
     allow_canonical_task_write: bool = False,
     step_effect_capability_registry: Any = None,
+    require_planner_active: bool = False,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = path.with_suffix(path.suffix + ".lock")
@@ -11829,6 +11858,13 @@ def _atomic_write_plan_state(
                 raise PermanentInfrastructureError(
                     "PLAN_STATE_ROOT_INVALID", type(exc).__name__
                 ) from exc
+        # Under the existing atomic admission lock, cancellation/terminal state
+        # takes precedence over a generation conflict. No allocation or pending
+        # approval object is written before this check.
+        if require_planner_active or state.get("allocation_intent") or state.get("plan_commit_requested"):
+            reason = planner_admission_closed_reason(current_value)
+            if reason:
+                raise PlannerAdmissionClosed(reason)
         if expected_generation is not None and int(expected_generation) != current_generation:
             raise StateCASConflict(
                 "STATE_CAS_CONFLICT: expected generation "

@@ -1,0 +1,252 @@
+[
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00042068958282470703,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 15.250908038578928,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0006573228165507317,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00042330194264650345,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.1072531659156084,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002214144915342331,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00038395076990127563,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7769984724000096,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018789246678352356,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00037176162004470825,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.133899767883122,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020651984959840775,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027630850672721863,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8842187244445086,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017014052718877792,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002579968422651291,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8772067688405514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018009264022111893,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000265476293861866,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8293672101572156,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001854579895734787,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018520094454288483,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.5095482924953103,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016888603568077087,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012448802590370178,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.8831644114106894,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018564052879810333,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001360001042485237,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.9197333753108978,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001696282997727394,
+    "failure": ""
+  }
+]

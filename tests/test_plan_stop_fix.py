@@ -115,7 +115,7 @@ def test_comparison_preserves_paths_parameters_roles_and_trusted_facts():
 
 
 async def closed_reload(case, task, state, runner):
-    from agent_core.plan_tracker import load_plan_state, canonical_task_spec_for_state
+    from agent_core.plan_tracker import load_plan_state, canonical_task_spec_for_state, PlannerAdmissionClosed
     from agent_core.planner_recovery import claim_planner_call, complete_planner_claim, PlannerCallError
     from agent_core.workflow.early_nodes import TypedPlanner
     loaded=load_plan_state(case.root,task)
@@ -124,7 +124,7 @@ async def closed_reload(case, task, state, runner):
     complete_planner_claim(loaded,claim,claim['response_integrity'],outcome=claim['outcome'])
     complete_planner_claim(loaded,claim,claim['response_integrity'],outcome=claim['outcome'])
     assert loaded==before
-    with pytest.raises(PlannerCallError):
+    with pytest.raises((PlannerCallError, PlannerAdmissionClosed)):
         claim_planner_call(case.root,task,loaded,claim['scope'],claim['output_policy'])
     invocation={**runner,'task_mode':'managed','task_revision':loaded['current_task']['task_revision'],
         'task_spec':canonical_task_spec_for_state(loaded),'selected_skills':['genomics/snpeff-annotation']}

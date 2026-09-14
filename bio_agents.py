@@ -37768,6 +37768,34 @@ question. Never guess a scientific or database identity.
                 PlannerCallError, claim_planner_call, complete_planner_claim,
                 response_integrity, select_length_remediation, unsettled_call,
             )
+            from agent_core.plan_tracker import PlannerAdmissionClosed, planner_admission_closed_reason
+
+            def planner_closed_update(current, boundary, integrity=None):
+                reason = planner_admission_closed_reason(current)
+                if not reason:
+                    return None
+                diagnostic = {"error_code": "PLANNER_ADMISSION_CLOSED", "reason": reason,
+                              "boundary": boundary, "candidate_admitted": False}
+                if integrity is not None:
+                    # Only a discard receipt may be appended to the cancelled
+                    # state. It grants no Plan, approval or execution authority.
+                    diagnostic["response_integrity"] = deepcopy(integrity)
+                    for _ in range(3):
+                        latest = load_plan_state(self.data_path, task_id)
+                        if not planner_admission_closed_reason(latest):
+                            break
+                        latest.setdefault("task_state", {})["planner_discarded_response"] = deepcopy(diagnostic)
+                        try:
+                            save_plan_state(self.data_path, task_id, latest)
+                            break
+                        except StateCASConflict:
+                            continue
+                status = "cancelled" if reason == "cancelled" else task_status(current)
+                if status not in TASK_TERMINAL_STATUSES:
+                    status = "failed"
+                return {"messages": [SystemMessage(content=json.dumps(diagnostic, ensure_ascii=False, sort_keys=True))],
+                        "task_status": status, "pending_action": {}, "next_step": "finish"}
+
             output.print_node_header("planner")
             messages   = state["messages"]
             planner_phase_context = phase_provider_context(state)
@@ -37775,6 +37803,9 @@ question. Never guess a scientific or database identity.
             task_revision = task_spec_revision(task_spec)
             task_id = state.get("task_id", "default")
             planner_entry_state = load_plan_state(self.data_path, task_id)
+            closed = planner_closed_update(planner_entry_state, "entry")
+            if closed:
+                return closed
             planner_entry_schema = workflow_routing_schema_version(
                 planner_entry_state,
                 state,
@@ -38388,6 +38419,9 @@ question. Never guess a scientific or database identity.
                 return planner_stale_update(changed) if changed else None
 
             def planner_call_stop(current, diagnostic):
+                closed = planner_closed_update(load_plan_state(self.data_path, task_id), "local_stop")
+                if closed:
+                    return closed
                 # A late local stop belongs to its invocation, not a successor
                 # task/epoch that another producer has already committed.
                 stale = planner_scope_stale(load_plan_state(self.data_path, task_id))
@@ -39015,6 +39049,8 @@ question. Never guess a scientific or database identity.
                     self.data_path, task_id, load_plan_state(self.data_path, task_id),
                     planner_call_scope, planner_output_policy, planner_remediation,
                 )
+            except PlannerAdmissionClosed:
+                return planner_closed_update(load_plan_state(self.data_path, task_id), "claim")
             except PlannerCallError as exc:
                 return planner_call_stop(load_plan_state(self.data_path, task_id), exc.to_diagnostic())
             planning_epoch = dict((load_plan_state(self.data_path, task_id).get("task_state") or {}).get("planning_epoch") or {})
@@ -39032,6 +39068,9 @@ question. Never guess a scientific or database identity.
             plan_content = ""
             violations: List[Any] = []
             try:
+                closed = planner_closed_update(load_plan_state(self.data_path, task_id), "pre_dispatch")
+                if closed:
+                    return closed
                 response = await self._ainvoke_node_llm(
                     planner_llm_messages,
                     node_context=planner_node_context,
@@ -39088,6 +39127,10 @@ question. Never guess a scientific or database identity.
                 )
                 return {"messages": [response], "plan_progress": plan_progress, "next_step": "finish"}
 
+            closed = planner_closed_update(load_plan_state(self.data_path, task_id), "post_await",
+                response_integrity(response, scope=planner_call_scope, claim=planner_call_claim, policy=planner_output_policy))
+            if closed:
+                return closed
             if planner_phase_context is not None:
                 planner_phase_context.record_assistant_response(response)
             raw_plan_content = str(response.content or "").strip()
@@ -40153,6 +40196,8 @@ question. Never guess a scientific or database identity.
                         else None
                     ),
                 )
+            except PlannerAdmissionClosed:
+                return planner_closed_update(load_plan_state(self.data_path, task_id), "atomic_admission", planner_response_integrity)
             except StateCASConflict:
                 # The candidate was valid, but another writer advanced the
                 # authoritative generation after this invocation's final
@@ -40163,6 +40208,9 @@ question. Never guess a scientific or database identity.
                 bookkeeping_committed = False
                 for _ in range(3):
                     latest = load_plan_state(self.data_path, task_id)
+                    closed = planner_closed_update(latest, "admission_conflict", planner_response_integrity)
+                    if closed:
+                        return closed
                     latest_task = canonical_task_spec_for_state(latest) or task_spec
                     latest_context = build_node_context(
                         node_type="planner",

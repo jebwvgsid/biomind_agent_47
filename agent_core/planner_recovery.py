@@ -94,8 +94,11 @@ def planner_call_limit(state: Mapping[str, Any]) -> int:
 def claim_planner_call(data_path: str, task_id: str, expected_state: Mapping[str, Any],
                        scope: Mapping[str, Any], output_policy: Mapping[str, Any],
                        remediation: Mapping[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
-    from agent_core.plan_tracker import load_plan_state, save_plan_state
+    from agent_core.plan_tracker import load_plan_state, save_plan_state, planner_admission_closed_reason, PlannerAdmissionClosed
 
+    closed = planner_admission_closed_reason(load_plan_state(data_path, task_id))
+    if closed:
+        raise PlannerAdmissionClosed(closed)
     state = deepcopy(dict(expected_state))
     _check_scope(state, scope)
     epoch = _epoch(state)
@@ -140,7 +143,7 @@ def claim_planner_call(data_path: str, task_id: str, expected_state: Mapping[str
     state.setdefault("task_state", {})["planning_epoch"] = epoch
     # This CAS is the sole authorization/charge for this logical call. A racing
     # save raises the existing conflict; callers cannot turn it into a retry.
-    save_plan_state(data_path, task_id, state)
+    save_plan_state(data_path, task_id, state, require_planner_active=True)
     durable = load_plan_state(data_path, task_id)
     return durable, deepcopy(claim)
 
