@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/test_plan_epoch_reload_fix.py::test_read_closed_epoch_without_refund_or_dispatch",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_epoch_reload_fix.py::test_read_closed_epoch_without_refund_or_dispatch",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015122350305318832,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_epoch_reload_fix.py::test_read_closed_epoch_without_refund_or_dispatch",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.9056110046803951,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_epoch_reload_fix.py::test_read_closed_epoch_without_refund_or_dispatch",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018633529543876648,
+    "failure": ""
+  }
+]

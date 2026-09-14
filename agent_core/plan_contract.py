@@ -805,11 +805,11 @@ def parse_planner_outcome_envelope(
 def planner_stop_wire_example() -> Dict[str, Any]:
     """The normal Planner's mutually exclusive, non-success response branch."""
     return {"outcome_type": STOP_PLANNING, "diagnostic": {
-        "stage": "plan_admission", "error_codes": ["<observed-validator-code>"],
-        "attempted_changes": ["<field-level-change-already-attempted>"],
-        "stop_reason": "<why-no-supported-correction-remains>",
-        "uncertainties": ["<unverified-assumption>"],
-        "unperformed_work": ["<work-not-executed>"]}}
+        "stage": "plan_admission", "error_codes": ["PLAN_RESOURCE_ROLE_ASSOCIATION_MISSING"],
+        "attempted_changes": ["Removed resource_binding from the new workspace declaration; an explicit step/capability role association is still missing."],
+        "stop_reason": "I cannot determine a supported untried correction from the available declarations and feedback.",
+        "uncertainties": ["The missing role association has not been resolved; this does not establish a scientific or data failure."],
+        "unperformed_work": ["prepare_database", "build_database", "annotate_variants", "ANN summary and formal report"]}}
 
 
 def validate_planner_stop(payload: Mapping[str, Any]) -> Dict[str, Any]:

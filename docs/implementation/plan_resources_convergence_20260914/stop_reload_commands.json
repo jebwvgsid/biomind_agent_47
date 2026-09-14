@@ -1,0 +1,41 @@
+[
+  {
+    "name": "stop-example-r2",
+    "env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TMPDIR": "/tmp/biomind-planfix-v1/runtime",
+      "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-planfix-v1/results",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-planfix-v1/stop-example-r2-pytest.json"
+    },
+    "env_mode": "replace_environment",
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-planfix-v1/stop-example-r2/tests/offline_managed_bootstrap.py",
+      "/tmp/biomind-planfix-v1/stop-example-r2",
+      "-q",
+      "tests/test_plan_epoch_reload_fix.py",
+      "tests/test_plan_stop_fix.py"
+    ],
+    "rc": 0
+  },
+  {
+    "name": "epoch-independent-r2",
+    "env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C.UTF-8",
+      "TMPDIR": "/tmp/biomind-planfix-v1/runtime",
+      "BIOMIND_RESOURCE_AUDIT_RESULTS": "/tmp/biomind-planfix-v1/results",
+      "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-planfix-v1/epoch-independent-r2-pytest.json"
+    },
+    "env_mode": "replace_environment",
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/tmp/biomind-planfix-v1/stop-example-r2/tests/offline_managed_bootstrap.py",
+      "/tmp/biomind-planfix-v1/stop-example-r2",
+      "-q",
+      "tests/test_plan_epoch_reload_fix.py::test_read_closed_epoch_without_refund_or_dispatch"
+    ],
+    "rc": 0
+  }
+]
