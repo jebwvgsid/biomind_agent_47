@@ -27,8 +27,10 @@ MAX_RECONCILIATION_NONPROGRESS = 2
 
 PLAN_CANDIDATE = "PLAN_CANDIDATE"
 SUBMIT_PLAN_FOR_REVIEW = "SUBMIT_PLAN_FOR_REVIEW"
+STOP_PLANNING = "STOP_PLANNING"
 TASKSPEC_RECONCILIATION_REQUIRED = "TASKSPEC_RECONCILIATION_REQUIRED"
 RECOGNIZED_PLANNER_OUTCOMES = {
+    STOP_PLANNING,
     PLAN_CANDIDATE,
     SUBMIT_PLAN_FOR_REVIEW,
     TASKSPEC_RECONCILIATION_REQUIRED,
@@ -791,13 +793,41 @@ def parse_planner_outcome_envelope(
                 "field_path": "$.outcome_type",
                 "expected_type": (
                     "SUBMIT_PLAN_FOR_REVIEW|PLAN_CANDIDATE|"
-                    "TASKSPEC_RECONCILIATION_REQUIRED"
+                    "TASKSPEC_RECONCILIATION_REQUIRED|STOP_PLANNING"
                 ),
                 "received_type": "string" if outcome_type else "missing",
                 "received_excerpt": outcome_type[:200],
             },
         )
     return PlannerOutcomeEnvelope(outcome_type, deepcopy(dict(value)), legacy)
+
+
+def planner_stop_wire_example() -> Dict[str, Any]:
+    """The normal Planner's mutually exclusive, non-success response branch."""
+    return {"outcome_type": STOP_PLANNING, "diagnostic": {
+        "stage": "plan_admission", "error_codes": ["<observed-validator-code>"],
+        "attempted_changes": ["<field-level-change-already-attempted>"],
+        "stop_reason": "<why-no-supported-correction-remains>",
+        "uncertainties": ["<unverified-assumption>"],
+        "unperformed_work": ["<work-not-executed>"]}}
+
+
+def validate_planner_stop(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """Validate only after invocation authority; no keyword or model-truth gate."""
+    example = planner_stop_wire_example()
+    diagnostic = payload.get("diagnostic")
+    valid = (set(payload) == set(example) and payload.get("outcome_type") == STOP_PLANNING
+             and isinstance(diagnostic, Mapping) and set(diagnostic) == set(example["diagnostic"]))
+    if valid:
+        for key, value in diagnostic.items():
+            if key in {"stage", "stop_reason"}:
+                valid = valid and isinstance(value, str) and 0 < len(value.strip()) <= 2000
+            else:
+                valid = valid and isinstance(value, list) and len(value) <= 20 and all(
+                    isinstance(item, str) and 0 < len(item.strip()) <= 2000 for item in value)
+    if not valid:
+        raise PlannerEnvelopeError("PLANNER_STOP_PROTOCOL_INVALID", "STOP_PLANNING must be mutually exclusive with Plan/Skill/reconciliation fields and contain the complete bounded diagnostic.", diagnostic={"field_path": "$", "expected": example})
+    return {"source": "model_report", "verified": False, **deepcopy(dict(diagnostic))}
 
 
 def new_candidate_scope_id() -> str:

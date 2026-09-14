@@ -87,6 +87,10 @@ def select_length_remediation(state: Mapping[str, Any], initial_policy: Mapping[
             "source_occurrence_id": str((((state.get("task_state") or {}).get("planning_failure") or {}).get("occurrence_receipt") or {}).get("id") or "")}
 
 
+def planner_call_limit(state: Mapping[str, Any]) -> int:
+    return min(4, max(0, int(((state.get("task_state") or {}).get("budgets") or {}).get("max_planner_calls_per_epoch", 4))))
+
+
 def claim_planner_call(data_path: str, task_id: str, expected_state: Mapping[str, Any],
                        scope: Mapping[str, Any], output_policy: Mapping[str, Any],
                        remediation: Mapping[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -99,6 +103,8 @@ def claim_planner_call(data_path: str, task_id: str, expected_state: Mapping[str
         raise PlannerCallError("PLANNER_CALL_EPOCH_CLOSED", "The planning epoch is not active; it cannot authorize another call.")
     if unsettled_call(state):
         raise PlannerCallError("PLANNER_CALL_RESULT_UNKNOWN", "A prior claimed Planner call has no accepted durable result. Its budget is not refunded and the call will not be dispatched again.")
+    if int(epoch.get("planner_calls_total") or 0) >= planner_call_limit(state):
+        raise PlannerCallError("PLANNING_EPOCH_EXHAUSTED", "The hard total Planner request budget, including the first request, is exhausted; no fifth dispatch is authorized.")
     task_limit = ((state.get("task_state") or {}).get("budgets") or {}).get("max_planner_output_tokens")
     if task_limit is not None:
         requested = output_policy.get("requested_output_limit")
@@ -228,6 +234,9 @@ def attach_rejection_facts(state: dict[str, Any], integrity: Mapping[str, Any],
     elif int(failure.get("repeat_count") or 0) >= 1 and (remediation or {}).get("status") != "available":
         terminal = {"error_code": "PLANNER_REPEATED_FAILURE", "error_owner": "planner",
                     "detail": "A new accounted Planner call repeated the same semantic rejection without an unused effective remediation. This is repeated failure, not replay of the previous request."}
+    if terminal is None and int(_epoch(state).get("planner_calls_total") or 0) >= planner_call_limit(state):
+        terminal = {"error_code": "PLANNING_EPOCH_EXHAUSTED", "error_owner": "planner",
+                    "detail": "The last allowed Planner response was rejected. The budget is exhausted; no further request is authorized."}
     if terminal:
         updated = terminalize_planning_failure(state,
             planning_epoch_id=str(failure.get("planning_epoch_id") or ""),

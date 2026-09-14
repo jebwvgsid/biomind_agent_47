@@ -23,7 +23,10 @@ def correction_feedback(state: Mapping[str, Any]) -> dict[str, Any]:
             "planner_calls_total": int(epoch.get("planner_calls_total") or 0),
             "next_candidate_ordinal": int(epoch.get("planner_calls_total") or 0) + 1,
             "nominal_call_limit": int((task.get("budgets") or {}).get("max_planner_calls_per_epoch", 4)),
-            "limit_condition": "call limit AND repeated structural non-progress; independent phase and receipt guards also apply",
+            "limit_condition": "hard total, including the first request; fourth valid response may be accepted; no fifth request",
+            "remaining_requests": max(0, min(4, int((task.get("budgets") or {}).get("max_planner_calls_per_epoch", 4))) - int(epoch.get("planner_calls_total") or 0)),
+            "active_stop_available": True,
+            "cycle_detected": bool(failure.get("cycle_detected")),
             "repeat_count": int(failure.get("repeat_count") or 0),
         },
     }

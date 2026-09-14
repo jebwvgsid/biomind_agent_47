@@ -977,6 +977,7 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
     # completed its search and found no source), so copy them from the raw
     # issue after generic diagnostic normalization has removed empty values.
     dataflow_evidence_fields = (
+        "not_evaluated",
         "issue_id", "candidate_revision", "validator_id",
         "authority", "blocking", "explicit_contract_source",
         "contract_revision", "resource_id", "canonical_resource_id",
@@ -1004,6 +1005,7 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
 
     machine_evidence = dict(issue.get("machine_evidence") or {})
     for key in (
+        "not_evaluated",
         "dependency_step_id", "consumer_step_id", "producer_step_ids",
         "affected_output_ids", "cycle", "artifact_ref", "reason_code",
         "actual_value", "expected_contract", "selected_skill_id",
@@ -1023,7 +1025,7 @@ _PLANNER_CORRECTION_STRUCTURE_FIELDS = (
     "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
     "execution_capability_id", "operation", "produces_bindings",
     "produces_observations", "workspace_mutations", "explicit_side_effects",
-    "step_effect",
+    "step_effect", "parameters", "generate_binding_input_contract",
 )
 
 
@@ -1056,7 +1058,7 @@ def _candidate_correction_signature(
     """Hash only validator-relevant candidate structure for no-progress checks."""
     if not isinstance(candidate, Mapping):
         return ""
-    semantic_candidate = _semantic_candidate_value(candidate)
+    semantic_candidate = _semantic_candidate_value(_candidate_comparison_view(candidate, candidate))
     affected_step_ids = set(_planning_issue_affected_step_ids(issues))
     affected_fields = {
         str(field)
@@ -1096,7 +1098,7 @@ def _candidate_correction_signature(
     signature_payload["proposed_artifacts"] = [
         {
             key: deepcopy(raw.get(key))
-            for key in ("local_ref", "artifact_contract", "resource_binding")
+            for key in ("local_ref", "artifact_contract", "resource_binding", "role_associations")
             if key in raw
         }
         for raw in semantic_candidate.get("proposed_artifacts", []) or []
@@ -1116,6 +1118,31 @@ def _candidate_correction_signature(
     ).hexdigest()
 
 
+def _candidate_comparison_view(value: Any, candidate: Optional[Mapping[str, Any]]) -> Any:
+    candidate = dict(candidate or {})
+    replacements = {}
+    declared = {str(row.get("local_ref")) for row in candidate.get("proposed_artifacts", []) if isinstance(row, Mapping)}
+    scope = str(candidate.get("candidate_scope_id") or (candidate.get("candidate_scope") or {}).get("candidate_scope_id") or "")
+    for local in declared:
+        if scope:
+            replacements[f"candidate:{scope}:{local}"] = "candidate-local:" + local
+    for row in (candidate.get("plan_resource_bindings") or {}).values():
+        if not isinstance(row, Mapping):
+            continue
+        local = str(row.get("local_ref") or "")
+        identity = str(row.get("canonical_resource_id") or "")
+        row_scope = str(row.get("candidate_scope_id") or "")
+        if local in declared and row_scope and identity == f"candidate:{row_scope}:{local}":
+            replacements[identity] = "candidate-local:" + local
+    def project(item):
+        if isinstance(item, Mapping):
+            return {replacements.get(str(k), str(k)): project(v) for k, v in item.items()}
+        if isinstance(item, (list, tuple)):
+            return [project(v) for v in item]
+        return replacements.get(item, item) if isinstance(item, str) else deepcopy(item)
+    return project(value)
+
+
 def _planning_issue_fingerprint_value(value: Any) -> Any:
     """Remove event-only identity while retaining semantic failure evidence."""
 
@@ -1128,10 +1155,6 @@ def _planning_issue_fingerprint_value(value: Any) -> Any:
         }
     if isinstance(semantic, list):
         return [_planning_issue_fingerprint_value(item) for item in semantic]
-    if isinstance(semantic, str):
-        marker = ":plan."
-        if semantic.startswith("candidate:") and marker in semantic:
-            return "candidate-local:plan." + semantic.split(marker, 1)[1]
     return deepcopy(semantic)
 
 
@@ -1200,7 +1223,7 @@ def record_planning_failure(
         "planning_epoch_id": str(planning_epoch_id or ""),
         "validation_source": str(validation_source or "planner_candidate_admission"),
         "issues": [
-            _planning_issue_fingerprint_view(issue)
+            _planning_issue_fingerprint_view(_candidate_comparison_view(issue, candidate))
             for issue in issues
         ],
     }
@@ -1230,6 +1253,17 @@ def record_planning_failure(
             default=str,
         ).encode("utf-8")
     ).hexdigest()
+    epoch = dict(task_state.get("planning_epoch") or {})
+    # Scope comparisons to trusted task/protocol/Skill facts; never provider narration.
+    comparison_facts = hashlib.sha256(json.dumps({
+        "task_revision": task_spec_revision_value,
+        "requirements": list(requirements),
+        "protocol": epoch.get("planner_response_protocol_version"),
+        "task_identity": epoch.get("base_task_semantic_identity"),
+    }, sort_keys=True, default=str).encode()).hexdigest()
+    seen = list(epoch.get("rejected_candidate_comparisons") or []) if str(epoch.get("planning_epoch_id") or "") == str(planning_epoch_id) else []
+    seen_match = next((row for row in seen if row.get("signature") == candidate_correction_signature
+                       and row.get("issues") == issue_fingerprint and row.get("facts") == comparison_facts), None)
     prior = dict(task_state.get("planning_failure") or {})
     same_lifecycle = bool(
         str(prior.get("status") or "") == "unresolved"
@@ -1242,11 +1276,17 @@ def record_planning_failure(
         same_lifecycle
         and str(prior.get("issue_fingerprint") or "") == issue_fingerprint
     )
-    repeated = bool(
-        same_issue
-        and str(prior.get("candidate_correction_signature") or "")
-        == candidate_correction_signature
-    )
+    repeated = bool(same_lifecycle and (seen_match or (
+        not epoch.get("planning_epoch_id") and same_issue
+        and prior.get("candidate_correction_signature") == candidate_correction_signature
+        and prior.get("comparison_facts") == comparison_facts)))
+    claim_id = str((epoch.get("call_claim") or {}).get("claim_id") or "")
+    if same_lifecycle and claim_id and prior.get("comparison_claim_id") == claim_id and prior.get("failure_fingerprint") == fingerprint:
+        return result  # Idempotent replay, not a new rejection/ledger entry.
+    seen.append({"signature": candidate_correction_signature, "issues": issue_fingerprint,
+                 "facts": comparison_facts, "claim_id": claim_id})
+    epoch["rejected_candidate_comparisons"] = seen[-4:]
+    task_state["planning_epoch"] = epoch
     attempt = int(prior.get("attempt") or 0) + 1 if same_lifecycle else 1
     capsule: Dict[str, Any] = {
         "schema_version": PLANNING_FAILURE_SCHEMA_VERSION,
@@ -1270,6 +1310,10 @@ def record_planning_failure(
         "failure_fingerprint": fingerprint,
         "issue_fingerprint": issue_fingerprint,
         "candidate_correction_signature": candidate_correction_signature,
+        "comparison_facts": comparison_facts,
+        "comparison_claim_id": claim_id,
+        "seen_rejection_count": len(seen),
+        "cycle_detected": repeated,
         "correction_progress": (
             "no_structural_progress"
             if repeated
@@ -1330,6 +1374,11 @@ def record_planning_failure(
         # discard failure continuity on the next Planner dispatch.
         epoch["status"] = "active"
         task_state["planning_epoch"] = epoch
+    if terminal:
+        epoch = dict(task_state.get("planning_epoch") or {})
+        epoch["status"] = "exhausted"
+        task_state["planning_epoch"] = epoch
+        task_state["planner_loop"].update({"status": "terminal", "phase": "failed", "agent_disposition": "terminal"})
     result["task_state"] = task_state
     return result
 
@@ -1363,6 +1412,12 @@ def terminalize_planning_failure(
             terminal=True,
             terminal_diagnostic=terminal_diagnostic,
         )
+    epoch = dict(task_state.get("planning_epoch") or {})
+    epoch["status"] = "exhausted"
+    task_state["planning_epoch"] = epoch
+    loop = dict(task_state.get("planner_loop") or {})
+    loop.update({"status": "terminal", "phase": "failed", "agent_disposition": "terminal"})
+    task_state["planner_loop"] = loop
     failure["status"] = "terminal"
     failure["terminal_diagnostic"] = deepcopy(dict(terminal_diagnostic or {}))
     failure["updated_at"] = _now()

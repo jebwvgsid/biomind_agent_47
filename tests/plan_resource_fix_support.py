@@ -63,7 +63,7 @@ class PlanFixGraphCase:
             'resolved_bindings':{},'consultation_state':{},'planner_feedback':{},'request_intent':admission,
             'intent_admission':admission,'managed_intent_admitted':True}
 
-async def scenario(candidates, name, *, late_cancel=False, readonly=False, after_plan=None, before_dispatch=None):
+async def scenario(candidates, name, *, late_cancel=False, readonly=False, after_plan=None, before_dispatch=None, bounded_rejection=True, setup=None):
     import bio_agents
     from tests.plan_resource_fix_support import PlanFixGraphCase
     from agent_core.plan_tracker import load_plan_state, save_plan_state
@@ -99,7 +99,7 @@ async def scenario(candidates, name, *, late_cancel=False, readonly=False, after
         progress(tid,event,payload)
         if event=='candidate_rejected':
             states.append(deepcopy(load_plan_state(case.root,task)))
-            if counts['planner']==len(candidates) and not late_cancel:
+            if bounded_rejection and counts['planner']==len(candidates) and not late_cancel:
                 external_stop.append('after durable rejection, before next dispatch')
                 raise asyncio.CancelledError('external bounded audit ceiling')
     case.agent._planner_progress=progress_observer
@@ -132,6 +132,8 @@ async def scenario(candidates, name, *, late_cancel=False, readonly=False, after
     case.agent._prompt_user=forbidden
     try:
         runner=case._runner_state(task)
+        if setup is not None:
+            await setup(case, task, runner, counts)
         app=bio_agents.build_schema2_production_graph(case.agent._schema2_node_handlers).compile(checkpointer=case.agent.checkpointer, interrupt_after=['planner'])
         async def consume():
             for index in range(len(candidates)):
@@ -149,7 +151,7 @@ async def scenario(candidates, name, *, late_cancel=False, readonly=False, after
         if not final_states: final_states.append(deepcopy(load_plan_state(case.root,task)))
         result={'counts':counts,'states':states,'requests':requests,'validator_calls':calls,'events':events,
             'final_states':final_states,'external_stop':external_stop,
-            'production_source':'exact export; no validator mocked','stop':'external bounded witness ceiling',
+            'production_source':'exact export; no validator mocked','stop':'external bounded witness ceiling' if external_stop else 'production routing',
             'registry':case.agent.skill_manager.get_execution_capability_registry([SID])}
         if after_plan is not None:
             result['after_plan'] = await after_plan(case, task, final_states[-1], runner)

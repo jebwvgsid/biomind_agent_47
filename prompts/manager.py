@@ -1777,7 +1777,7 @@ Read-only skill-resolution input JSON:
 
 Return exactly one complete raw JSON object and no Markdown or prose. Output is
 mode-dependent. In create_complete_plan, revise_current_plan, or correct_previous_plan mode, return
-SUBMIT_PLAN_FOR_REVIEW, TASKSPEC_RECONCILIATION_REQUIRED, REQUEST_SKILL_CONTEXT,
+SUBMIT_PLAN_FOR_REVIEW, STOP_PLANNING, TASKSPEC_RECONCILIATION_REQUIRED, REQUEST_SKILL_CONTEXT,
 SEARCH_SKILLS, or PROPOSE_SKILL_BINDING. Semantic delta and nested repair
 responses are unsupported. PLAN_CANDIDATE is a legacy schema-1 response and is
 not accepted from a schema-2 Planner. In correct_previous_plan mode, a
@@ -1989,6 +1989,8 @@ machine contracts and return observations; they do not choose the next node.
 
 If a required user-owned semantic fact is genuinely absent, return:
 {"outcome_type":"TASKSPEC_RECONCILIATION_REQUIRED","missing_semantic_facts":[{"fact_key":"<missing-fact>","reason":"<why-required>","affected_operation_id":"<operation>","relevant_confirmed_decision_ids":[],"durable_evidence_may_resolve":true}]}"""
+        from agent_core.plan_contract import planner_stop_wire_example
+        base_prompt += "\n\nIf no supported correction remains, you may actively stop even when the request budget has remaining slots. Return only STOP_PLANNING with the complete diagnostic below, mutually exclusive with all Plan, Skill and reconciliation fields. Report attempted changes, observed codes, uncertainty and unperformed work. Your diagnosis is not verified evidence or scientific success. Never use free-text <finish> to route. Total Planner requests including the first are at most four; a valid fourth may be accepted and no fifth is dispatched.\n" + json.dumps(planner_stop_wire_example(), ensure_ascii=False)
         skill_protocol = PromptManager._skill_decision_protocol(
             binding_boundary=(
                 "Planner may propose only a current-step supplemental binding. "

@@ -1,0 +1,252 @@
+[
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018522795289754868,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 11.71403447072953,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0006551500409841537,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016608834266662598,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005092360079288483,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010791700333356857,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010436493903398514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00034464895725250244,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.266939014196396e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.05627514887601137,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004679804667830467,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015791039913892746,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011413171887397766,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006038686260581017,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010545086115598679,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023327115923166275,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00017864909023046494,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010917335748672485,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020446162670850754,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000182420015335083,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010507460683584213,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018088426440954208,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00018568523228168488,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.910296648740768e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020011421293020248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00021124165505170822,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001042662188410759,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018006190657615662,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00016728322952985764,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011182483285665512,
+    "failure": ""
+  }
+]

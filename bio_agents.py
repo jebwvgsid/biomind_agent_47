@@ -38294,6 +38294,12 @@ question. Never guess a scientific or database identity.
             planner_revision = accepted_planner_revision(planner_source_state)
             revision_decision_id = str(planner_revision.get("decision_id") or "")
             prior_epoch = dict(planner_task_state.get("planning_epoch") or {})
+            prior_failure = dict(planner_task_state.get("planning_failure") or {})
+            if prior_failure.get("status") == "terminal" and int(prior_failure.get("task_spec_revision") or 0) == task_revision:
+                diagnostic = prior_failure.get("terminal_diagnostic") or {}
+                return {"messages": [SystemMessage(content=json.dumps(diagnostic, ensure_ascii=False))],
+                        "task_status": "failed", "failure_type": diagnostic.get("error_code", "PLANNING_STOPPED"),
+                        "failure_owner": "planner", "pending_action": {}, "next_step": "finish"}
             committed_plan = dict(planner_source_state.get("current_plan") or {})
             base_snapshot_id = str(committed_plan.get("plan_snapshot_ref") or "")
             base_plan_semantic_identity = (
@@ -38353,7 +38359,7 @@ question. Never guess a scientific or database identity.
                     for counter in ("planner_calls_total", "candidate_repairs", "stale_redispatches"):
                         planning_epoch[counter] = int(prior_epoch.get(counter) or 0)
                 planning_epoch["planner_output_policy_version"] = PLANNER_OUTPUT_POLICY_VERSION
-                planning_epoch["planner_response_protocol_version"] = 2
+                planning_epoch["planner_response_protocol_version"] = 3
 
             planner_node_context = None
 
@@ -38430,11 +38436,9 @@ question. Never guess a scientific or database identity.
                     or ""
                 )
             )
-            # The call count is a safety ceiling, not evidence that the task is
-            # impossible.  Only a normalized, repeatedly identical candidate
-            # failure may consume that ceiling; meaningful StepEffect changes
-            # remain repair progress and receive another local Planner turn.
-            if planner_calls_total >= max_planner_calls and semantic_no_progress:
+            # A hard total is independent from semantic progress and is never
+            # evidence of scientific impossibility. The claim repeats this gate.
+            if planner_calls_total >= min(4, max_planner_calls):
                 planning_epoch["status"] = "exhausted"
                 planner_task_state["planning_epoch"] = planning_epoch
                 planner_source_state["task_state"] = planner_task_state
@@ -38780,6 +38784,12 @@ question. Never guess a scientific or database identity.
                 ]
             if planner_phase_context is None and restored_planner_messages:
                 planner_llm_messages = restored_planner_messages
+            planner_llm_messages = [*planner_llm_messages, SystemMessage(content=json.dumps({
+                "planner_request_budget": {"total_limit": min(4, max_planner_calls),
+                    "requests_already_dispatched": planner_calls_total,
+                    "current_request_ordinal": planner_calls_total + 1,
+                    "requests_remaining_after_this_reply": max(0, min(4, max_planner_calls) - planner_calls_total - 1)},
+                "instruction": "You may return STOP_PLANNING with its complete diagnostic even while requests remain when no supported correction remains. A stop is not scientific success or verified diagnosis. Never emit a free-text finish tag followed by another Plan."}, ensure_ascii=False))]
             if planner_remediation:
                 from agent_core.planner_recovery import length_feedback
 
@@ -39015,7 +39025,7 @@ question. Never guess a scientific or database identity.
                 "candidate_ordinal": int(planning_epoch.get("planner_calls_total") or 0),
                 "planning_epoch_id": str(planning_epoch.get("planning_epoch_id") or ""),
                 "nominal_call_limit": max_planner_calls,
-                "limit_condition": "nominal limit AND repeated structural non-progress; independent phase/receipt guards apply",
+                "limit_condition": "hard total including first; accept valid fourth; no fifth dispatch",
                 "repeat_count": int(active_planning_failure.get("repeat_count") or 0),
             }
             self._planner_progress(task_id, "candidate_started", planner_observation)
@@ -39087,8 +39097,17 @@ question. Never guess a scientific or database identity.
             planner_length_terminated = planner_response_integrity["finish_reason"] == "length"
             planner_display = project_public_json(raw_plan_content)
             planner_business_content = planner_display.payload
+            # Recognize STOP by the same whole-object JSON transport, before a
+            # mixed Skill discriminator can claim this response. Body validation
+            # still occurs only after the invocation staleness gate below.
+            from agent_core.plan_contract import normalize_planner_json_transport
             try:
-                typed_planner_skill_decision = None if planner_length_terminated else self._planner_observed_call(task_id, planner_observation, "parse_skill_envelope", parse_typed_skill_decision,
+                response_discriminator = json.loads(normalize_planner_json_transport(planner_business_content))
+                stop_discriminator = isinstance(response_discriminator, Mapping) and response_discriminator.get("outcome_type") == "STOP_PLANNING"
+            except (PlannerEnvelopeError, ValueError, TypeError):
+                stop_discriminator = False
+            try:
+                typed_planner_skill_decision = None if planner_length_terminated or stop_discriminator else self._planner_observed_call(task_id, planner_observation, "parse_skill_envelope", parse_typed_skill_decision,
                     planner_business_content
                 )
             except SkillAccessError as exc:
@@ -39272,14 +39291,29 @@ question. Never guess a scientific or database identity.
                         "planning_epoch": deepcopy((rejected_state.get("task_state") or {}).get("planning_epoch") or {}),
                         "next_step": "planner"}
 
+            from agent_core.plan_contract import STOP_PLANNING, validate_planner_stop
+            if planner_envelope is not None and planner_envelope.outcome_type == STOP_PLANNING:
+                try:
+                    model_diagnostic = validate_planner_stop(planner_envelope.payload)
+                except PlannerEnvelopeError as exc:
+                    rejected = record_planning_failure(current_planner_state,
+                        validation_issues=[exc.to_diagnostic()], planning_epoch_id=planner_call_scope["planning_epoch_id"],
+                        task_spec_revision_value=task_revision, validation_source="planner_stop_protocol",
+                        candidate=planner_envelope.payload, requirements=planner_requirements)
+                    feedback = persist_planner_rejection(rejected, planner_envelope.payload)
+                    return {"messages": [SystemMessage(content=json.dumps(feedback, ensure_ascii=False))],
+                            "pending_action": {}, "next_step": "planner"}
+                complete_planner_claim(current_planner_state, planner_call_claim, planner_response_integrity, outcome="model_stopped")
+                return planner_call_stop(current_planner_state, {"error_code": "PLANNER_MODEL_STOPPED", "error_owner": "planner",
+                    "detail": "Planner explicitly stopped without submitting a Plan; its diagnostic is an unverified model report.",
+                    "model_diagnostic": model_diagnostic, "response_integrity": planner_response_integrity,
+                    "remaining_requests": max(0, min(4, max_planner_calls) - int(planning_epoch.get("planner_calls_total") or 0))})
+
             if typed_planner_skill_decision is not None:
                 complete_planner_claim(current_planner_state, planner_call_claim, planner_response_integrity, outcome="skill_evidence_request")
                 save_plan_state(self.data_path, task_id, current_planner_state)
-                if not planner_remediation:
-                    self._refund_planner_call_for_skill_continuation(
-                        task_id,
-                        str(planning_epoch.get("planning_epoch_id") or ""),
-                    )
+                # A Skill response still consumed a Planner provider request;
+                # evidence acquisition cannot refund the hard total.
                 try:
                     skill_update = await self._handle_skill_node_decision(
                         task_id=task_id,

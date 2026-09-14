@@ -1,0 +1,1002 @@
+[
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017066486179828644,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 11.96628715004772,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_active_model_stop_with_budget_remaining",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0006633009761571884,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_first_response_active_stop",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_first_response_active_stop",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016709044575691223,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_first_response_active_stop",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7317195711657405,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_first_response_active_stop",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018112361431121826,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_actual_a_b_a_stops_before_fourth_dispatch",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_actual_a_b_a_stops_before_fourth_dispatch",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011096056550741196,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_actual_a_b_a_stops_before_fourth_dispatch",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.6346000880002975,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_actual_a_b_a_stops_before_fourth_dispatch",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001667151227593422,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_compiled_candidate_uuid_does_not_look_like_progress",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_compiled_candidate_uuid_does_not_look_like_progress",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001124730333685875,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_compiled_candidate_uuid_does_not_look_like_progress",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.5267194714397192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_compiled_candidate_uuid_does_not_look_like_progress",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017937924712896347,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_correction_succeeds_and_fourth_valid_is_accepted",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_correction_succeeds_and_fourth_valid_is_accepted",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012285355478525162,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_correction_succeeds_and_fourth_valid_is_accepted",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 4.106320200487971,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_correction_succeeds_and_fourth_valid_is_accepted",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002011796459555626,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_fourth_invalid_stops_and_never_dispatches_fifth",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_fourth_invalid_stops_and_never_dispatches_fifth",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000122743658721447,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_fourth_invalid_stops_and_never_dispatches_fifth",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.728368202224374,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_fourth_invalid_stops_and_never_dispatches_fifth",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001756511628627777,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032482389360666275,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.896617048420012,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002181241288781166,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed_skill]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed_skill]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002832980826497078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed_skill]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.224397855810821,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[mixed_skill]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020997226238250732,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[missing]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[missing]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002552913501858711,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[missing]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.257130111567676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[missing]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000194489024579525,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[text]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[text]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002624252811074257,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[text]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.562890401110053,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[text]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018320046365261078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[fragment]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[fragment]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025383010506629944,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[fragment]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.0482433028519154,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[fragment]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000192972831428051,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[truncated]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[truncated]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000262959860265255,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[truncated]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.316320288926363,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_stop_invalid_never_routes_by_keyword[truncated]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022245198488235474,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_comparison_preserves_paths_parameters_roles_and_trusted_facts",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_comparison_preserves_paths_parameters_roles_and_trusted_facts",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001323465257883072,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_comparison_preserves_paths_parameters_roles_and_trusted_facts",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00946133304387331,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_comparison_preserves_paths_parameters_roles_and_trusted_facts",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013413559645414352,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010905042290687561,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.3531572297215462,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_stop_fix.py::test_closed_epoch_reload_and_claim_replay_are_not_new_calls",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016359426081180573,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_approved_plan_local_identity_uses_plan_namespace_and_survives_replan",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_approved_plan_local_identity_uses_plan_namespace_and_survives_replan",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003436123952269554,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_approved_plan_local_identity_uses_plan_namespace_and_survives_replan",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010829824954271317,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_approved_plan_local_identity_uses_plan_namespace_and_survives_replan",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014110933989286423,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_dag_validator_emits_generic_correction_contract",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_dag_validator_emits_generic_correction_contract",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021056830883026123,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_dag_validator_emits_generic_correction_contract",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000999833457171917,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_dag_validator_emits_generic_correction_contract",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012589618563652039,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_empty_validator_result_still_fails_closed_with_machine_issue",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_empty_validator_result_still_fails_closed_with_machine_issue",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018919538706541061,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_empty_validator_result_still_fails_closed_with_machine_issue",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005302485078573227,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_empty_validator_result_still_fails_closed_with_machine_issue",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001088147982954979,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_is_durable_and_next_human_request_is_not_initial_request",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_is_durable_and_next_human_request_is_not_initial_request",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017747282981872559,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_is_durable_and_next_human_request_is_not_initial_request",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004804340191185474,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_is_durable_and_next_human_request_is_not_initial_request",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012292712926864624,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_lifecycle_resolve_and_task_revision_supersede",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_lifecycle_resolve_and_task_revision_supersede",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018876232206821442,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_lifecycle_resolve_and_task_revision_supersede",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0024559972807765007,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_failure_lifecycle_resolve_and_task_revision_supersede",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012143701314926147,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_full_replan_ignores_prose_but_protects_machine_history",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_full_replan_ignores_prose_but_protects_machine_history",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023819319903850555,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_full_replan_ignores_prose_but_protects_machine_history",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0014546150341629982,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_full_replan_ignores_prose_but_protects_machine_history",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001162094995379448,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_json_error_preserves_parser_location_and_excerpt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_json_error_preserves_parser_location_and_excerpt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019481312483549118,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_json_error_preserves_parser_location_and_excerpt",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00025263987481594086,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_json_error_preserves_parser_location_and_excerpt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010035652667284012,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_no_progress_uses_validator_affected_structure_not_superficial_edits",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_no_progress_uses_validator_affected_structure_not_superficial_edits",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034509506076574326,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_no_progress_uses_validator_affected_structure_not_superficial_edits",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005637062713503838,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_no_progress_uses_validator_affected_structure_not_superficial_edits",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012973695993423462,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_plan_local_artifact_must_use_closed_plan_namespace",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_plan_local_artifact_must_use_closed_plan_namespace",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001905066892504692,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_plan_local_artifact_must_use_closed_plan_namespace",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002821497619152069,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_plan_local_artifact_must_use_closed_plan_namespace",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001011136919260025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_prompt_is_split_and_provider_visible_example_is_retired",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_prompt_is_split_and_provider_visible_example_is_retired",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017337128520011902,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_prompt_is_split_and_provider_visible_example_is_retired",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00038794148713350296,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_prompt_is_split_and_provider_visible_example_is_retired",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012031011283397675,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_rejected_candidate_remains_in_the_same_active_epoch",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_rejected_candidate_remains_in_the_same_active_epoch",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017805956304073334,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_rejected_candidate_remains_in_the_same_active_epoch",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000512637197971344,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_rejected_candidate_remains_in_the_same_active_epoch",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011295359581708908,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_retired_semantic_patch_api_and_prompt_are_absent",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_retired_semantic_patch_api_and_prompt_are_absent",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001805117353796959,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_retired_semantic_patch_api_and_prompt_are_absent",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00013761594891548157,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_retired_semantic_patch_api_and_prompt_are_absent",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.978003799915314e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_schema_diagnostic_preserves_expected_and_received_types",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_schema_diagnostic_preserves_expected_and_received_types",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018768850713968277,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_schema_diagnostic_preserves_expected_and_received_types",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004316037520766258,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_schema_diagnostic_preserves_expected_and_received_types",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011252518743276596,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_cannot_be_shadowed_by_plan_local_artifact",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_cannot_be_shadowed_by_plan_local_artifact",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018491409718990326,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_cannot_be_shadowed_by_plan_local_artifact",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019329879432916641,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_cannot_be_shadowed_by_plan_local_artifact",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012492667883634567,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_projection_contains_complete_contract",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_projection_contains_complete_contract",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001879790797829628,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_projection_contains_complete_contract",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0018201395869255066,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_task_output_projection_contains_complete_contract",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001220284029841423,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_terminalization_preserves_last_real_failure_and_repeat_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_terminalization_preserves_last_real_failure_and_repeat_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019032415002584457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_terminalization_preserves_last_real_failure_and_repeat_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001303444616496563,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_terminalization_preserves_last_real_failure_and_repeat_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011588074266910553,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_typed_output_producer_is_stable_before_and_after_local_allocation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_typed_output_producer_is_stable_before_and_after_local_allocation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018889736384153366,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_typed_output_producer_is_stable_before_and_after_local_allocation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04320090264081955,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_full_replan_convergence_v2.py::PlannerFullReplanConvergenceV2Tests::test_typed_output_producer_is_stable_before_and_after_local_allocation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001627691090106964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012858770787715912,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004944764077663422,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_projection_keeps_repair_meaning_and_local_audit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010706018656492233,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011545047163963318,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003514811396598816,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_nested_diagnostic_refs_and_length_feedback_are_projected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010131485760211945,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.4671321725472808,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007118586450815201,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_saved_correction_can_dispatch_twice_and_preserves_raw_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018497183918952942,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012621097266674042,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000870593823492527,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_legacy_record_projects_only_feedback_and_preserves_history",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001171361654996872,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002557653933763504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002015111967921257,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011506769806146622,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000214320607483387,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001953495666384697,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011487770825624466,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019701849669218063,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00019837636500597,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_unrelated_messages_preserve_hashes_without_blocking[message2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001223888248205185,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021284911781549454,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00025671813637018204,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001306980848312378,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020468048751354218,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00019450858235359192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_feedback_boundary.py::test_failed_task_is_distinct_from_completed_summary[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012765079736709595,
+    "failure": ""
+  }
+]
