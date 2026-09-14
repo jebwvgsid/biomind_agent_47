@@ -371,6 +371,8 @@ async def scenario(mode):
                     return AIMessage(content=json.dumps({'fact_ids':['causal_execution','current_candidate','stop_reason']}))
             case.agent.terminal_summary_llm=SummaryModel()
         stop=await finalize_managed_stop(case.agent,task,values,boundary)
+        assert '文件交付：not_attempted' in stop['frozen_report_bodies']['report.md']
+        assert '冻结正文不回写，最终交付以持久 receipt 为准' in stop['frozen_report_bodies']['report.md']
         save('graph-'+mode+'-stop',stop)
         if b_exhausted:
             assert stop['execution']['attempt_id']=='' and stop['execution']['executed'] is False

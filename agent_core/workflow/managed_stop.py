@@ -437,6 +437,8 @@ def build_managed_stop(task_id, values, durable, boundary):
 def report_delivery_status(receipts):
     """Writer lifecycle is independent from fulfilled file contracts."""
     rows = [dict((receipts or {}).get(name) or {}) for name in ("report.md", "stage_status.tsv", "reproduce.sh")]
+    if all(row.get("status") in (None, "", "not_attempted") for row in rows):
+        return "not_attempted"
     delivered = sum(row.get("status") in {"created", "reused", "unchanged"} and bool(row.get("sha256")) for row in rows)
     return "complete" if delivered == 3 else "partial" if delivered else "failed"
 
@@ -450,7 +452,7 @@ def explanation(stop):
     if causal.get("executed") and not _mapping(stop.get("execution")).get("executed"):
         base = base.replace("没有可确认的命令执行记录。", "末次候选尚未执行；本轮已有真实因果执行记录。")
     base = base.replace("Supervisor 待核实的疑虑：", "原始起因（断言待核实）：").replace("仍需完成语义复核", "原因记录不完整")
-    base += "\n\n文件交付：" + report_delivery_status(stop.get("report_receipts")) + "；" + "；".join(
+    base += "\n\n文件交付：" + report_delivery_status(stop.get("report_receipts")) + "（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；" + "；".join(
         name + "=" + str((stop.get("report_receipts", {}).get(name) or {}).get("status", "not_attempted"))
         + " " + str((stop.get("report_receipts", {}).get(name) or {}).get("reason", ""))
         for name in ("report.md", "stage_status.tsv", "reproduce.sh"))

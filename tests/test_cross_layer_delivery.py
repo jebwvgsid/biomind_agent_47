@@ -13,6 +13,15 @@ from agent_core.plan_tracker import load_plan_state,save_plan_state,record_preac
 from tests.test_preflight_recovery_audit import save
 
 
+def test_F25_frozen_report_before_publication_is_not_delivery_failure():
+    from agent_core.workflow.managed_stop import report_delivery_status
+    assert report_delivery_status({})=='not_attempted'
+    assert report_delivery_status({'report.md':{'status':'not_attempted'}})=='not_attempted'
+    assert report_delivery_status({'report.md':{'status':'failed'}})=='failed'
+    assert report_delivery_status({'report.md':{'status':'created','sha256':'actual'}})=='partial'
+    assert report_delivery_status({name:{'status':'created','sha256':'actual'} for name in ('report.md','stage_status.tsv','reproduce.sh')})=='complete'
+
+
 def test_F20_primary_execution_flag_keeps_original_scope():
     state={'task_id':'new','plan_id':'plan','plan_version':'v1','current_step_id':'s','steps':[],
         'task_state':{},'failure':{'error_code':'TOOL_FAILED','attempt_id':'actual','execution_started':True}}
