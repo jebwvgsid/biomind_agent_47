@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="BioMind 远程工作台交互原型。完全离线的演示模式。">
+  <title>BioMind 远程工作台 · 演示模式</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #ffffff; --sidebar: #f4f6f5; --panel: #fafbfa; --soft: #f3f5f4;
+  --text: #28352f; --muted: #77817b; --line: #e5e9e6; --hover: #ebefec;
+  --accent: #326951; --accent-soft: #eaf2ed; --amber: #996b27; --amber-bg: #fcf8ee;
+  --red: #ae554b; --red-bg: #fdf5f3; --code-bg: #f4f6f5; --shadow: 0 12px 48px #20342818;
+  font-family: "Segoe UI", "Noto Sans CJK SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 13px; color: var(--text); background: var(--bg); font-synthesis: none;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark; --bg: #202523; --sidebar: #191e1c; --panel: #1d2220; --soft: #292f2c;
+  --text: #d9e1dc; --muted: #98a89e; --line: #343e37; --hover: #303a33;
+  --accent: #9bccaf; --accent-soft: #293e31; --amber: #dab677; --amber-bg: #343023;
+  --red: #e99c8c; --red-bg: #3a2926; --code-bg: #181f1b; --shadow: 0 12px 48px #0005;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, textarea, select { font: inherit; }
+button { color: inherit; cursor: pointer; border: 0; background: none; }
+button, select, input { -webkit-tap-highlight-color: transparent; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+button:not(:disabled), select { transition: background 120ms, border-color 120ms; }
+button:hover:not(:disabled) { background: var(--hover); }
+svg { flex-shrink: 0; vertical-align: middle; }
+pre, code, .mono { font-family: Consolas, "Noto Sans Mono CJK SC", "Microsoft YaHei", monospace; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; }
+input, select, textarea { min-width: 0; color: var(--text); background: transparent; }
+select { cursor: pointer; border: 0; }
+option { color: var(--text); background: var(--bg); }
+small { font-size: 11px; }
+p { line-height: 1.85; }
+.muted { color: var(--muted); font-size: 12px; }
+.wrap { overflow-wrap: anywhere; }
+.shell { height: 100dvh; height: 100vh; display: grid; grid-template-columns: 242px minmax(0, 1fr) 326px; grid-template-rows: 56px 39px minmax(0,1fr) auto; grid-template-areas: "sidebar top top" "sidebar demo demo" "sidebar thread detail" "sidebar composer detail"; overflow: hidden; }
+.shell.panel-closed { grid-template-columns: 242px minmax(0, 1fr) 0; }
+.shell.panel-closed .detail { display: none; }
+.sidebar { grid-area: sidebar; background: var(--sidebar); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 25px 14px 0; min-height: 0; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 9px 28px; }
+.brand > div { display: grid; gap: 2px; }
+.brand strong { font-size: 20px; letter-spacing: -.6px; font-weight: 650; line-height: 1.1; }
+.brand div > span { font-size: 10px; letter-spacing: 2.1px; color: var(--muted); }
+.version { font-size: 9px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; margin-left: auto; padding: 2px 4px; }
+.primary, .secondary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: 7px; padding: 9px 13px; line-height: 1.5; white-space: nowrap; font-weight: 550; }
+.primary { background: #326951; border: 1px solid #326951; color: white; }
+.primary:hover:not(:disabled) { background: #26563f; border-color: #26563f; }
+.secondary { background: var(--bg); border: 1px solid var(--line); }
+.small { padding: 6px 11px; font-size: 12px; }
+.new-session { width: 100%; justify-content: flex-start; font-size: 13px; padding: 10px 13px; box-shadow: 0 2px 4px #1b493412; }
+.key-hint { margin-left: auto; opacity: .6; border: 1px solid #ffffff40; width: 19px; border-radius: 4px; text-align: center; font-size: 10px; }
+.nav-group { padding: 24px 5px 21px; }
+.nav-group label { color: var(--muted); display: flex; justify-content: space-between; align-items: center; margin: 0 3px 7px; font-size: 11px; }
+.nav-group label span { font-size: 9px; background: var(--line); border-radius: 4px; padding: 1px 4px; }
+.select-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 17px; padding: 7px 5px; color: var(--muted); }
+.select-wrap:last-child { margin-bottom: 0; }
+.select-wrap select { width: 100%; font-size: 12px; color: var(--text); outline-offset: 7px; }
+.history-heading { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 8px 10px; }
+.search-field { display: flex; align-items: center; gap: 6px; margin: 0 3px 11px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+.search-field input { border: 0; outline: 0; width: 100%; font-size: 11px; }
+.search-field kbd { font: inherit; color: var(--muted); }
+.session-list { flex: 1; min-height: 60px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+.session { width: 100%; display: flex; text-align: left; gap: 9px; padding: 12px 10px; border-radius: 7px; margin-bottom: 5px; position: relative; align-items: flex-start; }
+.session > svg { margin-top: 3px; color: var(--muted); }
+.session.selected { background: var(--accent-soft); }
+.session.selected > svg, .session.selected strong { color: var(--accent); }
+.session > span { min-width: 0; width: 100%; }
+.session strong { font-size: 12px; display: block; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; font-weight: 550; }
+.session small { margin-top: 7px; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+.attention-dot { width: 5px; height: 5px; border-radius: 50%; background: #b09047; position: absolute; right: 9px; top: 17px; }
+.sidebar-bottom { padding-top: 15px; }
+.privacy-note { display: flex; align-items: center; gap: 7px; color: var(--muted); padding: 10px 8px 18px; font-size: 10px; }
+.profile { display: flex; align-items: center; gap: 9px; padding: 16px 3px; border-top: 1px solid var(--line); }
+.profile-avatar { background: var(--line); border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center; color: var(--accent); font-size: 12px; }
+.profile div { display: grid; gap: 3px; flex: 1; }
+.profile strong { font-size: 11px; font-weight: 550; }.profile small { color: var(--muted); font-size: 9px; }
+.icon-button { display: inline-flex; justify-content: center; align-items: center; width: 30px; height: 30px; padding: 6px; border-radius: 6px; color: var(--muted); }
+.icon-button.active { color: var(--accent); background: var(--soft); }
+.topbar { grid-area: top; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--line); min-width: 0; }
+.top-location { display: flex; align-items: center; gap: 11px; min-width: 0; color: var(--muted); }
+.top-location strong { color: var(--text); font-size: 12px; white-space: nowrap; font-weight: 550; }
+.top-divider { color: #aeb8b2; font-size: 15px; }.directory { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Consolas, sans-serif; font-size: 11px; }
+.top-actions { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }.connection { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--accent); }
+.connection-interrupted { color: var(--amber); }.connection-disconnected { color: var(--muted); }.sidebar-toggle { display: none; }
+.demo-bar { grid-area: demo; background: var(--amber-bg); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 24px; }
+.demo-label { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--amber); }.demo-label strong { font-weight: 600; }.demo-description { color: var(--muted); margin-left: 5px; }
+.demo-dot { background: #bd9449; width: 5px; height: 5px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.demo-controls { display: flex; align-items: center; gap: 10px; font-size: 10px; color: var(--muted); }.demo-controls select { max-width: 165px; font-size: 11px; color: var(--amber); }
+.transcript { grid-area: thread; overflow-y: auto; min-height: 0; padding: 31px clamp(20px,3.2vw,55px) 15px; scroll-behavior: smooth; }
+.transcript > * { max-width: 805px; margin-left: auto; margin-right: auto; }
+.conversation-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 20px; }.eyebrow { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 6px; letter-spacing: .3px; }
+h1 { font-size: 19px; font-weight: 600; letter-spacing: -.4px; margin: 7px 0 0; overflow-wrap: anywhere; }
+.status { display: inline-flex; align-items: center; gap: 6px; background: var(--soft); color: var(--muted); border: 1px solid var(--line); font-size: 10px; white-space: nowrap; border-radius: 5px; padding: 4px 7px; }
+.status i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }.status-awaiting_plan, .status-awaiting_script, .status-stop_requested { background: var(--amber-bg); color: var(--amber); border-color: #b693492d; }.status-running, .status-completed { background: var(--accent-soft); color: var(--accent); border-color: #32695120; }.status-recovering { background: var(--red-bg); color: var(--red); }
+.conversation-date { display: flex; align-items: center; gap: 16px; color: #99a29d; font-size: 9px; padding: 3px 0 27px; }.conversation-date::before, .conversation-date::after { content: ''; height: 1px; background: var(--line); flex: 1; }
+.message { display: flex; gap: 13px; margin-bottom: 26px; }.message-avatar { flex-shrink: 0; width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; background: var(--soft); color: var(--muted); font-size: 11px; }.message-avatar svg { width: 27px; height: 27px; }
+.message-body { flex: 1; min-width: 0; }.message-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 11px; min-height: 26px; }.message-meta strong { font-weight: 600; }.message-meta time { color: #939e97; font-size: 9px; margin-left: 2px; }.tiny-demo { font-size: 9px; color: var(--muted); background: var(--soft); padding: 1px 4px; border-radius: 3px; }.queue-label { color: var(--amber); font-size: 10px; }
+.message-text { margin: 7px 0 11px; font-size: 13px; line-height: 1.95; white-space: pre-wrap; overflow-wrap: anywhere; }.reference-chips { display: flex; gap: 6px; flex-wrap: wrap; }.file-chip { display: inline-flex; gap: 5px; align-items: center; border: 1px solid var(--line); border-radius: 5px; font-size: 10px; color: var(--muted); background: var(--panel); padding: 4px 6px; }.file-chip button { display: grid; place-items: center; padding: 0 1px; }
+.assistant-work { padding-left: 40px; }.tool-activity { display: flex; gap: 7px; align-items: center; font-size: 10px; color: var(--muted); margin: -5px 0 16px; flex-wrap: wrap; }.tool-activity > svg { color: var(--accent); }.tool-activity > span:nth-child(3) { font-size: 9px; color: #9ba69e; }.text-button { padding: 2px 4px; font-size: 10px; color: var(--muted); display: inline-flex; align-items: center; gap: 3px; border-radius: 3px; }.tool-activity .text-button { margin-left: auto; }
+.plan-card { border: 1px solid var(--line); border-radius: 9px; margin-bottom: 14px; background: var(--bg); overflow: hidden; }summary { cursor: pointer; list-style: none; }summary::-webkit-details-marker { display: none; }summary > svg:last-child { margin-left: auto; color: var(--muted); transition: transform 150ms; }details[open] > summary > svg:last-child { transform: rotate(180deg); }.plan-card > summary { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }.card-icon { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 7px; background: var(--soft); color: var(--accent); }.card-heading { display: grid; gap: 5px; }.card-heading strong { font-size: 12px; font-weight: 600; }.card-heading small { font-size: 10px; color: var(--muted); }.subtle-tag { font-size: 9px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; margin-left: auto; white-space: nowrap; }
+.plan-steps { list-style: none; margin: 0; padding: 1px 16px 15px; display: grid; gap: 13px; }.plan-steps li { display: flex; gap: 10px; align-items: center; }.step-index { width: 20px; height: 20px; border: 1px solid var(--line); border-radius: 50%; display: grid; place-items: center; font-size: 9px; color: var(--muted); flex-shrink: 0; }.step-completed .step-index { color: var(--accent); background: var(--accent-soft); border-color: transparent; }.step-running .step-index { color: var(--accent); border-color: var(--accent); }.step-failed .step-index { color: var(--red); }.plan-steps li > div { display: grid; gap: 4px; }.plan-steps strong { font-size: 11px; font-weight: 500; }.plan-steps small { font-size: 10px; color: var(--muted); }.tool-name { margin-left: auto; font-size: 10px; color: var(--muted); }
+.approval-card { border: 1px solid #c7ab704a; background: var(--amber-bg); border-radius: 9px; padding: 16px 17px 0; margin-bottom: 21px; }.approval-card.resolved { border-color: var(--line); background: var(--panel); }.approval-title { display: flex; gap: 9px; align-items: center; }.approval-icon { color: var(--amber); }.approval-title > div { display: grid; gap: 5px; }.approval-title strong { font-size: 12px; font-weight: 600; }.approval-title div > span { color: var(--muted); font-size: 9px; }.approval-card > p { margin: 15px 0 14px; color: var(--muted); font-size: 11px; }.scope-grid { display: grid; grid-template-columns: 67px minmax(0,1fr); gap: 9px; font-size: 10px; margin: 0 0 17px; }.scope-grid > span:nth-child(odd) { color: var(--muted); }.scope-grid code { overflow-wrap: anywhere; font-size: 10px; }
+.script-disclosure { border: 1px solid var(--line); border-radius: 6px; background: var(--bg); margin-bottom: 15px; overflow: hidden; }.script-disclosure summary { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 10px; }.script-disclosure summary > span { font-size: 9px; margin-left: auto; color: var(--muted); }.script-disclosure summary > svg:last-child { margin-left: 5px; }.code-block { padding: 14px; margin: 0; background: var(--code-bg); color: var(--text); font-size: 10px; line-height: 1.9; overflow-x: auto; }.script-identity { padding: 6px 10px; color: var(--muted); font-size: 9px; overflow-wrap: anywhere; }
+.card-footer { border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 12px 0; }.card-footer > span { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; color: var(--muted); }.button-group { display: flex; gap: 7px; margin-left: auto; }.plan-card .card-footer { padding: 12px 16px; }.approved-label { color: var(--accent) !important; }
+.connection-notice { border: 1px solid #c7ab703d; background: var(--amber-bg); border-radius: 8px; padding: 13px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 23px; color: var(--amber); }.connection-notice > div { flex: 1; }.connection-notice strong { font-size: 12px; }.connection-notice p { font-size: 10px; margin: 6px 0 0; color: var(--muted); }
+.recovery-card { background: var(--red-bg); border: 1px solid #ae554b30; border-radius: 9px; padding: 15px 17px; margin-top: 17px; }.recovery-card > div { display: flex; gap: 7px; color: var(--red); align-items: center; }.recovery-card strong { font-size: 12px; }.recovery-card p { font-size: 11px; }.recovery-card small { font-size: 9px; color: var(--muted); }
+.result-card { border: 1px solid #32695130; background: var(--accent-soft); padding: 17px; border-radius: 9px; margin-top: 20px; }.result-title { display: flex; gap: 7px; color: var(--accent); align-items: center; }.result-title strong { font-size: 13px; }.result-title > span { font-size: 9px; margin-left: auto; }.result-card > p { font-size: 10px; color: var(--muted); }.result-files { display: grid; gap: 8px; margin: 15px 0; }.result-files button { display: flex; text-align: left; align-items: center; gap: 10px; border: 1px solid var(--line); padding: 12px; border-radius: 6px; background: var(--bg); }.result-files strong { display: block; font-size: 11px; font-weight: 500; }.result-files small { display: block; color: var(--muted); font-size: 9px; margin-top: 5px; }.result-files button > svg:last-child { margin-left: auto; }.result-card > small { font-size: 9px; color: var(--muted); }
+.run-strip { display: flex; gap: 10px; align-items: center; padding: 16px 0; }.run-strip > div { display: grid; gap: 6px; flex: 1; }.run-strip strong { font-size: 11px; font-weight: 500; }.run-strip small { color: var(--muted); font-size: 10px; }.activity-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 4px var(--accent-soft); }.approval-hint { text-align: center; font-size: 10px; color: var(--muted); margin-top: 16px; }.stopped-note { font-size: 11px; padding: 14px; background: var(--soft); border-radius: 6px; }.conversation-end { height: 5px; }
+.composer { grid-area: composer; padding: 13px clamp(20px,3.2vw,55px) 14px; background: var(--bg); position: relative; }.composer::before { content: ''; position: absolute; top: -18px; left: 0; right: 0; height: 18px; background: linear-gradient(transparent,var(--bg)); pointer-events: none; }.composer-box, .composer-footnote { max-width: 805px; margin: auto; }.composer-box { border: 1px solid #ced8d1; border-radius: 12px; padding: 11px 13px 9px; box-shadow: 0 3px 8px #20342806; }.composer-box:focus-within { border-color: #7ba08b; box-shadow: 0 0 0 2px #32695108; }.draft-references { display: flex; gap: 5px; flex-wrap: wrap; }.draft-references:not(:empty) { margin-bottom: 6px; }textarea { border: 0; resize: vertical; width: 100%; display: block; min-height: 58px; max-height: 180px; padding: 2px; outline: 0 !important; line-height: 1.8; font-size: 12px; }textarea::placeholder { color: #98a29b; }.composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 5px; }.attach-button { display: flex; align-items: center; gap: 5px; color: var(--muted); padding: 5px; font-size: 10px; border-radius: 5px; white-space: nowrap; }.composer-right { display: flex; align-items: center; gap: 10px; }.input-hint, .queue-caption { font-size: 9px; color: #97a199; }.queue-caption { color: var(--amber); }.send-button { width: 30px; height: 30px; display: grid; place-items: center; background: #326951; color: white; border-radius: 8px; }.send-button:hover:not(:disabled) { background: #26563f; }.send-button:disabled { background: var(--hover); color: var(--muted); opacity: 1; }.composer-footnote { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; font-size: 8px; padding-top: 9px; color: var(--muted); }.composer-footnote > div { display: flex; gap: 5px; }.composer-footnote button { padding: 0; font-size: 8px; text-decoration: underline; text-underline-offset: 3px; }
+.detail { grid-area: detail; background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; min-width: 0; }.detail-heading { display: flex; align-items: center; justify-content: space-between; padding: 15px 19px 9px; }.detail-heading strong { font-size: 12px; font-weight: 550; }.detail-tabs { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 0 13px; }.detail-tabs button { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; padding: 11px 9px; border-bottom: 2px solid transparent; }.detail-tabs button.selected { color: var(--accent); border-color: var(--accent); }.detail-body { flex: 1; overflow-y: auto; padding: 22px 21px; min-height: 0; }.section-caption { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); font-weight: 550; margin-bottom: 15px; }.section-caption span { font-size: 9px; font-weight: 400; }.progress-track { height: 3px; background: var(--line); border-radius: 2px; margin: 0 0 26px; }.progress-track i { display: block; height: 3px; background: var(--accent); border-radius: 2px; }.vertical-steps { list-style: none; margin: 0 0 29px; padding: 0; }.vertical-steps li { display: flex; gap: 12px; padding-bottom: 25px; position: relative; }.vertical-steps li:not(:last-child)::before { content: ''; position: absolute; top: 23px; bottom: 3px; left: 10px; width: 1px; background: var(--line); }.vertical-steps li > span { width: 21px; height: 21px; border: 1px solid var(--line); color: var(--muted); border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; font-size: 9px; }.vertical-steps li.step-completed > span { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }.vertical-steps li.step-running > span { border-color: var(--accent); color: var(--accent); }.vertical-steps li.step-failed > span { border-color: var(--red); color: var(--red); }.vertical-steps strong { font-size: 11px; font-weight: 550; display: block; padding-top: 2px; }.vertical-steps p { font-size: 10px; color: var(--muted); margin: 7px 0; line-height: 1.6; }.vertical-steps small { font-size: 9px; color: var(--muted); }.step-pending strong { color: var(--muted); }.detail-section { border-top: 1px solid var(--line); padding-top: 19px; }.detail-section dl { display: grid; grid-template-columns: 70px minmax(0,1fr); gap: 14px; font-size: 10px; }.detail-section dt { color: var(--muted); }.detail-section dd { margin: 0; }.detail-tip { background: var(--soft); padding: 12px; display: flex; gap: 8px; margin-top: 26px; border-radius: 6px; color: var(--muted); }.detail-tip p { margin: 0; font-size: 10px; line-height: 1.8; }.detail-tip svg { margin-top: 3px; }.detail-footer { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--muted); padding: 12px 21px; border-top: 1px solid var(--line); }
+.approval-record { display: grid; grid-template-columns: 1fr 1fr; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 10px; }.approval-record strong { font-weight: 500; color: var(--accent); text-align: right; }.approval-record small { grid-column: 1 / -1; font-size: 9px; color: var(--muted); margin-top: 7px; overflow-wrap: anywhere; }.panel-empty { padding: 22px 0; font-size: 11px; color: var(--muted); }.log-toolbar { display: flex; align-items: center; justify-content: space-between; font-size: 9px; color: var(--muted); margin: 5px 0 15px; }.load-logs { width: 100%; margin-bottom: 10px; }.logs { max-height: 480px; overflow: auto; background: var(--code-bg); padding: 12px; border: 1px solid var(--line); border-radius: 6px; }.log-line { border-bottom: 1px solid var(--line); padding: 8px 0; overflow-wrap: anywhere; }.log-line > span { display: block; font-size: 8px; color: var(--muted); margin-bottom: 5px; }.log-line b { font-weight: normal; }.log-line code { font-size: 9px; color: var(--accent); }.log-line p { font-size: 10px; margin: 4px 0; }.log-error p { color: var(--red); }.log-warning p { color: var(--amber); }.resource-row { display: flex; width: 100%; gap: 10px; text-align: left; padding: 13px 0; border-bottom: 1px solid var(--line); align-items: center; }.resource-row > svg { color: var(--muted); }.resource-row > span { min-width: 0; flex: 1; }.resource-row strong { font-size: 10px; display: block; font-weight: 500; overflow-wrap: anywhere; }.resource-row small { font-size: 9px; color: var(--muted); display: block; margin: 5px 0; }.resource-row em { font-style: normal; font-size: 8px; color: var(--muted); }.resource-row .resource-verified { color: var(--accent); }.resource-row .resource-unverified { color: var(--amber); }.resource-row:disabled { opacity: .75; }.artifacts-caption { margin-top: 29px; }.file-note { margin-top: 22px; font-size: 10px; }
+.welcome { text-align: center; padding: 45px 0 25px; }.welcome-mark svg { width: 48px; height: 48px; }.welcome > .eyebrow { justify-content: center; margin-top: 23px; font-size: 10px; }.welcome h2 { font-size: 26px; line-height: 1.6; font-weight: 550; letter-spacing: -1px; margin: 12px 0 17px; }.welcome h2 span { color: var(--accent); }.welcome > p { font-size: 12px; color: var(--muted); line-height: 2; }.starter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 530px; margin: 31px auto 17px; }.starter-grid button { text-align: left; border: 1px solid var(--line); border-radius: 9px; padding: 17px; position: relative; background: var(--panel); }.starter-grid button > svg:first-child { color: var(--accent); }.starter-grid strong { display: block; font-size: 12px; margin: 16px 0 7px; font-weight: 550; }.starter-grid span { font-size: 10px; color: var(--muted); }.starter-grid button > svg:last-child { position: absolute; right: 14px; top: 20px; color: var(--muted); }.welcome > small { color: var(--muted); font-size: 9px; }.empty-list { font-size: 11px; text-align: center; padding-top: 24px; }
+dialog { color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); width: min(680px, calc(100vw - 30px)); max-height: 85vh; padding: 0; }dialog::backdrop { background: #10271d55; }.modal-heading { display: flex; align-items: center; gap: 10px; padding: 19px 22px; border-bottom: 1px solid var(--line); }.modal-heading h2 { margin: 0; font-size: 15px; font-weight: 550; }.modal-heading > .icon-button { margin-left: auto; }.modal-content { padding: 20px 24px; }.modal-content > .muted { margin-top: 0; }.modal-footer { padding: 15px 24px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); }.file-choice { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); padding: 14px; border-radius: 7px; margin: 9px 0; cursor: pointer; }.file-choice span { display: grid; gap: 6px; min-width: 0; }.file-choice strong { font-size: 12px; font-weight: 500; }.file-choice small { color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }input[type="checkbox"] { accent-color: #326951; }.resource-path { overflow-wrap: anywhere; padding: 11px; border-radius: 5px; background: var(--soft); font-size: 10px; color: var(--muted); margin-bottom: 16px; }.preview-text { padding: 16px; font-size: 12px; line-height: 1.9; background: var(--code-bg); border-radius: 7px; min-height: 170px; }.preview-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 18px 0; }.preview-stats > div { border: 1px solid var(--line); padding: 15px; border-radius: 6px; }.preview-stats small { color: var(--muted); font-size: 10px; }.preview-stats strong { display: block; font-size: 23px; margin-top: 9px; font-weight: 550; color: var(--accent); }.preview-stats em { font-size: 9px; font-style: normal; color: var(--muted); }.toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); padding: 12px 18px; max-width: min(600px,90vw); background: var(--text); color: var(--bg); border-radius: 8px; font-size: 12px; box-shadow: var(--shadow); z-index: 50; pointer-events: none; }.toast:empty { display: none; }
+@media (min-width: 1600px) { .shell { grid-template-columns: 258px minmax(0,1fr) 350px; }.shell.panel-closed { grid-template-columns: 258px minmax(0,1fr) 0; }.transcript { padding-top: 40px; } }
+@media (max-width: 1180px) { .shell { grid-template-columns: 216px minmax(0,1fr) 288px; }.shell.panel-closed { grid-template-columns: 216px minmax(0,1fr) 0; }.sidebar { padding-left: 11px; padding-right: 11px; }.brand { padding-left: 3px; padding-right: 3px; }.topbar, .demo-bar { padding-left: 20px; padding-right: 16px; }.top-actions { gap: 9px; }.detail-body { padding: 20px 16px; }.detail-tabs { padding: 0 9px; }.detail-tabs button { padding: 11px 6px; }.transcript, .composer { padding-left: 23px; padding-right: 23px; }.assistant-work { padding-left: 0; }.input-hint, .queue-caption { display: none; }.approval-title > .subtle-tag { display: none; }.top-divider, .directory { display: none; } }
+@media (max-width: 1000px) { .shell, .shell.panel-closed { grid-template-columns: 210px minmax(0,1fr) 0; }.detail { position: fixed; right: 0; top: 95px; bottom: 0; width: 330px; max-width: 94vw; z-index: 10; box-shadow: -10px 0 40px #20342812; }.conversation-header { align-items: flex-start; }.demo-description { display: none; } }
+@media (max-width: 700px) { .shell, .shell.panel-closed { grid-template-columns: 0 minmax(0,1fr) 0; }.sidebar { display: none; }.sidebar-open .sidebar { display: flex; position: fixed; left: 0; top: 56px; bottom: 0; width: 250px; z-index: 20; box-shadow: var(--shadow); }.sidebar-toggle { display: inline-flex; }.topbar { padding: 0 12px; }.top-location { gap: 7px; }.top-location > svg { display: none; }.connection { font-size: 10px; }.top-actions { gap: 7px; }.demo-bar { padding: 0 15px; }.demo-controls { gap: 5px; }.demo-controls label { display: none; }.transcript { padding: 24px 18px 13px; }.composer { padding: 10px 15px 12px; }.composer-footnote { font-size: 8px; }.conversation-header { display: block; }h1 { font-size: 18px; }.conversation-header .status { margin-top: 13px; }.conversation-date { padding-bottom: 20px; }.message { gap: 10px; }.message-text { font-size: 12px; }.connection-notice { flex-wrap: wrap; }.connection-notice > button { margin-left: 28px; }.scope-grid { grid-template-columns: 59px minmax(0,1fr); }.approval-card { padding-left: 13px; padding-right: 13px; }.card-footer > span { font-size: 8px; }.card-footer .button-group { margin-top: 4px; }.starter-grid { grid-template-columns: 1fr; }.welcome { padding: 18px 0; }.welcome h2 { font-size: 24px; }.starter-grid button { padding: 15px; }.starter-grid strong { display: inline-block; margin: 0 0 7px 8px; }.starter-grid span { display: block; padding-left: 33px; }.preview-stats { grid-template-columns: 1fr; }.preview-stats strong { font-size: 20px; }.result-title { flex-wrap: wrap; }.result-title > span { margin-left: 0; }.tool-name { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
+
+/* Legible secondary Chinese labels and native keyboard focus. */
+.version, .nav-group label span, .history-heading, .session small, .privacy-note, .profile small, .demo-controls, .demo-controls select, .status, .eyebrow, .tiny-demo, .message-meta time, .file-chip, .tool-activity, .text-button, .card-heading small, .subtle-tag, .plan-steps small, .tool-name, .approval-title div > span, .scope-grid, .scope-grid code, .script-disclosure summary > span, .card-footer > span, .script-identity, .section-caption, .section-caption span, .vertical-steps p, .vertical-steps small, .detail-section dl, .detail-tip p, .detail-footer, .resource-row small, .resource-row em, .log-line > span, .log-line code, .log-toolbar, .composer-footnote, .composer-footnote button { font-size: 11px; }
+.resource-row strong, .plan-steps strong, .vertical-steps strong, .attach-button { font-size: 12px; }
+textarea:focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 2px; border-radius: 3px; }
+.composer-footnote { line-height: 1.7; }
+@media (max-width: 700px) { .top-run-status { display: none; }.card-footer { align-items: flex-start; }.message-meta { gap: 6px; } }
+</style>
+</head>
+<body>
+  <div id="biomind-workbench"></div>
+  <noscript>此原型需要启用 JavaScript，所有演示仅在浏览器内运行。</noscript>
+  <script>(() => { 'use strict'; const modules = {"demo/data.js": function(require, exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.scenarios = exports.workspaces = exports.servers = void 0;
+exports.makeScript = makeScript;
+exports.makeSteps = makeSteps;
+exports.makeResources = makeResources;
+exports.approvalFor = approvalFor;
+exports.makeSession = makeSession;
+exports.initialSessions = initialSessions;
+exports.servers = [
+    { id: 'lab', name: '生信计算服务器', alias: 'biomind-lab-demo', description: 'Linux · 演示服务器' },
+    { id: 'sandbox', name: '测试服务器', alias: 'biomind-sandbox-demo', description: 'Linux · 演示服务器' },
+];
+exports.workspaces = [
+    { id: 'rice', serverId: 'lab', name: '水稻转录组研究', path: '/demo/projects/rice-rnaseq' },
+    { id: 'variant', serverId: 'lab', name: '变异注释探索', path: '/demo/projects/variant-study' },
+    { id: 'sandbox', serverId: 'sandbox', name: '方法验证', path: '/demo/workspaces/methods' },
+];
+exports.scenarios = [
+    { id: 'approval', label: '等待脚本审批' }, { id: 'plan', label: '等待计划审批' },
+    { id: 'running', label: '运行中' }, { id: 'recovery', label: '执行失败 · 恢复中' },
+    { id: 'offline', label: '断线待重连' }, { id: 'completed', label: '完成 · 查看结果' },
+    { id: 'new', label: '新会话' }, { id: 'disconnected', label: '未连接' },
+];
+const script = `# 演示模式 · 仅供查看，原型不会执行本脚本
+# 工作目录：/demo/projects/rice-rnaseq
+# 读取：reads/ 下的演示 FASTQ
+# 写入：results/quality/；不覆盖输入文件
+set -euo pipefail
+
+mkdir -p results/quality/fastqc
+fastqc --threads 4 \\
+  --outdir results/quality/fastqc \\
+  reads/demo_R1.fastq.gz reads/demo_R2.fastq.gz
+
+multiqc results/quality/fastqc \\
+  --outdir results/quality \\
+  --filename multiqc_report.html
+`;
+function makeScript(root) { return script.replace('/demo/projects/rice-rnaseq', root); }
+function makeSteps() {
+    return [
+        { title: '确认输入文件', detail: '核对双端文件与样本说明', tool: '文件检查', status: 'completed' },
+        { title: '评估测序质量', detail: '碱基质量、GC 分布与接头含量', tool: 'FastQC', status: 'pending' },
+        { title: '汇总质量报告', detail: '汇总各样本指标，保留原始报告', tool: 'MultiQC', status: 'pending' },
+        { title: '核验并解读结果', detail: '检查交付项，给出后续分析建议', tool: 'BioMind', status: 'pending' },
+    ];
+}
+function makeResources(root, complete) {
+    return [
+        { id: 'r1', name: 'demo_R1.fastq.gz', path: `${root}/reads/demo_R1.fastq.gz`, kind: 'input', format: 'FASTQ', size: '1.2 GB · 演示', status: 'available', preview: '演示文件引用\n此处不读取真实 FASTQ，也不下载原始数据。\n读取方向：R1\n配对文件：demo_R2.fastq.gz' },
+        { id: 'r2', name: 'demo_R2.fastq.gz', path: `${root}/reads/demo_R2.fastq.gz`, kind: 'input', format: 'FASTQ', size: '1.3 GB · 演示', status: 'available', preview: '演示文件引用\n此处不读取真实 FASTQ，也不下载原始数据。\n读取方向：R2' },
+        { id: 'samples', name: 'samples.tsv', path: `${root}/samples.tsv`, kind: 'input', format: 'TSV', size: '256 B · 演示', status: 'available', preview: 'sample\tcondition\tread1\tread2\ndemo\tcontrol\tdemo_R1.fastq.gz\tdemo_R2.fastq.gz' },
+        { id: 'report', name: 'multiqc_report.html', path: `${root}/results/quality/multiqc_report.html`, kind: 'artifact', format: 'HTML', size: complete ? '2.4 MB · 演示' : '—', status: complete ? 'verified' : 'expected', preview: 'MultiQC 质量报告 · 演示模式\n\n以下全部为合成指标，不能用于科学结论。\n样本：demo\n读取对数：24,000,000\nQ30：94.8%\nGC 含量：43.2%\n\n交付核验：演示后端返回 completed / verified。' },
+        { id: 'metrics', name: 'quality_summary.tsv', path: `${root}/results/quality/quality_summary.tsv`, kind: 'artifact', format: 'TSV', size: complete ? '186 B · 演示' : '—', status: complete ? 'verified' : 'expected', preview: '# 演示模式：合成数据\nsample\tread_pairs\tq30_percent\tgc_percent\ndemo\t24000000\t94.8\t43.2' },
+        { id: 'scratch', name: 'fastqc_notes.txt', path: `${root}/results/quality/fastqc_notes.txt`, kind: 'artifact', format: 'TXT', size: '64 B · 演示', status: 'unverified', preview: '演示模式 · 中间记录\n文件已生成，尚未经交付核验。文件存在不代表分析完成。' },
+    ];
+}
+function approvalFor(id, kind, version = 1) {
+    return { id: `${id}-${kind}-${version}`, kind, version, digest: `demo-${kind}-v${version}-7e2a90c1`, status: 'pending' };
+}
+function makeSession(scenario, id = `demo-${scenario}`, serverId = 'lab', workspaceId = 'rice') {
+    const complete = scenario === 'completed';
+    const empty = scenario === 'new' || scenario === 'disconnected';
+    const workspace = exports.workspaces.find(w => w.id === workspaceId);
+    const steps = makeSteps();
+    if (complete)
+        steps.forEach(step => step.status = 'completed');
+    if (['running', 'offline'].includes(scenario))
+        steps[1].status = 'running';
+    if (scenario === 'recovery') {
+        steps[1].status = 'completed';
+        steps[2].status = 'failed';
+    }
+    const plan = approvalFor(id, 'plan');
+    plan.status = scenario === 'plan' ? 'pending' : 'approved';
+    const approval = approvalFor(id, 'script');
+    if (['running', 'offline', 'completed', 'recovery'].includes(scenario))
+        approval.status = 'approved';
+    const session = {
+        id, runId: `${id}-run-1`, title: empty ? '新会话' : { completed: '测序质量评估 · 已完成', recovery: '质量评估 · 恢复记录', offline: '测序质控 · 待重连', plan: 'RNA-seq 分析计划', running: '样本质量检查 · 运行中' }[scenario] || '水稻 RNA-seq · 质量评估',
+        serverId, workspaceId,
+        status: empty ? 'idle' : complete ? 'completed' : scenario === 'approval' ? 'awaiting_script' : scenario === 'plan' ? 'awaiting_plan' : scenario === 'recovery' ? 'recovering' : 'running',
+        connection: scenario === 'disconnected' ? 'disconnected' : scenario === 'offline' ? 'interrupted' : 'demo',
+        confirmedAt: '2026-09-14T09:42:18+08:00', cursor: empty ? 0 : 3, elapsed: complete ? 186 : 42,
+        messages: empty ? [] : [
+            { id: `${id}-m1`, role: 'user', time: '09:41', text: '请检查这个工作区的双端 RNA-seq 数据质量，汇总质量报告，并告诉我是否需要做接头过滤。', delivery: 'accepted', references: ['r1', 'r2', 'samples'] },
+            { id: `${id}-m2`, role: 'assistant', time: '09:42', text: '我会先核对输入，再用 FastQC 评估测序质量，最后汇总报告并检查交付项。原始数据会保留在服务器工作目录中。' },
+        ],
+        steps: empty ? [] : steps, approvals: empty ? [] : scenario === 'plan' ? [plan] : [plan, approval], script: makeScript(workspace.path),
+        resources: makeResources(workspace.path, complete), executionCount: ['running', 'offline', 'completed', 'recovery'].includes(scenario) ? 1 : 0,
+        events: empty ? [] : [
+            { seq: 1, time: '09:41:02', type: 'message.accepted', text: '已受理演示请求，创建分析计划。', level: 'info' },
+            { seq: 2, time: '09:41:08', type: 'tool.completed', text: '文件检查完成：1 组双端文件与 1 份样本表。', level: 'info' },
+            { seq: 3, time: '09:42:18', type: 'approval.requested', text: scenario === 'plan' ? '计划版本 1 等待审核。' : '已确认计划版本 1，生成质控脚本。', level: 'info' },
+        ],
+    };
+    if (complete)
+        session.messages.push({ id: `${id}-result`, role: 'assistant', time: '09:45', text: '演示分析已完成，质量报告和指标汇总均已通过演示核验。合成样本的 Q30 为 94.8%，请在右侧查看报告。本页数值仅用于展示结果交付流程。' });
+    if (scenario === 'recovery')
+        session.error = { node: 'Execute → Recovery', summary: '质量评估脚本退出，已进入恢复', detail: '演示错误：MultiQC executable not found（exit 127）。本轮演示保留 FastQC 检查记录，Recovery 正在检查已登记工具路径。', retryable: true, next: '展示恢复方案，再单独审核更新后的脚本。' };
+    return session;
+}
+function initialSessions() {
+    return ['approval', 'completed', 'recovery', 'offline'].map(s => makeSession(s));
+}
+
+},
+"main.js": function(require, exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const data_js_1 = require("./demo/data.js");
+const demo_service_js_1 = require("./services/demo-service.js");
+const components_js_1 = require("./ui/components.js");
+const icons_js_1 = require("./ui/icons.js");
+const demo = new demo_service_js_1.DemoWorkbenchService();
+const service = demo;
+const state = {
+    active: 'demo-approval', server: 'lab', workspace: 'rice', panel: 'plan', panelOpen: innerWidth > 1000,
+    sidebarOpen: false, search: '', scenario: 'approval', theme: 'light', expanded: new Set(['plan']),
+    logLimit: 60, draft: '', references: [],
+};
+const drafts = new Map();
+const app = document.getElementById('biomind-workbench');
+app.innerHTML = '<div class="shell"><aside class="sidebar" aria-label="服务器与会话导航"></aside><header class="topbar"></header><div class="demo-bar"></div><main class="transcript" aria-label="BioMind 对话"></main><aside class="detail" aria-label="会话详情"></aside><section class="composer" aria-label="消息输入"></section></div><dialog id="modal" aria-labelledby="modal-title"></dialog><div class="toast" role="status" aria-live="polite"></div>';
+const el = (selector) => app.querySelector(selector);
+let composing = false;
+let requestSerial = 0;
+let toastTimer;
+let preview;
+const requestId = () => `demo-request-${Date.now()}-${++requestSerial}`;
+const current = () => service.snapshot(state.active).session;
+function toast(message) {
+    clearTimeout(toastTimer);
+    el('.toast').textContent = message;
+    toastTimer = setTimeout(() => { el('.toast').textContent = ''; }, 4300);
+}
+function preserveDraft() { drafts.set(state.active, { text: state.draft, references: [...state.references] }); }
+function switchSession(id) {
+    preserveDraft();
+    const s = service.snapshot(id).session;
+    state.active = id;
+    state.server = s.serverId;
+    state.workspace = s.workspaceId;
+    state.draft = drafts.get(id)?.text || '';
+    state.references = [...drafts.get(id)?.references || []];
+    state.scenario = '';
+    state.logLimit = 60;
+    state.sidebarOpen = false;
+    state.expanded = new Set(['plan']);
+    render();
+    el('.transcript').scrollTop = 0;
+}
+function render() {
+    const active = document.activeElement;
+    const focusId = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ? active.id : '';
+    const selection = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ? [active.selectionStart, active.selectionEnd] : undefined;
+    const scroll = el('.transcript').scrollTop;
+    const detailsScroll = app.querySelector('.detail-body')?.scrollTop || 0;
+    const logsScroll = app.querySelector('.logs')?.scrollTop || 0;
+    const s = current();
+    el('.shell').className = `shell ${state.panelOpen ? '' : 'panel-closed'} ${state.sidebarOpen ? 'sidebar-open' : ''}`;
+    document.documentElement.dataset.theme = state.theme;
+    el('.sidebar').innerHTML = (0, components_js_1.renderSidebar)(service.listSessions(), state);
+    el('.topbar').innerHTML = (0, components_js_1.renderTop)(s, state);
+    el('.demo-bar').innerHTML = (0, components_js_1.renderDemoBar)(state);
+    el('.transcript').innerHTML = (0, components_js_1.renderConversation)(s, state);
+    el('.detail').innerHTML = (0, components_js_1.renderDetails)(s, state);
+    if (!composing)
+        el('.composer').innerHTML = (0, components_js_1.renderComposer)(s, state);
+    el('.transcript').scrollTop = scroll;
+    el('.detail-body').scrollTop = detailsScroll;
+    if (app.querySelector('.logs'))
+        el('.logs').scrollTop = logsScroll;
+    if (focusId && !composing) {
+        const next = document.getElementById(focusId);
+        if (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement) {
+            next.focus({ preventScroll: true });
+            if (selection && selection[0] !== null && selection[1] !== null && ['text', 'search', 'textarea'].includes(next instanceof HTMLInputElement ? next.type : 'textarea'))
+                next.setSelectionRange(selection[0], selection[1]);
+        }
+    }
+}
+function send() {
+    if (composing)
+        return;
+    const s = current();
+    if (!state.draft.trim() || s.connection !== 'demo')
+        return;
+    const receipt = service.sendMessage(s.id, requestId(), state.draft, state.references);
+    if (receipt.status !== 'rejected') {
+        state.draft = '';
+        state.references = [];
+        preserveDraft();
+        render();
+    }
+    toast(receipt.message);
+    el('#message-input').focus();
+    el('.transcript').scrollTop = el('.transcript').scrollHeight;
+}
+function showModal(title, content, footer = '') {
+    const modal = el('#modal');
+    modal.innerHTML = `<div class="modal-heading"><h2 id="modal-title">${(0, components_js_1.escape)(title)}</h2><span class="tiny-demo">演示模式</span><button class="icon-button" data-action="close-modal" aria-label="关闭窗口">${(0, icons_js_1.icon)('close')}</button></div><div class="modal-content">${content}</div>${footer ? `<div class="modal-footer">${footer}</div>` : ''}`;
+    modal.showModal();
+}
+function showFilePicker() {
+    showModal('引用服务器文件', `<p class="muted">从当前演示工作区选择输入文件，只添加远端引用。不会上传或下载原始数据。</p><div class="resource-path">${data_js_1.workspaces.find(w => w.id === state.workspace).path}</div>${current().resources.filter(r => r.kind === 'input').map(r => `<label class="file-choice"><input type="checkbox" value="${r.id}" name="reference" ${state.references.includes(r.id) ? 'checked' : ''}>${(0, icons_js_1.icon)('file', 22)}<span><strong>${r.name}</strong><small>${r.path} · ${r.size}</small></span></label>`).join('')}`, '<button class="secondary" data-action="close-modal">取消</button><button class="primary" data-action="apply-references">添加引用</button>');
+}
+function showResource(id) {
+    try {
+        preview = service.readResource(state.active, id);
+    }
+    catch (error) {
+        toast(error.message);
+        return;
+    }
+    const r = preview;
+    showModal(r.name, `<div class="resource-path">${(0, components_js_1.escape)(r.path)}</div><p class="muted">${r.kind === 'input' ? '演示输入资源摘要；未读取服务器文件。' : r.status === 'verified' ? '演示交付核验通过。下列数据全部为合成内容。' : '已生成的演示中间文件，尚未核验。'}</p>${r.id === 'report' ? '<div class="preview-stats"><div><small>演示读取对数</small><strong>24.0 M</strong><em>合成指标</em></div><div><small>演示 Q30</small><strong>94.8%</strong><em>合成指标</em></div><div><small>演示 GC 含量</small><strong>43.2%</strong><em>合成指标</em></div></div>' : ''}<pre class="preview-text">${(0, components_js_1.escape)(r.preview)}</pre>`, `<button class="secondary" data-action="close-modal">关闭</button>${r.kind === 'artifact' ? '<button class="primary" data-action="download">' + (0, icons_js_1.icon)('download', 16) + '下载演示摘要</button>' : ''}`);
+}
+function showStop() {
+    showModal('请求停止演示任务', '<p>提交后先显示“已请求停止”。点击“模拟停止回执”后才会显示“已停止”。</p><p class="muted">这是本页演示操作，不终止服务器上的任何进程。</p>', '<button class="secondary" data-action="close-modal">返回</button><button class="primary" data-action="confirm-stop">请求停止（演示）</button>');
+}
+function selectWorkspace(serverId, workspaceId) {
+    state.search = '';
+    const existing = service.listSessions().find(s => s.serverId === serverId && s.workspaceId === workspaceId);
+    switchSession(existing?.id || service.createSession(serverId, workspaceId).session.id);
+}
+app.addEventListener('click', event => {
+    const button = event.target.closest('[data-action]');
+    if (!button || (button instanceof HTMLButtonElement && button.disabled))
+        return;
+    const { action, id, tab, prompt } = button.dataset;
+    const s = current();
+    switch (action) {
+        case 'new':
+            switchSession(service.createSession(state.server, state.workspace).session.id);
+            break;
+        case 'session':
+            switchSession(id);
+            break;
+        case 'send':
+            send();
+            break;
+        case 'starter':
+            state.draft = prompt;
+            preserveDraft();
+            render();
+            el('#message-input').focus();
+            break;
+        case 'theme':
+            state.theme = state.theme === 'light' ? 'dark' : 'light';
+            render();
+            break;
+        case 'sidebar':
+            state.sidebarOpen = !state.sidebarOpen;
+            render();
+            break;
+        case 'panel-toggle':
+            state.panelOpen = !state.panelOpen;
+            render();
+            break;
+        case 'tab':
+            state.panel = tab;
+            state.panelOpen = true;
+            render();
+            break;
+        case 'files':
+            showFilePicker();
+            break;
+        case 'unreference':
+            state.references = state.references.filter(r => r !== id);
+            preserveDraft();
+            render();
+            break;
+        case 'apply-references':
+            state.references = [...el('#modal').querySelectorAll('input:checked')].map(input => input.value);
+            preserveDraft();
+            el('#modal').close();
+            render();
+            el('#message-input').focus();
+            break;
+        case 'close-modal':
+            el('#modal').close();
+            break;
+        case 'preview':
+            showResource(id);
+            break;
+        case 'download': {
+            if (!preview || preview.kind !== 'artifact')
+                break;
+            const url = URL.createObjectURL(new Blob([preview.preview], { type: 'text/plain;charset=utf-8' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${preview.name}.demo.txt`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast('已下载演示文本摘要，未读取服务器产物。');
+            break;
+        }
+        case 'approve':
+        case 'reject': {
+            const approval = s.approvals.find(a => a.id === id);
+            const receipt = service.submitApproval({ requestId: requestId(), sessionId: s.id, approvalId: id, version: approval.version, digest: approval.digest, decision: action === 'approve' ? 'approve' : 'reject' });
+            toast(receipt.message);
+            break;
+        }
+        case 'connect': {
+            const result = service.reconnect(s.id, s.cursor);
+            toast(`演示重连完成：附着同一运行，补齐 ${result.events.length} 条活动；没有重新执行。`);
+            break;
+        }
+        case 'disconnect':
+            demo.disconnect(s.id);
+            toast('已模拟断线，保留最近确认状态和草稿。');
+            break;
+        case 'advance':
+            demo.advance(s.id);
+            if (s.connection === 'interrupted')
+                toast('演示后台已推进，重连后获取最新事实。');
+            break;
+        case 'fail':
+            demo.simulateFailure(s.id);
+            break;
+        case 'recover':
+            demo.proposeRecovery(s.id);
+            break;
+        case 'stop':
+            showStop();
+            break;
+        case 'confirm-stop':
+            el('#modal').close();
+            toast(service.requestStop(s.id, requestId()).message);
+            break;
+        case 'long-logs':
+            demo.addDemoLogs(s.id);
+            toast('已追加 240 条合成日志和 1 条未知观察事件。');
+            break;
+        case 'more-logs':
+            state.logLimit += 60;
+            render();
+            break;
+    }
+});
+app.addEventListener('input', event => {
+    const target = event.target;
+    if (target.id === 'message-input') {
+        state.draft = target.value;
+        preserveDraft();
+        el('[data-action="send"]').disabled = !target.value.trim() || current().connection !== 'demo';
+    }
+    if (target.id === 'session-search') {
+        state.search = target.value;
+        render();
+    }
+});
+app.addEventListener('change', event => {
+    const target = event.target;
+    if (target.id === 'server-select')
+        selectWorkspace(target.value, data_js_1.workspaces.find(w => w.serverId === target.value).id);
+    if (target.id === 'workspace-select')
+        selectWorkspace(state.server, target.value);
+    if (target.id === 'scenario-select') {
+        const snapshot = demo.chooseScenario(target.value, state.server, state.workspace);
+        switchSession(snapshot.session.id);
+        state.scenario = target.value;
+        render();
+    }
+});
+app.addEventListener('compositionstart', () => { composing = true; });
+app.addEventListener('compositionend', () => { composing = false; });
+app.addEventListener('keydown', event => {
+    if (event.target.id === 'message-input' && event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229 && !composing) {
+        event.preventDefault();
+        send();
+    }
+    const target = event.target;
+    if (target.getAttribute('role') === 'tab' && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        const panels = ['plan', 'script', 'logs', 'files'];
+        state.panel = panels[(panels.indexOf(state.panel) + (event.key === 'ArrowRight' ? 1 : 3)) % 4];
+        render();
+        el(`[role="tab"][data-tab="${state.panel}"]`).focus();
+    }
+});
+app.addEventListener('toggle', event => {
+    const target = event.target;
+    if (target instanceof HTMLDetailsElement && target.dataset.disclosure && target.isConnected) {
+        if (target.open)
+            state.expanded.add(target.dataset.disclosure);
+        else
+            state.expanded.delete(target.dataset.disclosure);
+    }
+}, true);
+service.subscribe(render);
+render();
+
+},
+"services/demo-service.js": function(require, exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DemoWorkbenchService = void 0;
+const data_js_1 = require("../demo/data.js");
+const clone = (value) => structuredClone(value);
+/** Local simulation only: no fetch, subprocess, filesystem or provider calls. */
+class DemoWorkbenchService {
+    sessions = (0, data_js_1.initialSessions)();
+    listeners = new Set();
+    receipts = new Map();
+    frozen = new Map();
+    serial = 0;
+    constructor() {
+        for (const s of this.sessions)
+            if (s.connection === 'interrupted')
+                this.frozen.set(s.id, clone(s));
+    }
+    get(id) {
+        const session = this.sessions.find(s => s.id === id);
+        if (!session)
+            throw new Error('演示会话不存在');
+        return session;
+    }
+    notify() {
+        // A broken display subscriber must not undo a decision or lose its receipt.
+        for (const listener of this.listeners) {
+            try {
+                listener();
+            }
+            catch { /* Other observers and command receipts remain usable. */ }
+        }
+    }
+    event(session, type, text, level = 'info') {
+        session.cursor += 1;
+        session.confirmedAt = new Date().toISOString();
+        session.events.push({ seq: session.cursor, time: new Date().toLocaleTimeString('zh-CN', { hour12: false }), type, text, level });
+    }
+    command(requestId, payload, perform) {
+        const encoded = JSON.stringify(payload);
+        const prior = this.receipts.get(requestId);
+        if (prior)
+            return prior.payload === encoded ? clone(prior.result) : { requestId, status: 'rejected', message: '同一请求标识不能用于不同操作。' };
+        const result = { requestId, ...perform() };
+        this.receipts.set(requestId, { payload: encoded, result });
+        this.notify();
+        return clone(result);
+    }
+    listSessions() { return this.sessions.map(s => this.snapshot(s.id).session); }
+    snapshot(sessionId) {
+        const session = clone(this.frozen.get(sessionId) || this.get(sessionId));
+        return { mode: 'demo', session, cursor: session.cursor };
+    }
+    subscribe(listener) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
+    getRequest(requestId) { return clone(this.receipts.get(requestId)?.result); }
+    createSession(serverId, workspaceId) {
+        if (!data_js_1.workspaces.some(w => w.id === workspaceId && w.serverId === serverId))
+            throw new Error('工作区不属于所选演示服务器');
+        const session = (0, data_js_1.makeSession)('new', `demo-new-${++this.serial}`, serverId, workspaceId);
+        this.sessions.unshift(session);
+        this.notify();
+        return this.snapshot(session.id);
+    }
+    sendMessage(sessionId, requestId, text, references) {
+        return this.command(requestId, { kind: 'message', sessionId, text, references }, () => {
+            const s = this.get(sessionId);
+            if (s.connection !== 'demo')
+                return { status: 'rejected', message: '演示连接未就绪；草稿已保留。' };
+            if (!text.trim())
+                return { status: 'rejected', message: '请先输入消息。' };
+            if (references.some(id => !s.resources.some(r => r.id === id && r.kind === 'input')))
+                return { status: 'rejected', message: '文件引用不属于当前演示会话。' };
+            const queued = !['idle', 'completed', 'stopped'].includes(s.status);
+            s.messages.push({ id: requestId, role: 'user', text, references, time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }), delivery: queued ? 'queued' : 'accepted' });
+            if (queued) {
+                this.event(s, 'message.queued', '补充消息仅在演示队列中，未改变正在执行的脚本。');
+                return { status: 'queued', message: '演示消息已排队，未进入当前运行；原型不会自动派发队列。' };
+            }
+            s.title = text.trim().split('\n')[0].slice(0, 30);
+            s.status = 'awaiting_plan';
+            s.steps = (0, data_js_1.makeSteps)();
+            s.error = undefined;
+            s.elapsed = 0;
+            s.script = (0, data_js_1.makeScript)(data_js_1.workspaces.find(w => w.id === s.workspaceId).path);
+            s.runId = `${s.id}-run-${++this.serial}`;
+            s.approvals = [(0, data_js_1.approvalFor)(s.id, 'plan', this.serial)];
+            s.resources.filter(r => r.kind === 'artifact' && r.status === 'verified').forEach(r => r.status = 'expected');
+            s.messages.push({ id: `${requestId}-response`, role: 'assistant', time: '现在', text: '已收到你的演示消息。下面展示固定的质控示例计划，请先审核计划；脚本会在下一步单独请求执行审批。' });
+            this.event(s, 'plan.proposed', '已生成演示计划，等待人工审核。');
+            return { status: 'accepted', message: '演示消息已受理。' };
+        });
+    }
+    submitApproval(command) {
+        return this.command(command.requestId, command, () => {
+            const s = this.get(command.sessionId);
+            if (s.connection !== 'demo')
+                return { status: 'rejected', message: '连接中断，先重连核对审批状态。' };
+            const approval = s.approvals.find(a => a.id === command.approvalId);
+            const expectedStatus = approval?.kind === 'plan' ? 'awaiting_plan' : 'awaiting_script';
+            if (!approval || approval.version !== command.version || approval.digest !== command.digest || approval.status !== 'pending' || s.status !== expectedStatus) {
+                return { status: 'rejected', message: '审批已失效或已处理，请读取当前审批。' };
+            }
+            approval.status = command.decision === 'approve' ? 'approved' : 'rejected';
+            this.event(s, 'approval.decided', `${approval.kind === 'plan' ? '计划' : '脚本'} v${approval.version} ${approval.status === 'approved' ? '已模拟批准' : '已模拟拒绝'}。`);
+            if (command.decision === 'reject') {
+                s.status = 'idle';
+                s.messages.push({ id: `${command.requestId}-reply`, role: 'assistant', time: '现在', text: '已记录演示拒绝，没有开始执行。你可以补充要求，重新生成计划并审核。' });
+            }
+            else if (approval.kind === 'plan') {
+                s.status = 'awaiting_script';
+                s.approvals.push((0, data_js_1.approvalFor)(s.id, 'script', approval.version));
+                this.event(s, 'approval.requested', '计划已批准；脚本执行仍需单独审批。');
+            }
+            else {
+                s.status = 'running';
+                s.executionCount += 1;
+                const next = s.steps.find(step => step.status === 'pending');
+                if (next)
+                    next.status = 'running';
+                this.event(s, 'tool.started', `演示 ${next?.tool || '工具'} 开始；真实命令执行次数始终为 0。`);
+            }
+            return { status: 'accepted', message: command.decision === 'reject' ? '已模拟拒绝，未执行命令。' : '已模拟批准，未执行真实命令。' };
+        });
+    }
+    requestStop(sessionId, requestId) {
+        return this.command(requestId, { kind: 'stop', sessionId }, () => {
+            const s = this.get(sessionId);
+            if (s.connection !== 'demo')
+                return { status: 'rejected', message: '当前连接中断，无法确认停止请求。' };
+            if (!['running', 'recovering'].includes(s.status))
+                return { status: 'rejected', message: '当前演示状态不能请求停止。' };
+            s.status = 'stop_requested';
+            this.event(s, 'stop.requested', '演示停止请求已受理，等待执行状态回执。', 'warning');
+            return { status: 'accepted', message: '已请求停止（演示），尚未确认停止。' };
+        });
+    }
+    reconnect(sessionId, afterCursor) {
+        const s = this.get(sessionId);
+        if (!Number.isInteger(afterCursor) || afterCursor < 0 || afterCursor > s.cursor)
+            throw new Error('事件游标无效，需要重新读取快照');
+        s.connection = 'demo';
+        this.frozen.delete(sessionId);
+        // A fresh snapshot includes all events through cursor; the tail is audit evidence, not re-applied to it.
+        s.confirmedAt = new Date().toISOString();
+        const result = { snapshot: this.snapshot(sessionId), events: clone(s.events.filter(e => e.seq > afterCursor)) };
+        this.notify();
+        return result;
+    }
+    readResource(sessionId, resourceId) {
+        const resource = this.get(sessionId).resources.find(r => r.id === resourceId);
+        if (!resource)
+            throw new Error('该资源不属于当前演示会话');
+        if (resource.status === 'expected')
+            throw new Error('产物尚未生成，不能预览或下载');
+        return clone(resource);
+    }
+    /** The methods below are demo controls, deliberately absent from WorkbenchService. */
+    chooseScenario(scenario, serverId, workspaceId) {
+        const session = (0, data_js_1.makeSession)(scenario, `demo-scene-${++this.serial}`, serverId, workspaceId);
+        this.sessions.unshift(session);
+        if (session.connection === 'interrupted')
+            this.frozen.set(session.id, clone(session));
+        this.notify();
+        return this.snapshot(session.id);
+    }
+    disconnect(sessionId) {
+        const s = this.get(sessionId);
+        s.connection = 'interrupted';
+        this.frozen.set(sessionId, clone(s));
+        this.notify();
+    }
+    advance(sessionId) {
+        const s = this.get(sessionId);
+        if (s.status === 'stop_requested') {
+            s.status = 'stopped';
+            this.event(s, 'run.stopped', '演示执行者确认停止；没有终止任何服务器进程。');
+        }
+        else if (s.status === 'running') {
+            s.elapsed += 48;
+            const current = s.steps.findIndex(step => step.status === 'running');
+            if (current >= 0) {
+                s.steps[current].status = 'completed';
+                this.event(s, 'tool.completed', `${s.steps[current].tool} 演示回执已收到。`);
+                if (current < s.steps.length - 1)
+                    s.steps[current + 1].status = 'running';
+                else {
+                    s.status = 'completed';
+                    s.resources.filter(r => r.id === 'report' || r.id === 'metrics').forEach(r => { r.status = 'verified'; r.size = r.id === 'report' ? '2.4 MB · 演示' : '186 B · 演示'; });
+                    this.event(s, 'run.completed', '演示运行返回 completed；报告与指标表返回 verified。');
+                    s.messages.push({ id: `${s.runId}-complete`, role: 'assistant', time: '现在', text: '演示分析已完成，报告和指标表通过演示交付核验。Q30：94.8%，GC：43.2%。这些是合成数据，不能用于真实科学结论。' });
+                }
+            }
+        }
+        this.notify();
+    }
+    simulateFailure(sessionId) {
+        const s = this.get(sessionId);
+        if (s.status !== 'running')
+            return;
+        s.status = 'recovering';
+        s.steps.find(step => step.status === 'running').status = 'failed';
+        s.error = { node: 'Execute → Recovery', summary: '脚本执行失败，已进入恢复', detail: '演示错误：MultiQC executable not found（exit 127）。已保留输入文件和已完成步骤。', retryable: true, next: '展示恢复方案，再审核更新后的脚本。' };
+        this.event(s, 'execution.failed', s.error.detail, 'error');
+        this.event(s, 'recovery.started', 'Recovery 正在检查登记的工具路径（演示）。', 'warning');
+        this.notify();
+    }
+    proposeRecovery(sessionId) {
+        const s = this.get(sessionId);
+        if (s.status !== 'recovering' || s.connection !== 'demo')
+            return;
+        const version = Math.max(...s.approvals.map(a => a.version)) + 1;
+        s.script = s.script.replace('multiqc results/', '/demo/tools/multiqc results/');
+        s.approvals.push((0, data_js_1.approvalFor)(s.id, 'script', version));
+        s.status = 'awaiting_script';
+        s.steps.forEach(step => { if (step.status === 'failed')
+            step.status = 'pending'; });
+        s.messages.push({ id: `${s.id}-recovery-${version}`, role: 'assistant', time: '现在', text: '演示恢复方案：使用已登记的 MultiQC 路径。脚本版本已更新，旧审批失效；请审核新脚本。本操作没有安装软件或重新执行任务。' });
+        this.event(s, 'recovery.proposed', `恢复脚本 v${version} 等待新审批。`);
+        this.notify();
+    }
+    addDemoLogs(sessionId) {
+        const s = this.get(sessionId);
+        for (let i = 0; i < 240; i++)
+            this.event(s, 'tool.stdout', `[演示日志 ${i + 1}/240] 质量检查记录 · sample=demo · 本行是合成输出，不读取服务器日志。`);
+        this.event(s, 'future.observation', '收到原型尚不认识的观察事件，按通用活动展示。');
+        this.notify();
+    }
+}
+exports.DemoWorkbenchService = DemoWorkbenchService;
+
+},
+"types.js": function(require, exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+
+},
+"ui/components.js": function(require, exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.labels = void 0;
+exports.escape = escape;
+exports.statusBadge = statusBadge;
+exports.renderSidebar = renderSidebar;
+exports.renderTop = renderTop;
+exports.renderDemoBar = renderDemoBar;
+exports.renderPlan = renderPlan;
+exports.renderConversation = renderConversation;
+exports.renderDetails = renderDetails;
+exports.renderComposer = renderComposer;
+const data_js_1 = require("../demo/data.js");
+const icons_js_1 = require("./icons.js");
+function escape(value) {
+    return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+exports.labels = { idle: '待开始', running: '运行中', awaiting_plan: '等待计划审批', awaiting_script: '等待脚本审批', recovering: '恢复中', stop_requested: '已请求停止', stopped: '已停止', completed: '已完成' };
+function statusBadge(s) {
+    return `<span class="status status-${s.status}"><i></i>${s.connection === 'interrupted' ? '最后确认：' : ''}${exports.labels[s.status]}</span>`;
+}
+function renderSidebar(sessions, state) {
+    const visible = sessions.filter(s => s.serverId === state.server && s.workspaceId === state.workspace && s.title.toLowerCase().includes(state.search.toLowerCase()));
+    return `<div class="brand">${(0, icons_js_1.logo)()}<div><strong>BioMind</strong><span>远程工作台</span></div><span class="version">预览版</span></div>
+    <button class="new-session primary" data-action="new">${(0, icons_js_1.icon)('plus')}新建会话</button>
+    <div class="nav-group"><label for="server-select">服务器 <span>演示</span></label>
+      <div class="select-wrap">${(0, icons_js_1.icon)('server')}<select id="server-select" aria-label="选择演示服务器">${data_js_1.servers.map(s => `<option value="${s.id}" ${s.id === state.server ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div>
+      <label for="workspace-select">远程工作区</label><div class="select-wrap">${(0, icons_js_1.icon)('folder')}<select id="workspace-select" aria-label="选择演示远程工作区">${data_js_1.workspaces.filter(w => w.serverId === state.server).map(w => `<option value="${w.id}" ${w.id === state.workspace ? 'selected' : ''}>${w.name}</option>`).join('')}</select></div>
+    </div>
+    <div class="history-heading"><span>会话记录</span><span>${visible.length}</span></div>
+    <div class="search-field">${(0, icons_js_1.icon)('search', 15)}<input id="session-search" type="search" value="${escape(state.search)}" aria-label="搜索会话" placeholder="搜索会话…"><kbd>⌕</kbd></div>
+    <div class="session-list">${visible.length ? visible.map(s => `<button class="session ${s.id === state.active ? 'selected' : ''}" data-action="session" data-id="${escape(s.id)}" aria-current="${s.id === state.active ? 'true' : 'false'}">${(0, icons_js_1.icon)('chat', 17)}<span><strong>${escape(s.title)}</strong><small>${s.connection === 'interrupted' ? '连接中断 · 状态待确认' : exports.labels[s.status]}<span>09/14</span></small></span>${s.status.startsWith('awaiting') ? '<i class="attention-dot"></i>' : ''}</button>`).join('') : '<p class="muted empty-list">没有匹配的会话</p>'}</div>
+    <div class="sidebar-bottom"><div class="privacy-note">${(0, icons_js_1.icon)('shield', 16)}<span>演示数据 · 仅保存在本页内存</span></div><div class="profile"><span class="profile-avatar">研</span><div><strong>我的研究空间</strong><small>BioMind Workbench</small></div><button class="icon-button" data-action="theme" aria-label="切换深浅主题" title="切换深浅主题">${(0, icons_js_1.icon)(state.theme === 'light' ? 'moon' : 'sun')}</button></div></div>`;
+}
+function renderTop(s, state) {
+    const workspace = data_js_1.workspaces.find(w => w.id === s.workspaceId);
+    const server = data_js_1.servers.find(server => server.id === s.serverId);
+    return `<div class="top-location"><button class="icon-button sidebar-toggle" data-action="sidebar" aria-label="展开会话导航">${(0, icons_js_1.icon)('panel')}</button>${(0, icons_js_1.icon)('server')}<strong>${server.name}</strong><span class="top-divider">/</span><span class="directory" title="${workspace.path}">${workspace.path}</span></div>
+  <div class="top-actions"><span class="top-run-status">${statusBadge(s)}</span><span class="connection connection-${s.connection}">${(0, icons_js_1.icon)(s.connection === 'demo' ? 'wifi' : 'offline', 15)}${s.connection === 'demo' ? '演示连接' : s.connection === 'interrupted' ? '连接中断（演示）' : '未连接'}</span><button class="icon-button ${state.panelOpen ? 'active' : ''}" data-action="panel-toggle" aria-label="${state.panelOpen ? '收起' : '展开'}详情面板" aria-expanded="${state.panelOpen}">${(0, icons_js_1.icon)('panel')}</button></div>`;
+}
+function renderDemoBar(state) {
+    return `<div class="demo-label"><span class="demo-dot"></span><strong>演示模式</strong><span class="demo-description">合成数据 · 未接入真实服务器</span></div><div class="demo-controls"><label for="scenario-select">体验场景</label><select id="scenario-select" aria-label="切换演示场景"><option value="" ${state.scenario ? '' : 'selected'} disabled>当前会话</option>${data_js_1.scenarios.map(s => `<option value="${s.id}" ${state.scenario === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div>`;
+}
+function renderPlan(s, state) {
+    const plan = [...s.approvals].reverse().find(a => a.kind === 'plan');
+    return `<details class="plan-card" data-disclosure="plan" ${state.expanded.has('plan') ? 'open' : ''}><summary><span class="card-icon">${(0, icons_js_1.icon)('list')}</span><span class="card-heading"><strong>分析计划</strong><small>${s.steps.length} 个步骤 · ${plan?.status === 'approved' ? '计划已批准' : plan?.status === 'rejected' ? '计划已拒绝' : '等待你的审核'}</small></span><span class="subtle-tag">v${plan?.version || 1}</span>${(0, icons_js_1.icon)('down', 15)}</summary><ol class="plan-steps">${s.steps.map((step, i) => `<li class="step-${step.status}"><span class="step-index">${step.status === 'completed' ? (0, icons_js_1.icon)('check', 13) : i + 1}</span><div><strong>${step.title}</strong><small>${step.detail}</small></div><span class="tool-name">${step.tool}</span></li>`).join('')}</ol>${plan?.status === 'pending' ? `<div class="card-footer"><span>只批准计划，脚本将单独审批。</span>${approvalButtons(plan, s)}</div>` : ''}</details>`;
+}
+function approvalButtons(approval, s) {
+    return `<div class="button-group"><button class="secondary small" data-action="reject" data-id="${approval.id}" ${s.connection !== 'demo' ? 'disabled' : ''}>拒绝</button><button class="primary small" data-action="approve" data-id="${approval.id}" ${s.connection !== 'demo' ? 'disabled' : ''}>${(0, icons_js_1.icon)('check', 15)}模拟批准${approval.kind === 'plan' ? '计划' : '执行'}</button></div>`;
+}
+function scriptCard(s, state) {
+    const approval = [...s.approvals].reverse().find(a => a.kind === 'script');
+    if (!approval)
+        return '';
+    return `<section class="approval-card ${approval.status !== 'pending' ? 'resolved' : ''}"><div class="approval-title"><span class="approval-icon">${(0, icons_js_1.icon)('shield', 20)}</span><div><strong>${approval.status === 'pending' ? '脚本已就绪，等待执行审批' : approval.status === 'approved' ? '脚本已模拟批准' : '脚本已拒绝'}</strong><span>执行审批 · 版本 ${approval.version} · 演示模式</span></div><span class="subtle-tag">${approval.status === 'pending' ? '需要你确认' : '已记录'}</span></div>
+  <p>在演示工作区运行 FastQC 与 MultiQC，输出质量报告。</p><div class="scope-grid"><span>读取范围</span><code>reads/demo_R{1,2}.fastq.gz</code><span>写入目录</span><code>results/quality/</code><span>资源使用</span><span>4 线程 · 演示配置</span></div>
+  <details class="script-disclosure" data-disclosure="script" ${state.expanded.has('script') ? 'open' : ''}><summary>${(0, icons_js_1.icon)('code', 16)}查看完整脚本<span>Bash · ${s.script.split('\n').length} 行</span>${(0, icons_js_1.icon)('down', 14)}</summary><pre class="code-block"><code>${escape(s.script)}</code></pre><div class="script-identity">${escape(approval.id)} · ${escape(approval.digest)}</div></details>
+  <div class="card-footer"><span>${(0, icons_js_1.icon)('shield', 14)}模拟审批不会执行真实命令</span>${approval.status === 'pending' ? approvalButtons(approval, s) : '<span class="approved-label">已保存演示决定</span>'}</div></section>`;
+}
+function renderConversation(s, state) {
+    const offline = s.connection === 'interrupted';
+    const pending = s.approvals.some(a => a.status === 'pending');
+    return `<div class="conversation-header"><div><div class="eyebrow">${(0, icons_js_1.icon)('folder', 14)}${data_js_1.workspaces.find(w => w.id === s.workspaceId).name}</div><h1>${escape(s.title)}</h1></div>${statusBadge(s)}</div>
+  ${s.connection !== 'demo' ? `<div class="connection-notice">${(0, icons_js_1.icon)('offline', 20)}<div><strong>${offline ? '连接中断，运行状态待确认' : '尚未连接服务器'}</strong><p>${offline ? `最后确认：${exports.labels[s.status]} · ${new Date(s.confirmedAt).toLocaleTimeString('zh-CN', { hour12: false })}。重连只恢复视图，不重新执行。` : '选择一个演示服务器，体验远程工作台。不会建立真实 SSH 连接。'}</p>${offline && s.status === 'running' ? '<button class="text-button" data-action="advance">模拟后台继续推进</button>' : ''}</div><button class="secondary small" data-action="connect">${(0, icons_js_1.icon)('refresh', 14)}${offline ? '模拟重连' : '进入演示连接'}</button></div>` : ''}
+  ${!s.messages.length ? `<div class="welcome"><div class="welcome-mark">${(0, icons_js_1.logo)()}</div><span class="eyebrow">从一个研究问题开始</span><h2>把分析交给 BioMind<br><span>让每一步，都清晰可见。</span></h2><p>选择服务器文件，描述你的分析目标。<br>在执行之前，你可以查看计划并审核脚本。</p><div class="starter-grid"><button data-action="starter" data-prompt="检查当前工作区的双端 RNA-seq 数据质量，并汇总报告。">${(0, icons_js_1.icon)('leaf', 22)}<strong>检查测序质量</strong><span>从双端 FASTQ 到质量报告</span>${(0, icons_js_1.icon)('chevron', 16)}</button><button data-action="starter" data-prompt="请说明这个演示工作区有哪些输入与预期交付项。">${(0, icons_js_1.icon)('folder', 22)}<strong>了解工作区文件</strong><span>梳理输入与预期分析产物</span>${(0, icons_js_1.icon)('chevron', 16)}</button></div><small>演示模式使用固定质控示例，不调用模型。</small></div>` : `<div class="conversation-date"><span>今天 · 9 月 14 日</span></div>
+  <div class="messages">${s.messages.map(m => `<article class="message message-${m.role}"><div class="message-avatar">${m.role === 'assistant' ? (0, icons_js_1.logo)() : '我'}</div><div class="message-body"><div class="message-meta"><strong>${m.role === 'assistant' ? 'BioMind' : '你'}</strong>${m.role === 'assistant' ? '<span class="tiny-demo">演示</span>' : ''}<time>${m.time}</time>${m.delivery === 'queued' ? '<span class="queue-label">演示排队 · 未派发</span>' : ''}</div><p class="message-text">${escape(m.text)}</p>${m.references?.length ? `<div class="reference-chips">${m.references.map(id => `<button class="file-chip" data-action="preview" data-id="${id}">${(0, icons_js_1.icon)('file', 13)}${escape(s.resources.find(r => r.id === id)?.name || id)}</button>`).join('')}</div>` : ''}</div></article>`).join('')}</div>
+  ${s.steps.length ? `<div class="assistant-work"><div class="tool-activity">${(0, icons_js_1.icon)('check', 15)}<span>已检查演示输入文件</span><span>3 个文件</span><button class="text-button" data-action="tab" data-tab="logs">查看活动 ${(0, icons_js_1.icon)('chevron', 12)}</button></div>${renderPlan(s, state)}${scriptCard(s, state)}</div>` : ''}`}
+  ${s.error ? `<section class="recovery-card"><div>${(0, icons_js_1.icon)('warning', 19)}<strong>${s.error.summary}</strong><span class="subtle-tag">${s.status === 'recovering' ? '恢复中' : '恢复记录'}</span></div><p>${s.error.detail}</p><small>来源：${s.error.node} · ${s.error.retryable ? '可进入恢复' : '不可重试'}</small><p class="muted">${s.error.next}</p>${s.status === 'recovering' ? '<button class="secondary small" data-action="recover" ' + (offline ? 'disabled' : '') + '>查看演示恢复方案</button>' : ''}</section>` : ''}
+  ${s.status === 'completed' ? `<section class="result-card"><div class="result-title">${(0, icons_js_1.icon)('check', 20)}<strong>分析完成，结果已就绪</strong><span>演示核验通过</span></div><p>2 项交付已核验 · 1 项中间文件尚未核验</p><div class="result-files">${s.resources.filter(r => r.status === 'verified').map(r => `<button data-action="preview" data-id="${r.id}">${(0, icons_js_1.icon)('file', 22)}<span><strong>${r.name}</strong><small>${r.format} · ${r.size}</small></span>${(0, icons_js_1.icon)('chevron', 15)}</button>`).join('')}</div><small>完成状态来自演示回执，不从文件存在或退出码推断。</small></section>` : ''}
+  ${['running', 'recovering', 'stop_requested'].includes(s.status) && !offline ? `<div class="run-strip"><span class="activity-dot"></span><div><strong>${s.status === 'running' ? '工具执行中（演示）' : exports.labels[s.status] + '（演示）'}</strong><small>${s.status === 'stop_requested' ? '等待模拟执行者确认停止。' : `${s.steps.filter(step => step.status === 'completed').length} / ${s.steps.length} 步 · 已用时 ${s.elapsed} 秒（合成）`}</small></div>${s.status === 'running' || s.status === 'stop_requested' ? `<button class="secondary small" data-action="advance">${(0, icons_js_1.icon)('play', 13)}${s.status === 'stop_requested' ? '模拟停止回执' : '推进演示'}</button>` : ''}</div>` : ''}
+  ${s.status === 'stopped' ? '<div class="stopped-note">演示执行者已确认停止。未终止任何服务器进程。</div>' : ''}
+  ${pending ? '<p class="approval-hint">你可以先展开计划和脚本，再作出审批决定。</p>' : ''}
+  <div class="conversation-end" aria-hidden="true"></div>`;
+}
+function renderDetails(s, state) {
+    const tabs = [{ id: 'plan', name: '计划', icon: 'list' }, { id: 'script', name: '脚本', icon: 'code' }, { id: 'logs', name: '日志', icon: 'terminal' }, { id: 'files', name: '文件', icon: 'folder' }];
+    const filtered = s.events.slice(-state.logLimit);
+    return `<div class="detail-heading"><strong>会话详情</strong><button class="icon-button" data-action="panel-toggle" aria-label="关闭详情">${(0, icons_js_1.icon)('panel', 17)}</button></div><div class="detail-tabs" role="tablist" aria-label="详情分类">${tabs.map(tab => `<button type="button" role="tab" id="detail-tab-${tab.id}" aria-controls="detail-panel" aria-selected="${state.panel === tab.id}" data-action="tab" data-tab="${tab.id}" class="${state.panel === tab.id ? 'selected' : ''}">${(0, icons_js_1.icon)(tab.icon, 15)}${tab.name}</button>`).join('')}</div><div class="detail-body" id="detail-panel" role="tabpanel" aria-labelledby="detail-tab-${state.panel}" aria-label="${tabs.find(t => t.id === state.panel).name}详情">
+  ${state.panel === 'plan' ? `<div class="section-caption">执行计划<span>${s.steps.filter(step => step.status === 'completed').length}/${s.steps.length}</span></div><div class="progress-track"><i style="width:${s.steps.length ? s.steps.filter(step => step.status === 'completed').length / s.steps.length * 100 : 0}%"></i></div>${s.steps.length ? `<ol class="vertical-steps">${s.steps.map((step, i) => `<li class="step-${step.status}"><span>${step.status === 'completed' ? (0, icons_js_1.icon)('check', 13) : i + 1}</span><div><strong>${step.title}</strong><p>${step.detail}</p><small>${step.tool} · ${{ pending: '待执行', completed: '已完成', running: '执行中', failed: '执行失败' }[step.status]}</small></div></li>`).join('')}</ol>` : '<p class="panel-empty">发送一条演示消息，开始查看计划。</p>'}<div class="detail-section"><div class="section-caption">运行信息</div><dl><dt>运行状态</dt><dd>${exports.labels[s.status]}${s.connection === 'interrupted' ? '（最后确认）' : ''}</dd><dt>运行标识</dt><dd class="mono wrap">${escape(s.runId)}</dd><dt>最近确认</dt><dd>${new Date(s.confirmedAt).toLocaleTimeString('zh-CN', { hour12: false })} · 演示</dd><dt>事件游标</dt><dd>${s.cursor}</dd><dt>真实命令执行</dt><dd>0 次</dd></dl></div><div class="detail-tip">${(0, icons_js_1.icon)('shield', 17)}<p>BioMind 负责执行与结果核验。工作台展示事实，并提交你的操作。</p></div>` : ''}
+  ${state.panel === 'script' ? `<div class="section-caption">当前脚本<span>Bash · 演示</span></div><pre class="code-block"><code>${escape(s.script)}</code></pre><p class="muted">只读预览。脚本变更后须重新审核对应版本。</p><div class="section-caption">审批记录</div>${s.approvals.map(a => `<div class="approval-record"><span>${a.kind === 'plan' ? '计划' : '脚本'} v${a.version}</span><strong>${{ pending: '待审批', approved: '已模拟批准', rejected: '已拒绝' }[a.status]}</strong><small>${escape(a.digest)}</small></div>`).join('') || '<p class="panel-empty">暂无审批</p>'}` : ''}
+  ${state.panel === 'logs' ? `<div class="section-caption">运行日志<span>演示输出</span></div><div class="log-toolbar"><span>显示 ${filtered.length} / ${s.events.length} 条</span><button class="text-button" data-action="long-logs">生成长日志示例</button></div>${filtered.length < s.events.length ? '<button class="load-logs secondary small" data-action="more-logs">加载更早的 60 条</button>' : ''}<div class="logs" tabindex="0" aria-label="可滚动演示日志">${filtered.map(e => `<div class="log-line log-${e.level}"><span>${e.time} <b>#${e.seq}</b></span><code>${escape(e.type)}</code><p>${escape(e.text)}</p></div>`).join('') || '<p class="muted">尚无运行日志</p>'}</div><p class="muted">未知观察事件显示为普通活动。日志与原始数据未离开服务器；此处全部为合成内容。</p>` : ''}
+  ${state.panel === 'files' ? `<div class="section-caption">输入文件<span>远端引用 · 演示</span></div>${s.resources.filter(r => r.kind === 'input').map(resourceRow).join('')}<div class="section-caption artifacts-caption">分析产物<span>${s.resources.filter(r => r.status === 'verified').length} 项已核验</span></div>${s.resources.filter(r => r.kind === 'artifact').map(resourceRow).join('')}<p class="muted file-note">选择远端文件只添加引用。预期产物、已生成文件与核验通过的交付项分别显示。</p>` : ''}
+  </div><div class="detail-footer"><span class="demo-dot"></span>当前面板仅展示演示数据</div>`;
+}
+function resourceRow(r) {
+    return `<button class="resource-row" data-action="preview" data-id="${r.id}" ${r.status === 'expected' ? 'disabled' : ''}>${(0, icons_js_1.icon)('file', 22)}<span><strong>${escape(r.name)}</strong><small>${r.size}</small><em class="resource-${r.status}">${{ available: '输入文件 · 可引用', expected: '待生成', verified: '演示核验通过', unverified: '已生成 · 尚未核验' }[r.status]}</em></span>${r.status !== 'expected' ? (0, icons_js_1.icon)('chevron', 13) : ''}</button>`;
+}
+function renderComposer(s, state) {
+    const connected = s.connection === 'demo';
+    const busy = !['idle', 'completed', 'stopped'].includes(s.status);
+    return `<div class="composer-box"><div class="draft-references">${state.references.map(id => `<span class="file-chip">${(0, icons_js_1.icon)('file', 13)}${escape(s.resources.find(r => r.id === id)?.name || id)}<button data-action="unreference" data-id="${id}" aria-label="移除引用 ${id}">${(0, icons_js_1.icon)('close', 12)}</button></span>`).join('')}</div><textarea id="message-input" aria-label="发送给 BioMind 的演示消息" placeholder="${connected ? '描述你的分析目标，或继续补充要求…' : '可以先写下分析目标，建立演示连接后发送…'}" rows="3">${escape(state.draft)}</textarea><div class="composer-actions"><button class="attach-button" data-action="files">${(0, icons_js_1.icon)('plus', 17)}引用服务器文件</button><div class="composer-right">${busy && connected ? '<span class="queue-caption">运行中发送仅进入演示队列</span>' : '<span class="input-hint">Enter 发送 · Shift + Enter 换行</span>'}<button class="send-button" data-action="send" aria-label="发送演示消息" ${!state.draft.trim() || !connected ? 'disabled' : ''}>${(0, icons_js_1.icon)('arrow', 20)}</button></div></div></div><div class="composer-footnote"><span>演示模式 · 不建立 SSH 连接，不调用模型或执行脚本</span><div>${s.status === 'running' && connected ? '<button data-action="fail">模拟失败</button><span>·</span>' : ''}${['running', 'recovering'].includes(s.status) && connected ? '<button data-action="stop">请求停止（演示）</button><span>·</span>' : ''}${connected ? '<button data-action="disconnect">模拟断线</button>' : '<button data-action="connect">模拟重连</button>'}</div></div>`;
+}
+
+},
+"ui/icons.js": function(require, exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.icon = icon;
+exports.logo = logo;
+const paths = {
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    chevron: '<path d="m9 5 7 7-7 7"/>',
+    down: '<path d="m6 9 6 6 6-6"/>',
+    server: '<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/>',
+    folder: '<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+    chat: '<path d="M21 11a8 8 0 0 1-8 8H7l-5 3 2-6a8 8 0 1 1 17-5Z"/>',
+    search: '<circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/>',
+    panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M18 8v3"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    code: '<path d="m7 7-5 5 5 5m10-10 5 5-5 5M14 4l-4 16"/>',
+    list: '<path d="m3 5 1 1 2-2m-3 8 1 1 2-2m-3 8 1 1 2-2M10 5h11M10 12h11M10 19h11"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+    terminal: '<rect x="2" y="4" width="20" height="16" rx="3"/><path d="m6 8 4 4-4 4m7 0h5"/>',
+    arrow: '<path d="M12 20V4m-6 6 6-6 6 6"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2m3 6a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/>',
+    refresh: '<path d="M20 8a8 8 0 1 0 0 8M20 3v5h-5"/>',
+    wifi: '<path d="M3 8a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0m-8 4a4 4 0 0 1 4 0M12 20h.01"/>',
+    offline: '<path d="M3 3l18 18M3 8a15 15 0 0 1 3-1.5M10 5.5A15 15 0 0 1 21 8M6 12a10 10 0 0 1 5-2m5 1 2 1m-8 4a4 4 0 0 1 4 0M12 20h.01"/>',
+    warning: '<path d="m10 4-8 14a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3L14 4a2 2 0 0 0-4 0Z"/><path d="M12 9v4m0 4h.01"/>',
+    close: '<path d="m6 6 12 12M6 18 18 6"/>',
+    download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/>',
+    moon: '<path d="M20 14A9 9 0 0 1 10 3a9 9 0 1 0 10 11Z"/>',
+    shield: '<path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6Z"/><path d="m8 12 3 3 5-6"/>',
+    stop: '<rect x="5" y="5" width="14" height="14" rx="3"/>',
+    play: '<path d="m8 4 12 8-12 8Z"/>',
+    leaf: '<path d="M20 3c-11-1-18 4-15 11 6 5 15 0 15-11ZM4 21 16 8"/>',
+};
+function icon(name, size = 18) {
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.file}</svg>`;
+}
+/** Original BioMind mark, drawn for this prototype. */
+function logo() {
+    return '<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="10" fill="#326951"/><path d="M10 24V9m0 7c0-7 12-9 12-5 0 3-8 4-12 5Zm0 0c5-1 14 0 13 5-1 5-10 4-13 3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="22" cy="8" r="2" fill="#b9dc89"/></svg>';
+}
+
+}}; const cache = {}; function load(id) { if(cache[id]) return cache[id]; const exports = cache[id] = {}; modules[id](name => { const parts=id.split('/'); parts.pop(); for(const p of name.split('/')) { if(p==='..') parts.pop(); else if(p!=='.') parts.push(p); } return load(parts.join('/')); }, exports); return exports; } load('main.js'); })();</script>
+</body>
+</html>
