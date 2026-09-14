@@ -1,0 +1,188 @@
+{
+  "note": "Named executed entry/approval/AskUser paths compared as source AST segments, excluding unrelated Generate candidate implementation. This is dependency analysis for reusing recorded dynamic evidence after narrow Generate-only changes, not a claim of reloading the final complete bio_agents file.",
+  "regions": [
+    {
+      "symbol": "BioAnalystAgent.__init__",
+      "executed_export": {
+        "start": 2569,
+        "end": 3362,
+        "sha256": "7854d909fd431ca4c96a74490250330f2c75b15762a5c822dcd95c59fe9b4f95"
+      },
+      "current_worktree": {
+        "start": 2569,
+        "end": 3362,
+        "sha256": "7854d909fd431ca4c96a74490250330f2c75b15762a5c822dcd95c59fe9b4f95"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._prompt_user",
+      "executed_export": {
+        "start": 25498,
+        "end": 25567,
+        "sha256": "4c25cff92b3b80f17005efb9ed513cb44179a58c514aa1217d646fe06dcee916"
+      },
+      "current_worktree": {
+        "start": 25499,
+        "end": 25568,
+        "sha256": "4c25cff92b3b80f17005efb9ed513cb44179a58c514aa1217d646fe06dcee916"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._aprompt_user",
+      "executed_export": {
+        "start": 25569,
+        "end": 25605,
+        "sha256": "72f969a7353ae2e5fbc72803f89c4fcc39f715f2b77dd8ae901e0c4076fce2d9"
+      },
+      "current_worktree": {
+        "start": 25570,
+        "end": 25606,
+        "sha256": "72f969a7353ae2e5fbc72803f89c4fcc39f715f2b77dd8ae901e0c4076fce2d9"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.consultant",
+      "executed_export": {
+        "start": 31862,
+        "end": 37666,
+        "sha256": "f1b85f926c6ba76bc4c4be83485ed6497edbfc4d1f765a9b795da7d6e7fb5b6e"
+      },
+      "current_worktree": {
+        "start": 31863,
+        "end": 37667,
+        "sha256": "f1b85f926c6ba76bc4c4be83485ed6497edbfc4d1f765a9b795da7d6e7fb5b6e"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.ask_user",
+      "executed_export": {
+        "start": 37668,
+        "end": 37880,
+        "sha256": "b431ce3327e601e757277ff5f88e48f57fa3004fcab1b4f0b0e377a4f4a7acc1"
+      },
+      "current_worktree": {
+        "start": 37669,
+        "end": 37881,
+        "sha256": "b431ce3327e601e757277ff5f88e48f57fa3004fcab1b4f0b0e377a4f4a7acc1"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.planner",
+      "executed_export": {
+        "start": 37885,
+        "end": 40602,
+        "sha256": "8a83c0683ca9eb2960cadbdada6440f54cb1b5f7396ca6fc50d344f24efa0822"
+      },
+      "current_worktree": {
+        "start": 37886,
+        "end": 40603,
+        "sha256": "8a83c0683ca9eb2960cadbdada6440f54cb1b5f7396ca6fc50d344f24efa0822"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.plan_review",
+      "executed_export": {
+        "start": 40607,
+        "end": 41250,
+        "sha256": "7e20e9fe0deee153f6e01ade52e86c15e4e92a0fc87e9d7e48f97f98ba918168"
+      },
+      "current_worktree": {
+        "start": 40608,
+        "end": 41251,
+        "sha256": "7e20e9fe0deee153f6e01ade52e86c15e4e92a0fc87e9d7e48f97f98ba918168"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.consultant_router",
+      "executed_export": {
+        "start": 53013,
+        "end": 53020,
+        "sha256": "f2523e7771de32d321d92576b4c4edb261961b8a883065ae11bb80a25752283e"
+      },
+      "current_worktree": {
+        "start": 53022,
+        "end": 53029,
+        "sha256": "f2523e7771de32d321d92576b4c4edb261961b8a883065ae11bb80a25752283e"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.ask_user_router",
+      "executed_export": {
+        "start": 53025,
+        "end": 53029,
+        "sha256": "0443935753efaf8867e0f683446f6177b7422e65769189494ac0608f250f32f1"
+      },
+      "current_worktree": {
+        "start": 53034,
+        "end": 53038,
+        "sha256": "0443935753efaf8867e0f683446f6177b7422e65769189494ac0608f250f32f1"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.planner_router",
+      "executed_export": {
+        "start": 53034,
+        "end": 53040,
+        "sha256": "98437b92b98693a4ff20c8333a870c041ef545a9ad8ca019a69d919375b5b1b1"
+      },
+      "current_worktree": {
+        "start": 53043,
+        "end": 53049,
+        "sha256": "98437b92b98693a4ff20c8333a870c041ef545a9ad8ca019a69d919375b5b1b1"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.plan_review_router",
+      "executed_export": {
+        "start": 53054,
+        "end": 53061,
+        "sha256": "00c16731b1ebfa4b40aefc03a4008c4c83b42376c217a1c3e57cec4de3b206b4"
+      },
+      "current_worktree": {
+        "start": 53063,
+        "end": 53070,
+        "sha256": "00c16731b1ebfa4b40aefc03a4008c4c83b42376c217a1c3e57cec4de3b206b4"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._app_for_task",
+      "executed_export": {
+        "start": 53146,
+        "end": 53157,
+        "sha256": "b973e1e3662ac894653697261c987c1cac71669c0675de8f46f02b481605875e"
+      },
+      "current_worktree": {
+        "start": 53155,
+        "end": 53166,
+        "sha256": "b973e1e3662ac894653697261c987c1cac71669c0675de8f46f02b481605875e"
+      },
+      "equal": true
+    },
+    {
+      "symbol": "BioAnalystAgent._finalize_managed_terminal",
+      "executed_export": {
+        "start": 53888,
+        "end": 53908,
+        "sha256": "bc311ca3b51e616e7973e7e9abeac13dc8dd72b942121a2726d737b7c805f69c"
+      },
+      "current_worktree": {
+        "start": 53897,
+        "end": 53917,
+        "sha256": "bc311ca3b51e616e7973e7e9abeac13dc8dd72b942121a2726d737b7c805f69c"
+      },
+      "equal": true
+    }
+  ],
+  "all_selected_regions_equal": true
+}

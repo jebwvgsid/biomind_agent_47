@@ -1,0 +1,15 @@
+{
+  "final01_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+  "final02_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+  "same_production_and_public_resource_files": 343,
+  "changed_tests_only": {
+    "tests/a1_unified_fix/test_f5_pty.py": {
+      "before": "756358064f9141e5112bb697e47634dca088894ef7630d0cc312af02686b42ba",
+      "after": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538"
+    }
+  },
+  "added_tests_only": {
+    "tests/a1_unified_fix/test_f2_approval_graph.py": "abe43f46a68eadffaaee9dff35b20c364ef86842107a07d22a9c7db60f174a8b"
+  },
+  "production_retest_policy": "No production/resource/called shared fixture change. Rerun all14 F5 parent cases and3 newlyaddedcarrier cases; unchanged existing group evidence remains byte-identical."
+}

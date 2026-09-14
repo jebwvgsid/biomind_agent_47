@@ -1,0 +1,13 @@
+{
+  "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "loaded_source_manifest": "/tmp/biomind-a1-unified-final-08/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[recovery_event_failure]"
+  ],
+  "timeout_seconds": 180,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

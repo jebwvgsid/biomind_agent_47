@@ -1,0 +1,28 @@
+{
+  "previous_signature": "237ac5ba0d0921017c9ff6252762b2cc429efb7985ce1586aeb5f2a9fe03af94",
+  "current_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+  "changed": {
+    "tests/a1_unified_fix/test_f6_graph.py": {
+      "old": "6cb8e65653d3983375504f9a9a5732902de392ecddfa30e6de1b7ffbdf2efbac",
+      "new": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94"
+    },
+    "bio_agents.py": {
+      "old": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+      "new": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+    },
+    "tests/a1_unified_fix/test_f6_repeat_graph.py": {
+      "old": null,
+      "new": "3aa9bda7f67d95a5ecba7f105795c76e95375a3950471dc64874322eff7dfa1a"
+    },
+    "tests/a1_unified_fix/test_f3_env_progress.py": {
+      "old": null,
+      "new": "64ba7f64592e0ae1c8ccda052c100d69411f05ae96c6ea9d26b8664e1bd4dec8"
+    },
+    "agent_core/workflow/candidate_repair.py": {
+      "old": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+      "new": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+    }
+  },
+  "production_candidate": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+  "required_replay": "Affected shared parser/progress callers, full six-operation normal/recovery plus genuine recurrence END/report, Recovery claim, terminal consumers and hooks; unchanged entry scopes reused only with exact dependency proof."
+}

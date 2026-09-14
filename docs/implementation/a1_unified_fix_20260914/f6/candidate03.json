@@ -1,0 +1,12 @@
+{
+  "status": "18 tests returned PASS; later fixture review found _ainvoke_node_llm replaced as a whole, so real invocation register/consume and transport were not covered by this round. Superseded for complete external-leaf-only graph acceptance.",
+  "archive": "candidate03_prior_provider_wiring.tar.gz",
+  "sha256": "482af9d94be14cb9ce1ded01a7777bbaefcacd0ddcf28c898aa3110cd0d51d16",
+  "bytes": 11663667,
+  "required_revalidation": "Keep real _ainvoke_node_llm/_ainvoke_llm and inject only fixed llm_override leaf; rerun all 18.",
+  "original_fixture_source": {
+    "path": "candidate03_fixture_source.py.gz",
+    "sha256": "cebb5b63bc77694b629943db3771e84d1a4ad69074daaf753983a2b6b94d5fbb",
+    "raw_sha256": "b0303259d7262236085529f7c2f41de2344d7c258b6c7593321baf8e9b94838a"
+  }
+}

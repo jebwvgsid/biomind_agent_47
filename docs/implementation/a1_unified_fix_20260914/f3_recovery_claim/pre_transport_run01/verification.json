@@ -1,0 +1,58 @@
+{
+  "status": "PRE_FULL_TRANSPORT_RECOVERY_CLAIM_CACHE_PASS_AWAITING_FINAL04_RETEST",
+  "test": "tests/a1_unified_fix/test_f3_recovery_claim.py",
+  "test_sha256": "580059708879332b3c6202acd685178faa4d2f94ca07e64a311efa92ad42cc2b",
+  "source_signature": "eac9738626c965210f8d3de2479febdc4796f58950b44e69c8dea5058c93b80d",
+  "baseline_head": "a64ca7652c74f505242620535788524d3f365241",
+  "counts": {
+    "passed": 1
+  },
+  "actual_returncode": 0,
+  "production_differences_from_final03": {},
+  "shared_test_differences_from_final03": {},
+  "source_changes_after_run": [],
+  "actual_external_leaf_counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 0,
+    "recovery": 1
+  },
+  "independent_children": [
+    {
+      "pid": 471,
+      "before_status": "claimed",
+      "after_status": "claimed",
+      "provider_calls": 0,
+      "budget_unchanged": true,
+      "target_unchanged": true
+    },
+    {
+      "pid": 472,
+      "before_status": "provider_completed",
+      "after_status": "action_adopted",
+      "provider_calls": 0,
+      "budget_unchanged": true,
+      "target_unchanged": true
+    }
+  ],
+  "pending_scope": "A child calls the existing durable update_recovery_generation_claim/save/load API on the freshly generated task to exercise claimed->unknown->claimed. This reads and preserves budget/identity; it does not pretend to exercise remote replay.",
+  "completed_scope": "Real completion CAS is observed and interrupted before consumption; a separate fork process re-enters the actual registered Generate handler. With node-model invocation forbidden, it returns action_ready from cache and adopts the same claim without extra budget or scientific execution.",
+  "transport_limit": "This first run inherits the earlier F6 fixture whose external substitute bypasses _ainvoke_node_llm. It is not evidence for real transport registration/consumption/retryguard. The revised F6 fixture must rerun this exact test on final04.",
+  "unknown_remote_limit": "Existing generation_claim explicitly declares at_least_once_without_provider_idempotency; a missing remote completion can be redelivered under the same target. This differs from scientific Execute outcome_unknown and does not authorize rerunning an unknown scientific process.",
+  "artifacts": {
+    "export_manifest.json": "d6037a6c1a4b9efc4f39458ad65b1fa7bc951fb39513ba220544c71c06a8f9b2",
+    "pytest-results.json": "d8e70cb516831114fdea849ca87cccfe843e9a60dbbd5340de78b077272670e8",
+    "invocation.json": "69b4d487b491211f6ddcbb6820abf7ae81f968fe0152f0f06f9283593e0b03b5",
+    "run_exit.json": "7397b6f17e55e8b500efa90b366b4e8b76639b537c00a7a49ccec558bef1f997",
+    "stdout.txt.gz": "b07ed39853fa9f32e4e6e1c2ec736c4ed9eea01094f198321cc2c6a75a90cb21",
+    "f3-recovery-claim.json": "49c501e3fc39b03d69a6d2a35c383016b1d607dc74c830a44688002e606cc661",
+    "actual_new_task/plan_state.json": "ce2763cf840369c9e62e695e52c8f9df04d2d8beed6e769b4ddc15691b97068b",
+    "actual_new_task/executions/execution_records.jsonl": "e89d59432a663f0d876707f336686c275e79a8427f32961948d18fa1e3cceb58",
+    "actual_new_task/attempts/attempt_228b26354d14b2b10a59/exit_status.json": "15fb668f07639c7e0961432966ff0c89ee639cc88a44647c4ef9bdb5942055ee",
+    "actual_new_task/attempts/attempt_228b26354d14b2b10a59/approved.sh": "b58feb2baca7e462ab4712e345752e0bfc02c18edface1ad9812506b67bd735f",
+    "actual_new_task/attempts/attempt_228b26354d14b2b10a59/executed.sh": "f086962b6b72441e6d5f346a45e360a5d5804db59f8ea25a53f62e5cdbd87280",
+    "actual_new_task/attempts/attempt_228b26354d14b2b10a59/stderr.log": "86e8d6f0ffa7a26fe25b9ba313639cf72cb55a7b93ca755616acbe6354d99af4",
+    "actual_new_task/attempts/attempt_228b26354d14b2b10a59/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

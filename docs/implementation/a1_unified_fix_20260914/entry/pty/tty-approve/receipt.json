@@ -1,0 +1,388 @@
+{
+  "root": "/tmp/biomind-f45-entry-final/tty-approve",
+  "returncode": 0,
+  "actual_kernel_pty": true,
+  "mode": "tty",
+  "scenario": "approve",
+  "source_signature": "46c6f2c3f3f8d0354e29d98c3b6fcbdb89a7e91451ca69ad3c34216a3d33e8de",
+  "source_unchanged": true,
+  "frames": {
+    "default": {
+      "at": 4287330.660253828,
+      "screen": "等待输入\n🏭 Software Repository: /tmp/biomind-f45-entry-final/tty-approve/scratch/biomind-plan-lo\ncal-graph-lpf0zeyuJ 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消\n📂 Source Install Path (Default): /tmp/biomind-f45-entry-final/tty-approve/scratch/biomi\n计划审批\n计划 plan_e33c5694231df57920a4 · 步骤数 12\n审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816\n下方为当前冻结计划的完整正文；可滚动查看后明确确认。\n/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。\n## Plan Identity                                                                       ^\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none                                                                                 v\n等待计划审批 · 当前候选尚未执行\n\nApprove? [y/n/q] or type feedback >\n\nPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情",
+      "state": {
+        "frames": 18,
+        "pending": true,
+        "pending_id": 22702509001424,
+        "input_ready": true,
+        "modal": false,
+        "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "cursor": 0,
+        "draft": "",
+        "size": [
+          88,
+          26
+        ],
+        "view_document": {
+          "sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+          "bytes": 19264,
+          "path": "documents/4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816.txt"
+        }
+      }
+    },
+    "scrolled": {
+      "at": 4287330.788385982,
+      "screen": "等待输入\n🏭 Software Repository: /tmp/biomind-f45-entry-final/tty-approve/scratch/biomind-plan-lo\ncal-graph-lpf0zeyuJ 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消\n📂 Source Install Path (Default): /tmp/biomind-f45-entry-final/tty-approve/scratch/biomi\n计划审批\n计划 plan_e33c5694231df57920a4 · 步骤数 12\n审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816\n下方为当前冻结计划的完整正文；可滚动查看后明确确认。\n/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。\n- Plan ID: `plan_e33c5694231df57920a4`                                                 ^\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none\n                                                                                       v\n等待计划审批 · 当前候选尚未执行\n\nApprove? [y/n/q] or type feedback >\n\nPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情",
+      "state": {
+        "frames": 19,
+        "pending": true,
+        "pending_id": 22702509001424,
+        "input_ready": true,
+        "modal": false,
+        "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "cursor": 413,
+        "draft": "",
+        "size": [
+          88,
+          26
+        ],
+        "view_document": {
+          "sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+          "bytes": 19264,
+          "path": "documents/4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816.txt"
+        }
+      }
+    },
+    "details": {
+      "at": 4287330.931410191,
+      "screen": "等待输入\n🏭 Software Repository: /tmp/biomind-f45-entry-final/tty-approve/scratch/biomind-plan-lo\ncal-graph-lpf0zeyuJ 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消\n📂 Source Install Path (Default): /tmp/biomind-f45-entry-final/tty-approve/scratch/biomi\n计划审批\n计划 plan_e33c5694231df57920a4 · 步骤数 12\n审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816\n下方为当前冻结计划的完整正文；可滚动查看后明确确认。\n/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。\n计划审批                                                                               ^\n\n## Plan Identity\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none\n                                                                                       v\n仍待审批 · Esc 返回；查看不代表批准\n↑↓ / PgUp PgDn 浏览 · Esc 返回；Enter 不批准",
+      "state": {
+        "frames": 20,
+        "pending": true,
+        "pending_id": 22702509001424,
+        "input_ready": true,
+        "modal": true,
+        "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "cursor": 0,
+        "draft": "",
+        "size": [
+          88,
+          26
+        ],
+        "view_document": {
+          "sha256": "e4d57644b483832a4df325140c98ec1160b8a632a503803fd8551fcbc0e5457f",
+          "bytes": 26393,
+          "path": "documents/e4d57644b483832a4df325140c98ec1160b8a632a503803fd8551fcbc0e5457f.txt"
+        }
+      }
+    },
+    "resized": {
+      "at": 4287333.023890402,
+      "screen": "等待输入\n🏭 Software Repository: /tmp/biomind-f45-entry-final/tty-approve/sc\ncal-graph-lpf0zeyuJ 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消\n📂 Source Install Path (Default): /tmp/biomind-f45-entry-final/tty-\n计划审批\n计划 plan_e33c5694231df57920a4 · 步骤数 12\n审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e267\n下方为当前冻结计划的完整正文；可滚动查看后明确确认。\n/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。\n## Plan Identity                                                  ^\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed\n53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d3\n7ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none                                                            v\n等待计划审批 · 当前候选尚未执行\n\nApprove? [y/n/q] or type feedback >\n\n\n\n\n\nPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情",
+      "state": {
+        "frames": 25,
+        "pending": true,
+        "pending_id": 22702509001424,
+        "input_ready": true,
+        "modal": false,
+        "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "cursor": 0,
+        "draft": "",
+        "size": [
+          67,
+          32
+        ],
+        "view_document": {
+          "sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+          "bytes": 19264,
+          "path": "documents/4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816.txt"
+        }
+      }
+    },
+    "before-decision": {
+      "at": 4287333.02485705,
+      "screen": "等待输入\n🏭 Software Repository: /tmp/biomind-f45-entry-final/tty-approve/sc\ncal-graph-lpf0zeyuJ 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消\n📂 Source Install Path (Default): /tmp/biomind-f45-entry-final/tty-\n计划审批\n计划 plan_e33c5694231df57920a4 · 步骤数 12\n审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e267\n下方为当前冻结计划的完整正文；可滚动查看后明确确认。\n/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。\n## Plan Identity                                                  ^\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed\n53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d3\n7ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none                                                            v\n等待计划审批 · 当前候选尚未执行\n\nApprove? [y/n/q] or type feedback >\n\n\n\n\n\nPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情",
+      "state": {
+        "frames": 25,
+        "pending": true,
+        "pending_id": 22702509001424,
+        "input_ready": true,
+        "modal": false,
+        "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "cursor": 0,
+        "draft": "",
+        "size": [
+          67,
+          32
+        ],
+        "view_document": {
+          "sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+          "bytes": 19264,
+          "path": "documents/4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816.txt"
+        }
+      }
+    },
+    "done": {
+      "at": 4287333.940763,
+      "screen": "等待输入\n🏭 Software Repository: /tmp/biomind-f45-entry-final/tty-approve/sc\ncal-graph-lpf0zeyuJ 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消\n📂 Source Install Path (Default): /tmp/biomind-f45-entry-final/tty-\n计划审批\n计划 plan_e33c5694231df57920a4 · 步骤数 12\n审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e267\n下方为当前冻结计划的完整正文；可滚动查看后明确确认。\n/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。\n›\n✓ Plan approved. Preparing the current step...\n计划审批\n运行中可编辑本地草稿；尚未提交\n\n\n\n\n\n\n\n\nEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消\n\n\n\n\n\n\n\n\n\n",
+      "state": {
+        "frames": 30,
+        "pending": false,
+        "pending_id": null,
+        "input_ready": false,
+        "modal": false,
+        "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "cursor": 0,
+        "draft": "",
+        "size": [
+          67,
+          32
+        ],
+        "view_document": {
+          "sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+          "bytes": 19264,
+          "path": "documents/4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816.txt"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "at": 4287312.872059348,
+      "event": "cursor-report"
+    },
+    {
+      "at": 4287330.512406782,
+      "event": "cursor-report"
+    },
+    {
+      "at": 4287330.661482636,
+      "event": "scroll-default-plan"
+    },
+    {
+      "at": 4287330.800994991,
+      "event": "F2"
+    },
+    {
+      "at": 4287330.932520472,
+      "event": "Enter-details-no-approval"
+    },
+    {
+      "at": 4287331.100526634,
+      "event": "Escape-details"
+    },
+    {
+      "at": 4287332.731214162,
+      "event": "cursor-report"
+    },
+    {
+      "at": 4287332.735270502,
+      "event": "cursor-report"
+    },
+    {
+      "at": 4287333.025674413,
+      "event": "explicit-decision"
+    },
+    {
+      "at": 4287333.025740009,
+      "event": "cursor-report"
+    },
+    {
+      "at": 4287333.100790597,
+      "event": "cursor-report"
+    },
+    {
+      "at": 4287333.616806795,
+      "event": "cursor-report"
+    }
+  ],
+  "business": {
+    "scenario": "approve",
+    "provider_calls": [
+      "consultant",
+      "planner"
+    ],
+    "reviews": [
+      {
+        "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "kind": "plan",
+        "submission": {
+          "ready": true,
+          "identity_matches": true,
+          "reason_code": "PLAN_REVIEW_SUBMISSION_COMMITTED",
+          "submission_id": "plan-submission-7feff252d83d35083464",
+          "receipt": {
+            "schema_version": 1,
+            "protocol_version": 1,
+            "submission_id": "plan-submission-7feff252d83d35083464",
+            "action_type": "submit_plan_for_review",
+            "agent_initiated": true,
+            "status": "pending_review",
+            "task_id": "f5-plan-current",
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+            "plan_snapshot_ref": "object:sha256:6e389daf5b507ea55bcedaa5449d7774fc2ec88a6a6ccc95d65e25b5f422c68b",
+            "task_revision": 1,
+            "generated_from_task_revision": 1,
+            "authoritative_user_turn_revision": 1,
+            "planner_claim_id": "planner-call:97775724c813cfee41d9363eb32d0d4f67e34da1e35c102a84165ebbe7a63361",
+            "planning_epoch_id": "planning-epoch-3e0c9839-cc73-4143-ae90-b2a16db3be55",
+            "candidate_scope_id": "candidate-scope-880db9a8-5121-405f-8c88-6e659673ffd3",
+            "submitted_at": "2026-09-14T15:10:19.717687+00:00"
+          }
+        },
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "payload": {
+          "content": "## Plan Identity\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none\n\n## Effective Plan\n\n### [plan-inspect-0] 合成步骤 00 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `none`\n- Success criteria: `冻结要求 00-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-1] 合成步骤 01 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-bl"
+        },
+        "frozen_body": {
+          "sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+          "bytes": 19264,
+          "path": "documents/4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816.txt"
+        }
+      }
+    ],
+    "executions": 0,
+    "code_approvals": 0,
+    "input": [
+      {
+        "stage": "plan_review",
+        "response": ""
+      }
+    ],
+    "outcome": {
+      "schema_version": 1,
+      "type": "approved_for_execution",
+      "summary": "Plan review approved the plan for execution.",
+      "scope": {
+        "task_id": "f5-plan-current",
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "step_id": "plan-inspect-0"
+      },
+      "payload": {
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "approval_status": "approved",
+        "execution_backend": "in_process",
+        "review_receipt_id": "plan-review-7c313a70eb704270bdd1"
+      },
+      "evidence_refs": []
+    },
+    "acceptance": {
+      "ready": true,
+      "reason_code": "PLAN_REVIEW_ACCEPTANCE_COMMITTED",
+      "review_receipt_id": "plan-review-7c313a70eb704270bdd1",
+      "submission_id": "plan-submission-7feff252d83d35083464",
+      "receipt": {
+        "schema_version": 1,
+        "protocol_version": 1,
+        "review_receipt_id": "plan-review-7c313a70eb704270bdd1",
+        "status": "accepted",
+        "submission_id": "plan-submission-7feff252d83d35083464",
+        "approval_id": "approval-1dec98a6cadb56d4a591",
+        "review_event_id": "review-4ee025aaabad23a606a2",
+        "task_id": "f5-plan-current",
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+        "plan_snapshot_ref": "object:sha256:6e389daf5b507ea55bcedaa5449d7774fc2ec88a6a6ccc95d65e25b5f422c68b",
+        "accepted_at": "2026-09-14T15:10:23.716762+00:00"
+      }
+    },
+    "approval_scope": {
+      "task_hash": "faac9a046384e09a2f490caf86052a1c812c74e55af659a42072dd5df355e163",
+      "task_revision": "1",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "plan_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+      "task_spec_hash": "3edc29d802ae178b09fa5b94fb2a7d296a4406edb05c2d4c042da62d4bfb7b17",
+      "canonical_constraint_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "claim_set_hash": "fd20a55bf916a60d2546b9da51ad433267f23699748fd9232a5a941d88b3edc7",
+      "input_bindings_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "renderer_invocation_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "selected_skills_hash": "4cf7271ea5291ba34cf7ec1007bb98a66a6d2576c22e8676bbc4850530242531",
+      "projection_hash": "eda675c3e12d4ffd83f06d58142167eeadbbe18a22d82159123f17a96330aca0",
+      "projection_version": "2",
+      "approval_scope_hash": "0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922"
+    },
+    "current_approval": {
+      "approval_id": "approval-1dec98a6cadb56d4a591",
+      "approval_record_ref": "object:sha256:8d1bdd3f93f6b175c67501a0c1717d78063e4e8caa63ee3e3941b7ddd3a0fe4d",
+      "plan_snapshot_ref": "object:sha256:6e389daf5b507ea55bcedaa5449d7774fc2ec88a6a6ccc95d65e25b5f422c68b",
+      "status": "approved"
+    },
+    "durable_status": "running",
+    "question_waiting": null,
+    "approval_events": [
+      {
+        "phase": "request_created",
+        "monotonic": 4287330.524435953,
+        "request_id": 1,
+        "task_id": "f5-plan-current",
+        "stage": "plan_review",
+        "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "action_id": ""
+      },
+      {
+        "phase": "presentation_started",
+        "monotonic": 4287330.525031549,
+        "request_id": 1,
+        "task_id": "f5-plan-current",
+        "stage": "plan_review",
+        "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "action_id": ""
+      },
+      {
+        "phase": "frame_rendered",
+        "monotonic": 4287330.530147174,
+        "request_id": 1,
+        "task_id": "f5-plan-current",
+        "stage": "plan_review",
+        "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "action_id": ""
+      },
+      {
+        "phase": "input_ready",
+        "monotonic": 4287330.530183954,
+        "request_id": 1,
+        "task_id": "f5-plan-current",
+        "stage": "plan_review",
+        "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "action_id": ""
+      },
+      {
+        "phase": "decision_received",
+        "monotonic": 4287333.030391075,
+        "request_id": 1,
+        "task_id": "f5-plan-current",
+        "stage": "plan_review",
+        "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+        "action_id": ""
+      }
+    ]
+  },
+  "error": {},
+  "unknown_vt": [],
+  "transfer": {},
+  "loaded_modules": 117,
+  "loaded_match_export_manifest": true,
+  "artifact_hashes": {
+    "terminal.raw": "0aff7e861668920c2e425ee473d17b7cb7c719cbb4b85a9956d3ad93449fe797",
+    "invocation.json": "ba12204b4abd97444a17cdd02cd5b4a13f1207cfab4d23c5375c88f54f861bff",
+    "default.screen.txt": "5795f619cc98b6d38e958234e2c109a41c2ab295b5049716f6949a96d920017c",
+    "done.screen.txt": "2a473790db253929bbfa8b53457632b0e4a1035f9e32b5f3a107138c39e63ffc",
+    "scrolled.screen.txt": "5771322b3c146e8a6c00bd747eb3eb25082e108da807811ee9b5dc1bd36888a3",
+    "before-decision.screen.txt": "58ee4cfad5ca0342771b5d59345b54d0488ea58ce392cb526152b22fab6c68da",
+    "checks.json": "279027cdf502d7782e44e4878f3bf789261425823d1259927e65ed3c6d6c756f",
+    "loaded.json": "38a291678987ae9ab8ee4bdecaccf4a6b330a93e9ee91d3f79e1e03b436023ee",
+    "pytest-results.json": "ae08e13364b9338c06ae52ea1e1f17f0fbef22b9ebb60d9de8a032f38360f0d4",
+    "durable.json": "9950d7c8e3c9f403b9366a8f3b23d58bfc223ef4503e37060b96c05a9671ed93",
+    "details.screen.txt": "57320fb9861a56f32c30ef85cec0fc883bf1bff71cf5648803506e571458b11b",
+    "resized.screen.txt": "58ee4cfad5ca0342771b5d59345b54d0488ea58ce392cb526152b22fab6c68da"
+  }
+}

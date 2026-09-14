@@ -1,0 +1,171 @@
+{
+  "status": "Final08 F1 protocol 6/6 PASS within shared 101/101 PASS; ordinary/local/Recovery/blocked use real node/transport wrappers with fixed external model leaf",
+  "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "source_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "source_step_effects_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+  "source_bio_agents_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+  "source_candidate_repair_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa",
+  "test_f6_fixture_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+  "run_root": "/tmp/biomind-a1-unified-final-08/protocol-helper-shared",
+  "f1_raw_artifact_root": "final08",
+  "full_group_root_archive": "../../final/final08_runs/protocol-helper-shared",
+  "full_group_root_archive_owner": "Root copies full group after final08 groups finish; F1 selected raw receipts already persisted locally here.",
+  "new_f1_calls": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 9.974437494762242,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 13.609416692517698,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 22.18828064482659,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 23.973319344222546,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 2.1413168031722307,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.07821216620504856,
+      "failure": ""
+    }
+  ],
+  "shared_calls_passed": 101,
+  "f1_loaded_module_count": 123,
+  "run_exit": {
+    "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+    "loaded_source_manifest": "/tmp/biomind-a1-unified-final-08/export/export_manifest.json",
+    "test_targets": [
+      "-s",
+      "-q",
+      "tests/a1_unified_fix/test_f1_f2.py",
+      "tests/a1_unified_fix/test_f1_protocol.py",
+      "tests/a1_unified_fix/test_f2_scope.py",
+      "tests/test_cross_layer_publication.py",
+      "tests/test_cross_layer_domain.py",
+      "tests/test_step_effect_runtime.py",
+      "tests/test_semantic_completion.py"
+    ],
+    "timeout_seconds": 180,
+    "watchdog_is_not_production_termination": true,
+    "returncode": 0,
+    "source_changes_after_run": []
+  },
+  "scope": "Actual ordinary/local/Recovery requests traverse real node invocation register/consume and transport wrappers with fixed non-streaming model leaves, then parser/current admission unchanged. Blocked and legacy alternatives verified. Standalone demo computes False/empty only under demo declarations. No real API/SDK-streaming or scientific completion claim.",
+  "retained_prior_final03_evidence": "current_final03_evidence.json",
+  "retained_pre_scope_evidence": "regression_evidence.json",
+  "artifacts": [
+    {
+      "file": "final08/f1-protocol-blocked.json.gz",
+      "sha256": "b42798185f85a69395a631f1d4997fd12574b897ede68c91d8dede3ce7a3bd8d",
+      "raw_sha256": "b1862b6d39435b7647174dfd0923b2a1739513cfeb55d925cc5fa2ebfd19c273"
+    },
+    {
+      "file": "final08/f1-protocol-capture-blocked-2.json.gz",
+      "sha256": "5d4846b1c5ccc16ef48fcb2828667ba3ae4f07bc4738af1a8a3c2227663874e6",
+      "raw_sha256": "1463856739b4a0d3c26db903d3d0ca79affd5111f7b7a76f19becb9873742372"
+    },
+    {
+      "file": "final08/f1-protocol-capture-local-1.json.gz",
+      "sha256": "859ca53cb1780ae434dbd3f563c4f37fd63468d96790279e0f3fbec595c9608c",
+      "raw_sha256": "cfc432e4654d26641a8b2d8926c402b0855951ffc3c410d46023b0aceb114853"
+    },
+    {
+      "file": "final08/f1-protocol-capture-local-2.json.gz",
+      "sha256": "3b3c8acaad6ad4c5176201c5c2aebc37da166b4917bc2586a903766bdb3d1e66",
+      "raw_sha256": "67caf636cea409d652885c12bb5f9b56f2dea05f661c67418691f852d12a8c94"
+    },
+    {
+      "file": "final08/f1-protocol-capture-normal-1.json.gz",
+      "sha256": "0a75905a4f5f0066f7b30dd46fd9c04d35e56a20e32f9322cc1798e23304cfd6",
+      "raw_sha256": "6dc905143b43ce01d3adef079cb800341a33d188246a61f79d5b3b6275630bee"
+    },
+    {
+      "file": "final08/f1-protocol-capture-recovery-2.json.gz",
+      "sha256": "777dd82f0219728a3854fd143f83d80c6a4749920f9e9e483a3f258a0c43cf31",
+      "raw_sha256": "dd98296691b99449ac91b97bfd3a94df52b281b465d3b482d95b440cb156f3d2"
+    },
+    {
+      "file": "final08/f1-protocol-demo.json.gz",
+      "sha256": "501c4ce00afbd486b32e32162d8750d54f7ce640da69c0fac6bf5e92cbe49160",
+      "raw_sha256": "61a8afec01e4b0b26b3bb287c9f9607120f8d973259212dd85a23f2831648261"
+    },
+    {
+      "file": "final08/f1-protocol-legacy.json.gz",
+      "sha256": "b1228fab03040fab58b49191bdec956f2791408f977cb2cd3520ff317936e969",
+      "raw_sha256": "e2e9410c46900b0ad904c562a1f02609a64b5cd0ab0853e9e6e7ac6323a229c3"
+    },
+    {
+      "file": "final08/f1-protocol-loaded.json.gz",
+      "sha256": "4d3613f042bc7542404439ac7464c7076a0b762a8e4f764947ff86a8ec60c647",
+      "raw_sha256": "0232e8e6c0e2935b7f8f567a3d66c9ea4aa2490b5fd234291d996e943fa8fa5d"
+    },
+    {
+      "file": "final08/f1-protocol-local.json.gz",
+      "sha256": "6bf62eeca70d18dc5c8b13464e2fa145eb5d51e06789b88c936f00ba543a029f",
+      "raw_sha256": "5ae297411db546ebdc26cb19c6084ca3295b2823cbd5cbaf402e3662a00d96cb"
+    },
+    {
+      "file": "final08/f1-protocol-normal.json.gz",
+      "sha256": "82ad5c8e0edbea849ed8f6ba96ba942279bc59a51f938c1b2ed6f9bbeae707fc",
+      "raw_sha256": "9d8538bade8dc175a2e6fb03d2890947b357fc1fd5e3e2de58105bf42d78b16a"
+    },
+    {
+      "file": "final08/f1-protocol-recovery.json.gz",
+      "sha256": "c8c902bb196cb6bb5390fcbaebd4e9a877358ebed28f8d695365b361a4b2e573",
+      "raw_sha256": "09369af5b34594c86fe381648eeda9e805ef4678efaf02c6065116c77d892b94"
+    },
+    {
+      "file": "final08/invocation.json.gz",
+      "sha256": "c0e39fddb3b52ea5c5a9fe0465459b051008fb4be442e670aebc5aa88ae9173d",
+      "raw_sha256": "2f45655125047d2aaa90e75a7e6e7bce9edace54f24cd03f6ff3e841a7ff8bee"
+    },
+    {
+      "file": "final08/pytest-results.json.gz",
+      "sha256": "9864d41df5d0a89cd828d2baed79a74a4abb0bec7cc985d89a1fc5c5db7ed1ac",
+      "raw_sha256": "38e31e39f9582d6dfb3960349f29bfaf9cde32a20d87e41359e47df19c475373"
+    },
+    {
+      "file": "final08/run_exit.json.gz",
+      "sha256": "66d497aa181ab7ef78e8308568957a2f6b7f157fb6d4f05c99968c188cc06e80",
+      "raw_sha256": "6b3ac125df2631a6039ff190d4cbaae48f60a57ff55240bda1c78aa11f855bab"
+    },
+    {
+      "file": "final08/stdout.txt.gz",
+      "sha256": "0b3231f6526ef6d576eed76ad557365e0485eddaa65d911e9831e48ecbccb46e",
+      "raw_sha256": "e386c2acef1448d99fc0bb5e5fe97fe4abdcba8223da691ccb49afe4384e6cf9"
+    }
+  ],
+  "case_substitution_boundaries": {
+    "normal/local/recovery/blocked": "F6Graph FixedModelLeaf via real _ainvoke_node_llm and _ainvoke_llm/run_provider_attempt; four graph cases.",
+    "legacy": "Original PlanLocal/ger_fixture_support.generate_until_ready_or_stopped replaces _ainvoke_node_llm with a fixed response provider; formal prompt/display projection/parser/current-step admission remain real. This case is mode/admission evidence, not node invocation/transport proof.",
+    "demo": "Standalone real tiny process + declared frozen helper + stdout effect parser; no provider/node invocation."
+  },
+  "source_managed_stop_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593",
+  "all_f1_loaded_match_final08_manifest": true,
+  "retained_prior_final06_evidence": "current_final06_evidence.json"
+}

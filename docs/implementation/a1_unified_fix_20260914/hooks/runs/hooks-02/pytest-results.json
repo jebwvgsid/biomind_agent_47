@@ -1,0 +1,377 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.10673981625586748,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.6228358084335923,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00041030533611774445,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008209515362977982,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.0235973540693521,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022790394723415375,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007309615612030029,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7919843913987279,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002124980092048645,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007217861711978912,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8598828576505184,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021585635840892792,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007321005687117577,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.5891199875622988,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022774748504161835,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006419280543923378,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.38465752825140953,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021437928080558777,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[normal]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[normal]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006933407858014107,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[normal]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.6411704272031784,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[normal]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00023797154426574707,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[exception]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[exception]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007163034752011299,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[exception]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.637829102575779,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[exception]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022040680050849915,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[none]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[none]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007332898676395416,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[none]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.6209848979488015,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[none]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002302480861544609,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[timeout]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[timeout]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007079681381583214,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[timeout]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7158528110012412,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[timeout]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021820515394210815,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[cancel]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[cancel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007623666897416115,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[cancel]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.5611983677372336,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel[cancel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022144895046949387,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_plan_default_body_is_current_gap_and_details_preserves_bytes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_plan_default_body_is_current_gap_and_details_preserves_bytes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012066122144460678,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_plan_default_body_is_current_gap_and_details_preserves_bytes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.027394140139222145,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_plan_default_body_is_current_gap_and_details_preserves_bytes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018691737204790115,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007105171680450439,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.4675184963271022,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[normal]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002210177481174469,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[exception]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[exception]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008261324837803841,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[exception]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.4310597060248256,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[exception]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002438044175505638,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[none]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[none]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007388051599264145,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[none]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3965697893872857,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback[none]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00026029907166957855,
+    "failure": ""
+  }
+]

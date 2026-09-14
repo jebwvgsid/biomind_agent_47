@@ -1,0 +1,44 @@
+# BioMind A1 统一实施与隔离验收
+
+**IMPLEMENTATION STATUS: COMPLETE（限本轮授权的 F1—F6 框架机制）。事故链 FIX PASS；必选组合机制 FIX PASS。** 生产修复已提交，真实模型/API 和真实科学 E2E 均为 NOT_AUTHORIZED / NOT_RUN，原 session 未恢复，未 push。
+
+实施 BASE：`b877b28b2b0366c04e9042bad09e1ee26a138ab0`（tree `d28fe5f7f771166ae11555532e3b1969c696fb78`）＋原保护 overlay。最终生产候选：`dbaa3f8e11bc56524ba2477c986d722657bf2b0c`（tree `c02d4b431d5d85ec7120cea621ac49c76812a026`）＋登记 overlay。[最终导出 manifest](final/final_export_manifest.json)为 457 文件，signature `332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9`。逐进程实际加载模块另有回执；提交父版本、测试加载字节及复用证据分别登记；不把 disk HEAD 或目录名当加载证明。
+
+[A1 审计](../../audits/execution_architecture_20260914_unified_a1/README.md)及其 `d146a479c437f190a19041d7ee0a7251aaeb9f4d`＋overlay 基线保持原样；历史 witness 不计入本轮 FIX PASS，未重启全节点审计。
+
+| 切片 | 实际结果与关闭证据 |
+|---|---|
+| F1 | 普通、Recovery、局部纠正共用当前 mode 投影；完整动作/停止例子经正式 parser 接纳，动作 JSON 与 stdout 事实分开。独立示例实际计算 False/空列表，未给当前步骤造事实。[6项协议回执](f1_protocol/unified_final/current_final08_evidence.json) |
+| F2 | helper 在审批前进入实际解释器/argv 载体，code/argv 保持一致。正常及恢复六步图使用 native argv-only；另有 native code-only、legacy Python/Bash 正式审批执行。字符串内 marker、非 stdin heredoc 等负例受控拒收。[作用域](f2_scope.md)、[正式图](f6/README.md) |
+| F3 | 坏 env 保留 parser 首因；真实检查点统一上下层进展判断。重排、无关新字段和旧账本新增诊断不能买进展，真实字段修复/移除和最后合法机会可继续；旧预算、去重、重载、主动停止及取消保留。33项＋Recovery独立重载1项；真重复/ABA另走完整 END/报告。[env before/after](f3_env_progress.md)、[F3](f3.md)、[claim](f3_recovery_claim.md) |
+| F4 | 回调直接抛错的 harness_error 正确 END；缺答复、question_missing 与正常匹配保留。6新例＋43旧输入审批保护通过。[最终49项](final/final08_root_verification.json) |
+| F5 | compact 默认展示同一冻结 Plan body；F2/details 同对象，Enter/current owner/receipt/CAS 不退化。14真实PTY/plain通过，另补旧display24＋model-progress1（四模式）。[终端证据](entry/unified_final/README.md) |
+| F6 | 22场正式图组合、4场真实终止摘要异常/取消、14场已注册hook正常/异常通过；覆盖 IT-01—12。[矩阵](acceptance_matrix.tsv)、[完整图回执](f6/verification.json)、[根回归](final/final08_root_verification.json) |
+
+正常图从正式 handoff、六步 Plan 和审批开始，真实串联 check contigs → prepare → build → annotation → summary → final deliverables。prepare/build 在同一 mutable identity 上两次实际推进、attestation 和 Commit；annotation 消费这条链得到的 ready 版本。正常图 6 次步骤执行、6 次唯一 Commit，产出 annotated VCF、summary、report.md、reproduce.sh、stage_status.tsv 五项物理交付。
+
+恢复图从本轮新小进程 rc7 开始，真实 Recovery retry_step、多轮 JSON/外壳/env 拒收反馈进入下一请求，然后新审批、执行、证据和 Commit；10次 Generate、7个实际 attempt（首次7，其余0）、6次 Commit。真重复/重排/无关变化停止时余3，A-B-A停止时余2；这些图均无代码审批、Execute 或 Commit，并经真实终止 owner 写三份状态报告。另有3条[来源字段正反图](f3_stop_origin.md)：Generate来源正确、合法blocked类型正确、真实Execute母因的attempt/rc保留。既有正常 Plan 审批已从正式冻结入口取得，未预塞 ready/approved/succeeded。
+
+固定回复下移到外部模型叶子；主图保留真实 `_ainvoke_node_llm`/`_ainvoke_llm`、调用登记/消费、传输记录、parser、helper、审批、执行器与新进程、attester、Reviewer parser、gate、Commit/CAS、重载和 report writer。科学替身仅写新合成资源。外部运行能力观测值也显式替代，但其正式 evidence identity/持久化/解析真实。组件测试各自的替身边界单列，未将较窄组件结果冒充完整传输或真实模型验证。
+
+[总账本](verification.json)、[每个缺陷→代码/正反验收](changes_and_acceptance.tsv)、[实际请求/审批/执行/Commit/report](f6/compact_evidence.json)和逐进程加载清单共同构成证据。343个非测试源码/公开资源不等于全部文件均被执行，也不证明所有Skill科学可用。F5及不受影响旧CLI结果按[精确依赖和调用边界](entry/unified_final/candidate08_display_reuse.json)复用，明确保留其真实加载版本；其余受影响公共调用方已在最终候选回归。
+
+生产逻辑提交（完整文件范围、父提交、tree另见[提交账本](final/commit_files.tsv)）：
+
+| 完整 commit | 文件范围 |
+|---|---|
+| `499ce1ae5b95a04dd227e21628578946203372f6` | `agent_core/step_effects.py`, `bio_agents.py`, `prompts/manager.py`, `tests/a1_unified_fix/export_and_run.py`, `tests/a1_unified_fix/test_f1_f2.py` |
+| `a84e9932d66019a2277bf1ffb8b13ac7a5e39af6` | `agent_core/workflow/runtime_graph.py`, `tests/a1_unified_fix/test_f4_ask_user.py` |
+| `2966f5ef3d0889201101192e397234e9b752cec9` | `agent_core/cli_plain.py`, `agent_core/cli_review.py`, `agent_core/cli_terminal.py`, `bio_agents.py`, `tests/a1_unified_fix/test_f5_pty.py` |
+| `267d3b746a94c0db0f43509cea4e77cba3262577` | `agent_core/recovery.py`, `agent_core/workflow/candidate_repair.py`, `bio_agents.py`, `tests/a1_unified_fix/test_f3_claims.py`, `tests/a1_unified_fix/test_f3_late_result.py`, `tests/a1_unified_fix/test_f3_progress.py` |
+| `8bf302c37bb38259d4878524ddc6e2d0e2a27e60` | `agent_core/step_effects.py`, `bio_agents.py`, `prompts/manager.py`, `tests/a1_unified_fix/test_f1_f2.py`, `tests/a1_unified_fix/test_f1_protocol.py` |
+| `a64ca7652c74f505242620535788524d3f365241` | `agent_core/step_effects.py`, `tests/a1_unified_fix/test_f2_scope.py` |
+| `e9df3ece9fceae24b782f5f1eb682926f8ed9f11` | `agent_core/workflow/candidate_repair.py`, `bio_agents.py`, `tests/a1_unified_fix/test_f3_env_progress.py` |
+| `2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7` | `agent_core/workflow/candidate_repair.py`, `tests/a1_unified_fix/test_f3_env_progress.py` |
+| `dbaa3f8e11bc56524ba2477c986d722657bf2b0c` | `agent_core/workflow/managed_stop.py`, `tests/a1_unified_fix/test_f3_stop_origin.py` |
+
+最终验收产物提交仅包含本轮拥有的 `tests/a1_unified_fix/` 和本目录文件；完整 hash 随交付回执返回。生产提交经独立 index 与 HEAD CAS，只同步本轮条目。[保护记录](final/protection.json)确认56个其他安全 dirty 文件原字节、相交 prompt 与 managed_stop 原 delta、其他 index 条目及旧 A1 均保留；没有收编原 HASH_OUTPUT_POLICY hunk。五个语义 overlay 独立登记，retriever 的 CRLF 原字节差异另列。敏感配置只检查 Git 元数据。**没有验证裸 commit/干净克隆独立部署通过。**
+
+已有失败保持可见：旧9项缺 candidate scope 的 fixture 失败未删；最终公共39项为38 PASS、1项 BASE 已有的整字典形状断言失败（另2个subtest PASS），旧断言未改。相关类和断言的基线等同性见[公共回归](regression/final08/verification.json)；未授权旧事故/其他benchmark输入的测试逐项 NOT_RUN_SAFETY，见[preflight](regression/preflight.json)。开发中的旧失败、外层watchdog124、进程-11、测试输入时序和反馈历史假设均保留原回执，不计成功；-11原因未证实。
+
+[独立限制](remaining_limits.md)：真实模型/API与科学工具未运行；原任务完整历史加载 UNKNOWN；R、external_worker、宿主登录环境及全部OS/断电窗口未验证。Recovery未知远端结果沿既有 at-least-once 协议记账，不宣称远端 exactly-once；已完成缓存的真实Generate重载为零provider调用。原session NOT_RESUMED，原批准脚本 NOT_EXECUTED，未安装、未读正式科学输入/业务库，PUSH NOT_PERFORMED。机制通过不代表原 snpEff业务或真实科学目标已完成。

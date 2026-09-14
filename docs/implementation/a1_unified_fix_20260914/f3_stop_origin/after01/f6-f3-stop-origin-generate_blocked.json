@@ -1,0 +1,85 @@
+{
+  "mode": "generate_blocked",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 1,
+    "recovery": 0
+  },
+  "diagnostic_stage": "generate",
+  "origin": {
+    "source_stage": "generate",
+    "source_owner": "UNKNOWN",
+    "failure_id": "",
+    "failure_type": "blocked",
+    "error_code": "GENERATE_BLOCKED",
+    "summary": "Generate recorded a durable terminal blocker.",
+    "concerns": [],
+    "evidence_refs": [],
+    "returncode": null,
+    "attempt_id": "",
+    "process_fact_scope": "original causal execution; no scientific validity inferred"
+  },
+  "causal_execution": {
+    "status": "UNKNOWN"
+  },
+  "execution_attempts": [
+    {
+      "attempt_id": "attempt_37234b30cc6de7093bec",
+      "rc": 0
+    }
+  ],
+  "report_has_generate_origin": true,
+  "report_has_execute_origin": false,
+  "report_receipts": {
+    "stage_status.tsv": {
+      "path": "/tmp/biomind-a1-stop-origin-after-01/results/scratch/biomind-plan-local-graph-unsl8wti/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+      "sha256": "cb9fa20031953a8f6ff42f088e2cc6f67262148b30a7d8e9eb15a622c0363ff5",
+      "operation_id": "082c1396ab4e1d760bc8d6210caba1fd3cbe6300396eec9cdbcfc88b23a1df7b",
+      "ownership": {
+        "operation_id": "082c1396ab4e1d760bc8d6210caba1fd3cbe6300396eec9cdbcfc88b23a1df7b",
+        "path": "/tmp/biomind-a1-stop-origin-after-01/results/scratch/biomind-plan-local-graph-unsl8wti/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "sha256": "cb9fa20031953a8f6ff42f088e2cc6f67262148b30a7d8e9eb15a622c0363ff5",
+        "proof_name": ".runtime-report-proof-082c1396ab4e1d760bc8d6210caba1fd3cbe6300396eec9cdbcfc88b23a1df7b",
+        "device": 2051,
+        "inode": 10768798
+      },
+      "status": "created",
+      "stop_id": "managed-stop:77fcca5bebb9b948efa7a1e1f152b5232ac633cdfc8deb99dbefff3474e756bd",
+      "task_id": "fix-f6-voluntary_stop"
+    },
+    "reproduce.sh": {
+      "path": "/tmp/biomind-a1-stop-origin-after-01/results/scratch/biomind-plan-local-graph-unsl8wti/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+      "sha256": "3ab69b4bd7063fadf92cf1df94ba6897ab83f0ee671e86618bc6d3702decc598",
+      "operation_id": "a68913172bc4a864361a1874d8a6ea0c70fd0c4af7caa05502234f2baa5331bd",
+      "ownership": {
+        "operation_id": "a68913172bc4a864361a1874d8a6ea0c70fd0c4af7caa05502234f2baa5331bd",
+        "path": "/tmp/biomind-a1-stop-origin-after-01/results/scratch/biomind-plan-local-graph-unsl8wti/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "sha256": "3ab69b4bd7063fadf92cf1df94ba6897ab83f0ee671e86618bc6d3702decc598",
+        "proof_name": ".runtime-report-proof-a68913172bc4a864361a1874d8a6ea0c70fd0c4af7caa05502234f2baa5331bd",
+        "device": 2051,
+        "inode": 10768801
+      },
+      "status": "created",
+      "stop_id": "managed-stop:77fcca5bebb9b948efa7a1e1f152b5232ac633cdfc8deb99dbefff3474e756bd",
+      "task_id": "fix-f6-voluntary_stop"
+    },
+    "report.md": {
+      "path": "/tmp/biomind-a1-stop-origin-after-01/results/scratch/biomind-plan-local-graph-unsl8wti/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+      "sha256": "903517a9947a5ea071782ada17b0b46f526fc5e32e1a763ca8309f89e5a73746",
+      "operation_id": "8bd2de150e8391141f1ea2d7107a34c1c36bd8e975df1f2354e5c1126515f4cb",
+      "ownership": {
+        "operation_id": "8bd2de150e8391141f1ea2d7107a34c1c36bd8e975df1f2354e5c1126515f4cb",
+        "path": "/tmp/biomind-a1-stop-origin-after-01/results/scratch/biomind-plan-local-graph-unsl8wti/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+        "sha256": "903517a9947a5ea071782ada17b0b46f526fc5e32e1a763ca8309f89e5a73746",
+        "proof_name": ".runtime-report-proof-8bd2de150e8391141f1ea2d7107a34c1c36bd8e975df1f2354e5c1126515f4cb",
+        "device": 2051,
+        "inode": 10768806
+      },
+      "status": "created",
+      "stop_id": "managed-stop:77fcca5bebb9b948efa7a1e1f152b5232ac633cdfc8deb99dbefff3474e756bd",
+      "task_id": "fix-f6-voluntary_stop"
+    }
+  }
+}

@@ -1,0 +1,527 @@
+{
+  "note": "Development runs; final candidate matrix is separately recorded. The one tty-approve failure in entry-03 is an over-strict test of the entire F2 pane equaling its body, despite existing title/prompt/diagnostic sections. Receipt/current-body checks passed. New assertion checks the whole frozen body as an exact contiguous value within existing chrome. No production change was made for that test assumption.",
+  "runs": [
+    {
+      "root": "/tmp/biomind-f4-entry-01",
+      "source_signature": "e5150397b31995216dd92879852b43158c9e77b42d0633821626ad575f13ecb4",
+      "baseline_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "pytest": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[OSError]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[ValueError]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_actual_answer_missing_question_and_old_answer_stay_distinct",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[cancel]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[interrupt]",
+          "outcome": "passed"
+        }
+      ],
+      "pty_checks": []
+    },
+    {
+      "root": "/tmp/biomind-f5-entry-01",
+      "source_signature": "7f7dea3b4be38a418dd98c6287a180b2f68a8a6c585914b6a67d3973702bac1a",
+      "baseline_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "pytest": [],
+      "pty_checks": [
+        {
+          "case": "plain-approve",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true
+          }
+        },
+        {
+          "case": "tty-approve",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "same_body_in_f2": true,
+            "default_scrolled": true,
+            "resize_same_scope": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true
+          }
+        },
+        {
+          "case": "tty-nonsemantic",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true
+          }
+        },
+        {
+          "case": "tty-semantic",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "stale_input_rejected": true
+          }
+        }
+      ]
+    },
+    {
+      "root": "/tmp/biomind-f5-entry-02",
+      "source_signature": "c7f50fe61428721df915d534e865b8974e443d96e45a09393f1db180149d61e2",
+      "baseline_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "pytest": [],
+      "pty_checks": [
+        {
+          "case": "plain-blank_paste",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true
+          }
+        },
+        {
+          "case": "tty-blank_paste",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true
+          }
+        },
+        {
+          "case": "tty-cancel",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true
+          }
+        },
+        {
+          "case": "tty-eof",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true
+          }
+        },
+        {
+          "case": "tty-fallback",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "same_pending_future_transferred_once": true,
+            "same_frozen_body_in_plain": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true
+          }
+        },
+        {
+          "case": "tty-feedback",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "feedback_not_approval": true
+          }
+        },
+        {
+          "case": "tty-queued",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true
+          }
+        },
+        {
+          "case": "tty-reject",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "feedback_not_approval": true
+          }
+        }
+      ]
+    },
+    {
+      "root": "/tmp/biomind-f45-entry-03",
+      "source_signature": "a3b57f394f7cb34c5f42bed0723bd535bb3506ade63fbde885e51b04b4a73de5",
+      "baseline_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "pytest": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[OSError]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[ValueError]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_actual_answer_missing_question_and_old_answer_stay_distinct",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[cancel]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[interrupt]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_real_question_interrupt_and_eof_wait_without_answer_or_approval",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_framed_task_tail_and_intentional_identical_feedback[\\x1b[200~first\\nlast\\n\\n\\x1b[201~\\n-first\\nlast\\n\\n]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_framed_task_tail_and_intentional_identical_feedback[\\x1b[200~first\\r\\nlast\\r\\n\\r\\n\\x1b[201~\\r\\n-first\\nlast\\n\\n]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[y]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[\\x1b[200~unfinished\\n]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[\\x1b[200~\\n\\n]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_explicit_multiline_preserves_blank_lines_and_next_decision",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_no_paste_drain_called_by_production_prompt",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_preexisting_pipe_tail_is_retained_and_cannot_approve",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[\\n\\n]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[  ]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[-approve]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[   -approve]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[y-approve]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[yes-approve]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n-reject]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n: keep the current input-reject]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[q-quit]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[e: printf edited-edit]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[edit: printf edited-edit]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[please use the current scope-reject]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[this is pasted feedback\\n/details\\nkeep the original files-reject]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[None-reject]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_visibility.py::test_existing_safe_automatic_approval_and_unknown_manual_scope",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[True]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[False]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_finite_prior_writer_batch_precedes_input",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_details_is_same_request_and_does_not_decide",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_second_reader_and_stale_context_are_rejected",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_eof_is_not_empty_enter",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_urgent_output_preserves_input_for_same_request",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_writer_failure_never_enables_input",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_paste_keeps_details_text_inside_feedback",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_legacy_non_safe_enter_keeps_its_original_rule",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[predicate]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[close]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_unfinished_tty_writer_cannot_create_a_competing_plain_writer",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_pending_tty_view_cannot_be_replaced_by_late_review_or_detail",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_queued_tty_read_moves_once_to_already_cancelled_plain_owner",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[y]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[n]",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[eof]",
+          "outcome": "passed"
+        }
+      ],
+      "pty_checks": [
+        {
+          "case": "plain-approve",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true,
+            "one_current_owner_decision": true,
+            "receipt_current_frozen_version": true
+          }
+        },
+        {
+          "case": "plain-feedback",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "default_body_visible": true,
+            "correct_acceptance": true,
+            "feedback_not_approval": true
+          }
+        },
+        {
+          "case": "tty-approve",
+          "passed": false,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "entire_frozen_body_in_current_view": true,
+            "default_body_visible": true,
+            "same_body_in_f2": true,
+            "entire_frozen_body_in_f2": false,
+            "default_scrolled": true,
+            "resize_same_scope": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true,
+            "one_current_owner_decision": true,
+            "receipt_current_frozen_version": true
+          }
+        },
+        {
+          "case": "tty-fallback",
+          "passed": true,
+          "checks": {
+            "child_rc0": true,
+            "business_done": true,
+            "source_unchanged": true,
+            "one_frozen_plan": true,
+            "no_execution_or_code_approval": true,
+            "fixed_provider_only": true,
+            "full_body_bound_before_confirmation": true,
+            "entire_frozen_body_in_current_view": true,
+            "default_body_visible": true,
+            "same_pending_future_transferred_once": true,
+            "same_frozen_body_in_plain": true,
+            "correct_acceptance": true,
+            "formal_review_receipt": true,
+            "one_current_owner_decision": true,
+            "receipt_current_frozen_version": true
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "status": "FINAL08_THREE_REAL_GRAPH_STOP_ORIGIN_FIX_PASS",
+  "owned_production_hunk": "agent_core/workflow/managed_stop.py::build_managed_stop, five inserted lines only in not packet / Generate origin projection",
+  "unchanged_production_builder": "agent_core/workflow/inspection_stop.py",
+  "scope": "report origin fields only; no route/budget/approval/execution changes",
+  "default_owner_contract": "RecoveryFailureOwner.UNKNOWN; explicit original GENERATED_ACTION retained",
+  "runs": {
+    "before01": {
+      "root": "/tmp/biomind-a1-stop-origin-before-01",
+      "returncode": 1,
+      "summary": "1 failed in 17.25s",
+      "source_signature": "2f734455c65f6836c33a2280246bec463a74fc27a63d6814d33baaa518dcb4a0",
+      "file_count": 446,
+      "source_changes_after_run": [],
+      "source_hashes": {
+        "agent_core/workflow/managed_stop.py": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+        "agent_core/workflow/inspection_stop.py": "438aacac19969d0010b42616b5dc271f9c60bd38ac35cb10329d855cdd59ed6c",
+        "tests/a1_unified_fix/test_f3_stop_origin.py": "a9e7a1ea4c958c525b2929e476b9f0a1e780319e4b645e8265b018195537ad08"
+      }
+    },
+    "after01": {
+      "root": "/tmp/biomind-a1-stop-origin-after-01",
+      "returncode": 0,
+      "summary": "3 passed in 50.21s",
+      "source_signature": "46395712f1f1ccee429c7f0e26107036eae7f368c9ea9a996d6577c4c1e52222",
+      "file_count": 446,
+      "source_changes_after_run": [],
+      "source_hashes": {
+        "agent_core/workflow/managed_stop.py": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593",
+        "agent_core/workflow/inspection_stop.py": "438aacac19969d0010b42616b5dc271f9c60bd38ac35cb10329d855cdd59ed6c",
+        "tests/a1_unified_fix/test_f3_stop_origin.py": "7941e7924f3fc4760fe296471e91d37db75c7c365f2e7648bee78e95bc265801"
+      }
+    }
+  },
+  "original_final06_evidence": {
+    "persistent_file": "original_final06_repeat.full.json.gz",
+    "sha256": "f07ac1b9311119d878b87fbab9c53b8da052293b7454050519bad2c6fc8089df",
+    "pointers": {
+      "origin": "/terminal/terminal_diagnostic/origin",
+      "stage": "/terminal/terminal_diagnostic/stage",
+      "primary_owner": "/values/generate_outcome/payload/primary_cause/owner",
+      "zero_recovery": "/counts/recovery"
+    },
+    "projection": {
+      "stage": "generate",
+      "origin": {
+        "source_stage": "recovery",
+        "source_owner": "semantic_review",
+        "failure_id": "",
+        "failure_type": "generated_action_contract_error",
+        "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+        "summary": "execute.env must be an object of string values.",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "causal_execution": {
+        "status": "UNKNOWN"
+      },
+      "primary_owner": "GENERATED_ACTION",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      }
+    }
+  },
+  "before_production_matches_final06": {
+    "agent_core/workflow/managed_stop.py": true,
+    "agent_core/workflow/inspection_stop.py": true
+  },
+  "after_test_projections": {
+    "generate_repeat": {
+      "file": "after01/f6-f3-stop-origin-generate_repeat.json",
+      "sha256": "3674641c74f7084bc13da0015e0f6e576edd3eb3c7e06c5b3502f70e4a59d064",
+      "stage": "generate",
+      "origin": {
+        "source_stage": "generate",
+        "source_owner": "GENERATED_ACTION",
+        "failure_id": "",
+        "failure_type": "generated_action_contract_error",
+        "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+        "summary": "execute.env must be an object of string values.",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "report_has_expected_source": true
+    },
+    "generate_blocked": {
+      "file": "after01/f6-f3-stop-origin-generate_blocked.json",
+      "sha256": "93121790098fb9907dcd0a23e621d3d639f589c164bec597d8e59918902b1b57",
+      "stage": "generate",
+      "origin": {
+        "source_stage": "generate",
+        "source_owner": "UNKNOWN",
+        "failure_id": "",
+        "failure_type": "blocked",
+        "error_code": "GENERATE_BLOCKED",
+        "summary": "Generate recorded a durable terminal blocker.",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "report_has_expected_source": true
+    },
+    "execute_recovery_stop": {
+      "file": "after01/f6-f3-stop-origin-execute_recovery_stop.json",
+      "sha256": "d767551c69cafcb422bff4e723f54fab2cafca4dc0120e12eca65938fec0f035",
+      "stage": "recovery",
+      "origin": {
+        "source_stage": "execute",
+        "source_owner": "GENERATED_ACTION",
+        "failure_id": "failure-d9aaffc2809ab062a9ab26a1",
+        "failure_type": "execution_failed",
+        "error_code": "EXECUTION_FAILED",
+        "summary": "A launched command failed after immutable evidence persistence.",
+        "concerns": [],
+        "evidence_refs": [
+          "exec-attempt_00a588b4bad20f8a2ba5"
+        ],
+        "returncode": 7,
+        "attempt_id": "attempt_00a588b4bad20f8a2ba5",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "report_has_expected_source": true
+    }
+  },
+  "limits": [
+    "fixed provider/external science leaf; real parser/approval/CAS/terminal/report code",
+    "before01 ran Generate repeat only; after01 added formal blocked and actual Execute-parent controls",
+    "no original session business load, no original approved script or scientific resources",
+    "Current integration proof is final08 with real fixed-leaf graphs; historical component receipts remain separate."
+  ],
+  "current_result_pointer": "unified_final08",
+  "unified_final08": {
+    "counts": {
+      "passed": 3
+    },
+    "unique_nodeids": 3,
+    "exit": {
+      "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-08/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_stop_origin.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+    "loaded_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+    "source_file_count": 457,
+    "source_unchanged": true,
+    "source_and_test_match": {
+      "agent_core/workflow/managed_stop.py": true,
+      "agent_core/workflow/inspection_stop.py": true,
+      "tests/a1_unified_fix/test_f3_stop_origin.py": true
+    },
+    "receipt_directory": "final08",
+    "root_receipt_directory": "../final/final08_runs/origin",
+    "fresh_results": "/tmp/biomind-a1-unified-final-08/origin",
+    "test_results": [
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]",
+        "outcome": "passed",
+        "duration": 16.774970936588943
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_blocked]",
+        "outcome": "passed",
+        "duration": 18.49879847280681
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[execute_recovery_stop]",
+        "outcome": "passed",
+        "duration": 14.235908141359687
+      }
+    ],
+    "artifact_sha256": {
+      "run_exit.json": "da25150506231f96c60f9c43ebb8a87a613365dec5f8321468d7573346bc2c61",
+      "invocation.json": "e2986056a8addd867e63e7ac7ce347e58d3630d39dcf8996226f0ea388d28d8d",
+      "stdout.txt.gz": "1570065aa9b70363cdd06ac0f97925b32c9de3c815502552188814497c1040f1",
+      "pytest-results.json": "c9987f5752c176124c58eb15b5341083bf0fb885d7a38063b24e9bafa05a851f",
+      "export_manifest.json": "5b6b1841b3f441286dea25cd692a4228b00e675459163c7d807f4a9b9d0ca819",
+      "f6-f3-stop-origin-generate_blocked.json": "5418b4a8a01a6f2c2ce74655bd11eae79fa84259bfede27143510eed88076101",
+      "f6-f3-stop-origin-generate_repeat.json": "e251985430681f3da2a5653462d68c68e220bb5cafeb03f79ae95bfc06181fb0",
+      "f6-f3-stop-origin-execute_recovery_stop.json": "012400301cd3ce6749c3b031c3af4f7fef34277dfeeb8f8b6ffd45ffc22f97de"
+    }
+  }
+}

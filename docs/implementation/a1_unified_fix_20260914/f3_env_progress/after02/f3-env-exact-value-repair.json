@@ -1,0 +1,217 @@
+[
+  {
+    "first_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.BAD",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "next_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.NEXT",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "expected_first_field": "env.BAD",
+    "expected_gained": [
+      "execute.env.BAD"
+    ],
+    "assessment": {
+      "schema_version": 1,
+      "producer": "biomind.generate_candidate_admission.v1",
+      "progress_proven": true,
+      "basis": "validated_representation_target",
+      "comparison_fingerprint": "1518e56adc38bacc1036769041c64b1feda523ff610cf319ed20806555d56450",
+      "validation_signature": "da1d2014e5091c299c0201db63b8b8b392920c76449dd1336eb8fbe453f088c7",
+      "representation_targets": [
+        "action_type",
+        "execute.argv_shape",
+        "execute.env.BAD",
+        "execute.env_keys",
+        "execute.env_object",
+        "execute.executable_body",
+        "execute.outputs_shape",
+        "json_object"
+      ],
+      "binding_facts": null,
+      "binding_axis": "not_evaluated",
+      "newly_satisfied_targets": [
+        "execute.env.BAD"
+      ],
+      "resolved_targets": [
+        "env.BAD"
+      ],
+      "pending_targets": [
+        "env.NEXT"
+      ],
+      "scientific_success": "not_assessed"
+    }
+  },
+  {
+    "first_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.BAD",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "next_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.NEXT",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "expected_first_field": "env.BAD",
+    "expected_gained": [
+      "execute.env.BAD"
+    ],
+    "assessment": {
+      "schema_version": 1,
+      "producer": "biomind.generate_candidate_admission.v1",
+      "progress_proven": true,
+      "basis": "validated_representation_target",
+      "comparison_fingerprint": "1518e56adc38bacc1036769041c64b1feda523ff610cf319ed20806555d56450",
+      "validation_signature": "da1d2014e5091c299c0201db63b8b8b392920c76449dd1336eb8fbe453f088c7",
+      "representation_targets": [
+        "action_type",
+        "execute.argv_shape",
+        "execute.env.BAD",
+        "execute.env_keys",
+        "execute.env_object",
+        "execute.executable_body",
+        "execute.outputs_shape",
+        "json_object"
+      ],
+      "binding_facts": null,
+      "binding_axis": "not_evaluated",
+      "newly_satisfied_targets": [
+        "execute.env.BAD"
+      ],
+      "resolved_targets": [
+        "env.BAD"
+      ],
+      "pending_targets": [
+        "env.NEXT"
+      ],
+      "scientific_success": "not_assessed"
+    }
+  },
+  {
+    "first_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.BAD",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "next_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.NEXT",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "expected_first_field": "env.BAD",
+    "expected_gained": [
+      "removed_optional_field:env.BAD"
+    ],
+    "assessment": {
+      "schema_version": 1,
+      "producer": "biomind.generate_candidate_admission.v1",
+      "progress_proven": true,
+      "basis": "validated_representation_target",
+      "comparison_fingerprint": "859663bd4949041aae6966fd066cd1c6fd809fb86bb4265956e63b971e0e44c5",
+      "validation_signature": "55f6f5b206bae47c5b89aa4c710d56de4c30c5e9408a8188df27a634ef41956a",
+      "representation_targets": [
+        "action_type",
+        "execute.argv_shape",
+        "execute.env_keys",
+        "execute.env_object",
+        "execute.executable_body",
+        "execute.outputs_shape",
+        "json_object"
+      ],
+      "binding_facts": null,
+      "binding_axis": "not_evaluated",
+      "newly_satisfied_targets": [
+        "removed_optional_field:env.BAD"
+      ],
+      "resolved_targets": [
+        "env.BAD"
+      ],
+      "pending_targets": [
+        "env.NEXT"
+      ],
+      "scientific_success": "not_assessed"
+    }
+  },
+  {
+    "first_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env keys must be non-empty strings.",
+      "field_path": "env",
+      "expected": "non-empty string keys",
+      "actual": "string",
+      "response_container_source": "raw_json"
+    },
+    "next_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.NEXT",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "expected_first_field": "env",
+    "expected_gained": [
+      "execute.env_keys"
+    ],
+    "assessment": {
+      "schema_version": 1,
+      "producer": "biomind.generate_candidate_admission.v1",
+      "progress_proven": true,
+      "basis": "validated_representation_target",
+      "comparison_fingerprint": "2acf9e7b229bc459d03857135afd70e07cabca7b80c5139754a00b048d299a8d",
+      "validation_signature": "e0320d3d5ee5e2411b0ea30db33f585bc18493bbd625d39ae8df48994424003a",
+      "representation_targets": [
+        "action_type",
+        "execute.argv_shape",
+        "execute.env.VALID",
+        "execute.env_keys",
+        "execute.env_object",
+        "execute.executable_body",
+        "execute.outputs_shape",
+        "json_object"
+      ],
+      "binding_facts": null,
+      "binding_axis": "not_evaluated",
+      "newly_satisfied_targets": [
+        "execute.env_keys"
+      ],
+      "resolved_targets": [
+        "env"
+      ],
+      "pending_targets": [
+        "env.NEXT"
+      ],
+      "scientific_success": "not_assessed"
+    }
+  }
+]

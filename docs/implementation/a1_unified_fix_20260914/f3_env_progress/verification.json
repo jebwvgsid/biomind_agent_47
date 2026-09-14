@@ -1,0 +1,580 @@
+{
+  "status": "FINAL08_ENV_FIVE_CASE_FIX_PASS_WITH_F3_33_CASE_REGRESSION",
+  "before_final04_production_byte_match": {
+    "bio_agents.py": true,
+    "agent_core/workflow/candidate_repair.py": true
+  },
+  "negative_assertions_unchanged": {
+    "test_env_key_reordering_is_recurrence_without_false_resolution": "68ccb26b673bf777aaee44ad76ae819db3027a6691c4cc9fdb329e759e092bb5",
+    "test_unrelated_valid_env_key_does_not_repair_pending_field": "5a95a0c0313c1fac9355f5ae17bfaacf58629f2f03fc98b11e2a8855982b2b1e"
+  },
+  "runs": {
+    "before01": {
+      "root": "/tmp/biomind-a1-f3-env-before-01",
+      "returncode": 1,
+      "summary": "2 failed, 2 deselected in 4.37s",
+      "source_signature": "60896d753eddaf8b267b48de1b940452fb6a436ee44f0af47d59ebbe1882bcc2",
+      "source_hashes": {
+        "bio_agents.py": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+        "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+        "tests/a1_unified_fix/test_f3_env_progress.py": "d7fb8da1d6e4b3c109a009db3f4af81cc42f0966420b272be5565ed40811d212"
+      }
+    },
+    "after01": {
+      "root": "/tmp/biomind-a1-f3-env-after-01",
+      "returncode": 0,
+      "summary": "4 passed in 11.08s",
+      "source_signature": "f410a8868eace8b391f930b315b30bf021062093377b7ac6abd1f601c5dc5b08",
+      "source_hashes": {
+        "bio_agents.py": "e3b328046a67eaf54501a6e7e0fc78de0a2a2d97b14b1bbb06a1064a9eb43cf3",
+        "agent_core/workflow/candidate_repair.py": "c582566c5ce4a311ac333c627aed26faac2c9d6c508d5b722e27df0072193039",
+        "tests/a1_unified_fix/test_f3_env_progress.py": "ff65aac5571819b7f4651c841b2b51a0082a13f10c9cf005c6c0abfd09839736"
+      }
+    },
+    "after02": {
+      "root": "/tmp/biomind-a1-f3-env-after-02",
+      "returncode": 0,
+      "summary": "4 passed in 11.71s",
+      "source_signature": "e0c8ff0dce15227bf6dd987e68b3a2dbf94facd8e49ad55d2a388c9de08b64c4",
+      "source_hashes": {
+        "bio_agents.py": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+        "agent_core/workflow/candidate_repair.py": "6a8a7f031285992d2b29a44cfa8f0a8890ed1964d76ea6cc382e962b84bed87a",
+        "tests/a1_unified_fix/test_f3_env_progress.py": "b3679523517c36a3df2bce35aef2f1cea7b3cd7ca60a41fc58ea230546a000a3"
+      },
+      "manifest_files": 444,
+      "post_run_manifest_mismatches": []
+    },
+    "before02": {
+      "root": "/tmp/biomind-a1-f3-env-before-02",
+      "returncode": 1,
+      "summary": "1 failed in 4.37s",
+      "source_signature": "71bf8f24849f221330db12f36d83873187b60e1358bb3ad5d84525762a373264",
+      "source_hashes": {
+        "bio_agents.py": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+        "agent_core/workflow/candidate_repair.py": "6a8a7f031285992d2b29a44cfa8f0a8890ed1964d76ea6cc382e962b84bed87a",
+        "tests/a1_unified_fix/test_f3_env_progress.py": "64ba7f64592e0ae1c8ccda052c100d69411f05ae96c6ea9d26b8664e1bd4dec8"
+      },
+      "manifest_files": 444,
+      "post_run_manifest_mismatches": []
+    },
+    "after03": {
+      "root": "/tmp/biomind-a1-f3-env-after-03",
+      "returncode": 0,
+      "summary": "5 passed in 11.08s",
+      "source_signature": "e3f31ee8544daa52c84e1d287c8d4df1c4221548fea137789900d7be68389718",
+      "source_hashes": {
+        "bio_agents.py": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+        "agent_core/workflow/candidate_repair.py": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b",
+        "tests/a1_unified_fix/test_f3_env_progress.py": "64ba7f64592e0ae1c8ccda052c100d69411f05ae96c6ea9d26b8664e1bd4dec8"
+      },
+      "manifest_files": 444,
+      "post_run_manifest_mismatches": []
+    },
+    "before03": {
+      "root": "/tmp/biomind-a1-f3-env-before-03",
+      "returncode": 1,
+      "summary": "1 failed in 3.94s",
+      "source_signature": "17ea2c6614b0fdaf3519b58deba0a3788d77b31885622b9ef95451b4e04c17d6",
+      "source_hashes": {
+        "bio_agents.py": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+        "agent_core/workflow/candidate_repair.py": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b",
+        "tests/a1_unified_fix/test_f3_env_progress.py": "40a7b5afe03250570c397d617b4e001bc5d40aec203f5e19dd93b20b978a36a7"
+      },
+      "manifest_files": 445,
+      "post_run_manifest_mismatches": []
+    },
+    "after04": {
+      "root": "/tmp/biomind-a1-f3-env-after-04",
+      "returncode": 0,
+      "summary": "5 passed in 10.99s",
+      "source_signature": "7faa35344ffbefe1a14481357796725a23461636a26106da247e049d0c278c5c",
+      "source_hashes": {
+        "bio_agents.py": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+        "agent_core/workflow/candidate_repair.py": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa",
+        "tests/a1_unified_fix/test_f3_env_progress.py": "40a7b5afe03250570c397d617b4e001bc5d40aec203f5e19dd93b20b978a36a7"
+      },
+      "manifest_files": 445,
+      "post_run_manifest_mismatches": []
+    }
+  },
+  "production_scope": [
+    "bio_agents.py::_structured_action_from_object_result env block",
+    "agent_core/workflow/candidate_repair.py::candidate_progress_assessment"
+  ],
+  "limit": "fixed provider; fresh formal Plan/parser/CAS/admission and shared Recovery policy only; no science Execute; old final04 18PASS did not cover these two negative boundaries",
+  "production_frozen": true,
+  "after02_added_positive_oracles": [
+    "removing previously valid optional env key does not negate exact BAD repair",
+    "previously invalid optional env key removed from actual Mapping is resolved",
+    "invalid empty env key corrected is demonstrated by env_keys checkpoint"
+  ],
+  "final04_limitation": "All 18 F6 cases PASS at final04 did not cover JSON env-order/unrelated-field progress. Before01 FAIL demonstrates this boundary on identical final04 production bytes; no old PASS relabelled as this FIX.",
+  "current_pointer": "unified_final08",
+  "before02_same_candidate_old_progress_row": "FAIL: additional env_keys alone previously granted progress; raw old-row unchanged witness preserved",
+  "after03_comparison_context": "same canonical candidate + binding facts + contract identifies recurrence independently of representation diagnostic version; legacy context derived read-only from existing old row",
+  "before02_after03_test_file_identical": true,
+  "before03_final05_production_match": {
+    "bio_agents.py": true,
+    "agent_core/workflow/candidate_repair.py": true
+  },
+  "before03_after04_test_file_identical": true,
+  "before03_counterexample": "Existing old progress row + merely changed prose or unrelated valid env field still gained env_keys after03; same canonical was already blocked. All three witnesses preserved before assertions.",
+  "after04_filter": "New env_keys checkpoint can independently count as gain only for previous exact pending env key-shape error. Context recurrence fix retained; earlier JSON/code/outputs progress has other actual structural checkpoints.",
+  "component_current_pointer": "after04",
+  "unified_final06": {
+    "counts": {
+      "passed": 33
+    },
+    "unique_nodeids": 33,
+    "exit": {
+      "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-06/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_progress.py",
+        "tests/a1_unified_fix/test_f3_claims.py",
+        "tests/a1_unified_fix/test_f3_late_result.py",
+        "tests/a1_unified_fix/test_f3_env_progress.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+    "loaded_head": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+    "source_unchanged": true,
+    "production_and_env_test_match": {
+      "bio_agents.py": true,
+      "agent_core/workflow/candidate_repair.py": true,
+      "agent_core/recovery.py": true,
+      "tests/a1_unified_fix/test_f3_env_progress.py": true
+    },
+    "receipt_directory": "final/final06_runs/f3",
+    "fresh_results": "/tmp/biomind-a1-unified-final-06/f3",
+    "manifest_sha256": "a17b0c9f72f86f2948c58c5974cf902a7d0ce51f2507eb0f66cfbb87120e5dfd",
+    "test_results": [
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+        "outcome": "passed",
+        "duration": 0.0011745123192667961
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+        "outcome": "passed",
+        "duration": 0.0003198077902197838
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+        "outcome": "passed",
+        "duration": 0.00027515366673469543
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+        "outcome": "passed",
+        "duration": 0.00029809027910232544
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+        "outcome": "passed",
+        "duration": 0.00013449601829051971
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+        "outcome": "passed",
+        "duration": 0.00014069769531488419
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+        "outcome": "passed",
+        "duration": 0.00013326015323400497
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+        "outcome": "passed",
+        "duration": 0.00015815440565347672
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+        "outcome": "passed",
+        "duration": 10.193140842951834
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+        "outcome": "passed",
+        "duration": 9.817503553815186
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+        "outcome": "passed",
+        "duration": 9.893599624745548
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+        "outcome": "passed",
+        "duration": 9.789031418040395
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+        "outcome": "passed",
+        "duration": 5.619304056279361
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+        "outcome": "passed",
+        "duration": 3.153030780144036
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+        "outcome": "passed",
+        "duration": 3.120021551847458
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+        "outcome": "passed",
+        "duration": 0.0005304822698235512
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+        "outcome": "passed",
+        "duration": 0.0005508707836270332
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+        "outcome": "passed",
+        "duration": 0.0006926478818058968
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+        "outcome": "passed",
+        "duration": 7.482038497924805
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+        "outcome": "passed",
+        "duration": 7.6750993356108665
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.8160727536305785
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.6194043112918735
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+        "outcome": "passed",
+        "duration": 0.26166199520230293
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+        "outcome": "passed",
+        "duration": 0.0004768064245581627
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+        "outcome": "passed",
+        "duration": 2.033081702888012
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+        "outcome": "passed",
+        "duration": 2.1016466040164232
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+        "outcome": "passed",
+        "duration": 2.167842423543334
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+        "outcome": "passed",
+        "duration": 2.1020895708352327
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+        "outcome": "passed",
+        "duration": 0.0013997042551636696
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+        "outcome": "passed",
+        "duration": 0.000796852633357048
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+        "outcome": "passed",
+        "duration": 0.001909581944346428
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+        "outcome": "passed",
+        "duration": 0.0014299480244517326
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+        "outcome": "passed",
+        "duration": 7.4817022532224655
+      }
+    ],
+    "env_test_results": [
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+        "outcome": "passed",
+        "duration": 0.0013997042551636696
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+        "outcome": "passed",
+        "duration": 0.000796852633357048
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+        "outcome": "passed",
+        "duration": 0.001909581944346428
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+        "outcome": "passed",
+        "duration": 0.0014299480244517326
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+        "outcome": "passed",
+        "duration": 7.4817022532224655
+      }
+    ]
+  },
+  "unified_final08": {
+    "counts": {
+      "passed": 33
+    },
+    "unique_nodeids": 33,
+    "exit": {
+      "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-08/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_progress.py",
+        "tests/a1_unified_fix/test_f3_claims.py",
+        "tests/a1_unified_fix/test_f3_late_result.py",
+        "tests/a1_unified_fix/test_f3_env_progress.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+    "loaded_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+    "source_unchanged": true,
+    "production_and_env_test_match": {
+      "bio_agents.py": true,
+      "agent_core/workflow/candidate_repair.py": true,
+      "agent_core/recovery.py": true,
+      "tests/a1_unified_fix/test_f3_env_progress.py": true
+    },
+    "receipt_directory": "final/final08_runs/f3",
+    "fresh_results": "/tmp/biomind-a1-unified-final-08/f3",
+    "manifest_sha256": "5b6b1841b3f441286dea25cd692a4228b00e675459163c7d807f4a9b9d0ca819",
+    "test_results": [
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+        "outcome": "passed",
+        "duration": 0.0011569159105420113
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+        "outcome": "passed",
+        "duration": 0.0003045937046408653
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+        "outcome": "passed",
+        "duration": 0.00027657393366098404
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+        "outcome": "passed",
+        "duration": 0.00030946824699640274
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+        "outcome": "passed",
+        "duration": 0.00013960245996713638
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+        "outcome": "passed",
+        "duration": 0.0001352531835436821
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+        "outcome": "passed",
+        "duration": 0.00013672932982444763
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+        "outcome": "passed",
+        "duration": 0.00014594383537769318
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+        "outcome": "passed",
+        "duration": 10.03538825083524
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+        "outcome": "passed",
+        "duration": 10.068876249715686
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+        "outcome": "passed",
+        "duration": 9.591067687608302
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+        "outcome": "passed",
+        "duration": 8.214981551282108
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+        "outcome": "passed",
+        "duration": 5.757471711374819
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+        "outcome": "passed",
+        "duration": 3.1150142243131995
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+        "outcome": "passed",
+        "duration": 3.364633657038212
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+        "outcome": "passed",
+        "duration": 0.0005265288054943085
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+        "outcome": "passed",
+        "duration": 0.0005792947486042976
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+        "outcome": "passed",
+        "duration": 0.0007192762568593025
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+        "outcome": "passed",
+        "duration": 7.609824824146926
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+        "outcome": "passed",
+        "duration": 7.690547469072044
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.542701519094408
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.321135547012091
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+        "outcome": "passed",
+        "duration": 0.20052486471831799
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+        "outcome": "passed",
+        "duration": 0.00042129959911108017
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+        "outcome": "passed",
+        "duration": 2.1639444790780544
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+        "outcome": "passed",
+        "duration": 2.112720239907503
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+        "outcome": "passed",
+        "duration": 1.9680931027978659
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+        "outcome": "passed",
+        "duration": 2.1425184989348054
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+        "outcome": "passed",
+        "duration": 0.0013640932738780975
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+        "outcome": "passed",
+        "duration": 0.0007731234654784203
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+        "outcome": "passed",
+        "duration": 0.0017747953534126282
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+        "outcome": "passed",
+        "duration": 0.001525774598121643
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+        "outcome": "passed",
+        "duration": 7.568193747662008
+      }
+    ],
+    "env_test_results": [
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+        "outcome": "passed",
+        "duration": 0.0013640932738780975
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+        "outcome": "passed",
+        "duration": 0.0007731234654784203
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+        "outcome": "passed",
+        "duration": 0.0017747953534126282
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+        "outcome": "passed",
+        "duration": 0.001525774598121643
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+        "outcome": "passed",
+        "duration": 7.568193747662008
+      }
+    ]
+  }
+}

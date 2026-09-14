@@ -1,0 +1,28 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-a1-unified-final-05/export/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-a1-unified-final-05/export",
+    "-s",
+    "-q",
+    "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+    "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+    "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+    "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-a1-final05-public-recovery_pure-01/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-a1-final05-public-recovery_pure-01/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-a1-final05-public-recovery_pure-01",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-a1-final05-public-recovery_pure-01",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-a1-final05-public-recovery_pure-01/scratch/executor-logs"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "returncode": 1,
+  "source_signature": "2f734455c65f6836c33a2280246bec463a74fc27a63d6814d33baaa518dcb4a0",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]"
+  ]
+}

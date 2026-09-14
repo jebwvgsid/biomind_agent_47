@@ -1,0 +1,9 @@
+{
+  "main_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "carrier_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "production_files_compared": 343,
+  "production_differences": [],
+  "common_test_differences": [],
+  "carrier_extra_files": [],
+  "main_additional_tests": []
+}

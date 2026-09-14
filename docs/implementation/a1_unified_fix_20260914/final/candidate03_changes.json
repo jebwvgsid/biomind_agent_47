@@ -1,0 +1,18 @@
+{
+  "final02_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+  "final03_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+  "changed_files": {
+    "agent_core/step_effects.py": {
+      "before": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+      "after": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+    },
+    "tests/a1_unified_fix/test_terminal_hooks.py": {
+      "before": "b0298020f1561a0948fe572b78c0bc6fd99bcef677f16ad97de0fa4b6c23d41d",
+      "after": "ee3c56bc04f63acb911d20a1854b628ce95e4beb08febed4e6b4d079009c900f"
+    }
+  },
+  "added_files": {
+    "tests/a1_unified_fix/test_f2_scope.py": "06b08dba68df24f792f61c455ce1ff412fdfcf337b7d8d85dc9f54be849c9b75"
+  },
+  "production_retest_policy": "Repeat all helper consumers, 15 main graphs, 3 formal carriers, F1 protocol/F3 affected callers and terminal hook graph cases. Reuse F4/F5 and independent context/archive hooks only with unchanged call-region evidence."
+}

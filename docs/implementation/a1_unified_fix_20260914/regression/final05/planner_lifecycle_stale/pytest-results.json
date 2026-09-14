@@ -1,0 +1,77 @@
+[
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012405775487422943,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.367132152430713,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0005368506535887718,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012416020035743713,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.0358289880678058,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014895666390657425,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.054690599441528e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.940766477957368,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013106968253850937,
+    "failure": ""
+  }
+]

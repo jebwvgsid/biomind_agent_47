@@ -1,0 +1,198 @@
+SOURCE_IDENTITY 22710c626506956990c8e9bc9b778c9a55b35cbae356ef0c57ea3ef223463a43
+SYNTHETIC_CONFIG {"ANACONDA_ROOT": null, "BIOMIND_MEMORY_DIR": "/tmp/biomind-f45-entry-final/tty-approve/scratch/managed-bootstrap-wsrpsgt2/memory", "BIOMIND_STEP_WORKER_BACKEND": "legacy", "BIOMIND_WIKI_DIR": "/tmp/biomind-f45-entry-final/tty-approve/scratch/managed-bootstrap-wsrpsgt2/wiki", "BIOMIND_WIKI_ENABLED": false, "BIOMIND_WIKI_INGEST_MODE": "off", "BIO_SOFTWARE_ROOT": null, "BIO_SOURCE_INSTALL_DIR": null, "CONSULTANT_CANDIDATE_SKILL_LIMIT": 10, "CONSULTANT_DISCOVERY_REASONING_EFFORT": "low", "CONSULTANT_DISCOVERY_THINKING_ENABLED": false, "CONSULTANT_FINALIZE_BUDGET_POLICY_VERSION": 1, "CONSULTANT_FINALIZE_CONTEXT_LIMIT_TOKENS": 1, "CONSULTANT_FINALIZE_ESTIMATED_MICROUSD_PER_TOKEN": 1, "CONSULTANT_FINALIZE_MAX_BATCH_ITEMS": 1, "CONSULTANT_FINALIZE_MAX_CREATED_BATCHES": 1, "CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS": 1, "CONSULTANT_FINALIZE_MAX_PROVIDER_CALLS": 1, "CONSULTANT_FINALIZE_MAX_REPARTITION_DEPTH": 1, "CONSULTANT_FINALIZE_MAX_RESOLUTION_ITEMS": 1, "CONSULTANT_FINALIZE_MAX_TOTAL_COMPLETION_TOKENS": 1, "CONSULTANT_FINALIZE_MAX_TOTAL_ESTIMATED_COST_MICROUSD": 1, "CONSULTANT_FINALIZE_MAX_WALL_TIME_MS": 1, "CONSULTANT_FINALIZE_OUTPUT_HEADROOM_TOKENS": 1, "CONSULTANT_FINALIZE_PER_CALL_TIMEOUT_MS": 1, "CONSULTANT_FINALIZE_PROVIDER_OUTPUT_CAP_TOKENS": 1, "CONSULTANT_HISTORY_MAX_MESSAGES": 100, "CONSULTANT_HISTORY_TOKEN_BUDGET": 30000, "CONSULTANT_RESERVED_HEADROOM_TOKENS": 16000, "CONSULTANT_SKILL_TOKEN_BUDGET": 40000, "DEEPSEEK_TEMPERATURE": 0.0, "DEFAULT_PROJECT_ID": "offline", "ENABLE_COMMAND_TRACE": 1, "ENABLE_PIPESTATUS_CAPTURE": 1, "ENABLE_PROGRESS_DETECTOR": 1, "ENABLE_RECOVERY_PATCHING": 1, "ENABLE_ROOT_CAUSE_ANALYZER": false, "GENERATE_PROVIDER_MAX_ATTEMPTS": 3, "GENERATE_PROVIDER_RETRY_BASE_SECONDS": 0, "GENERATE_PROVIDER_RETRY_CAP_SECONDS": 0, "GENERATE_REASONING_EFFORT": "low", "GENERATE_THINKING_ENABLED": false, "KB_MAP": {}, "LLM_API_KEY": "", "LLM_BASE_URL": "https://offline.invalid/v1", "LLM_CANCEL_CLEANUP_TIMEOUT_SECONDS": 1, "LLM_DEFAULT_MODEL": "offline-model", "LLM_FIRST_CHUNK_TIMEOUT_SECONDS": 10, "LLM_MAX_HISTORY_CHARS": 500000, "LLM_MAX_HISTORY_MESSAGES": 100, "LLM_MAX_RETRIES": 0, "LLM_READONLY_TIMEOUT_SECONDS": 30, "LLM_STEP_CONTEXT_CHARS": 500000, "LLM_STEP_CONTEXT_MESSAGES": 100, "LLM_STEP_EPHEMERAL_CHARS": 50000, "LLM_STEP_PLAN_CHARS": 100000, "LLM_STEP_SKILL_DOC_CHARS": 200000, "LLM_STREAM_IDLE_TIMEOUT_SECONDS": 10, "LLM_TIMEOUT_SECONDS": 30, "LLM_TOTAL_TIMEOUT_SECONDS": 30, "MAX_CONSULTANT_IDENTICAL_NO_PROGRESS_TRANSITIONS": 1, "MAX_SKILL_BINDING_PROPOSALS_PER_STEP": 4, "MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION": 4, "MAX_SKILL_SEARCH_ROUNDS_PER_STEP": 4, "PLANNER_COMPRESSION_TOKEN_RATIO": 0.75, "PLANNER_CORRECTION_REASONING_EFFORT": "low", "PLANNER_CORRECTION_THINKING_ENABLED": false, "PLANNER_HARD_TOKEN_RATIO": 0.95, "PLANNER_NOMINAL_CHAR_BUDGET": 500000, "PLANNER_RESERVED_HEADROOM_TOKENS": 16000, "PLANNER_SOFT_TOKEN_RATIO": 0.6, "RAGFLOW_ADDRESS": "https://offline.invalid", "RAGFLOW_API_KEY": "", "RECOVERY_REASONING_EFFORT": "low", "RECOVERY_THINKING_ENABLED": false, "RERANK_MODEL_ID": "offline", "ROOT_CAUSE_TIMEOUT_SECONDS": 1, "SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS": 200000, "SCHEMA2_CONTEXT_COMPACTION_ENABLED": false, "SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS": 2048, "SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS": 16000, "SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS": 2048, "SESSION_ARCHIVE_OBSERVATION_QUEUE_SIZE": 1024, "SESSION_ARCHIVE_SHUTDOWN_DRAIN_SECONDS": 1, "SESSION_ARCHIVE_WRITER_BACKOFF_SECONDS": 0.01, "SESSION_ARCHIVE_WRITER_BUSY_TIMEOUT_SECONDS": 1, "SESSION_ARCHIVE_WRITER_MAX_ATTEMPTS": 3, "SKILLS_DIR": "/tmp/biomind-f45-entry-final/export/skills", "SKILL_CONTEXT_MAX_REQUESTS_PER_ROUND": 4, "SKILL_EXCERPT_MAX_CHARS": 24000, "SKILL_FULL_READ_MAX_CHARS": 200000, "WIKI_EMBEDDING_API_KEY": "", "WIKI_EMBEDDING_BASE_URL": "", "WIKI_EMBEDDING_DIMENSIONS": 1, "WIKI_EMBEDDING_ENABLED": false, "WIKI_EMBEDDING_MODEL": "offline"}
+[?12l[?25h[6n[?2004h[?1l[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m等待输入[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消[62D[A[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h🏭 Software Repository: /tmp/biomind-f45-entry-final/tty-approve/scratch/biomind-plan-local-graph-lpf0zeyu[0m
+[0m📂 Source Install Path (Default): /tmp/biomind-f45-entry-final/tty-approve/scratch/biomind-plan-local-graph-lpf0zeyu/source_tools[0m
+[?25l[?7l[A[0mtriage[0m[K[0m
+[?7h[0m[?12l[?25h[0m[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[A[0mconsultant[0m
+[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[A[0mplanner[0m[K[0m
+[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[A[4C[0m_review[0m
+[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[0;33;1m计划审批
+计划 plan_e33c5694231df57920a4 · 步骤数 12
+审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816
+下方为当前冻结计划的完整正文；可滚动查看后明确确认。
+/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。
+[0m[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m计划审批[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消[62D[A[?7h[0m[?12l[?25h[?25l[?7l[A[0m## Plan Identity                                                                       [87C[0;1m^[0m
+[0m- Plan ID: `plan_e33c5694231df57920a4`                                                 [87C[0;48;5;238m [0m
+[0m- Plan Version: `plan_v1`                                                              [87C[0;48;5;238m [0m
+[0m- Parent Version: `none`                                                               [87C[0;48;5;248m [0m
+[0m- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`    [87C[0;48;5;248m [0m
+[0m- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`   [87C[0;48;5;248m [0m
+[0m- Execution Cursor: `none`                                                             [87C[0;48;5;248m [0m
+[0m- Next Executable Step: `plan-inspect-0`                                               [87C[0;48;5;248m [0m
+[0m- Changed Stable Step IDs: `none`                                                      [87C[0;48;5;248m [0m
+[0m                                                                                       [87C[0;48;5;248m [0m
+[0m## Highlighted Constraints                                                             [87C[0;48;5;248m [0m
+[0m- none                                                                                 [87C[0;1mv[0m
+[0;33;1m等待计划审批 · 当前候选尚未执行[0m
+
+[0;33;1mApprove? [y/n/q] or type feedback > [0m
+[0m [0m
+[0mPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情[61D[A[?7h[0m[?12l[?25h[?25l[?7l[15A[0m- Plan ID: `plan_e33c5694231df57920a4` [0m
+[7C[0mVersion: `plan_v1`              [0m
+[3C[0marent Version: `none`  [0m
+[2C[0mSema[2Cic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2` [0m
+[2C[0mApproval[CScope: `0e4f[C5ca638f768f84d96[C5264eb43[C020126e2bc6341d37ff71885e2f41b9[C2` [0m
+[2C[0mExecution Cursor: `none`                                                           [0m
+[2C[0mNext Executable Step: `plan-inspect-0` [0m
+[2C[0mChanged Stable Step IDs: `[Cone`        [0m
+[0m                                  [0m
+[0m## Highlighted Constraints [0m
+[0m- none                     [0m
+[0m       [0m
+
+
+
+[?7h[0m[?12l[?25h[?25l[?7l[15A[0m计划审批                               [0m
+[0m                          [0m
+[0m## Pla[C Id[Cnt[Cty         [0m
+[2C[0mPlan ID:[C`plan_e33[2C694231df57920a4`                                              [0m
+[2C[0mPlan Version: `plan_v1`                                                            [0m
+[2C[0mParen[C Version: `no[Ce`   [0m
+[2C[0mS[Cmantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2` [0m
+[2C[0mApproval Scop[C: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922` [0m
+[0m- Execution Cursor: `none` [0m
+[0m- Next Executable S[Cep: `plan-inspect-0` [0m
+[2C[0mChanged Stable Step IDs: `none` [0m
+[0m                                                                                       [87C[0;48;5;248m [0m
+[0m## Highlighted Constraints                                                             [87C[0;48;5;248m [0m
+[0m- none                                                                                 [87C[0;48;5;248m [0m
+[0m                                                                                       [87C[0;1mv[0m
+[0;33;1m仍待审批 · Esc 返回；查看不代表批准[0m
+[0m↑↓ / [2CUp[CPgDn 浏览 · Esc 返回；Enter[C不批准[0m[K[16A[44D[?7h[0m[?12l[?25h[?25l[?7l[?7h[0m[?12l[?25h[?25l[?7l[0m## Plan Identity [0m
+[0m- Plan ID: `plan_e33c5694231df57920a4` [0m
+[0m- Plan Version: `plan_v1` [0m
+[3C[0marent Versio[C: `none`               [0m
+[2C[0mSemantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2` [0m
+[2C[0mApproval Scope[3C0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922` [0m
+[2C[0mExecu[2Con Cursor: `none`                                                          [0m
+[2C[0mNext Executable[CSt[Cp: `plan-inspect-0`                                             [0m
+[2C[0mChanged Stable Step IDs:[C`none` [0m
+[0m                                         [0m
+[0m## Highligh[Ced Constraints[C       [0m
+[0m- none                                                                                 [87C[0;1mv[0m
+[0;33;1m等待计划审批 · 当前候选尚未执行[0m[K[0m
+[0m [0m[K[0m
+[0;33;1mApprove? [y/n/q] or type feedback > [0m[K[0m
+[0m [0m[K[0m
+[0mPgUp/[2CDn[C计划正文 · Enter/y 批准 · n[C拒绝 · q 退出 · F2 详情[A[61D[?7h[0m[?12l[?25h[15A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m## Plan Identity                                                  [66C[0;1m^[0m
+[0m- Plan ID: `plan_e33c5694231df57920a4`                            [66C[0;48;5;238m [0m
+[0m- Plan Version: `plan_v1`                                         [66C[0;48;5;238m [0m
+[0m- Parent Version: `none`                                          [66C[0;48;5;248m [0m
+[0m- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed[66C[0;48;5;248m [0m
+[0m53c30e3ba516ccd2`                                                 [66C[0;48;5;248m [0m
+[0m- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d3[66C[0;48;5;248m [0m
+[0m7ff71885e2f41b922`                                                [66C[0;48;5;248m [0m
+[0m- Execution Cursor: `none`                                        [66C[0;48;5;248m [0m
+[0m- Next Executable Step: `plan-inspect-0`                          [66C[0;48;5;248m [0m
+[0m- Changed Stable Step IDs: `none`                                 [66C[0;48;5;248m [0m
+[0m                                                                  [66C[0;1mv[0m
+[0;33;1m等待计划审批 · 当前候选尚未执行[0m
+
+[0;33;1mApprove? [y/n/q] or type feedback > [0m
+[0m [0m
+[0mPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情[61D[A[?7h[0m[?12l[?25h[15A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m## Plan Identity                                                  [66C[0;1m^[0m
+[0m- Plan ID: `plan_e33c5694231df57920a4`                            [66C[0;48;5;238m [0m
+[0m- Plan Version: `plan_v1`                                         [66C[0;48;5;238m [0m
+[0m- Parent Version: `none`                                          [66C[0;48;5;248m [0m
+[0m- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed[66C[0;48;5;248m [0m
+[0m53c30e3ba516ccd2`                                                 [66C[0;48;5;248m [0m
+[0m- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d3[66C[0;48;5;248m [0m
+[0m7ff71885e2f41b922`                                                [66C[0;48;5;248m [0m
+[0m- Execution Cursor: `none`                                        [66C[0;48;5;248m [0m
+[0m- Next Executable Step: `plan-inspect-0`                          [66C[0;48;5;248m [0m
+[0m- Changed Stable Step IDs: `none`                                 [66C[0;48;5;248m [0m
+[0m                                                                  [66C[0;1mv[0m
+[0;33;1m等待计划审批 · 当前候选尚未执行[0m
+
+[0;33;1mApprove? [y/n/q] or type feedback > [0m
+[0m [0m
+[0mPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情[61D[A[?7h[0m[?12l[?25h[?25l[?7l[4A[0m                                                                  [66C[0;48;5;248m [0m
+[0m## Highlighted Constraints                                        [66C[0;48;5;248m [0m
+[0m- none                                                            [66C[0;1mv[0m
+[0;33;1m等待计划审批 · 当前候选尚未执行[0m[K[0m
+[0m [0m
+[0;33;1mApprove? [y/n/q] or type feedback > [0m[K[0m
+[0m [0m
+[0m [0m
+
+
+[0m [0m
+[0mPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情[61D[4A[?7h[0m[?12l[?25h[18A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m## Plan Identity                                                  [66C[0;1m^[0m
+[0m- Plan ID: `plan_e33c5694231df57920a4`                            [66C[0;48;5;238m [0m
+[0m- Plan Version: `plan_v1`                                         [66C[0;48;5;238m [0m
+[0m- Parent Version: `none`                                          [66C[0;48;5;248m [0m
+[0m- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed[66C[0;48;5;248m [0m
+[0m53c30e3ba516ccd2`                                                 [66C[0;48;5;248m [0m
+[0m- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d3[66C[0;48;5;248m [0m
+[0m7ff71885e2f41b922`                                                [66C[0;48;5;248m [0m
+[0m- Execution Cursor: `none`                                        [66C[0;48;5;248m [0m
+[0m- Next Executable Step: `plan-inspect-0`                          [66C[0;48;5;248m [0m
+[0m- Changed Stable Step IDs: `none`                                 [66C[0;48;5;248m [0m
+[0m                                                                  [66C[0;1mv[0m
+[0;33;1m等待计划审批 · 当前候选尚未执行[0m
+
+[0;33;1mApprove? [y/n/q] or type feedback > [0m
+[0m [0m
+[0mPgUp/PgDn 计划正文 · Enter/y 批准 · n 拒绝 · q 退出 · F2 详情[61D[A[?7h[0m[?12l[?25h[15A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[0m› 
+[0m[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m计划审批[0m
+[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消[62D[A[?7h[0m[?12l[?25h[?25l[?7l[A[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0m [0m[K[0m
+[0m [0m
+
+
+
+
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消[0m
+
+
+
+
+
+
+
+
+
+
+[0m [17A[?7h[0m[?12l[?25h[4A[J[0m[?7h[?1000l[?1015l[?1006l[?1003l[?2004l[0m✓ Plan approved. Preparing the current step...
+[0m[6n[?2004h[?1000h[?1003h[?1015h[?1006h[?25l[0m[?7l[0m[J[0m计划审批[0m
+[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消[62D[A[?7h[0m[?12l[?25h[?25l[?7l[A[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0m [0m[K[0m
+[0m [0m
+
+
+
+
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消[0m
+
+
+
+
+
+
+
+
+
+[0m [16A[?7h[0m[?12l[?25h[?25l[?7l[4A[0m[J[0m计划审批[0m
+[0m运行中可编辑本地草稿；尚未提交[0m
+[0m [0m
+[0mEnter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消[62D[0m
+[J[?7h[0m[?12l[?25h[?1000l[?1015l[?1006l[?1003l[?2004l[32m.[0m
+[32m[32m[1m1 passed[0m[32m in 23.89s[0m[0m
+
+PYTEST_EXIT_CODE=0
+RESULTS=/tmp/biomind-f45-entry-final/tty-approve/pytest-results.json
+SOURCE_UNCHANGED[0m [0mTrue[0m
+[0mIMPORTED_SOURCES[0m [0m{"__main__": "/tmp/biomind-f45-entry-final/export/tests/offline_managed_bootstrap.py", "__mp_main__": "/tmp/biomind-f45-entry-final/export/tests/offline_managed_bootstrap.py", "agent_core": "/tmp/biomind-f45-entry-final/export/agent_core/__init__.py", "agent_core.action_runtime": "/tmp/biomind-f45-entry-final/export/agent_core/action_runtime.py", "agent_core.active_state": "/tmp/biomind-f45-entry-final/export/agent_core/active_state.py", "agent_core.approved_resource_locator": "/tmp/biomind-f45-entry-final/export/agent_core/approved_resource_locator.py", "agent_core.candidate_repair_policy": "/tmp/biomind-f45-entry-final/export/agent_core/candidate_repair_policy.py", "agent_core.cli_activity": "/tmp/biomind-f45-entry-final/export/agent_core/cli_activity.py", "agent_core.cli_display": "/tmp/biomind-f45-entry-final/export/agent_core/cli_display.py", "agent_core.cli_logging": "/tmp/biomind-f45-entry-final/export/agent_core/cli_logging.py", "agent_core.cli_plain": "/tmp/biomind-f45-entry-final/export/agent_core/cli_plain.py", "agent_core.cli_review": "/tmp/biomind-f45-entry-final/export/agent_core/cli_review.py", "agent_core.cli_terminal": "/tmp/biomind-f45-entry-final/export/agent_core/cli_terminal.py", "agent_core.committed_observations": "/tmp/biomind-f45-entry-final/export/agent_core/committed_observations.py", "agent_core.completion_gate": "/tmp/biomind-f45-entry-final/export/agent_core/completion_gate.py", "agent_core.consultant_binding": "/tmp/biomind-f45-entry-final/export/agent_core/consultant_binding.py", "agent_core.consultant_continuation": "/tmp/biomind-f45-entry-final/export/agent_core/consultant_continuation.py", "agent_core.consultant_finalize": "/tmp/biomind-f45-entry-final/export/agent_core/consultant_finalize.py", "agent_core.consultation_state": "/tmp/biomind-f45-entry-final/export/agent_core/consultation_state.py", "agent_core.context_budget": "/tmp/biomind-f45-entry-final/export/agent_core/context_budget.py", "agent_core.context_lineage": "/tmp/biomind-f45-entry-final/export/agent_core/context_lineage.py", "agent_core.controller_audit": "/tmp/biomind-f45-entry-final/export/agent_core/controller_audit.py", "agent_core.deepseek_stream": "/tmp/biomind-f45-entry-final/export/agent_core/deepseek_stream.py", "agent_core.diagnostics": "/tmp/biomind-f45-entry-final/export/agent_core/diagnostics.py", "agent_core.evidence_projection": "/tmp/biomind-f45-entry-final/export/agent_core/evidence_projection.py", "agent_core.execution_authority": "/tmp/biomind-f45-entry-final/export/agent_core/execution_authority.py", "agent_core.formal_artifact_resolver": "/tmp/biomind-f45-entry-final/export/agent_core/formal_artifact_resolver.py", "agent_core.genomics_contig_parser": "/tmp/biomind-f45-entry-final/export/agent_core/genomics_contig_parser.py", "agent_core.human_io": "/tmp/biomind-f45-entry-final/export/agent_core/human_io.py", "agent_core.installer": "/tmp/biomind-f45-entry-final/export/agent_core/installer.py", "agent_core.knowledge_conflicts": "/tmp/biomind-f45-entry-final/export/agent_core/knowledge_conflicts.py", "agent_core.llm_safety": "/tmp/biomind-f45-entry-final/export/agent_core/llm_safety.py", "agent_core.managed_artifacts": "/tmp/biomind-f45-entry-final/export/agent_core/managed_artifacts.py", "agent_core.middleware": "/tmp/biomind-f45-entry-final/export/agent_core/middleware.py", "agent_core.node_context": "/tmp/biomind-f45-entry-final/export/agent_core/node_context.py", "agent_core.phase_timing": "/tmp/biomind-f45-entry-final/export/agent_core/phase_timing.py", "agent_core.plan_bindings": "/tmp/biomind-f45-entry-final/export/agent_core/plan_bindings.py", "agent_core.plan_contract": "/tmp/biomind-f45-entry-final/export/agent_core/plan_contract.py", "agent_core.plan_tracker": "/tmp/biomind-f45-entry-final/export/agent_core/plan_tracker.py", "agent_core.planner_context": "/tmp/biomind-f45-entry-final/export/agent_core/planner_context.py", "agent_core.planner_loop": "/tmp/biomind-f45-entry-final/export/agent_core/planner_loop.py", "agent_core.planner_output_policy": "/tmp/biomind-f45-entry-final/export/agent_core/planner_output_policy.py", "agent_core.planner_recovery": "/tmp/biomind-f45-entry-final/export/agent_core/planner_recovery.py", "agent_core.planner_revision": "/tmp/biomind-f45-entry-final/export/agent_core/planner_revision.py", "agent_core.provider_attempt": "/tmp/biomind-f45-entry-final/export/agent_core/provider_attempt.py", "agent_core.provider_message_safety": "/tmp/biomind-f45-entry-final/export/agent_core/provider_message_safety.py", "agent_core.public_response": "/tmp/biomind-f45-entry-final/export/agent_core/public_response.py", "agent_core.recovery": "/tmp/biomind-f45-entry-final/export/agent_core/recovery.py", "agent_core.recovery_contract": "/tmp/biomind-f45-entry-final/export/agent_core/recovery_contract.py", "agent_core.recovery_evidence": "/tmp/biomind-f45-entry-final/export/agent_core/recovery_evidence.py", "agent_core.recovery_provider": "/tmp/biomind-f45-entry-final/export/agent_core/recovery_provider.py", "agent_core.retriever": "/tmp/biomind-f45-entry-final/export/agent_core/retriever.py", "agent_core.root_cause": "/tmp/biomind-f45-entry-final/export/agent_core/root_cause.py", "agent_core.router": "/tmp/biomind-f45-entry-final/export/agent_core/router.py", "agent_core.runtime_evidence": "/tmp/biomind-f45-entry-final/export/agent_core/runtime_evidence.py", "agent_core.semantic_completion": "/tmp/biomind-f45-entry-final/export/agent_core/semantic_completion.py", "agent_core.skill_access": "/tmp/biomind-f45-entry-final/export/agent_core/skill_access.py", "agent_core.skill_discovery": "/tmp/biomind-f45-entry-final/export/agent_core/skill_discovery.py", "agent_core.skill_manager": "/tmp/biomind-f45-entry-final/export/agent_core/skill_manager.py", "agent_core.state": "/tmp/biomind-f45-entry-final/export/agent_core/state.py", "agent_core.state_contract_store": "/tmp/biomind-f45-entry-final/export/agent_core/state_contract_store.py", "agent_core.step_effects": "/tmp/biomind-f45-entry-final/export/agent_core/step_effects.py", "agent_core.task_spec": "/tmp/biomind-f45-entry-final/export/agent_core/task_spec.py", "agent_core.wiki_lifecycle": "/tmp/biomind-f45-entry-final/export/agent_core/wiki_lifecycle.py", "agent_core.workflow": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/__init__.py", "agent_core.workflow.candidate_repair": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/candidate_repair.py", "agent_core.workflow.commit_step": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/commit_step.py", "agent_core.workflow.consultant_resume": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/consultant_resume.py", "agent_core.workflow.context_activation": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/context_activation.py", "agent_core.workflow.context_compaction": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/context_compaction.py", "agent_core.workflow.early_nodes": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/early_nodes.py", "agent_core.workflow.execution": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/execution.py", "agent_core.workflow.final_audit": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/final_audit.py", "agent_core.workflow.generate_handoff": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/generate_handoff.py", "agent_core.workflow.inspection_evidence": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/inspection_evidence.py", "agent_core.workflow.inspection_stop": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/inspection_stop.py", "agent_core.workflow.managed_stop": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/managed_stop.py", "agent_core.workflow.outcomes": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/outcomes.py", "agent_core.workflow.phase_archive": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/phase_archive.py", "agent_core.workflow.phase_compaction": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/phase_compaction.py", "agent_core.workflow.phase_inspection": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/phase_inspection.py", "agent_core.workflow.phase_subgraph": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/phase_subgraph.py", "agent_core.workflow.pi_rpc": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/pi_rpc.py", "agent_core.workflow.recovery_agent": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/recovery_agent.py", "agent_core.workflow.recovery_context": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/recovery_context.py", "agent_core.workflow.recovery_node": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/recovery_node.py", "agent_core.workflow.recovery_projection": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/recovery_projection.py", "agent_core.workflow.recovery_reception": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/recovery_reception.py", "agent_core.workflow.recovery_runtime": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/recovery_runtime.py", "agent_core.workflow.recovery_tools": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/recovery_tools.py", "agent_core.workflow.runtime_evidence_recovery": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/runtime_evidence_recovery.py", "agent_core.workflow.runtime_graph": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/runtime_graph.py", "agent_core.workflow.runtime_recovery_reporting": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/runtime_recovery_reporting.py", "agent_core.workflow.scoped_context": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/scoped_context.py", "agent_core.workflow.stage_contracts": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/stage_contracts.py", "agent_core.workflow.step_worker": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/step_worker.py", "agent_core.workflow.typed_node": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/typed_node.py", "agent_core.workflow.verifier": "/tmp/biomind-f45-entry-final/export/agent_core/workflow/verifier.py", "agent_core.workflow_manager": "/tmp/biomind-f45-entry-final/export/agent_core/workflow_manager.py", "agent_core.workspace_attestation": "/tmp/biomind-f45-entry-final/export/agent_core/workspace_attestation.py", "bio_agents": "/tmp/biomind-f45-entry-final/export/bio_agents.py", "execution": "/tmp/biomind-f45-entry-final/export/execution/__init__.py", "execution.confirmation": "/tmp/biomind-f45-entry-final/export/execution/confirmation.py", "execution.executor": "/tmp/biomind-f45-entry-final/export/execution/executor.py", "execution.monitoring": "/tmp/biomind-f45-entry-final/export/execution/monitoring.py", "execution.preflight_progress": "/tmp/biomind-f45-entry-final/export/execution/preflight_progress.py", "execution.profiling": "/tmp/biomind-f45-entry-final/export/execution/profiling.py", "execution.runtime_contract": "/tmp/biomind-f45-entry-final/export/execution/runtime_contract.py", "execution.shell_safety": "/tmp/biomind-f45-entry-final/export/execution/shell_safety.py", "execution.validator": "/tmp/biomind-f45-entry-final/export/execution/validator.py", "memory": "/tmp/biomind-f45-entry-final/export/memory/__init__.py", "memory.artifact_index": "/tmp/biomind-f45-entry-final/export/memory/artifact_index.py", "memory.core_store": "/tmp/biomind-f45-entry-final/export/memory/core_store.py", "memory.patch_validator": "/tmp/biomind-f45-entry-final/export/memory/patch_validator.py", "memory.persistence": "/tmp/biomind-f45-entry-final/export/memory/persistence.py", "memory.policy": "/tmp/biomind-f45-entry-final/export/memory/policy.py", "memory.session_archive": "/tmp/biomind-f45-entry-final/export/memory/session_archive.py", "memory.session_archive_writer": "/tmp/biomind-f45-entry-final/export/memory/session_archive_writer.py", "memory.task_semantics": "/tmp/biomind-f45-entry-final/export/memory/task_semantics.py", "memory.task_summary": "/tmp/biomind-f45-entry-final/export/memory/task_summary.py", "memory.utils": "/tmp/biomind-f45-entry-final/export/memory/utils.py", "memory.wiki_memory": "/tmp/biomind-f45-entry-final/export/memory/wiki_memory.py", "memory_manager": "/tmp/biomind-f45-entry-final/export/memory_manager.py", "package_manager": "/tmp/biomind-f45-entry-final/export/package_manager.py", "prompts": "/tmp/biomind-f45-entry-final/export/prompts/__init__.py", "prompts.context_compaction": "/tmp/biomind-f45-entry-final/export/prompts/context_compaction.py", "prompts.manager": "/tmp/biomind-f45-entry-final/export/prompts/manager.py", "prompts.templates": "/tmp/biomind-f45-entry-final/export/prompts/templates.py", "supervisor": "/tmp/biomind-f45-entry-final/export/supervisor.py", "test_f5_pty": "/tmp/biomind-f45-entry-final/export/tests/a1_unified_fix/test_f5_pty.py", "tests.ger_fixture_support": "/tmp/biomind-f45-entry-final/export/tests/ger_fixture_support.py", "tests.replay_cli_v2_pty": "/tmp/biomind-f45-entry-final/export/tests/replay_cli_v2_pty.py", "tests.test_plan_local_preaction_convergence_v2": "/tmp/biomind-f45-entry-final/export/tests/test_plan_local_preaction_convergence_v2.py"}[0m
+[0m[0m

@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "checks": {
+    "child_rc0": true,
+    "business_done": true,
+    "source_unchanged": true,
+    "one_frozen_plan": true,
+    "no_execution_or_code_approval": true,
+    "fixed_provider_only": true,
+    "full_body_bound_before_confirmation": true,
+    "entire_frozen_body_in_current_view": true,
+    "default_body_visible": true,
+    "same_body_in_f2": true,
+    "entire_frozen_body_in_f2": true,
+    "default_scrolled": true,
+    "resize_same_scope": true,
+    "correct_acceptance": true,
+    "formal_review_receipt": true,
+    "one_current_owner_decision": true,
+    "receipt_current_frozen_version": true
+  }
+}

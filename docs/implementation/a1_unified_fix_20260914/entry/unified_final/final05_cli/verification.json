@@ -1,0 +1,76 @@
+{
+  "status": "Final05 original model-progress component 1/1 PASS; four modes within one test",
+  "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+  "source_head": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+  "test_calls": [
+    {
+      "nodeid": "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 7.496485040523112,
+      "failure": ""
+    }
+  ],
+  "run_exit": {
+    "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+    "loaded_source_manifest": "/tmp/biomind-a1-unified-final-05/export/export_manifest.json",
+    "test_targets": [
+      "-s",
+      "-q",
+      "tests/test_cli_model_progress_integration.py"
+    ],
+    "timeout_seconds": 180,
+    "watchdog_is_not_production_termination": true,
+    "returncode": 0,
+    "source_changes_after_run": []
+  },
+  "loaded_module_count": 131,
+  "all_imported_sources_match_unchanged_manifest": true,
+  "loaded_modules": "loaded_modules.json",
+  "artifacts": [
+    {
+      "file": "cli1-recovery-off.json.gz",
+      "sha256": "a1c63618931f7f47ade9b5c964c9f3d0489b0090f1c0ad9abd846ce138bbd9fa",
+      "raw_sha256": "cfa76050fad9a5518577e76ce9c4d9cd0e8800ed687b0c1ad2473e64a16d72b8"
+    },
+    {
+      "file": "pytest-results.json.gz",
+      "sha256": "ffa5f8a2d4952f0c3f74f658a1e492035b0921e6b1a52441a16dcef6be5320b8",
+      "raw_sha256": "b3a5f3a6e5c6ba1897f1f4f0420666edf38487c9734120344643263772f49476"
+    },
+    {
+      "file": "cli1-recovery-broken.json.gz",
+      "sha256": "1465d95742e421d95583ffa96ad2f11a2f2b44ee4428ea226c71d9633074c68e",
+      "raw_sha256": "5da41ba4ed8b1680e9b036afbbdad11beab1cd609f54a895021a80c13e0b763a"
+    },
+    {
+      "file": "invocation.json.gz",
+      "sha256": "bad1f1afe7189d84666dea2746d2aba5a1413f54c4a84df14d2ca6129879bc61",
+      "raw_sha256": "c88a1d159a577168b2bced5138d574c1cc205555e935e9e4b1a9183a7327966e"
+    },
+    {
+      "file": "cli1-recovery-timeout.json.gz",
+      "sha256": "e50ed571a2eb411b14cad0326cdd713025bf2485e69906c25bbabe582b73dbeb",
+      "raw_sha256": "c3d386d148f717928ab495533dfd68ba663a7fe73a4cd56d2ecb81fcd417918f"
+    },
+    {
+      "file": "cli1-recovery-plain.json.gz",
+      "sha256": "4a44a92ae0213708b9d52ddfeb35dfac3485a928a78f942e23d2ea8343bf67fb",
+      "raw_sha256": "17297a77691a9bc9d4a29baf59dc9a5f6872905613b6dd92aa581fc686c584f0"
+    },
+    {
+      "file": "stdout.txt.gz",
+      "sha256": "43a0f77f855419f84459ec607aa6d95bb555af9f782efeb5d4892291121881d7",
+      "raw_sha256": "3a322d0c266e66db424de82a8a71410bdc9678db17f7737d50933451b286a2fe"
+    },
+    {
+      "file": "run_exit.json.gz",
+      "sha256": "2f1562c957ef60b118a05bc87e35d2b788fe7b94d75147eafacc21db92000f20",
+      "raw_sha256": "5c84556e3a278306dccde1d5910b1c25606b488b3383cbf3a5a2dacc00a571bb"
+    }
+  ],
+  "scope": "Actual RecoveryAgentLoop + production recovery event sink + PlainTerminal, fixed provider_invoke/dispatcher and pure in-memory synthetic seed; plain/off/timeout/broken modes. Component evidence, not whole production graph or scientific recovery.",
+  "old_assertions_modified": false,
+  "previous_candidate04_result": "../final04_cli/verification.json",
+  "unchanged_other_entry_evidence": "../candidate05_reuse.json"
+}

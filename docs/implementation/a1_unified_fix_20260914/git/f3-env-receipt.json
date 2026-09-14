@@ -1,0 +1,24 @@
+{
+  "commit": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+  "parent": "a64ca7652c74f505242620535788524d3f365241",
+  "tree": "8a6563f6da4020128bb449f50f20ac6e4a5b6663",
+  "files": [
+    "agent_core/workflow/candidate_repair.py",
+    "bio_agents.py",
+    "tests/a1_unified_fix/test_f3_env_progress.py"
+  ],
+  "patch_sha256": "7d8913b3bcc960bfbdcbaaf11eb74e5aff65683c731376079ef9cab7fbf7fcd0",
+  "other_index_entries_preserved": true,
+  "validation": {
+    "before": "two env counterexamples fail on recorded final04 production; old-row diagnostic counterexample also fails",
+    "after": "/tmp/biomind-a1-f3-env-after-03: 5 passed, rc0",
+    "source_signature": "e3f31ee8544daa52c84e1d287c8d4df1c4221548fea137789900d7be68389718",
+    "owned_sha256": {
+      "bio_agents.py": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+      "agent_core/workflow/candidate_repair.py": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b",
+      "tests/a1_unified_fix/test_f3_env_progress.py": "64ba7f64592e0ae1c8ccda052c100d69411f05ae96c6ea9d26b8664e1bd4dec8"
+    },
+    "combined_final_retest": "required after this commit"
+  },
+  "push": false
+}

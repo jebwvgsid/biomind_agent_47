@@ -1,0 +1,849 @@
+{
+  "result": "Reuse supported for F4/F5 recorded interface scope; no UI rerun claimed",
+  "dynamic_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+  "candidate_source_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+  "candidate_export": "/tmp/biomind-a1-unified-final-03/export",
+  "production_public_files_compared": 343,
+  "production_changed": [
+    "agent_core/step_effects.py"
+  ],
+  "step_effects_top_level_changes": [
+    {
+      "symbol": "Import(names=[alias(name='io')])",
+      "old": null,
+      "new": {
+        "start": 27,
+        "end": 27,
+        "sha256": "62cd3ae402970adfdc586f270368421b44d9ad2f06053e20c14a2a61cf3b310b"
+      }
+    },
+    {
+      "symbol": "Import(names=[alias(name='tokenize')])",
+      "old": null,
+      "new": {
+        "start": 32,
+        "end": 32,
+        "sha256": "89fc41dc3a2d7bd67888f6a9f8cd4d9df84d03305ef8fb5f91ee9846b5cdca72"
+      }
+    },
+    {
+      "symbol": "_assert_helper_scope",
+      "old": {
+        "start": 3386,
+        "end": 3409,
+        "sha256": "29642aa9a978f7d4179bb708c5145c40ebfcda18f5dab58f63cfc7e1e4373187"
+      },
+      "new": {
+        "start": 3453,
+        "end": 3480,
+        "sha256": "0d8c34a6d2737a0b404ac4905c4cdd8ff6cf82002c6f56725339309eeb1832e0"
+      }
+    },
+    {
+      "symbol": "_assert_python_helper_comment",
+      "old": null,
+      "new": {
+        "start": 3388,
+        "end": 3399,
+        "sha256": "1543749b2cfaae478ac47110bfb8270d7227c6297d9b1215b99843aa5176de79"
+      }
+    },
+    {
+      "symbol": "_python_stdin_selector",
+      "old": null,
+      "new": {
+        "start": 3402,
+        "end": 3431,
+        "sha256": "8e42c895a808a30a84480d581fb8625878f4ac4ca706916d54186ff092dd8a3f"
+      }
+    },
+    {
+      "symbol": "_single_shell_command",
+      "old": null,
+      "new": {
+        "start": 3434,
+        "end": 3450,
+        "sha256": "b98a0b93421795d4cd29ec91c8e91baf12b1c4db6e71c3def798f6787a726b84"
+      }
+    }
+  ],
+  "unchanged_entry_regions": [
+    {
+      "symbol": "BioAnalystAgent.__init__",
+      "actual_final02": {
+        "start": 2569,
+        "end": 3362,
+        "sha256": "f4cc39f126bce81febfb378895cc1cd7832a71bc630f492fff9ed231b6d2a88c"
+      },
+      "candidate": {
+        "start": 2569,
+        "end": 3362,
+        "sha256": "f4cc39f126bce81febfb378895cc1cd7832a71bc630f492fff9ed231b6d2a88c"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._prompt_user",
+      "actual_final02": {
+        "start": 25499,
+        "end": 25568,
+        "sha256": "60dd771f14d32ad43ccbf6012036bf530cd18a4b1a928d5e6ddf121597ec1c70"
+      },
+      "candidate": {
+        "start": 25499,
+        "end": 25568,
+        "sha256": "60dd771f14d32ad43ccbf6012036bf530cd18a4b1a928d5e6ddf121597ec1c70"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._aprompt_user",
+      "actual_final02": {
+        "start": 25570,
+        "end": 25606,
+        "sha256": "2120677937bfb45fb385eaf3e8fed860d5080a85410659fa8691141cc45ecc0f"
+      },
+      "candidate": {
+        "start": 25570,
+        "end": 25606,
+        "sha256": "2120677937bfb45fb385eaf3e8fed860d5080a85410659fa8691141cc45ecc0f"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.consultant",
+      "actual_final02": {
+        "start": 31863,
+        "end": 37667,
+        "sha256": "737b9025e3a037ee846e75636b533a8e23a2ee26b5b9c0022196fa8d3b308a87"
+      },
+      "candidate": {
+        "start": 31863,
+        "end": 37667,
+        "sha256": "737b9025e3a037ee846e75636b533a8e23a2ee26b5b9c0022196fa8d3b308a87"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.ask_user",
+      "actual_final02": {
+        "start": 37669,
+        "end": 37881,
+        "sha256": "4236f527e3296430fcf4ea26f6d9ac4c39ebd5318d509aed9cc7cb5e72b98ab7"
+      },
+      "candidate": {
+        "start": 37669,
+        "end": 37881,
+        "sha256": "4236f527e3296430fcf4ea26f6d9ac4c39ebd5318d509aed9cc7cb5e72b98ab7"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.planner",
+      "actual_final02": {
+        "start": 37886,
+        "end": 40603,
+        "sha256": "e9bb637c6b2c40ca4fd4259473b3ed7413ace22a2d258d3ffd2d2e1a1a377e2e"
+      },
+      "candidate": {
+        "start": 37886,
+        "end": 40603,
+        "sha256": "e9bb637c6b2c40ca4fd4259473b3ed7413ace22a2d258d3ffd2d2e1a1a377e2e"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.plan_review",
+      "actual_final02": {
+        "start": 40608,
+        "end": 41251,
+        "sha256": "6ca050a22673320adf18dcad7f4e76a251e42885e1d109efd03ef05c2acd3ac4"
+      },
+      "candidate": {
+        "start": 40608,
+        "end": 41251,
+        "sha256": "6ca050a22673320adf18dcad7f4e76a251e42885e1d109efd03ef05c2acd3ac4"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.consultant_router",
+      "actual_final02": {
+        "start": 53023,
+        "end": 53030,
+        "sha256": "30ff599934fc6e7ee73eb3df04e8fe3b8ad2b345699da80b59eb4a79542e2b9e"
+      },
+      "candidate": {
+        "start": 53023,
+        "end": 53030,
+        "sha256": "30ff599934fc6e7ee73eb3df04e8fe3b8ad2b345699da80b59eb4a79542e2b9e"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.ask_user_router",
+      "actual_final02": {
+        "start": 53035,
+        "end": 53039,
+        "sha256": "cd4ec53e47539ae3f1490348c74ef6b55dd280943fabedbe3226de95228480f9"
+      },
+      "candidate": {
+        "start": 53035,
+        "end": 53039,
+        "sha256": "cd4ec53e47539ae3f1490348c74ef6b55dd280943fabedbe3226de95228480f9"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.planner_router",
+      "actual_final02": {
+        "start": 53044,
+        "end": 53050,
+        "sha256": "c5504c331eea61f98f167d4a7466776a169d8e830f966f27f66c87856ef8de89"
+      },
+      "candidate": {
+        "start": 53044,
+        "end": 53050,
+        "sha256": "c5504c331eea61f98f167d4a7466776a169d8e830f966f27f66c87856ef8de89"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.plan_review_router",
+      "actual_final02": {
+        "start": 53064,
+        "end": 53071,
+        "sha256": "8338cb5fca891eabd1dd55d7c85ee61509f62dec83c275c1f49d575d139fcf8a"
+      },
+      "candidate": {
+        "start": 53064,
+        "end": 53071,
+        "sha256": "8338cb5fca891eabd1dd55d7c85ee61509f62dec83c275c1f49d575d139fcf8a"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._app_for_task",
+      "actual_final02": {
+        "start": 53156,
+        "end": 53167,
+        "sha256": "476eb9445417d8f38dabceff47b33e7073c9327888d3754748b22f5166b3d9db"
+      },
+      "candidate": {
+        "start": 53156,
+        "end": 53167,
+        "sha256": "476eb9445417d8f38dabceff47b33e7073c9327888d3754748b22f5166b3d9db"
+      },
+      "same": true
+    },
+    {
+      "symbol": "BioAnalystAgent._finalize_managed_terminal",
+      "actual_final02": {
+        "start": 53898,
+        "end": 53918,
+        "sha256": "0924f2e87dea550bd953c1f8e0004cc4e32f481946d8cff5a4e129da9a297bbf"
+      },
+      "candidate": {
+        "start": 53898,
+        "end": 53918,
+        "sha256": "0924f2e87dea550bd953c1f8e0004cc4e32f481946d8cff5a4e129da9a297bbf"
+      },
+      "same": true
+    }
+  ],
+  "f5_loaded_comparison": [
+    {
+      "case": "f5-plain-approve",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-plain-approve/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-plain-blank_paste",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-plain-blank_paste/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-plain-eof",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-plain-eof/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-plain-feedback",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-plain-feedback/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-approve",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-approve/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-blank_paste",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-blank_paste/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-cancel",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-cancel/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-eof",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-eof/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-fallback",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-fallback/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-feedback",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-feedback/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-nonsemantic",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-nonsemantic/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-queued",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-queued/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-reject",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-reject/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    },
+    {
+      "case": "f5-tty-semantic",
+      "matched_unchanged_modules": 116,
+      "unchanged_map_sha256": "4cdb0c6afa4aeb53d3262563439dd158871fedadd7ebf0f5a2b3f52270bb62ac",
+      "actual_loaded_receipt": "final02_pty/f5-tty-semantic/loaded.json.gz",
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ]
+    }
+  ],
+  "f4_loaded_comparison": [
+    {
+      "case": "f4-OSError.json",
+      "module_count": 94,
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ],
+      "provider_calls": 0,
+      "entry": "real registered AskUser handler in isolated StateGraph segment; actual outer finalizer",
+      "counts": {
+        "consultant": 0,
+        "callback": 1
+      },
+      "receipt": "f4-regression/f4-OSError.json.gz"
+    },
+    {
+      "case": "f4-ValueError.json",
+      "module_count": 94,
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ],
+      "provider_calls": 0,
+      "entry": "real registered AskUser handler in isolated StateGraph segment; actual outer finalizer",
+      "counts": {
+        "consultant": 0,
+        "callback": 1
+      },
+      "receipt": "f4-regression/f4-ValueError.json.gz"
+    },
+    {
+      "case": "f4-answers.json",
+      "module_count": 94,
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ],
+      "provider_calls": 0,
+      "entry": null,
+      "counts": null,
+      "receipt": "f4-regression/f4-answers.json.gz"
+    },
+    {
+      "case": "f4-cancel.json",
+      "module_count": 94,
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ],
+      "provider_calls": 0,
+      "entry": null,
+      "counts": null,
+      "receipt": "f4-regression/f4-cancel.json.gz"
+    },
+    {
+      "case": "f4-eof.json",
+      "module_count": 94,
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ],
+      "provider_calls": 0,
+      "entry": "real AskUser graph interrupt then actual prompt/input on newly closed synthetic pipe",
+      "counts": null,
+      "receipt": "f4-regression/f4-eof.json.gz"
+    },
+    {
+      "case": "f4-interrupt.json",
+      "module_count": 94,
+      "different": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        }
+      ],
+      "provider_calls": 0,
+      "entry": null,
+      "counts": null,
+      "receipt": "f4-regression/f4-interrupt.json.gz"
+    }
+  ],
+  "f5_actual_dispatch": [
+    {
+      "case": "f5-plain-approve",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-plain-approve/result.json.gz"
+    },
+    {
+      "case": "f5-plain-blank_paste",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-plain-blank_paste/result.json.gz"
+    },
+    {
+      "case": "f5-plain-eof",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-plain-eof/result.json.gz"
+    },
+    {
+      "case": "f5-plain-feedback",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-plain-feedback/result.json.gz"
+    },
+    {
+      "case": "f5-tty-approve",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-approve/result.json.gz"
+    },
+    {
+      "case": "f5-tty-blank_paste",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-blank_paste/result.json.gz"
+    },
+    {
+      "case": "f5-tty-cancel",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-cancel/result.json.gz"
+    },
+    {
+      "case": "f5-tty-eof",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-eof/result.json.gz"
+    },
+    {
+      "case": "f5-tty-fallback",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-fallback/result.json.gz"
+    },
+    {
+      "case": "f5-tty-feedback",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-feedback/result.json.gz"
+    },
+    {
+      "case": "f5-tty-nonsemantic",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-nonsemantic/result.json.gz"
+    },
+    {
+      "case": "f5-tty-queued",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-queued/result.json.gz"
+    },
+    {
+      "case": "f5-tty-reject",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-reject/result.json.gz"
+    },
+    {
+      "case": "f5-tty-semantic",
+      "actual_update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "provider_calls": [
+        "consultant",
+        "planner"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "receipt": "final02_pty/f5-tty-semantic/result.json.gz"
+    }
+  ],
+  "scope_callers": [
+    {
+      "file": "agent_core/step_effects.py",
+      "line": 3455,
+      "enclosing_function": "_assert_helper_scope",
+      "callee": "_assert_python_helper_comment"
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "line": 3467,
+      "enclosing_function": "_assert_helper_scope",
+      "callee": "_single_shell_command"
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "line": 3476,
+      "enclosing_function": "_assert_helper_scope",
+      "callee": "_python_stdin_selector"
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "line": 3477,
+      "enclosing_function": "_assert_helper_scope",
+      "callee": "_assert_python_helper_comment"
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "line": 3498,
+      "enclosing_function": "materialize_effect_template",
+      "callee": "_assert_helper_scope"
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "line": 3525,
+      "enclosing_function": "materialize_effect_action",
+      "callee": "materialize_effect_template"
+    },
+    {
+      "file": "bio_agents.py",
+      "line": 43841,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "materialize_effect_template"
+    },
+    {
+      "file": "bio_agents.py",
+      "line": 44012,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "materialize_effect_action"
+    }
+  ],
+  "reason": "Changed helper scope and its new lexical/argv helpers are reached through materialize_effect_template/action in Generate. Recorded F5 graph yields only triage/consultant/planner/plan_review; all attempts and code approvals remain zero. F4 invokes real AskUser handler/interrupt/finalizer only, with zero provider calls. The only changed loaded module is step_effects; all its other function bytes and all other loaded modules/13 entry regions are unchanged. This is bounded dependency evidence, not runtime profiling of every function and not a claim that these runs loaded the candidate step_effects file.",
+  "added_imports": "Only standard library io/tokenize; no initialization callback/provider/resource loading introduced.",
+  "f1_static_review": "No new explicit contradiction found in same-source builder, public mode selection, current resource/binding projection, normal seed, Recovery JSON node_context, or local episode requests. Their builder/manager/assembly are outside the changed scope. Current examples prove admission only; separate demo values do not satisfy current scientific obligations. F1 dynamic candidate coverage is rerun by root.",
+  "candidate_head": "a64ca7652c74f505242620535788524d3f365241",
+  "candidate_step_effects_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+  "caller_search_scope": "All manifest-listed non-test, non-config Python sources in final03 safe export; textual call search confirmed the recorded step_effects/bio_agents call sites, followed by AST enclosing-function checks.",
+  "later_test_only_candidate04": {
+    "source_signature": "237ac5ba0d0921017c9ff6252762b2cc429efb7985ce1586aeb5f2a9fe03af94",
+    "equivalence_receipt": "../../final/candidate04_equivalence.json",
+    "production_public_files_identical": 343,
+    "changed_tests": [
+      "tests/a1_unified_fix/test_f3_recovery_claim.py",
+      "tests/a1_unified_fix/test_f6_graph.py"
+    ],
+    "f4_f5_depend_on_changed_tests": false,
+    "interpretation": "Recorded F4/F5 dependencies do not use F6Graph or recovery-claim test. Their source/interface reuse remains valid; F1/F6 dependent tests require separate final04 replay."
+  }
+}

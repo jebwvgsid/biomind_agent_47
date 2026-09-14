@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012188218533992767,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 18.290347903966904,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0010236231610178947,
+    "failure": ""
+  }
+]

@@ -1,0 +1,143 @@
+{
+  "status": "Final03 F1 protocol 6/6 PASS within shared 101/101 PASS",
+  "source_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+  "source_head": "a64ca7652c74f505242620535788524d3f365241",
+  "source_step_effects_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+  "run_root": "/tmp/biomind-a1-unified-final-03/protocol-helper-shared",
+  "permanent_receipt_root": "../../final/final03_runs/protocol-helper-shared",
+  "new_f1_calls": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 5.76883502304554,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 9.31943703442812,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 16.23928980436176,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 17.912060513161123,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 1.7172591323032975,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.05445402301847935,
+      "failure": ""
+    }
+  ],
+  "shared_calls_passed": 101,
+  "f1_loaded_module_count": 123,
+  "all_f1_loaded_match_final03_manifest": true,
+  "run_exit": {
+    "source_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+    "loaded_source_manifest": "/tmp/biomind-a1-unified-final-03/export/export_manifest.json",
+    "test_targets": [
+      "-s",
+      "-q",
+      "tests/a1_unified_fix/test_f1_f2.py",
+      "tests/a1_unified_fix/test_f1_protocol.py",
+      "tests/a1_unified_fix/test_f2_scope.py",
+      "tests/test_cross_layer_publication.py",
+      "tests/test_cross_layer_domain.py",
+      "tests/test_step_effect_runtime.py",
+      "tests/test_semantic_completion.py"
+    ],
+    "timeout_seconds": 180,
+    "watchdog_is_not_production_termination": true,
+    "returncode": 0,
+    "source_changes_after_run": []
+  },
+  "scope": "Actual ordinary/local/Recovery requests parsed and admitted unchanged; blocked and legacy alternatives verified. Standalone demo computes False and empty list only under demo declarations. Current action examples prove admission, not scientific completion.",
+  "previous_pre_scope_evidence": "regression_evidence.json",
+  "artifacts": [
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-blocked.json.gz",
+      "sha256": "f2ffa0e146cb02bb9d8d7f0f24c8dc0eb09e13ad692fb0a9720ec9d43d6a96ff"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-capture-blocked-2.json.gz",
+      "sha256": "ebc2ed7ad5e6e953bcec7008b189f29f65b4e4e7b06e7ba569373436882dba43"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-capture-local-1.json.gz",
+      "sha256": "9617c34d52e65149ba0dd666e89bd456da1e8539d6c81d4967bdd3e3c1a41763"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-capture-local-2.json.gz",
+      "sha256": "796729b8c79389954bace6f55ab81cc2269fa53dfd05ffe9172427730bbc679f"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-capture-normal-1.json.gz",
+      "sha256": "d84ccdf550905e9cf303c05c8d46a24a5b66db7254127d313361532637298dde"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-capture-recovery-2.json.gz",
+      "sha256": "28d52abbb66c201feb9142c4cbfdddd2df831596ec35c71c8f8d97977d220911"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-demo.json.gz",
+      "sha256": "501c4ce00afbd486b32e32162d8750d54f7ce640da69c0fac6bf5e92cbe49160"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-legacy.json.gz",
+      "sha256": "a28653d8aca43c47d3469a24282b15509c7b1ace8692a0be60fe7212f999cd17"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-loaded.json.gz",
+      "sha256": "955f401b9f882526a6e249616b7aa6a7f446fdc0cb3fe3c2c850e0d5e8a50283"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-local.json.gz",
+      "sha256": "aa5c03f2a9a734353ffeaa68dcbb1a7c15c54cfdd1e72b9a4aac7796f0dc12a7"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-normal.json.gz",
+      "sha256": "bf4ba1b8aa5dc956d7dcc77e258adbbd1e41a90cbe0a0c15704d183e5b0d9c62"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/f1-protocol-recovery.json.gz",
+      "sha256": "b1e4cd77e208cd4b2ef04749b662f75bd2ea6a39e393817aff1c6029b33f1211"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/invocation.json.gz",
+      "sha256": "c21beb9b8c224b554a5eb7bb419e5f5798378bc837e7e923f97294a44327071b"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/loaded_modules.json",
+      "sha256": "538f24544e397c581e419cefd85bfae34a9b351f1741cebec981e4986138521e"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/pytest-results.json.gz",
+      "sha256": "f0c0ebc38684196b83fd045a109eb75c132006b8ade3e851008e0a007ea93006"
+    },
+    {
+      "file": "../../final/final03_runs/protocol-helper-shared/run_exit.json.gz",
+      "sha256": "f19b2608e63ea30282a10c42b8ed005beb4fb86bf4e92781a077b5876d5d2100"
+    }
+  ],
+  "superseded_by_final_verification": "current_final06_evidence.json"
+}

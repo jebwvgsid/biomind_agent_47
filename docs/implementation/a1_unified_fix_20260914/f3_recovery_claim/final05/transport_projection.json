@@ -1,0 +1,58 @@
+[
+  {
+    "event": "actual_provider_leaf_delivery",
+    "stage": "consultant",
+    "invocation_id": "inv-2660af6b-cfee-4b8b-b0a7-a96bc0d10242",
+    "status": null,
+    "transport_history_count": null
+  },
+  {
+    "event": "actual_node_dispatch_consumed",
+    "stage": "consultant",
+    "invocation_id": "inv-2660af6b-cfee-4b8b-b0a7-a96bc0d10242",
+    "status": "consumed",
+    "transport_history_count": 1
+  },
+  {
+    "event": "actual_provider_leaf_delivery",
+    "stage": "planner",
+    "invocation_id": "inv-f6519749-bb69-4de8-87cd-4e2cef6a5e80",
+    "status": null,
+    "transport_history_count": null
+  },
+  {
+    "event": "actual_node_dispatch_consumed",
+    "stage": "planner",
+    "invocation_id": "inv-f6519749-bb69-4de8-87cd-4e2cef6a5e80",
+    "status": "consumed",
+    "transport_history_count": 2
+  },
+  {
+    "event": "actual_provider_leaf_delivery",
+    "stage": "generate",
+    "invocation_id": "inv-e89be467-65a1-4d70-8ac6-59ebc65c1d30",
+    "status": null,
+    "transport_history_count": null
+  },
+  {
+    "event": "actual_node_dispatch_consumed",
+    "stage": "generate",
+    "invocation_id": "inv-e89be467-65a1-4d70-8ac6-59ebc65c1d30",
+    "status": "consumed",
+    "transport_history_count": 3
+  },
+  {
+    "event": "actual_provider_leaf_delivery",
+    "stage": "generate",
+    "invocation_id": "inv-0c9c7ab0-acd6-40b7-8d56-f277c24c2b8c",
+    "status": null,
+    "transport_history_count": null
+  },
+  {
+    "event": "actual_node_dispatch_consumed",
+    "stage": "generate",
+    "invocation_id": "inv-0c9c7ab0-acd6-40b7-8d56-f277c24c2b8c",
+    "status": "consumed",
+    "transport_history_count": 5
+  }
+]

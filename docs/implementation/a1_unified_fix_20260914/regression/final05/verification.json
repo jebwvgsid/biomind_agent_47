@@ -1,0 +1,229 @@
+{
+  "status": "INTERMEDIATE_FINAL05_PUBLIC_CALLER_RESULTS",
+  "loaded_source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+  "loaded_baseline_head": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+  "loaded_manifest_sha256": "b0d711a132be55546f1fe6e37d364a660e80481467ed2f72058c799f178199f4",
+  "loaded_file_count": 456,
+  "source_commit_is_not_entire_loaded_tree": true,
+  "protected_overlay_included_by_manifest": true,
+  "not_run_safety": [
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_session_1788340897_offline_mock_replay_crosses_prompt_guard",
+      "source_line": 204,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_controller_attaches_internal_binding_and_hash_mismatch_fails_closed",
+      "source_line": 261,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_candidate_generation_resume.py",
+      "reason": "Old session JSON fixture; no new read/export authorized. Replaced by fresh F3 real claims/reload and F6 combination.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_resource_fix.py",
+      "reason": "Old incident JSON fixtures; reuse validated unchanged modules and old bounded receipts, not a new whole-chain PASS.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_stop_fix.py",
+      "reason": "Same old incident JSON dependency; new F3/F6 formal blocked branches and unchanged Planner evidence are separated.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_cancel_fix.py",
+      "reason": "Same old incident JSON dependency; unchanged pre_dispatch/atomic evidence reused, changed Generate boundaries retested in F3.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_recovery_transition_lifecycle.py::<incident_fixture dependent cases>",
+      "reason": "Old session JSON fixture. Only four explicitly fixture-free cases selected.",
+      "status": "NOT_RUN_SAFETY"
+    }
+  ],
+  "safety": {
+    "new_fixture_reads": false,
+    "old_assertions_modified": false,
+    "real_provider": false,
+    "real_science": false,
+    "original_session_load": false,
+    "controlled_environment": "Existing explicit launch environment recorded per group; no inherited/full process environment inspected.",
+    "watchdog_seconds_per_group": 180,
+    "source_hash_check": "all manifest files before and after each group; child loaded paths in stdout",
+    "only_synthetic_tiny_process_execution": "Planner lifecycle uses formally generated fresh scripts; no original approved script execution."
+  },
+  "scope_limits": [
+    "Pure Recovery component states are not end-to-end proof.",
+    "A fixed provider and synthetic scientific evidence do not establish real model or scientific E2E.",
+    "The protected legacy assertion failure remains failed; no xfail, skip or assertion adaptation was added."
+  ],
+  "preexisting_failure_evidence": "../unified_final/preexisting_assertion.json",
+  "reuse_ledger": "../preflight.json",
+  "component_and_new_chain_mapping": "../preflight.json#/replacement_map",
+  "groups": {
+    "shared": {
+      "fresh_results": "/tmp/biomind-a1-final05-public-shared-01",
+      "targets": [
+        "tests/test_candidate_generation_claims.py",
+        "tests/test_generate_recovery_handoff.py",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_delivery.py"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 18
+      },
+      "call_event_count": 18,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "18 passed, 3 warnings in 10.16s"
+      ],
+      "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "run_exit.json": "ead56b587f8ffa4eb9e186c290f57489f94feb1960898c5986d5ce1e062a3ace",
+        "pytest-results.json": "ae72ff850474522521aa4ce98a53e70bc036f9fa12d06b788dc70c9fe86ae93f",
+        "stdout.txt.gz": "1c0356d8923439b7beb1120e177b5cc2615ccedcfc02c831b98204d91e301b89",
+        "invocation.json": "d8b328313748c3a615259efc75a212edbaa75f98b376ea4ca5825496fbc456b9",
+        "stdout_uncompressed_sha256": "c11630b445abd65aa7df72bf89e9c10b8853068a7d640cbe8e8b71d0d1029a88"
+      }
+    },
+    "prompt": {
+      "fresh_results": "/tmp/biomind-a1-final05-public-prompt-01",
+      "targets": [
+        "tests/test_generate_capability_scoped_prompt.py",
+        "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+        "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception"
+      ],
+      "actual_returncode": 1,
+      "unique_case_counts": {
+        "passed": 12,
+        "failed": 1
+      },
+      "call_event_count": 15,
+      "additional_subtest_call_events": 2,
+      "summary_lines": [
+        "1 failed, 12 passed, 2 subtests passed in 6.62s"
+      ],
+      "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+      "source_changes_after_run": [],
+      "failure_events": [
+        {
+          "event_json_pointer": "/48",
+          "nodeid": "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+          "phase": "call",
+          "failure_sha256": "0c29e9dd352b626a7ebe9a5570ae922cd93b0ba7a0f7187b74e437f8deef818f",
+          "classification": "PREEXISTING_ASSERTION_SHAPE_MISMATCH"
+        }
+      ],
+      "artifact_sha256": {
+        "invocation.json": "e7cdc0f11e746f0b248ce045ae0fe5b7ee024c97b01970751f2ba9649076f1f5",
+        "run_exit.json": "a0411e151f2a266ec763a2d9d0a69bf2482603263a3e3a54757d6903c4bd3168",
+        "pytest-results.json": "d176b6a5cee3c77be26de7d66a20c37ec327af200f4c595232341b9ffa81864f",
+        "stdout.txt.gz": "01eea4bb0f1e81265d8f85f1b3f3bec139b2bf09d5c332cd5461fe56e32259d3",
+        "stdout_uncompressed_sha256": "1875c69ccaf6dca6de003eefdc0318f773009e0933e3a1dee7c3755224f3ff8a"
+      }
+    },
+    "planner_lifecycle_full": {
+      "fresh_results": "/tmp/biomind-a1-final05-public-planner_lifecycle_full-01",
+      "targets": [
+        "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 1
+      },
+      "call_event_count": 1,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "1 passed in 18.36s"
+      ],
+      "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "pytest-results.json": "010c4ecad8e21536a63ee3bff46bde68f1853f07358ad74b0834c5267b07251c",
+        "run_exit.json": "580cf7b817aa3c03c4548c23fd2a661dd1fcf2facfdf22acf65ff4ef5b489cd7",
+        "invocation.json": "9665ff5cdde654a013f6bb2702719d3c4784e5af22baa83a34a0896c3aa9c6ff",
+        "stdout.txt.gz": "45aa4df3d1e926860c62df087d3bc2627d3f5efb3e770835e2d2479c08c330fe",
+        "stdout_uncompressed_sha256": "cfde6c8369ba57d197a0374810d43bd63b23f25f0445c4c156ee774535055639"
+      }
+    },
+    "planner_lifecycle_stale": {
+      "fresh_results": "/tmp/biomind-a1-final05-public-planner_lifecycle_stale-01",
+      "targets": [
+        "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+        "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+        "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 3
+      },
+      "call_event_count": 3,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "3 passed in 12.44s"
+      ],
+      "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "run_exit.json": "7e7e80219dcbb23798ad78285647acc9008a2c2ee22c6090d95cabe298d951a5",
+        "pytest-results.json": "95df2ffffa7ea6ca900aa022d77da3d75f55cae6fe85f03ded9c2dca01de1924",
+        "invocation.json": "ce243f99de1fc9b4fc973f4214b46ddf47a16b02bf93269df5e4227bb52beaeb",
+        "stdout.txt.gz": "348e12f3c157107ccd650c48fc2192c985b564591a651a12d7d9d8ce1e8a5fcd",
+        "stdout_uncompressed_sha256": "125fa09ee726a98ef5ba689aa8b5bdf81eabf82bc74eec412d55d9bccc67bd74"
+      }
+    },
+    "recovery_pure": {
+      "fresh_results": "/tmp/biomind-a1-final05-public-recovery_pure-01",
+      "targets": [
+        "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+        "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+        "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+        "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 4
+      },
+      "call_event_count": 4,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "4 passed in 4.36s"
+      ],
+      "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "pytest-results.json": "9afc5a1907ecd82f94824d721e612b80214db06191b16d74a9a5e1caf29ae86b",
+        "invocation.json": "2980d5247688529c3eca8c369715fe431b3eb3e200f23fb05573250e47c3b4ab",
+        "stdout.txt.gz": "13857b7bbd4012224b6193f4706eb1a29827d8923695ed3843bc3554765c6995",
+        "run_exit.json": "d690793dd8fe9c9943e3d3c8c29c2408dda267ab571cc49abee707ccaa2df974",
+        "stdout_uncompressed_sha256": "c6a273236c3404453ef3d46fea815273a4082649ea85c35d674e3e6856751b19"
+      }
+    }
+  },
+  "prior_final_source_results": "../unified_final/verification.json",
+  "claim_owner_limit": "New F3 unknown/reload tests cover ordinary Generate provider_claims owner. Recovery uses recovery_state.generation_claim/history and scoped completion cache; current IT02 does not itself prove all Recovery unknown/reload windows.",
+  "unique_case_counts": {
+    "passed": 38,
+    "failed": 1
+  },
+  "unique_case_total": 39,
+  "call_event_count": 41,
+  "additional_subtests_passed": 2,
+  "superseded_by": "final06",
+  "unique_case_totals": {
+    "passed": 38,
+    "failed": 1
+  },
+  "additional_subtests": 2,
+  "all_groups_completed": true
+}

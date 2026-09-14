@@ -1,0 +1,102 @@
+[
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001256978139281273,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006766673177480698,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011056382209062576,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.257664740085602e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0014551365748047829,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.361933916807175e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.04559322074055672,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.032821076922118664,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013318005949258804,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.418411016464233e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009415745735168457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010124687105417252,
+    "failure": ""
+  }
+]

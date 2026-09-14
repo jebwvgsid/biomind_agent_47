@@ -288,7 +288,14 @@ def record(export,root,mode,scenario):
                     elif scenario not in {'eof','cancel'}:value+=b'\r'
                     send(value,'explicit-decision');seen.add('decision')
             if phase=='business_done' and 'done' not in seen:snapshot('done');(root/'finish').write_text('captured');seen.add('done')
-            if phase=='feedback_requested' and ready and 'feedback_sent' not in seen:
+            # The prompt callback publishes its phase before the next input
+            # owner has rendered. Do not reuse the preceding approval frame's
+            # readiness to inject a confirmation for the feedback request.
+            feedback_pending=state.get('pending_id')
+            previous_pending=frames.get('before-decision',{}).get('state',{}).get('pending_id')
+            if (phase=='feedback_requested' and ready and feedback_pending is not None
+                    and feedback_pending!=previous_pending and time.monotonic()-quiet>.12
+                    and 'feedback_sent' not in seen):
                 send('请按当前材料重新咨询，保留未决条件。\r'.encode(),'reject-followup-feedback');seen.add('feedback_sent')
             if child.poll() is not None:break
         if child.poll() is None:child.terminate()
@@ -298,6 +305,8 @@ def record(export,root,mode,scenario):
         if child.poll() is None:child.kill();child.wait()
     (root/'terminal.raw').write_bytes(raw)
     result={'root':str(root),'returncode':rc,'actual_kernel_pty':True,'mode':mode,'scenario':scenario,'source_signature':manifest['source_signature'],
+        'parent_harness_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        'guarded_child_harness_sha256':hashlib.sha256((export/'tests/a1_unified_fix/test_f5_pty.py').read_bytes()).hexdigest(),
         'source_unchanged':all(hashlib.sha256((export/n).read_bytes()).hexdigest()==d for n,d in manifest['files'].items()),
         'frames':frames,'actions':actions,'business':read('business.json'),'error':read('child-error.json'),'unknown_vt':screen.unknown,
         'transfer':read('transfer.json')}

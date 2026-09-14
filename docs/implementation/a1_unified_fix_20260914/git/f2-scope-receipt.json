@@ -1,0 +1,13 @@
+{
+  "commit": "a64ca7652c74f505242620535788524d3f365241",
+  "parent": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+  "tree": "0e58412b6b972e7d892d8f56741cf7feeecf546e",
+  "files": [
+    "agent_core/step_effects.py",
+    "tests/a1_unified_fix/test_f2_scope.py"
+  ],
+  "patch_sha256": "12af6c3cf18a9225a0247d926d20a5913492d2242e819ec7e0cf97595bf64f15",
+  "other_index_entries_preserved": true,
+  "validation": "F2 focused scope run03: original misplaced carrier witnesses, string-vs-comment tokens, actual Python stdin selector, flags/argument preservation, safe real tiny processes. Public helper callers and all F6 graph cases will rerun on final03. No science/protocol authority added.",
+  "push": false
+}

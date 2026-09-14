@@ -1,0 +1,220 @@
+{
+  "status": "PUBLIC_CALLER_REGRESSION_COMPLETE_WITH_PREEXISTING_ASSERTION_FAILURE",
+  "loaded_source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+  "loaded_baseline_head": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+  "loaded_manifest_sha256": "719915debfc68aad31d997782ea892a5e94b836bda90ee19dc711b0d3fc27298",
+  "loaded_file_count": 451,
+  "source_commit_is_not_entire_loaded_tree": true,
+  "protected_overlay_included_by_manifest": true,
+  "groups": {
+    "shared": {
+      "fresh_results": "/tmp/biomind-a1-final-public-shared-01",
+      "targets": [
+        "tests/test_candidate_generation_claims.py",
+        "tests/test_generate_recovery_handoff.py",
+        "tests/test_cross_layer_correction.py",
+        "tests/test_cross_layer_delivery.py"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 18
+      },
+      "call_event_count": 18,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "18 passed, 3 warnings in 12.09s"
+      ],
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "run_exit.json": "42ed938404a1c234821ec493d9e83904784e6cbc70fed0eedb1f398483777d4d",
+        "pytest-results.json": "689b14cae803f6c5de465c22b05c6b37e2e939fd6eb5d1f4acbc1e3850a6f306",
+        "invocation.json": "286ecdd58f57c470cb64b156134ae7cbdea3aac211859dd9ae0b0e07dfefc762",
+        "stdout.txt.gz": "7dd2df705c2d0b4aed28a383c7f8caa81fc52815345aa02f092aed17a7f3d1a1",
+        "stdout_uncompressed_sha256": "3a0826d7eff334626515f3f98df938614d6ed248bb412ca8d064ee829921dc3e"
+      }
+    },
+    "prompt": {
+      "fresh_results": "/tmp/biomind-a1-final-public-prompt-01",
+      "targets": [
+        "tests/test_generate_capability_scoped_prompt.py",
+        "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+        "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception"
+      ],
+      "actual_returncode": 1,
+      "unique_case_counts": {
+        "passed": 12,
+        "failed": 1
+      },
+      "call_event_count": 15,
+      "additional_subtest_call_events": 2,
+      "summary_lines": [
+        "1 failed, 12 passed, 2 subtests passed in 5.69s"
+      ],
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "source_changes_after_run": [],
+      "failure_events": [
+        {
+          "event_json_pointer": "/48",
+          "nodeid": "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+          "phase": "call",
+          "failure_sha256": "02e63efdd934285e4fb5bfb89b424b404de057c55d10e5c801049c63dd0e6aed",
+          "classification": "PREEXISTING_ASSERTION_SHAPE_MISMATCH"
+        }
+      ],
+      "artifact_sha256": {
+        "run_exit.json": "e917c76d1afae653248fd2345c186c08443f6da0f48e5b48992ba690f3435585",
+        "pytest-results.json": "00d6d513767a09e355d925d5437beacba2c81d00d5f541a93f8347bdf4dd3236",
+        "invocation.json": "25ab7707ff9d7e17fe98801346c57a1b0dd30eed47fa27981dff0b154c33ef5c",
+        "stdout.txt.gz": "4e1d15c8fb8224570f18291cf3ced13ce0fc9f3571ef23b1273944b651eb0d2a",
+        "stdout_uncompressed_sha256": "a63986fdff418c05d7a63acab3429c4b8371c6d7dd167632632fb22b95ca2ce1"
+      }
+    },
+    "planner_lifecycle_full": {
+      "fresh_results": "/tmp/biomind-a1-final-public-planner_lifecycle_full-01",
+      "targets": [
+        "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 1
+      },
+      "call_event_count": 1,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "1 passed in 21.13s"
+      ],
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "run_exit.json": "26ac7be67d0269fa69aa25a8db5346a972f52535306633f755aa5098b6a506e0",
+        "pytest-results.json": "81c3f3f062bd3290bda9c36bb9ed3500960631e28fdd38c9452dffcecc9e4ef8",
+        "invocation.json": "b7cf485364a5f9f9a432d92f9f9a3b5540b5e73149dc48b7739c54c0f4758eed",
+        "stdout.txt.gz": "e888f3cab0d97f54e2a5e541aefc9d1ffe3c40dc0c70c1cb5d062b73b51f430e",
+        "stdout_uncompressed_sha256": "547b684cc35902cc96f4605298715004670084b2b9852f971c00f4fd308bcf1c"
+      }
+    },
+    "planner_lifecycle_stale": {
+      "fresh_results": "/tmp/biomind-a1-final-public-planner_lifecycle_stale-01",
+      "targets": [
+        "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+        "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+        "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 3
+      },
+      "call_event_count": 3,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "3 passed in 13.39s"
+      ],
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "run_exit.json": "2f0c524bc7faea4a7d3b5a7369be28dcc159aa4d0aad935470a8e3478b3d3606",
+        "pytest-results.json": "8baad2e2c7b2fc81f34c84432bb10ed95884c31d013cf5177200c0edd1c014aa",
+        "invocation.json": "1c20c5dde51977456f730512d7dc1e60d12664aa6d3bec8e49f56c41707acb6d",
+        "stdout.txt.gz": "90d963eb57c3c23f15f4dfbf8becfb7363d22fc1fad9e4f6b9b908ecf6487400",
+        "stdout_uncompressed_sha256": "16370c5460b7f0ef1cbb3a5db35f9906fa44f524ecd4f0fabd2a95214bc08e4e"
+      }
+    },
+    "recovery_pure": {
+      "fresh_results": "/tmp/biomind-a1-final-public-recovery_pure-01",
+      "targets": [
+        "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+        "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+        "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+        "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation"
+      ],
+      "actual_returncode": 0,
+      "unique_case_counts": {
+        "passed": 4
+      },
+      "call_event_count": 4,
+      "additional_subtest_call_events": 0,
+      "summary_lines": [
+        "4 passed in 4.83s"
+      ],
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "source_changes_after_run": [],
+      "failure_events": [],
+      "artifact_sha256": {
+        "run_exit.json": "e72e9a41838516ad020f84c890456be368a769e009d2786de4497bd0b513a749",
+        "pytest-results.json": "676a64b4f0528c914a16b1b84994f4f44dd7533b039dd3782fffe8deaa65a3c0",
+        "invocation.json": "e63ce1ee1093d53d2e2cc823c2912dd5be2e8c623aa016b34a281155b1d4e971",
+        "stdout.txt.gz": "5fa8814a22393f27cd87275b79049e43863539f7998ccd884151a9ab88e421a0",
+        "stdout_uncompressed_sha256": "1af3981b195601b8288d22d302d5f8985cb0ca2ff9cf4b54f3232239157267ad"
+      }
+    }
+  },
+  "not_run_safety": [
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_session_1788340897_offline_mock_replay_crosses_prompt_guard",
+      "source_line": 204,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_controller_attaches_internal_binding_and_hash_mismatch_fails_closed",
+      "source_line": 261,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_candidate_generation_resume.py",
+      "reason": "Old session JSON fixture; no new read/export authorized. Replaced by fresh F3 real claims/reload and F6 combination.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_resource_fix.py",
+      "reason": "Old incident JSON fixtures; reuse validated unchanged modules and old bounded receipts, not a new whole-chain PASS.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_stop_fix.py",
+      "reason": "Same old incident JSON dependency; new F3/F6 formal blocked branches and unchanged Planner evidence are separated.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_cancel_fix.py",
+      "reason": "Same old incident JSON dependency; unchanged pre_dispatch/atomic evidence reused, changed Generate boundaries retested in F3.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_recovery_transition_lifecycle.py::<incident_fixture dependent cases>",
+      "reason": "Old session JSON fixture. Only four explicitly fixture-free cases selected.",
+      "status": "NOT_RUN_SAFETY"
+    }
+  ],
+  "safety": {
+    "new_fixture_reads": false,
+    "old_assertions_modified": false,
+    "real_provider": false,
+    "real_science": false,
+    "original_session_load": false,
+    "controlled_environment": "Existing explicit launch environment recorded per group; no inherited/full process environment inspected.",
+    "watchdog_seconds_per_group": 180,
+    "source_hash_check": "all manifest files before and after each group; child loaded paths in stdout",
+    "only_synthetic_tiny_process_execution": "Planner lifecycle uses formally generated fresh scripts; no original approved script execution."
+  },
+  "scope_limits": [
+    "Pure Recovery component states are not end-to-end proof.",
+    "A fixed provider and synthetic scientific evidence do not establish real model or scientific E2E.",
+    "The protected legacy assertion failure remains failed; no xfail, skip or assertion adaptation was added."
+  ],
+  "preexisting_failure_evidence": "preexisting_assertion.json",
+  "reuse_ledger": "../preflight.json",
+  "component_and_new_chain_mapping": "../preflight.json#/replacement_map",
+  "unique_case_counts": {
+    "passed": 38,
+    "failed": 1
+  },
+  "unique_case_total": 39,
+  "call_event_count": 41,
+  "additional_subtests_passed": 2
+}

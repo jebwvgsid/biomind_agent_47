@@ -1,0 +1,18 @@
+{
+  "evidence": "final/runs/hooks",
+  "cases": 14,
+  "observed_loaded_modules": 129,
+  "same_other_loaded_modules": 128,
+  "changed_imported_module_only": "agent_core.step_effects",
+  "changed_functions_only": [
+    "_assert_helper_scope",
+    "_assert_python_helper_comment",
+    "_python_stdin_selector",
+    "_single_shell_command"
+  ],
+  "called_boundary": "Registered BioAnalystAgent constructor and archive/summary transport/legacy compression/PhaseContextCompactor callbacks. These 14 cases never propose/admit/execute an action. An archive event labelled generate is a direct archive callback invocation, not Generate dispatch.",
+  "unchanged_hook_tests_and_called_modules": true,
+  "call_edge_proof": "entry/unified_final/helper_scope_reuse.json: new helper scope is reached only by materialize_effect_template in Generate, not these callbacks.",
+  "actual_main_graph_enabled_hooks": "Separate final03 F6 cases rerun; this proof does not replace their integration.",
+  "reuse_level": "Bounded dependency proof; not a claim these processes imported final03 step_effects bytes."
+}

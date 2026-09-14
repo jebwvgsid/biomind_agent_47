@@ -1,0 +1,22 @@
+{
+  "commit": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+  "parent": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+  "tree": "9c33860884d0b540081fc332e766910a3413492a",
+  "files": [
+    "agent_core/workflow/candidate_repair.py",
+    "tests/a1_unified_fix/test_f3_env_progress.py"
+  ],
+  "patch_sha256": "369f00129839f96d84159ab170be4c55f8733b4a950ea55ae2d47ca05378973b",
+  "other_index_entries_preserved": true,
+  "validation": {
+    "before": "old progress row plus changed prose or unrelated valid env repeats remains unresolved; before03 rc1",
+    "after": "/tmp/biomind-a1-f3-env-after-04: 5 passed, rc0; exact pending env repair/removal/key repair and last opportunity preserved",
+    "source_signature": "7faa35344ffbefe1a14481357796725a23461636a26106da247e049d0c278c5c",
+    "owned_sha256": {
+      "agent_core/workflow/candidate_repair.py": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa",
+      "tests/a1_unified_fix/test_f3_env_progress.py": "40a7b5afe03250570c397d617b4e001bc5d40aec203f5e19dd93b20b978a36a7"
+    },
+    "combined_final_retest": "required after this commit"
+  },
+  "push": false
+}

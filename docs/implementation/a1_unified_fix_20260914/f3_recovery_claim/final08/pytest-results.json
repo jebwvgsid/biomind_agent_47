@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011611916124820709,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 34.76001336798072,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0009336667135357857,
+    "failure": ""
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "status": "CANDIDATE05_SUPERSEDED_AFTER_3_RUNS",
+  "reason": "F3 historical checkpoint compatibility requires another production fix. repeat and recovery PASS; ABA failed only the newly added test assumption that an actual request contains exactly one feedback message; raw third request correctly retained historical plus current feedback. No final22 verdict.",
+  "source_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+  "runs": {
+    "recovery": {
+      "returncode": 0
+    },
+    "repeat": {
+      "returncode": 0
+    },
+    "aba": {
+      "returncode": 1,
+      "failure_kind": "NEW_TEST_FEEDBACK_CARDINALITY_ASSUMPTION",
+      "actual_business_path": "ABA env object improvement, recurrent rejection at remaining2, real END and physical3 reports completed before assertion"
+    }
+  },
+  "archive": "candidate05_partial_pre_legacy_checkpoint_fix.tar.gz",
+  "sha256": "03d41d881cb74fcf566356eca6b6fa5ea9906ad3205d39683ff1d02d57f14541",
+  "bytes": 2518537,
+  "original_new_test_source": {
+    "path": "candidate05_fixture_source.py.gz",
+    "sha256": "1094017551c79b27101c35570b74b93a891ed4961b53382aa511f24f7935b88a",
+    "raw_sha256": "3aa9bda7f67d95a5ecba7f105795c76e95375a3950471dc64874322eff7dfa1a"
+  },
+  "remaining_cases": "NOT_RUN; stopped dispatch after active Recovery completed; no cancellation; new final06 runs required."
+}

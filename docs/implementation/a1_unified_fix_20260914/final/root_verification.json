@@ -1,0 +1,103 @@
+{
+  "f12-shared": {
+    "counts": {
+      "passed": 77
+    },
+    "unique_nodeids": 77,
+    "exit": {
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-01/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f1_f2.py",
+        "tests/test_cross_layer_publication.py",
+        "tests/test_cross_layer_domain.py",
+        "tests/test_step_effect_runtime.py",
+        "tests/test_semantic_completion.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "imported_modules": 147,
+    "runtime_import_file_hash_match": true,
+    "source_unchanged": true,
+    "receipt_directory": "final/runs/f12-shared"
+  },
+  "f3": {
+    "counts": {
+      "passed": 28
+    },
+    "unique_nodeids": 28,
+    "exit": {
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-01/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_progress.py",
+        "tests/a1_unified_fix/test_f3_claims.py",
+        "tests/a1_unified_fix/test_f3_late_result.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "imported_modules": 143,
+    "runtime_import_file_hash_match": true,
+    "source_unchanged": true,
+    "receipt_directory": "final/runs/f3"
+  },
+  "hooks": {
+    "counts": {
+      "passed": 14
+    },
+    "unique_nodeids": 14,
+    "exit": {
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-01/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_hooks.py",
+        "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_real_constructor_registration_and_optional_archive_faults",
+        "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_registered_summary_transport_normal_exception_none_timeout_cancel",
+        "tests/execution_architecture_audit_a1/test_entry_hooks.py::test_entry_legacy_memory_callback_dispatch_keeps_real_fallback"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "imported_modules": 129,
+    "runtime_import_file_hash_match": true,
+    "source_unchanged": true,
+    "receipt_directory": "final/runs/hooks"
+  },
+  "terminal-none": {
+    "counts": {
+      "passed": 1
+    },
+    "unique_nodeids": 1,
+    "exit": {
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-01/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[none]"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "imported_modules": 135,
+    "runtime_import_file_hash_match": true,
+    "source_unchanged": true,
+    "receipt_directory": "final/runs/terminal-none"
+  }
+}

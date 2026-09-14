@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[repeat]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[repeat]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002512931823730469,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[repeat]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 24.37671106029302,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[repeat]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002797786146402359,
+    "failure": ""
+  }
+]

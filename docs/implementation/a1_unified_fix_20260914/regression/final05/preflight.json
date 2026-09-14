@@ -1,0 +1,531 @@
+{
+  "status": "PREPARED_WAITING_FINAL_UNIFIED_EXPORT",
+  "requested_tests": [
+    "tests/test_candidate_generation_claims.py",
+    "tests/test_candidate_generation_resume.py",
+    "tests/test_plan_resource_fix.py",
+    "tests/test_plan_stop_fix.py",
+    "tests/test_plan_cancel_fix.py",
+    "tests/test_generate_recovery_handoff.py",
+    "tests/test_cross_layer_correction.py",
+    "tests/test_cross_layer_delivery.py",
+    "tests/test_generate_capability_scoped_prompt.py",
+    "tests/test_generate_provider_payload_safety.py",
+    "tests/test_planner_lifecycle_boundary.py",
+    "tests/test_recovery_transition_lifecycle.py"
+  ],
+  "safe_groups": {
+    "shared": [
+      "tests/test_candidate_generation_claims.py",
+      "tests/test_generate_recovery_handoff.py",
+      "tests/test_cross_layer_correction.py",
+      "tests/test_cross_layer_delivery.py"
+    ],
+    "prompt": [
+      "tests/test_generate_capability_scoped_prompt.py",
+      "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+      "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception"
+    ],
+    "planner_lifecycle_full": [
+      "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution"
+    ],
+    "planner_lifecycle_stale": [
+      "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+      "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+      "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute"
+    ],
+    "recovery_pure": [
+      "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+      "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+      "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+      "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation"
+    ]
+  },
+  "explicit_python_dependencies": [
+    "tests/cli_model_progress_support.py",
+    "tests/formal_generate_fixture.py",
+    "tests/ger_fixture_support.py",
+    "tests/plan_resource_fix_support.py",
+    "tests/test_base01_allocation_reload.py",
+    "tests/test_candidate_generation_claims.py",
+    "tests/test_candidate_generation_resume.py",
+    "tests/test_cli_model_progress_integration.py",
+    "tests/test_cli_v2_display.py",
+    "tests/test_cross_layer_correction.py",
+    "tests/test_cross_layer_delivery.py",
+    "tests/test_generate_admission_typed_repair.py",
+    "tests/test_generate_capability_scoped_prompt.py",
+    "tests/test_generate_provider_payload_safety.py",
+    "tests/test_generate_recovery_handoff.py",
+    "tests/test_generate_session_1788681718_production_path.py",
+    "tests/test_inspection_workflow.py",
+    "tests/test_plan_cancel_fix.py",
+    "tests/test_plan_dataflow_p1.py",
+    "tests/test_plan_local_preaction_convergence_v2.py",
+    "tests/test_plan_resource_fix.py",
+    "tests/test_plan_stop_fix.py",
+    "tests/test_planner_lifecycle_boundary.py",
+    "tests/test_preflight_recovery_audit.py",
+    "tests/test_recovery_agent_loop.py",
+    "tests/test_recovery_projection.py",
+    "tests/test_recovery_transition_lifecycle.py"
+  ],
+  "python_import_edges": [
+    {
+      "from": "tests/test_planner_lifecycle_boundary.py",
+      "line": 16,
+      "module": "tests.test_plan_local_preaction_convergence_v2",
+      "to": "tests/test_plan_local_preaction_convergence_v2.py"
+    },
+    {
+      "from": "tests/test_planner_lifecycle_boundary.py",
+      "line": 17,
+      "module": "tests.ger_fixture_support",
+      "to": "tests/ger_fixture_support.py"
+    },
+    {
+      "from": "tests/test_planner_lifecycle_boundary.py",
+      "line": 18,
+      "module": "tests.test_cli_v2_display",
+      "to": "tests/test_cli_v2_display.py"
+    },
+    {
+      "from": "tests/test_planner_lifecycle_boundary.py",
+      "line": 19,
+      "module": "tests.test_cli_model_progress_integration",
+      "to": "tests/test_cli_model_progress_integration.py"
+    },
+    {
+      "from": "tests/test_cli_model_progress_integration.py",
+      "line": 19,
+      "module": "tests.cli_model_progress_support",
+      "to": "tests/cli_model_progress_support.py"
+    },
+    {
+      "from": "tests/test_cli_model_progress_integration.py",
+      "line": 32,
+      "module": "tests.test_recovery_agent_loop",
+      "to": "tests/test_recovery_agent_loop.py"
+    },
+    {
+      "from": "tests/test_recovery_agent_loop.py",
+      "line": 22,
+      "module": "tests.test_recovery_projection",
+      "to": "tests/test_recovery_projection.py"
+    },
+    {
+      "from": "tests/test_cross_layer_delivery.py",
+      "line": 13,
+      "module": "tests.test_preflight_recovery_audit",
+      "to": "tests/test_preflight_recovery_audit.py"
+    },
+    {
+      "from": "tests/test_preflight_recovery_audit.py",
+      "line": 24,
+      "module": "tests.cli_model_progress_support",
+      "to": "tests/cli_model_progress_support.py"
+    },
+    {
+      "from": "tests/test_preflight_recovery_audit.py",
+      "line": 120,
+      "module": "tests.test_plan_local_preaction_convergence_v2",
+      "to": "tests/test_plan_local_preaction_convergence_v2.py"
+    },
+    {
+      "from": "tests/test_preflight_recovery_audit.py",
+      "line": 121,
+      "module": "tests.ger_fixture_support",
+      "to": "tests/ger_fixture_support.py"
+    },
+    {
+      "from": "tests/test_cross_layer_correction.py",
+      "line": 92,
+      "module": "tests.test_plan_local_preaction_convergence_v2",
+      "to": "tests/test_plan_local_preaction_convergence_v2.py"
+    },
+    {
+      "from": "tests/test_cross_layer_correction.py",
+      "line": 93,
+      "module": "tests.test_preflight_recovery_audit",
+      "to": "tests/test_preflight_recovery_audit.py"
+    },
+    {
+      "from": "tests/test_cross_layer_correction.py",
+      "line": 126,
+      "module": "tests.test_generate_admission_typed_repair",
+      "to": "tests/test_generate_admission_typed_repair.py"
+    },
+    {
+      "from": "tests/test_cross_layer_correction.py",
+      "line": 128,
+      "module": "tests.test_preflight_recovery_audit",
+      "to": "tests/test_preflight_recovery_audit.py"
+    },
+    {
+      "from": "tests/test_generate_recovery_handoff.py",
+      "line": 13,
+      "module": "tests.test_recovery_projection",
+      "to": "tests/test_recovery_projection.py"
+    },
+    {
+      "from": "tests/test_plan_cancel_fix.py",
+      "line": 7,
+      "module": "tests.plan_resource_fix_support",
+      "to": "tests/plan_resource_fix_support.py"
+    },
+    {
+      "from": "tests/test_plan_cancel_fix.py",
+      "line": 8,
+      "module": "tests.test_plan_resource_fix",
+      "to": "tests/test_plan_resource_fix.py"
+    },
+    {
+      "from": "tests/test_plan_cancel_fix.py",
+      "line": 9,
+      "module": "tests.test_plan_stop_fix",
+      "to": "tests/test_plan_stop_fix.py"
+    },
+    {
+      "from": "tests/test_plan_stop_fix.py",
+      "line": 7,
+      "module": "tests.plan_resource_fix_support",
+      "to": "tests/plan_resource_fix_support.py"
+    },
+    {
+      "from": "tests/test_plan_stop_fix.py",
+      "line": 8,
+      "module": "tests.test_plan_resource_fix",
+      "to": "tests/test_plan_resource_fix.py"
+    },
+    {
+      "from": "tests/test_plan_resource_fix.py",
+      "line": 11,
+      "module": "tests.plan_resource_fix_support",
+      "to": "tests/plan_resource_fix_support.py"
+    },
+    {
+      "from": "tests/plan_resource_fix_support.py",
+      "line": 68,
+      "module": "tests.plan_resource_fix_support",
+      "to": "tests/plan_resource_fix_support.py"
+    },
+    {
+      "from": "tests/test_candidate_generation_resume.py",
+      "line": 16,
+      "module": "tests.test_generate_session_1788681718_production_path",
+      "to": "tests/test_generate_session_1788681718_production_path.py"
+    },
+    {
+      "from": "tests/test_candidate_generation_resume.py",
+      "line": 17,
+      "module": "tests.formal_generate_fixture",
+      "to": "tests/formal_generate_fixture.py"
+    },
+    {
+      "from": "tests/test_candidate_generation_resume.py",
+      "line": 18,
+      "module": "tests.test_inspection_workflow",
+      "to": "tests/test_inspection_workflow.py"
+    },
+    {
+      "from": "tests/formal_generate_fixture.py",
+      "line": 9,
+      "module": "tests.test_plan_dataflow_p1",
+      "to": "tests/test_plan_dataflow_p1.py"
+    },
+    {
+      "from": "tests/test_candidate_generation_claims.py",
+      "line": 9,
+      "module": "tests.test_base01_allocation_reload",
+      "to": "tests/test_base01_allocation_reload.py"
+    },
+    {
+      "from": "tests/test_base01_allocation_reload.py",
+      "line": 17,
+      "module": "test_plan_dataflow_p1",
+      "to": "tests/test_plan_dataflow_p1.py"
+    }
+  ],
+  "not_run_safety": [
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_session_1788340897_offline_mock_replay_crosses_prompt_guard",
+      "source_line": 204,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_controller_attaches_internal_binding_and_hash_mismatch_fails_closed",
+      "source_line": 261,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_candidate_generation_resume.py",
+      "reason": "Old session JSON fixture; no new read/export authorized. Replaced by fresh F3 real claims/reload and F6 combination.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_resource_fix.py",
+      "reason": "Old incident JSON fixtures; reuse validated unchanged modules and old bounded receipts, not a new whole-chain PASS.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_stop_fix.py",
+      "reason": "Same old incident JSON dependency; new F3/F6 formal blocked branches and unchanged Planner evidence are separated.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_cancel_fix.py",
+      "reason": "Same old incident JSON dependency; unchanged pre_dispatch/atomic evidence reused, changed Generate boundaries retested in F3.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_recovery_transition_lifecycle.py::<incident_fixture dependent cases>",
+      "reason": "Old session JSON fixture. Only four explicitly fixture-free cases selected.",
+      "status": "NOT_RUN_SAFETY"
+    }
+  ],
+  "forbidden_fixture_reads_performed": false,
+  "new_fixture_exports_performed": false,
+  "not_read_or_exported_paths": [
+    "../benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1788340897/plan_state.json",
+    "tests/fixtures/session_1788681718_generate_candidate.json",
+    "tests/fixtures/session_1788681718_approved_plan.json",
+    "tests/fixtures/session_1787797284_recovery_transition_replay.json",
+    "docs/audits/session_1789369423_plan_resource_cycle/candidate_C_rejected.json",
+    "docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json"
+  ],
+  "reuse": {
+    "files": [
+      {
+        "file": "agent_core/plan_contract.py",
+        "current_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+        "previous_loaded_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "agent_core/plan_tracker.py",
+        "current_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+        "previous_loaded_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "agent_core/planner_recovery.py",
+        "current_sha256": "09f311dd02997260a62af1d7477e94b6805cb69ba7244022775f26e56c38bebd",
+        "previous_loaded_sha256": "09f311dd02997260a62af1d7477e94b6805cb69ba7244022775f26e56c38bebd",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "agent_core/planner_loop.py",
+        "current_sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649",
+        "previous_loaded_sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "agent_core/plan_bindings.py",
+        "current_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+        "previous_loaded_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "agent_core/workflow/early_nodes.py",
+        "current_sha256": "cabf181201849b0fe2c4e6fd7ed0caeb441cefde23f54ca57d7a0277e98b55c9",
+        "previous_loaded_sha256": "cabf181201849b0fe2c4e6fd7ed0caeb441cefde23f54ca57d7a0277e98b55c9",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "agent_core/workflow/execution.py",
+        "current_sha256": "44a73f514aca43fa068e55d43f25e5f4026dc054a0ceb9ef66fda027983ff65c",
+        "previous_loaded_sha256": "44a73f514aca43fa068e55d43f25e5f4026dc054a0ceb9ef66fda027983ff65c",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "agent_core/task_spec.py",
+        "current_sha256": "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059",
+        "previous_loaded_sha256": "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059",
+        "same": true,
+        "prior_manifest": "A1 incident/final_export_manifest.json"
+      },
+      {
+        "file": "tests/test_plan_cancel_fix.py",
+        "current_sha256": "0367e87606240d6ea6512f42b14495c3e096ba487e7b1bfeeaf15568101b2c1d",
+        "previous_loaded_sha256": "0367e87606240d6ea6512f42b14495c3e096ba487e7b1bfeeaf15568101b2c1d",
+        "same": true,
+        "prior_manifest": "latest Plan final_export_manifest.json"
+      },
+      {
+        "file": "tests/test_plan_resource_fix.py",
+        "current_sha256": "462b4fabd8e9291b45856a8e64de9f1a6bc5e2350308c9a44aa5b5235e29dbde",
+        "previous_loaded_sha256": "462b4fabd8e9291b45856a8e64de9f1a6bc5e2350308c9a44aa5b5235e29dbde",
+        "same": true,
+        "prior_manifest": "latest Plan final_export_manifest.json"
+      },
+      {
+        "file": "tests/test_plan_stop_fix.py",
+        "current_sha256": "b87104da8159f178a2f6c234ae6a63fa159db1f9e8288ef31dad1a174c6e1568",
+        "previous_loaded_sha256": "b87104da8159f178a2f6c234ae6a63fa159db1f9e8288ef31dad1a174c6e1568",
+        "same": true,
+        "prior_manifest": "latest Plan final_export_manifest.json"
+      }
+    ],
+    "bio_agents_function_comparison": {
+      "baseline_git_blob_matches_a1_loaded": true,
+      "baseline_blob_sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d",
+      "functions": {
+        "_persist_user_submission": {
+          "baseline_sha256": "7efa7a3840a8d77a8fb546ccaedba810fdc16516ea4b9e06716cb16b31918fdc",
+          "current_sha256": "7efa7a3840a8d77a8fb546ccaedba810fdc16516ea4b9e06716cb16b31918fdc",
+          "same": true
+        },
+        "_commit_user_cancellation": {
+          "baseline_sha256": "9e0fb9e425f8ab5263dfd892048d518c19758eaeb80418b2ee9e62f4ec82c2a1",
+          "current_sha256": "9e0fb9e425f8ab5263dfd892048d518c19758eaeb80418b2ee9e62f4ec82c2a1",
+          "same": true
+        },
+        "planner_scope_stale": {
+          "baseline_sha256": "8f3ff50b1600bb158bda12a9fa876ceaad328a2a6a5437021793dc1daa74f689",
+          "current_sha256": "8f3ff50b1600bb158bda12a9fa876ceaad328a2a6a5437021793dc1daa74f689",
+          "same": true
+        },
+        "persist_planner_rejection": {
+          "baseline_sha256": "94e0300a65e2870f28e422c939df9f5aa68c221bc1f8f8b9aafe4c6d0a89a5b6",
+          "current_sha256": "94e0300a65e2870f28e422c939df9f5aa68c221bc1f8f8b9aafe4c6d0a89a5b6",
+          "same": true
+        },
+        "planner": {
+          "baseline_sha256": "e9bb637c6b2c40ca4fd4259473b3ed7413ace22a2d258d3ffd2d2e1a1a377e2e",
+          "current_sha256": "e9bb637c6b2c40ca4fd4259473b3ed7413ace22a2d258d3ffd2d2e1a1a377e2e",
+          "same": true
+        },
+        "plan_review": {
+          "baseline_sha256": "d2c8d1ef248f02342641735bee126e7af8754b0bbec0db2abdf31de495df2dc5",
+          "current_sha256": "6ca050a22673320adf18dcad7f4e76a251e42885e1d109efd03ef05c2acd3ac4",
+          "same": false
+        },
+        "planner_closed_update": {
+          "baseline_sha256": "4f00a60ee8a975acf426dfa3085885e3ff94acd35a91885e2a137bcfe0448fa7",
+          "current_sha256": "4f00a60ee8a975acf426dfa3085885e3ff94acd35a91885e2a137bcfe0448fa7",
+          "same": true
+        },
+        "planner_stale_update": {
+          "baseline_sha256": "1646ef5ec65f64c88848eecefbc3e74a17da63ad14e6b4554f3d1852860f05c2",
+          "current_sha256": "1646ef5ec65f64c88848eecefbc3e74a17da63ad14e6b4554f3d1852860f05c2",
+          "same": true
+        },
+        "_persist_plan_review_cancellation": {
+          "baseline_sha256": "eddae0de1f3aab55a4dd7aae99f987969f3c3d113a83355588dffa3f52dd2c09",
+          "current_sha256": "eddae0de1f3aab55a4dd7aae99f987969f3c3d113a83355588dffa3f52dd2c09",
+          "same": true
+        }
+      }
+    },
+    "evidence_file": "docs/implementation/plan_resources_convergence_20260914/all_test_results.json.gz",
+    "evidence_file_sha256": "b30d8971e639c8a9f75874b11b4f8efeeedcaebe5de3fcd65841084305c47a3d",
+    "cancellation_call_records": [
+      {
+        "json_pointer": "/acceptance-current-combined-pytest.json/142",
+        "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 0.7745504649356008
+      },
+      {
+        "json_pointer": "/acceptance-current-combined-pytest.json/146",
+        "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+        "phase": "call",
+        "outcome": "passed",
+        "duration": 1.1968555739149451
+      }
+    ],
+    "claim": "Reused bounded witnesses for byte-identical implementation only; plan_review changed and requires F4/F5/fresh lifecycle evidence. No claim that all previous 237 files remain unchanged after implementation."
+  },
+  "replacement_map": {
+    "IT08_budget_reload": "test_f3_claims.py plus test_f3_progress.py legacy/exact replay and F6 current combined scope",
+    "IT09_pre_dispatch_and_atomic_save": "previous loaded exact cancellation call records + byte-identical planner and persistence functions/modules",
+    "IT09_late_valid_invalid_blocked_and_nonsemantic": "test_f3_late_result.py current fresh Plan graph, real cancellation and guard",
+    "approval_display_and_changed_review": "F4/F5 current tests; pending final public lifecycle selection",
+    "execution_recovery_commit": "F6 fresh six-capability and real process combinations"
+  },
+  "execution_limits": [
+    "Existing reviewed offline launch/guard; no real provider/science or original session.",
+    "Per child launcher timeout 180s; longest lifecycle case isolated.",
+    "Older fake-success/component fixtures are not E2E proof.",
+    "Old assertion failures remain failures; no modifications or skip markers introduced."
+  ],
+  "historical_legacy_failures": {
+    "scope": "Historical recorded failures retained; not relabeled current PASS and not rerun against forbidden fixtures.",
+    "source": "docs/implementation/plan_resources_convergence_20260914/all_test_results.json.gz",
+    "records": [
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/10",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_c_only_explicit_submission_reaches_plan_review",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "2bfc1c388a0d34660b778aa4c4c3d03dcf846d207091253d0eeb52804357161e"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/14",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_d_submit_review_acceptance_chain_reaches_execution",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "eb3384f69d7c54f03f4f1c7ac34ffc66a55942d409bb38d3b1651ab9989f6188"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/18",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e2_plan_review_revision_requires_durable_rejection_receipt",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "0318e3712a5d50af77400ac89b95906cfe579c493e18722da78dbe11c28b2451"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/22",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_e_output_identity_review_evidence_is_machine_addressable",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "3b6e7221b219c4dda217dd0fe406bb18d9cb22c8d8d1093381716a87641bfe83"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/26",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_f_rejected_v1_returns_to_planner_and_v2_can_be_accepted",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "796cbc2af965de50c1ae04dce26a429634b793692ccdf401b15314f37111e3b1"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/34",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_h_transient_ready_poison_cannot_reach_generate",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "a3e1f4bfd45cc52486c16c7df7a5008a9921ff9bff00d9e0c9a49e948a172144"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/38",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_i_reverse_poison_cannot_divert_accepted_plan",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "62cac10aab22cc7e080a593d4b1bb1e5e7ba697d47815cd6248d8bf88fe5d891"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/54",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k3_stale_result_is_consumed_once",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "8737e8ea8c37661c3309503aee1bfa9b6c34e42ef4e8dc116315ff1e6f334841"
+      },
+      {
+        "json_pointer": "/acceptance-current-legacy-pytest.json/62",
+        "nodeid": "tests/test_planner_agent_loop.py::PlannerAgentLoopTests::test_k5_adapter_update_clears_consumed_stale_receipt",
+        "phase": "call",
+        "outcome": "failed",
+        "failure_sha256": "6dcdc40f6f85628495f06de4a9283bfcf135d818a96562739644830a63f12bee"
+      }
+    ]
+  }
+}

@@ -1,0 +1,233 @@
+diff --git a/agent_core/step_effects.py b/agent_core/step_effects.py
+index 563a705..8f89ab9 100644
+--- a/agent_core/step_effects.py
++++ b/agent_core/step_effects.py
+@@ -24,10 +24,12 @@ from __future__ import annotations
+ 
+ import hashlib
+ import inspect
++import io
+ import json
+ import math
+ import re
+ import shlex
++import tokenize
+ from copy import deepcopy
+ from dataclasses import dataclass
+ from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
+@@ -3383,8 +3385,74 @@ def _inline_interpreter_body(argv: Sequence[str]) -> tuple[int, str] | None:
+     return None
+ 
+ 
++def _assert_python_helper_comment(body: str, marker_index: int) -> None:
++    """The marker must be Python source, not bytes inside a string literal."""
++    try:
++        for token in tokenize.generate_tokens(io.StringIO(body).readline):
++            if (token.type == tokenize.COMMENT and token.start == (marker_index + 1, 0)
++                    and token.string == EFFECT_HELPER_MARKER):
++                return
++            if token.start[0] > marker_index + 1:
++                break
++    except (tokenize.TokenError, IndentationError, SyntaxError):
++        pass
++    raise ValueError("EFFECT_HELPER_REQUIRES_PYTHON_COMMENT_SCOPE")
++
++
++def _python_stdin_selector(args: Sequence[str]) -> bool:
++    """Recognize an explicit Python stdin operand, before any script or module."""
++    i = 1
++    while i < len(args):
++        option = args[i]
++        if option == "-":
++            return True  # All following words are script arguments, even '-'.
++        if option == "--":
++            return i + 1 < len(args) and args[i + 1] == "-"
++        if option == "--check-hash-based-pycs":
++            if i + 1 >= len(args) or args[i + 1] not in {"always", "default", "never"}:
++                return False
++            i += 2
++            continue
++        if not option.startswith("-") or option.startswith("--"):
++            return False
++        # Python short switches can be clustered. W/X consume the rest of
++        # their word or the next word; a '-' consumed there is not stdin.
++        skip = 1
++        for offset, flag in enumerate(option[1:], 1):
++            if flag in {"W", "X"}:
++                if offset == len(option) - 1:
++                    if i + 1 >= len(args):
++                        return False
++                    skip = 2
++                break
++            if flag not in "bBdEiIOPqRsSuvx":
++                return False  # Includes -c/-m, help/version and unknown modes.
++        i += skip
++    return False
++
++
++def _single_shell_command(prefix: str) -> bool:
++    """Reject unquoted shell operators without interpreting shell expressions."""
++    quote = ""
++    escaped = False
++    for char in prefix:
++        if escaped:
++            escaped = False
++        elif char == "\\" and quote != "'":
++            escaped = True
++        elif quote:
++            if char == quote:
++                quote = ""
++        elif char in {"'", '"'}:
++            quote = char
++        elif char in ";&|<>()\n":
++            return False
++    return not quote and not escaped
++
++
+ def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
+     if language in {"python", "py"}:
++        _assert_python_helper_comment(body, marker_index)
+         return
+     if language not in {"bash", "shell", "sh"}:
+         raise ValueError("EFFECT_HELPER_REQUIRES_PYTHON_SCOPE")
+@@ -3396,6 +3464,8 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
+         match = re.fullmatch(r"\s*(.*?)\s*<<\s*'([A-Za-z_][A-Za-z_0-9]*)'\s*", lines[i])
+         if not match:
+             continue
++        if not _single_shell_command(match[1]):
++            break
+         try:
+             args = shlex.split(match[1])
+         except ValueError:
+@@ -3403,7 +3473,8 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
+         executable = args[0].rsplit("/", 1)[-1] if args else ""
+         closing = next((j for j in range(i + 1, len(lines)) if lines[j] == match[2]), None)
+         if (re.fullmatch(r"(?:python|pypy)(?:\d+(?:\.\d+)*)?", executable)
+-                and "-" in args[1:] and closing is not None and i < marker_index < closing):
++                and _python_stdin_selector(args) and closing is not None and i < marker_index < closing):
++            _assert_python_helper_comment("\n".join(lines[i + 1:closing]) + "\n", marker_index - i - 1)
+             return
+         break
+     raise ValueError("EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC")
+diff --git a/tests/a1_unified_fix/test_f2_scope.py b/tests/a1_unified_fix/test_f2_scope.py
+new file mode 100644
+index 0000000..13fa4ed
+--- /dev/null
++++ b/tests/a1_unified_fix/test_f2_scope.py
+@@ -0,0 +1,116 @@
++"""F2 actual Python scope: new tiny processes and the real materializer.
++
++Negative process witnesses are explicitly constructed reproductions of the old
++literal substitution, never admitted candidates or full graph success claims.
++All script/module paths are new synthetic files and all shells are non-login.
++"""
++import asyncio
++import json
++import os
++from pathlib import Path
++import shlex
++import sys
++
++import pytest
++
++from agent_core.step_effects import (
++    EFFECT_HELPER_MARKER,
++    declared_effect_emission_contract,
++    extract_structured_effect_evidence,
++    materialize_effect_action,
++)
++from tests.test_preflight_recovery_audit import PYTHON, approved_tiny
++
++
++def frozen():
++    step = {'step_id': 'synthetic-scope', 'produces_observations': [
++        {'identity': 'scope_probe', 'evidence_contract': {'required_fields': ['value']}}]}
++    return declared_effect_emission_contract({'steps': [step]}, step['step_id'])
++
++
++def save(name, value):
++    root = Path(os.environ['BIOMIND_GER_ARTIFACTS'])
++    (root / ('f2-scope-' + name + '.json')).write_text(json.dumps(value, indent=2) + '\n')
++
++
++def tiny(path, body):
++    try:
++        return asyncio.run(approved_tiny(path, body))
++    finally:
++        sys.modules['__main__'].OFFLINE_ALLOWED_SCRIPT_PATHS.discard(str(path))
++
++
++@pytest.mark.parametrize('mode', ['python_string', 'heredoc_string', 'command', 'module', 'file'])
++def test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails(mode, tmp_path):
++    template = frozen()
++    call = "print(emit_effect_evidence({'produces_observations': {'scope_probe': {'value': False}}}))\n"
++    probe = tmp_path / 'new_scope_probe.py'
++    probe.write_text(call)
++    if mode in {'python_string', 'heredoc_string'}:
++        body = "ignored = '''\n" + EFFECT_HELPER_MARKER + "\n'''\n" + call
++        prefix = [PYTHON, '-I', '-S', '-']
++    else:
++        body = EFFECT_HELPER_MARKER + '\n'
++        prefix = [PYTHON, '-I', '-S'] + {
++            'command': ['-c', call, '-'],
++            'module': ['-m', 'json.tool', '-'],
++            'file': [str(probe), '-'],
++        }[mode]
++    script = body if mode == 'python_string' else shlex.join(prefix) + " <<'SCOPE'\n" + body + 'SCOPE\n'
++    action = {'type': 'execute', 'code': script, 'language': 'python' if mode == 'python_string' else 'bash', 'argv': []}
++    error = ('EFFECT_HELPER_REQUIRES_PYTHON_COMMENT_SCOPE' if mode in {'python_string', 'heredoc_string'}
++             else 'EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC')
++    with pytest.raises(ValueError, match=error):
++        materialize_effect_action(action, template)
++    # Reproduce the former byte replacement only in a fresh test script. This
++    # witness establishes why the corrected admission gate must reject it.
++    old_substitution = script.replace(EFFECT_HELPER_MARKER, template['python_template'].rstrip())
++    command = ('exec ' + shlex.join([PYTHON, '-I', '-S', '-c', old_substitution])
++               if mode == 'python_string' else old_substitution)
++    out, err, rc = tiny(tmp_path / 'old-scope-witness.sh', command)
++    expected_error = 'Expecting value' if mode == 'module' else "name 'emit_effect_evidence' is not defined"
++    assert rc == 1 and expected_error in err
++    assert 'BIOMIND_EFFECT_EVIDENCE_JSON=' not in out
++    save(mode, {'fixed_materializer': error, 'old_literal_substitution_witness': {'rc': rc, 'stdout': out, 'stderr': err},
++                'scope': 'component rejection plus deliberately nonadmitted old-substitution process; no approval/graph/scientific success'})
++
++
++@pytest.mark.parametrize('mode', ['argv_python', 'heredoc_flags', 'heredoc_cluster', 'heredoc_x_stdin'])
++def test_actual_comment_scope_and_stdin_selector_preserve_arguments(mode, tmp_path):
++    expected = ['space and 中文', 'single\'double"', '-', ';']
++    body = "label = '''a string completed before the real marker'''\n" + EFFECT_HELPER_MARKER + '\nimport sys\n'
++    body += 'assert sys.argv[1:] == ' + repr(expected) + '\n'
++    body += "items = [value for value in sys.argv[1:] if value == 'absent-value']\n"
++    body += "print(emit_effect_evidence({'produces_observations': {'scope_probe': {'value': bool(items), 'items': items}}}))\n"
++    if mode == 'argv_python':
++        action = {'type': 'execute', 'argv': [PYTHON, '-I', '-S', '-c', body, *expected]}
++    else:
++        flags = ['-I', '-S', '-P', '-W', 'ignore', '-X', 'dev', '-'] if mode == 'heredoc_flags' else ['-IS', '-Wignore', '-Xdev', '--', '-']
++        if mode == 'heredoc_x_stdin':
++            flags = ['-I', '-S', '-x', '-']
++            # On the tested Python, -x does not skip the first stdin source
++            # line. Put the marker there to preserve that measured boundary.
++            body = body.split('\n', 1)[1]
++        script = shlex.join([PYTHON, *flags, *expected]) + " <<'SCOPE'\n" + body + 'SCOPE\n'
++        action = {'type': 'execute', 'code': script, 'language': 'bash', 'argv': ['bash', '--noprofile', '--norc', '-c', script]}
++    admitted = materialize_effect_action(action, frozen())
++    assert materialize_effect_action(admitted, frozen()) == admitted
++    if mode != 'argv_python':
++        assert admitted['code'] == admitted['argv'][4]
++    out, err, rc = tiny(tmp_path / 'new-valid-scope.sh', 'exec ' + shlex.join(admitted['argv']))
++    assert rc == 0 and not err
++    assert extract_structured_effect_evidence(out)['produces_observations'] == [
++        {'identity': 'scope_probe', 'value': False, 'items': []}]
++    save(mode, {'rc': rc, 'stdout': out, 'stderr': err, 'actual_script_arguments': expected,
++                'scope': 'real materializer and tiny process; categorized actual False/empty result under synthetic declaration'})
++
++
++@pytest.mark.parametrize('prefix', [
++    "python -c 'print(1)' -", "python -m json.tool -", "python script.py -",
++    'python -W -', 'python -X -', 'python -V -', 'python --help -',
++    'python - && cat -', 'python -; cat -',
++])
++def test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope(prefix):
++    body = prefix + " <<'SCOPE'\n" + EFFECT_HELPER_MARKER + '\nSCOPE\n'
++    with pytest.raises(ValueError, match='EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC'):
++        materialize_effect_action({'type': 'execute', 'code': body, 'language': 'bash'}, frozen())

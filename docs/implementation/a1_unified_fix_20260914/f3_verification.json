@@ -1,0 +1,3745 @@
+{
+  "scope": "F3 IG-D4/IG-D5/G11 production implementation; actual parser/ledger/gates and fixed provider",
+  "status": "FIX_PASS_AT_GENERATE_ADMISSION_BOUNDARY",
+  "test_count": 33,
+  "commit_parent_and_loaded_baseline_are_separate": true,
+  "final_export": {
+    "run": 9,
+    "root": "/tmp/biomind-a1-f3-run09",
+    "export_head": "499ce1ae5b95a04dd227e21628578946203372f6",
+    "source_signature": "d7a1bfe83c0de806c1ee6ef1a2812eb32e231e163238de6fb30ece4074b2de4e",
+    "export_manifest_sha256": "5e972a3c8801d46d351b59d1f8e79503b1630e8e0b076df34692044a561ed28a",
+    "production_export_hashes": {
+      "bio_agents.py": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+      "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+    },
+    "tests_export_hashes": {
+      "tests/a1_unified_fix/test_f3_progress.py": "c7b986951d1cb35d42f3856c757ff6cbf7a1fca5799b0ec7c4c39244cbb02c2a",
+      "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+      "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+    },
+    "counts": {
+      "passed": 28
+    },
+    "collection_error": false,
+    "source_unchanged_in_test_process": true,
+    "test_result_sha256": "20a23b70696b9b8035d97647cbf0d632f67f97b0cc953579d7ed187b0ff668c0",
+    "summary_lines": [
+      "28 passed, 1 warning in 88.12s (0:01:28)"
+    ],
+    "scope": "Current checkpoint wiring and all 28 F3 FIX cases."
+  },
+  "production_current_matches_export": {
+    "current": "unified_final08",
+    "files": {
+      "bio_agents.py": true,
+      "agent_core/workflow/candidate_repair.py": true,
+      "agent_core/recovery.py": true,
+      "tests/a1_unified_fix/test_f3_env_progress.py": true
+    }
+  },
+  "runs": [
+    {
+      "run": 1,
+      "root": "/tmp/biomind-a1-f3-run01",
+      "export_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "source_signature": "48922680adb0bf83d53c437a0fe71b5073c9bc3ad2be81cdc180116d2659845d",
+      "export_manifest_sha256": "9f0cfc9488e33cd9d4aa324fb5d729a0a04b773c489c19cbea28e0b9931d2bc9",
+      "production_export_hashes": {
+        "bio_agents.py": "a6424778c771a8c4ec3d294da372eca437000926e97ed5113d229ad47f7a83a4",
+        "agent_core/workflow/candidate_repair.py": "2e0901e9a1e96897306172b4c2b3e66c6de93ec331789a521436b47f36376afa",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "a1726b39f3e462a417ef631143d80e87294d92503ef3e8fc9e9cb5d8280c305a",
+        "tests/a1_unified_fix/test_f3_late_result.py": null,
+        "tests/a1_unified_fix/test_f3_claims.py": null
+      },
+      "counts": {
+        "passed": 13,
+        "failed": 3
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "5a5d8928b7b378df26943aed861ead9205b87f0fae8782c8e78d9acc38b043dd",
+      "summary_lines": [
+        "3 failed, 13 passed in 47.40s"
+      ],
+      "scope": "Initial FIX run exposed missing public progress feedback; all three multiround executions reached action_ready before feedback assertion failed."
+    },
+    {
+      "run": 2,
+      "root": "/tmp/biomind-a1-f3-run02",
+      "export_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "source_signature": "f03dca922fdde6a30e39a26e7a6a8fa6d78ce2ffbf1721d64e0240c192ca2348",
+      "export_manifest_sha256": "f180d54c83fbe6b28fb56353770e5a1ebde3b4d302d20ad060fbcd98d192a2b7",
+      "production_export_hashes": {
+        "bio_agents.py": "56d73bae51254d14d5eaa063d3f36585bd0336975478a4f31a486f9fcc5f9af0",
+        "agent_core/workflow/candidate_repair.py": "2e0901e9a1e96897306172b4c2b3e66c6de93ec331789a521436b47f36376afa",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "a1726b39f3e462a417ef631143d80e87294d92503ef3e8fc9e9cb5d8280c305a",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {},
+      "collection_error": true,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": null,
+      "summary_lines": [
+        "1 error in 6.40s"
+      ],
+      "scope": "Exporter omitted a safe existing fixture dependency; collection failed, no production failure claim."
+    },
+    {
+      "run": 3,
+      "root": "/tmp/biomind-a1-f3-run03",
+      "export_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "source_signature": "5cf769af870689b084209ea9154b0fb31cc4df0d4a946cf4d0adf64590218cad",
+      "export_manifest_sha256": "264f110e4df2ed43dabea21eebf84db38a9326d46bb2af6dfba274ef3e8048a8",
+      "production_export_hashes": {
+        "bio_agents.py": "f92617feba030a451ef623f49da02362b9e62c64a01f05efcdd1843fb9a39e1f",
+        "agent_core/workflow/candidate_repair.py": "2e0901e9a1e96897306172b4c2b3e66c6de93ec331789a521436b47f36376afa",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "cfc94bf68ddbb9604f68a16ae0e8b3f94fa87734137854b356ac1b75ead1864e",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {
+        "passed": 23
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "bea8cba3029f22357457b891bd55e134ad24ae40cc10be6c0a80fdbc900869f7",
+      "summary_lines": [
+        "23 passed, 1 warning in 66.16s (0:01:06)"
+      ],
+      "scope": "First complete parser/progress/cancellation/reload suite."
+    },
+    {
+      "run": 4,
+      "root": "/tmp/biomind-a1-f3-run04",
+      "export_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "source_signature": "c3f301bddfe64dc837ac430132dd49e65e06f7016b90c6998933ff7524927a5e",
+      "export_manifest_sha256": "c150e8d60b3aa5c044d3b3bf87d90aa7832d16fd054d58c7283c428155a1e1fa",
+      "production_export_hashes": {
+        "bio_agents.py": "98a378688e3bef9d34d1ca5ab40aecdc27b6b4ed22dc1e4d03b91d9102adb6b0",
+        "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "6bfbb47d49997943dcb4e3c6997620f53c29d10d96f34b793174c652b9c5214b",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {
+        "passed": 24
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "48718bf2ee323931d058bbe5dd95c1cb21872f03f49310dc7f5ac06a662fbf53",
+      "summary_lines": [
+        "24 passed, 1 warning in 61.13s (0:01:01)"
+      ],
+      "scope": "Comparison-version preservation test and parser selection metadata."
+    },
+    {
+      "run": 5,
+      "root": "/tmp/biomind-a1-f3-run05",
+      "export_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "source_signature": "81fd529531fda8a192814a7da8a0d93a4c067061a86aa7a0ffb45aaa28dce505",
+      "export_manifest_sha256": "ffda7a35231ec6e7bffea6db214bc4936d92d61b8d4e966e18a5f87fd0a86080",
+      "production_export_hashes": {
+        "bio_agents.py": "cf04aa512391d497b5af56e097c0d88e00175ca62093998832a5fc05f53c5709",
+        "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "264982aedf458f28ffb20550065a413c74f541393e8c258eeef06d6fd11f9948",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {
+        "passed": 25
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "ced8dc600dd9f04039d72c2169eb1ca5c592c7e35cbd84fbda3a6c107b7c8706",
+      "summary_lines": [
+        "25 passed, 1 warning in 70.94s (0:01:10)"
+      ],
+      "scope": "Legacy optional progress metadata compatibility added."
+    },
+    {
+      "run": 6,
+      "root": "/tmp/biomind-a1-f3-run06",
+      "export_head": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+      "source_signature": "91502a435c5af7cc0970da48380583a2722603be21ed715b443111a0cd58fb4a",
+      "export_manifest_sha256": "f310b37e54659cb23b9eef6d4c67725d70f89d9b644997b10939ba4bdf982e9a",
+      "production_export_hashes": {
+        "bio_agents.py": "cf04aa512391d497b5af56e097c0d88e00175ca62093998832a5fc05f53c5709",
+        "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "377afaa7266c54e3bb9cfb2946aae2463b42be29f7856d862fec79c1f790b74d",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {
+        "passed": 1
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "d063594c2af5381c17ad2e449fde7e387ad45e1578274a387f0aa91b01f6eaa0",
+      "summary_lines": [
+        "1 passed in 19.24s"
+      ],
+      "scope": "Exact rejection event replay in actual graph."
+    },
+    {
+      "run": 7,
+      "root": "/tmp/biomind-a1-f3-run07",
+      "export_head": "499ce1ae5b95a04dd227e21628578946203372f6",
+      "source_signature": "3e662f48c6301d5096de66d175f53ec38de86e058fc2924062797c29f160d320",
+      "export_manifest_sha256": "dfe7405739cf6e2e737127ef0341f4906254c41c985d06ed8a5b607fde379b68",
+      "production_export_hashes": {
+        "bio_agents.py": "9b79a1f2dd0227f0941b1e81ebd3dafec8f2633d70350016753294aa4b593853",
+        "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "377afaa7266c54e3bb9cfb2946aae2463b42be29f7856d862fec79c1f790b74d",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {
+        "passed": 26
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "8f49cad6e636c90d456d02eb10919672b55f969ba3d9d1028c0aa0c125cc9c11",
+      "summary_lines": [
+        "26 passed, 1 warning in 114.50s (0:01:54)"
+      ],
+      "scope": "All 26 cases before actual helper/syntax checkpoints were added."
+    },
+    {
+      "run": 8,
+      "root": "/tmp/biomind-a1-f3-run08",
+      "export_head": "499ce1ae5b95a04dd227e21628578946203372f6",
+      "source_signature": "4f6e4020c826e1d0ee9f2bf585425433f39ffe72e3cb6ea227d1b16cb1dd276a",
+      "export_manifest_sha256": "12399813438fba03e9deb420191d40170d17c0144bd0066ee7d24530ec9b1a15",
+      "production_export_hashes": {
+        "bio_agents.py": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+        "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "3102bcf9e05115b781e9d1c442b1c736801b9b75264699033f3ec636851b9bcd",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {
+        "failed": 1,
+        "passed": 1
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "3e1517e04d1e4c98c87c595e152df7e842ba30a39769de3728172f4e9b0a2f16",
+      "summary_lines": [
+        "1 failed, 1 passed in 11.42s"
+      ],
+      "scope": "Actual syntax checkpoint passed. Helper fixture first-line indentation was stripped by the existing parser; fixture did not exercise intended error, corrected only new test input."
+    },
+    {
+      "run": 9,
+      "root": "/tmp/biomind-a1-f3-run09",
+      "export_head": "499ce1ae5b95a04dd227e21628578946203372f6",
+      "source_signature": "d7a1bfe83c0de806c1ee6ef1a2812eb32e231e163238de6fb30ece4074b2de4e",
+      "export_manifest_sha256": "5e972a3c8801d46d351b59d1f8e79503b1630e8e0b076df34692044a561ed28a",
+      "production_export_hashes": {
+        "bio_agents.py": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+        "agent_core/workflow/candidate_repair.py": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+        "agent_core/recovery.py": "66e214184ced2809127e53e4854f202ba1ed8d1b654057ad981ae67a7a98cc31"
+      },
+      "tests_export_hashes": {
+        "tests/a1_unified_fix/test_f3_progress.py": "c7b986951d1cb35d42f3856c757ff6cbf7a1fca5799b0ec7c4c39244cbb02c2a",
+        "tests/a1_unified_fix/test_f3_late_result.py": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+        "tests/a1_unified_fix/test_f3_claims.py": "270cfdf28808bd1bc8f39552e64681d5acf32783b9f89af7dfba8adc13c21601"
+      },
+      "counts": {
+        "passed": 28
+      },
+      "collection_error": false,
+      "source_unchanged_in_test_process": true,
+      "test_result_sha256": "20a23b70696b9b8035d97647cbf0d632f67f97b0cc953579d7ed187b0ff668c0",
+      "summary_lines": [
+        "28 passed, 1 warning in 88.12s (0:01:28)"
+      ],
+      "scope": "Current checkpoint wiring and all 28 F3 FIX cases."
+    }
+  ],
+  "test_results": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+      "outcome": "passed",
+      "duration": 0.0011388957500457764
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+      "outcome": "passed",
+      "duration": 0.00034292880445718765
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+      "outcome": "passed",
+      "duration": 0.00030391570180654526
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+      "outcome": "passed",
+      "duration": 0.0003369012847542763
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+      "outcome": "passed",
+      "duration": 0.00016602221876382828
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+      "outcome": "passed",
+      "duration": 0.00015521235764026642
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+      "outcome": "passed",
+      "duration": 0.00015670526772737503
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+      "outcome": "passed",
+      "duration": 0.0001715105026960373
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+      "outcome": "passed",
+      "duration": 7.365355998277664
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+      "outcome": "passed",
+      "duration": 7.312896649353206
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+      "outcome": "passed",
+      "duration": 7.758877350017428
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+      "outcome": "passed",
+      "duration": 8.449200173839927
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+      "outcome": "passed",
+      "duration": 7.050798777490854
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+      "outcome": "passed",
+      "duration": 4.106083181686699
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+      "outcome": "passed",
+      "duration": 3.98378824070096
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+      "outcome": "passed",
+      "duration": 0.0004943357780575752
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+      "outcome": "passed",
+      "duration": 0.0005650129169225693
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+      "outcome": "passed",
+      "duration": 0.0007373783737421036
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+      "outcome": "passed",
+      "duration": 10.373255449347198
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+      "outcome": "passed",
+      "duration": 9.337107765488327
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+      "outcome": "passed",
+      "duration": 4.253164104185998
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+      "outcome": "passed",
+      "duration": 4.51499295886606
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+      "outcome": "passed",
+      "duration": 2.284086534753442
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+      "outcome": "passed",
+      "duration": 2.1872847080230713
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+      "outcome": "passed",
+      "duration": 1.9858969245105982
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+      "outcome": "passed",
+      "duration": 2.2169875893741846
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+      "outcome": "passed",
+      "duration": 0.27622523438185453
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+      "outcome": "passed",
+      "duration": 0.0004528826102614403
+    }
+  ],
+  "graph_sequences": [
+    {
+      "case": "f3-blocked-list",
+      "provider_calls": 4,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "blocked"
+      ],
+      "has_pending_action": false,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "JSON_DECODE_ERROR",
+          "repair_stage": "json_decode",
+          "candidate_fingerprint": "4494b229f1d3290c90a86fdc857314cd466070a321db84357b0e3c77dd85a8b9",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "5fb99ed4a96dbd93ffafec520c9f1cc73e1fd0f9023779371c37577820241401",
+            "validation_signature": "03cc7475948b07704a2136f9b499b08a76be92844550eb630e5ea1ebd08eb442",
+            "representation_targets": [],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "response"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "json_candidate_source": "candidate_text",
+            "stage": "json_decode",
+            "code": "JSON_DECODE_ERROR",
+            "message": "Expecting value",
+            "line": 1,
+            "column": 13,
+            "position": 12,
+            "raw_excerpt": "{\"unclosed\":",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "JSON_DECODE_ERROR",
+              "field_path": "response",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "json_decode",
+            "json_candidate_source": "candidate_text",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1aad5a229f7956b033da1abecc97926942659a9ac0ce192fbc8fe41d032aa345"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "ad805b6eaab98e04e6cd136e09c3a859cd1244bc537c91a9e91a5d24e0b75aed",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "05e8fb0cff6ac694a53670bba7a7116ef01994e9dcda7fea3f90fbd62484934f",
+            "validation_signature": "61ec994cc134f4ec1dee80706774ba4b03a0f870e63227bf7dd29f3683fea9ba",
+            "representation_targets": [
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "json_object"
+            ],
+            "resolved_targets": [
+              "response"
+            ],
+            "pending_targets": [
+              "action_type"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+            "message": "A structured action requires action_type.",
+            "field_path": "action_type",
+            "expected": "supported action type",
+            "actual": "missing",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+              "field_path": "action_type",
+              "expected": "supported action type",
+              "actual": "missing"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "2a3525573c948e042b5ba83c37343dc594d3ed0120aa335f523e97c44d1fc182"
+          }
+        },
+        {
+          "ordinal": 3,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "3dc2f2cc509cb1df84020c89885cfd632e0743894c3d8213f5dbc73d076e1334",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape"
+            ],
+            "resolved_targets": [
+              "action_type"
+            ],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 1,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "5d14fbf005cbeb7379e3006a5e1e58f15d70ec3fe7e9fb2b1fc6abb26634dbf4"
+          }
+        }
+      ],
+      "artifact_sha256": "258787998a0f7b1df55d2a42e1c82a45c667bd3e10c67dcb82836905b74b681a"
+    },
+    {
+      "case": "f3-empty_object-list",
+      "provider_calls": 5,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "JSON_DECODE_ERROR",
+          "repair_stage": "json_decode",
+          "candidate_fingerprint": "4494b229f1d3290c90a86fdc857314cd466070a321db84357b0e3c77dd85a8b9",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "5fb99ed4a96dbd93ffafec520c9f1cc73e1fd0f9023779371c37577820241401",
+            "validation_signature": "03cc7475948b07704a2136f9b499b08a76be92844550eb630e5ea1ebd08eb442",
+            "representation_targets": [],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "response"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "json_candidate_source": "candidate_text",
+            "stage": "json_decode",
+            "code": "JSON_DECODE_ERROR",
+            "message": "Expecting value",
+            "line": 1,
+            "column": 13,
+            "position": 12,
+            "raw_excerpt": "{\"unclosed\":",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "JSON_DECODE_ERROR",
+              "field_path": "response",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "json_decode",
+            "json_candidate_source": "candidate_text",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1aad5a229f7956b033da1abecc97926942659a9ac0ce192fbc8fe41d032aa345"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "1f312917e2b88bd8c529faa987ed8e2e061b71302ad45f76a9c76d0ba5af5570",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "34cf0a062011a3d4287054876e4112c630b4b9179d34fdb9a68086a4ce70abb1",
+            "validation_signature": "61ec994cc134f4ec1dee80706774ba4b03a0f870e63227bf7dd29f3683fea9ba",
+            "representation_targets": [
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "json_object"
+            ],
+            "resolved_targets": [
+              "response"
+            ],
+            "pending_targets": [
+              "action_type"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+            "message": "A structured action requires action_type.",
+            "field_path": "action_type",
+            "expected": "supported action type",
+            "actual": "missing",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+              "field_path": "action_type",
+              "expected": "supported action type",
+              "actual": "missing"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          }
+        },
+        {
+          "ordinal": 3,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "3dc2f2cc509cb1df84020c89885cfd632e0743894c3d8213f5dbc73d076e1334",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape"
+            ],
+            "resolved_targets": [
+              "action_type"
+            ],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 1,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "5d14fbf005cbeb7379e3006a5e1e58f15d70ec3fe7e9fb2b1fc6abb26634dbf4"
+          }
+        },
+        {
+          "ordinal": 4,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "927077cc4ed69978dcd0e550a94880ee496d321d2f89f11c8c27142d5f42816c",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "823315a878147d283c68cb214480f5cf6dc3e6a89bfc4fe0f89a530b3b3d366a",
+            "validation_signature": "8180b1b7f247e67cf55c81376fc63e0d3fe4411f44b2e5462d7b1862c55c7cdc",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "execute.env_object"
+            ],
+            "resolved_targets": [
+              "env"
+            ],
+            "pending_targets": [
+              "env.VALUE"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 0,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env values must be strings.",
+            "field_path": "env.VALUE",
+            "expected": "string",
+            "actual": "number",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env.VALUE",
+              "expected": "string",
+              "actual": "number"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "4b0ab66a3869294dce713d013a20a36a673f7e5aafb094a6bd604c9476c15700"
+          }
+        }
+      ],
+      "artifact_sha256": "d18341a81ba8b4028806aeb42d1bd21e03835eaa0c78b987dd81166a1283180f"
+    },
+    {
+      "case": "f3-helper_checkpoint-list",
+      "provider_calls": 3,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "3aa2c5d80367e04499e4e97861deefc72851dbff381d8ad8c28cd5c3a34a69eb",
+            "validation_signature": "4e29a1bcce9a74447b22949352d77afc4f384cbfb9c2cef1c9f1965d20fde16e",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "$.code|argv",
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+            "field_path": "$.code|argv",
+            "message": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE"
+          },
+          "violations": [
+            {
+              "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+              "field_path": "$.code|argv",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            },
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "field_path": "operation",
+              "expected": null,
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "active_protocol_parser",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "68895b0b9c56664f814abf8a1616b471b13d7132f89d106169b8add56db8b6ab"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_OPERATION_SCOPE_MISMATCH",
+          "repair_stage": "operation_binding_admission",
+          "candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+            "validation_signature": "d0046e233d354971121c65cf6c484521fcc3942d7f25dae377c6304c6e5a449f",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "effect_helper_materialization",
+              "executable_syntax",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [
+              "effect_helper_materialization",
+              "executable_syntax"
+            ],
+            "resolved_targets": [
+              "$.code|argv"
+            ],
+            "pending_targets": [
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "RETRY_CURRENT_ACTION",
+          "exact_parser_error": null,
+          "violations": [
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "field_path": "operation",
+              "expected": null,
+              "actual": null
+            }
+          ],
+          "parser_selection": null
+        }
+      ],
+      "artifact_sha256": "d10b4f0ac4e3d80f1f826c3b8147044f638285cd581c4e39e71273692a9f1192"
+    },
+    {
+      "case": "f3-legacy-list",
+      "provider_calls": 5,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "JSON_DECODE_ERROR",
+          "repair_stage": "json_decode",
+          "candidate_fingerprint": "4494b229f1d3290c90a86fdc857314cd466070a321db84357b0e3c77dd85a8b9",
+          "progress_proven": true,
+          "progress_assessment": null,
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "json_candidate_source": "candidate_text",
+            "stage": "json_decode",
+            "code": "JSON_DECODE_ERROR",
+            "message": "Expecting value",
+            "line": 1,
+            "column": 13,
+            "position": 12,
+            "raw_excerpt": "{\"unclosed\":",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "JSON_DECODE_ERROR",
+              "field_path": "response",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "json_decode",
+            "json_candidate_source": "candidate_text",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1aad5a229f7956b033da1abecc97926942659a9ac0ce192fbc8fe41d032aa345"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "ad805b6eaab98e04e6cd136e09c3a859cd1244bc537c91a9e91a5d24e0b75aed",
+          "progress_proven": true,
+          "progress_assessment": null,
+          "remaining": 2,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+            "message": "A structured action requires action_type.",
+            "field_path": "action_type",
+            "expected": "supported action type",
+            "actual": "missing",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+              "field_path": "action_type",
+              "expected": "supported action type",
+              "actual": "missing"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "2a3525573c948e042b5ba83c37343dc594d3ed0120aa335f523e97c44d1fc182"
+          }
+        },
+        {
+          "ordinal": 3,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "3dc2f2cc509cb1df84020c89885cfd632e0743894c3d8213f5dbc73d076e1334",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape"
+            ],
+            "resolved_targets": [
+              "action_type"
+            ],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 1,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "5d14fbf005cbeb7379e3006a5e1e58f15d70ec3fe7e9fb2b1fc6abb26634dbf4"
+          }
+        },
+        {
+          "ordinal": 4,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "927077cc4ed69978dcd0e550a94880ee496d321d2f89f11c8c27142d5f42816c",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "823315a878147d283c68cb214480f5cf6dc3e6a89bfc4fe0f89a530b3b3d366a",
+            "validation_signature": "8180b1b7f247e67cf55c81376fc63e0d3fe4411f44b2e5462d7b1862c55c7cdc",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "execute.env_object"
+            ],
+            "resolved_targets": [
+              "env"
+            ],
+            "pending_targets": [
+              "env.VALUE"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 0,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env values must be strings.",
+            "field_path": "env.VALUE",
+            "expected": "string",
+            "actual": "number",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env.VALUE",
+              "expected": "string",
+              "actual": "number"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "4b0ab66a3869294dce713d013a20a36a673f7e5aafb094a6bd604c9476c15700"
+          }
+        }
+      ],
+      "artifact_sha256": "0eaf336d6d41260b5ba37e1c4e5c6468845dd0bd9fc2816596722ac5fd9e0739"
+    },
+    {
+      "case": "f3-repeat-list",
+      "provider_calls": 2,
+      "outcome_types": [
+        "candidate_rejected",
+        "internal_protocol_error"
+      ],
+      "has_pending_action": false,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "3dc2f2cc509cb1df84020c89885cfd632e0743894c3d8213f5dbc73d076e1334",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "5d14fbf005cbeb7379e3006a5e1e58f15d70ec3fe7e9fb2b1fc6abb26634dbf4"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "3dc2f2cc509cb1df84020c89885cfd632e0743894c3d8213f5dbc73d076e1334",
+          "progress_proven": false,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": false,
+            "basis": "recurrent_rejected_candidate",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "5d14fbf005cbeb7379e3006a5e1e58f15d70ec3fe7e9fb2b1fc6abb26634dbf4"
+          }
+        }
+      ],
+      "artifact_sha256": "73ebf5467a21a7139ef84287cb9516cb724fe9e939a0ba6dc8282a28f42deb7b"
+    },
+    {
+      "case": "f3-replay-list",
+      "provider_calls": 5,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {
+        "state_generation": 28,
+        "event_count": 1,
+        "receipt_ref": "object:sha256:5046ce8fa086c1b12a533c020716d589c1d07b43df018ace3990234261834c2b",
+        "same_event_and_receipt": true
+      },
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "JSON_DECODE_ERROR",
+          "repair_stage": "json_decode",
+          "candidate_fingerprint": "4494b229f1d3290c90a86fdc857314cd466070a321db84357b0e3c77dd85a8b9",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "5fb99ed4a96dbd93ffafec520c9f1cc73e1fd0f9023779371c37577820241401",
+            "validation_signature": "03cc7475948b07704a2136f9b499b08a76be92844550eb630e5ea1ebd08eb442",
+            "representation_targets": [],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "response"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "json_candidate_source": "candidate_text",
+            "stage": "json_decode",
+            "code": "JSON_DECODE_ERROR",
+            "message": "Expecting value",
+            "line": 1,
+            "column": 13,
+            "position": 12,
+            "raw_excerpt": "{\"unclosed\":",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "JSON_DECODE_ERROR",
+              "field_path": "response",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "json_decode",
+            "json_candidate_source": "candidate_text",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1aad5a229f7956b033da1abecc97926942659a9ac0ce192fbc8fe41d032aa345"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "ad805b6eaab98e04e6cd136e09c3a859cd1244bc537c91a9e91a5d24e0b75aed",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "05e8fb0cff6ac694a53670bba7a7116ef01994e9dcda7fea3f90fbd62484934f",
+            "validation_signature": "61ec994cc134f4ec1dee80706774ba4b03a0f870e63227bf7dd29f3683fea9ba",
+            "representation_targets": [
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "json_object"
+            ],
+            "resolved_targets": [
+              "response"
+            ],
+            "pending_targets": [
+              "action_type"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+            "message": "A structured action requires action_type.",
+            "field_path": "action_type",
+            "expected": "supported action type",
+            "actual": "missing",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+              "field_path": "action_type",
+              "expected": "supported action type",
+              "actual": "missing"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "2a3525573c948e042b5ba83c37343dc594d3ed0120aa335f523e97c44d1fc182"
+          }
+        },
+        {
+          "ordinal": 3,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "3dc2f2cc509cb1df84020c89885cfd632e0743894c3d8213f5dbc73d076e1334",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape"
+            ],
+            "resolved_targets": [
+              "action_type"
+            ],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 1,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "5d14fbf005cbeb7379e3006a5e1e58f15d70ec3fe7e9fb2b1fc6abb26634dbf4"
+          }
+        },
+        {
+          "ordinal": 4,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "927077cc4ed69978dcd0e550a94880ee496d321d2f89f11c8c27142d5f42816c",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "823315a878147d283c68cb214480f5cf6dc3e6a89bfc4fe0f89a530b3b3d366a",
+            "validation_signature": "8180b1b7f247e67cf55c81376fc63e0d3fe4411f44b2e5462d7b1862c55c7cdc",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "execute.env_object"
+            ],
+            "resolved_targets": [
+              "env"
+            ],
+            "pending_targets": [
+              "env.VALUE"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 0,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env values must be strings.",
+            "field_path": "env.VALUE",
+            "expected": "string",
+            "actual": "number",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env.VALUE",
+              "expected": "string",
+              "actual": "number"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "4b0ab66a3869294dce713d013a20a36a673f7e5aafb094a6bd604c9476c15700"
+          }
+        }
+      ],
+      "artifact_sha256": "70d36128710b695e7a326cb0b4924d6bbd5158eea644ca73a066874b71788491"
+    },
+    {
+      "case": "f3-syntax_checkpoint-list",
+      "provider_calls": 3,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+          "repair_stage": "script_body_validation",
+          "candidate_fingerprint": "219bae1e7d3f76a5497154a1f7424e29425575efe71bc5af6fb1e55aa7c026f1",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "219bae1e7d3f76a5497154a1f7424e29425575efe71bc5af6fb1e55aa7c026f1",
+            "validation_signature": "e1c13477833eabd3950877a5b4cc054a0452aeb31d05df0aff655179e4ccccbd",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "effect_helper_materialization",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "$.code",
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "RETRY_CURRENT_ACTION",
+          "exact_parser_error": null,
+          "violations": [
+            {
+              "code": "GENERATE_SCRIPT_SYNTAX_INVALID",
+              "field_path": "$.code",
+              "expected": null,
+              "actual": null
+            },
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "field_path": "operation",
+              "expected": null,
+              "actual": null
+            }
+          ],
+          "parser_selection": null
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_OPERATION_SCOPE_MISMATCH",
+          "repair_stage": "operation_binding_admission",
+          "candidate_fingerprint": "a6d3ddb8237cd6a88cd18ddf2ceb9a4180c2fe1d786144ebabb8e36013afccc8",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "a6d3ddb8237cd6a88cd18ddf2ceb9a4180c2fe1d786144ebabb8e36013afccc8",
+            "validation_signature": "d0046e233d354971121c65cf6c484521fcc3942d7f25dae377c6304c6e5a449f",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "effect_helper_materialization",
+              "executable_syntax",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [
+              "executable_syntax"
+            ],
+            "resolved_targets": [
+              "$.code"
+            ],
+            "pending_targets": [
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "RETRY_CURRENT_ACTION",
+          "exact_parser_error": null,
+          "violations": [
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "field_path": "operation",
+              "expected": null,
+              "actual": null
+            }
+          ],
+          "parser_selection": null
+        }
+      ],
+      "artifact_sha256": "c92ee4a8d01e03aa53e6e81919425d9a7ab57673b2943a2a3d3a376bf5cb2096"
+    },
+    {
+      "case": "f3-uuid-list",
+      "provider_calls": 2,
+      "outcome_types": [
+        "candidate_rejected",
+        "internal_protocol_error"
+      ],
+      "has_pending_action": false,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1578a44c53dee35d52bf69f0d59f840367560837c764130e418a019c3e42d2b8"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "progress_proven": false,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": false,
+            "basis": "recurrent_rejected_candidate",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "716a23440aca38defec0977f4fa682350aa759d45a3b81b01da39cfee8a2be78"
+          }
+        }
+      ],
+      "artifact_sha256": "c59c33eb15819d6954c27b815a46d4e27a61f46bd69f023c7fa326aa6a76130b"
+    },
+    {
+      "case": "f3-valid-NoneType",
+      "provider_calls": 5,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "JSON_DECODE_ERROR",
+          "repair_stage": "json_decode",
+          "candidate_fingerprint": "4494b229f1d3290c90a86fdc857314cd466070a321db84357b0e3c77dd85a8b9",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "5fb99ed4a96dbd93ffafec520c9f1cc73e1fd0f9023779371c37577820241401",
+            "validation_signature": "03cc7475948b07704a2136f9b499b08a76be92844550eb630e5ea1ebd08eb442",
+            "representation_targets": [],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "response"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "json_candidate_source": "candidate_text",
+            "stage": "json_decode",
+            "code": "JSON_DECODE_ERROR",
+            "message": "Expecting value",
+            "line": 1,
+            "column": 13,
+            "position": 12,
+            "raw_excerpt": "{\"unclosed\":",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "JSON_DECODE_ERROR",
+              "field_path": "response",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "json_decode",
+            "json_candidate_source": "candidate_text",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1aad5a229f7956b033da1abecc97926942659a9ac0ce192fbc8fe41d032aa345"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "ad805b6eaab98e04e6cd136e09c3a859cd1244bc537c91a9e91a5d24e0b75aed",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "05e8fb0cff6ac694a53670bba7a7116ef01994e9dcda7fea3f90fbd62484934f",
+            "validation_signature": "61ec994cc134f4ec1dee80706774ba4b03a0f870e63227bf7dd29f3683fea9ba",
+            "representation_targets": [
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "json_object"
+            ],
+            "resolved_targets": [
+              "response"
+            ],
+            "pending_targets": [
+              "action_type"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+            "message": "A structured action requires action_type.",
+            "field_path": "action_type",
+            "expected": "supported action type",
+            "actual": "missing",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+              "field_path": "action_type",
+              "expected": "supported action type",
+              "actual": "missing"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "2a3525573c948e042b5ba83c37343dc594d3ed0120aa335f523e97c44d1fc182"
+          }
+        },
+        {
+          "ordinal": 3,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "fb776488e4be72fd2ab430c542ee7593dbd13d35e404b565aa9528f1cc27d9e4",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "4ea1e6db1a3242dbca0bd79b47812f9d2e01798ce697be36ec700086bca7ff2a",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape"
+            ],
+            "resolved_targets": [
+              "action_type"
+            ],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 1,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "null",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "null"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "7cd05ee175fcd5ce5b3acf9f7874b947d7a0ed4331da937e613704e840e0d7e7"
+          }
+        },
+        {
+          "ordinal": 4,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "927077cc4ed69978dcd0e550a94880ee496d321d2f89f11c8c27142d5f42816c",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "823315a878147d283c68cb214480f5cf6dc3e6a89bfc4fe0f89a530b3b3d366a",
+            "validation_signature": "8180b1b7f247e67cf55c81376fc63e0d3fe4411f44b2e5462d7b1862c55c7cdc",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "execute.env_object"
+            ],
+            "resolved_targets": [
+              "env"
+            ],
+            "pending_targets": [
+              "env.VALUE"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 0,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env values must be strings.",
+            "field_path": "env.VALUE",
+            "expected": "string",
+            "actual": "number",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env.VALUE",
+              "expected": "string",
+              "actual": "number"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "4b0ab66a3869294dce713d013a20a36a673f7e5aafb094a6bd604c9476c15700"
+          }
+        }
+      ],
+      "artifact_sha256": "5edd1327e00499f3be2da8c59f487b0faaec9dd3f4e66b711933d796e4bebce6"
+    },
+    {
+      "case": "f3-valid-list",
+      "provider_calls": 5,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "JSON_DECODE_ERROR",
+          "repair_stage": "json_decode",
+          "candidate_fingerprint": "4494b229f1d3290c90a86fdc857314cd466070a321db84357b0e3c77dd85a8b9",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "5fb99ed4a96dbd93ffafec520c9f1cc73e1fd0f9023779371c37577820241401",
+            "validation_signature": "03cc7475948b07704a2136f9b499b08a76be92844550eb630e5ea1ebd08eb442",
+            "representation_targets": [],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "response"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "json_candidate_source": "candidate_text",
+            "stage": "json_decode",
+            "code": "JSON_DECODE_ERROR",
+            "message": "Expecting value",
+            "line": 1,
+            "column": 13,
+            "position": 12,
+            "raw_excerpt": "{\"unclosed\":",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "JSON_DECODE_ERROR",
+              "field_path": "response",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "json_decode",
+            "json_candidate_source": "candidate_text",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1aad5a229f7956b033da1abecc97926942659a9ac0ce192fbc8fe41d032aa345"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "ad805b6eaab98e04e6cd136e09c3a859cd1244bc537c91a9e91a5d24e0b75aed",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "05e8fb0cff6ac694a53670bba7a7116ef01994e9dcda7fea3f90fbd62484934f",
+            "validation_signature": "61ec994cc134f4ec1dee80706774ba4b03a0f870e63227bf7dd29f3683fea9ba",
+            "representation_targets": [
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "json_object"
+            ],
+            "resolved_targets": [
+              "response"
+            ],
+            "pending_targets": [
+              "action_type"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+            "message": "A structured action requires action_type.",
+            "field_path": "action_type",
+            "expected": "supported action type",
+            "actual": "missing",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+              "field_path": "action_type",
+              "expected": "supported action type",
+              "actual": "missing"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "2a3525573c948e042b5ba83c37343dc594d3ed0120aa335f523e97c44d1fc182"
+          }
+        },
+        {
+          "ordinal": 3,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "3dc2f2cc509cb1df84020c89885cfd632e0743894c3d8213f5dbc73d076e1334",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape"
+            ],
+            "resolved_targets": [
+              "action_type"
+            ],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 1,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "array"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "5d14fbf005cbeb7379e3006a5e1e58f15d70ec3fe7e9fb2b1fc6abb26634dbf4"
+          }
+        },
+        {
+          "ordinal": 4,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "927077cc4ed69978dcd0e550a94880ee496d321d2f89f11c8c27142d5f42816c",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "823315a878147d283c68cb214480f5cf6dc3e6a89bfc4fe0f89a530b3b3d366a",
+            "validation_signature": "8180b1b7f247e67cf55c81376fc63e0d3fe4411f44b2e5462d7b1862c55c7cdc",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "execute.env_object"
+            ],
+            "resolved_targets": [
+              "env"
+            ],
+            "pending_targets": [
+              "env.VALUE"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 0,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env values must be strings.",
+            "field_path": "env.VALUE",
+            "expected": "string",
+            "actual": "number",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env.VALUE",
+              "expected": "string",
+              "actual": "number"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "4b0ab66a3869294dce713d013a20a36a673f7e5aafb094a6bd604c9476c15700"
+          }
+        }
+      ],
+      "artifact_sha256": "2874b4bc265eff83eb68cafb9a98074cec704f355448808b8130b16b38d12684"
+    },
+    {
+      "case": "f3-valid-str",
+      "provider_calls": 5,
+      "outcome_types": [
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "candidate_rejected",
+        "action_ready"
+      ],
+      "has_pending_action": true,
+      "replay": {},
+      "loaded_bio_agents_sha256": "c8aae29ba5b10213714528144594c3f13ddf637c56f0c12d17958dde2976537c",
+      "rejections": [
+        {
+          "ordinal": 1,
+          "reason_code": "JSON_DECODE_ERROR",
+          "repair_stage": "json_decode",
+          "candidate_fingerprint": "4494b229f1d3290c90a86fdc857314cd466070a321db84357b0e3c77dd85a8b9",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "5fb99ed4a96dbd93ffafec520c9f1cc73e1fd0f9023779371c37577820241401",
+            "validation_signature": "03cc7475948b07704a2136f9b499b08a76be92844550eb630e5ea1ebd08eb442",
+            "representation_targets": [],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "response"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 3,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "json_candidate_source": "candidate_text",
+            "stage": "json_decode",
+            "code": "JSON_DECODE_ERROR",
+            "message": "Expecting value",
+            "line": 1,
+            "column": 13,
+            "position": 12,
+            "raw_excerpt": "{\"unclosed\":",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "JSON_DECODE_ERROR",
+              "field_path": "response",
+              "expected": "one current-step action matching the active Generate protocol",
+              "actual": null
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "json_decode",
+            "json_candidate_source": "candidate_text",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "1aad5a229f7956b033da1abecc97926942659a9ac0ce192fbc8fe41d032aa345"
+          }
+        },
+        {
+          "ordinal": 2,
+          "reason_code": "ACTION_SCHEMA_REQUIRED_FIELD",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "ad805b6eaab98e04e6cd136e09c3a859cd1244bc537c91a9e91a5d24e0b75aed",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "05e8fb0cff6ac694a53670bba7a7116ef01994e9dcda7fea3f90fbd62484934f",
+            "validation_signature": "61ec994cc134f4ec1dee80706774ba4b03a0f870e63227bf7dd29f3683fea9ba",
+            "representation_targets": [
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "json_object"
+            ],
+            "resolved_targets": [
+              "response"
+            ],
+            "pending_targets": [
+              "action_type"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 2,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+            "message": "A structured action requires action_type.",
+            "field_path": "action_type",
+            "expected": "supported action type",
+            "actual": "missing",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_REQUIRED_FIELD",
+              "field_path": "action_type",
+              "expected": "supported action type",
+              "actual": "missing"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "2a3525573c948e042b5ba83c37343dc594d3ed0120aa335f523e97c44d1fc182"
+          }
+        },
+        {
+          "ordinal": 3,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "0b0dbd6c10ef2c4eb16d9ebd0a66dc34357956124ec76bc8af0592410833a893",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "5e4b1a8a16f3d831940a1d5aacb7c38240a58a72f45ebae14dc39090c814eac8",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape"
+            ],
+            "resolved_targets": [
+              "action_type"
+            ],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 1,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "string",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env",
+              "expected": "object",
+              "actual": "string"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "c61c56ec53aa996736c863da190c069ad879bff96227ee5a504b825cdb1a413f"
+          }
+        },
+        {
+          "ordinal": 4,
+          "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "repair_stage": "action_schema",
+          "candidate_fingerprint": "927077cc4ed69978dcd0e550a94880ee496d321d2f89f11c8c27142d5f42816c",
+          "progress_proven": true,
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "823315a878147d283c68cb214480f5cf6dc3e6a89bfc4fe0f89a530b3b3d366a",
+            "validation_signature": "8180b1b7f247e67cf55c81376fc63e0d3fe4411f44b2e5462d7b1862c55c7cdc",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_object",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [
+              "execute.env_object"
+            ],
+            "resolved_targets": [
+              "env"
+            ],
+            "pending_targets": [
+              "env.VALUE"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "remaining": 0,
+          "policy_decision_kind": "FORMAT_REPAIR",
+          "exact_parser_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env values must be strings.",
+            "field_path": "env.VALUE",
+            "expected": "string",
+            "actual": "number",
+            "response_container_source": "raw_json"
+          },
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "field_path": "env.VALUE",
+              "expected": "string",
+              "actual": "number"
+            }
+          ],
+          "parser_selection": {
+            "response_container_source": "raw_json",
+            "stage": "action_schema",
+            "json_candidate_source": "decoded_candidate",
+            "excerpt_kind": "bounded_parser_excerpt",
+            "excerpt_sha256": "4b0ab66a3869294dce713d013a20a36a673f7e5aafb094a6bd604c9476c15700"
+          }
+        }
+      ],
+      "artifact_sha256": "fea12d4d094af7c1b0a2eb859d959830e8564527cc0f83e5b575470bd6aacf0f"
+    }
+  ],
+  "late_results": [
+    {
+      "case": "f3-late-cancel-blocked",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "action_approval": 0
+      },
+      "outcome": {
+        "schema_version": 1,
+        "type": "stale_result",
+        "summary": "Generate result became stale before adoption.",
+        "scope": {
+          "task_id": "fix-f3-late-generate-cancel-blocked",
+          "task_revision": 1,
+          "plan_id": "plan_0c8286a34fa6b7166a81",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct",
+          "attempt_id": ""
+        },
+        "payload": {
+          "changed_preconditions": [
+            "approval_applicability"
+          ],
+          "invocation_id": "ba0e4881edeb41cfa4ee1ee4",
+          "consumed_revision_hashes": {},
+          "current_revision_hashes": {},
+          "counts_as_failure": false,
+          "generate_invocation": {
+            "generate_call_id": "generate-9e0451dd8de44c7e921b2c187e3b4d40",
+            "scope": {
+              "task_id": "fix-f3-late-generate-cancel-blocked",
+              "task_revision": 1,
+              "plan_id": "plan_0c8286a34fa6b7166a81",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "source_ref": "object:sha256:c0e9cedc31d507dae0fc38bd9ed4f62e5bb7d4fad97ca53e62bdcf901079bc38",
+            "prompt_assembly_started": true,
+            "prompt_assembly_succeeded": true,
+            "provider_call_attempted": true,
+            "llm_invoked": true
+          }
+        },
+        "evidence_refs": []
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "planner"
+      ],
+      "durable_status": "cancelled",
+      "has_pending_action": false,
+      "execution_attempt_count": 0,
+      "rejection_event_count": 0,
+      "claim_statuses": [
+        "completed"
+      ],
+      "before": {
+        "state_generation": 20,
+        "plan_id": "plan_0c8286a34fa6b7166a81",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved"
+      },
+      "after_mutation": {
+        "state_generation": 21,
+        "plan_id": "plan_0c8286a34fa6b7166a81",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved",
+        "task_status": "cancelled"
+      },
+      "post_cancel_outcomes": [
+        {
+          "schema_version": 1,
+          "type": "terminal",
+          "summary": "Planner reached a terminal business state.",
+          "scope": {
+            "task_id": "fix-f3-late-generate-cancel-blocked",
+            "plan_id": "plan_0c8286a34fa6b7166a81",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct"
+          },
+          "payload": {
+            "status": "cancelled",
+            "reason_code": "planning_terminal"
+          },
+          "evidence_refs": []
+        }
+      ],
+      "artifact_sha256": "80e750c71369122914449712ecdced14035ae7e528d3b21dc03b5dab55050372"
+    },
+    {
+      "case": "f3-late-cancel-invalid",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "action_approval": 0
+      },
+      "outcome": {
+        "schema_version": 1,
+        "type": "stale_result",
+        "summary": "Generate result became stale before adoption.",
+        "scope": {
+          "task_id": "fix-f3-late-generate-cancel-invalid",
+          "task_revision": 1,
+          "plan_id": "plan_2b89a2a200cfc1feebe3",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct",
+          "attempt_id": ""
+        },
+        "payload": {
+          "changed_preconditions": [
+            "approval_applicability"
+          ],
+          "invocation_id": "1c6cd145baf0f9f02abca692",
+          "consumed_revision_hashes": {},
+          "current_revision_hashes": {},
+          "counts_as_failure": false,
+          "generate_invocation": {
+            "generate_call_id": "generate-c598baf5d32d468d9a2b778bb1726170",
+            "scope": {
+              "task_id": "fix-f3-late-generate-cancel-invalid",
+              "task_revision": 1,
+              "plan_id": "plan_2b89a2a200cfc1feebe3",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "source_ref": "object:sha256:ddb567c306f26e9930c6a848a92761d996bea95ab5e70dbb715737bdc11bb59f",
+            "prompt_assembly_started": true,
+            "prompt_assembly_succeeded": true,
+            "provider_call_attempted": true,
+            "llm_invoked": true
+          }
+        },
+        "evidence_refs": []
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "planner"
+      ],
+      "durable_status": "cancelled",
+      "has_pending_action": false,
+      "execution_attempt_count": 0,
+      "rejection_event_count": 0,
+      "claim_statuses": [
+        "completed"
+      ],
+      "before": {
+        "state_generation": 20,
+        "plan_id": "plan_2b89a2a200cfc1feebe3",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved"
+      },
+      "after_mutation": {
+        "state_generation": 21,
+        "plan_id": "plan_2b89a2a200cfc1feebe3",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved",
+        "task_status": "cancelled"
+      },
+      "post_cancel_outcomes": [
+        {
+          "schema_version": 1,
+          "type": "terminal",
+          "summary": "Planner reached a terminal business state.",
+          "scope": {
+            "task_id": "fix-f3-late-generate-cancel-invalid",
+            "plan_id": "plan_2b89a2a200cfc1feebe3",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct"
+          },
+          "payload": {
+            "status": "cancelled",
+            "reason_code": "planning_terminal"
+          },
+          "evidence_refs": []
+        }
+      ],
+      "artifact_sha256": "44dae7e23c9e8ca9415f45d8b907690f8a6f3fe747f5372390ccc68e80d67992"
+    },
+    {
+      "case": "f3-late-cancel-valid",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "action_approval": 0
+      },
+      "outcome": {
+        "schema_version": 1,
+        "type": "stale_result",
+        "summary": "Generate result became stale before adoption.",
+        "scope": {
+          "task_id": "fix-f3-late-generate-cancel-valid",
+          "task_revision": 1,
+          "plan_id": "plan_132f8bcc1f659f6bacbb",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct",
+          "attempt_id": ""
+        },
+        "payload": {
+          "changed_preconditions": [
+            "approval_applicability"
+          ],
+          "invocation_id": "619146c706896de7dfae7bcf",
+          "consumed_revision_hashes": {},
+          "current_revision_hashes": {},
+          "counts_as_failure": false,
+          "generate_invocation": {
+            "generate_call_id": "generate-7bd077187472490fb7d97d243c6dbee4",
+            "scope": {
+              "task_id": "fix-f3-late-generate-cancel-valid",
+              "task_revision": 1,
+              "plan_id": "plan_132f8bcc1f659f6bacbb",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "source_ref": "object:sha256:42c2526cf85a67962ce8615077712635cb0f1bb5a9dda2ec0befb1955ca8fd04",
+            "prompt_assembly_started": true,
+            "prompt_assembly_succeeded": true,
+            "provider_call_attempted": true,
+            "llm_invoked": true
+          }
+        },
+        "evidence_refs": []
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "planner"
+      ],
+      "durable_status": "cancelled",
+      "has_pending_action": false,
+      "execution_attempt_count": 0,
+      "rejection_event_count": 0,
+      "claim_statuses": [
+        "completed"
+      ],
+      "before": {
+        "state_generation": 20,
+        "plan_id": "plan_132f8bcc1f659f6bacbb",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved"
+      },
+      "after_mutation": {
+        "state_generation": 21,
+        "plan_id": "plan_132f8bcc1f659f6bacbb",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved",
+        "task_status": "cancelled"
+      },
+      "post_cancel_outcomes": [
+        {
+          "schema_version": 1,
+          "type": "terminal",
+          "summary": "Planner reached a terminal business state.",
+          "scope": {
+            "task_id": "fix-f3-late-generate-cancel-valid",
+            "plan_id": "plan_132f8bcc1f659f6bacbb",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct"
+          },
+          "payload": {
+            "status": "cancelled",
+            "reason_code": "planning_terminal"
+          },
+          "evidence_refs": []
+        }
+      ],
+      "artifact_sha256": "23e39eeae8c34771a269450e8e9767e17f220f28a422688c32b3fc8ab467a953"
+    },
+    {
+      "case": "f3-late-nonsemantic-valid",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "action_approval": 0
+      },
+      "outcome": {
+        "schema_version": 1,
+        "type": "action_ready",
+        "summary": "A validated action candidate is ready for Execute.",
+        "scope": {
+          "task_id": "fix-f3-late-generate-nonsemantic-valid",
+          "task_revision": 1,
+          "plan_id": "plan_a7f3abad1ebc93701df6",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct",
+          "attempt_id": ""
+        },
+        "payload": {
+          "action": {
+            "type": "execute",
+            "source": "action_json",
+            "code": "bash -lc 'printf '\"'\"'%s\\n'\"'\"' '\"'\"'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'\"'\"''",
+            "argv": [
+              "bash",
+              "-lc",
+              "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+            ],
+            "env": {},
+            "outputs": [],
+            "language": "bash",
+            "operation": "check_contig_compatibility",
+            "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b",
+            "binding_env": {},
+            "binding_normalization_receipt": {
+              "schema_version": 2,
+              "producer": "managed_binding_normalizer",
+              "protocol": "public_handle_v2",
+              "scope": {
+                "task_id": "fix-f3-late-generate-nonsemantic-valid",
+                "task_revision": 1,
+                "plan_id": "plan_a7f3abad1ebc93701df6",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "step-direct",
+                "attempt_id": ""
+              },
+              "contract_digest": "1e25cf2a51bde874ceaef00d9c3593087078ad1b92daea06e8e0729aed1f3f4c",
+              "catalog_digests": [],
+              "raw_digest": "7dbad982b6793846572614a77c9f5d832e05218460628c9c3d30bf93fbc40c97",
+              "normalized_digest": "be299952eafbb53059447f350227dd1af5a1e62e65db7e2d22af67916dcfcbd0",
+              "raw_candidate": {
+                "type": "execute",
+                "source": "action_json",
+                "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+                "argv": [
+                  "bash",
+                  "-lc",
+                  "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+                ],
+                "env": {},
+                "outputs": [],
+                "language": "bash",
+                "operation": "check_contig_compatibility",
+                "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b"
+              },
+              "normalized_candidate": {
+                "type": "execute",
+                "source": "action_json",
+                "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+                "argv": [
+                  "bash",
+                  "-lc",
+                  "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+                ],
+                "env": {},
+                "outputs": [],
+                "language": "bash",
+                "operation": "check_contig_compatibility",
+                "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b",
+                "binding_env": {}
+              },
+              "raw_public_candidate": {
+                "action_type": "execute",
+                "operation": "check_contig_compatibility",
+                "language": "bash",
+                "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+                "env": {},
+                "outputs": []
+              },
+              "raw_public_digest": "21ad67608c6319dc7ec3e87508bd1abaf7d6547b6940022a96e726debfaa4e9a",
+              "raw_representation": "parsed_action_before_binding",
+              "receipt_id": "binding-normalization-fdcb772cbe662bcde9a58c1d62f335d1dba816867405a84dd7cc1d1c3ef37c97"
+            },
+            "formal_workspace_bindings": [],
+            "binding_contract_rule": {},
+            "generate_binding_resolution": {
+              "environment": {},
+              "records": []
+            },
+            "generate_binding_resolution_digest": "49130909db9874d2ef1e55b5271596c4c1bd9fcf67acfd64aa8e969b8e3cef5a",
+            "workspace_mutation_intent_contracts": [],
+            "managed_artifact_handles": [],
+            "referenced_output_handles": [],
+            "materialized_artifacts": {},
+            "concrete_artifact_bindings": [],
+            "controller_output_bindings": [],
+            "candidate_fingerprint": "afd5b6e513448c78a36f1e0b22c86bf20f0c328210f7149fb39363f57bd5e3e8",
+            "action_id": "action_1ea8f0499baa9430",
+            "step_id": "step-direct",
+            "task_revision": 1,
+            "plan_id": "plan_a7f3abad1ebc93701df6",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "authoritative_user_turn_revision": 1,
+            "execution_epoch": "0",
+            "purpose": "analysis",
+            "command_role": "primary",
+            "expected_outputs": [],
+            "expected_step_effect": {
+              "schema_version": 1,
+              "produces_artifacts": [],
+              "produces_bindings": [],
+              "produces_observations": [
+                {
+                  "identity": "contigs_compatible",
+                  "evidence_contract": {
+                    "required_fields": [
+                      "value"
+                    ]
+                  },
+                  "predicate": {
+                    "applicability": {
+                      "execution_capability_ids": [
+                        "genomics.snpeff_annotation.prepare_database",
+                        "genomics.snpeff_annotation.build_database",
+                        "genomics.snpeff_annotation.annotate_variants",
+                        "genomics.snpeff_annotation.summarize_ann",
+                        "genomics.snpeff_annotation.finalize_outputs"
+                      ],
+                      "kind": "plan_contains_any_execution_capability",
+                      "schema_version": 1
+                    },
+                    "expected": true,
+                    "failure_disposition": "correction_required",
+                    "missing_disposition": "inspection_required",
+                    "operator": "boolean_equals",
+                    "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                    "parser_id": "biomind.genomics.contig_compatibility.v1",
+                    "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+                  }
+                }
+              ],
+              "workspace_mutations": [],
+              "explicit_side_effects": []
+            },
+            "expected_evidence": [
+              "the approved command exits"
+            ],
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "capability_contract": {
+              "schema_version": 1,
+              "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+              "selected_skill_id": "genomics/snpeff-annotation",
+              "required_runtime_binding_ids": [],
+              "optional_runtime_binding_ids": [],
+              "required_artifact_binding_ids": [
+                "artifact.annotation_gtf",
+                "artifact.reference_fasta",
+                "artifact.variant_vcf"
+              ],
+              "execution_guidance": [
+                "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+                "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+                "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+                "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+              ],
+              "operation": "check_contig_compatibility",
+              "consumes_artifacts": [
+                "artifact.annotation_gtf",
+                "artifact.reference_fasta",
+                "artifact.variant_vcf"
+              ],
+              "produces_artifacts": [],
+              "produces_bindings": [],
+              "produces_observations": [
+                {
+                  "observation_id": "contigs_compatible",
+                  "predicate": {
+                    "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+                    "operator": "boolean_equals",
+                    "expected": true,
+                    "parser_id": "biomind.genomics.contig_compatibility.v1",
+                    "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                    "failure_disposition": "correction_required",
+                    "missing_disposition": "inspection_required",
+                    "applicability": {
+                      "schema_version": 1,
+                      "kind": "plan_contains_any_execution_capability",
+                      "execution_capability_ids": [
+                        "genomics.snpeff_annotation.prepare_database",
+                        "genomics.snpeff_annotation.build_database",
+                        "genomics.snpeff_annotation.annotate_variants",
+                        "genomics.snpeff_annotation.summarize_ann",
+                        "genomics.snpeff_annotation.finalize_outputs"
+                      ]
+                    }
+                  },
+                  "evidence_contract": {
+                    "required_fields": [
+                      "value"
+                    ]
+                  }
+                }
+              ],
+              "workspace_mutations": [],
+              "explicit_side_effects": []
+            },
+            "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+            "runtime_bindings": {},
+            "runtime_binding_records": [],
+            "runtime_binding_manifest": {
+              "schema_version": 1,
+              "action_id": "action_1ea8f0499baa9430",
+              "plan_id": "plan_a7f3abad1ebc93701df6",
+              "step_id": "step-direct",
+              "selected_skill_id": "genomics/snpeff-annotation",
+              "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+              "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+              "scope": "current_action",
+              "bindings": [],
+              "manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db"
+            },
+            "runtime_binding_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+            "artifact_env_manifest": {
+              "schema_version": 1,
+              "action_id": "action_1ea8f0499baa9430",
+              "plan_id": "plan_a7f3abad1ebc93701df6",
+              "step_id": "step-direct",
+              "selected_skill_id": "genomics/snpeff-annotation",
+              "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+              "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+              "scope": "current_action",
+              "bindings": [],
+              "manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db"
+            },
+            "artifact_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+            "execution_policy_manifest": {
+              "schema_version": 1,
+              "action_id": "action_1ea8f0499baa9430",
+              "plan_id": "plan_a7f3abad1ebc93701df6",
+              "step_id": "step-direct",
+              "working_directory": "/tmp/biomind-a1-f3-run09/export",
+              "language": "Bash",
+              "scope": "current_action",
+              "policy": {
+                "stdin": "devnull",
+                "process_group": "isolated",
+                "shell_errexit": false,
+                "shell_pipefail": true
+              },
+              "manifest_hash": "sha256:ba590cea6e9f935e474f32d32f03877dfaff89c59a25c3d3cefbdf147cff4565"
+            },
+            "execution_policy_manifest_hash": "sha256:ba590cea6e9f935e474f32d32f03877dfaff89c59a25c3d3cefbdf147cff4565",
+            "action_approval_identity": {
+              "schema_version": 1,
+              "generated_script_sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+              "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+              "runtime_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+              "artifact_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+              "execution_policy_manifest_hash": "sha256:ba590cea6e9f935e474f32d32f03877dfaff89c59a25c3d3cefbdf147cff4565",
+              "working_directory": "/tmp/biomind-a1-f3-run09/export",
+              "approval_identity_hash": "sha256:433a05d97451cb62ea855c3723657e9d495e8a2850a77a2dc463b8c538543094"
+            },
+            "generated_script_sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+            "working_directory": "/tmp/biomind-a1-f3-run09/export",
+            "generated_from_plan_hash": "0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+            "generated_from_approval_scope_hash": "e81bde4fdb0292eb663fa10eb9d30233293780692cf05352e79577cb7bf433e6",
+            "action_hash": "3266775af52752b19edd68613f7409f4df80777253c8d9d4381eef7854facd63",
+            "candidate_repair_source": {
+              "action_type": "execute",
+              "operation": "check_contig_compatibility",
+              "language": "bash",
+              "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+              "env": {},
+              "outputs": []
+            },
+            "generated_script": {
+              "version": "generated",
+              "path": "/tmp/biomind-a1-f3-run09/results/scratch/biomind-plan-local-graph-fpm9g2t0/task_outputs/fix-f3-late-generate-nonsemantic-valid/scripts/plan_a7f3abad1ebc93701df6/plan_v1/step-direct/action_1ea8f0499baa9430/generated.sh",
+              "sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+              "producer": "generate",
+              "parent_script_ref": {},
+              "mutation_reason": "model_generation",
+              "created_at": "2026-09-14T23:16:15"
+            },
+            "generated_script_path": "/tmp/biomind-a1-f3-run09/results/scratch/biomind-plan-local-graph-fpm9g2t0/task_outputs/fix-f3-late-generate-nonsemantic-valid/scripts/plan_a7f3abad1ebc93701df6/plan_v1/step-direct/action_1ea8f0499baa9430/generated.sh",
+            "generated_script_hash": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d"
+          },
+          "action_id": "action_1ea8f0499baa9430",
+          "candidate_fingerprint": "afd5b6e513448c78a36f1e0b22c86bf20f0c328210f7149fb39363f57bd5e3e8",
+          "validation_evidence": {
+            "status": "validated",
+            "reason_code": ""
+          },
+          "generate_invocation": {
+            "generate_call_id": "generate-07c7ab14348d4fa9afebc832b114b324",
+            "scope": {
+              "task_id": "fix-f3-late-generate-nonsemantic-valid",
+              "task_revision": 1,
+              "plan_id": "plan_a7f3abad1ebc93701df6",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "source_ref": "object:sha256:bd481665f7ae3e73be52998ffe179b30846efd5a0ce69cf7b02aa0439393e5f2",
+            "prompt_assembly_started": true,
+            "prompt_assembly_succeeded": true,
+            "provider_call_attempted": true,
+            "llm_invoked": true
+          }
+        },
+        "evidence_refs": []
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate"
+      ],
+      "durable_status": "running",
+      "has_pending_action": true,
+      "execution_attempt_count": 0,
+      "rejection_event_count": 0,
+      "claim_statuses": [
+        "completed"
+      ],
+      "before": {
+        "state_generation": 20,
+        "plan_id": "plan_a7f3abad1ebc93701df6",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved"
+      },
+      "after_mutation": {
+        "state_generation": 21,
+        "plan_id": "plan_a7f3abad1ebc93701df6",
+        "plan_revision": 1,
+        "plan_version": "plan_v1",
+        "current_step_id": "step-direct",
+        "approval_status": "approved",
+        "task_status": "running"
+      },
+      "post_cancel_outcomes": [],
+      "artifact_sha256": "693728648ace1a7fb13cc79538f81c02ad867e78daaa9570344210ef59989d17"
+    }
+  ],
+  "independent_reload": {
+    "claim_id": "candidate-call:e78cdf93cf6454d722467f1a18fd054611bd642685f6bb8ab862f6bbd1d628fd",
+    "cached_response": "synthetic public candidate",
+    "policy": {
+      "version": "candidate-corrections-v2",
+      "scope": {
+        "task_id": "base01-real-allocation",
+        "task_revision": 1,
+        "plan_id": "plan_679146cd9cb3509f6a1d",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "prepare"
+      },
+      "limit": 4,
+      "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+      "unit": "additional_candidate_calls",
+      "categories_share_total": true
+    },
+    "before_count": 1,
+    "after_count": 1
+  },
+  "limits": [
+    "Fixed provider, no real model/API calls.",
+    "Graph fixture substitutes runtime readiness and memory hooks; this is declared, not actual science capability.",
+    "No Execute dispatched by these F3 graph tests; approval/execution/evidence/Commit combination belongs to F6 integration evidence.",
+    "No original session business load or approved script, no production scientific input, no shell/profile in child reload.",
+    "Historical loaded revision remains UNKNOWN; safe current export hashes identify tested source bytes."
+  ],
+  "budget_policy": "No default/cap/claim-unit change. Legacy cap/stopped evidence plus optional-metadata compatibility verified.",
+  "old_tests_and_a1_artifacts": "UNCHANGED_BY_F3",
+  "git_actions_by_subagent": "NONE",
+  "historical_component_runs_label": "final_export/run09 and prior unified results retained as historical; current same-source full F3 result is unified_final08",
+  "unified_final": {
+    "counts": {
+      "passed": 28
+    },
+    "unique_nodeids": 28,
+    "exit": {
+      "source_signature": "8a9c97461b19f769a10afbcf958b1b9cbd1c33f7a087290378cd95907af7e774",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-01/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_progress.py",
+        "tests/a1_unified_fix/test_f3_claims.py",
+        "tests/a1_unified_fix/test_f3_late_result.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "imported_modules": 143,
+    "runtime_import_file_hash_match": true,
+    "source_unchanged": true,
+    "receipt_directory": "final/runs/f3"
+  },
+  "unified_final03": {
+    "counts": {
+      "passed": 28
+    },
+    "unique_nodeids": 28,
+    "exit": {
+      "source_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-03/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_progress.py",
+        "tests/a1_unified_fix/test_f3_claims.py",
+        "tests/a1_unified_fix/test_f3_late_result.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "imported_modules": 143,
+    "runtime_import_file_hash_match": true,
+    "source_unchanged": true,
+    "receipt_directory": "final/final03_runs/f3"
+  },
+  "current_result_pointer": "unified_final08",
+  "unified_final06": {
+    "counts": {
+      "passed": 33
+    },
+    "unique_nodeids": 33,
+    "exit": {
+      "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-06/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_progress.py",
+        "tests/a1_unified_fix/test_f3_claims.py",
+        "tests/a1_unified_fix/test_f3_late_result.py",
+        "tests/a1_unified_fix/test_f3_env_progress.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+    "loaded_head": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+    "source_unchanged": true,
+    "production_and_env_test_match": {
+      "bio_agents.py": true,
+      "agent_core/workflow/candidate_repair.py": true,
+      "agent_core/recovery.py": true,
+      "tests/a1_unified_fix/test_f3_env_progress.py": true
+    },
+    "receipt_directory": "final/final06_runs/f3",
+    "fresh_results": "/tmp/biomind-a1-unified-final-06/f3",
+    "manifest_sha256": "a17b0c9f72f86f2948c58c5974cf902a7d0ce51f2507eb0f66cfbb87120e5dfd",
+    "test_results": [
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+        "outcome": "passed",
+        "duration": 0.0011745123192667961
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+        "outcome": "passed",
+        "duration": 0.0003198077902197838
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+        "outcome": "passed",
+        "duration": 0.00027515366673469543
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+        "outcome": "passed",
+        "duration": 0.00029809027910232544
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+        "outcome": "passed",
+        "duration": 0.00013449601829051971
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+        "outcome": "passed",
+        "duration": 0.00014069769531488419
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+        "outcome": "passed",
+        "duration": 0.00013326015323400497
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+        "outcome": "passed",
+        "duration": 0.00015815440565347672
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+        "outcome": "passed",
+        "duration": 10.193140842951834
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+        "outcome": "passed",
+        "duration": 9.817503553815186
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+        "outcome": "passed",
+        "duration": 9.893599624745548
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+        "outcome": "passed",
+        "duration": 9.789031418040395
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+        "outcome": "passed",
+        "duration": 5.619304056279361
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+        "outcome": "passed",
+        "duration": 3.153030780144036
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+        "outcome": "passed",
+        "duration": 3.120021551847458
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+        "outcome": "passed",
+        "duration": 0.0005304822698235512
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+        "outcome": "passed",
+        "duration": 0.0005508707836270332
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+        "outcome": "passed",
+        "duration": 0.0006926478818058968
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+        "outcome": "passed",
+        "duration": 7.482038497924805
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+        "outcome": "passed",
+        "duration": 7.6750993356108665
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.8160727536305785
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.6194043112918735
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+        "outcome": "passed",
+        "duration": 0.26166199520230293
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+        "outcome": "passed",
+        "duration": 0.0004768064245581627
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+        "outcome": "passed",
+        "duration": 2.033081702888012
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+        "outcome": "passed",
+        "duration": 2.1016466040164232
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+        "outcome": "passed",
+        "duration": 2.167842423543334
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+        "outcome": "passed",
+        "duration": 2.1020895708352327
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+        "outcome": "passed",
+        "duration": 0.0013997042551636696
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+        "outcome": "passed",
+        "duration": 0.000796852633357048
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+        "outcome": "passed",
+        "duration": 0.001909581944346428
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+        "outcome": "passed",
+        "duration": 0.0014299480244517326
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+        "outcome": "passed",
+        "duration": 7.4817022532224655
+      }
+    ]
+  },
+  "additional_recovery_claim": "f3_recovery_claim/verification.json",
+  "additional_env_before_after": "f3_env_progress/verification.json",
+  "public_caller_regression": "regression/final08/verification.json",
+  "unified_final08": {
+    "counts": {
+      "passed": 33
+    },
+    "unique_nodeids": 33,
+    "exit": {
+      "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+      "loaded_source_manifest": "/tmp/biomind-a1-unified-final-08/export/export_manifest.json",
+      "test_targets": [
+        "-s",
+        "-q",
+        "tests/a1_unified_fix/test_f3_progress.py",
+        "tests/a1_unified_fix/test_f3_claims.py",
+        "tests/a1_unified_fix/test_f3_late_result.py",
+        "tests/a1_unified_fix/test_f3_env_progress.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+    "loaded_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+    "source_unchanged": true,
+    "production_and_env_test_match": {
+      "bio_agents.py": true,
+      "agent_core/workflow/candidate_repair.py": true,
+      "agent_core/recovery.py": true,
+      "tests/a1_unified_fix/test_f3_env_progress.py": true
+    },
+    "receipt_directory": "final/final08_runs/f3",
+    "fresh_results": "/tmp/biomind-a1-unified-final-08/f3",
+    "manifest_sha256": "5b6b1841b3f441286dea25cd692a4228b00e675459163c7d807f4a9b9d0ca819",
+    "test_results": [
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+        "outcome": "passed",
+        "duration": 0.0011569159105420113
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+        "outcome": "passed",
+        "duration": 0.0003045937046408653
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+        "outcome": "passed",
+        "duration": 0.00027657393366098404
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+        "outcome": "passed",
+        "duration": 0.00030946824699640274
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+        "outcome": "passed",
+        "duration": 0.00013960245996713638
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+        "outcome": "passed",
+        "duration": 0.0001352531835436821
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+        "outcome": "passed",
+        "duration": 0.00013672932982444763
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+        "outcome": "passed",
+        "duration": 0.00014594383537769318
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+        "outcome": "passed",
+        "duration": 10.03538825083524
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+        "outcome": "passed",
+        "duration": 10.068876249715686
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+        "outcome": "passed",
+        "duration": 9.591067687608302
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+        "outcome": "passed",
+        "duration": 8.214981551282108
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+        "outcome": "passed",
+        "duration": 5.757471711374819
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+        "outcome": "passed",
+        "duration": 3.1150142243131995
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+        "outcome": "passed",
+        "duration": 3.364633657038212
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+        "outcome": "passed",
+        "duration": 0.0005265288054943085
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+        "outcome": "passed",
+        "duration": 0.0005792947486042976
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+        "outcome": "passed",
+        "duration": 0.0007192762568593025
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+        "outcome": "passed",
+        "duration": 7.609824824146926
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+        "outcome": "passed",
+        "duration": 7.690547469072044
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.542701519094408
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+        "outcome": "passed",
+        "duration": 4.321135547012091
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+        "outcome": "passed",
+        "duration": 0.20052486471831799
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+        "outcome": "passed",
+        "duration": 0.00042129959911108017
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+        "outcome": "passed",
+        "duration": 2.1639444790780544
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+        "outcome": "passed",
+        "duration": 2.112720239907503
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+        "outcome": "passed",
+        "duration": 1.9680931027978659
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+        "outcome": "passed",
+        "duration": 2.1425184989348054
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+        "outcome": "passed",
+        "duration": 0.0013640932738780975
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+        "outcome": "passed",
+        "duration": 0.0007731234654784203
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+        "outcome": "passed",
+        "duration": 0.0017747953534126282
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+        "outcome": "passed",
+        "duration": 0.001525774598121643
+      },
+      {
+        "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+        "outcome": "passed",
+        "duration": 7.568193747662008
+      }
+    ]
+  },
+  "additional_stop_origin": "f3_stop_origin/verification.json"
+}

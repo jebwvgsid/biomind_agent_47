@@ -1,0 +1,9 @@
+{
+  "status": "18 mechanism cases PASS on candidate01/02; subsequent F2 scope hardening requires final03 rerun",
+  "passed_cases": 18,
+  "original_no_verdict_runs": 1,
+  "archive": "candidate01_02_full_receipts.tar.gz",
+  "sha256": "e1394b50004e9615bf6050b27c846d81fcc89066defe2a0b9c3bd791ee5e1cea",
+  "bytes": 11864430,
+  "later_identified_fixture_limit": "Like candidate03, this round replaced the entire _ainvoke_node_llm; real invocation registration, consumption and bounded transport were outside the exercised boundary. Its PASS does not satisfy the later external-leaf-only integration requirement. Exact original archive is unchanged."
+}

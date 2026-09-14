@@ -1,0 +1,602 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.027458772994577885,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.320412733592093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022913236171007156,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007366640493273735,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.07182589638978243,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018331687897443771,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000681903213262558,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03226632717996836,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016298051923513412,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005990667268633842,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03736746869981289,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015454832464456558,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006109355017542839,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03226607758551836,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001533394679427147,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000582544133067131,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.037836034782230854,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014907587319612503,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005616042762994766,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008653299883008003,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012974347919225693,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000606161542236805,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008296305313706398,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013014301657676697,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005509005859494209,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008412059396505356,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014477968215942383,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005494914948940277,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008322335779666901,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012878701090812683,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000546671450138092,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008184434846043587,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013156235218048096,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005429219454526901,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.031006675213575363,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001495126634836197,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005633048713207245,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03118673898279667,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001675579696893692,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011355709284543991,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019669560715556145,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012724753469228745,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010511837899684906,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.17987113725394,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022411812096834183,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F01_F02_publication_and_completion_are_distinct",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F01_F02_publication_and_completion_are_distinct",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00069377850741148,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F01_F02_publication_and_completion_are_distinct",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0022659217938780785,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F01_F02_publication_and_completion_are_distinct",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014765653759241104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[foreign]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[foreign]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021742936223745346,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[foreign]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00036738812923431396,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[foreign]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012203771620988846,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[override]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[override]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019855983555316925,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[override]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002977615222334862,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[override]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011965446174144745,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[null]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[null]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001955004408955574,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[null]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00030834414064884186,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[null]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012434273958206177,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[missing]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[missing]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00033642444759607315,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[missing]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00031994376331567764,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[missing]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011851172894239426,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[path]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[path]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020355451852083206,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[path]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00029670633375644684,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[path]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001142667606472969,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[category]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[category]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002031540498137474,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[category]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00029762275516986847,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[category]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012387707829475403,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[mixed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[mixed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021433643996715546,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[mixed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00030242837965488434,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F03_invalid_supplied_fact_fails_atomically[mixed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011741835623979568,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F06_F07_frozen_helper_executes_without_nested_json",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F06_F07_frozen_helper_executes_without_nested_json",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004921071231365204,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F06_F07_frozen_helper_executes_without_nested_json",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04038415290415287,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_cross_layer_publication.py::test_F06_F07_frozen_helper_executes_without_nested_json",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019962619990110397,
+    "failure": ""
+  }
+]

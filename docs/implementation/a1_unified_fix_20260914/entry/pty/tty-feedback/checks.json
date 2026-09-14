@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "checks": {
+    "child_rc0": true,
+    "business_done": true,
+    "source_unchanged": true,
+    "one_frozen_plan": true,
+    "no_execution_or_code_approval": true,
+    "fixed_provider_only": true,
+    "full_body_bound_before_confirmation": true,
+    "entire_frozen_body_in_current_view": true,
+    "default_body_visible": true,
+    "correct_acceptance": true,
+    "feedback_not_approval": true,
+    "multiline_feedback_is_one_input": true
+  }
+}

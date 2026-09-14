@@ -1,0 +1,13 @@
+{
+  "source_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+  "loaded_source_manifest": "/tmp/biomind-a1-unified-final-03/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution"
+  ],
+  "timeout_seconds": 180,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

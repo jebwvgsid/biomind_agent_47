@@ -1,0 +1,18 @@
+id	coverage	evidence	status
+IT-01	六种snpEff操作，native argv-only，两次mutable推进、6唯一Commit、5物理输出	f6/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-02	真实rc7→Recovery retry_step→JSON/外壳/env修正→新审批执行→6Commit	f6/compact_evidence.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-03	同脚本表示修正、真重复、ABA、系统UUID对照	f3_env_progress/verification.json; final/final08_root_verification.json; f6/compact_evidence.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-04	义务不同的False、空列表、partial、blocked、无证据	f6/verification.json; final/final08_root_verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-05	依赖缺失/部分build rc23，不激活annotation，真实失败报告	f6/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-06	Generate剩余额度blocked、已Commit保留；Planner正式STOP旧未变证明	f6/verification.json; f3_verification.json; regression/preflight.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-07	Reviewer纠正/同源耗尽后重评/科学否决，科学进程不重跑	f6/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-08	事件重投/独立进程重载/结果unknown/最后机会/Commit输入幂等	f3_verification.json; f6/verification.json; f3_recovery_claim/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-09	取消late-valid/invalid/blocked，nonsemantic正例；既有pre-dispatch/atomic-save精确复用	f3_verification.json; regression/preflight.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-10	指定报告冲突/partial交付/同内容幂等/真实journal丢receipt补偿/并发保护	f6/verification.json; regression/final08/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-11	AskUser真实callback、harness_error END、缺问题/答复、正常/EOF/取消	final/final08_root_verification.json: f4-regression	PASS_FINAL08_GRAPH_OR_COMPONENT
+IT-12	同冻结Plan body默认可读，14真实PTY/plain，owner/CAS/排队保护	entry/unified_final/final02_pty/evidence.json; entry/unified_final/candidate08_display_reuse.json	PASS_WITH_EXPLICIT_UNCHANGED_ENTRY_DEPENDENCY_REUSE
+HOOK-ARCHIVE	实际constructor archive正常/None/dropped/OSError，业务状态不变；主图实际启用	final/final08_root_verification.json; f6/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+HOOK-SUMMARY	实际transport5型＋真实停止consumer正常/None/error/timeout/真实await取消	final/final08_root_verification.json; final/terminal_development/classification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+HOOK-LEGACY	当前同步legacy callback正常/None/异常及原fallback	final/final08_root_verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+HOOK-SCHEMA2	真实注册enabled PhaseContextCompactor正常/None/error/timeout/cancel；主链prepare实际命中	final/final08_root_verification.json; f6/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT
+HOOK-REQUIRED	Recovery必需event_sink异常停止、原attempt/rc7保留，不续provider/Execute	f6/verification.json	PASS_FINAL08_GRAPH_OR_COMPONENT

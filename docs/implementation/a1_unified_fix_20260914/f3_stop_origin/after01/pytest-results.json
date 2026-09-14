@@ -1,0 +1,77 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002600783482193947,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 16.813504232093692,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003436608240008354,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_blocked]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_blocked]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00036462489515542984,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_blocked]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 18.652300154790282,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_blocked]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019252952188253403,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[execute_recovery_stop]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[execute_recovery_stop]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002611745148897171,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[execute_recovery_stop]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 14.59065462835133,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[execute_recovery_stop]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017790589481592178,
+    "failure": ""
+  }
+]

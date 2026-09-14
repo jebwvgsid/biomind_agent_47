@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015437696129083633,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.002275516279041767,
+    "failure": "def test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint():\n        candidate, parsed, _ = assess_env({'BAD': 7})\n        contract = {'plan_revision': 1}\n        old_assessment = candidate_progress_assessment(\n            candidate=candidate,\n            representation_targets=[target for target in parsed.validated_targets if target != 'execute.env_keys'],\n            binding_facts=None, violations=[parsed.error], prior_rows=[], contract_ref=contract)\n        # Model the actual pre-checkpoint diagnostic schema only. The real rejected\n        # candidate, previous pending field, contract and counters stay unchanged.\n        old_assessment.pop('comparison_context_fingerprint', None)\n        previous = {**row(candidate, old_assessment, 1), 'contract_ref': contract}\n        unchanged_before = deepcopy(previous)\n        witnesses = []\n        for mode, current in [('same', candidate), ('prose', {**candidate, 'purpose': 'unrelated prose'}),\n                ('unrelated_env', action(env={'NEW': 'ok', 'BAD': 7}))]:\n            current_parse = BioAnalystAgent._extract_structured_action_result(json.dumps(current))\n            actual = candidate_progress_assessment(\n                candidate=current, representation_targets=current_parse.validated_targets,\n                binding_facts=None, violations=[current_parse.error], prior_rows=[previous], contract_ref=contract)\n            witnesses.append({'mode': mode, 'assessment': actual})\n        save('f3-env-existing-progress-row', {'old_row': previous, 'witnesses': witnesses,\n            'old_row_unchanged': previous == unchanged_before})\n        assert previous == unchanged_before\n        for witness in witnesses:\n            actual = witness['assessment']\n>           assert not actual['progress_proven'], witness\nE           AssertionError: {'mode': 'prose', 'assessment': {'schema_version': 1, 'producer': 'biomind.generate_candidate_admission.v1', 'progress_proven': True, 'basis': 'validated_representation_target', ...}}\nE           assert not True\n\ntests/a1_unified_fix/test_f3_env_progress.py:118: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016736891120672226,
+    "failure": ""
+  }
+]

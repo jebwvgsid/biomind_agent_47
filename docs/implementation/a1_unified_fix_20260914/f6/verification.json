@@ -1,0 +1,3004 @@
+{
+  "status": "FIX_PASS_FOR_LISTED_FRAMEWORK_MECHANISMS",
+  "expected_cases": 22,
+  "passed_cases": 22,
+  "candidate": {
+    "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+    "head_metadata": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+    "loaded_file_count": 457,
+    "manifest": "final_manifests/main.json",
+    "step_effects_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+    "protected_overlays": "See manifest baseline/protected_safe_hashes; this is not a bare commit deployment claim."
+  },
+  "provider_substitution": "Only fixed llm_override leaf; original _ainvoke_node_llm/_ainvoke_llm retain message cleanliness checks, registration, bounded transport, retry context and consumption. Actual delivered-message hashes and provider-attempt config are verified.",
+  "production_edits_by_this_subtask": [],
+  "test_sources": [
+    "tests/a1_unified_fix/test_f6_graph.py",
+    "tests/a1_unified_fix/test_f2_approval_graph.py",
+    "tests/a1_unified_fix/test_f6_repeat_graph.py"
+  ],
+  "cases": [
+    {
+      "case": "aba",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_rcs": [],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "failed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/aba/outputs/report.md",
+          "sha256": "8380e1114e6502d49910914f61f0eabb831eafa6deec59e7c679cfda6278d76c",
+          "bytes": 7608
+        },
+        {
+          "path": "final_cases/aba/outputs/reproduce.sh",
+          "sha256": "4b6b484bbfbc66d4917f25b3fe43454e7e257a17d1962099875b6fa33cbdb7d3",
+          "bytes": 603
+        },
+        {
+          "path": "final_cases/aba/outputs/stage_status.tsv",
+          "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+          "bytes": 800
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 6,
+        "finalize": 0,
+        "prepare": 4,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 5,
+        "consumed_count": 5,
+        "last_observed_transport_history_count": 5
+      },
+      "terminal": {
+        "status": "failed",
+        "terminal_diagnostic": {
+          "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+          "stage": "generate",
+          "error_owner": "generate",
+          "stop_id": "managed-stop:f5dd5732206b91ce72723798676cdb9462d8578d1c6228e9a948362a08ce14f5",
+          "origin": {
+            "source_stage": "generate",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "",
+            "failure_type": "generated_action_contract_error",
+            "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "summary": "execute.env must be an object of string values.",
+            "concerns": [],
+            "evidence_refs": [],
+            "returncode": null,
+            "attempt_id": "",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {
+            "attempt_id": "",
+            "execution_started": false,
+            "approved": false,
+            "candidate_fingerprint": "b774bff6f9f783bbf033771e04cfbf1bff8f22b56ad9d992bf2fa6c58aafacd0",
+            "candidate_event_id": "candidate-call:37c35d806e0ed1854711f3eac20128c1b3973ecf420c094d8e8f49a822a5a709",
+            "cause_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "correction_category": "representation"
+          },
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+            "detail": "Generate encountered an internal protocol violation and failed closed.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 0,
+            "tool_calls": 0,
+            "termination_reason": "repair_no_progress",
+            "budget_receipt": {
+              "version": "candidate-corrections-v2",
+              "scope": {
+                "task_id": "fix-f6-aba",
+                "task_revision": 1,
+                "plan_id": "plan_c8663b0f44b12e464e21",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "check_contig_compatibility"
+              },
+              "limit": 4,
+              "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+              "unit": "additional_candidate_calls",
+              "categories_share_total": true,
+              "rejection_ordinal": 3,
+              "corrections_authorized_before": 2,
+              "corrections_observed_before_rejection": 2,
+              "remaining_before_authorization": 2,
+              "category": "representation",
+              "progress_assessment": {
+                "schema_version": 1,
+                "producer": "biomind.generate_candidate_admission.v1",
+                "progress_proven": false,
+                "basis": "recurrent_rejected_candidate",
+                "comparison_fingerprint": "7f8182a196fefd80c26ca32aa1115ec88593845c77d98e9cb457b3af5abf9ad5",
+                "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+                "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+                "representation_targets": [
+                  "action_type",
+                  "execute.argv_shape",
+                  "execute.executable_body",
+                  "execute.outputs_shape",
+                  "json_object"
+                ],
+                "binding_facts": null,
+                "binding_axis": "not_evaluated",
+                "newly_satisfied_targets": [],
+                "resolved_targets": [],
+                "pending_targets": [
+                  "env"
+                ],
+                "scientific_success": "not_assessed"
+              },
+              "correction_authorized": false,
+              "corrections_authorized": 2,
+              "remaining": 2,
+              "repair_ordinal": 3,
+              "repair_limit": 4,
+              "event_id": "candidate-rejection:10c915ce6de6ea6bf2772a15",
+              "correction_category": "representation"
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-aba/scratch/biomind-plan-local-graph-1y4k287e/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+              "operation_id": "a60c7a9d2ba0d3a641d4814d9fddec2db309ea818de20a10aa74f1023be847cf",
+              "ownership": {
+                "operation_id": "a60c7a9d2ba0d3a641d4814d9fddec2db309ea818de20a10aa74f1023be847cf",
+                "path": "/tmp/biomind-f6-candidate08-aba/scratch/biomind-plan-local-graph-1y4k287e/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+                "proof_name": ".runtime-report-proof-a60c7a9d2ba0d3a641d4814d9fddec2db309ea818de20a10aa74f1023be847cf",
+                "device": 2051,
+                "inode": 10770231
+              },
+              "status": "created",
+              "stop_id": "managed-stop:f5dd5732206b91ce72723798676cdb9462d8578d1c6228e9a948362a08ce14f5",
+              "task_id": "fix-f6-aba"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-aba/scratch/biomind-plan-local-graph-1y4k287e/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "4b6b484bbfbc66d4917f25b3fe43454e7e257a17d1962099875b6fa33cbdb7d3",
+              "operation_id": "ed81126af791dc9d62a9e196e0602e7ab99ea7d0eae5ae8933dd5cbfff1d0b78",
+              "ownership": {
+                "operation_id": "ed81126af791dc9d62a9e196e0602e7ab99ea7d0eae5ae8933dd5cbfff1d0b78",
+                "path": "/tmp/biomind-f6-candidate08-aba/scratch/biomind-plan-local-graph-1y4k287e/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "4b6b484bbfbc66d4917f25b3fe43454e7e257a17d1962099875b6fa33cbdb7d3",
+                "proof_name": ".runtime-report-proof-ed81126af791dc9d62a9e196e0602e7ab99ea7d0eae5ae8933dd5cbfff1d0b78",
+                "device": 2051,
+                "inode": 10770353
+              },
+              "status": "created",
+              "stop_id": "managed-stop:f5dd5732206b91ce72723798676cdb9462d8578d1c6228e9a948362a08ce14f5",
+              "task_id": "fix-f6-aba"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-aba/scratch/biomind-plan-local-graph-1y4k287e/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "8380e1114e6502d49910914f61f0eabb831eafa6deec59e7c679cfda6278d76c",
+              "operation_id": "eed3fe8638f6c681e884069440b703c90c13f207c5da0e4a0927850d6e089976",
+              "ownership": {
+                "operation_id": "eed3fe8638f6c681e884069440b703c90c13f207c5da0e4a0927850d6e089976",
+                "path": "/tmp/biomind-f6-candidate08-aba/scratch/biomind-plan-local-graph-1y4k287e/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "8380e1114e6502d49910914f61f0eabb831eafa6deec59e7c679cfda6278d76c",
+                "proof_name": ".runtime-report-proof-eed3fe8638f6c681e884069440b703c90c13f207c5da0e4a0927850d6e089976",
+                "device": 2051,
+                "inode": 10770527
+              },
+              "status": "created",
+              "stop_id": "managed-stop:f5dd5732206b91ce72723798676cdb9462d8578d1c6228e9a948362a08ce14f5",
+              "task_id": "fix-f6-aba"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "e27abba896e1d0a2e825c417b353cc196823f762afb609395bfb7f6224ca3a8c"
+      },
+      "rejected_candidate_end": {
+        "scope": "Real full graph through END and actual three-report publication; no Execute/Commit",
+        "actual_candidate_count": 3,
+        "persisted_responses": [
+          {
+            "claim_id": "candidate-call:9381f0e2e6eede1764774a07713d12a13ac73a75a4efb3935cdb0a7db77ab1a9",
+            "response_ref": "object:sha256:fdea3c38d0349a35ad16f5371b072616cdd5099c54f8057ef06dc08a70f53fea",
+            "sha256": "d80c052c1a6a8b448a5bebd74d07d9c5b3a24ca7b11a2e1f6ec203fd1b1cbdc0"
+          },
+          {
+            "claim_id": "candidate-call:dced1b8f077509cafda8ff4a44378aa5a273cdf79f52028ef463a61e7b45dfeb",
+            "response_ref": "object:sha256:1c30d8dcdbbcc21d60a1ead6465f24e921cd1a748ea429e3fdc68c4e47079d42",
+            "sha256": "9713a0dd15b8c9c9d14d2de373e4cca7ba82397792fdb5a9d6dd7bfedbcc3310"
+          },
+          {
+            "claim_id": "candidate-call:37c35d806e0ed1854711f3eac20128c1b3973ecf420c094d8e8f49a822a5a709",
+            "response_ref": "object:sha256:fdea3c38d0349a35ad16f5371b072616cdd5099c54f8057ef06dc08a70f53fea",
+            "sha256": "d80c052c1a6a8b448a5bebd74d07d9c5b3a24ca7b11a2e1f6ec203fd1b1cbdc0"
+          }
+        ],
+        "remaining": 2,
+        "raw_response_and_feedback_evidence": {
+          "path": "final_cases/aba/f6-it03-aba.json",
+          "sha256": "91a03507d73c1b2a026d952a6c88eceb21e0db7fc4a3bdb83734f6b25ff2f661"
+        }
+      },
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "empty_observation",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/empty_observation/outputs/report.md",
+          "sha256": "0e327ce70991298d821261cc2ff5fa221af921998f3f3361ce36f757fd880102",
+          "bytes": 6168
+        },
+        {
+          "path": "final_cases/empty_observation/outputs/reproduce.sh",
+          "sha256": "e75cf50f2f51bcdb9cf3e7df0b7f8c7aedbcfb18dd9256708ad89c99a55d088d",
+          "bytes": 4525
+        },
+        {
+          "path": "final_cases/empty_observation/outputs/stage_status.tsv",
+          "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+          "bytes": 785
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:5390d020c786a14d23f021361c982a6b198e77a16e6377f20847927a412f8ec4",
+          "origin": {
+            "source_stage": "supervisor",
+            "source_owner": "deterministic_predicate",
+            "failure_id": "failure-c5226ab57cfbedf5260fc74f",
+            "failure_type": "correction_required",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annota",
+            "concerns": [
+              "BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID"
+            ],
+            "evidence_refs": [
+              "validation-1b262945c636e85fb875",
+              "completion-report-185cf9398a7ae12446cc4a0c39a66422ed49a1ca76a04e7f01b8f21fc2cfe9cf",
+              "semantic-decision-99bd6587daabba639689d494d0a8c6c588788fb7365b5179ad381e862b084a31"
+            ],
+            "returncode": null,
+            "attempt_id": "attempt_49431103ecbd802af78b",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+              "operation_id": "0194dd80137564942f04c63b96cf0d9787f2b100a5cf8ef3a3b364d97493b55e",
+              "ownership": {
+                "operation_id": "0194dd80137564942f04c63b96cf0d9787f2b100a5cf8ef3a3b364d97493b55e",
+                "path": "/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+                "proof_name": ".runtime-report-proof-0194dd80137564942f04c63b96cf0d9787f2b100a5cf8ef3a3b364d97493b55e",
+                "device": 2051,
+                "inode": 10770664
+              },
+              "status": "created",
+              "stop_id": "managed-stop:5390d020c786a14d23f021361c982a6b198e77a16e6377f20847927a412f8ec4",
+              "task_id": "fix-f6-empty_observation"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "e75cf50f2f51bcdb9cf3e7df0b7f8c7aedbcfb18dd9256708ad89c99a55d088d",
+              "operation_id": "e80b383b26a9b3a4108d9f4696c4d1649f4cfb712182e3fa64afb7a8de247dcb",
+              "ownership": {
+                "operation_id": "e80b383b26a9b3a4108d9f4696c4d1649f4cfb712182e3fa64afb7a8de247dcb",
+                "path": "/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "e75cf50f2f51bcdb9cf3e7df0b7f8c7aedbcfb18dd9256708ad89c99a55d088d",
+                "proof_name": ".runtime-report-proof-e80b383b26a9b3a4108d9f4696c4d1649f4cfb712182e3fa64afb7a8de247dcb",
+                "device": 2051,
+                "inode": 10770213
+              },
+              "status": "created",
+              "stop_id": "managed-stop:5390d020c786a14d23f021361c982a6b198e77a16e6377f20847927a412f8ec4",
+              "task_id": "fix-f6-empty_observation"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "0e327ce70991298d821261cc2ff5fa221af921998f3f3361ce36f757fd880102",
+              "operation_id": "3844e27cd7d647b16697ce79261ff467a4d8614affacebff516ff802facc2df7",
+              "ownership": {
+                "operation_id": "3844e27cd7d647b16697ce79261ff467a4d8614affacebff516ff802facc2df7",
+                "path": "/tmp/biomind-f6-candidate08-empty_observation/scratch/biomind-plan-local-graph-qsufv2ph/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "0e327ce70991298d821261cc2ff5fa221af921998f3f3361ce36f757fd880102",
+                "proof_name": ".runtime-report-proof-3844e27cd7d647b16697ce79261ff467a4d8614affacebff516ff802facc2df7",
+                "device": 2051,
+                "inode": 10770266
+              },
+              "status": "created",
+              "stop_id": "managed-stop:5390d020c786a14d23f021361c982a6b198e77a16e6377f20847927a412f8ec4",
+              "task_id": "fix-f6-empty_observation"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "8058b2f62b9346b3c77e4767f139d9194a79a96f75de5d342ecf55c2ddce926f"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "empty_summary",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 5,
+        "reviewer": 4,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "actual_commit_receipts": 4,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/empty_summary/outputs/ann_summary.tsv",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "final_cases/empty_summary/outputs/annotated.vcf",
+          "sha256": "6d525a3a25eea09ca53e129ecfca2f507f0eb0385d47c90db28aa6c1cc460499",
+          "bytes": 265
+        },
+        {
+          "path": "final_cases/empty_summary/outputs/report.md",
+          "sha256": "9226560f9041d5d95ee8db9554fe007c0450a398fea117a64ce4d7ae483359e0",
+          "bytes": 7779
+        },
+        {
+          "path": "final_cases/empty_summary/outputs/reproduce.sh",
+          "sha256": "46c105756e638982748707dadfc7c31a0bc7a8b982668cb183c4e40d2abb62b6",
+          "bytes": 4662
+        },
+        {
+          "path": "final_cases/empty_summary/outputs/stage_status.tsv",
+          "sha256": "afc7695b2b772ea14a697c138daecf0ef4011a8bfba6a16f7ffc97d95e423e6f",
+          "bytes": 720
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 13,
+        "finalize": 0,
+        "prepare": 6,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 7,
+        "consumed_count": 7,
+        "last_observed_transport_history_count": 7
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:20e27e00faa44448cf77561c198cb08773ede3561677bf819e31edb109f0d67b",
+          "origin": {
+            "source_stage": "execute",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "failure-d7a1c824d19d06168a12088f",
+            "failure_type": "execution_failed",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, re",
+            "concerns": [],
+            "evidence_refs": [
+              "exec-attempt_6b2c8f9ca7be24bb58a5"
+            ],
+            "returncode": 0,
+            "attempt_id": "attempt_6b2c8f9ca7be24bb58a5",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [
+            {
+              "step_id": "check_contig_compatibility",
+              "commit_id": "commit-step-6dc82216f7caabaa3bb4bcfa",
+              "receipt": "typed-step-commit:commit-step-6dc82216f7caabaa3bb4bcfa",
+              "committed": true
+            },
+            {
+              "step_id": "prepare_database",
+              "commit_id": "commit-step-586365be00103b098d41d0f6",
+              "receipt": "typed-step-commit:commit-step-586365be00103b098d41d0f6",
+              "committed": true
+            },
+            {
+              "step_id": "build_database",
+              "commit_id": "commit-step-8bf66b312e4c9b5302fa3a00",
+              "receipt": "typed-step-commit:commit-step-8bf66b312e4c9b5302fa3a00",
+              "committed": true
+            },
+            {
+              "step_id": "annotate_variants",
+              "commit_id": "commit-step-b1f515cd581c70763dd90834",
+              "receipt": "typed-step-commit:commit-step-b1f515cd581c70763dd90834",
+              "committed": true
+            }
+          ],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "afc7695b2b772ea14a697c138daecf0ef4011a8bfba6a16f7ffc97d95e423e6f",
+              "operation_id": "15cd4df9be32073f33319929212ba26d0f5d73954ae2d31ec9e2652dacf33431",
+              "ownership": {
+                "operation_id": "15cd4df9be32073f33319929212ba26d0f5d73954ae2d31ec9e2652dacf33431",
+                "path": "/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "afc7695b2b772ea14a697c138daecf0ef4011a8bfba6a16f7ffc97d95e423e6f",
+                "proof_name": ".runtime-report-proof-15cd4df9be32073f33319929212ba26d0f5d73954ae2d31ec9e2652dacf33431",
+                "device": 2051,
+                "inode": 9209929
+              },
+              "status": "created",
+              "stop_id": "managed-stop:20e27e00faa44448cf77561c198cb08773ede3561677bf819e31edb109f0d67b",
+              "task_id": "fix-f6-empty_summary"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "46c105756e638982748707dadfc7c31a0bc7a8b982668cb183c4e40d2abb62b6",
+              "operation_id": "b9994395ba4f41170b08962553b72134d8eda5828d0e5afd55c4ae52bbb8fb90",
+              "ownership": {
+                "operation_id": "b9994395ba4f41170b08962553b72134d8eda5828d0e5afd55c4ae52bbb8fb90",
+                "path": "/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "46c105756e638982748707dadfc7c31a0bc7a8b982668cb183c4e40d2abb62b6",
+                "proof_name": ".runtime-report-proof-b9994395ba4f41170b08962553b72134d8eda5828d0e5afd55c4ae52bbb8fb90",
+                "device": 2051,
+                "inode": 9209930
+              },
+              "status": "created",
+              "stop_id": "managed-stop:20e27e00faa44448cf77561c198cb08773ede3561677bf819e31edb109f0d67b",
+              "task_id": "fix-f6-empty_summary"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "9226560f9041d5d95ee8db9554fe007c0450a398fea117a64ce4d7ae483359e0",
+              "operation_id": "ddef41a89588f911af1f0831ae08beb03c750fc64102aa105f53014a334d3de3",
+              "ownership": {
+                "operation_id": "ddef41a89588f911af1f0831ae08beb03c750fc64102aa105f53014a334d3de3",
+                "path": "/tmp/biomind-f6-candidate08-empty_summary/scratch/biomind-plan-local-graph-d34eqlka/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "9226560f9041d5d95ee8db9554fe007c0450a398fea117a64ce4d7ae483359e0",
+                "proof_name": ".runtime-report-proof-ddef41a89588f911af1f0831ae08beb03c750fc64102aa105f53014a334d3de3",
+                "device": 2051,
+                "inode": 9209931
+              },
+              "status": "created",
+              "stop_id": "managed-stop:20e27e00faa44448cf77561c198cb08773ede3561677bf819e31edb109f0d67b",
+              "task_id": "fix-f6-empty_summary"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "f0dd1752ea969181de81b5e39d45c5aac24a8076bd7adc82fa6cdea113e3a9af"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "env_reorder",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_rcs": [],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "failed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/env_reorder/outputs/report.md",
+          "sha256": "7b5f42e6d2274397284fca15a44f058657d87b380a77a97a6e26f670d3adf96e",
+          "bytes": 7711
+        },
+        {
+          "path": "final_cases/env_reorder/outputs/reproduce.sh",
+          "sha256": "e4d7c4bc751fe6a89d3256a8057933ad3896c051f29c3a64957b5d3ff5a31b6f",
+          "bytes": 611
+        },
+        {
+          "path": "final_cases/env_reorder/outputs/stage_status.tsv",
+          "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+          "bytes": 800
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 3,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 4,
+        "consumed_count": 4,
+        "last_observed_transport_history_count": 4
+      },
+      "terminal": {
+        "status": "failed",
+        "terminal_diagnostic": {
+          "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+          "stage": "generate",
+          "error_owner": "generate",
+          "stop_id": "managed-stop:c251dce89937c134e28a46c17ca6ab91ef096f4c746eff5cd328fd273287729e",
+          "origin": {
+            "source_stage": "generate",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "",
+            "failure_type": "generated_action_contract_error",
+            "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "summary": "execute.env values must be strings.",
+            "concerns": [],
+            "evidence_refs": [],
+            "returncode": null,
+            "attempt_id": "",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {
+            "attempt_id": "",
+            "execution_started": false,
+            "approved": false,
+            "candidate_fingerprint": "c23c2839b447653e2bf6adfed37c67b8ebcb4fffcd8302b74169f004e088288a",
+            "candidate_event_id": "candidate-call:d2b573097d877f684c53352d66e683da5106acc26cc038d70631a0fd80dff871",
+            "cause_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "correction_category": "representation"
+          },
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+            "detail": "Generate encountered an internal protocol violation and failed closed.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 0,
+            "tool_calls": 0,
+            "termination_reason": "repair_no_progress",
+            "budget_receipt": {
+              "version": "candidate-corrections-v2",
+              "scope": {
+                "task_id": "fix-f6-env_reorder",
+                "task_revision": 1,
+                "plan_id": "plan_4518e1826da372e7cda0",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "check_contig_compatibility"
+              },
+              "limit": 4,
+              "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+              "unit": "additional_candidate_calls",
+              "categories_share_total": true,
+              "rejection_ordinal": 2,
+              "corrections_authorized_before": 1,
+              "corrections_observed_before_rejection": 1,
+              "remaining_before_authorization": 3,
+              "category": "representation",
+              "progress_assessment": {
+                "schema_version": 1,
+                "producer": "biomind.generate_candidate_admission.v1",
+                "progress_proven": false,
+                "basis": "recurrent_rejected_candidate",
+                "comparison_fingerprint": "a370b46535a5c645e7788f1222f3ad790b06a67fb237e54f70fb4147fa7495e8",
+                "validation_signature": "3a4fa689f1d5ce212423b79a86cd2c722ee97340c8fe264a495c55c79e939413",
+                "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+                "representation_targets": [
+                  "action_type",
+                  "execute.argv_shape",
+                  "execute.env.VALID",
+                  "execute.env_keys",
+                  "execute.env_object",
+                  "execute.executable_body",
+                  "execute.outputs_shape",
+                  "json_object"
+                ],
+                "binding_facts": null,
+                "binding_axis": "not_evaluated",
+                "newly_satisfied_targets": [],
+                "resolved_targets": [],
+                "pending_targets": [
+                  "env.BAD"
+                ],
+                "scientific_success": "not_assessed"
+              },
+              "correction_authorized": false,
+              "corrections_authorized": 1,
+              "remaining": 3,
+              "repair_ordinal": 2,
+              "repair_limit": 4,
+              "event_id": "candidate-rejection:3040319467e0682ea291508e",
+              "correction_category": "representation"
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-env_reorder/scratch/biomind-plan-local-graph-7re5sg_z/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+              "operation_id": "c1ed18a33d03e772117cd423398427ca1f7741947540c911de9878857e7261b7",
+              "ownership": {
+                "operation_id": "c1ed18a33d03e772117cd423398427ca1f7741947540c911de9878857e7261b7",
+                "path": "/tmp/biomind-f6-candidate08-env_reorder/scratch/biomind-plan-local-graph-7re5sg_z/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+                "proof_name": ".runtime-report-proof-c1ed18a33d03e772117cd423398427ca1f7741947540c911de9878857e7261b7",
+                "device": 2051,
+                "inode": 10770707
+              },
+              "status": "created",
+              "stop_id": "managed-stop:c251dce89937c134e28a46c17ca6ab91ef096f4c746eff5cd328fd273287729e",
+              "task_id": "fix-f6-env_reorder"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-env_reorder/scratch/biomind-plan-local-graph-7re5sg_z/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "e4d7c4bc751fe6a89d3256a8057933ad3896c051f29c3a64957b5d3ff5a31b6f",
+              "operation_id": "ff929fd6c04c3fce1f4e1a393539ae8778741c073527164430ba971152d5ba96",
+              "ownership": {
+                "operation_id": "ff929fd6c04c3fce1f4e1a393539ae8778741c073527164430ba971152d5ba96",
+                "path": "/tmp/biomind-f6-candidate08-env_reorder/scratch/biomind-plan-local-graph-7re5sg_z/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "e4d7c4bc751fe6a89d3256a8057933ad3896c051f29c3a64957b5d3ff5a31b6f",
+                "proof_name": ".runtime-report-proof-ff929fd6c04c3fce1f4e1a393539ae8778741c073527164430ba971152d5ba96",
+                "device": 2051,
+                "inode": 10770830
+              },
+              "status": "created",
+              "stop_id": "managed-stop:c251dce89937c134e28a46c17ca6ab91ef096f4c746eff5cd328fd273287729e",
+              "task_id": "fix-f6-env_reorder"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-env_reorder/scratch/biomind-plan-local-graph-7re5sg_z/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "7b5f42e6d2274397284fca15a44f058657d87b380a77a97a6e26f670d3adf96e",
+              "operation_id": "6e33b07cd22da04685cef3dd50df8c93337fedc10b35b8973441b517f6e779a8",
+              "ownership": {
+                "operation_id": "6e33b07cd22da04685cef3dd50df8c93337fedc10b35b8973441b517f6e779a8",
+                "path": "/tmp/biomind-f6-candidate08-env_reorder/scratch/biomind-plan-local-graph-7re5sg_z/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "7b5f42e6d2274397284fca15a44f058657d87b380a77a97a6e26f670d3adf96e",
+                "proof_name": ".runtime-report-proof-6e33b07cd22da04685cef3dd50df8c93337fedc10b35b8973441b517f6e779a8",
+                "device": 2051,
+                "inode": 10770877
+              },
+              "status": "created",
+              "stop_id": "managed-stop:c251dce89937c134e28a46c17ca6ab91ef096f4c746eff5cd328fd273287729e",
+              "task_id": "fix-f6-env_reorder"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "11899a4683d1f636b0d02e4d48a299b95731952656d2d7ba872d32f16f485fa8"
+      },
+      "rejected_candidate_end": {
+        "scope": "Real full graph through END and actual three-report publication; no Execute/Commit",
+        "actual_candidate_count": 2,
+        "persisted_responses": [
+          {
+            "claim_id": "candidate-call:ea4274b1cb3b3d5a0415e77322e7e9126513d97cea26e741b41d9c15a6c1e5c9",
+            "response_ref": "object:sha256:e1f391aba3bb04db7f69f1568dff1d1968eedb32494b38a72b16cdac607a6d24",
+            "sha256": "ea6eefa38cc05963fce13cb74f3d91ac05774f9435d7239492a183ccc3ac81de"
+          },
+          {
+            "claim_id": "candidate-call:d2b573097d877f684c53352d66e683da5106acc26cc038d70631a0fd80dff871",
+            "response_ref": "object:sha256:97e47755158130b9e4f1cc8cbcba982dc5991c9962256980e8bd0059d903a557",
+            "sha256": "9407f7973c24e4eb84f270dfc5878c2f072514afe908dec8bacca33e10cad144"
+          }
+        ],
+        "remaining": 3,
+        "raw_response_and_feedback_evidence": {
+          "path": "final_cases/env_reorder/f6-it03-env_reorder.json",
+          "sha256": "cda74e0f331d321e1fe218a0cfa24d9289a02ee203bc60122bc89b94632e1c6e"
+        }
+      },
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "env_unrelated",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_rcs": [],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "failed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/env_unrelated/outputs/report.md",
+          "sha256": "49d208587ffbe9384a8920ef21f99246e2c4b7c49666f368b3b90bd300388be5",
+          "bytes": 7726
+        },
+        {
+          "path": "final_cases/env_unrelated/outputs/reproduce.sh",
+          "sha256": "1b69f7e770c674353812015a93b6afc1ed42d2f3d34f0ca570e867d2b80ceaa7",
+          "bytes": 613
+        },
+        {
+          "path": "final_cases/env_unrelated/outputs/stage_status.tsv",
+          "sha256": "28e0d452d00233b9b6d43ab21939c7934d82ccb871279316f522c2d53cce4659",
+          "bytes": 799
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 3,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 4,
+        "consumed_count": 4,
+        "last_observed_transport_history_count": 4
+      },
+      "terminal": {
+        "status": "failed",
+        "terminal_diagnostic": {
+          "error_code": "GENERATE_REPAIR_NO_VALIDATED_PROGRESS",
+          "stage": "generate",
+          "error_owner": "generate",
+          "stop_id": "managed-stop:edf19c28fc4ba67d419b2644c5f4c7bc4a9b3adc09f05a1f70d73b6c218504b4",
+          "origin": {
+            "source_stage": "generate",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "",
+            "failure_type": "generated_action_contract_error",
+            "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "summary": "execute.env values must be strings.",
+            "concerns": [],
+            "evidence_refs": [],
+            "returncode": null,
+            "attempt_id": "",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {
+            "attempt_id": "",
+            "execution_started": false,
+            "approved": false,
+            "candidate_fingerprint": "1775784c50c47689ac005a5aae7667e404472f9498d9c8f0c6cd77cd21529f99",
+            "candidate_event_id": "candidate-call:1a2b8ac307c1797c1c43d7fe5f4db11976471c3f25780c9cc1ee3af59186f804",
+            "cause_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "correction_category": "representation"
+          },
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "GENERATE_REPAIR_NO_VALIDATED_PROGRESS",
+            "detail": "Generate encountered an internal protocol violation and failed closed.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 0,
+            "tool_calls": 0,
+            "termination_reason": "repair_no_progress",
+            "budget_receipt": {
+              "version": "candidate-corrections-v2",
+              "scope": {
+                "task_id": "fix-f6-env_unrelated",
+                "task_revision": 1,
+                "plan_id": "plan_f03c737a20a6a9045fb8",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "check_contig_compatibility"
+              },
+              "limit": 4,
+              "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+              "unit": "additional_candidate_calls",
+              "categories_share_total": true,
+              "rejection_ordinal": 2,
+              "corrections_authorized_before": 1,
+              "corrections_observed_before_rejection": 1,
+              "remaining_before_authorization": 3,
+              "category": "representation",
+              "progress_assessment": {
+                "schema_version": 1,
+                "producer": "biomind.generate_candidate_admission.v1",
+                "progress_proven": false,
+                "basis": "no_validated_target_progress",
+                "comparison_fingerprint": "c8d68348b24cb8058ef347400648976146d04059d2dd1f0cce17b00b2b60ec8d",
+                "validation_signature": "fed8c5c4d633cdbe650a6779e834ccecaaf4745097af7247c215be403c8bbf71",
+                "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+                "representation_targets": [
+                  "action_type",
+                  "execute.argv_shape",
+                  "execute.env.NEW",
+                  "execute.env_keys",
+                  "execute.env_object",
+                  "execute.executable_body",
+                  "execute.outputs_shape",
+                  "json_object"
+                ],
+                "binding_facts": null,
+                "binding_axis": "not_evaluated",
+                "newly_satisfied_targets": [],
+                "resolved_targets": [],
+                "pending_targets": [
+                  "env.BAD"
+                ],
+                "scientific_success": "not_assessed"
+              },
+              "correction_authorized": false,
+              "corrections_authorized": 1,
+              "remaining": 3,
+              "repair_ordinal": 2,
+              "repair_limit": 4,
+              "event_id": "candidate-rejection:d0cf32ce163fd3a0cfb86bf5",
+              "correction_category": "representation"
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-env_unrelated/scratch/biomind-plan-local-graph-bd6p_cf8/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "28e0d452d00233b9b6d43ab21939c7934d82ccb871279316f522c2d53cce4659",
+              "operation_id": "f35995aa211d5eb089cdc86de3cc464bc85192eec3ed60111fb6b3e077db0e34",
+              "ownership": {
+                "operation_id": "f35995aa211d5eb089cdc86de3cc464bc85192eec3ed60111fb6b3e077db0e34",
+                "path": "/tmp/biomind-f6-candidate08-env_unrelated/scratch/biomind-plan-local-graph-bd6p_cf8/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "28e0d452d00233b9b6d43ab21939c7934d82ccb871279316f522c2d53cce4659",
+                "proof_name": ".runtime-report-proof-f35995aa211d5eb089cdc86de3cc464bc85192eec3ed60111fb6b3e077db0e34",
+                "device": 2051,
+                "inode": 10771163
+              },
+              "status": "created",
+              "stop_id": "managed-stop:edf19c28fc4ba67d419b2644c5f4c7bc4a9b3adc09f05a1f70d73b6c218504b4",
+              "task_id": "fix-f6-env_unrelated"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-env_unrelated/scratch/biomind-plan-local-graph-bd6p_cf8/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "1b69f7e770c674353812015a93b6afc1ed42d2f3d34f0ca570e867d2b80ceaa7",
+              "operation_id": "9dea322685332f9abddf44e43cafbd8eaa274ad0286f7a585f10c787d56e3e98",
+              "ownership": {
+                "operation_id": "9dea322685332f9abddf44e43cafbd8eaa274ad0286f7a585f10c787d56e3e98",
+                "path": "/tmp/biomind-f6-candidate08-env_unrelated/scratch/biomind-plan-local-graph-bd6p_cf8/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "1b69f7e770c674353812015a93b6afc1ed42d2f3d34f0ca570e867d2b80ceaa7",
+                "proof_name": ".runtime-report-proof-9dea322685332f9abddf44e43cafbd8eaa274ad0286f7a585f10c787d56e3e98",
+                "device": 2051,
+                "inode": 10771173
+              },
+              "status": "created",
+              "stop_id": "managed-stop:edf19c28fc4ba67d419b2644c5f4c7bc4a9b3adc09f05a1f70d73b6c218504b4",
+              "task_id": "fix-f6-env_unrelated"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-env_unrelated/scratch/biomind-plan-local-graph-bd6p_cf8/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "49d208587ffbe9384a8920ef21f99246e2c4b7c49666f368b3b90bd300388be5",
+              "operation_id": "a2c6b3fdc22dd29b7bbfbf2f9bfb9b154e8066a9b2e01f5084c55609dfbe3424",
+              "ownership": {
+                "operation_id": "a2c6b3fdc22dd29b7bbfbf2f9bfb9b154e8066a9b2e01f5084c55609dfbe3424",
+                "path": "/tmp/biomind-f6-candidate08-env_unrelated/scratch/biomind-plan-local-graph-bd6p_cf8/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "49d208587ffbe9384a8920ef21f99246e2c4b7c49666f368b3b90bd300388be5",
+                "proof_name": ".runtime-report-proof-a2c6b3fdc22dd29b7bbfbf2f9bfb9b154e8066a9b2e01f5084c55609dfbe3424",
+                "device": 2051,
+                "inode": 10771130
+              },
+              "status": "created",
+              "stop_id": "managed-stop:edf19c28fc4ba67d419b2644c5f4c7bc4a9b3adc09f05a1f70d73b6c218504b4",
+              "task_id": "fix-f6-env_unrelated"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "a68fbd82d6f9dc88aae1732af5f74a2c98222532a3ee306f4737832ddf9cffce"
+      },
+      "rejected_candidate_end": {
+        "scope": "Real full graph through END and actual three-report publication; no Execute/Commit",
+        "actual_candidate_count": 2,
+        "persisted_responses": [
+          {
+            "claim_id": "candidate-call:a8c5fef00232b4941fd717a34e49d7ac5e92918f93fa2d1701cd46340e4fbd61",
+            "response_ref": "object:sha256:b53219828b1f85d9200dc61af9e1be3aaf5695141d25f548ece83794cee4f98e",
+            "sha256": "6f38622636e613441b83f1e316559d684f092c11519fbfd1a08ea7ca1505a15a"
+          },
+          {
+            "claim_id": "candidate-call:1a2b8ac307c1797c1c43d7fe5f4db11976471c3f25780c9cc1ee3af59186f804",
+            "response_ref": "object:sha256:1365eb7dc9f4b3501e69e5e8ee1777a1b04ce763420187c4249501ce0575ef95",
+            "sha256": "3c8e6b08eb0fb518a60abf374f8529b7035ae6eb77f787a3d5de05d5ed0adc21"
+          }
+        ],
+        "remaining": 3,
+        "raw_response_and_feedback_evidence": {
+          "path": "final_cases/env_unrelated/f6-it03-env_unrelated.json",
+          "sha256": "a7c8bf255c74f57e45f053b7e621c345a80e9fba6f2744b01f066840fcd193c3"
+        }
+      },
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "false_diagnostic",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 1,
+      "final_audit_type": "task_verified",
+      "task_status": "completed",
+      "physical_outputs": [],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {},
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "false_required",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/false_required/outputs/report.md",
+          "sha256": "8978f2def8c14e8e19f4d5c268b405d8190911dcb1384fdd8f867805ea6b6805",
+          "bytes": 6152
+        },
+        {
+          "path": "final_cases/false_required/outputs/reproduce.sh",
+          "sha256": "86c36841430d1fa61f679e8de7caed945b5f3fd210c90fa8065e19f7b201f9b8",
+          "bytes": 4492
+        },
+        {
+          "path": "final_cases/false_required/outputs/stage_status.tsv",
+          "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+          "bytes": 785
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:cf06a2f2be36ff5aad7ec7764ab3948f9f19784d904fb8781f692abd14d8ab8f",
+          "origin": {
+            "source_stage": "supervisor",
+            "source_owner": "deterministic_predicate",
+            "failure_id": "failure-a6d2cf035c86d91c3800bc36",
+            "failure_type": "correction_required",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/report.",
+            "concerns": [
+              "BOOLEAN_PREDICATE_NOT_SATISFIED"
+            ],
+            "evidence_refs": [
+              "validation-1aaff9113202ca512245",
+              "completion-report-88f28490ded0157320c334374217ba4c1dc1fcef5c371f8fc42645eac3f6f3bd",
+              "semantic-decision-29508bebb9b91120fb2d957281f025096ff09f5eb18e209fceee2dab1cd89674"
+            ],
+            "returncode": null,
+            "attempt_id": "attempt_b0e347337bc6a6b9d414",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+              "operation_id": "1d0825b56d6ffe92f8a7eb5c553c177c175e4887bfcd25dcfcd9be6b5499d444",
+              "ownership": {
+                "operation_id": "1d0825b56d6ffe92f8a7eb5c553c177c175e4887bfcd25dcfcd9be6b5499d444",
+                "path": "/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+                "proof_name": ".runtime-report-proof-1d0825b56d6ffe92f8a7eb5c553c177c175e4887bfcd25dcfcd9be6b5499d444",
+                "device": 2051,
+                "inode": 10771067
+              },
+              "status": "created",
+              "stop_id": "managed-stop:cf06a2f2be36ff5aad7ec7764ab3948f9f19784d904fb8781f692abd14d8ab8f",
+              "task_id": "fix-f6-false_required"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "86c36841430d1fa61f679e8de7caed945b5f3fd210c90fa8065e19f7b201f9b8",
+              "operation_id": "7ef2b2eec3bca4274fc6ca3ff19f9dbd51ffa5a1302f17f062c23521a51e2d91",
+              "ownership": {
+                "operation_id": "7ef2b2eec3bca4274fc6ca3ff19f9dbd51ffa5a1302f17f062c23521a51e2d91",
+                "path": "/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "86c36841430d1fa61f679e8de7caed945b5f3fd210c90fa8065e19f7b201f9b8",
+                "proof_name": ".runtime-report-proof-7ef2b2eec3bca4274fc6ca3ff19f9dbd51ffa5a1302f17f062c23521a51e2d91",
+                "device": 2051,
+                "inode": 10770745
+              },
+              "status": "created",
+              "stop_id": "managed-stop:cf06a2f2be36ff5aad7ec7764ab3948f9f19784d904fb8781f692abd14d8ab8f",
+              "task_id": "fix-f6-false_required"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "8978f2def8c14e8e19f4d5c268b405d8190911dcb1384fdd8f867805ea6b6805",
+              "operation_id": "2115add15ef34296fa4d9a4631ebdf2ef5f0b2393ade1e68a83ac75e8f448345",
+              "ownership": {
+                "operation_id": "2115add15ef34296fa4d9a4631ebdf2ef5f0b2393ade1e68a83ac75e8f448345",
+                "path": "/tmp/biomind-f6-candidate08-false_required/scratch/biomind-plan-local-graph-k5ndhum9/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "8978f2def8c14e8e19f4d5c268b405d8190911dcb1384fdd8f867805ea6b6805",
+                "proof_name": ".runtime-report-proof-2115add15ef34296fa4d9a4631ebdf2ef5f0b2393ade1e68a83ac75e8f448345",
+                "device": 2051,
+                "inode": 10770929
+              },
+              "status": "created",
+              "stop_id": "managed-stop:cf06a2f2be36ff5aad7ec7764ab3948f9f19784d904fb8781f692abd14d8ab8f",
+              "task_id": "fix-f6-false_required"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "1fcc8474588f529448f61f9ecfcc3c255cc49562bfa82d1342fa64fb468fbc1e"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "legacy_bash",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 1,
+      "final_audit_type": "task_verified",
+      "task_status": "completed",
+      "physical_outputs": [],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {},
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "legacy_python",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 1,
+      "final_audit_type": "task_verified",
+      "task_status": "completed",
+      "physical_outputs": [],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {},
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "missing_build_dependency",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3,
+        "reviewer": 2,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0,
+        0,
+        23
+      ],
+      "actual_commit_receipts": 2,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/missing_build_dependency/outputs/report.md",
+          "sha256": "d222350ab4a110c7a9ea185cbc4980fd8c9ea5d422d4a2ffeb462ffd1d1976ac",
+          "bytes": 7382
+        },
+        {
+          "path": "final_cases/missing_build_dependency/outputs/reproduce.sh",
+          "sha256": "54dd31b5b07e90811d600ca2410a540b181f38bf90049292aa20fda448781170",
+          "bytes": 4517
+        },
+        {
+          "path": "final_cases/missing_build_dependency/outputs/stage_status.tsv",
+          "sha256": "6fa38f88c6124f93007b05ca95369ad002aea1411181708e6c0f1294680c7299",
+          "bytes": 735
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 9,
+        "finalize": 0,
+        "prepare": 4,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 5,
+        "consumed_count": 5,
+        "last_observed_transport_history_count": 5
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:3c8bbb45b90fd4381f7a42649d1c241649202af90b34ec9e890aee51dcff3e2c",
+          "origin": {
+            "source_stage": "execute",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "failure-f01e4c4d8c2720b06c694532",
+            "failure_type": "execution_failed",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-",
+            "concerns": [],
+            "evidence_refs": [
+              "exec-attempt_9de33493f0f28c3acf46"
+            ],
+            "returncode": 23,
+            "attempt_id": "attempt_9de33493f0f28c3acf46",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [
+            {
+              "step_id": "check_contig_compatibility",
+              "commit_id": "commit-step-364c3ef44a903386faf35ab1",
+              "receipt": "typed-step-commit:commit-step-364c3ef44a903386faf35ab1",
+              "committed": true
+            },
+            {
+              "step_id": "prepare_database",
+              "commit_id": "commit-step-9bb62d0afe82b0705362b7c1",
+              "receipt": "typed-step-commit:commit-step-9bb62d0afe82b0705362b7c1",
+              "committed": true
+            }
+          ],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "6fa38f88c6124f93007b05ca95369ad002aea1411181708e6c0f1294680c7299",
+              "operation_id": "56bdee3d43f3d3c103c5b5de3506f6fa8adfd68ea2d8db751ba63f4101fa8ef0",
+              "ownership": {
+                "operation_id": "56bdee3d43f3d3c103c5b5de3506f6fa8adfd68ea2d8db751ba63f4101fa8ef0",
+                "path": "/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "6fa38f88c6124f93007b05ca95369ad002aea1411181708e6c0f1294680c7299",
+                "proof_name": ".runtime-report-proof-56bdee3d43f3d3c103c5b5de3506f6fa8adfd68ea2d8db751ba63f4101fa8ef0",
+                "device": 2051,
+                "inode": 10770727
+              },
+              "status": "created",
+              "stop_id": "managed-stop:3c8bbb45b90fd4381f7a42649d1c241649202af90b34ec9e890aee51dcff3e2c",
+              "task_id": "fix-f6-missing_build_dependency"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "54dd31b5b07e90811d600ca2410a540b181f38bf90049292aa20fda448781170",
+              "operation_id": "52bdb8c29e4bb6d66afc09504594963203f28505c0370d802f59bca9808e48e8",
+              "ownership": {
+                "operation_id": "52bdb8c29e4bb6d66afc09504594963203f28505c0370d802f59bca9808e48e8",
+                "path": "/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "54dd31b5b07e90811d600ca2410a540b181f38bf90049292aa20fda448781170",
+                "proof_name": ".runtime-report-proof-52bdb8c29e4bb6d66afc09504594963203f28505c0370d802f59bca9808e48e8",
+                "device": 2051,
+                "inode": 10770765
+              },
+              "status": "created",
+              "stop_id": "managed-stop:3c8bbb45b90fd4381f7a42649d1c241649202af90b34ec9e890aee51dcff3e2c",
+              "task_id": "fix-f6-missing_build_dependency"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "d222350ab4a110c7a9ea185cbc4980fd8c9ea5d422d4a2ffeb462ffd1d1976ac",
+              "operation_id": "83957ed85335632a68802228cc79c79111d6a6a1fbeb18e31db6330f06bf48a8",
+              "ownership": {
+                "operation_id": "83957ed85335632a68802228cc79c79111d6a6a1fbeb18e31db6330f06bf48a8",
+                "path": "/tmp/biomind-f6-candidate08-missing_build_dependency/scratch/biomind-plan-local-graph-7s6rwk68/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "d222350ab4a110c7a9ea185cbc4980fd8c9ea5d422d4a2ffeb462ffd1d1976ac",
+                "proof_name": ".runtime-report-proof-83957ed85335632a68802228cc79c79111d6a6a1fbeb18e31db6330f06bf48a8",
+                "device": 2051,
+                "inode": 10770933
+              },
+              "status": "created",
+              "stop_id": "managed-stop:3c8bbb45b90fd4381f7a42649d1c241649202af90b34ec9e890aee51dcff3e2c",
+              "task_id": "fix-f6-missing_build_dependency"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "92eea4d730a23c8e6568e0e92fdb84d3d80bf545a7aeb944abf0b1e659e79a3d"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "native_code_python",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 1,
+      "final_audit_type": "task_verified",
+      "task_status": "completed",
+      "physical_outputs": [],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {},
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "no_evidence",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/no_evidence/outputs/report.md",
+          "sha256": "d05ba2de979aff45c58d44d1d744a154851f9e90d214bb6ecb31ebe2e42fc017",
+          "bytes": 6099
+        },
+        {
+          "path": "final_cases/no_evidence/outputs/reproduce.sh",
+          "sha256": "6b74642a14a12251d8962157242a1b28ae350f2bf86c9aa33cf64628478b5297",
+          "bytes": 4378
+        },
+        {
+          "path": "final_cases/no_evidence/outputs/stage_status.tsv",
+          "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+          "bytes": 785
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery.inspection",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:cc2c065b4c885f5a80057c8f27c3a442f385fb7f8b67fadc22298a42439562bd",
+          "origin": {
+            "source_stage": "supervisor",
+            "source_owner": "deterministic_predicate",
+            "failure_id": "failure-c89146189137dd1758fc68ba",
+            "failure_type": "inspection_required",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_scri",
+            "concerns": [
+              "BOOLEAN_PREDICATE_EVIDENCE_MISSING",
+              "COMPLETION_GATE_REJECTED:step_effect_incomplete"
+            ],
+            "evidence_refs": [
+              "validation-724ed16ae071190e9a0d",
+              "completion-report-23f0f60b505ea901acfba24214e532799d9bd5a5db7c26841f2a2c5846a42f11",
+              "semantic-decision-e653459dbf6768a0100f74d23c7ec9fd091cdae24340ce4e86d548556edd5d7b"
+            ],
+            "returncode": null,
+            "attempt_id": "attempt_ca318f8fbcc951f72c72",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+              "operation_id": "2200672d9a169a76584da7f0462922211b75ef546b7e8a44c21367507475a588",
+              "ownership": {
+                "operation_id": "2200672d9a169a76584da7f0462922211b75ef546b7e8a44c21367507475a588",
+                "path": "/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+                "proof_name": ".runtime-report-proof-2200672d9a169a76584da7f0462922211b75ef546b7e8a44c21367507475a588",
+                "device": 2051,
+                "inode": 8405951
+              },
+              "status": "created",
+              "stop_id": "managed-stop:cc2c065b4c885f5a80057c8f27c3a442f385fb7f8b67fadc22298a42439562bd",
+              "task_id": "fix-f6-no_evidence"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "6b74642a14a12251d8962157242a1b28ae350f2bf86c9aa33cf64628478b5297",
+              "operation_id": "8f9c5dcedd888b8fe1490bdfbc70ee3e3e8db88414486dbc240f77e7158bb38e",
+              "ownership": {
+                "operation_id": "8f9c5dcedd888b8fe1490bdfbc70ee3e3e8db88414486dbc240f77e7158bb38e",
+                "path": "/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "6b74642a14a12251d8962157242a1b28ae350f2bf86c9aa33cf64628478b5297",
+                "proof_name": ".runtime-report-proof-8f9c5dcedd888b8fe1490bdfbc70ee3e3e8db88414486dbc240f77e7158bb38e",
+                "device": 2051,
+                "inode": 8405954
+              },
+              "status": "created",
+              "stop_id": "managed-stop:cc2c065b4c885f5a80057c8f27c3a442f385fb7f8b67fadc22298a42439562bd",
+              "task_id": "fix-f6-no_evidence"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "d05ba2de979aff45c58d44d1d744a154851f9e90d214bb6ecb31ebe2e42fc017",
+              "operation_id": "21c08f79103c1a0dfab7e90bff82afed8816c8f494370efcca4582ae5cccc526",
+              "ownership": {
+                "operation_id": "21c08f79103c1a0dfab7e90bff82afed8816c8f494370efcca4582ae5cccc526",
+                "path": "/tmp/biomind-f6-candidate08-no_evidence/scratch/biomind-plan-local-graph-qb87k0pd/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "d05ba2de979aff45c58d44d1d744a154851f9e90d214bb6ecb31ebe2e42fc017",
+                "proof_name": ".runtime-report-proof-21c08f79103c1a0dfab7e90bff82afed8816c8f494370efcca4582ae5cccc526",
+                "device": 2051,
+                "inode": 8405959
+              },
+              "status": "created",
+              "stop_id": "managed-stop:cc2c065b4c885f5a80057c8f27c3a442f385fb7f8b67fadc22298a42439562bd",
+              "task_id": "fix-f6-no_evidence"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "f3cbda3f5511153a0b2e4c02ea014ec5b1e2ddc9db454af02509f9b2e39862a5"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "normal",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 6,
+        "reviewer": 6,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "actual_commit_receipts": 6,
+      "final_audit_type": "task_verified",
+      "task_status": "completed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/normal/outputs/ann_summary.tsv",
+          "sha256": "3381c679be3843e7da214e1ddc8848ed5f13afe57f1d84f390e20227086222f2",
+          "bytes": 32
+        },
+        {
+          "path": "final_cases/normal/outputs/annotated.vcf",
+          "sha256": "6d525a3a25eea09ca53e129ecfca2f507f0eb0385d47c90db28aa6c1cc460499",
+          "bytes": 265
+        },
+        {
+          "path": "final_cases/normal/outputs/report.md",
+          "sha256": "646b9fb6fbd121412447ff637aab0fbf735e09ce37b51623e95526a285ee722f",
+          "bytes": 120
+        },
+        {
+          "path": "final_cases/normal/outputs/reproduce.sh",
+          "sha256": "7ca55a9649d34b2824abb57631d5e93f585363de7c00e25d6345ff127a2027e4",
+          "bytes": 115
+        },
+        {
+          "path": "final_cases/normal/outputs/stage_status.tsv",
+          "sha256": "21878fb68bfb107f12479b9080f110b29e40e9c2715d019fc9ff15e7f6df09f7",
+          "bytes": 241
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 15,
+        "finalize": 0,
+        "prepare": 7,
+        "summary": 0
+      },
+      "real_node_dispatch": {
+        "leaf_count": 8,
+        "consumed_count": 8,
+        "last_observed_transport_history_count": 8
+      },
+      "terminal": {},
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "partial_build",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3,
+        "reviewer": 2,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0,
+        0,
+        23
+      ],
+      "actual_commit_receipts": 2,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/partial_build/outputs/report.md",
+          "sha256": "3dc357b3c729b1b3ea1321263c666ccc7e3b0483e95b0178331e0fa1728b6303",
+          "bytes": 7324
+        },
+        {
+          "path": "final_cases/partial_build/outputs/reproduce.sh",
+          "sha256": "7dfdd991f66bc61dc3dd7d78e25d5fa1320f6c3d8cbca8f341301517469b1e17",
+          "bytes": 4665
+        },
+        {
+          "path": "final_cases/partial_build/outputs/stage_status.tsv",
+          "sha256": "6fa38f88c6124f93007b05ca95369ad002aea1411181708e6c0f1294680c7299",
+          "bytes": 735
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 9,
+        "finalize": 0,
+        "prepare": 4,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 5,
+        "consumed_count": 5,
+        "last_observed_transport_history_count": 5
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:15c6f9e126d41eb3d680a5c0e15a390962b005a0c3e9fcd32b770fb3e30282a8",
+          "origin": {
+            "source_stage": "execute",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "failure-e223b8159d1b7f9c46f118d2",
+            "failure_type": "execution_failed",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, re",
+            "concerns": [],
+            "evidence_refs": [
+              "exec-attempt_d0c6520d83ea0253c36a"
+            ],
+            "returncode": 23,
+            "attempt_id": "attempt_d0c6520d83ea0253c36a",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [
+            {
+              "step_id": "check_contig_compatibility",
+              "commit_id": "commit-step-1274df6b8ebf6b3fa29e528c",
+              "receipt": "typed-step-commit:commit-step-1274df6b8ebf6b3fa29e528c",
+              "committed": true
+            },
+            {
+              "step_id": "prepare_database",
+              "commit_id": "commit-step-c2c1afa120191bf023fbd79c",
+              "receipt": "typed-step-commit:commit-step-c2c1afa120191bf023fbd79c",
+              "committed": true
+            }
+          ],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "6fa38f88c6124f93007b05ca95369ad002aea1411181708e6c0f1294680c7299",
+              "operation_id": "9af0a1541b9a14552f4f8621b4d3c31e2212b8463054a6700d459966082e2436",
+              "ownership": {
+                "operation_id": "9af0a1541b9a14552f4f8621b4d3c31e2212b8463054a6700d459966082e2436",
+                "path": "/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "6fa38f88c6124f93007b05ca95369ad002aea1411181708e6c0f1294680c7299",
+                "proof_name": ".runtime-report-proof-9af0a1541b9a14552f4f8621b4d3c31e2212b8463054a6700d459966082e2436",
+                "device": 2051,
+                "inode": 8406057
+              },
+              "status": "created",
+              "stop_id": "managed-stop:15c6f9e126d41eb3d680a5c0e15a390962b005a0c3e9fcd32b770fb3e30282a8",
+              "task_id": "fix-f6-partial_build"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "7dfdd991f66bc61dc3dd7d78e25d5fa1320f6c3d8cbca8f341301517469b1e17",
+              "operation_id": "45afdc3c2cc76d21967279e3f1f1719161dcbfe42e95126db40cae41248c0c77",
+              "ownership": {
+                "operation_id": "45afdc3c2cc76d21967279e3f1f1719161dcbfe42e95126db40cae41248c0c77",
+                "path": "/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "7dfdd991f66bc61dc3dd7d78e25d5fa1320f6c3d8cbca8f341301517469b1e17",
+                "proof_name": ".runtime-report-proof-45afdc3c2cc76d21967279e3f1f1719161dcbfe42e95126db40cae41248c0c77",
+                "device": 2051,
+                "inode": 8406060
+              },
+              "status": "created",
+              "stop_id": "managed-stop:15c6f9e126d41eb3d680a5c0e15a390962b005a0c3e9fcd32b770fb3e30282a8",
+              "task_id": "fix-f6-partial_build"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "3dc357b3c729b1b3ea1321263c666ccc7e3b0483e95b0178331e0fa1728b6303",
+              "operation_id": "86d21c4f256110ae158df4003d8335c216a08763939e3243cdc490e0bcf1ee1e",
+              "ownership": {
+                "operation_id": "86d21c4f256110ae158df4003d8335c216a08763939e3243cdc490e0bcf1ee1e",
+                "path": "/tmp/biomind-f6-candidate08-partial_build/scratch/biomind-plan-local-graph-s348xj1t/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "3dc357b3c729b1b3ea1321263c666ccc7e3b0483e95b0178331e0fa1728b6303",
+                "proof_name": ".runtime-report-proof-86d21c4f256110ae158df4003d8335c216a08763939e3243cdc490e0bcf1ee1e",
+                "device": 2051,
+                "inode": 8406065
+              },
+              "status": "created",
+              "stop_id": "managed-stop:15c6f9e126d41eb3d680a5c0e15a390962b005a0c3e9fcd32b770fb3e30282a8",
+              "task_id": "fix-f6-partial_build"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "7eb81ae2f597907d5960b950ad6aa42d45f1df42ada7cf0bba1af0cc3996c8c6"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "recovery",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 10,
+        "reviewer": 6,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "actual_commit_receipts": 6,
+      "final_audit_type": "task_verified",
+      "task_status": "completed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/recovery/outputs/ann_summary.tsv",
+          "sha256": "3381c679be3843e7da214e1ddc8848ed5f13afe57f1d84f390e20227086222f2",
+          "bytes": 32
+        },
+        {
+          "path": "final_cases/recovery/outputs/annotated.vcf",
+          "sha256": "6d525a3a25eea09ca53e129ecfca2f507f0eb0385d47c90db28aa6c1cc460499",
+          "bytes": 265
+        },
+        {
+          "path": "final_cases/recovery/outputs/report.md",
+          "sha256": "646b9fb6fbd121412447ff637aab0fbf735e09ce37b51623e95526a285ee722f",
+          "bytes": 120
+        },
+        {
+          "path": "final_cases/recovery/outputs/reproduce.sh",
+          "sha256": "7ca55a9649d34b2824abb57631d5e93f585363de7c00e25d6345ff127a2027e4",
+          "bytes": 115
+        },
+        {
+          "path": "final_cases/recovery/outputs/stage_status.tsv",
+          "sha256": "21878fb68bfb107f12479b9080f110b29e40e9c2715d019fc9ff15e7f6df09f7",
+          "bytes": 241
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 20,
+        "finalize": 0,
+        "prepare": 11,
+        "summary": 0
+      },
+      "real_node_dispatch": {
+        "leaf_count": 12,
+        "consumed_count": 12,
+        "last_observed_transport_history_count": 13
+      },
+      "terminal": {},
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "recovery_event_failure",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        7
+      ],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "failed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/recovery_event_failure/outputs/report.md",
+          "sha256": "6f46542f1fd22597756745d6f00711a70ae1c7344a4b14c9e4f01b50a1be4904",
+          "bytes": 4746
+        },
+        {
+          "path": "final_cases/recovery_event_failure/outputs/reproduce.sh",
+          "sha256": "68fd010f3447b9d2e6c37256b529b85dd09a7f98354f59231dc0bc3207d86f3e",
+          "bytes": 875
+        },
+        {
+          "path": "final_cases/recovery_event_failure/outputs/stage_status.tsv",
+          "sha256": "84deef248c3d9cd7fb2e9ae482bc094920b0ea13461454ab7498615cdc034967",
+          "bytes": 777
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {
+        "status": "failed",
+        "terminal_diagnostic": {
+          "error_code": "RECOVERY_EVENT_PERSISTENCE_FAILED",
+          "stage": "recovery",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:27a608b38d9015b725e1899199af36a43f3ad0513f1362cd25bc7c610d8f60ff",
+          "origin": {
+            "source_stage": "execute",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "failure-09566f1afafbf29726909083",
+            "failure_type": "execution_failed",
+            "error_code": "EXECUTION_FAILED",
+            "summary": "A launched command failed after immutable evidence persistence.",
+            "concerns": [],
+            "evidence_refs": [
+              "exec-attempt_d2561c0346963d0fa4fa"
+            ],
+            "returncode": 7,
+            "attempt_id": "attempt_d2561c0346963d0fa4fa",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "attempt_id": "attempt_d2561c0346963d0fa4fa",
+            "step_id": "check_contig_compatibility",
+            "executed": true,
+            "purpose": "UNKNOWN",
+            "returncode": 7,
+            "deterministic_passed": false,
+            "validation_status": "unknown",
+            "reviewer_disposition": "inspection_required",
+            "step_status": "running",
+            "committed": false,
+            "executed_script_ref": "/tmp/biomind-f6-candidate08-recovery_event_failure/scratch/biomind-plan-local-graph-myqkl29l/task_outputs/fix-f6-recovery_event_failure/attempts/attempt_d2561c0346963d0fa4fa/executed.sh",
+            "command_body_available": false,
+            "scope": {
+              "task_id": "fix-f6-recovery_event_failure",
+              "plan_id": "plan_6980e52dd0421903b70c",
+              "plan_version": "plan_v1",
+              "step_id": "check_contig_compatibility",
+              "attempt_id": "attempt_d2561c0346963d0fa4fa"
+            },
+            "failure_packet_ref": "failure-packet:sha256:845f36cf1729f4ead744277c4cdd3b0a107e66469f237b0e1393a9e73c05c929",
+            "read_only": true
+          },
+          "current_candidate": {},
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "RECOVERY_EVENT_PERSISTENCE_FAILED",
+            "detail": "recovery_started: OSError",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 0,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {}
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-recovery_event_failure/scratch/biomind-plan-local-graph-myqkl29l/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "84deef248c3d9cd7fb2e9ae482bc094920b0ea13461454ab7498615cdc034967",
+              "operation_id": "a3709e31f7b26815bb9aa808df16b1bc4deae11bf46f107b3577b4c5d472946a",
+              "ownership": {
+                "operation_id": "a3709e31f7b26815bb9aa808df16b1bc4deae11bf46f107b3577b4c5d472946a",
+                "path": "/tmp/biomind-f6-candidate08-recovery_event_failure/scratch/biomind-plan-local-graph-myqkl29l/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "84deef248c3d9cd7fb2e9ae482bc094920b0ea13461454ab7498615cdc034967",
+                "proof_name": ".runtime-report-proof-a3709e31f7b26815bb9aa808df16b1bc4deae11bf46f107b3577b4c5d472946a",
+                "device": 2051,
+                "inode": 10770787
+              },
+              "status": "created",
+              "stop_id": "managed-stop:27a608b38d9015b725e1899199af36a43f3ad0513f1362cd25bc7c610d8f60ff",
+              "task_id": "fix-f6-recovery_event_failure"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-recovery_event_failure/scratch/biomind-plan-local-graph-myqkl29l/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "68fd010f3447b9d2e6c37256b529b85dd09a7f98354f59231dc0bc3207d86f3e",
+              "operation_id": "de30bcbb4181133ad9ae4f5ebceafabb2732876d46711b9b82f2e53b22cda789",
+              "ownership": {
+                "operation_id": "de30bcbb4181133ad9ae4f5ebceafabb2732876d46711b9b82f2e53b22cda789",
+                "path": "/tmp/biomind-f6-candidate08-recovery_event_failure/scratch/biomind-plan-local-graph-myqkl29l/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "68fd010f3447b9d2e6c37256b529b85dd09a7f98354f59231dc0bc3207d86f3e",
+                "proof_name": ".runtime-report-proof-de30bcbb4181133ad9ae4f5ebceafabb2732876d46711b9b82f2e53b22cda789",
+                "device": 2051,
+                "inode": 10770790
+              },
+              "status": "created",
+              "stop_id": "managed-stop:27a608b38d9015b725e1899199af36a43f3ad0513f1362cd25bc7c610d8f60ff",
+              "task_id": "fix-f6-recovery_event_failure"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-recovery_event_failure/scratch/biomind-plan-local-graph-myqkl29l/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "6f46542f1fd22597756745d6f00711a70ae1c7344a4b14c9e4f01b50a1be4904",
+              "operation_id": "ba0db1adfcb8e985d136f104599993dcf1a4fc69b651e17c25687e52460e01a0",
+              "ownership": {
+                "operation_id": "ba0db1adfcb8e985d136f104599993dcf1a4fc69b651e17c25687e52460e01a0",
+                "path": "/tmp/biomind-f6-candidate08-recovery_event_failure/scratch/biomind-plan-local-graph-myqkl29l/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "6f46542f1fd22597756745d6f00711a70ae1c7344a4b14c9e4f01b50a1be4904",
+                "proof_name": ".runtime-report-proof-ba0db1adfcb8e985d136f104599993dcf1a4fc69b651e17c25687e52460e01a0",
+                "device": 2051,
+                "inode": 10770796
+              },
+              "status": "created",
+              "stop_id": "managed-stop:27a608b38d9015b725e1899199af36a43f3ad0513f1362cd25bc7c610d8f60ff",
+              "task_id": "fix-f6-recovery_event_failure"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "6b731dc5854eb9498d952badc50c531721bde2279907b9f5dd39fa859e5695a0"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "repeat",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_rcs": [],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "failed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/repeat/outputs/report.md",
+          "sha256": "cf7198e1769980dd39e164e9b7e6d066e24fbc61f4f3619e921c20b769a6cba7",
+          "bytes": 7635
+        },
+        {
+          "path": "final_cases/repeat/outputs/reproduce.sh",
+          "sha256": "822611195a07d4b44de84674a5ee6dc0d8666e03e7ef780acb5360ea29da78b2",
+          "bytes": 606
+        },
+        {
+          "path": "final_cases/repeat/outputs/stage_status.tsv",
+          "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+          "bytes": 800
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 3,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 4,
+        "consumed_count": 4,
+        "last_observed_transport_history_count": 4
+      },
+      "terminal": {
+        "status": "failed",
+        "terminal_diagnostic": {
+          "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+          "stage": "generate",
+          "error_owner": "generate",
+          "stop_id": "managed-stop:7c13e28374922a7e11cfe4f0b1fa0608254e2e7dc7439ed09a915f114702b220",
+          "origin": {
+            "source_stage": "generate",
+            "source_owner": "GENERATED_ACTION",
+            "failure_id": "",
+            "failure_type": "generated_action_contract_error",
+            "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "summary": "execute.env must be an object of string values.",
+            "concerns": [],
+            "evidence_refs": [],
+            "returncode": null,
+            "attempt_id": "",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {
+            "attempt_id": "",
+            "execution_started": false,
+            "approved": false,
+            "candidate_fingerprint": "2251890fa6693aefa61dc7c21ce9ac0d3d334bb83d1d9fdae3adf8203e627e5a",
+            "candidate_event_id": "candidate-call:7315d842947496cb4c208c14fd2ca75781281ab2618ea2c901855bd002064e94",
+            "cause_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "correction_category": "representation"
+          },
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+            "detail": "Generate encountered an internal protocol violation and failed closed.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 0,
+            "tool_calls": 0,
+            "termination_reason": "repair_no_progress",
+            "budget_receipt": {
+              "version": "candidate-corrections-v2",
+              "scope": {
+                "task_id": "fix-f6-repeat",
+                "task_revision": 1,
+                "plan_id": "plan_9976e0bc5013f463cf1b",
+                "plan_version": "plan_v1",
+                "plan_revision": 1,
+                "step_id": "check_contig_compatibility"
+              },
+              "limit": 4,
+              "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+              "unit": "additional_candidate_calls",
+              "categories_share_total": true,
+              "rejection_ordinal": 2,
+              "corrections_authorized_before": 1,
+              "corrections_observed_before_rejection": 1,
+              "remaining_before_authorization": 3,
+              "category": "representation",
+              "progress_assessment": {
+                "schema_version": 1,
+                "producer": "biomind.generate_candidate_admission.v1",
+                "progress_proven": false,
+                "basis": "recurrent_rejected_candidate",
+                "comparison_fingerprint": "db65c9b531d8cd03d8936c654a35f2158784cebb4c591de4bbf2381c36548969",
+                "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+                "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+                "representation_targets": [
+                  "action_type",
+                  "execute.argv_shape",
+                  "execute.executable_body",
+                  "execute.outputs_shape",
+                  "json_object"
+                ],
+                "binding_facts": null,
+                "binding_axis": "not_evaluated",
+                "newly_satisfied_targets": [],
+                "resolved_targets": [],
+                "pending_targets": [
+                  "env"
+                ],
+                "scientific_success": "not_assessed"
+              },
+              "correction_authorized": false,
+              "corrections_authorized": 1,
+              "remaining": 3,
+              "repair_ordinal": 2,
+              "repair_limit": 4,
+              "event_id": "candidate-rejection:138f7de4469483a78fbefae4",
+              "correction_category": "representation"
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-repeat/scratch/biomind-plan-local-graph-aw8jfgkk/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+              "operation_id": "babd0f9f4e7012b07ebb93085dc1cc32846ef13d8c595f920281751cf4a13aad",
+              "ownership": {
+                "operation_id": "babd0f9f4e7012b07ebb93085dc1cc32846ef13d8c595f920281751cf4a13aad",
+                "path": "/tmp/biomind-f6-candidate08-repeat/scratch/biomind-plan-local-graph-aw8jfgkk/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+                "proof_name": ".runtime-report-proof-babd0f9f4e7012b07ebb93085dc1cc32846ef13d8c595f920281751cf4a13aad",
+                "device": 2051,
+                "inode": 10770614
+              },
+              "status": "created",
+              "stop_id": "managed-stop:7c13e28374922a7e11cfe4f0b1fa0608254e2e7dc7439ed09a915f114702b220",
+              "task_id": "fix-f6-repeat"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-repeat/scratch/biomind-plan-local-graph-aw8jfgkk/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "822611195a07d4b44de84674a5ee6dc0d8666e03e7ef780acb5360ea29da78b2",
+              "operation_id": "2d7f21e98b3dd16127faf269d0ae258b2ea55f2d70896139e26016ccf051d031",
+              "ownership": {
+                "operation_id": "2d7f21e98b3dd16127faf269d0ae258b2ea55f2d70896139e26016ccf051d031",
+                "path": "/tmp/biomind-f6-candidate08-repeat/scratch/biomind-plan-local-graph-aw8jfgkk/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "822611195a07d4b44de84674a5ee6dc0d8666e03e7ef780acb5360ea29da78b2",
+                "proof_name": ".runtime-report-proof-2d7f21e98b3dd16127faf269d0ae258b2ea55f2d70896139e26016ccf051d031",
+                "device": 2051,
+                "inode": 10770628
+              },
+              "status": "created",
+              "stop_id": "managed-stop:7c13e28374922a7e11cfe4f0b1fa0608254e2e7dc7439ed09a915f114702b220",
+              "task_id": "fix-f6-repeat"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-repeat/scratch/biomind-plan-local-graph-aw8jfgkk/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "cf7198e1769980dd39e164e9b7e6d066e24fbc61f4f3619e921c20b769a6cba7",
+              "operation_id": "37343ba6cb4187533b5b50cfbc435a1824bb1cafbd20400cbc66236f027b67e6",
+              "ownership": {
+                "operation_id": "37343ba6cb4187533b5b50cfbc435a1824bb1cafbd20400cbc66236f027b67e6",
+                "path": "/tmp/biomind-f6-candidate08-repeat/scratch/biomind-plan-local-graph-aw8jfgkk/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "cf7198e1769980dd39e164e9b7e6d066e24fbc61f4f3619e921c20b769a6cba7",
+                "proof_name": ".runtime-report-proof-37343ba6cb4187533b5b50cfbc435a1824bb1cafbd20400cbc66236f027b67e6",
+                "device": 2051,
+                "inode": 10770645
+              },
+              "status": "created",
+              "stop_id": "managed-stop:7c13e28374922a7e11cfe4f0b1fa0608254e2e7dc7439ed09a915f114702b220",
+              "task_id": "fix-f6-repeat"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "925012ae49e7bc07985a619fb795a1004b56e66f5457541d880cf69d514559b0"
+      },
+      "rejected_candidate_end": {
+        "scope": "Real full graph through END and actual three-report publication; no Execute/Commit",
+        "actual_candidate_count": 2,
+        "persisted_responses": [
+          {
+            "claim_id": "candidate-call:983a58bd699d15f92add745e89c4842743ab2b69d043e4e200aaca9b2565a49c",
+            "response_ref": "object:sha256:de5aa9d762062f737950e1b220fbb9a705493c06521d97dbdd2052d2a046b60f",
+            "sha256": "a7332c12738741de99fc76de2012e98bc16490ebc1f4a75f90a3342b0ec862a5"
+          },
+          {
+            "claim_id": "candidate-call:7315d842947496cb4c208c14fd2ca75781281ab2618ea2c901855bd002064e94",
+            "response_ref": "object:sha256:de5aa9d762062f737950e1b220fbb9a705493c06521d97dbdd2052d2a046b60f",
+            "sha256": "a7332c12738741de99fc76de2012e98bc16490ebc1f4a75f90a3342b0ec862a5"
+          }
+        ],
+        "remaining": 3,
+        "raw_response_and_feedback_evidence": {
+          "path": "final_cases/repeat/f6-it03-repeat.json",
+          "sha256": "74e603e3369ef2a713cf311c2eb525270b84bfc03bccbe02873682074dee5ca4"
+        }
+      },
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "report_conflict",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/report_conflict/outputs/report.md",
+          "sha256": "e1f6ef924eca5270d7c23ea5307f0c0b9b00e3455ef4cbbd5ab913cf29e4d18d",
+          "bytes": 52
+        },
+        {
+          "path": "final_cases/report_conflict/outputs/reproduce.sh",
+          "sha256": "874e8c91e1267435c26051ddf4262a246b47d4baef3825f8d00e4322ee232265",
+          "bytes": 4495
+        },
+        {
+          "path": "final_cases/report_conflict/outputs/stage_status.tsv",
+          "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+          "bytes": 785
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:aa6821bf9f05efdf43a1936729b05a79fb0a4f58d44721b39c4729f871802472",
+          "origin": {
+            "source_stage": "supervisor",
+            "source_owner": "deterministic_predicate",
+            "failure_id": "failure-77f9f5dc7d4c1c1b1ca64431",
+            "failure_type": "correction_required",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/r",
+            "concerns": [
+              "BOOLEAN_PREDICATE_NOT_SATISFIED"
+            ],
+            "evidence_refs": [
+              "validation-de5ff317f03919d5b90e",
+              "completion-report-8bf12fa907ff960ce3f1505ef89a86a55baa878df3e751175f3742866c60f786",
+              "semantic-decision-e910acf72af455b4344ddaebba6e5ba8d91104e50db062dc46e18a4ddc06903a"
+            ],
+            "returncode": null,
+            "attempt_id": "attempt_023cd64b5ddd35c81757",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "partial",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+              "operation_id": "c05c6032a7333da17e3287635c5e8bbec026eacde0428ba96e4f07062cdaa242",
+              "ownership": {
+                "operation_id": "c05c6032a7333da17e3287635c5e8bbec026eacde0428ba96e4f07062cdaa242",
+                "path": "/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+                "proof_name": ".runtime-report-proof-c05c6032a7333da17e3287635c5e8bbec026eacde0428ba96e4f07062cdaa242",
+                "device": 2051,
+                "inode": 10771687
+              },
+              "status": "created",
+              "stop_id": "managed-stop:aa6821bf9f05efdf43a1936729b05a79fb0a4f58d44721b39c4729f871802472",
+              "task_id": "fix-f6-report_conflict"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "874e8c91e1267435c26051ddf4262a246b47d4baef3825f8d00e4322ee232265",
+              "operation_id": "563c9dd573b92151b06dcac49df1dd8a27bfb2651d723bad2c595cfcf9d54ec1",
+              "ownership": {
+                "operation_id": "563c9dd573b92151b06dcac49df1dd8a27bfb2651d723bad2c595cfcf9d54ec1",
+                "path": "/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "874e8c91e1267435c26051ddf4262a246b47d4baef3825f8d00e4322ee232265",
+                "proof_name": ".runtime-report-proof-563c9dd573b92151b06dcac49df1dd8a27bfb2651d723bad2c595cfcf9d54ec1",
+                "device": 2051,
+                "inode": 10771692
+              },
+              "status": "created",
+              "stop_id": "managed-stop:aa6821bf9f05efdf43a1936729b05a79fb0a4f58d44721b39c4729f871802472",
+              "task_id": "fix-f6-report_conflict"
+            },
+            "report.md": {
+              "status": "failed",
+              "path": "/tmp/biomind-f6-candidate08-report_conflict/scratch/biomind-plan-local-graph-p3eobggq/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "task_id": "fix-f6-report_conflict",
+              "stop_id": "managed-stop:aa6821bf9f05efdf43a1936729b05a79fb0a4f58d44721b39c4729f871802472",
+              "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "711da8ab14fe83e462b803e19b8508e9ea9f3e9bb8dec1145364e35eb4513403"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "reviewer_correct",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 6,
+        "reviewer": 8,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "actual_commit_receipts": 6,
+      "final_audit_type": "task_verified",
+      "task_status": "completed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/reviewer_correct/outputs/ann_summary.tsv",
+          "sha256": "3381c679be3843e7da214e1ddc8848ed5f13afe57f1d84f390e20227086222f2",
+          "bytes": 32
+        },
+        {
+          "path": "final_cases/reviewer_correct/outputs/annotated.vcf",
+          "sha256": "6d525a3a25eea09ca53e129ecfca2f507f0eb0385d47c90db28aa6c1cc460499",
+          "bytes": 265
+        },
+        {
+          "path": "final_cases/reviewer_correct/outputs/report.md",
+          "sha256": "646b9fb6fbd121412447ff637aab0fbf735e09ce37b51623e95526a285ee722f",
+          "bytes": 120
+        },
+        {
+          "path": "final_cases/reviewer_correct/outputs/reproduce.sh",
+          "sha256": "7ca55a9649d34b2824abb57631d5e93f585363de7c00e25d6345ff127a2027e4",
+          "bytes": 115
+        },
+        {
+          "path": "final_cases/reviewer_correct/outputs/stage_status.tsv",
+          "sha256": "21878fb68bfb107f12479b9080f110b29e40e9c2715d019fc9ff15e7f6df09f7",
+          "bytes": 241
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 15,
+        "finalize": 0,
+        "prepare": 7,
+        "summary": 0
+      },
+      "real_node_dispatch": {
+        "leaf_count": 8,
+        "consumed_count": 8,
+        "last_observed_transport_history_count": 8
+      },
+      "terminal": {},
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "reviewer_exhaust",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 3,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "failed",
+      "physical_outputs": [
+        {
+          "path": "final_cases/reviewer_exhaust/outputs/report.md",
+          "sha256": "05bf38fec044871072606a73de6c6c4afcf67b3e4aaca1fc9e71be4626ed44a7",
+          "bytes": 5120
+        },
+        {
+          "path": "final_cases/reviewer_exhaust/outputs/reproduce.sh",
+          "sha256": "9cd2b26cfa9a5b70144e2a044856ae9e08478407d7daa12c7256e669d29f2ef6",
+          "bytes": 870
+        },
+        {
+          "path": "final_cases/reviewer_exhaust/outputs/stage_status.tsv",
+          "sha256": "7fa8fd8325b96cac5dd226b6c944342bc0edf8eba4e2416385f301b59d8e7f81",
+          "bytes": 794
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {
+        "status": "failed",
+        "terminal_diagnostic": {
+          "error_code": "SEMANTIC_REVIEW_PROTOCOL_EXHAUSTED",
+          "stage": "supervisor",
+          "error_owner": "supervisor",
+          "stop_id": "managed-stop:fb2287120c684b0a5c6afcf47bdce061a6ee1b486930def35e719dca75668594",
+          "origin": {
+            "source_stage": "supervisor",
+            "source_owner": "semantic_review",
+            "failure_id": "failure-6fa41802ab509c268bc55f29",
+            "failure_type": "assessment_pending",
+            "error_code": "SEMANTIC_REVIEW_PROTOCOL_EXHAUSTED",
+            "summary": "Execution evidence retained; automatic semantic review stopped without step commit.",
+            "concerns": [
+              "SEMANTIC_REVIEW_PROTOCOL_EXHAUSTED"
+            ],
+            "evidence_refs": [
+              "validation-9138db32adde9d950c8d",
+              "completion-report-726872dfca1670753e0d2729bb9f5a73569cebbed85cc25a31c88ec9948ff73a",
+              "semantic-decision-575afa4972a0715305569ea489574c00abdf465d16f8924fa2e6d102a83b23f3",
+              "exec-attempt_c6b39a919e1f8be63887"
+            ],
+            "returncode": 0,
+            "attempt_id": "attempt_c6b39a919e1f8be63887",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "attempt_id": "attempt_c6b39a919e1f8be63887",
+            "step_id": "check_contig_compatibility",
+            "executed": true,
+            "purpose": "UNKNOWN",
+            "returncode": 0,
+            "deterministic_passed": true,
+            "validation_status": "VALID",
+            "reviewer_disposition": "assessment_pending",
+            "step_status": "verification_pending",
+            "committed": false,
+            "executed_script_ref": "/tmp/biomind-f6-candidate08-reviewer_exhaust/scratch/biomind-plan-local-graph-tbwrx295/task_outputs/fix-f6-reviewer_exhaust/attempts/attempt_c6b39a919e1f8be63887/executed.sh",
+            "command_body_available": false,
+            "scope": {
+              "task_id": "fix-f6-reviewer_exhaust",
+              "plan_id": "plan_74110f2d7fda0bac4cea",
+              "plan_version": "plan_v1",
+              "step_id": "check_contig_compatibility",
+              "attempt_id": "attempt_c6b39a919e1f8be63887"
+            },
+            "failure_packet_ref": "failure-packet:sha256:d840431ffa3bbc7c055d543239e6010be32b212e4daa699085e28a31db8e3846",
+            "read_only": true
+          },
+          "current_candidate": {},
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "SEMANTIC_REVIEW_PROTOCOL_EXHAUSTED",
+            "detail": "Execution evidence retained; automatic semantic review stopped without step commit.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 0,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {}
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-reviewer_exhaust/scratch/biomind-plan-local-graph-tbwrx295/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "7fa8fd8325b96cac5dd226b6c944342bc0edf8eba4e2416385f301b59d8e7f81",
+              "operation_id": "c65ad4131cc9fbf300a2d0669506cc4395910d5b13880f87dbf15f5adf7e41ef",
+              "ownership": {
+                "operation_id": "c65ad4131cc9fbf300a2d0669506cc4395910d5b13880f87dbf15f5adf7e41ef",
+                "path": "/tmp/biomind-f6-candidate08-reviewer_exhaust/scratch/biomind-plan-local-graph-tbwrx295/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "7fa8fd8325b96cac5dd226b6c944342bc0edf8eba4e2416385f301b59d8e7f81",
+                "proof_name": ".runtime-report-proof-c65ad4131cc9fbf300a2d0669506cc4395910d5b13880f87dbf15f5adf7e41ef",
+                "device": 2051,
+                "inode": 10771020
+              },
+              "status": "created",
+              "stop_id": "managed-stop:fb2287120c684b0a5c6afcf47bdce061a6ee1b486930def35e719dca75668594",
+              "task_id": "fix-f6-reviewer_exhaust"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-reviewer_exhaust/scratch/biomind-plan-local-graph-tbwrx295/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "9cd2b26cfa9a5b70144e2a044856ae9e08478407d7daa12c7256e669d29f2ef6",
+              "operation_id": "5149a611753556b748a8f723b4a8319d76d2d5cd760378492895bb10b862c2b4",
+              "ownership": {
+                "operation_id": "5149a611753556b748a8f723b4a8319d76d2d5cd760378492895bb10b862c2b4",
+                "path": "/tmp/biomind-f6-candidate08-reviewer_exhaust/scratch/biomind-plan-local-graph-tbwrx295/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "9cd2b26cfa9a5b70144e2a044856ae9e08478407d7daa12c7256e669d29f2ef6",
+                "proof_name": ".runtime-report-proof-5149a611753556b748a8f723b4a8319d76d2d5cd760378492895bb10b862c2b4",
+                "device": 2051,
+                "inode": 10771024
+              },
+              "status": "created",
+              "stop_id": "managed-stop:fb2287120c684b0a5c6afcf47bdce061a6ee1b486930def35e719dca75668594",
+              "task_id": "fix-f6-reviewer_exhaust"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-reviewer_exhaust/scratch/biomind-plan-local-graph-tbwrx295/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "05bf38fec044871072606a73de6c6c4afcf67b3e4aaca1fc9e71be4626ed44a7",
+              "operation_id": "f8cf2b158a72359881176a466c5905eb7106c0cdbc5c0d1c816b5d82cafdb762",
+              "ownership": {
+                "operation_id": "f8cf2b158a72359881176a466c5905eb7106c0cdbc5c0d1c816b5d82cafdb762",
+                "path": "/tmp/biomind-f6-candidate08-reviewer_exhaust/scratch/biomind-plan-local-graph-tbwrx295/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "05bf38fec044871072606a73de6c6c4afcf67b3e4aaca1fc9e71be4626ed44a7",
+                "proof_name": ".runtime-report-proof-f8cf2b158a72359881176a466c5905eb7106c0cdbc5c0d1c816b5d82cafdb762",
+                "device": 2051,
+                "inode": 10771034
+              },
+              "status": "created",
+              "stop_id": "managed-stop:fb2287120c684b0a5c6afcf47bdce061a6ee1b486930def35e719dca75668594",
+              "task_id": "fix-f6-reviewer_exhaust"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "d5865114e8d559460dec271ba1d0bfdeaa595bafcd034446e07ab1e2d9649507"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "reviewer_veto",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 0,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/reviewer_veto/outputs/report.md",
+          "sha256": "03b7bea51024f4d11e59cce9def48ad4c95054ab836c2384ab6082bf526203d9",
+          "bytes": 6131
+        },
+        {
+          "path": "final_cases/reviewer_veto/outputs/reproduce.sh",
+          "sha256": "8060732ebd6b84de0fef387b67c70600b6e95b01f926ab707e723f5cb889348a",
+          "bytes": 4489
+        },
+        {
+          "path": "final_cases/reviewer_veto/outputs/stage_status.tsv",
+          "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+          "bytes": 785
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 5,
+        "finalize": 0,
+        "prepare": 2,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 3,
+        "consumed_count": 3,
+        "last_observed_transport_history_count": 3
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "stage": "recovery.inspection",
+          "error_owner": "recovery",
+          "stop_id": "managed-stop:e15ddfa8b7c2a84d503b3f41a446d998e7f9298ddb3ea09b5602c507aa52c9d0",
+          "origin": {
+            "source_stage": "supervisor",
+            "source_owner": "semantic_review",
+            "failure_id": "failure-496facc81b3b8f18c923a4e4",
+            "failure_type": "inspection_required",
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, re",
+            "concerns": [
+              "SEMANTIC_COMPLETION_NOT_ACCEPTED"
+            ],
+            "evidence_refs": [
+              "validation-347315c9c5ce294e79e5",
+              "completion-report-0c4b7852d45da71a7b499588e7277cadc3578fdd9518cb05d0ab13cc6ef89803",
+              "semantic-decision-91925e4f0af41db8695d9aab5c3e12d65f4c3c4e0f77081b088773c74fd18ed0"
+            ],
+            "returncode": null,
+            "attempt_id": "attempt_e873256be02caae1a005",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [],
+          "stop_reason": {
+            "error_code": "F6_SYNTHETIC_CAUSE",
+            "detail": "Explicit synthetic causal follow-up.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 1,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {
+              "error_code": "F6_SYNTHETIC_CAUSE",
+              "detail": "Explicit synthetic causal follow-up.",
+              "transport_receipt": {},
+              "failure_stage": "",
+              "no_progress_rounds": 0,
+              "model_turns": 1,
+              "tool_calls": 0
+            }
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+              "operation_id": "c0d6e73a7ef29385fa06beb9a58025b4054e38cbfd5330412b2ceb1f065ca0a4",
+              "ownership": {
+                "operation_id": "c0d6e73a7ef29385fa06beb9a58025b4054e38cbfd5330412b2ceb1f065ca0a4",
+                "path": "/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+                "proof_name": ".runtime-report-proof-c0d6e73a7ef29385fa06beb9a58025b4054e38cbfd5330412b2ceb1f065ca0a4",
+                "device": 2051,
+                "inode": 10770780
+              },
+              "status": "created",
+              "stop_id": "managed-stop:e15ddfa8b7c2a84d503b3f41a446d998e7f9298ddb3ea09b5602c507aa52c9d0",
+              "task_id": "fix-f6-reviewer_veto"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "8060732ebd6b84de0fef387b67c70600b6e95b01f926ab707e723f5cb889348a",
+              "operation_id": "3fac1e0716fb80ac12c5a81415aacd37fb5eea027ff266cc86c3210ac5147b30",
+              "ownership": {
+                "operation_id": "3fac1e0716fb80ac12c5a81415aacd37fb5eea027ff266cc86c3210ac5147b30",
+                "path": "/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "8060732ebd6b84de0fef387b67c70600b6e95b01f926ab707e723f5cb889348a",
+                "proof_name": ".runtime-report-proof-3fac1e0716fb80ac12c5a81415aacd37fb5eea027ff266cc86c3210ac5147b30",
+                "device": 2051,
+                "inode": 10770819
+              },
+              "status": "created",
+              "stop_id": "managed-stop:e15ddfa8b7c2a84d503b3f41a446d998e7f9298ddb3ea09b5602c507aa52c9d0",
+              "task_id": "fix-f6-reviewer_veto"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "03b7bea51024f4d11e59cce9def48ad4c95054ab836c2384ab6082bf526203d9",
+              "operation_id": "b746ae638521083ebc01a6abe0f906429a5543ad82c1547229a17952080afc00",
+              "ownership": {
+                "operation_id": "b746ae638521083ebc01a6abe0f906429a5543ad82c1547229a17952080afc00",
+                "path": "/tmp/biomind-f6-candidate08-reviewer_veto/scratch/biomind-plan-local-graph-i5cgwcbd/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "03b7bea51024f4d11e59cce9def48ad4c95054ab836c2384ab6082bf526203d9",
+                "proof_name": ".runtime-report-proof-b746ae638521083ebc01a6abe0f906429a5543ad82c1547229a17952080afc00",
+                "device": 2051,
+                "inode": 10770831
+              },
+              "status": "created",
+              "stop_id": "managed-stop:e15ddfa8b7c2a84d503b3f41a446d998e7f9298ddb3ea09b5602c507aa52c9d0",
+              "task_id": "fix-f6-reviewer_veto"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "56acf31eec3e3fd95a432c05ac22e88e773c484c93c14b985d13cb781c226c79"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    },
+    {
+      "case": "voluntary_stop",
+      "status": "PASS",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_rcs": [
+        0
+      ],
+      "actual_commit_receipts": 1,
+      "final_audit_type": null,
+      "task_status": "blocked",
+      "physical_outputs": [
+        {
+          "path": "final_cases/voluntary_stop/outputs/report.md",
+          "sha256": "b59d0d353ea7db346f910688dc5b0e19ffec93231473095a0a0e6ca548e5bab1",
+          "bytes": 4142
+        },
+        {
+          "path": "final_cases/voluntary_stop/outputs/reproduce.sh",
+          "sha256": "e79f08599fb9de61e2b58b7b3e7a269e78c5174f4fff48836b91420a576a346c",
+          "bytes": 564
+        },
+        {
+          "path": "final_cases/voluntary_stop/outputs/stage_status.tsv",
+          "sha256": "cb9fa20031953a8f6ff42f088e2cc6f67262148b30a7d8e9eb15a622c0363ff5",
+          "bytes": 765
+        }
+      ],
+      "actual_hook_hits": {
+        "observe": 6,
+        "finalize": 0,
+        "prepare": 3,
+        "summary": 0,
+        "terminal_summary_provider": 1
+      },
+      "real_node_dispatch": {
+        "leaf_count": 4,
+        "consumed_count": 4,
+        "last_observed_transport_history_count": 4
+      },
+      "terminal": {
+        "status": "blocked",
+        "terminal_diagnostic": {
+          "error_code": "GENERATE_BLOCKED",
+          "stage": "generate",
+          "error_owner": "generate",
+          "stop_id": "managed-stop:044043de025b1670f0867149d155dfef96667ead9afc75982410667080c5002f",
+          "origin": {
+            "source_stage": "generate",
+            "source_owner": "UNKNOWN",
+            "failure_id": "",
+            "failure_type": "blocked",
+            "error_code": "GENERATE_BLOCKED",
+            "summary": "Generate recorded a durable terminal blocker.",
+            "concerns": [],
+            "evidence_refs": [],
+            "returncode": null,
+            "attempt_id": "",
+            "process_fact_scope": "original causal execution; no scientific validity inferred"
+          },
+          "causal_execution": {
+            "status": "UNKNOWN"
+          },
+          "current_candidate": {},
+          "prior_completed_work": [
+            {
+              "step_id": "check_contig_compatibility",
+              "commit_id": "commit-step-9bc0e87f63c5949bbe13572c",
+              "receipt": "typed-step-commit:commit-step-9bc0e87f63c5949bbe13572c",
+              "committed": true
+            }
+          ],
+          "stop_reason": {
+            "error_code": "GENERATE_BLOCKED",
+            "detail": "Generate recorded a durable terminal blocker.",
+            "transport_receipt": {},
+            "failure_stage": "",
+            "no_progress_rounds": 0,
+            "model_turns": 0,
+            "tool_calls": 0,
+            "termination_reason": "",
+            "budget_receipt": {}
+          },
+          "delivery_status": "complete",
+          "report_receipts": {
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-f6-candidate08-voluntary_stop/scratch/biomind-plan-local-graph-5in_2kys/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "cb9fa20031953a8f6ff42f088e2cc6f67262148b30a7d8e9eb15a622c0363ff5",
+              "operation_id": "9305ea7fe759e54f0d13fc016a472cdf7ced7b63f1d011b152b1e82fd1d26fca",
+              "ownership": {
+                "operation_id": "9305ea7fe759e54f0d13fc016a472cdf7ced7b63f1d011b152b1e82fd1d26fca",
+                "path": "/tmp/biomind-f6-candidate08-voluntary_stop/scratch/biomind-plan-local-graph-5in_2kys/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+                "sha256": "cb9fa20031953a8f6ff42f088e2cc6f67262148b30a7d8e9eb15a622c0363ff5",
+                "proof_name": ".runtime-report-proof-9305ea7fe759e54f0d13fc016a472cdf7ced7b63f1d011b152b1e82fd1d26fca",
+                "device": 2051,
+                "inode": 10770723
+              },
+              "status": "created",
+              "stop_id": "managed-stop:044043de025b1670f0867149d155dfef96667ead9afc75982410667080c5002f",
+              "task_id": "fix-f6-voluntary_stop"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-f6-candidate08-voluntary_stop/scratch/biomind-plan-local-graph-5in_2kys/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "e79f08599fb9de61e2b58b7b3e7a269e78c5174f4fff48836b91420a576a346c",
+              "operation_id": "800a8327322a39556f9a3742b603d23fdedd5e05dc6db460a89c80bbe2979060",
+              "ownership": {
+                "operation_id": "800a8327322a39556f9a3742b603d23fdedd5e05dc6db460a89c80bbe2979060",
+                "path": "/tmp/biomind-f6-candidate08-voluntary_stop/scratch/biomind-plan-local-graph-5in_2kys/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+                "sha256": "e79f08599fb9de61e2b58b7b3e7a269e78c5174f4fff48836b91420a576a346c",
+                "proof_name": ".runtime-report-proof-800a8327322a39556f9a3742b603d23fdedd5e05dc6db460a89c80bbe2979060",
+                "device": 2051,
+                "inode": 10770727
+              },
+              "status": "created",
+              "stop_id": "managed-stop:044043de025b1670f0867149d155dfef96667ead9afc75982410667080c5002f",
+              "task_id": "fix-f6-voluntary_stop"
+            },
+            "report.md": {
+              "path": "/tmp/biomind-f6-candidate08-voluntary_stop/scratch/biomind-plan-local-graph-5in_2kys/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "b59d0d353ea7db346f910688dc5b0e19ffec93231473095a0a0e6ca548e5bab1",
+              "operation_id": "10fd9c9f978883413d107bf5d83d58a5226a2fb47813bc3409facce338a760a6",
+              "ownership": {
+                "operation_id": "10fd9c9f978883413d107bf5d83d58a5226a2fb47813bc3409facce338a760a6",
+                "path": "/tmp/biomind-f6-candidate08-voluntary_stop/scratch/biomind-plan-local-graph-5in_2kys/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+                "sha256": "b59d0d353ea7db346f910688dc5b0e19ffec93231473095a0a0e6ca548e5bab1",
+                "proof_name": ".runtime-report-proof-10fd9c9f978883413d107bf5d83d58a5226a2fb47813bc3409facce338a760a6",
+                "device": 2051,
+                "inode": 10770732
+              },
+              "status": "created",
+              "stop_id": "managed-stop:044043de025b1670f0867149d155dfef96667ead9afc75982410667080c5002f",
+              "task_id": "fix-f6-voluntary_stop"
+            }
+          },
+          "persistence_status": "committed",
+          "summary_status": "COMPLETED",
+          "summary_llm_calls": 1
+        },
+        "raw_terminal_sha256": "899f51a0d2e3813b61993b40c8e330cca5b6ad0b3c045bd6fc65c509ece269d9"
+      },
+      "rejected_candidate_end": {},
+      "detail": "compact_evidence.json"
+    }
+  ],
+  "raw_run_ledger": "final_ledger.json",
+  "scope_and_interface_receipts": "compact_evidence.json",
+  "matrix": "matrix.tsv",
+  "historical_candidate": "candidate01_02.json/candidate03.json record old deeper model-dispatch substitution; candidate04.json records real-transport PASS before the F3 env fix; candidate05.json retains two PASS and the newly added feedback-cardinality test failure; candidate06.json retains22PASS plus the observed origin-label issue; candidate07.json is EXPORT_ONLY/NOT_RUN; none replaces final08; original rc124 retained",
+  "limits": {
+    "real_model_API": "NOT_RUN; fixed business replies are explicit external leaf substitutions",
+    "real_scientific_E2E": "NOT_RUN; new predictor/ANN-shaped synthetic Python algorithm only",
+    "normal_final_audit_task_memory_finalize": "NOT_TRIGGERED: actual _finalize_task_memory and TaskSummaryRenderer calls are 0; actual archive and enabled compactor prepare do execute",
+    "schema2_compaction_trigger": "Enabled and actual prepare hit; six-step input stays below trigger. Root registered-compactor cases cover actual trigger/None/error/timeout/cancel.",
+    "normal_physical_reports": "Actually approved finalize_outputs script writes 3 reports; real evidence/gate/FinalAudit consume them; they are synthetic fixtures, not validated scientific reproduction.",
+    "stop_physical_reports": "Actual outer owner derives boundary from graph snapshot, persists summary/receipts and uses real publication writer; replay is checked idempotent.",
+    "carrier_scope": "One diagnostic operation; native code-only Python uses snpEff check; legacy Python/Bash use existing WGS inspect; no physical output requested by these narrower tasks.",
+    "test_process_environment": "Native carrier context frozen before agent construction, approval bytes unchanged; actual approved-file runner non-login; legacy adapter metadata itself is not an executed login-shell test.",
+    "IT08_09_other_windows": "Commit replay covered here; independent-process claim/reload and pre-dispatch/cancel/late-result windows are separate root/F3 evidence, not inferred from these graphs.",
+    "IT11_12_UI": "Separate root/entry tests; these fixtures resume actual approval interrupts but do not replace the real PTY evidence.",
+    "original_incident": "NOT_RESUMED; original approved script NOT_EXECUTED; no host config/profile/formal data read."
+  }
+}

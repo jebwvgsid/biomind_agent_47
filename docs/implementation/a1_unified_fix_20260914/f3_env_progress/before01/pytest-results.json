@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015647243708372116,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0024624811485409737,
+    "failure": "def test_env_key_reordering_is_recurrence_without_false_resolution():\n        witnesses = []\n        for first_env, next_env, next_field in [\n            ({'BAD': 7, 'VALID': 'ok'}, {'VALID': 'ok', 'BAD': 7}, 'env.BAD'),\n            ({'BAD': 7, 'VALID': 'ok', 'NEXT': 8},\n             {'NEXT': 8, 'VALID': 'ok', 'BAD': 7}, 'env.NEXT'),\n        ]:\n            first, parsed_first, initial = assess_env(first_env)\n            candidate, parsed, actual = assess_env(next_env, [row(first, initial, 1)])\n            witnesses.append({'first_error': parsed_first.error, 'next_error': parsed.error,\n                'first_targets': list(parsed_first.validated_targets),\n                'next_targets': list(parsed.validated_targets), 'assessment': actual,\n                'same_full_fingerprint': candidate_repair_fingerprint(first) == candidate_repair_fingerprint(candidate)})\n        save('f3-env-key-reordering', witnesses)\n        for witness in witnesses:\n            assert witness['same_full_fingerprint']\n            assert witness['first_error']['field_path'] == 'env.BAD'\n            assert witness['next_error']['field_path'] in ('env.BAD', 'env.NEXT')\n>           assert witness['first_targets'] == witness['next_targets']\nE           AssertionError: assert ['json_object...e.env_object'] == ['json_object..._object', ...]\nE             \nE             Right contains one more item: 'execute.env.VALID'\nE             Use -v to get more diff\n\ntests/a1_unified_fix/test_f3_env_progress.py:49: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001909872516989708,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.012781083583832e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.000873243436217308,
+    "failure": "def test_unrelated_valid_env_key_does_not_repair_pending_field():\n        first, _, initial = assess_env({'BAD': 7})\n        _, parsed, actual = assess_env({'NEW': 'ok', 'BAD': 7}, [row(first, initial, 1)])\n        save('f3-env-unrelated-valid-key', {'error': parsed.error, 'assessment': actual})\n        assert parsed.error['field_path'] == 'env.BAD'\n        assert 'execute.env.NEW' in actual['representation_targets']\n>       assert not actual['progress_proven']\nE       assert not True\n\ntests/a1_unified_fix/test_f3_env_progress.py:61: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010331161320209503,
+    "failure": ""
+  }
+]

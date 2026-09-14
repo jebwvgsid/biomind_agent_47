@@ -1,0 +1,341 @@
+[
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_binding_only_effect_forces_typed_semantic_action_protocol",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_binding_only_effect_forces_typed_semantic_action_protocol",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.289612228050828,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_binding_only_effect_forces_typed_semantic_action_protocol",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008482728153467178,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_binding_only_effect_forces_typed_semantic_action_protocol",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012188777327537537,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_config_and_data_directory_remain_artifact_bindings",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_config_and_data_directory_remain_artifact_bindings",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018246565014123917,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_config_and_data_directory_remain_artifact_bindings",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0015823328867554665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_config_and_data_directory_remain_artifact_bindings",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000101492740213871,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_contig_check_has_no_annotation_runtime_reference",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_contig_check_has_no_annotation_runtime_reference",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015861261636018753,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_contig_check_has_no_annotation_runtime_reference",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010188408195972443,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_contig_check_has_no_annotation_runtime_reference",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.858686149120331e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_corrective_generate_uses_the_same_tool_agnostic_rules",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_corrective_generate_uses_the_same_tool_agnostic_rules",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015497393906116486,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_corrective_generate_uses_the_same_tool_agnostic_rules",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004654647782444954,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_corrective_generate_uses_the_same_tool_agnostic_rules",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.735844701528549e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_global_generate_rules_are_tool_agnostic_for_both_protocols",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_global_generate_rules_are_tool_agnostic_for_both_protocols",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026873592287302017,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_global_generate_rules_are_tool_agnostic_for_both_protocols",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_global_generate_rules_are_tool_agnostic_for_both_protocols",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_global_generate_rules_are_tool_agnostic_for_both_protocols",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002371576614677906,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_global_generate_rules_are_tool_agnostic_for_both_protocols",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.347870945930481e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_internal_binding_and_llm_capability_view_are_independent",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_internal_binding_and_llm_capability_view_are_independent",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017768330872058868,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_internal_binding_and_llm_capability_view_are_independent",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010261572897434235,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_internal_binding_and_llm_capability_view_are_independent",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.671917021274567e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_invalid_capability_fails_without_skill_wide_guidance_fallback",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_invalid_capability_fails_without_skill_wide_guidance_fallback",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014622975140810013,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_invalid_capability_fails_without_skill_wide_guidance_fallback",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000626799650490284,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_invalid_capability_fails_without_skill_wide_guidance_fallback",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.485745638608932e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_observation_only_script_block_contains_effect_evidence_abi",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_observation_only_script_block_contains_effect_evidence_abi",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014720484614372253,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_observation_only_script_block_contains_effect_evidence_abi",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009925179183483124,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_observation_only_script_block_contains_effect_evidence_abi",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.441880345344543e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_skill_manager_projection_contains_only_selected_capability",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_skill_manager_projection_contains_only_selected_capability",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015659909695386887,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_skill_manager_projection_contains_only_selected_capability",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006687091663479805,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_skill_manager_projection_contains_only_selected_capability",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.935535490512848e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_snpeff_build_gets_only_current_capability_runtime_guidance",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_snpeff_build_gets_only_current_capability_runtime_guidance",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015525706112384796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_snpeff_build_gets_only_current_capability_runtime_guidance",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0015500271692872047,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_snpeff_build_gets_only_current_capability_runtime_guidance",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.02265882957726717,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_wgs_only_prompt_has_no_annotation_guidance_leakage",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_wgs_only_prompt_has_no_annotation_guidance_leakage",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018319487571716309,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_wgs_only_prompt_has_no_annotation_guidance_leakage",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011077960953116417,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_capability_scoped_prompt.py::GenerateCapabilityScopedPromptTests::test_wgs_only_prompt_has_no_annotation_guidance_leakage",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001315893605351448,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.919090032577515e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.27408209070563316,
+    "failure": "def test_nonempty_capability_uses_complete_production_message_safety() -> None:\n        runtime_state = {\n            \"runtime_audit\": [{\n                \"runtime_audit_id\": \"offline-runtime-audit\",\n                \"skill_id\": \"genomics/snpeff-annotation\",\n                \"status\": \"ready\",\n                \"resolved_runtime_paths\": {\n                    \"RESOLVED_JAVA_BIN\": \"/controller/private/java\",\n                    \"RESOLVED_SNPEFF_JAR\": \"/controller/private/snpEff.jar\",\n                },\n            }]\n        }\n        resolution, contract = _resolution(\n            \"genomics.snpeff_annotation.build_database\",\n            runtime_state=runtime_state,\n        )\n        internal_hash = resolution[\"capability_contract_hash\"]\n        approved_plan = {\n            \"steps\": [{\n                \"step_id\": \"step-1\",\n                \"execution_capability_id\": contract[\"capability_id\"],\n                \"capability_contract_hash\": internal_hash,\n            }]\n        }\n        capability_context = project_action_capability_context_for_provider(\n            resolution,\n            [{\n                \"semantic_handle\": \"input.reference_fasta\",\n                \"direction\": \"input\",\n                \"path\": \"/data/reference.fa\",\n                \"exists\": True,\n                \"readable\": True,\n            }],\n        )\n        current_action_capability_llm_view = capability_context[\n            \"current_action_capability\"\n        ]\n        capability_instructions = serialize_action_capability_instructions(\n            capability_context,\n            script_protocol=\"Use only current-action references.\",\n        )\n        audit = GenerateInvocationAudit()\n    \n        assert approved_plan[\"steps\"][0][\"capability_contract_hash\"] == internal_hash\n        assert capability_instructions\n        assert current_action_capability_llm_view\n        messages = assemble_generate_v2_messages(\n            _payload(capability_context, step_id=\"step-1\", title=\"Build database\"),\n            capability_instructions=capability_instructions,\n            invocation_audit=audit,\n        )\n        audit.mark_provider_call_attempted()\n        provider = MockGenerateProvider()\n        response = asyncio.run(provider.ainvoke(messages))\n    \n        rendered = \"\\n\".join(str(message.content) for message in messages)\n        assert provider.call_count == 1\n        assert response.content.startswith(\"<shell>\")\n>       assert audit.to_dict() == {\n            \"prompt_assembly_started\": True,\n            \"prompt_assembly_succeeded\": True,\n            \"provider_call_attempted\": True,\n            \"llm_invoked\": True,\n        }\nE       AssertionError: assert {'generate_ca...d': True, ...} == {'prompt_asse...nvoked': True}\nE         \nE         Omitting 4 identical items, use -vv to show\nE         Left contains 3 more items:\nE         {'generate_call_id': 'generate-d22808d68b2f42e9b67f270832d3956b',\nE          'scope': {},\nE          'source_ref': ''}\nE         Use -v to get more diff\n\ntests/test_generate_provider_payload_safety.py:166: AssertionError"
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015423353761434555,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.061582386493683e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.29587375838309526,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001431889832019806,
+    "failure": ""
+  }
+]

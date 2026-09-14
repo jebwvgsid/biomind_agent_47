@@ -1,0 +1,130 @@
+{
+  "old_row": {
+    "candidate_fingerprint": "fe6c937ccd8a208e308bac3b590a80f6084a8979d294f13615c2c7d8ceb78818",
+    "progress_assessment": {
+      "schema_version": 1,
+      "producer": "biomind.generate_candidate_admission.v1",
+      "progress_proven": true,
+      "basis": "initial_rejection",
+      "comparison_fingerprint": "fe6c937ccd8a208e308bac3b590a80f6084a8979d294f13615c2c7d8ceb78818",
+      "validation_signature": "862dcad0f2186bf899240ee7e16cafd918131d4ba07025eb8eb2b1a2dd720c82",
+      "representation_targets": [
+        "action_type",
+        "execute.argv_shape",
+        "execute.env_object",
+        "execute.executable_body",
+        "execute.outputs_shape",
+        "json_object"
+      ],
+      "binding_facts": null,
+      "binding_axis": "not_evaluated",
+      "newly_satisfied_targets": [],
+      "resolved_targets": [],
+      "pending_targets": [
+        "env.BAD"
+      ],
+      "scientific_success": "not_assessed"
+    },
+    "repair_ordinal": 1,
+    "contract_ref": {
+      "plan_revision": 1
+    }
+  },
+  "witnesses": [
+    {
+      "mode": "same",
+      "assessment": {
+        "schema_version": 1,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "progress_proven": false,
+        "basis": "recurrent_rejected_candidate",
+        "comparison_fingerprint": "fe6c937ccd8a208e308bac3b590a80f6084a8979d294f13615c2c7d8ceb78818",
+        "validation_signature": "633be0dd73b605fb8e77eef12c4cf23a46a4c61a94dfa669b98400d8250fb343",
+        "comparison_context_fingerprint": "d13ad8793fe009d26125bf8b3e43b602116258d2d707cb8c329b1ed30c45f014",
+        "representation_targets": [
+          "action_type",
+          "execute.argv_shape",
+          "execute.env_keys",
+          "execute.env_object",
+          "execute.executable_body",
+          "execute.outputs_shape",
+          "json_object"
+        ],
+        "binding_facts": null,
+        "binding_axis": "not_evaluated",
+        "newly_satisfied_targets": [
+          "execute.env_keys"
+        ],
+        "resolved_targets": [],
+        "pending_targets": [
+          "env.BAD"
+        ],
+        "scientific_success": "not_assessed"
+      }
+    },
+    {
+      "mode": "prose",
+      "assessment": {
+        "schema_version": 1,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "progress_proven": true,
+        "basis": "validated_representation_target",
+        "comparison_fingerprint": "6405d32cc05ca90a856bbd0ffc8e55febfb38a5710037719cc51bb006b6432d7",
+        "validation_signature": "633be0dd73b605fb8e77eef12c4cf23a46a4c61a94dfa669b98400d8250fb343",
+        "comparison_context_fingerprint": "d13ad8793fe009d26125bf8b3e43b602116258d2d707cb8c329b1ed30c45f014",
+        "representation_targets": [
+          "action_type",
+          "execute.argv_shape",
+          "execute.env_keys",
+          "execute.env_object",
+          "execute.executable_body",
+          "execute.outputs_shape",
+          "json_object"
+        ],
+        "binding_facts": null,
+        "binding_axis": "not_evaluated",
+        "newly_satisfied_targets": [
+          "execute.env_keys"
+        ],
+        "resolved_targets": [],
+        "pending_targets": [
+          "env.BAD"
+        ],
+        "scientific_success": "not_assessed"
+      }
+    },
+    {
+      "mode": "unrelated_env",
+      "assessment": {
+        "schema_version": 1,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "progress_proven": true,
+        "basis": "validated_representation_target",
+        "comparison_fingerprint": "675865ab6baf37ec8dec141f3ed9a67ab283e821a6df39a2b50cef73f83e9733",
+        "validation_signature": "b4bd54182c96eb8ce3ce7313c4e65ccbb56d85b90bc5df837e6f61f2b2d0f65c",
+        "comparison_context_fingerprint": "d13ad8793fe009d26125bf8b3e43b602116258d2d707cb8c329b1ed30c45f014",
+        "representation_targets": [
+          "action_type",
+          "execute.argv_shape",
+          "execute.env.NEW",
+          "execute.env_keys",
+          "execute.env_object",
+          "execute.executable_body",
+          "execute.outputs_shape",
+          "json_object"
+        ],
+        "binding_facts": null,
+        "binding_axis": "not_evaluated",
+        "newly_satisfied_targets": [
+          "execute.env_keys"
+        ],
+        "resolved_targets": [],
+        "pending_targets": [
+          "env.BAD"
+        ],
+        "scientific_success": "not_assessed"
+      }
+    }
+  ],
+  "old_row_unchanged": true
+}

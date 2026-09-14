@@ -1,0 +1,17 @@
+{
+  "commit": "267d3b746a94c0db0f43509cea4e77cba3262577",
+  "parent": "2966f5ef3d0889201101192e397234e9b752cec9",
+  "tree": "0a1dc59c0403e8e1b12edbbb9b2fb482f542a6d0",
+  "files": [
+    "agent_core/recovery.py",
+    "agent_core/workflow/candidate_repair.py",
+    "bio_agents.py",
+    "tests/a1_unified_fix/test_f3_claims.py",
+    "tests/a1_unified_fix/test_f3_late_result.py",
+    "tests/a1_unified_fix/test_f3_progress.py"
+  ],
+  "patch_sha256": "c228adc234d95e2b183a9037347527728ef1a2d509cd89242cd43636693f2c26",
+  "other_index_entries_preserved": true,
+  "validation": "f3_verification.json run09:28 PASS; three production source hashes matched before commit; protected overlays retained",
+  "push": false
+}

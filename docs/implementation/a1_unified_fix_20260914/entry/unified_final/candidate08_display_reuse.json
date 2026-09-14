@@ -1,0 +1,664 @@
+{
+  "status": "F5 true PTY14, existing display24 and model-progress1 reusable for final08 conditional report-origin projection; F4 excluded and independently rerun by root",
+  "candidate08_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "candidate08_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "candidate06_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+  "production_changes": {
+    "agent_core/workflow/managed_stop.py": {
+      "final06": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+      "final08": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+    }
+  },
+  "source_proof": {
+    "file": "agent_core/workflow/managed_stop.py",
+    "entire_file_is_identical_after_removing_only_this_added_text": true,
+    "added_text": "        if boundary[\"node\"] == \"generate\":\n            value[\"origin\"].update(source_stage=\"generate\", source_owner=_code(\n                primary.get(\"owner\") or primary.get(\"error_owner\"), \"UNKNOWN\"))\n            if outcome.get(\"type\") == \"blocked\":\n                value[\"origin\"][\"failure_type\"] = \"blocked\"\n",
+    "condition": "Inside existing if not packet, additionally boundary[node] == generate; failure_type adjustment further requires outcome[type] == blocked.",
+    "full_diff": "--- final06/agent_core/workflow/managed_stop.py\n+++ final08/agent_core/workflow/managed_stop.py\n@@ -351,6 +351,11 @@\n     if not packet:\n         value[\"origin\"].update(error_code=primary.get(\"error_code\") or value[\"stop_reason\"][\"error_code\"],\n             summary=_safe(primary.get(\"message\") or primary.get(\"summary\") or outcome.get(\"summary\")))\n+        if boundary[\"node\"] == \"generate\":\n+            value[\"origin\"].update(source_stage=\"generate\", source_owner=_code(\n+                primary.get(\"owner\") or primary.get(\"error_owner\"), \"UNKNOWN\"))\n+            if outcome.get(\"type\") == \"blocked\":\n+                value[\"origin\"][\"failure_type\"] = \"blocked\"\n     if (boundary[\"node\"] == \"execute\" and outcome.get(\"type\") == \"harness_error\"\n             and payload.get(\"error_code\") in {\n                 \"DIAGNOSTIC_ACTION_CONTRACT_INVALID\", \"EXECUTE_ACTION_ROLE_MISSING\"\n"
+  },
+  "same_entry_component_files": {
+    "bio_agents.py": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+    "agent_core/cli_plain.py": "925cc811678b970bf1ce5e9a592c873c4c60a7d3861959b47b832295edcfefa3",
+    "agent_core/cli_terminal.py": "f6a033cfe1f5916470ddc9e1ed51c377f37b9316fb0b0ce085eeda0a69496655",
+    "agent_core/cli_review.py": "a506aa694fbad65b60673fa1157d69fe5b2fc0463f2657d3b9f0094e4d84c1a0",
+    "agent_core/cli_display.py": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d",
+    "agent_core/human_io.py": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2",
+    "agent_core/workflow/recovery_agent.py": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c",
+    "tests/a1_unified_fix/test_f5_pty.py": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538",
+    "tests/test_cli_v2_display.py": "06e9951ef0ebffde632d34f0f63c24f586d70554b81581d20310573a9ea1d72b",
+    "tests/test_cli_model_progress_integration.py": "dc1a7c1f352628e7a12a9344c9cef5f6cefc8f60561c3659e79ff059c6f3fdc6"
+  },
+  "f5_actual_dispatch_and_loaded": [
+    {
+      "case": "f5-plain-approve",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approved_for_execution",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-plain-approve/result.json.gz"
+    },
+    {
+      "case": "f5-plain-blank_paste",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approved_for_execution",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-plain-blank_paste/result.json.gz"
+    },
+    {
+      "case": "f5-plain-eof",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approval_pending",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-plain-eof/result.json.gz"
+    },
+    {
+      "case": "f5-plain-feedback",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "reconsultation_required",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-plain-feedback/result.json.gz"
+    },
+    {
+      "case": "f5-tty-approve",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approved_for_execution",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-approve/result.json.gz"
+    },
+    {
+      "case": "f5-tty-blank_paste",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approved_for_execution",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-blank_paste/result.json.gz"
+    },
+    {
+      "case": "f5-tty-cancel",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "terminal",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-cancel/result.json.gz"
+    },
+    {
+      "case": "f5-tty-eof",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approval_pending",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-eof/result.json.gz"
+    },
+    {
+      "case": "f5-tty-fallback",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approved_for_execution",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-fallback/result.json.gz"
+    },
+    {
+      "case": "f5-tty-feedback",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "reconsultation_required",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-feedback/result.json.gz"
+    },
+    {
+      "case": "f5-tty-nonsemantic",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approved_for_execution",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-nonsemantic/result.json.gz"
+    },
+    {
+      "case": "f5-tty-queued",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "approved_for_execution",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-queued/result.json.gz"
+    },
+    {
+      "case": "f5-tty-reject",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "reconsultation_required",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-reject/result.json.gz"
+    },
+    {
+      "case": "f5-tty-semantic",
+      "actual_source_signature": "0dd37d399d8fd0ea25cfba3654620651a14de8cf069e8c032317829049e7d97c",
+      "node_updates": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0,
+      "plan_review_outcome": "revision_required",
+      "actual_loaded_modules": 117,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_loaded_sha256": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate08_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_loaded_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        },
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded_sha256": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_loaded_sha256": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate08_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "all_other_loaded_sources_same": true,
+      "actual_result": "final02_pty/f5-tty-semantic/result.json.gz"
+    }
+  ],
+  "old_cli_loaded_comparison": [
+    {
+      "group": "display24",
+      "actual_evidence": "final04_cli/verification.json",
+      "actual_loaded_count": 9,
+      "differing_from_actual": [],
+      "all_other_loaded_sources_same": true
+    },
+    {
+      "group": "model_progress1_four_modes",
+      "actual_evidence": "final05_cli/verification.json",
+      "actual_loaded_count": 131,
+      "differing_from_actual": [
+        {
+          "module": "agent_core.workflow.candidate_repair",
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_source_sha256": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b",
+          "candidate08_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+        },
+        {
+          "module": "agent_core.workflow.managed_stop",
+          "file": "agent_core/workflow/managed_stop.py",
+          "actual_source_sha256": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+          "candidate08_sha256": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+        }
+      ],
+      "all_other_loaded_sources_same": true
+    }
+  ],
+  "previous_candidate_and_helper_dependencies": "candidate06_reuse.json",
+  "call_boundary": "F5 production_plan awaits actual schema2 graph updates and breaks on plan_review; all 14 actual traces show only triage/consultant/planner/plan_review with zero Generate, Execute, scientific executions or code approvals. Even the cancel case is a PlanReview terminal outcome; the new branch specifically requires boundary.node=generate. Old display24 never imports managed_stop. Model-progress1 invokes real RecoveryAgentLoop directly, with BioAnalystAgent.__new__ only used for the unchanged _schema2_recovery_event_sink; it has no outer managed finalizer/build_managed_stop or Generate dispatch. Candidate06 proof already separated its uncalled candidate progress import.",
+  "test_changes_not_dependencies": {
+    "tests/a1_unified_fix/test_f3_stop_origin.py": {
+      "final06": null,
+      "final08": "7941e7924f3fc4760fe296471e91d37db75c7c365f2e7648bee78e95bc265801"
+    },
+    "tests/a1_unified_fix/test_f6_repeat_graph.py": {
+      "final06": "01c416126c9eb90c824e5775b9f554e09b01d4f08e3947f8e2a24e3615883007",
+      "final08": "c30deb9b9a933366bbaa86c8da953ae3dd12196e3d368ccbf0b80f73ef806019"
+    }
+  },
+  "proof_limit": "Bounded source/call-path reasoning with preserved actual dispatch/loaded receipts, not a rerun or function profiler. Do not rewrite final02/final04/final05 source hashes as final08. No F4 equivalence claim is made for the changed terminal builder; root runs its 49-case group on final08.",
+  "test_count_policy": "14 kernel PTY cases plus 25 existing CLI cases (24 display + 1 four-mode component); no duplicate count for equivalent versions."
+}

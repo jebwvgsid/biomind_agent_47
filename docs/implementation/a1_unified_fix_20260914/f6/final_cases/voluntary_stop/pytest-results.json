@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[voluntary_stop]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[voluntary_stop]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024602748453617096,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[voluntary_stop]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 22.056198086589575,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[voluntary_stop]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00024833064526319504,
+    "failure": ""
+  }
+]

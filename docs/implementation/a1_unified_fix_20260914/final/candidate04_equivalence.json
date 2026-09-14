@@ -1,0 +1,17 @@
+{
+  "previous_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+  "current_signature": "237ac5ba0d0921017c9ff6252762b2cc429efb7985ce1586aeb5f2a9fe03af94",
+  "changed": {
+    "tests/a1_unified_fix/test_f3_recovery_claim.py": {
+      "old": null,
+      "new": "580059708879332b3c6202acd685178faa4d2f94ca07e64a311efa92ad42cc2b"
+    },
+    "tests/a1_unified_fix/test_f6_graph.py": {
+      "old": "b0303259d7262236085529f7c2f41de2344d7c258b6c7593321baf8e9b94838a",
+      "new": "6cb8e65653d3983375504f9a9a5732902de392ecddfa30e6de1b7ffbdf2efbac"
+    }
+  },
+  "production_and_public_resources_unchanged": true,
+  "identical_non_test_files": 343,
+  "interpretation": "Test fixture moved replacement to external model leaf. All tests using test_f6_graph must replay; unrelated exact dependency evidence may be reused."
+}

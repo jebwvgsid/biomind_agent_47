@@ -1,0 +1,24 @@
+{
+  "classification": "PREEXISTING_ASSERTION_SHAPE_MISMATCH",
+  "baseline_commit": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+  "production_class": "GenerateInvocationAudit",
+  "production_class_base_sha256": "b7413b9299697ccb40dcb15163ff146a657cb90fc59ef698e9af92fe88371a0b",
+  "production_class_base_plus_overlay_sha256": "b7413b9299697ccb40dcb15163ff146a657cb90fc59ef698e9af92fe88371a0b",
+  "production_class_final_sha256": "b7413b9299697ccb40dcb15163ff146a657cb90fc59ef698e9af92fe88371a0b",
+  "saved_baseline_path": "/tmp/biomind-a1-implementation-original/bio_agents.py",
+  "saved_baseline_file_sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d",
+  "test_function": "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+  "test_function_base_sha256": "0dca22dcfc5e47742c8c36fd43ae64048631ac7d9a5e2854a28c0d0cdaf9084a",
+  "test_function_final_sha256": "0dca22dcfc5e47742c8c36fd43ae64048631ac7d9a5e2854a28c0d0cdaf9084a",
+  "full_test_file_base_equals_final": false,
+  "full_test_file_limit": "File differs across baseline and final, so equivalence is claimed only for the exact failing function; no old assertion was edited in this run.",
+  "mismatch": "to_dict returns four expected booleans plus existing generate_call_id, scope and source_ref. The old exact whole-dict assertion allows only the four booleans.",
+  "actual_provider_call_count": 1,
+  "expected_four_booleans_match": true,
+  "new_scope_coverage": [
+    "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary",
+    "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite"
+  ],
+  "mapping_limit": "The new cases cover actual invocation scope ownership, durable claim replay and late-result admission, not a replacement assertion for the complete to_dict field set. Their final-source results are owned by the main F3 final run."
+}

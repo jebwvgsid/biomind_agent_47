@@ -1,0 +1,86 @@
+{
+  "implementation_status": "COMPLETE_WITHIN_AUTHORIZED_F1_F6_MECHANISM_SCOPE",
+  "a1_evidence_baseline": {
+    "report": "../../audits/execution_architecture_20260914_unified_a1/README.md",
+    "source_commit": "d146a479c437f190a19041d7ee0a7251aaeb9f4d",
+    "overlay": "Original A1 ledger; unchanged"
+  },
+  "implementation_base": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+  "production_candidate": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "production_tree": "c02d4b431d5d85ec7120cea621ac49c76812a026",
+  "final_export_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "final_export_manifest": "final/final_export_manifest.json",
+  "exported_non_test_sources_and_public_resources": 343,
+  "slices": {
+    "F1": "PASS: current-mode native/legacy action and stop admission; separate actual synthetic facts; ordinary/Recovery/local combined coverage",
+    "F2": "PASS: preapproval actual carrier, native argv-only normal/recovery, code-only and legacy formal graphs, lexical/interpreter scope negatives",
+    "F3": "PASS: 33 parser/progress/claim/late-result cases, 1 Recovery-owner reload case, real-transport repeat/ABA/env negatives and successful Recovery",
+    "F4": "PASS: 6 new callback/route cases and 43 existing INPUT/approval protections actually replayed in final08",
+    "F5": "PASS: 14 real PTY/plain scenarios; 24 old display tests and 1 model-progress test with 4 modes; bounded final08 dependency reuse",
+    "F6": "PASS: 22 complete graph cases, 4 actual terminal-summary fault/cancel cases, 14 registered hook cases; IT-01--12 mapping in acceptance_matrix.tsv"
+  },
+  "pass_levels": {
+    "a1_witness": "PRESERVED_SEPARATELY_NOT_FIX",
+    "component": "PASS_FOR_MAPPED_REQUIRED_CASES; legacy unchanged assertion mismatch separately retained",
+    "production_fix": "IMPLEMENTED_AND_LOCALLY_COMMITTED",
+    "incident_chain_fix": "PASS",
+    "mandatory_graph_mechanism": "FIX_PASS",
+    "real_model_api": "NOT_AUTHORIZED / NOT_RUN",
+    "real_scientific_e2e": "NOT_AUTHORIZED / NOT_RUN"
+  },
+  "verification_runs": {
+    "root_101_33_4_14_3_49": "final/final08_root_verification.json",
+    "F6_22": "f6/verification.json",
+    "F6_actual_requests_approvals_execution_commit_report": "f6/compact_evidence.json",
+    "F6_actual_loaded_manifests": "f6/final_manifests/",
+    "F1_6_current_request_examples": "f1_protocol/unified_final/current_final08_evidence.json",
+    "F3_env_before_after": "f3_env_progress/verification.json",
+    "Recovery_claim_independent_processes": "f3_recovery_claim/verification.json",
+    "F4_49": "final/final08_root_verification.json: f4-regression",
+    "F5_14_actual_PTY_plain": "entry/unified_final/final02_pty/evidence.json",
+    "old_CLI_24_plus_1": "entry/unified_final/final04_cli/verification.json",
+    "old_CLI_progress_final05_run": "entry/unified_final/final05_cli/verification.json",
+    "unchanged_entry_reuse_proof": "entry/unified_final/candidate08_display_reuse.json",
+    "shared_39": "regression/final08/verification.json"
+  },
+  "replay_counting": "Each unique nodeid counted once in its current/reused scope; historical reruns and witness expectations are not added to current pass counts.",
+  "existing_failures": {
+    "old_missing_scope_fixtures": 9,
+    "unchanged_dictionary_shape_assertion": 1,
+    "ledger": "regression/preflight.json; regression/final08/verification.json",
+    "assertions": "No old assertion, skip or xfail modified"
+  },
+  "stop_origin": "f3_stop_origin/verification.json; final/final08_root_verification.json: origin",
+  "new_defects_closed": [
+    "IG-D1",
+    "IG-D2",
+    "IG-D3",
+    "IG-D4",
+    "IG-D5",
+    "G11",
+    "R01",
+    "PLAN_DEFAULT_BODY",
+    "IG-D5-ENV-ORDER and legacy diagnostic-only progress; truthful Generate origin/blocked type"
+  ],
+  "new_fixture_issues": "Earlier broad model seam and incorrect latest-feedback/PTY injection assumptions corrected only in owned tests. Every original result remains versioned; watchdog/segfault results are not PASS.",
+  "remaining_limits": "remaining_limits.md",
+  "safety": {
+    "original_session": "NOT_RESUMED",
+    "original_approved_script": "NOT_EXECUTED",
+    "production_scientific_inputs": "NOT_READ",
+    "provider_network_calls": 0,
+    "real_scientific_tool_calls": 0,
+    "installation": "NOT_PERFORMED",
+    "push": "NOT_PERFORMED"
+  },
+  "git": {
+    "production_commits": "final/production_commits.json",
+    "full_file_ranges_and_parent_trees": "final/commit_files.tsv",
+    "protection": "final/protection.json",
+    "artifact_commit": "Contains only explicitly owned test/document files; final full hash is supplied in delivery response and Git history."
+  },
+  "no_bare_commit_claim": true,
+  "failure_ledgers_preserved": true,
+  "exported_files": 457,
+  "actual_loaded_modules": "Per-process imported source maps in final/final08_runs and f6/final_cases; exported file count is not executed module count"
+}

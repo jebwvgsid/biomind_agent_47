@@ -1,0 +1,18 @@
+{
+  "status": "18/18 actual real-node-dispatch and real-transport cases passed; superseded because subsequent F3 static review found env target accounting boundaries requiring a production fix and final05 revalidation.",
+  "source_signature": "237ac5ba0d0921017c9ff6252762b2cc429efb7985ce1586aeb5f2a9fe03af94",
+  "archive": "candidate04_real_transport_pre_f3_env_fix.tar.gz",
+  "sha256": "a26eeb1c36806afc3fa6149bc169cb09e9ae4cf0c6d67bb1594b2b7cecade505",
+  "bytes": 11788618,
+  "passed_cases": 18,
+  "provider_boundary": "Fixed llm_override leaf only; original node registry/consume/cleanliness and actual bounded transport retained. Delivered message hashes and provider attempt metadata verified.",
+  "normal": {
+    "registered_and_consumed": 8,
+    "transport_history": 8
+  },
+  "recovery": {
+    "registered_and_consumed": 12,
+    "transport_history": 13
+  },
+  "original_raw_results": "/tmp/biomind-f6-candidate04-* remain untouched; exact-byte archive is the persistent evidence."
+}

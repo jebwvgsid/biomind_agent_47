@@ -1,0 +1,106 @@
+[
+  {
+    "commit": "499ce1ae5b95a04dd227e21628578946203372f6",
+    "parent": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+    "tree": "d518edc7473ef62a4e3e4b92e7f86cdfd43e123f",
+    "subject": "fix(generate): align output examples and materialize actual helper carriers before approval",
+    "files": [
+      "agent_core/step_effects.py",
+      "bio_agents.py",
+      "prompts/manager.py",
+      "tests/a1_unified_fix/export_and_run.py",
+      "tests/a1_unified_fix/test_f1_f2.py"
+    ]
+  },
+  {
+    "commit": "a84e9932d66019a2277bf1ffb8b13ac7a5e39af6",
+    "parent": "499ce1ae5b95a04dd227e21628578946203372f6",
+    "tree": "df18af25859190d8e6af7e13cc14cad68e5b8132",
+    "subject": "fix(workflow): end AskUser harness failures before semantic routing",
+    "files": [
+      "agent_core/workflow/runtime_graph.py",
+      "tests/a1_unified_fix/test_f4_ask_user.py"
+    ]
+  },
+  {
+    "commit": "2966f5ef3d0889201101192e397234e9b752cec9",
+    "parent": "a84e9932d66019a2277bf1ffb8b13ac7a5e39af6",
+    "tree": "25dea3b12a39d779552172147edbf04f99bd88ca",
+    "subject": "fix(cli): show the frozen Plan body in compact approval views",
+    "files": [
+      "agent_core/cli_plain.py",
+      "agent_core/cli_review.py",
+      "agent_core/cli_terminal.py",
+      "bio_agents.py",
+      "tests/a1_unified_fix/test_f5_pty.py"
+    ]
+  },
+  {
+    "commit": "267d3b746a94c0db0f43509cea4e77cba3262577",
+    "parent": "2966f5ef3d0889201101192e397234e9b752cec9",
+    "tree": "0a1dc59c0403e8e1b12edbbb9b2fb482f542a6d0",
+    "subject": "fix(generate): preserve parser failures and share validated correction progress",
+    "files": [
+      "agent_core/recovery.py",
+      "agent_core/workflow/candidate_repair.py",
+      "bio_agents.py",
+      "tests/a1_unified_fix/test_f3_claims.py",
+      "tests/a1_unified_fix/test_f3_late_result.py",
+      "tests/a1_unified_fix/test_f3_progress.py"
+    ]
+  },
+  {
+    "commit": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+    "parent": "267d3b746a94c0db0f43509cea4e77cba3262577",
+    "tree": "7d9865fcb2b3fde82be6c03c274e769e6fce8173",
+    "subject": "fix(generate): derive complete public examples from frozen runtime projection",
+    "files": [
+      "agent_core/step_effects.py",
+      "bio_agents.py",
+      "prompts/manager.py",
+      "tests/a1_unified_fix/test_f1_f2.py",
+      "tests/a1_unified_fix/test_f1_protocol.py"
+    ]
+  },
+  {
+    "commit": "a64ca7652c74f505242620535788524d3f365241",
+    "parent": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+    "tree": "0e58412b6b972e7d892d8f56741cf7feeecf546e",
+    "subject": "fix(effects): validate helper marker in the actual Python source scope",
+    "files": [
+      "agent_core/step_effects.py",
+      "tests/a1_unified_fix/test_f2_scope.py"
+    ]
+  },
+  {
+    "commit": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+    "parent": "a64ca7652c74f505242620535788524d3f365241",
+    "tree": "8a6563f6da4020128bb449f50f20ac6e4a5b6663",
+    "subject": "fix(generate): require actual env repair and stable recurrence context",
+    "files": [
+      "agent_core/workflow/candidate_repair.py",
+      "bio_agents.py",
+      "tests/a1_unified_fix/test_f3_env_progress.py"
+    ]
+  },
+  {
+    "commit": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+    "parent": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+    "tree": "9c33860884d0b540081fc332e766910a3413492a",
+    "subject": "fix(generate): avoid diagnostic-only progress for legacy env rejections",
+    "files": [
+      "agent_core/workflow/candidate_repair.py",
+      "tests/a1_unified_fix/test_f3_env_progress.py"
+    ]
+  },
+  {
+    "commit": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+    "parent": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+    "tree": "c02d4b431d5d85ec7120cea621ac49c76812a026",
+    "subject": "fix(report): retain truthful Generate origin without rewriting execution causes",
+    "files": [
+      "agent_core/workflow/managed_stop.py",
+      "tests/a1_unified_fix/test_f3_stop_origin.py"
+    ]
+  }
+]

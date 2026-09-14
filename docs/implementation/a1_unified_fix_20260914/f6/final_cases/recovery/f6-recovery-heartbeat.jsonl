@@ -1,0 +1,14 @@
+{"monotonic": 4294638.635248143, "mode": "recovery", "calls": {"consultant": 0, "planner": 0, "generate": 0, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4294649.365911977, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 1, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4294660.009648246, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 2, "reviewer": 0, "recovery": 1}, "executions": 1, "commits": 0}
+{"monotonic": 4294673.719145964, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 4, "reviewer": 0, "recovery": 1}, "executions": 1, "commits": 0}
+{"monotonic": 4294685.208464697, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 5, "reviewer": 0, "recovery": 1}, "executions": 1, "commits": 0}
+{"monotonic": 4294696.527152393, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 6, "reviewer": 1, "recovery": 1}, "executions": 2, "commits": 1}
+{"monotonic": 4294706.727009344, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 6, "reviewer": 1, "recovery": 1}, "executions": 3, "commits": 1}
+{"monotonic": 4294718.90015695, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 7, "reviewer": 2, "recovery": 1}, "executions": 3, "commits": 2}
+{"monotonic": 4294732.826807002, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 8, "reviewer": 3, "recovery": 1}, "executions": 4, "commits": 3}
+{"monotonic": 4294742.965869116, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 8, "reviewer": 3, "recovery": 1}, "executions": 4, "commits": 3}
+{"monotonic": 4294753.619486081, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 9, "reviewer": 4, "recovery": 1}, "executions": 5, "commits": 4}
+{"monotonic": 4294763.699542706, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 9, "reviewer": 4, "recovery": 1}, "executions": 5, "commits": 4}
+{"monotonic": 4294774.640094591, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 10, "reviewer": 5, "recovery": 1}, "executions": 6, "commits": 5}
+{"monotonic": 4294784.762775074, "mode": "recovery", "calls": {"consultant": 1, "planner": 1, "generate": 10, "reviewer": 6, "recovery": 1}, "executions": 7, "commits": 5}

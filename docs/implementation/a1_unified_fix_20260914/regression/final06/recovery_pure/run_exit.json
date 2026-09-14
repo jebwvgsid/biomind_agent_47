@@ -1,0 +1,16 @@
+{
+  "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+  "loaded_source_manifest": "/tmp/biomind-a1-unified-final-06/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+    "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+    "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+    "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation"
+  ],
+  "timeout_seconds": 180,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

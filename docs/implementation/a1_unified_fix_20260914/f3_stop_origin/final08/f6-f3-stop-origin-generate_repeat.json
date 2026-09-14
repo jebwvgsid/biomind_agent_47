@@ -1,0 +1,93 @@
+{
+  "mode": "generate_repeat",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "diagnostic_stage": "generate",
+  "origin": {
+    "source_stage": "generate",
+    "source_owner": "GENERATED_ACTION",
+    "failure_id": "",
+    "failure_type": "generated_action_contract_error",
+    "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+    "summary": "execute.env must be an object of string values.",
+    "concerns": [],
+    "evidence_refs": [],
+    "returncode": null,
+    "attempt_id": "",
+    "process_fact_scope": "original causal execution; no scientific validity inferred"
+  },
+  "causal_execution": {
+    "status": "UNKNOWN"
+  },
+  "execution_attempts": [],
+  "report_has_generate_origin": true,
+  "report_has_execute_origin": false,
+  "report_receipts": {
+    "stage_status.tsv": {
+      "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-ludkurvb/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+      "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+      "operation_id": "214648a263bbf82b32770067fe5836bfbfdc9f21d412bdeb717ebd55e0e74efd",
+      "ownership": {
+        "operation_id": "214648a263bbf82b32770067fe5836bfbfdc9f21d412bdeb717ebd55e0e74efd",
+        "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-ludkurvb/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "sha256": "529c112a838749af044a57c4761e13aaa12545bd11658d91648484720bc1c997",
+        "proof_name": ".runtime-report-proof-214648a263bbf82b32770067fe5836bfbfdc9f21d412bdeb717ebd55e0e74efd",
+        "device": 2051,
+        "inode": 10771767
+      },
+      "status": "created",
+      "stop_id": "managed-stop:6f5b689c91a26e039e519d39ff33250e5b6c86435732275e693601c894dc4153",
+      "task_id": "fix-f6-repeat"
+    },
+    "reproduce.sh": {
+      "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-ludkurvb/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+      "sha256": "009b7ce4d055f918155411c4825365e0b5b99bffcb8c34cf74339f96eead4348",
+      "operation_id": "765e8a61192d007be34a4f5b9f03893b3c90560b97715176ba088ff876deabda",
+      "ownership": {
+        "operation_id": "765e8a61192d007be34a4f5b9f03893b3c90560b97715176ba088ff876deabda",
+        "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-ludkurvb/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "sha256": "009b7ce4d055f918155411c4825365e0b5b99bffcb8c34cf74339f96eead4348",
+        "proof_name": ".runtime-report-proof-765e8a61192d007be34a4f5b9f03893b3c90560b97715176ba088ff876deabda",
+        "device": 2051,
+        "inode": 10771770
+      },
+      "status": "created",
+      "stop_id": "managed-stop:6f5b689c91a26e039e519d39ff33250e5b6c86435732275e693601c894dc4153",
+      "task_id": "fix-f6-repeat"
+    },
+    "report.md": {
+      "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-ludkurvb/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+      "sha256": "936177fe01748beb57850321d643f409e1da9dfc2088963b26d45495d8c51993",
+      "operation_id": "8e213fda4f6ea38509d59dc05b627f7534186f4244eab50d780247d2fa88ff3d",
+      "ownership": {
+        "operation_id": "8e213fda4f6ea38509d59dc05b627f7534186f4244eab50d780247d2fa88ff3d",
+        "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-ludkurvb/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+        "sha256": "936177fe01748beb57850321d643f409e1da9dfc2088963b26d45495d8c51993",
+        "proof_name": ".runtime-report-proof-8e213fda4f6ea38509d59dc05b627f7534186f4244eab50d780247d2fa88ff3d",
+        "device": 2051,
+        "inode": 10771775
+      },
+      "status": "created",
+      "stop_id": "managed-stop:6f5b689c91a26e039e519d39ff33250e5b6c86435732275e693601c894dc4153",
+      "task_id": "fix-f6-repeat"
+    }
+  },
+  "missing_owner_projection": {
+    "source_stage": "generate",
+    "source_owner": "UNKNOWN",
+    "failure_id": "",
+    "failure_type": "generated_action_contract_error",
+    "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+    "summary": "execute.env must be an object of string values.",
+    "concerns": [],
+    "evidence_refs": [],
+    "returncode": null,
+    "attempt_id": "",
+    "process_fact_scope": "original causal execution; no scientific validity inferred"
+  }
+}

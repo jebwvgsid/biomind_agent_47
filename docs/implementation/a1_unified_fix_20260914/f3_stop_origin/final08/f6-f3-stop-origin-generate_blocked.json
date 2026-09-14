@@ -1,0 +1,85 @@
+{
+  "mode": "generate_blocked",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 1,
+    "recovery": 0
+  },
+  "diagnostic_stage": "generate",
+  "origin": {
+    "source_stage": "generate",
+    "source_owner": "UNKNOWN",
+    "failure_id": "",
+    "failure_type": "blocked",
+    "error_code": "GENERATE_BLOCKED",
+    "summary": "Generate recorded a durable terminal blocker.",
+    "concerns": [],
+    "evidence_refs": [],
+    "returncode": null,
+    "attempt_id": "",
+    "process_fact_scope": "original causal execution; no scientific validity inferred"
+  },
+  "causal_execution": {
+    "status": "UNKNOWN"
+  },
+  "execution_attempts": [
+    {
+      "attempt_id": "attempt_12eb55e168efee40034a",
+      "rc": 0
+    }
+  ],
+  "report_has_generate_origin": true,
+  "report_has_execute_origin": false,
+  "report_receipts": {
+    "stage_status.tsv": {
+      "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-h97h2bub/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+      "sha256": "cb9fa20031953a8f6ff42f088e2cc6f67262148b30a7d8e9eb15a622c0363ff5",
+      "operation_id": "11a9001bcd51cc53a4cc5b597f0515b6da108605a5e920c69c1bb9ab49059ced",
+      "ownership": {
+        "operation_id": "11a9001bcd51cc53a4cc5b597f0515b6da108605a5e920c69c1bb9ab49059ced",
+        "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-h97h2bub/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "sha256": "cb9fa20031953a8f6ff42f088e2cc6f67262148b30a7d8e9eb15a622c0363ff5",
+        "proof_name": ".runtime-report-proof-11a9001bcd51cc53a4cc5b597f0515b6da108605a5e920c69c1bb9ab49059ced",
+        "device": 2051,
+        "inode": 10770460
+      },
+      "status": "created",
+      "stop_id": "managed-stop:f62021ee6447e2e75ab06c2f0c8d0cb7b664e89cf5ba66885fdc875fe3d8995e",
+      "task_id": "fix-f6-voluntary_stop"
+    },
+    "reproduce.sh": {
+      "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-h97h2bub/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+      "sha256": "2c1a143b680e9ef62da378989db3cc68d96fa6d37460081e50361779e7ab8010",
+      "operation_id": "7e150b79533ee69d67d3039a3e616c74181d11ed3204a9df8e2419118501bccd",
+      "ownership": {
+        "operation_id": "7e150b79533ee69d67d3039a3e616c74181d11ed3204a9df8e2419118501bccd",
+        "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-h97h2bub/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "sha256": "2c1a143b680e9ef62da378989db3cc68d96fa6d37460081e50361779e7ab8010",
+        "proof_name": ".runtime-report-proof-7e150b79533ee69d67d3039a3e616c74181d11ed3204a9df8e2419118501bccd",
+        "device": 2051,
+        "inode": 10770473
+      },
+      "status": "created",
+      "stop_id": "managed-stop:f62021ee6447e2e75ab06c2f0c8d0cb7b664e89cf5ba66885fdc875fe3d8995e",
+      "task_id": "fix-f6-voluntary_stop"
+    },
+    "report.md": {
+      "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-h97h2bub/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+      "sha256": "004a559a9d69f8e6c900252674f50daf7eb16fa0183eb6d857377a19e8b5044e",
+      "operation_id": "22b335272faf6695f481ffc683fcde7ce3c561e5360b3ef7b5c44dec2c964c5f",
+      "ownership": {
+        "operation_id": "22b335272faf6695f481ffc683fcde7ce3c561e5360b3ef7b5c44dec2c964c5f",
+        "path": "/tmp/biomind-a1-unified-final-08/origin/scratch/biomind-plan-local-graph-h97h2bub/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+        "sha256": "004a559a9d69f8e6c900252674f50daf7eb16fa0183eb6d857377a19e8b5044e",
+        "proof_name": ".runtime-report-proof-22b335272faf6695f481ffc683fcde7ce3c561e5360b3ef7b5c44dec2c964c5f",
+        "device": 2051,
+        "inode": 10770494
+      },
+      "status": "created",
+      "stop_id": "managed-stop:f62021ee6447e2e75ab06c2f0c8d0cb7b664e89cf5ba66885fdc875fe3d8995e",
+      "task_id": "fix-f6-voluntary_stop"
+    }
+  }
+}

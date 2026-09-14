@@ -1,0 +1,150 @@
+{
+  "status": "F2_SCOPE_FIX_PASS_COMPONENT_BOUNDARY",
+  "production_frozen": true,
+  "owned_files": [
+    "agent_core/step_effects.py",
+    "tests/a1_unified_fix/test_f2_scope.py"
+  ],
+  "frozen_production_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+  "frozen_test_sha256": "06b08dba68df24f792f61c455ce1ff412fdfcf337b7d8d85dc9f54be849c9b75",
+  "runs": [
+    {
+      "run": 1,
+      "fresh_root": "/tmp/biomind-a1-f2-scope-fix-01",
+      "loaded_source_signature": "562fc249097d09a7021cafb8cb776568ffcfdb341aa21829412af3adb3a7e9f8",
+      "baseline_head": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+      "production_sha256": "0ee7d72a6b5c48169aabf5f08362a523c981ac25480048d4ea02d0d575e88945",
+      "test_sha256": "88155fe6b0ad4b8e9268495d76b7b3f093d17c6d3953e6e02efb864fe864b3cc",
+      "actual_returncode": 1,
+      "counts": {
+        "passed": 29,
+        "failed": 1
+      },
+      "failure_events": [
+        {
+          "pointer": "/14",
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+          "failure_sha256": "281f50581fe588689d2acc5860e92408bc2472e07827180f676b29fa64de2abf"
+        }
+      ],
+      "source_changes_after_run": [],
+      "artifact_sha256": {
+        "export_manifest.json": "840116f6e9ce88447b480990ed6bd861213f7d0df7facf45f5d5cfbbeeb9af24",
+        "pytest-results.json": "45d1089e43d6293ed31970caf53b651eb3c93537038d2e55e4be4dc86706b4af",
+        "invocation.json": "e0d1a94d058e978279ac3c211df20c38ca58bbdda878d0ac839a503202f5669f",
+        "run_exit.json": "1b9b5a59d87a77a03d70d48837aad77ba6f5ef85fd8257399977532eb037b582",
+        "stdout.txt.gz": "94fef3315f71a224aeebbc9393a4b4f8b5cc8d6e6cc86c153dd7f8b34c362b8a",
+        "f2-scope-argv_python.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-command.json": "6727ababb82ca43dc356a58e56a77be9b6fce7f5e2216b0efc8336d37ba917d2",
+        "f2-scope-file.json": "86fb49081101a7925c21c6c87ac6cb87a60381f02c0f8a7094462dbce462a1b6",
+        "f2-scope-heredoc_cluster.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-heredoc_flags.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-heredoc_string.json": "9c0af067ff58393570550bcc00855b782649537ecf855c91f2e76739f3ba16b0",
+        "f2-scope-python_string.json": "5eb641422d2a27dd1923148428a19bb1135a4d5f09d895bff1b8c76629e83a06"
+      },
+      "interpretation": "The new -m runpy witness used a filesystem path as a module name; gate rejection passed, process failed for the wrong witness reason. Kept as TEST_DRIVER_FAILURE."
+    },
+    {
+      "run": 2,
+      "fresh_root": "/tmp/biomind-a1-f2-scope-fix-02",
+      "loaded_source_signature": "8ed8789215446e66e1c3c976ff3bd3bf936f97c9b080f13aff755d518c097036",
+      "baseline_head": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+      "production_sha256": "588f38bb8a944fea41508d6a48a2bb96358f1cef20de59b45d16ca236d1ee89f",
+      "test_sha256": "9fe8d8d5b9d2432f30b8f1eeeef00565135707341aa0e8e3e5cd1a69820dcf57",
+      "actual_returncode": 1,
+      "counts": {
+        "passed": 30,
+        "failed": 1
+      },
+      "failure_events": [
+        {
+          "pointer": "/22",
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[skip_line]",
+          "failure_sha256": "2353fac8a9e4d8754bc29d4d0c7e3609deddec1b78d987c6909b275f88d098e9"
+        }
+      ],
+      "source_changes_after_run": [],
+      "artifact_sha256": {
+        "export_manifest.json": "a6bf634c2b9df9ee8cba1037ed221ed4898d809f6b3acba2e267a49bdf21ed8a",
+        "pytest-results.json": "9384690b36d3f728ede0c44b604e7730e92dd7ac1aa047f6b22a44798901ffa9",
+        "invocation.json": "a1b636ce13ccabae10e0fbd572f6284b5d974b71ad383a6ef8483e24940a3794",
+        "run_exit.json": "39e3743d6ce2d562cd4696014ea5a93dfc289956467869ff839bbe85552094bd",
+        "stdout.txt.gz": "0cfd949bfac3901ef3d191a5d9506bd1c15fb2655aa45ce8e10ad20dc77bba46",
+        "f2-scope-argv_python.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-command.json": "6727ababb82ca43dc356a58e56a77be9b6fce7f5e2216b0efc8336d37ba917d2",
+        "f2-scope-file.json": "f21cc34a882a444a892ea69f123575c536ada5ad5bc299890fcc3dbd4babbdda",
+        "f2-scope-heredoc_cluster.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-heredoc_flags.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-heredoc_string.json": "9c0af067ff58393570550bcc00855b782649537ecf855c91f2e76739f3ba16b0",
+        "f2-scope-module.json": "7b5c0d30ee0e3c80976dda317a96254f1c9c3974f3859a78bc64fa713dee6dc7",
+        "f2-scope-python_string.json": "5eb641422d2a27dd1923148428a19bb1135a4d5f09d895bff1b8c76629e83a06"
+      },
+      "interpretation": "The new -x stdin witness assumed first-line skipping but actual Python returned rc0 and valid effect facts. Removed the unsupported hypothesis and retained -x as measured positive compatibility."
+    },
+    {
+      "run": 3,
+      "fresh_root": "/tmp/biomind-a1-f2-scope-fix-03",
+      "loaded_source_signature": "0b345b37c474b7c87d435a752bb0405193e4e29ac81bdeff4b7ee546eeab1dc6",
+      "baseline_head": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+      "production_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+      "test_sha256": "06b08dba68df24f792f61c455ce1ff412fdfcf337b7d8d85dc9f54be849c9b75",
+      "actual_returncode": 0,
+      "counts": {
+        "passed": 31
+      },
+      "failure_events": [],
+      "source_changes_after_run": [],
+      "artifact_sha256": {
+        "export_manifest.json": "e3ca499969b3528e86cc750bb19d1340e4bbb65e40c066ba3465a66746922022",
+        "pytest-results.json": "586954797a7efd729e5331a191b8bf9ab563abedfda7cdd48c611646049fc007",
+        "invocation.json": "4199c07b2df6a37d8032e1252cb279cdad9a1793ff9c9c33956932fce66dc9be",
+        "run_exit.json": "6954aee29f05bdf1fdf0eedefdc57389a8490cd58697f8283e8add817f4c2f2f",
+        "stdout.txt.gz": "408c132a4dfc1bfcd744f772cf3cc0aef7095fc703ac47fc8459351a6128fcb1",
+        "f2-scope-argv_python.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-command.json": "6727ababb82ca43dc356a58e56a77be9b6fce7f5e2216b0efc8336d37ba917d2",
+        "f2-scope-file.json": "2bf7cb997fef8d83934ca2bbef79dd95f992c7e0b7127bfe7fe3cc521085a119",
+        "f2-scope-heredoc_cluster.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-heredoc_flags.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-heredoc_string.json": "9c0af067ff58393570550bcc00855b782649537ecf855c91f2e76739f3ba16b0",
+        "f2-scope-heredoc_x_stdin.json": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+        "f2-scope-module.json": "7b5c0d30ee0e3c80976dda317a96254f1c9c3974f3859a78bc64fa713dee6dc7",
+        "f2-scope-python_string.json": "5eb641422d2a27dd1923148428a19bb1135a4d5f09d895bff1b8c76629e83a06"
+      },
+      "interpretation": "Final narrow materializer fix: 18 new scope cases and 13 existing carrier negatives/positives all passed. Scope-limited component verification, not full graph or scientific E2E."
+    }
+  ],
+  "final_counts": {
+    "passed": 31
+  },
+  "actual_negative_processes": [
+    "marker inside Python triple string",
+    "marker inside Python heredoc triple string",
+    "heredoc stdin ignored by Python -c",
+    "heredoc consumed as JSON by Python -m json.tool",
+    "heredoc ignored by Python script file operand"
+  ],
+  "positive_real_processes": [
+    "native Python argv -c",
+    "heredoc separated safe flags including -P/W/X",
+    "heredoc clustered flags and -- stdin operand",
+    "-x stdin with marker on first source line"
+  ],
+  "safe_argument_values": [
+    "space and Unicode",
+    "single and double quotes",
+    "literal dash after real stdin selector",
+    "quoted semicolon"
+  ],
+  "scope_limits": [
+    "The existing six carrier and seven conflict/identity tests are components; root owns same final-candidate graph regression.",
+    "Negative processes explicitly recreate the old literal substitution only in new scripts, and are not admitted production candidates or approval receipts.",
+    "The change validates marker lexical scope and supported interpreter selector only, not arbitrary scientific code or every possible cross-process helper call.",
+    "Python/PyPy executable spelling is recognized, but only the known Python 3.12 interpreter was executed. R/real scientific tools/real providers/original sessions remain untested here."
+  ],
+  "review_other_boundaries": {
+    "F1": "No additional blocking finding in shared projection and actual normal/local/Recovery public-example admission mapping; deliberate no-science example remains identified as such.",
+    "F4": "AskUser harness_error END appears in actual full schema2 graph destinations and existing terminal consumer; registered callback failure/receipt negative tests retain scope.",
+    "F5": "Default frozen Plan body preserves same review object and input owner; no change to CAS/readiness protections in reviewed diff.",
+    "new_drivers": "Reviewed export_and_run.py, run_final.py and test_f5_pty.py: host only safe source/manifest/known interpreter; explicit child environment and reviewed guard; newly created synthetic files/PTY; no newly introduced host config, original session or scientific data reads identified."
+  }
+}

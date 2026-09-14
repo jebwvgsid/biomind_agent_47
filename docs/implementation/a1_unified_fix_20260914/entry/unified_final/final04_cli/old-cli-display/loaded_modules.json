@@ -1,0 +1,47 @@
+{
+  "__main__": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/tests/offline_managed_bootstrap.py",
+    "file": "tests/offline_managed_bootstrap.py",
+    "source_sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0"
+  },
+  "agent_core": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/agent_core/__init__.py",
+    "file": "agent_core/__init__.py",
+    "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "agent_core.cli_display": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/agent_core/cli_display.py",
+    "file": "agent_core/cli_display.py",
+    "source_sha256": "b97c1fc5fc34b0be058db84f20b0170aafcbd95dae22ea888014aa238a81f52d"
+  },
+  "agent_core.cli_logging": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/agent_core/cli_logging.py",
+    "file": "agent_core/cli_logging.py",
+    "source_sha256": "981e05b7c29d30ec536bf53e7b81291409ebd587ca9b17663765204f52a86f82"
+  },
+  "agent_core.cli_plain": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/agent_core/cli_plain.py",
+    "file": "agent_core/cli_plain.py",
+    "source_sha256": "925cc811678b970bf1ce5e9a592c873c4c60a7d3861959b47b832295edcfefa3"
+  },
+  "agent_core.cli_terminal": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/agent_core/cli_terminal.py",
+    "file": "agent_core/cli_terminal.py",
+    "source_sha256": "f6a033cfe1f5916470ddc9e1ed51c377f37b9316fb0b0ce085eeda0a69496655"
+  },
+  "agent_core.human_io": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/agent_core/human_io.py",
+    "file": "agent_core/human_io.py",
+    "source_sha256": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2"
+  },
+  "package_manager": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/package_manager.py",
+    "file": "package_manager.py",
+    "source_sha256": "9028f0fc2d80d57aed657bd18743722ca872a90fc321f1fe3065df3ec86c624d"
+  },
+  "test_cli_v2_display": {
+    "path": "/tmp/biomind-a1-unified-final-04/export/tests/test_cli_v2_display.py",
+    "file": "tests/test_cli_v2_display.py",
+    "source_sha256": "06e9951ef0ebffde632d34f0f63c24f586d70554b81581d20310573a9ea1d72b"
+  }
+}

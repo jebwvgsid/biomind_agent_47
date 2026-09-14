@@ -1,0 +1,11 @@
+{
+  "returncode": 1,
+  "source_signature": "562fc249097d09a7021cafb8cb776568ffcfdb341aa21829412af3adb3a7e9f8",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f2_scope.py",
+    "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process",
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier"
+  ]
+}

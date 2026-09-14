@@ -1,0 +1,16 @@
+{
+  "commit": "499ce1ae5b95a04dd227e21628578946203372f6",
+  "parent": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+  "tree": "d518edc7473ef62a4e3e4b92e7f86cdfd43e123f",
+  "files": [
+    "agent_core/step_effects.py",
+    "bio_agents.py",
+    "prompts/manager.py",
+    "tests/a1_unified_fix/export_and_run.py",
+    "tests/a1_unified_fix/test_f1_f2.py"
+  ],
+  "patch_sha256": "25d9ea721fc7631dc902b460003a24bc952c0b3e1df30308290cedbeb57fcadc",
+  "other_index_entries_preserved": true,
+  "validation": "/tmp/biomind-a1-f12-run04 (77 passed); current worktree + registered protection overlay; not bare commit tested",
+  "push": false
+}

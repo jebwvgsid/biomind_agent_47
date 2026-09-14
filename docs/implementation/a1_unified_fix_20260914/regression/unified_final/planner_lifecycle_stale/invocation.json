@@ -1,0 +1,27 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-a1-unified-final-01/export/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-a1-unified-final-01/export",
+    "-s",
+    "-q",
+    "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+    "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+    "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-a1-final-public-planner_lifecycle_stale-01/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-a1-final-public-planner_lifecycle_stale-01/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-a1-final-public-planner_lifecycle_stale-01",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-a1-final-public-planner_lifecycle_stale-01",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-a1-final-public-planner_lifecycle_stale-01/scratch/executor-logs"
+  }
+}

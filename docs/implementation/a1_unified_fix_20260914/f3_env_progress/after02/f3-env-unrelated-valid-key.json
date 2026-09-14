@@ -1,0 +1,37 @@
+{
+  "error": {
+    "stage": "action_schema",
+    "code": "ACTION_SCHEMA_TYPE_ERROR",
+    "message": "execute.env values must be strings.",
+    "field_path": "env.BAD",
+    "expected": "string",
+    "actual": "number",
+    "response_container_source": "raw_json"
+  },
+  "assessment": {
+    "schema_version": 1,
+    "producer": "biomind.generate_candidate_admission.v1",
+    "progress_proven": false,
+    "basis": "no_validated_target_progress",
+    "comparison_fingerprint": "675865ab6baf37ec8dec141f3ed9a67ab283e821a6df39a2b50cef73f83e9733",
+    "validation_signature": "43705bca43e334493e6320c9b90f65509b28d1ffe0aa3b4c0faa3c614fa45616",
+    "representation_targets": [
+      "action_type",
+      "execute.argv_shape",
+      "execute.env.NEW",
+      "execute.env_keys",
+      "execute.env_object",
+      "execute.executable_body",
+      "execute.outputs_shape",
+      "json_object"
+    ],
+    "binding_facts": null,
+    "binding_axis": "not_evaluated",
+    "newly_satisfied_targets": [],
+    "resolved_targets": [],
+    "pending_targets": [
+      "env.BAD"
+    ],
+    "scientific_success": "not_assessed"
+  }
+}

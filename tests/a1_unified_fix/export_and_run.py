@@ -6,6 +6,7 @@ New test process receipts, rather than disk HEAD, identify what was loaded.
 """
 from __future__ import annotations
 import argparse
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -58,6 +59,31 @@ def export(destination, tests):
     extra.update(str(p.relative_to(REPO)) for p in (REPO / OWN).glob('*.py'))
     for name in extra:
         assert name.startswith('tests/') and name.endswith('.py') and '..' not in Path(name).parts
+    # Follow explicit safe Python fixture imports, rather than repeatedly
+    # producing incomplete exports or importing production in the host.
+    pending = list(extra | set(prior.base.TEST_FILES))
+    visited = set()
+    while pending:
+        name = pending.pop()
+        if name in visited:
+            continue
+        visited.add(name)
+        source = REPO / name
+        if not source.is_file() or source.is_symlink():
+            continue
+        for node in ast.walk(ast.parse(source.read_text())):
+            modules = ([node.module] if isinstance(node, ast.ImportFrom) and node.module else
+                       [item.name for item in node.names] if isinstance(node, ast.Import) else [])
+            for module in modules:
+                if module.startswith('tests.'):
+                    dependency = module.replace('.', '/') + '.py'
+                elif module.startswith('test_') and '.' not in module:
+                    dependency = 'tests/' + module + '.py'
+                else:
+                    continue
+                if (REPO / dependency).is_file() and not (REPO / dependency).is_symlink():
+                    extra.add(dependency)
+                    pending.append(dependency)
     prior.base.TEST_FILES += tuple(extra)
     # Public Skill declarations/references/scripts are safe source, not user data.
     resources = [str(p.relative_to(REPO)) for p in (REPO / 'skills').rglob('*')
@@ -77,6 +103,7 @@ def export(destination, tests):
     manifest['historical_loaded_revision'] = 'UNKNOWN'
     manifest['fixtures'] = {name: {'sha256': sha, 'tracked': bool(git('ls-files', '--', name))}
                             for name, sha in manifest['files'].items() if name.startswith('tests/')}
+    manifest['fixture_import_dependency_policy'] = 'AST of requested/allowlisted Python tests; explicit tests.* or existing bare test_*.py imports only; no data fixtures'
     manifest['overlay'] = {}
     for name, sha in manifest['files'].items():
         if name.startswith('tests/'):
@@ -110,7 +137,12 @@ def main():
                       'files': len(manifest['files']), 'root': str(args.root)}), flush=True)
     if args.run:
         from cli_model_progress_support import launch
-        raise SystemExit(launch(args.root / 'export', args.root / 'results', args.run, installed_cli=True))
+        returncode = launch(args.root / 'export', args.root / 'results', args.run, installed_cli=True)
+        (args.root / 'results' / 'run_exit.json').write_text(json.dumps({
+            'returncode': returncode, 'source_signature': manifest['source_signature'],
+            'test_targets': args.run,
+        }, indent=2) + '\n')
+        raise SystemExit(returncode)
 
 if __name__ == '__main__':
     main()

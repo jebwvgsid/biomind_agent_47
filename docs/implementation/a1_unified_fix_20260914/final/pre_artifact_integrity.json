@@ -1,0 +1,16 @@
+{
+  "phase": "pre_artifact_final08",
+  "base": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+  "current_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "final_test_production_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "all_457_tested_file_bytes_identical": true,
+  "protected_safe_files": 58,
+  "other_safe_files_byte_identical": 56,
+  "protected_prompt_and_managed_stop_original_deltas_identical": true,
+  "other_index_entries_identical": true,
+  "old_A1_commit_contents_unchanged": true,
+  "owned_committed_paths_count": 21,
+  "no_bare_commit_deployment_claim": true,
+  "no_push": true
+}

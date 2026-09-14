@@ -1,0 +1,496 @@
+{
+  "result": "21 PASS: six new F1 request/admission/demo cases and fifteen F1/F2 cases",
+  "loaded_modules": 123,
+  "all_loaded_match_final_manifest": true,
+  "development_failures": {
+    "01-results": "Test provider used focus instead of actual current_focus; real callback exception correctly produced llm_failure. Corrected new harness only.",
+    "02-remaining": "Recovery test incorrectly assumed XML prompt seed. Real recovery uses JSON GenerateSeed carrying current_generate_output_protocol; corrected new harness to inspect both actual formats."
+  },
+  "scope": "Complete current-resource actions admitted unchanged; they deliberately fail before emitting facts until the model provides scientific computation. No example completed science. Actual False/[] came only from the independently declared standalone synthetic demo; F6 owns the separate scientific mechanism positives.",
+  "runs": [
+    {
+      "run": "01-results",
+      "root": "/tmp/biomind-f1-protocol-01/results",
+      "source_signature": "080b4bd615d742c73d8bc99f657dbe44a518edcf919fd2624999e06833f3c831",
+      "baseline_head": "267d3b746a94c0db0f43509cea4e77cba3262577",
+      "calls": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+          "outcome": "failed",
+          "duration": 17.79143031872809
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+          "outcome": "passed",
+          "duration": 0.19412189163267612
+        }
+      ],
+      "artifacts": [
+        {
+          "file": "01-results/f1-protocol-demo.json.gz",
+          "sha256": "c7385619c84ef0e785c81e140a091734595db2fd2e20eb1c935f60b8518bd6f3",
+          "raw_sha256": "61a8afec01e4b0b26b3bb287c9f9607120f8d973259212dd85a23f2831648261"
+        },
+        {
+          "file": "01-results/f6-protocol-normal-summary.json.gz",
+          "sha256": "fbbc5f74fcfc13d2e6c30806b4807bdd0e67eb70e6403de5615a0d719daca195",
+          "raw_sha256": "d3c9e1228a4f20b333b637db764d9f69dacdcfd4688ebf2ac794810ccf6afec5"
+        },
+        {
+          "file": "01-results/pytest-results-test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]-facts.json.gz",
+          "sha256": "d15254cd9d142b950433cb8d1c0efb328352fa04db90c0f4d6eb2a68dead445f",
+          "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "file": "01-results/run_exit.json.gz",
+          "sha256": "11cdbad3672b32ec53048307989cff71c54de4c04da921d1eca0d6ad1cb3c48c",
+          "raw_sha256": "577c4213993af997d0d3a85379846bc14db9f481a1b32b76985b2c705bf288ed"
+        },
+        {
+          "file": "01-results/f6-protocol-normal-full.json.gz",
+          "sha256": "3649848b78dc554120f9a70a740dd569468ee179c1bea46a68e115e710360ba5"
+        }
+      ]
+    },
+    {
+      "run": "02-results",
+      "root": "/tmp/biomind-f1-protocol-02/results",
+      "source_signature": "16f098f3bdf59f2979781bc086c87e7f248e3116b3b93b1cf85a501afbc5f5b1",
+      "baseline_head": "267d3b746a94c0db0f43509cea4e77cba3262577",
+      "calls": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+          "outcome": "passed",
+          "duration": 17.8221740629524
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+          "outcome": "passed",
+          "duration": 0.06757491175085306
+        }
+      ],
+      "artifacts": [
+        {
+          "file": "02-results/f1-protocol-demo.json.gz",
+          "sha256": "c7385619c84ef0e785c81e140a091734595db2fd2e20eb1c935f60b8518bd6f3",
+          "raw_sha256": "61a8afec01e4b0b26b3bb287c9f9607120f8d973259212dd85a23f2831648261"
+        },
+        {
+          "file": "02-results/f1-protocol-normal.json.gz",
+          "sha256": "d4fda797b90bda71bdca3d6bebd8c39d832d544cfa5f81e45bff57c2fdb8ad1c",
+          "raw_sha256": "93dccfe07efac3b1f5230433a6979edbbea8e20799e28e3a4b1b80afaeb26b37"
+        },
+        {
+          "file": "02-results/f6-protocol-normal-summary.json.gz",
+          "sha256": "410f0911c038c083d1576d313b0c34a7c28f2e82d30812239d86abaa1335bfea",
+          "raw_sha256": "a28db7f534c2133c4f07cd4e4272a0075b00a90dde0462d4c49a814e613a4d4e"
+        },
+        {
+          "file": "02-results/run_exit.json.gz",
+          "sha256": "08c686947a979e4d55c1163fb7e86b6734933d32d152e44973e74ee3f0dc85fe",
+          "raw_sha256": "8fa06660f59a03ee79fc4bf3228a797050c9e066c7a5ad87e361456fa4236f77"
+        },
+        {
+          "file": "02-results/f6-protocol-normal-full.json.gz",
+          "sha256": "b98c85e43a936e21f6cdc2b43df39330fbe6c5e808be2b9df9ea43469a241281"
+        }
+      ]
+    },
+    {
+      "run": "02-remaining",
+      "root": "/tmp/biomind-f1-protocol-02/remaining",
+      "source_signature": "16f098f3bdf59f2979781bc086c87e7f248e3116b3b93b1cf85a501afbc5f5b1",
+      "baseline_head": "267d3b746a94c0db0f43509cea4e77cba3262577",
+      "calls": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+          "outcome": "passed",
+          "duration": 21.640310789458454
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+          "outcome": "failed",
+          "duration": 14.62632377911359
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+          "outcome": "passed",
+          "duration": 15.113216353580356
+        }
+      ],
+      "artifacts": [
+        {
+          "file": "02-remaining/f1-protocol-blocked.json.gz",
+          "sha256": "9244082dae847788202e7b2e174a4f28d095796eb82a264899e123e6fda518fc",
+          "raw_sha256": "91e4317eff64768676edceb5be0a887ee68d5da784af0b155c1f74b73ff9f8bc"
+        },
+        {
+          "file": "02-remaining/f1-protocol-local.json.gz",
+          "sha256": "bd1b126747e40a8bd0809d658648a58c99077b660d7f4a25a2ddb9ac1c7caf1e",
+          "raw_sha256": "b616295cf73fe9a5aaccb3ea6caefcf254f9c3a343596b79928add57360cd4c1"
+        },
+        {
+          "file": "02-remaining/f6-protocol-blocked-summary.json.gz",
+          "sha256": "881502e942480114a01bb2b2829e705e9128861b628bd333ea7c94a30c280699",
+          "raw_sha256": "9adea130e47968abf3da96e624a4adce5986d67f725d203222479e2b38d22618"
+        },
+        {
+          "file": "02-remaining/f6-protocol-local-summary.json.gz",
+          "sha256": "467c3fe6a27636e1e7a5a757ae01116a064751ed6885270e7e32ea14af4cd0a4",
+          "raw_sha256": "ae825a072d52de6784f3dd04840a74f9753b1eb12593b547296a0fc2bb50f675"
+        },
+        {
+          "file": "02-remaining/f6-recovery-summary.json.gz",
+          "sha256": "cebcd75aa3dd8e399b6c56c60d9b9df6ab6e844f84ca454b7d32bcdbc3282e34",
+          "raw_sha256": "2a2944a4cd4502d27a6571dfc96e0b1c9c83649680319cf7711ad24991b976ec"
+        },
+        {
+          "file": "02-remaining/pytest-results-test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]-facts.json.gz",
+          "sha256": "d15254cd9d142b950433cb8d1c0efb328352fa04db90c0f4d6eb2a68dead445f",
+          "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "file": "02-remaining/f6-protocol-blocked-full.json.gz",
+          "sha256": "a8b8928fc67e47d26c8b00956c88a2ded8855481399b52f6d1d781e47ff81d71"
+        },
+        {
+          "file": "02-remaining/f6-protocol-local-full.json.gz",
+          "sha256": "fd9e85fe1ebd3aca3e63c5b47fa65fed236691b1c4e3381f76a13dc058c8acc6"
+        },
+        {
+          "file": "02-remaining/f6-recovery-full.json.gz",
+          "sha256": "eefad835c976453edbbd45137c429fcc822238a84fe02ae42f439eb73a71c316"
+        }
+      ]
+    },
+    {
+      "run": "03-results",
+      "root": "/tmp/biomind-f1-protocol-03/results",
+      "source_signature": "e0cfbf6499a15a00d00317c147d131eb9159b94307bbf56781170359d3b7fa4c",
+      "baseline_head": "267d3b746a94c0db0f43509cea4e77cba3262577",
+      "calls": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+          "outcome": "passed",
+          "duration": 29.06041775085032
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+          "outcome": "passed",
+          "duration": 18.28751320205629
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+          "outcome": "passed",
+          "duration": 1.831410980783403
+        }
+      ],
+      "artifacts": [
+        {
+          "file": "03-results/f1-protocol-blocked.json.gz",
+          "sha256": "8dca958279675e32f4b0719d604475c7327d99ee7e1e824cb7840053d0be302e",
+          "raw_sha256": "af4b59c5889a958d20a77d35249fe5b8e78891435ad5b874c96358158c885291"
+        },
+        {
+          "file": "03-results/f1-protocol-capture-blocked-2.json.gz",
+          "sha256": "aad48d232688bd00cf92f55089d898a77c575dcd8cdbb27b8199a9f814ea08a5",
+          "raw_sha256": "7e86e890feb6ef8d7b81a5cfc5435ea1a764f7d3539c07a44265aedda0dccfe7"
+        },
+        {
+          "file": "03-results/f1-protocol-capture-recovery-2.json.gz",
+          "sha256": "22ac4b3ac2a6ca88a141dac39001ff4723988fa235f67d6a40fd04fd3cc79c58",
+          "raw_sha256": "bfad48df8abed89b00813b75ef2363b345a9834a25e4f4a11c00c0054ec2c2b6"
+        },
+        {
+          "file": "03-results/f1-protocol-legacy.json.gz",
+          "sha256": "b319dd2215ded8dc9edeedb37ec58607e2b05cf65781989f387a8e4695566845",
+          "raw_sha256": "3ec4fa0ea7171e15792b03bbc690a1881e7b70eac3defdab33095c22c749de2f"
+        },
+        {
+          "file": "03-results/f1-protocol-recovery.json.gz",
+          "sha256": "beb6dadddbabe28463059a18e92bc67fe5e31a4d47de02ea697678984159bb6d",
+          "raw_sha256": "24049e148857769053c84a0e7af22f3a261b7d6d803ae2566cb2659be90424a2"
+        },
+        {
+          "file": "03-results/f6-protocol-blocked-summary.json.gz",
+          "sha256": "25f3dcfd4b41284b94cbeb4c5727fd4dca6814705a65e430140fc8df76ea30c1",
+          "raw_sha256": "a0884d44dd5059b42ae6ff01a5784f0af7adfdb9347b12363a1a9a2ccd666609"
+        },
+        {
+          "file": "03-results/f6-recovery-summary.json.gz",
+          "sha256": "04eed2600062a9e8760b2f5dc3e01907ef48991a8608c0f3bd2b89a5b529d951",
+          "raw_sha256": "566547b1c739df4fb6c6e78cd096ba2b365e63ff9da2825458c6188a640fcc72"
+        },
+        {
+          "file": "03-results/run_exit.json.gz",
+          "sha256": "40e3ebe9e3a1c2994eb2926ac8aefd6f446fc58c6278f52e6efb588eb2560d73",
+          "raw_sha256": "27c145ae458afd3d60a9bf59f9140b235dcd73d2d2f1680cb8987dfecaae34ac"
+        },
+        {
+          "file": "03-results/f6-protocol-blocked-full.json.gz",
+          "sha256": "2b2cf674a24b13eab5b9bf33aeed1666ec5bac67018fbcd46527e2e769d80012"
+        },
+        {
+          "file": "03-results/f6-recovery-full.json.gz",
+          "sha256": "7ff8907c5334ba34f6caa07bbe543d8703ddc97333a5b90a437c08dd1021ce11"
+        }
+      ]
+    },
+    {
+      "run": "final-results",
+      "root": "/tmp/biomind-f1-protocol-final/results",
+      "source_signature": "a0447f9e008b591d47b5c69f0673d4dc0a07d52a3b9036465ba540dc892d3ccd",
+      "baseline_head": "267d3b746a94c0db0f43509cea4e77cba3262577",
+      "calls": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+          "outcome": "passed",
+          "duration": 6.539997414685786
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+          "outcome": "passed",
+          "duration": 9.039723318070173
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+          "outcome": "passed",
+          "duration": 16.544185700826347
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+          "outcome": "passed",
+          "duration": 18.873982979916036
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+          "outcome": "passed",
+          "duration": 1.90499712433666
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+          "outcome": "passed",
+          "duration": 0.058547123335301876
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+          "outcome": "passed",
+          "duration": 0.03202240169048309
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+          "outcome": "passed",
+          "duration": 0.05139866378158331
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+          "outcome": "passed",
+          "duration": 0.030638517811894417
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+          "outcome": "passed",
+          "duration": 0.03744295425713062
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+          "outcome": "passed",
+          "duration": 0.030619039200246334
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+          "outcome": "passed",
+          "duration": 0.03679174277931452
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+          "outcome": "passed",
+          "duration": 0.0008085602894425392
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+          "outcome": "passed",
+          "duration": 0.0008000629022717476
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+          "outcome": "passed",
+          "duration": 0.0008017262443900108
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+          "outcome": "passed",
+          "duration": 0.0008019832894206047
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+          "outcome": "passed",
+          "duration": 0.0008041160181164742
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+          "outcome": "passed",
+          "duration": 0.030738607980310917
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+          "outcome": "passed",
+          "duration": 0.03019726648926735
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+          "outcome": "passed",
+          "duration": 0.0012175887823104858
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+          "outcome": "passed",
+          "duration": 2.1115425350144506
+        }
+      ],
+      "artifacts": [
+        {
+          "file": "final-results/f1-f2-native-ready.json.gz",
+          "sha256": "e93d9c3f8d2d7788970941ba5bca28096e0d428b5f52664159fd7d2ce1dc2ad4",
+          "raw_sha256": "93edb98e2c1e0d5279a5ce712caa4bed5e414982b62fe179dc22730654d2695e"
+        },
+        {
+          "file": "final-results/f1-protocol-blocked.json.gz",
+          "sha256": "07d7333bb95fa458d8ff01fbbd4dbd72ee38cba1a01b1e5f9569d93b5bfe82b7",
+          "raw_sha256": "d1cd13de375f7cca31c3ee58cf7c48e42810393b485351ba57b965abec9a7ccf"
+        },
+        {
+          "file": "final-results/f1-protocol-capture-blocked-2.json.gz",
+          "sha256": "34a974a2f4b3bbd34fb34ee1b8b65852796a292fbc59c65c3da673106d275834",
+          "raw_sha256": "31a40d51b1eb6bf4433c7b3486ae8a8e7782404182b2231c9e1be53261eaebb0"
+        },
+        {
+          "file": "final-results/f1-protocol-capture-local-1.json.gz",
+          "sha256": "659797300eb9f41295f782c943aaba7066f461b5e2e2b49bd9a28d3235f9e329",
+          "raw_sha256": "2b0e8c4ce72aa3146cab411a5f6bbc1b362886ccd9ce6490f959f4517da378f3"
+        },
+        {
+          "file": "final-results/f1-protocol-capture-local-2.json.gz",
+          "sha256": "8b47234c9f679c94625779ec9a2bf19f57fd0207fe20a9e651614057a57a1889",
+          "raw_sha256": "3def1b6db5d77fe8f7235ec894882e89c2f0529e6925ee4c980329814fea842b"
+        },
+        {
+          "file": "final-results/f1-protocol-capture-normal-1.json.gz",
+          "sha256": "97b5f3e431dfc2b2cd8d85b60d9b87bc68ca4413d6ba158bcc131e526d71c62c",
+          "raw_sha256": "b92d02fc67881aa25ddeee04058f6758deb89caa0986b51e2032f72851a9dc27"
+        },
+        {
+          "file": "final-results/f1-protocol-capture-recovery-2.json.gz",
+          "sha256": "1b17c99b78b13a266f560efdd00230fec6854ae2d2baf6f162bdb12768cdd861",
+          "raw_sha256": "cfeb1d636867723d29d88ec86efe56759568e042ad1d0a767d85d00d3316d4d6"
+        },
+        {
+          "file": "final-results/f1-protocol-demo.json.gz",
+          "sha256": "c7385619c84ef0e785c81e140a091734595db2fd2e20eb1c935f60b8518bd6f3",
+          "raw_sha256": "61a8afec01e4b0b26b3bb287c9f9607120f8d973259212dd85a23f2831648261"
+        },
+        {
+          "file": "final-results/f1-protocol-legacy.json.gz",
+          "sha256": "d55aa613329ae907d4936ccca960df2dc26b6dba2981f0f9b0e2e04f20493bd5",
+          "raw_sha256": "0c3b8494fed907a578c9155d04b3096993265eb290e12a1123fbb4eed0289bd1"
+        },
+        {
+          "file": "final-results/f1-protocol-loaded.json.gz",
+          "sha256": "3882e7c150cf2e96bd533f948f40cf5434abc29c918e7e6bf5113469c82d1d98",
+          "raw_sha256": "bb5431a8d38f260f1b5235c9f8abf180b97e0eb9f6479c4d3ce88bc3fed0ef9d"
+        },
+        {
+          "file": "final-results/f1-protocol-local.json.gz",
+          "sha256": "b29f162b2bb1554691fa5a86afb366b8ee77fd4e47d0b8077a0a28e241b339f9",
+          "raw_sha256": "a1cc64b73c1d5ac0ebd81ccc7e2e939cde010458fcfce467ffe55b52b4453127"
+        },
+        {
+          "file": "final-results/f1-protocol-normal.json.gz",
+          "sha256": "0380bcacebf8983c4bae272e0afabb5e7cef55354d4a8a8832de9bb031bb1508",
+          "raw_sha256": "549acbce5a45792c980ef688b775822b04ea71e1ec6a0287a5983dbaafe6d488"
+        },
+        {
+          "file": "final-results/f1-protocol-recovery.json.gz",
+          "sha256": "71d33b4941ddbecaa8173a1d79da73bb65a274be203f8cd945e3570f15afa0de",
+          "raw_sha256": "ce9348a8672860909039c7f3d41aef2add05b93b3df391a8055b0a5897440723"
+        },
+        {
+          "file": "final-results/f2-carrier-bash.json.gz",
+          "sha256": "e7fe1cf8c8a5964e54dbca1adddd8325cf80d5ea30ed968db93100bcb6c405c4",
+          "raw_sha256": "76721608cdf5595930b1af66200d56b30626ea2eabcfc8d4a248b707e093bed3"
+        },
+        {
+          "file": "final-results/f2-carrier-both.json.gz",
+          "sha256": "e058b6b2b89b5a311f48cdae7dcd1aa43693a3f6397703f6c4cee3b91a85bdf1",
+          "raw_sha256": "84afda3332f191f1d040eafcfb09c1940e857c3adca9f0b86b5ca397d96aa64e"
+        },
+        {
+          "file": "final-results/f2-carrier-code.json.gz",
+          "sha256": "cec68a6694b33f14766f4ffe12ab62e8cc83ae92ca52092f3de10f93a661b11d",
+          "raw_sha256": "1042632d00630ea387d49c2053e1c1df187c42654d62b3933549e71dd3fad7b3"
+        },
+        {
+          "file": "final-results/f2-carrier-legacy_bash.json.gz",
+          "sha256": "9b07eb5e4b18dabe6bfbdd78324397d1d20f513960d9b4f253d2bb1ef31dd7cc",
+          "raw_sha256": "16f117f3230e6c85d4b34465331bc34a8fe7c3d2406c8c68eb7d8cc72849f8f2"
+        },
+        {
+          "file": "final-results/f2-carrier-legacy_python.json.gz",
+          "sha256": "27229f1879ee0ed628bca45da442fc2b2fde84a0fd8679e29a06e551d289ba82",
+          "raw_sha256": "20a579abbc16dd205bca04483a328cb46a7819b60f0ad966f230c2955347376d"
+        },
+        {
+          "file": "final-results/f2-carrier-python.json.gz",
+          "sha256": "387c245425909a3ad6326d690b825bd74dc582d16121d25f23434f46c82a9b7f",
+          "raw_sha256": "ade3e06147a73f3caafd958b0ac43bda307b18041ea5bc3953685a0cccae6ba4"
+        },
+        {
+          "file": "final-results/f6-protocol-blocked-summary.json.gz",
+          "sha256": "2252c9b48e6a5cb6edc4f0b8eed563ca137c9fdf52871305893e26f729fbcfdb",
+          "raw_sha256": "3f6690aef905303aed40a16f8ce8f363269e0af2a1ba013e130b8c3b7b3a498c"
+        },
+        {
+          "file": "final-results/f6-protocol-local-summary.json.gz",
+          "sha256": "9e196d02978d3eb07f087cb3e08730a2189100e648657e157cc535124d81df5b",
+          "raw_sha256": "b0186e8e1e112d9f73d4415e6b3789a1d49de504607e3b584b56b9765120bbe1"
+        },
+        {
+          "file": "final-results/f6-protocol-normal-summary.json.gz",
+          "sha256": "601372e7ed608ec95c969bc7d1548d046093c3143173a108759cc7c8de81de06",
+          "raw_sha256": "f464091b71bcb3762ec21f6492cc585f1949c0ad84a58fb8e258aac8c3ec5d17"
+        },
+        {
+          "file": "final-results/f6-recovery-summary.json.gz",
+          "sha256": "d2f959eb10fa48a124f6389ff4f530c8cc37a97bc1086c88ecf2c31625cdacfb",
+          "raw_sha256": "2cdceb04d97b94b27ed0d65ff5619e8d121311624842047a8a0e6b522a280929"
+        },
+        {
+          "file": "final-results/run_exit.json.gz",
+          "sha256": "130cd35b729e942db45787b38a8e42a383beb64b5726355eafb21fde89757a5b",
+          "raw_sha256": "56995ae094e70e313bf8fc5447e0914ca789098d3357036e962b4c744fd042a0"
+        },
+        {
+          "file": "final-results/f6-protocol-blocked-full.json.gz",
+          "sha256": "3f7c5abd5fea4a8a1f07cbf535a0f9b9f6d4244fcf284d30b8135e1b609596dc"
+        },
+        {
+          "file": "final-results/f6-protocol-local-full.json.gz",
+          "sha256": "e980d08705267ad5945119e10082fa5251f3c0891e389637b7577fdf5404f551"
+        },
+        {
+          "file": "final-results/f6-protocol-normal-full.json.gz",
+          "sha256": "42edbc5ac5e692c25166ca1f47cfcb93f35b1a255cb0c7577df5401346dc1e0e"
+        },
+        {
+          "file": "final-results/f6-recovery-full.json.gz",
+          "sha256": "cf6d028eed196034093c2331b5be5b849ba8f44ac028ad0e39b7ea7719fd26b7"
+        }
+      ]
+    }
+  ],
+  "latest_unified_evidence": "unified_final/current_final08_evidence.json",
+  "final01_final02_production_equivalence": "unified_final/final01_final02_equivalence.json",
+  "latest_result": "Final08 F1 protocol 6/6 PASS within shared 101/101 PASS; ordinary/local/Recovery/blocked use real node/transport wrappers with fixed external model leaf",
+  "retained_pre_scope_evidence": "unified_final/regression_evidence.json",
+  "final04_replay_status": "Superseded by final08 6/6 PASS with external-model leaf fixture and final production changes."
+}

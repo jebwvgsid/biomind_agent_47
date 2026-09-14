@@ -1,0 +1,2 @@
+{"monotonic": 4294638.800917431, "mode": "repeat", "calls": {"consultant": 0, "planner": 0, "generate": 0, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4294651.025257372, "mode": "repeat", "calls": {"consultant": 1, "planner": 1, "generate": 2, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}

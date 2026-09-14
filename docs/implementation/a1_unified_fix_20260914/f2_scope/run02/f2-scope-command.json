@@ -1,0 +1,9 @@
+{
+  "fixed_materializer": "EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC",
+  "old_literal_substitution_witness": {
+    "rc": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nNameError: name 'emit_effect_evidence' is not defined\n"
+  },
+  "scope": "component rejection plus deliberately nonadmitted old-substitution process; no approval/graph/scientific success"
+}

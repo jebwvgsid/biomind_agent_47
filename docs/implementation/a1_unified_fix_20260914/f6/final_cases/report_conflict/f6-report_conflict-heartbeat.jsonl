@@ -1,0 +1,2 @@
+{"monotonic": 4295002.605667626, "mode": "report_conflict", "calls": {"consultant": 0, "planner": 0, "generate": 0, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4295013.565313858, "mode": "report_conflict", "calls": {"consultant": 1, "planner": 1, "generate": 1, "reviewer": 1, "recovery": 0}, "executions": 1, "commits": 0}

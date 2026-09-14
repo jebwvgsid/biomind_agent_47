@@ -1,0 +1,9 @@
+{
+  "fixed_materializer": "EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC",
+  "old_literal_substitution_witness": {
+    "rc": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/tmp/biomind-a1-f2-scope-fix-01/results/scratch/pytest-of-liusiqi/pytest-0/test_nonexecuted_helper_scope_4/new_scope_probe.py\", line 1, in <module>\n    print(emit_effect_evidence({'produces_observations': {'scope_probe': {'value': False}}}))\n          ^^^^^^^^^^^^^^^^^^^^\nNameError: name 'emit_effect_evidence' is not defined\n"
+  },
+  "scope": "component rejection plus deliberately nonadmitted old-substitution process; no approval/graph/scientific success"
+}

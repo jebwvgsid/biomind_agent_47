@@ -1,0 +1,4 @@
+{"monotonic": 4294887.111677318, "mode": "missing_build_dependency", "calls": {"consultant": 0, "planner": 0, "generate": 0, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4294897.947222732, "mode": "missing_build_dependency", "calls": {"consultant": 1, "planner": 1, "generate": 1, "reviewer": 1, "recovery": 0}, "executions": 1, "commits": 0}
+{"monotonic": 4294908.734963028, "mode": "missing_build_dependency", "calls": {"consultant": 1, "planner": 1, "generate": 2, "reviewer": 2, "recovery": 0}, "executions": 2, "commits": 1}
+{"monotonic": 4294920.375428572, "mode": "missing_build_dependency", "calls": {"consultant": 1, "planner": 1, "generate": 3, "reviewer": 2, "recovery": 0}, "executions": 3, "commits": 2}

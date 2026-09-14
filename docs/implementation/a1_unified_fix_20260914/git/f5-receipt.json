@@ -1,0 +1,16 @@
+{
+  "commit": "2966f5ef3d0889201101192e397234e9b752cec9",
+  "parent": "a84e9932d66019a2277bf1ffb8b13ac7a5e39af6",
+  "tree": "25dea3b12a39d779552172147edbf04f99bd88ca",
+  "files": [
+    "agent_core/cli_plain.py",
+    "agent_core/cli_review.py",
+    "agent_core/cli_terminal.py",
+    "bio_agents.py",
+    "tests/a1_unified_fix/test_f5_pty.py"
+  ],
+  "patch_sha256": "f733830ceb848f6ab3ec5ff56d106b32ee2d1db34bcc45f0c6c83e71448a06dc",
+  "other_index_entries_preserved": true,
+  "validation": "entry/pty and entry/regression: 14/14 real kernel PTY/plain scenarios, 49 pytest regression PASS; exact called regions unchanged across Generate-only pending changes",
+  "push": false
+}

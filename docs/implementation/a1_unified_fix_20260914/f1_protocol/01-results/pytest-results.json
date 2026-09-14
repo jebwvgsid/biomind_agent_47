@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.024985543452203274,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 17.79143031872809,
+    "failure": "case = 'normal'\n\n    @pytest.mark.parametrize('case',['normal','local','recovery','blocked'])\n    def test_examples_from_actual_requests_reach_current_step_admission_or_stop(case):\n        async def run():\n            from bio_agents import BioAnalystAgent\n            fixture=ProtocolGraph(case);await fixture.setup()\n            try:\n                outcome=await fixture.collect();assert fixture.public_examples\n                example=fixture.public_examples[-1]['protocol']['action_example']\n                raw=fixture.public_examples[-1]['selected_raw']\n                assert json.loads(raw)==example\n                parsed=BioAnalystAgent._extract_structured_action_result(raw);assert not parsed.error\n                if case=='blocked':\n                    assert example['action_type']=='blocked' and 'genome_version' in example['reason']\n                    assert outcome['type'] in {'blocked','terminal','internal_error'} or fixture.values.get('managed_run_boundary')\n                    assert len(fixture.executions)==1\n                else:\n                    assert example['action_type']=='execute' and example['operation']==OPS[0]\n                    assert outcome['type']=='action_ready',outcome\n                    for path in [fixture.vcf,fixture.reference,fixture.annotation]:assert str(path) in example['code']\n                    assert len(fixture.executions)==(1 if case=='recovery' else 0)\n                    assert 'raise RuntimeError' in example['code']\n                    assert 'synthetic_demo_matches' not in example['code']\n                if case=='local':\n                    assert len(fixture.public_examples)==2\n                    assert 'action_type' in str(fixture.public_examples[-1]['request_messages'])\n                if case=='recovery':\n                    assert fixture.counts['recovery']==1\n                    assert any('recovery' in str(m.get('name') or '') for m in fixture.public_examples[-1]['request_messages'])\n                save(case,{'status':'CURRENT_STEP_ADMISSION_PASS' if case!='blocked' else 'FORMAL_STOP_PASS',\n                    'scientific_example_status':'NOT_IMPLEMENTED; no example execution or current scientific claim',\n                    'outcome':outcome,'requests':fixture.public_examples,'events':fixture.events,'executions':fixture.executions,\n                    'fixed_models':'Consultant/Planner/Recovery; F6 fixed scientific model only for predecessor/failed attempt',\n                    'substitutes':'new synthetic VCF/FASTA/GTF; no formal data/runtime/API'})\n            finally:await fixture.close()\n>       asyncio.run(run())\n\ntests/a1_unified_fix/test_f1_protocol.py:123: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def run():\n        from bio_agents import BioAnalystAgent\n        fixture=ProtocolGraph(case);await fixture.setup()\n        try:\n>           outcome=await fixture.collect();assert fixture.public_examples\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           assert []\nE            +  where [] = <test_f1_protocol.ProtocolGraph object at 0x154f63c42a80>.public_examples\n\ntests/a1_unified_fix/test_f1_protocol.py:95: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00040666479617357254,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.08067166619002819,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.19412189163267612,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020864326506853104,
+    "failure": ""
+  }
+]

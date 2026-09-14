@@ -1,0 +1,20 @@
+{
+  "previous_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+  "current_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+  "changed": {
+    "tests/a1_unified_fix/test_f3_env_progress.py": {
+      "old": "64ba7f64592e0ae1c8ccda052c100d69411f05ae96c6ea9d26b8664e1bd4dec8",
+      "new": "40a7b5afe03250570c397d617b4e001bc5d40aec203f5e19dd93b20b978a36a7"
+    },
+    "tests/a1_unified_fix/test_f6_repeat_graph.py": {
+      "old": "3aa9bda7f67d95a5ecba7f105795c76e95375a3950471dc64874322eff7dfa1a",
+      "new": "01c416126c9eb90c824e5775b9f554e09b01d4f08e3947f8e2a24e3615883007"
+    },
+    "agent_core/workflow/candidate_repair.py": {
+      "old": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b",
+      "new": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+    }
+  },
+  "production_candidate": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+  "required_replay": "Shared progress callers and complete combinations; new ABA test selects actual latest correction and retains full historical feedback. Final05 receipts remain intermediate."
+}

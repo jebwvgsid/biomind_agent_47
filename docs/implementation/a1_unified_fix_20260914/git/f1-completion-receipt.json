@@ -1,0 +1,16 @@
+{
+  "commit": "8bf302c37bb38259d4878524ddc6e2d0e2a27e60",
+  "parent": "267d3b746a94c0db0f43509cea4e77cba3262577",
+  "tree": "7d9865fcb2b3fde82be6c03c274e769e6fce8173",
+  "files": [
+    "agent_core/step_effects.py",
+    "bio_agents.py",
+    "prompts/manager.py",
+    "tests/a1_unified_fix/test_f1_f2.py",
+    "tests/a1_unified_fix/test_f1_protocol.py"
+  ],
+  "patch_sha256": "dcbc90ae3f37a37ae8160471728e7cdecb8d1b144c30c4a7069afccc8d63529f",
+  "other_index_entries_preserved": true,
+  "validation": "21 own F1/F2 tests PASS; real ordinary/local/Recovery requests admitted unchanged; legacy mode and complete blocked terminal; separate synthetic facts execution. Final shared regression and six-operation graph follow. Protected original HASH_OUTPUT_POLICY overlay excluded.",
+  "push": false
+}

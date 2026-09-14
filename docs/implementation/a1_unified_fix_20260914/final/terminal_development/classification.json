@@ -1,0 +1,7 @@
+{
+  "exception": "PASS on pre-scope-refinement candidate",
+  "timeout": "PASS on pre-scope-refinement candidate",
+  "cancel": "TEST_INJECTION_MISMATCH: external model directly raising CancelledError is not cancellation of the awaiting task; production transport classified it as provider failure. Updated only owned fixture to cancel pending parent after observed model entry; earlier rc1 retained.",
+  "production_changes_for_this_test": "NONE",
+  "next": "All four consumer cases rerun at final03 with exact request/attempt/report receipts."
+}

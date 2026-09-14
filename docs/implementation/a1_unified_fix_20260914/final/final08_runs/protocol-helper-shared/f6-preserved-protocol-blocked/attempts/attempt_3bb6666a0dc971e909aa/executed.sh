@@ -1,0 +1,12 @@
+#!/bin/bash
+set +e
+: > /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/stdout.log
+: > /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/stderr.log
+printf 'runner=%s script=%s\n' '/usr/bin/bash -o pipefail' /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/approved.sh > /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/command_trace.log
+/usr/bin/bash -o pipefail /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/approved.sh > /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/stdout.log 2> /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/stderr.log
+rc=$?
+printf 'returncode=%s\n' "$rc" >> /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/command_trace.log
+finished_at=$(date -Iseconds 2>/dev/null || date)
+printf '{"attempt_id":"attempt_3bb6666a0dc971e909aa","returncode":%s,"finished_at":"%s"}\n' "$rc" "$finished_at" > '/tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/exit_status.json.tmp.$$'
+mv '/tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/exit_status.json.tmp.$$' /tmp/biomind-a1-unified-final-08/protocol-helper-shared/scratch/biomind-plan-local-graph-62edlv9j/task_outputs/fix-f6-protocol-blocked/attempts/attempt_3bb6666a0dc971e909aa/exit_status.json
+exit "$rc"

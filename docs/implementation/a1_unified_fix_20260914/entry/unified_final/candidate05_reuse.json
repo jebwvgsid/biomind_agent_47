@@ -1,0 +1,920 @@
+{
+  "status": "F4/F5 recorded outcomes and 24 legacy display cases reusable for bounded final05 changes; no rerun claimed",
+  "candidate04_signature": "237ac5ba0d0921017c9ff6252762b2cc429efb7985ce1586aeb5f2a9fe03af94",
+  "candidate05_signature": "3db11dc5295b57d53999d5c2879a8d528006a1263199a827438c329a6c37e70c",
+  "candidate05_head": "e9df3ece9fceae24b782f5f1eb682926f8ed9f11",
+  "production_changes": {
+    "agent_core/workflow/candidate_repair.py": {
+      "old": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+      "new": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+    },
+    "bio_agents.py": {
+      "old": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+      "new": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+    }
+  },
+  "exact_ast_change_proof": [
+    {
+      "file": "bio_agents.py",
+      "only_changed_function": "_structured_action_from_object_result",
+      "before": {
+        "line": 21720,
+        "end": 22080,
+        "sha256": "ef8c05528d80e3cc19540ecb464c2c012e9e8e10f0956acc81a2b6750fa238b7"
+      },
+      "after": {
+        "line": 21720,
+        "end": 22090,
+        "sha256": "84e923053f1c6a3b983d7df68326c1c97cd6fe2ab41e3ba43a0438eb62e712cb"
+      },
+      "entire_other_ast_unchanged": true,
+      "all_source_bytes_outside_named_function_same": true
+    },
+    {
+      "file": "agent_core/workflow/candidate_repair.py",
+      "only_changed_function": "candidate_progress_assessment",
+      "before": {
+        "line": 71,
+        "end": 126,
+        "sha256": "bede2edaccac46806bbbced5eecab906064e04fd4e3eed1d6395c59d140e1149"
+      },
+      "after": {
+        "line": 71,
+        "end": 149,
+        "sha256": "ff929b5b1f46e3e77770a4d1ead6077bf6124ad36b999a0ba2ca8f6cec97bc9b"
+      },
+      "entire_other_ast_unchanged": true,
+      "all_source_bytes_outside_named_function_same": true
+    }
+  ],
+  "unchanged_13_entry_regions": [
+    {
+      "symbol": "BioAnalystAgent.__init__",
+      "actual_final02": {
+        "line": 2569,
+        "end": 3362,
+        "sha256": "7854d909fd431ca4c96a74490250330f2c75b15762a5c822dcd95c59fe9b4f95"
+      },
+      "candidate05": {
+        "line": 2569,
+        "end": 3362,
+        "sha256": "7854d909fd431ca4c96a74490250330f2c75b15762a5c822dcd95c59fe9b4f95"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._prompt_user",
+      "actual_final02": {
+        "line": 25499,
+        "end": 25568,
+        "sha256": "4c25cff92b3b80f17005efb9ed513cb44179a58c514aa1217d646fe06dcee916"
+      },
+      "candidate05": {
+        "line": 25509,
+        "end": 25578,
+        "sha256": "4c25cff92b3b80f17005efb9ed513cb44179a58c514aa1217d646fe06dcee916"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._aprompt_user",
+      "actual_final02": {
+        "line": 25570,
+        "end": 25606,
+        "sha256": "72f969a7353ae2e5fbc72803f89c4fcc39f715f2b77dd8ae901e0c4076fce2d9"
+      },
+      "candidate05": {
+        "line": 25580,
+        "end": 25616,
+        "sha256": "72f969a7353ae2e5fbc72803f89c4fcc39f715f2b77dd8ae901e0c4076fce2d9"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.consultant",
+      "actual_final02": {
+        "line": 31863,
+        "end": 37667,
+        "sha256": "f1b85f926c6ba76bc4c4be83485ed6497edbfc4d1f765a9b795da7d6e7fb5b6e"
+      },
+      "candidate05": {
+        "line": 31873,
+        "end": 37677,
+        "sha256": "f1b85f926c6ba76bc4c4be83485ed6497edbfc4d1f765a9b795da7d6e7fb5b6e"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.ask_user",
+      "actual_final02": {
+        "line": 37669,
+        "end": 37881,
+        "sha256": "b431ce3327e601e757277ff5f88e48f57fa3004fcab1b4f0b0e377a4f4a7acc1"
+      },
+      "candidate05": {
+        "line": 37679,
+        "end": 37891,
+        "sha256": "b431ce3327e601e757277ff5f88e48f57fa3004fcab1b4f0b0e377a4f4a7acc1"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.planner",
+      "actual_final02": {
+        "line": 37886,
+        "end": 40603,
+        "sha256": "8a83c0683ca9eb2960cadbdada6440f54cb1b5f7396ca6fc50d344f24efa0822"
+      },
+      "candidate05": {
+        "line": 37896,
+        "end": 40613,
+        "sha256": "8a83c0683ca9eb2960cadbdada6440f54cb1b5f7396ca6fc50d344f24efa0822"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.plan_review",
+      "actual_final02": {
+        "line": 40608,
+        "end": 41251,
+        "sha256": "7e20e9fe0deee153f6e01ade52e86c15e4e92a0fc87e9d7e48f97f98ba918168"
+      },
+      "candidate05": {
+        "line": 40618,
+        "end": 41261,
+        "sha256": "7e20e9fe0deee153f6e01ade52e86c15e4e92a0fc87e9d7e48f97f98ba918168"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.consultant_router",
+      "actual_final02": {
+        "line": 53023,
+        "end": 53030,
+        "sha256": "f2523e7771de32d321d92576b4c4edb261961b8a883065ae11bb80a25752283e"
+      },
+      "candidate05": {
+        "line": 53033,
+        "end": 53040,
+        "sha256": "f2523e7771de32d321d92576b4c4edb261961b8a883065ae11bb80a25752283e"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.ask_user_router",
+      "actual_final02": {
+        "line": 53035,
+        "end": 53039,
+        "sha256": "0443935753efaf8867e0f683446f6177b7422e65769189494ac0608f250f32f1"
+      },
+      "candidate05": {
+        "line": 53045,
+        "end": 53049,
+        "sha256": "0443935753efaf8867e0f683446f6177b7422e65769189494ac0608f250f32f1"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.planner_router",
+      "actual_final02": {
+        "line": 53044,
+        "end": 53050,
+        "sha256": "98437b92b98693a4ff20c8333a870c041ef545a9ad8ca019a69d919375b5b1b1"
+      },
+      "candidate05": {
+        "line": 53054,
+        "end": 53060,
+        "sha256": "98437b92b98693a4ff20c8333a870c041ef545a9ad8ca019a69d919375b5b1b1"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._build_graph.plan_review_router",
+      "actual_final02": {
+        "line": 53064,
+        "end": 53071,
+        "sha256": "00c16731b1ebfa4b40aefc03a4008c4c83b42376c217a1c3e57cec4de3b206b4"
+      },
+      "candidate05": {
+        "line": 53074,
+        "end": 53081,
+        "sha256": "00c16731b1ebfa4b40aefc03a4008c4c83b42376c217a1c3e57cec4de3b206b4"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._app_for_task",
+      "actual_final02": {
+        "line": 53156,
+        "end": 53167,
+        "sha256": "b973e1e3662ac894653697261c987c1cac71669c0675de8f46f02b481605875e"
+      },
+      "candidate05": {
+        "line": 53166,
+        "end": 53177,
+        "sha256": "b973e1e3662ac894653697261c987c1cac71669c0675de8f46f02b481605875e"
+      }
+    },
+    {
+      "symbol": "BioAnalystAgent._finalize_managed_terminal",
+      "actual_final02": {
+        "line": 53898,
+        "end": 53918,
+        "sha256": "bc311ca3b51e616e7973e7e9abeac13dc8dd72b942121a2726d737b7c805f69c"
+      },
+      "candidate05": {
+        "line": 53908,
+        "end": 53928,
+        "sha256": "bc311ca3b51e616e7973e7e9abeac13dc8dd72b942121a2726d737b7c805f69c"
+      }
+    }
+  ],
+  "recorded_loaded_comparisons": [
+    {
+      "case": "f4-regression/f4-OSError.json",
+      "count": 94,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f4-regression/f4-ValueError.json",
+      "count": 94,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f4-regression/f4-answers.json",
+      "count": 94,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f4-regression/f4-cancel.json",
+      "count": 94,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f4-regression/f4-eof.json",
+      "count": 94,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f4-regression/f4-interrupt.json",
+      "count": 94,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-plain-approve/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-plain-blank_paste/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-plain-eof/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-plain-feedback/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-approve/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-blank_paste/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-cancel/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-eof/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-fallback/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-feedback/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-nonsemantic/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-queued/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-reject/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    },
+    {
+      "case": "f5-tty-semantic/loaded.json",
+      "count": 117,
+      "different": [
+        {
+          "file": "agent_core/step_effects.py",
+          "actual_loaded": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+          "candidate05": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+        },
+        {
+          "file": "agent_core/workflow/candidate_repair.py",
+          "actual_loaded": "32a29edec4fe4408559c8f06eaf9ccee2c99a1f96c5d37863f24e53036ba79e8",
+          "candidate05": "0391233497aa6b5e74b35b44361127a66a86e2b32473c250da0f1647e2a4c97b"
+        },
+        {
+          "file": "bio_agents.py",
+          "actual_loaded": "0f9adb3ac3f22abe5303826528d03a8468bb48259845dea2a883a47249b435d0",
+          "candidate05": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b"
+        }
+      ],
+      "other_loaded_sources_same": true
+    }
+  ],
+  "actual_f5_dispatch": [
+    {
+      "case": "f5-plain-approve",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-plain-blank_paste",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-plain-eof",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-plain-feedback",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-approve",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-blank_paste",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-cancel",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-eof",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-fallback",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-feedback",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-nonsemantic",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-queued",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-reject",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "f5-tty-semantic",
+      "update_nodes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": 0,
+      "code_approvals": 0
+    }
+  ],
+  "old_cli_display_actual_loaded_count": 9,
+  "old_cli_display_all_loaded_sources_identical": true,
+  "previous_helper_scope_reuse": "helper_scope_reuse.json",
+  "candidate03_to04_equivalence": "../../final/candidate04_equivalence.json",
+  "causal_boundary": "The changed structured-action parser and candidate progress assessor are used by Generate/action rejection and Execute correction, not by recorded AskUser/PlanReview dispatch. F4 ordinary callback paths reach actual AskUser wrapper/END/managed terminal, its answer/EOF/cancel cases stay in that boundary. F5 dispatch is only triage/consultant/planner/plan_review, with no execution or code approval. All other production AST and 13 actual entry segments are identical. This is static dependency proof plus recorded graph dispatch, not runtime tracing of every function and not a claim that final01/final02 imported candidate05 bio_agents bytes.",
+  "model_progress_component": {
+    "status": "FINAL05 1/1 PASS, four modes",
+    "evidence": "final05_cli/verification.json"
+  },
+  "bio_action_parser_and_rejection_call_edges": [
+    {
+      "line": 16143,
+      "enclosing_function": "_candidate_admission_rejection_update",
+      "callee": "_structured_action_from_object_result"
+    },
+    {
+      "line": 16569,
+      "enclosing_function": "_candidate_admission_rejection_update",
+      "callee": "_structured_action_from_object_result"
+    },
+    {
+      "line": 16576,
+      "enclosing_function": "_candidate_admission_rejection_update",
+      "callee": "candidate_progress_assessment"
+    },
+    {
+      "line": 16586,
+      "enclosing_function": "_candidate_admission_rejection_update",
+      "callee": "candidate_progress_assessment"
+    },
+    {
+      "line": 22094,
+      "enclosing_function": "_structured_action_from_object",
+      "callee": "_structured_action_from_object_result"
+    },
+    {
+      "line": 22121,
+      "enclosing_function": "_extract_structured_action_result",
+      "callee": "_structured_action_from_object_result"
+    },
+    {
+      "line": 22209,
+      "enclosing_function": "_extract_structured_action",
+      "callee": "_extract_structured_action_result"
+    },
+    {
+      "line": 43295,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_extract_structured_action"
+    },
+    {
+      "line": 43817,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_extract_structured_action_result"
+    },
+    {
+      "line": 44143,
+      "enclosing_function": "_build_graph._generate_impl.reject_current_candidate",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 44207,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 44300,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 44403,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 44497,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 44876,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 45088,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 45851,
+      "enclosing_function": "_build_graph._generate_impl",
+      "callee": "_candidate_admission_rejection_update"
+    },
+    {
+      "line": 46408,
+      "enclosing_function": "_build_graph.execute_logic_impl.reject_execute_candidate",
+      "callee": "_candidate_admission_rejection_update"
+    }
+  ]
+}

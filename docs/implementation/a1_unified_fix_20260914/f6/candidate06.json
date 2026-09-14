@@ -1,0 +1,26 @@
+{
+  "status": "22/22 listed mechanisms PASS on final06; separately observed direct Generate origin role labels require the subsequent five-line producer fix. Not a final all-contracts verdict.",
+  "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+  "passed_cases": 22,
+  "archive": "candidate06_full_pre_origin_label_fix.tar.gz",
+  "sha256": "c9d7ae254869ee67db4c330539501823f3dc451e63963736a4071166bcada67b",
+  "bytes": 13274123,
+  "observed_origin": {
+    "cases": [
+      "repeat",
+      "aba",
+      "env_reorder",
+      "env_unrelated"
+    ],
+    "actual_stage": "generate",
+    "actual_recovery_calls": 0,
+    "origin_source_stage": "recovery",
+    "origin_source_owner": "semantic_review",
+    "origin_error": "ACTION_SCHEMA_TYPE_ERROR",
+    "attempt_id": "",
+    "causal_execution": {
+      "status": "UNKNOWN"
+    }
+  },
+  "preserved": "All raw receipts/output files/manifests and all three exact loaded F6 test sources; original /tmp runs unchanged."
+}

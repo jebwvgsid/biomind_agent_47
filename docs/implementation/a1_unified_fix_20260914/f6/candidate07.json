@@ -1,0 +1,8 @@
+{
+  "status": "EXPORT_ONLY_NOT_RUN",
+  "source_signature": "ca986c36fb5f4f54ccf80a3be054ead663d08a84da7e0980d41141498fdfa93d",
+  "reason": "Export completed before the two new IT03 origin-label assertions were saved. Parent ordered a fresh final08 export with the same production bytes and the final test assertions; final07 was not mutated or run.",
+  "manifest": "candidate07_export_manifest.json.gz",
+  "sha256": "04595a7baa73d09289c6e0b21bc38ef8f3bfb29449d7604823b854f6a19a8538",
+  "raw_sha256": "b8da0ada41cab12069fe404fdf1115bb09a88aaf7758597dc9fb8bb1497d7684"
+}

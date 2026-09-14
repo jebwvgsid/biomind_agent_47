@@ -1,0 +1,437 @@
+{
+  "status": "F4 FIX PASS; F5 FIX PASS for recorded isolated mechanism scope",
+  "source_signature": "46c6f2c3f3f8d0354e29d98c3b6fcbdb89a7e91451ca69ad3c34216a3d33e8de",
+  "source_baseline_head": "499ce1ae5b95a04dd227e21628578946203372f6",
+  "production_reuse": "Later Generate candidate bookkeeping changes are separately checked by entry_regions_reuse.json; no claim that this run loaded later full bio_agents bytes.",
+  "regression": {
+    "passed": 49,
+    "new_f4": 6,
+    "old_unchanged_input_approval": 43,
+    "receipt": "regression/pytest-results.json"
+  },
+  "pty": [
+    {
+      "case": "plain-approve",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "formal_review_receipt": true,
+          "one_current_owner_decision": true,
+          "receipt_current_frozen_version": true
+        }
+      },
+      "receipt": "pty/plain-approve/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approved_for_execution",
+      "acceptance_ready": true,
+      "review_receipt_id": "plan-review-e6db14896c88410fa62b",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "plain-blank_paste",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "formal_review_receipt": true,
+          "one_current_owner_decision": true,
+          "receipt_current_frozen_version": true
+        }
+      },
+      "receipt": "pty/plain-blank_paste/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approved_for_execution",
+      "acceptance_ready": true,
+      "review_receipt_id": "plan-review-8e16d916efd44d52a006",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "plain-eof",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "eof_preserves_waiting_without_decision": true
+        }
+      },
+      "receipt": "pty/plain-eof/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approval_pending",
+      "acceptance_ready": false,
+      "review_receipt_id": "",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "plain-feedback",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "feedback_not_approval": true,
+          "multiline_feedback_is_one_input": true
+        }
+      },
+      "receipt": "pty/plain-feedback/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "reconsultation_required",
+      "acceptance_ready": false,
+      "review_receipt_id": "",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-approve",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "same_body_in_f2": true,
+          "entire_frozen_body_in_f2": true,
+          "default_scrolled": true,
+          "resize_same_scope": true,
+          "correct_acceptance": true,
+          "formal_review_receipt": true,
+          "one_current_owner_decision": true,
+          "receipt_current_frozen_version": true
+        }
+      },
+      "receipt": "pty/tty-approve/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approved_for_execution",
+      "acceptance_ready": true,
+      "review_receipt_id": "plan-review-7c313a70eb704270bdd1",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-blank_paste",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "formal_review_receipt": true,
+          "one_current_owner_decision": true,
+          "receipt_current_frozen_version": true
+        }
+      },
+      "receipt": "pty/tty-blank_paste/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approved_for_execution",
+      "acceptance_ready": true,
+      "review_receipt_id": "plan-review-042d48178e064e33a29c",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-cancel",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "cancel_reaches_real_terminal": true
+        }
+      },
+      "receipt": "pty/tty-cancel/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "terminal",
+      "acceptance_ready": false,
+      "review_receipt_id": "",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-eof",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "eof_preserves_waiting_without_decision": true
+        }
+      },
+      "receipt": "pty/tty-eof/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approval_pending",
+      "acceptance_ready": false,
+      "review_receipt_id": "",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-fallback",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "same_pending_future_transferred_once": true,
+          "same_frozen_body_in_plain": true,
+          "correct_acceptance": true,
+          "formal_review_receipt": true,
+          "one_current_owner_decision": true,
+          "receipt_current_frozen_version": true
+        }
+      },
+      "receipt": "pty/tty-fallback/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approved_for_execution",
+      "acceptance_ready": true,
+      "review_receipt_id": "plan-review-7bf8b1bce1d14367b73e",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-feedback",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "feedback_not_approval": true,
+          "multiline_feedback_is_one_input": true
+        }
+      },
+      "receipt": "pty/tty-feedback/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "reconsultation_required",
+      "acceptance_ready": false,
+      "review_receipt_id": "",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-nonsemantic",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "formal_review_receipt": true,
+          "one_current_owner_decision": true,
+          "receipt_current_frozen_version": true
+        }
+      },
+      "receipt": "pty/tty-nonsemantic/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approved_for_execution",
+      "acceptance_ready": true,
+      "review_receipt_id": "plan-review-25cdbef4f4c642fbb209",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-queued",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "formal_review_receipt": true,
+          "one_current_owner_decision": true,
+          "receipt_current_frozen_version": true
+        }
+      },
+      "receipt": "pty/tty-queued/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "approved_for_execution",
+      "acceptance_ready": true,
+      "review_receipt_id": "plan-review-4f499f502fce4c6c876e",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-reject",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "feedback_not_approval": true,
+          "reject_then_feedback": true
+        }
+      },
+      "receipt": "pty/tty-reject/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "reconsultation_required",
+      "acceptance_ready": false,
+      "review_receipt_id": "",
+      "executions": 0,
+      "code_approvals": 0
+    },
+    {
+      "case": "tty-semantic",
+      "checks": {
+        "passed": true,
+        "checks": {
+          "child_rc0": true,
+          "business_done": true,
+          "source_unchanged": true,
+          "one_frozen_plan": true,
+          "no_execution_or_code_approval": true,
+          "fixed_provider_only": true,
+          "full_body_bound_before_confirmation": true,
+          "entire_frozen_body_in_current_view": true,
+          "default_body_visible": true,
+          "correct_acceptance": true,
+          "stale_input_rejected": true
+        }
+      },
+      "receipt": "pty/tty-semantic/receipt.json",
+      "loaded_modules": 117,
+      "loaded_match_manifest": true,
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "outcome": "revision_required",
+      "acceptance_ready": false,
+      "review_receipt_id": "",
+      "executions": 0,
+      "code_approvals": 0
+    }
+  ],
+  "real_provider": "NOT_RUN; fixed Consultant and Planner responses",
+  "real_science": "NOT_RUN; no execution dispatch",
+  "historical_production_loaded_config": "UNKNOWN; never read",
+  "f5_registered_hooks": "UI production render/writer callbacks exercised including actual run_terminal fallback; schema2 model/memory hooks covered by root F6 separate receipts",
+  "safety": "New synthetic tasks/paths/PTY, explicit child env, allowlisted export guard unchanged; no original sessions/scripts/data/config/API accessed.",
+  "latest_unified_regression": "unified_final/regression_evidence.json",
+  "latest_unified_pty": "unified_final/final02_pty/evidence.json",
+  "latest_old_cli_display": "unified_final/final04_cli/verification.json",
+  "latest_old_cli_model_progress": "unified_final/final05_cli/verification.json",
+  "latest_candidate05_reuse": "unified_final/candidate05_reuse.json",
+  "latest_candidate06_reuse": "unified_final/candidate06_reuse.json",
+  "latest_f5_cli_candidate08_reuse": "unified_final/candidate08_display_reuse.json"
+}

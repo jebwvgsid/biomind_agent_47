@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_IT01_six_distinct_snpeff_capabilities_native_argv",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_IT01_six_distinct_snpeff_capabilities_native_argv",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010910350829362869,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_IT01_six_distinct_snpeff_capabilities_native_argv",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 82.29066311288625,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_IT01_six_distinct_snpeff_capabilities_native_argv",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000321878120303154,
+    "failure": ""
+  }
+]

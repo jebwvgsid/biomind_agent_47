@@ -1,0 +1,13 @@
+{
+  "commit": "a84e9932d66019a2277bf1ffb8b13ac7a5e39af6",
+  "parent": "499ce1ae5b95a04dd227e21628578946203372f6",
+  "tree": "df18af25859190d8e6af7e13cc14cad68e5b8132",
+  "files": [
+    "agent_core/workflow/runtime_graph.py",
+    "tests/a1_unified_fix/test_f4_ask_user.py"
+  ],
+  "patch_sha256": "0b76d5b946b928f18653d219f715296c591d82fefcb6feedc82dae08e3f7a6ac",
+  "other_index_entries_preserved": true,
+  "validation": "docs/implementation/a1_unified_fix_20260914/entry/evidence.json; fixed current-byte export + protected overlays, F4 6 and existing safety 43 PASS",
+  "push": false
+}

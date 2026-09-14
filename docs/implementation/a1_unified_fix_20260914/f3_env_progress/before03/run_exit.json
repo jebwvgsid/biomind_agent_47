@@ -1,0 +1,9 @@
+{
+  "returncode": 1,
+  "source_signature": "17ea2c6614b0fdaf3519b58deba0a3788d77b31885622b9ef95451b4e04c17d6",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint"
+  ]
+}

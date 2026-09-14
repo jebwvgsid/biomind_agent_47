@@ -1,0 +1,133 @@
+{
+  "status": "FINAL08_RECOVERY_CLAIM_CACHE_RELOAD_PASS",
+  "test": "tests/a1_unified_fix/test_f3_recovery_claim.py",
+  "test_sha256": "580059708879332b3c6202acd685178faa4d2f94ca07e64a311efa92ad42cc2b",
+  "source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "baseline_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "actual_returncode": 0,
+  "counts": {
+    "passed": 1
+  },
+  "source_file_count": 457,
+  "source_changes_after_run": [],
+  "f6_fixture_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+  "production_generation_claim_owner": "task_state.recovery_state.generation_claim / generation_claim_history",
+  "actual_external_leaf_counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 0,
+    "recovery": 1
+  },
+  "actual_registered_consumed_node_invocations": 4,
+  "transport_projection": [
+    {
+      "event": "actual_provider_leaf_delivery",
+      "stage": "consultant",
+      "invocation_id": "inv-02002f2b-c244-4e5a-aa6a-c348484f30b1",
+      "status": null,
+      "transport_history_count": null
+    },
+    {
+      "event": "actual_node_dispatch_consumed",
+      "stage": "consultant",
+      "invocation_id": "inv-02002f2b-c244-4e5a-aa6a-c348484f30b1",
+      "status": "consumed",
+      "transport_history_count": 1
+    },
+    {
+      "event": "actual_provider_leaf_delivery",
+      "stage": "planner",
+      "invocation_id": "inv-011e7dd6-46a2-4dac-8a14-0a4702607dc4",
+      "status": null,
+      "transport_history_count": null
+    },
+    {
+      "event": "actual_node_dispatch_consumed",
+      "stage": "planner",
+      "invocation_id": "inv-011e7dd6-46a2-4dac-8a14-0a4702607dc4",
+      "status": "consumed",
+      "transport_history_count": 2
+    },
+    {
+      "event": "actual_provider_leaf_delivery",
+      "stage": "generate",
+      "invocation_id": "inv-e4f1831c-7259-447f-b204-daee37f59435",
+      "status": null,
+      "transport_history_count": null
+    },
+    {
+      "event": "actual_node_dispatch_consumed",
+      "stage": "generate",
+      "invocation_id": "inv-e4f1831c-7259-447f-b204-daee37f59435",
+      "status": "consumed",
+      "transport_history_count": 3
+    },
+    {
+      "event": "actual_provider_leaf_delivery",
+      "stage": "generate",
+      "invocation_id": "inv-8c783725-8727-4107-8e90-82fde6d6c083",
+      "status": null,
+      "transport_history_count": null
+    },
+    {
+      "event": "actual_node_dispatch_consumed",
+      "stage": "generate",
+      "invocation_id": "inv-8c783725-8727-4107-8e90-82fde6d6c083",
+      "status": "consumed",
+      "transport_history_count": 5
+    }
+  ],
+  "independent_children": [
+    {
+      "pid": 80,
+      "before_status": "claimed",
+      "after_status": "claimed",
+      "provider_calls": 0,
+      "budget_unchanged": true,
+      "target_unchanged": true
+    },
+    {
+      "pid": 81,
+      "before_status": "provider_completed",
+      "after_status": "action_adopted",
+      "provider_calls": 0,
+      "budget_unchanged": true,
+      "target_unchanged": true
+    }
+  ],
+  "pending_scope": "A child calls the existing durable update_recovery_generation_claim/save/load API on the freshly generated task to exercise claimed->unknown->claimed. This reads and preserves budget/identity; it does not pretend to exercise remote replay.",
+  "completed_scope": "Real completion CAS is observed and interrupted before consumption; a separate fork process re-enters the actual registered Generate handler. With node-model invocation forbidden, it returns action_ready from cache and adopts the same claim without extra budget or scientific execution.",
+  "unknown_remote_limit": "Existing generation_claim explicitly declares at_least_once_without_provider_idempotency; a missing remote completion can be redelivered under the same target. This differs from scientific Execute outcome_unknown and does not authorize rerunning an unknown scientific process.",
+  "transport_scope": "Final F6 fixture retains real _ainvoke_node_llm and _ainvoke_llm registration, consumption, recording and retry/staleness guard; only the external model leaf is fixed. All four main node dispatches completed their actual transport path. This single case does not inject all transport failure/retry schedules.",
+  "preliminary_run": "pre_transport_run01/verification.json",
+  "final_artifacts": {
+    "invocation.json": "1148fbe6a8dbda34fa0d5b5f5dac1f8c5fd3b2d4fc6eabfc69279d7f75d6019f",
+    "run_exit.json": "e887d1d0368aae793a951703ceb847788e44e1a71b5547530c9ce1da33a8a2c8",
+    "f3-recovery-claim.json": "6ade21f8a49b274cdcabb4334e139684dcba98c33ddc2cc56f3b6a1857e44986",
+    "f6-recovery-full.json.gz": "f3c0e14f0c2bd36b2d13ff85ada85a9308eacf1de21fb63d46994d2dcf618ce7",
+    "f6-recovery-summary.json": "56824d85b57338f8f9a80c9fc49fe84623b1364bb658251fb529461d53a360a1",
+    "stdout.txt.gz": "e3342397081104ae477da651b8693bfdf21859ad155597e5a730b6b44c948a32",
+    "pytest-results.json": "d982f9c3df59b29be84cc3bc1bcff172521b949d82aa7fb79e0218805e290728",
+    "export_manifest.json": "5b6b1841b3f441286dea25cd692a4228b00e675459163c7d807f4a9b9d0ca819",
+    "transport_projection.json": "1e8a7f5e8b3ac549b6e9cbf94244cdc00069b8a3293ff1e22a56b8f02d058e72",
+    "actual_new_task/plan_state.json": "b2f61005630f8fa3aaa004133ae138e4b0cb32a2393a7c0a5d88bd55a59929c8",
+    "actual_new_task/attempts/attempt_8246b13b167af4ea4b00/approved.sh": "435e3ec17298d2fd0a5832e12bee1cfec634cf25d4e3c0115abb25a57ab90515",
+    "actual_new_task/attempts/attempt_8246b13b167af4ea4b00/stderr.log": "86e8d6f0ffa7a26fe25b9ba313639cf72cb55a7b93ca755616acbe6354d99af4",
+    "actual_new_task/attempts/attempt_8246b13b167af4ea4b00/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "actual_new_task/attempts/attempt_8246b13b167af4ea4b00/exit_status.json": "ee7a8f66eaf7f80e37a14d8c6b3ad0c6c6c6c8d4379e0b4a3271a44580966eff",
+    "actual_new_task/attempts/attempt_8246b13b167af4ea4b00/executed.sh": "6dbc43db0908a889d5683e10b4454ca2e5853a849547ef160bfed21da0d7d564",
+    "actual_new_task/executions/execution_records.jsonl": "a93a58825fa55891cff36495154ce4086538197554abd65b238622a2f0f77b71"
+  },
+  "limits": [
+    "Only this new synthetic task is loaded; no original session/provider/science.",
+    "Forked fresh processes share the approved synthetic workspace and already installed safe modules; no claim for process-independent package discovery or all OS crash windows.",
+    "Pending unknown/reclaim is exercised through the actual ledger API, not an extra remote delivery.",
+    "Cached action reaches admission and adoption; test deliberately stops before a second script approval/Execute/Commit."
+  ],
+  "public_regression_reuse": null,
+  "public_regression_current": "../regression/final08/verification.json",
+  "current_pointer": "final08",
+  "summary": "1 passed, 2 warnings in 34.96s",
+  "superseded_by": null
+}

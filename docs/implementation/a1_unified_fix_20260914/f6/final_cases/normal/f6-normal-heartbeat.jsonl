@@ -1,0 +1,8 @@
+{"monotonic": 4294891.891797815, "mode": "normal", "calls": {"consultant": 0, "planner": 0, "generate": 0, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4294902.742878478, "mode": "normal", "calls": {"consultant": 1, "planner": 1, "generate": 1, "reviewer": 1, "recovery": 0}, "executions": 1, "commits": 0}
+{"monotonic": 4294913.441884482, "mode": "normal", "calls": {"consultant": 1, "planner": 1, "generate": 2, "reviewer": 2, "recovery": 0}, "executions": 2, "commits": 1}
+{"monotonic": 4294924.369899714, "mode": "normal", "calls": {"consultant": 1, "planner": 1, "generate": 3, "reviewer": 2, "recovery": 0}, "executions": 3, "commits": 2}
+{"monotonic": 4294935.465697889, "mode": "normal", "calls": {"consultant": 1, "planner": 1, "generate": 4, "reviewer": 3, "recovery": 0}, "executions": 3, "commits": 3}
+{"monotonic": 4294946.611164969, "mode": "normal", "calls": {"consultant": 1, "planner": 1, "generate": 5, "reviewer": 4, "recovery": 0}, "executions": 4, "commits": 4}
+{"monotonic": 4294957.180732735, "mode": "normal", "calls": {"consultant": 1, "planner": 1, "generate": 6, "reviewer": 5, "recovery": 0}, "executions": 5, "commits": 5}
+{"monotonic": 4294968.081135312, "mode": "normal", "calls": {"consultant": 1, "planner": 1, "generate": 6, "reviewer": 6, "recovery": 0}, "executions": 6, "commits": 5}

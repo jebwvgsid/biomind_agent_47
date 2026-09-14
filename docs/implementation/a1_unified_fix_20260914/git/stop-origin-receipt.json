@@ -1,0 +1,19 @@
+{
+  "commit": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "parent": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+  "tree": "c02d4b431d5d85ec7120cea621ac49c76812a026",
+  "files": [
+    "agent_core/workflow/managed_stop.py",
+    "tests/a1_unified_fix/test_f3_stop_origin.py"
+  ],
+  "patch_sha256": "8208f971a9657e9ba4fc48898c9627f7a47a36cc37e8c5a0b69a61a064f836cd",
+  "other_index_entries_preserved": true,
+  "validation": {
+    "before": "new formal repeat graph rc1: reported recovery instead of generate",
+    "after": "/tmp/biomind-a1-stop-origin-after-01: 3 passed, rc0; Generate repeat, voluntary blocked, real Execute rc7 parent cause preserved",
+    "source_signature": "46395712f1f1ccee429c7f0e26107036eae7f368c9ea9a996d6577c4c1e52222",
+    "protected_overlay": "Patch computed against exact original worktree bytes; only five new lines, original explanation hunks excluded",
+    "combined_final_retest": "required in final07"
+  },
+  "push": false
+}

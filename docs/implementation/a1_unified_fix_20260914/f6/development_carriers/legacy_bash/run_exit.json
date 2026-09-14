@@ -1,0 +1,13 @@
+{
+  "source_signature": "5302c6a47a72d2614bede12d5f3ed4335a19034f12283c14d5df816be2e19c83",
+  "loaded_source_manifest": "/tmp/biomind-f2-carriers-01/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_bash]"
+  ],
+  "timeout_seconds": 180,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

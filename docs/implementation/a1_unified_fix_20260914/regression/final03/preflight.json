@@ -1,0 +1,103 @@
+{
+  "status": "PREPARED_NOT_YET_RUN",
+  "source_signature": "8ffbd5ed701df66b4079d6627fb15fdffcd131928be7303b4eeb2efda49dffd0",
+  "baseline_head": "a64ca7652c74f505242620535788524d3f365241",
+  "manifest_sha256": "e11de7077794a9f5ba047aee40469da09c91f64e7597398a88915f53a4f4a225",
+  "file_count": 453,
+  "changes_since_final01": {
+    "agent_core/step_effects.py": {
+      "final01": "f3be5f2a2318d03730bfe9d29bbbd00c76a377d55359f9289acafccb855f5bde",
+      "final03": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e"
+    },
+    "tests/a1_unified_fix/test_f2_approval_graph.py": {
+      "final01": null,
+      "final03": "abe43f46a68eadffaaee9dff35b20c364ef86842107a07d22a9c7db60f174a8b"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py": {
+      "final01": null,
+      "final03": "06b08dba68df24f792f61c455ce1ff412fdfcf337b7d8d85dc9f54be849c9b75"
+    },
+    "tests/a1_unified_fix/test_f5_pty.py": {
+      "final01": "756358064f9141e5112bb697e47634dca088894ef7630d0cc312af02686b42ba",
+      "final03": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538"
+    },
+    "tests/a1_unified_fix/test_terminal_hooks.py": {
+      "final01": "b0298020f1561a0948fe572b78c0bc6fd99bcef677f16ad97de0fa4b6c23d41d",
+      "final03": "ee3c56bc04f63acb911d20a1854b628ce95e4beb08febed4e6b4d079009c900f"
+    }
+  },
+  "safe_groups": {
+    "shared": [
+      "tests/test_candidate_generation_claims.py",
+      "tests/test_generate_recovery_handoff.py",
+      "tests/test_cross_layer_correction.py",
+      "tests/test_cross_layer_delivery.py"
+    ],
+    "prompt": [
+      "tests/test_generate_capability_scoped_prompt.py",
+      "tests/test_generate_provider_payload_safety.py::test_nonempty_capability_uses_complete_production_message_safety",
+      "tests/test_generate_provider_payload_safety.py::test_hash_text_reaches_mock_provider_without_content_interception"
+    ],
+    "planner_lifecycle_full": [
+      "tests/test_planner_lifecycle_boundary.py::test_current_revision_correction_real_review_and_single_execution"
+    ],
+    "planner_lifecycle_stale": [
+      "tests/test_planner_lifecycle_boundary.py::test_stale_approval_is_checked_again_at_commit",
+      "tests/test_planner_lifecycle_boundary.py::test_late_provider_does_not_replace_current_submission",
+      "tests/test_planner_lifecycle_boundary.py::test_forced_stale_action_still_cannot_start_at_execute"
+    ],
+    "recovery_pure": [
+      "tests/test_recovery_transition_lifecycle.py::test_recovery_judge_cannot_complete_a_step",
+      "tests/test_recovery_transition_lifecycle.py::test_exhausted_progress_does_not_cross_step_boundaries",
+      "tests/test_recovery_transition_lifecycle.py::test_supervisor_reconciliation_is_evidence_not_route_authority",
+      "tests/test_recovery_transition_lifecycle.py::test_unbound_success_decision_from_supervisor_becomes_generate_continuation"
+    ]
+  },
+  "not_run_safety": [
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_session_1788340897_offline_mock_replay_crosses_prompt_guard",
+      "source_line": 204,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_generate_provider_payload_safety.py::test_controller_attaches_internal_binding_and_hash_mismatch_fails_closed",
+      "source_line": 261,
+      "reason": "Reads a different benchmark original session plan.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_candidate_generation_resume.py",
+      "reason": "Old session JSON fixture; no new read/export authorized. Replaced by fresh F3 real claims/reload and F6 combination.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_resource_fix.py",
+      "reason": "Old incident JSON fixtures; reuse validated unchanged modules and old bounded receipts, not a new whole-chain PASS.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_stop_fix.py",
+      "reason": "Same old incident JSON dependency; new F3/F6 formal blocked branches and unchanged Planner evidence are separated.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_plan_cancel_fix.py",
+      "reason": "Same old incident JSON dependency; unchanged pre_dispatch/atomic evidence reused, changed Generate boundaries retested in F3.",
+      "status": "NOT_RUN_SAFETY"
+    },
+    {
+      "test": "tests/test_recovery_transition_lifecycle.py::<incident_fixture dependent cases>",
+      "reason": "Old session JSON fixture. Only four explicitly fixture-free cases selected.",
+      "status": "NOT_RUN_SAFETY"
+    }
+  ],
+  "no_fixture_reads_added": true,
+  "preexisting_assertion_production_and_assertion_function_unchanged": true,
+  "previous_assertion_evidence": "../unified_final/preexisting_assertion.json",
+  "scope_fix_byte_equivalence": {
+    "production": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+    "new_test": "06b08dba68df24f792f61c455ce1ff412fdfcf337b7d8d85dc9f54be849c9b75"
+  },
+  "recovery_low_load_window": "Prepare only before approximate 16:04:16 UTC; no subprocess pytest started."
+}

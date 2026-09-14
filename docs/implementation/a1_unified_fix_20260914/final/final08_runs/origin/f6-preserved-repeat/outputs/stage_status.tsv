@@ -1,0 +1,8 @@
+stage	workflow_status	execution_status	committed	notes
+check_contig_compatibility	failed	not_started_or_unknown	False	latest attempt purpose=UNKNOWN; primary causal returncode=None; formal verification/commit remain authoritative
+prepare_database	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+build_database	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+annotate_variants	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+summarize_ann	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+finalize_outputs	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+run	failed	stopped	false	GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED

@@ -1,0 +1,21 @@
+{
+  "previous_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+  "current_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "changed": {
+    "agent_core/workflow/managed_stop.py": {
+      "old": "abbbc6a6573161a6926b07a1fe91929930a38a945f3b181c031082077a9c1ef4",
+      "new": "89479f55fa4ecc62551072b1b581fd8e00cb4a03c2128e989e5cec5d19685593"
+    },
+    "tests/a1_unified_fix/test_f6_repeat_graph.py": {
+      "old": "01c416126c9eb90c824e5775b9f554e09b01d4f08e3947f8e2a24e3615883007",
+      "new": "c30deb9b9a933366bbaa86c8da953ae3dd12196e3d368ccbf0b80f73ef806019"
+    },
+    "tests/a1_unified_fix/test_f3_stop_origin.py": {
+      "old": null,
+      "new": "7941e7924f3fc4760fe296471e91d37db75c7c365f2e7648bee78e95bc265801"
+    }
+  },
+  "production_candidate": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "final07": "EXPORT_ONLY_NOT_RUN; two new exact origin assertions were added before testing. No frozen export overwritten.",
+  "production_delta": "Five owned report projection lines only; original protected managed_stop explanation hunks preserved."
+}

@@ -1,0 +1,170 @@
+{
+  "status": "Final06 F1 protocol 6/6 PASS within shared 101/101 PASS; ordinary/local/Recovery/blocked use real node/transport wrappers with fixed external model leaf",
+  "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+  "source_head": "2b989a5eb6bd6b203805a1fbff216e8fb1a27cf7",
+  "source_step_effects_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+  "source_bio_agents_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+  "source_candidate_repair_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa",
+  "test_f6_fixture_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+  "run_root": "/tmp/biomind-a1-unified-final-06/protocol-helper-shared",
+  "f1_raw_artifact_root": "final06",
+  "full_group_root_archive": "../../final/final06_runs/protocol-helper-shared",
+  "full_group_root_archive_owner": "Root copies full group after all seven groups finish; F1 selected raw receipts already persisted locally here.",
+  "new_f1_calls": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 8.28981261048466,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 13.40094240475446,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 22.22776668984443,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 24.30098988302052,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 2.721761736087501,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.09869858622550964,
+      "failure": ""
+    }
+  ],
+  "shared_calls_passed": 101,
+  "f1_loaded_module_count": 123,
+  "all_f1_loaded_match_final06_manifest": true,
+  "run_exit": {
+    "source_signature": "1374896f03aa88546962770e120da9008cff2bcf67328daececc0d4f1afd20dc",
+    "loaded_source_manifest": "/tmp/biomind-a1-unified-final-06/export/export_manifest.json",
+    "test_targets": [
+      "-s",
+      "-q",
+      "tests/a1_unified_fix/test_f1_f2.py",
+      "tests/a1_unified_fix/test_f1_protocol.py",
+      "tests/a1_unified_fix/test_f2_scope.py",
+      "tests/test_cross_layer_publication.py",
+      "tests/test_cross_layer_domain.py",
+      "tests/test_step_effect_runtime.py",
+      "tests/test_semantic_completion.py"
+    ],
+    "timeout_seconds": 180,
+    "watchdog_is_not_production_termination": true,
+    "returncode": 0,
+    "source_changes_after_run": []
+  },
+  "scope": "Actual ordinary/local/Recovery requests traverse real node invocation register/consume and transport wrappers with fixed non-streaming model leaves, then parser/current admission unchanged. Blocked and legacy alternatives verified. Standalone demo computes False/empty only under demo declarations. No real API/SDK-streaming or scientific completion claim.",
+  "retained_prior_final03_evidence": "current_final03_evidence.json",
+  "retained_pre_scope_evidence": "regression_evidence.json",
+  "artifacts": [
+    {
+      "file": "final06/f1-protocol-blocked.json.gz",
+      "sha256": "3e729c6e8430574af7d49ec43a1469d0c6e9438edd6e9ae28ef4ca640c06ab1b",
+      "raw_sha256": "96c727a95e4f69768cf7c0a3d3e1cfb42e9b55e8e7af2d66442f7ab1c9badc62"
+    },
+    {
+      "file": "final06/f1-protocol-capture-blocked-2.json.gz",
+      "sha256": "64ca73340af2937f318d5a10ec0e9953113bc4be52c97ab44787a86cda2bdd5c",
+      "raw_sha256": "fb47b6f997885b21feccce76067d5e909f644c2a6f62ae67540112b0d3cf0a0e"
+    },
+    {
+      "file": "final06/f1-protocol-capture-local-1.json.gz",
+      "sha256": "4126b76b4349d47c2c1672c7a8c20cc51f3a3e5b320027f4f0e60a4321ba233f",
+      "raw_sha256": "c7123b42c353afef34504c264af0cdbbf6eaac5c5bc902fc2638a4f0c1a1be54"
+    },
+    {
+      "file": "final06/f1-protocol-capture-local-2.json.gz",
+      "sha256": "3dd04393de950e3d36c0d78c5192b32ad0d4fbb0a53354d7ccf58f4dc68ca3cc",
+      "raw_sha256": "b28e33c8735559480ae41c6b674ed9a44d6092a3d4ca884f2ab195c4af45676f"
+    },
+    {
+      "file": "final06/f1-protocol-capture-normal-1.json.gz",
+      "sha256": "6ff07086b2a4bfb9ad77183ab2b21f27408dba97e8685d1bc5cdc7f8dbaff6c0",
+      "raw_sha256": "ceffe64f8c99da05c43ba773492365ce30e3fb4fe28eefb9fda80da5af297443"
+    },
+    {
+      "file": "final06/f1-protocol-capture-recovery-2.json.gz",
+      "sha256": "93cdbaad0cfc8085c30583390067f36400f391ac7d1cee37ec53ea019e881f4f",
+      "raw_sha256": "d2b6ba5385e977639ff516782d92ba5bdd572bd2b496bc2eb92e5f74f1af449a"
+    },
+    {
+      "file": "final06/f1-protocol-demo.json.gz",
+      "sha256": "501c4ce00afbd486b32e32162d8750d54f7ce640da69c0fac6bf5e92cbe49160",
+      "raw_sha256": "61a8afec01e4b0b26b3bb287c9f9607120f8d973259212dd85a23f2831648261"
+    },
+    {
+      "file": "final06/f1-protocol-legacy.json.gz",
+      "sha256": "7b1b12401f0182c83bc7db150736dfb881bae3d627d5d3660078d0f0c32f6b26",
+      "raw_sha256": "38dd4193a9775ded23f0056a10c22018a2967a56d5740fafdf6795a424f61d88"
+    },
+    {
+      "file": "final06/f1-protocol-loaded.json.gz",
+      "sha256": "3e09e8cb20cd79bba1ad21739b88e0bd039aa438067bb5fca472fd921d09abd5",
+      "raw_sha256": "c63b67a6efeb04ae2cfdea3c09f7a83309ff92f674c39d2818e91782ac595869"
+    },
+    {
+      "file": "final06/f1-protocol-local.json.gz",
+      "sha256": "5152a8aecaa3a652996193ae17b634b780fc6d9ad7704c3b3c62acb0326ffa07",
+      "raw_sha256": "bec365d6e84dd8dbdf10c7ef4535255b7c52a6648d9c8aa29834b79213105cbe"
+    },
+    {
+      "file": "final06/f1-protocol-normal.json.gz",
+      "sha256": "9db315a9199fc78ceb73d6523f0a0332ec7e07b9bb561fb8add65bd9fa94c525",
+      "raw_sha256": "59d6c90e6ce62b5cac7dd8c3088f87762770f6c1c8e6c8562ac8c3c100f07111"
+    },
+    {
+      "file": "final06/f1-protocol-recovery.json.gz",
+      "sha256": "56af7960887c18c80dec48d78bfb09be83028e3e7e7d58f7ab4505367574264b",
+      "raw_sha256": "0ae231f2fcddb5864eabeb8e8786b12f524c3f102fd4c1e162f3f89226d73135"
+    },
+    {
+      "file": "final06/invocation.json.gz",
+      "sha256": "516bbdae6db15e3e79ea35358b3685c8e39f0304f5bf0739e0d0fc602a7cfee5",
+      "raw_sha256": "dc3dbc3dad109aff64255c0f6102d1a65eb24204d27a2d59c68ca44a21653734"
+    },
+    {
+      "file": "final06/pytest-results.json.gz",
+      "sha256": "92328e51497f59c97056f269d3ad93f56e6e84c5020b7cd185922821cec570a3",
+      "raw_sha256": "00983b1d89e9563ced92e056d6d6044fbb4245abf883e8dddf2bba626061ec51"
+    },
+    {
+      "file": "final06/run_exit.json.gz",
+      "sha256": "429d1e7e7a1b70a6ee7e64bc13b74a4a9b08135bc93f764e2a214485a70b3226",
+      "raw_sha256": "999c44efd205cadee4aed2d79e47d3e484527c4b4d7ce66461c5a0da052871e7"
+    },
+    {
+      "file": "final06/stdout.txt.gz",
+      "sha256": "dff646965dd166b72fd24978836026b8aafed0257346b012eca1595098e1c802",
+      "raw_sha256": "f600885d3ec5f1bac52aecaf0609b50e8d99dadb8599d2851a3e325b9f45773b"
+    }
+  ],
+  "case_substitution_boundaries": {
+    "normal/local/recovery/blocked": "F6Graph FixedModelLeaf via real _ainvoke_node_llm and _ainvoke_llm/run_provider_attempt; four graph cases.",
+    "legacy": "Original PlanLocal/ger_fixture_support.generate_until_ready_or_stopped replaces _ainvoke_node_llm with a fixed response provider; formal prompt/display projection/parser/current-step admission remain real. This case is mode/admission evidence, not node invocation/transport proof.",
+    "demo": "Standalone real tiny process + declared frozen helper + stdout effect parser; no provider/node invocation."
+  },
+  "superseded_by_final_verification": "current_final08_evidence.json"
+}
