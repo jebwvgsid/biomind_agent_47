@@ -102,14 +102,22 @@ def test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint()
     old_assessment.pop('comparison_context_fingerprint', None)
     previous = {**row(candidate, old_assessment, 1), 'contract_ref': contract}
     unchanged_before = deepcopy(previous)
-    actual = candidate_progress_assessment(
-        candidate=candidate, representation_targets=parsed.validated_targets,
-        binding_facts=None, violations=[parsed.error], prior_rows=[previous], contract_ref=contract)
-    save('f3-env-existing-progress-row', {'old_row': previous, 'assessment': actual,
+    witnesses = []
+    for mode, current in [('same', candidate), ('prose', {**candidate, 'purpose': 'unrelated prose'}),
+            ('unrelated_env', action(env={'NEW': 'ok', 'BAD': 7}))]:
+        current_parse = BioAnalystAgent._extract_structured_action_result(json.dumps(current))
+        actual = candidate_progress_assessment(
+            candidate=current, representation_targets=current_parse.validated_targets,
+            binding_facts=None, violations=[current_parse.error], prior_rows=[previous], contract_ref=contract)
+        witnesses.append({'mode': mode, 'assessment': actual})
+    save('f3-env-existing-progress-row', {'old_row': previous, 'witnesses': witnesses,
         'old_row_unchanged': previous == unchanged_before})
     assert previous == unchanged_before
-    assert not actual['progress_proven']
-    assert actual['basis'] == 'recurrent_rejected_candidate'
+    for witness in witnesses:
+        actual = witness['assessment']
+        assert not actual['progress_proven'], witness
+        assert actual['basis'] == ('recurrent_rejected_candidate' if witness['mode'] == 'same'
+            else 'no_validated_target_progress'), witness
 
 
 async def last_chance_graph():

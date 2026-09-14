@@ -113,8 +113,9 @@ def candidate_progress_assessment(
     # Adding an unrelated valid field cannot fix the previous rejection, and
     # dropping such a field cannot negate a demonstrated pending-value repair.
     gained_representation = [target for target in gained_representation
-        if not target.startswith("execute.env.")
-        or target.removeprefix("execute.") in prior_pending]
+        if (not target.startswith("execute.env.")
+            or target.removeprefix("execute.") in prior_pending)
+        and (target != "execute.env_keys" or "env" in prior_pending)]
     lost_representation = {target for target in old_representation - set(representation)
         if not target.startswith("execute.env.")}
     current_env = view.get("env", {}) if isinstance(view, Mapping) else None
