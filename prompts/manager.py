@@ -2567,7 +2567,8 @@ document and keep selected/excluded decision sets disjoint.
             "\n<current_generate_output_protocol>\n"
             + json.dumps(generate_output_examples(current_effect_step,
                 script_protocol=script_output_protocol,
-                binding_requirements=runtime_contract.get("binding_input_requirements") or {}),
+                binding_requirements=runtime_contract.get("binding_input_requirements") or {},
+                runtime_context=runtime_contract),
                 ensure_ascii=False, indent=2)
             + "\n</current_generate_output_protocol>\n"
         )
@@ -2787,18 +2788,10 @@ StepEffect.
             ensure_ascii=False,
             separators=(",", ":"),
         )
-        valid_env_example = json.dumps(
-            {
-                "action_type": "execute",
-                "argv": ["/opt/tool/bin/tool", "/data/reference.fasta", "-o", "/results/out.vcf"],
-                "env": {},
-            },
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
         current_examples = generate_output_examples(current_effect_step,
             script_protocol=False,
-            binding_requirements=runtime_contract.get("binding_input_requirements") or {})
+            binding_requirements=runtime_contract.get("binding_input_requirements") or {},
+            runtime_context=runtime_contract)
         canonical_execute_example = json.dumps(current_examples["action_example"], ensure_ascii=False, indent=2)
         observation_execute_example = canonical_execute_example
         return f"""You are BioMind Generate. Propose one action or one typed Skill decision for the current step.
@@ -2816,7 +2809,8 @@ Every item in `task_spec.highlighted_constraints` is authoritative and must be
 honored by the proposed action. Do not weaken, waive, summarize, reclassify, or
 return IDs/compliance claims for these open-world requirements.
 
-For a command, return exactly one JSON object and use structured argv. Required
+For a command, return exactly one JSON object with a supported code/language body
+or structured argv. If both are supplied, their executable body must agree. Required
 managed inputs/outputs must use the exact concrete paths supplied for the
 current action. Never emit an artifact placeholder or a Controller-created
 BIOMIND_INPUT/OUTPUT environment reference.
@@ -2828,10 +2822,7 @@ For `bash -lc`, this is invalid:
 {invalid_embedded_example}
 </action_json_example>
 The invalid shell scalar above contains an unresolved artifact reference.
-Use the supplied concrete input and output paths directly instead:
-<action_json_example name="valid_concrete_paths">
-{valid_env_example}
-</action_json_example>
+Use the current published concrete paths shown in current_generate_output_protocol.
 Do not emit `{{runtime:*}}`. Use the supplied concrete runtime value explicitly.
 
 Managed input/output paths may only come from the current step contract. Values

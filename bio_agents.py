@@ -42350,6 +42350,7 @@ question. Never guess a scientific or database identity.
                         approved_step, script_protocol=generate_script_protocol,
                         template=formal_emission_template,
                         binding_requirements=generate_binding_requirements,
+                        runtime_context=generate_action_provider_context,
                     )
                     generate_material_messages.insert(0, HumanMessage(
                         id="generate-output-protocol:" + hashlib.sha256(

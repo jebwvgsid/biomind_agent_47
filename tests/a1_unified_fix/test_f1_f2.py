@@ -88,7 +88,8 @@ def test_protocol_examples_exact_parser_and_negative_action_shapes():
     for name in ('action_example','blocked_example'):
         parsed=BioAnalystAgent._extract_structured_action_result(json.dumps(public[name],ensure_ascii=False))
         assert not parsed.error,parsed.error
-    assert public['action_example']['operation']==step['operation']
+    assert public['action_example']['action_type']=='blocked'
+    assert 'current_action_capability' in public['action_example']['reason']
     assert set(public['facts_example'])=={'produces_observations'}
     assert set(public['facts_example']['produces_observations'])=={'renamed_result'}
     wrapped=BioAnalystAgent._extract_structured_action_result(json.dumps({'action_json':public['action_example']}))

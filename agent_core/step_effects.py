@@ -3249,7 +3249,8 @@ def effect_template_provider_view(template: Mapping[str, Any]) -> Dict[str, Any]
 
 def generate_output_examples(step: Mapping[str, Any], *, script_protocol: bool,
                              template: Mapping[str, Any] | None = None,
-                             binding_requirements: Mapping[str, Any] | None = None) -> Dict[str, Any]:
+                             binding_requirements: Mapping[str, Any] | None = None,
+                             runtime_context: Mapping[str, Any] | None = None) -> Dict[str, Any]:
     """One current-mode projection shared by ordinary, Recovery and local requests.
 
     Examples describe representation only. The executable example deliberately
@@ -3262,39 +3263,94 @@ def generate_output_examples(step: Mapping[str, Any], *, script_protocol: bool,
         for key in dict.fromkeys([*(row.get("required_fields") or []),
             *( ["path"] if field == "produces_artifacts" else ["value"] if field == "produces_observations" else [])])}
         for row in rows} for field, rows in declarations.items() if rows}
-    body = (EFFECT_HELPER_MARKER + "\n"
-        "# Replace this failure with the approved computation and actual_facts.\n"
-        "raise RuntimeError('The protocol example has not performed the approved operation')\n"
-        "actual_facts = " + repr(facts) + "\n"
-        "print(emit_effect_evidence(actual_facts))\n")
     blocked = {"action_type": "blocked", "reason":
         "The current rejection remains unresolved after the attempted correction. No new evidence supports another candidate; the unresolved requirement must be checked before continuing. This does not complete the scientific step."}
     requirements = binding_requirements or {}
-    action = {"action_type": "execute", "operation": str(step.get("operation") or requirements.get("operation") or ""),
-        "language": "python", "code": body, "env": {}, "outputs": []}
-    if not action["operation"]:
-        action.pop("operation")
+    context = runtime_context or {}
+    capability = context.get("current_action_capability") or {}
+    operation = str(capability.get("operation") or step.get("operation") or requirements.get("operation") or "")
+    missing = []
+    if not capability:
+        missing.append("current_action_capability")
+    if step.get("operation") and operation != step["operation"]:
+        missing.append("one current approved operation")
+    resources = {name: deepcopy(context.get(name) or []) for name in (
+        "current_action_artifact_bindings", "current_action_runtime_bindings", "current_action_workspace_bindings")}
+    # These are already published concrete values, not a new resource resolver.
+    from agent_core.action_runtime import artifact_binding_id
+    artifact_ids = set()
+    for row in resources["current_action_artifact_bindings"]:
+        value = row.get("path") if row.get("direction") == "input" else row.get("expected_path")
+        if not value or row.get("direction") == "input" and (row.get("exists") is False or row.get("readable") is False):
+            if row.get("required"):
+                missing.append(str(row.get("semantic_handle") or "artifact path"))
+            continue
+        artifact_ids.update(artifact_binding_id(row.get(key)) for key in ("semantic_handle", "role") if row.get(key))
+    for row in resources["current_action_workspace_bindings"]:
+        if row.get("formal_concrete_path"):
+            artifact_ids.update(str(row[key]) for key in ("canonical_resource_id", "workspace_ref") if row.get(key))
+    missing.extend(str(name) for name in capability.get("required_artifact_binding_ids", []) if name not in artifact_ids)
+    runtime_ids = {row.get("binding_id") for row in resources["current_action_runtime_bindings"]
+        if row.get("value") and row.get("exists") is not False}
+    missing.extend(str(name) for name in capability.get("required_runtime_binding_ids", []) if name not in runtime_ids)
+    action = {"action_type": "execute", "language": "python", "env": {}, "outputs": []}
+    if operation:
+        action["operation"] = operation
     if requirements.get("protocol") == "public_handle_v2":
         action["binding_input_protocol"] = "public_handle_v2"
         action["consumed_bindings"] = deepcopy(requirements.get("consumed_bindings") or {})
         produced = {}
         for name, row in (requirements.get("produced_bindings") or {}).items():
             kind = row.get("type")
-            value = {"string": "actual semantic value", "integer": 0, "number": 0,
-                     "boolean": False, "json": {}}.get(kind)
-            if kind == "artifact_ref":
-                handles = row.get("allowed_handles") or []
-                value = {"handle": handles[0]} if len(handles) == 1 else {"handle": "select one of the published allowed_handles"}
-            produced[name] = {"type": kind, "value": value}
+            handles = row.get("allowed_handles") or []
+            if kind == "artifact_ref" and len(handles) == 1:
+                produced[name] = {"type": kind, "value": {"handle": handles[0]}}
+            else:
+                # New semantic values belong to the model. Never fill them
+                # with 0/False or an invented string just to satisfy a shape.
+                missing.append("produced_bindings." + str(name) + ".value")
         action["produced_bindings"] = produced
+    elif requirements.get("produced_bindings") or requirements.get("consumed_bindings"):
+        missing.append("complete current binding input protocol")
+    if script_protocol and (action.get("produced_bindings") or action.get("consumed_bindings")):
+        missing.append("native action protocol for current binding obligations")
+    execution_resources = {
+        "artifacts": {row["semantic_handle"]: {"direction": row.get("direction"),
+            "path": row.get("path") if row.get("direction") == "input" else row.get("expected_path")}
+            for row in resources["current_action_artifact_bindings"] if row.get("semantic_handle")},
+        "runtime": {row["binding_id"]: row.get("value")
+            for row in resources["current_action_runtime_bindings"] if row.get("binding_id")},
+        "workspaces": {row["plan_handle"]: row.get("formal_concrete_path")
+            for row in resources["current_action_workspace_bindings"] if row.get("plan_handle")},
+    }
+    body = (EFFECT_HELPER_MARKER + "\n"
+        "def perform_approved_operation(operation, resources):\n"
+        "    # Implement the approved scientific calculation; do not infer facts from paths.\n"
+        "    raise RuntimeError('Admission example only: the approved scientific operation is not implemented')\n\n"
+        "actual_facts = perform_approved_operation(" + repr(operation) + ", " + repr(execution_resources) + ")\n"
+        "print(emit_effect_evidence(actual_facts))\n")
+    action["code"] = body
+    example = ({"response_type": "biomind_generate_display_v1",
+        "public_message": "候选已形成，等待检查与审批。", "payload": "<python>\n" + body + "</python>"}
+        if script_protocol else action)
+    if missing:
+        example = {"action_type": "blocked", "reason":
+            "A complete current-step executable example cannot determine these required values from the published frozen context: "
+            + ", ".join(sorted(set(missing))) + ". No values, handles, paths or scientific facts have been guessed. Resolve these facts before proposing execution."}
+    demo = {"scope": "Standalone synthetic protocol demonstration only. This is NOT an action for the current step; never publish this identity under the current declarations.",
+        "step": {"step_id": "synthetic-protocol-demo", "produces_observations": [
+            {"identity": "synthetic_demo_matches", "evidence_contract": {"required_fields": ["value", "items"]}}]},
+        "code": EFFECT_HELPER_MARKER + "\nitems = [item for item in [1, 2, 3] if item < 0]\n"
+            "observed = bool(items)\nprint(emit_effect_evidence({'produces_observations': {'synthetic_demo_matches': {'value': observed, 'items': items}}}))\n",
+        "helper_scope": "Materialize this demonstration using only its own step declarations. Actual execution computes False and an empty list; these are not current-step observations."}
     return {"mode": "script_block_v1" if script_protocol else "native_action_json",
         "top_level": ("Return one supported executable block/display envelope or the complete blocked JSON."
             if script_protocol else "Return exactly one raw JSON object with action_type; no prose, Markdown, action_json wrapper or multiple actions."),
-        "action_example": ({"response_type": "biomind_generate_display_v1",
-            "public_message": "候选已形成，等待检查与审批。", "payload": "<python>\n" + body + "</python>"}
-            if script_protocol else action),
+        "action_example": example,
         "facts_example": facts, "blocked_example": blocked,
-        "example_scope": "Representation example only; implement this step's real obligations and use its current paths/handles before proposing execution. Placeholder values are not evidence. The example fails explicitly until implemented.",
+        "facts_example_scope": "Non-executable shape template only. Placeholder values are not measured facts and must not be published.",
+        "synthetic_protocol_demo": demo,
+        "example_scope": "The complete action uses current published operation/resources and only determinate binding values for admission. It intentionally fails without publishing facts until the MODEL implements the approved scientific calculation. Admission is not scientific completion. Unknown required values produce a complete blocked alternative. The separate synthetic demo is never a current-step action or observation.",
         "feedback_rule": "Correct the precise current representation or binding error in this node. If there is no new basis after attempted corrections, submit blocked before the remaining budget is exhausted. Changing an error code or script alone proves neither progress nor success.",
         "facts_rule": "action JSON precedes approval; categorized actual_facts is helper input inside the Python process; BIOMIND_EFFECT_EVIDENCE_JSON is execution stdout. Workspace mutations and produced binding acceptance belong to their attester and Commit, not this serializer."}
 
