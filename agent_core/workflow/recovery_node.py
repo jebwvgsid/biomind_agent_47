@@ -1708,6 +1708,11 @@ class Schema2RecoveryNode:
                     code="RECOVERY_CAUSAL_PACKET_MISSING",
                 )
             seed = projection.recovery_seed
+            from agent_core.workflow.recovery_runtime import revalidation_stop_reason
+            stop_reason = revalidation_stop_reason(projection, durable, self.runtime.repair_limit)
+            if stop_reason:
+                return fail(task_id=task_id, durable=durable, code=stop_reason,
+                    detail="原 attempt 重新核验后仍未解决；自动恢复已停止。已完成部分与剩余缺口见停止报告。")
             registry = build_recovery_inspection_registry(
                 seed, durable, phase_store=self.phase_store
             )

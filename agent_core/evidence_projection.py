@@ -124,6 +124,7 @@ def committed_dependency_facts(plan_state: Mapping[str, Any], step: Mapping[str,
             attempt_id=validation.get("attempt_id"), completion_report_ref=(outcome.get("payload") or {}).get("completion_report_ref"),
             observations=deepcopy(effects.get("produces_observations") or []),
             predicate_findings=deepcopy(evidence.get("predicate_findings") or []),
+            reviewed_observation_warnings=deepcopy(evidence.get("reviewed_observation_warnings") or {}),
             parser_evidence_status="recorded" if evidence.get("predicate_findings") else "not_saved_in_legacy_receipt",
             applicability="Only the declared observation/predicate and its recorded input scope; no additional scientific conclusion.")
         result.append(row)

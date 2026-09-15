@@ -1,0 +1,14 @@
+{
+  "session_id": "session_1789485273",
+  "before": "step_effect_incomplete",
+  "after": "step_observation_review_required",
+  "missing_effects": {
+    "produces_observations": [
+      "snpeff_database_ready"
+    ]
+  },
+  "original_observation_still_missing": true,
+  "model_acceptance": "NOT_RUN",
+  "scientific_execution": "NOT_RUN",
+  "scope": "read-only saved Plan/receipt projection plus local file metadata; no historical rerun"
+}

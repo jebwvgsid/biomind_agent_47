@@ -2512,6 +2512,21 @@ class CompletionGate:
         )
 
     @staticmethod
+    def _observation_reviewable(evidence: StepCompletionEvidence, effect: Mapping[str, Any]) -> bool:
+        if (set(evidence.missing_effects) != {"produces_observations"}
+                or any((evidence.failed_criteria, evidence.missing_outputs,
+                    evidence.invalid_outputs, evidence.stale_outputs,
+                    evidence.invalid_effects, evidence.unexpected_effects))):
+            return False
+        declarations = canonical_step_effect(effect)
+        reviewable = {
+            row if isinstance(row, str) else row["identity"]
+            for row in declarations["produces_observations"]
+            if isinstance(row, str) or (not row.get("predicate") and not row.get("required_fields"))
+        }
+        return set(evidence.missing_effects["produces_observations"]) <= reviewable
+
+    @staticmethod
     def validate_step_evidence(plan_state: Dict[str, Any], step_id: str) -> StepCompletionEvidence:
         provenance = ensure_provenance_state(plan_state)
         step = next(
@@ -2710,8 +2725,18 @@ class CompletionGate:
                 waiting.append(step_id)
             if status not in STEP_SUCCESS_STATUSES:
                 unfinished.append(step_id)
-            elif plan_uses_explicit_results(plan_state) and not CompletionGate.validate_step_evidence(plan_state, step_id).completion_satisfied:
-                unfinished.append(step_id)
+            elif plan_uses_explicit_results(plan_state):
+                evidence = CompletionGate.validate_step_evidence(plan_state, step_id)
+                if evidence.completion_satisfied:
+                    continue
+                from agent_core.evidence_projection import committed_dependency_facts
+                fact = committed_dependency_facts(plan_state, {"depends_on": [step_id]})[0]
+                warning = fact.get("reviewed_observation_warnings") or {}
+                if not (CompletionGate._observation_reviewable(evidence, step)
+                        and fact.get("status") == "committed"
+                        and warning.get("missing") == evidence.missing_effects
+                        and (warning.get("decision") or {}).get("disposition") == "completion_accepted"):
+                    unfinished.append(step_id)
         stale = []
         invalid = []
         for artifact_id, version_id in provenance.get("artifact_heads", {}).items():
@@ -2955,10 +2980,19 @@ class CompletionGate:
                     classification = "step_effect_contract_invalid"
                 elif provenance_evidence.unexpected_effects:
                     classification = "step_effect_evidence_mismatch"
+                # Missing plain observations are review findings, not failed
+                # measurements. Predicates, required fields and other effects
+                # retain their independent deterministic checks.
+                if CompletionGate._observation_reviewable(provenance_evidence, typed_effect):
+                    classification = "step_observation_review_required"
                 return GateResult(
                     False,
                     message="Current execution does not satisfy the approved StepEffect.",
                     feedback=(
+                        "WARNING: a plain observation was not emitted. Review the original "
+                        "execution and independent evidence; explicitly accept or identify the "
+                        "remaining factual gap. Do not rerun computation just to print a receipt."
+                        if classification == "step_observation_review_required" else
                         "Produce and deterministically validate the missing declared effects; "
                         "do not invent an artifact for a non-artifact effect. "
                         "Missing declared effects: " + json.dumps(provenance_evidence.missing_effects, ensure_ascii=False, sort_keys=True)

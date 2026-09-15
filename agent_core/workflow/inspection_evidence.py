@@ -406,7 +406,11 @@ def prepare_inspection_evidence(
                 or receipt.get("failure_packet_ref") != parent_ref
                 or receipt.get("incident_id") != parent_incident
                 or (not retry_parent and parent_incident != packet.incident_id)
-                or (receipt.get("directive") or {}).get("action") not in {"run_diagnostic_probe", "retry_step"}):
+                or (receipt.get("directive") or {}).get("action") not in {"run_diagnostic_probe", "retry_step", "revalidate"}
+                or ((receipt.get("directive") or {}).get("action") == "revalidate" and (
+                    (receipt.get("outcome") or {}).get("type") != "revalidation_required"
+                    or (parent.get("failure_packet") or {}).get("attempt_ref") != packet.attempt_ref
+                    or (parent.get("failure_packet") or {}).get("action_ref") != packet.action_ref))):
             raise InspectionEvidenceError("DIAGNOSTIC_PARENT_SCOPE_STALE", parent_ref)
         inherited = []
         for ref in (parent.get("inspection_publication") or {}).get("refs") or ():

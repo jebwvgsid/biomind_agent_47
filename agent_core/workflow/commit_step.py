@@ -31,6 +31,7 @@ from agent_core.semantic_completion import (
     SemanticCompletionError,
     SemanticDecision,
     build_completion_report,
+    observation_review_required,
 )
 from agent_core.workflow.outcomes import (
     CommitStepOutcome,
@@ -523,7 +524,8 @@ class CommitStep:
         candidate = semantic_candidate
         gate = semantic_gate
         supplied_gate = dict(verification_payload.get("completion_gate") or {})
-        if not supplied_gate.get("passed") or not gate.get("passed"):
+        if any(not item.get("passed") and not observation_review_required(item)
+               for item in (supplied_gate, gate)):
             return self._rejected(task_id, "COMPLETION_GATE_REJECTED", str(gate.get("classification") or "gate_failed"), validation.validation_id)
         if supplied_gate.get("plan_version") and str(supplied_gate.get("plan_version")) != expected_scope["plan_version"]:
             return self._rejected(task_id, "COMPLETION_GATE_SCOPE_MISMATCH", "plan_version", validation.validation_id)
@@ -610,6 +612,10 @@ class CommitStep:
                 "input_artifact_ids": list(step.get("input_artifact_ids") or ()),
                 "input_scope": dependency_input_scope(candidate, step),
                 "predicate_findings": [deepcopy(dict(item)) for item in report.predicate_results],
+                "reviewed_observation_warnings": (
+                    {"missing": deepcopy(gate["missing_effects"]),
+                     "decision": decision.to_dict()}
+                    if observation_review_required(gate) else {}),
             },
             "outcome": semantic_outcome.to_dict(),
             "successor_projection": {"current_step_id": successor_step_id,

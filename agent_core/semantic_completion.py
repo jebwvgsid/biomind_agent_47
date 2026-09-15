@@ -2,8 +2,8 @@
 
 The LLM reviewer may select one schema-validated semantic disposition.  It does
 not select graph nodes, and its prose is never classified.  Controller-owned
-predicates are evaluated independently and always take precedence over the
-reviewer's assessment.
+predicates are evaluated independently and take precedence over the reviewer's
+assessment. Missing plain observations require explicit review as warnings.
 """
 
 from __future__ import annotations
@@ -1146,8 +1146,23 @@ def evaluate_completion_gate_facts(
         "parser_id": "biomind.completion_gate.v1",
         "parser_receipt": gate,
     }
+    if observation_review_required(gate):
+        body.update(severity="warning", status="warning")
     body["result_id"] = _predicate_result_id(body)
     return [body]
+
+
+def observation_review_required(gate: Mapping[str, Any]) -> bool:
+    """Only the gate owner can classify missing plain observations for review."""
+    return gate.get("classification") == "step_observation_review_required"
+
+
+def _blocking_predicate(row: Mapping[str, Any]) -> bool:
+    return row.get("passed") is not True and not (
+        row.get("severity") == "warning"
+        and row.get("operator") == "completion_gate_passed"
+        and observation_review_required(row.get("parser_receipt") or {})
+    )
 
 
 def _deterministic_decision(
@@ -1156,7 +1171,7 @@ def _deterministic_decision(
     scope: Mapping[str, Any],
     report_id: str = "",
 ) -> Optional[SemanticDecision]:
-    failing = [row for row in results if row.get("passed") is not True]
+    failing = [row for row in results if _blocking_predicate(row)]
     if not failing:
         return None
     priority = (
@@ -1421,6 +1436,8 @@ def _derive_report_facts(
                 else str(row.get("reason_code") or "unknown")
             ),
         }
+        if row.get("severity") == "warning":
+            finding["severity"] = "warning"
         findings.append(finding)
         if nature == "binding_and_receipt":
             receipt_findings.append({
@@ -1545,7 +1562,7 @@ class CompletionReport:
         )
         review_requirements = deepcopy(dict(semantic_review_requirements or {}))
         normalized_findings = tuple(deepcopy(dict(item)) for item in findings)
-        deterministic_veto = any(item.get("passed") is not True for item in rows)
+        deterministic_veto = any(_blocking_predicate(item) for item in rows)
         validation_digest = str(validation_digest_override or "").strip()
         if validation_digest:
             if not validation_digest.startswith("sha256:"):
@@ -1817,7 +1834,7 @@ def build_completion_report(
         bool(semantic_review_required)
         if semantic_review_required is not None
         else validation.get("llm_advisory") not in (None, {}, "")
-    )
+    ) or observation_review_required(gate_value)
     report_facts = _derive_report_facts(
         plan_state=plan_state,
         validation=validation,

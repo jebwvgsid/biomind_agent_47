@@ -97,6 +97,7 @@ class TypedSupervisor:
         # fresh mechanical check. The original execution/approval/stdout stay
         # in its admitted receipt; the normal verifier owns validity.
         recovery = state.get("recovery_outcome") or {}
+        revalidation_receipt = {}
         decision_id = str(execution.get("recovery_decision_id") or "")
         if recovery.get("type") == "revalidation_required":
             decision_id = str((recovery.get("payload") or {}).get("decision_id") or decision_id)
@@ -114,6 +115,7 @@ class TypedSupervisor:
                     scope={"task_id": task_id}, payload={"validation_evidence": {}, "eligible_probe_capabilities": [], "missing_evidence": ["REVALIDATION_ORIGINAL_SCOPE_MISMATCH"],
                         "execution_record": execution}).to_dict()}
             verifier_state["validation_evidence"] = {}
+            revalidation_receipt = saved
         if decision_id:
             from agent_core.workflow.result_resolution import (
                 get_result_resolution_request, result_resolution_reconciliation, register_result_resolution,
@@ -287,7 +289,8 @@ class TypedSupervisor:
                     else "The typed semantic reviewer disposition requires follow-up."
                 )
             else:
-                if not gate.get("passed"):
+                from agent_core.semantic_completion import observation_review_required
+                if not gate.get("passed") and not observation_review_required(gate):
                     outcome_type = "rejected"
                     payload = {
                         "validation_evidence": validation_value,
@@ -303,7 +306,8 @@ class TypedSupervisor:
                 else:
                     outcome_type = (
                         "verified_with_warnings"
-                        if validation.status == ValidationStatus.VALID_WITH_WARNINGS.value
+                        if (validation.status == ValidationStatus.VALID_WITH_WARNINGS.value
+                            or observation_review_required(gate))
                         else "verified"
                     )
                     payload = {
@@ -311,7 +315,8 @@ class TypedSupervisor:
                         "completion_gate": gate,
                         "completion_report": report_value,
                         "semantic_decision": decision_value,
-                        "accepted_warnings": list(validation.warnings),
+                        "accepted_warnings": list(validation.warnings) + (
+                            [str(gate["feedback"])] if observation_review_required(gate) else []),
                     }
                     summary = "Current execution and CompletionGate are verified."
 
@@ -339,6 +344,19 @@ class TypedSupervisor:
             payload["result_resolution_ref"] = str(execution["result_resolution_receipt"]["decision_id"])
             payload["result_resolution_source_attempt_id"] = str(execution["result_resolution_receipt"]["source_attempt_id"])
             payload["result_resolution_local_attempt_id"] = str(execution["result_resolution_receipt"]["local_attempt_id"])
+
+        if revalidation_receipt and outcome_type not in {"verified", "verified_with_warnings"}:
+            # A failed recheck continues the admitted incident. Bookkeeping
+            # generation/report changes must not reset its budget or history.
+            parent_ref = revalidation_receipt["failure_packet_ref"]
+            parent = (durable.get("task_state") or {}).get("causal_failure_packets", {}).get(parent_ref) or {}
+            parent_packet = parent.get("failure_packet") or {}
+            payload.update(
+                incident_id=parent_packet.get("incident_id", ""),
+                failure_fingerprint=parent_packet.get("failure_fingerprint", ""),
+                causal_parent_packet_ref=parent_ref,
+                recovery_decision_id=decision_id,
+            )
 
         outcome = VerificationOutcome(
             schema_version=1,

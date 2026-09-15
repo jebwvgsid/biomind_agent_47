@@ -122,7 +122,7 @@ class InspectionFixture:
         return update
 
 
-def make_inspection_fixture(root: Path, *, task_id="inspection-e2e", resolve_second=True, claimed_value=True, variant_contig="chr1", execution_returncode=0, create_attempt=True):
+def make_inspection_fixture(root: Path, *, task_id="inspection-e2e", resolve_second=True, claimed_value=True, variant_contig="chr1", execution_returncode=0, create_attempt=True, observation_contract=None, recorded_stdout=None):
     root.mkdir(parents=True, exist_ok=True)
     inputs = root / "inputs"
     inputs.mkdir()
@@ -145,6 +145,8 @@ def make_inspection_fixture(root: Path, *, task_id="inspection-e2e", resolve_sec
         "parser_id": "biomind.genomics.contig_compatibility.v1", "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
         "failure_disposition": "correction_required", "missing_disposition": "inspection_required",
     }}
+    if observation_contract is not None:
+        observation = observation_contract
     first = {"step_id": "step.check_contigs", "title": "Check contig compatibility", "action": "execute", "purpose": "validation", "tool": "bash", "inputs": [f"input.{role}" for role in paths], "outputs": [], "dependencies": [], "success_criteria": ["Emit the contigs_compatible typed boolean; the Controller independently parses the supplied files."], "skill_ids": [], "workflow_stage_ids": [], "batch_id": "", "risk_level": "low", "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility", "operation": "check_contig_compatibility", "produces_observations": [observation]}
     second = {**deepcopy(first), "step_id": "step.next", "title": "Prepare the next step", "purpose": "analysis", "inputs": [], "outputs": ["output.report", "output.stage_status", "output.reproduce_script"], "dependencies": [first["step_id"]], "success_criteria": ["Write the requested reports."], "execution_capability_id": "fixture.next", "operation": "finalize_outputs", "produces_observations": []}
     plan = build_plan_state(task_id, json.dumps({"steps": [first, second], "validation_checklist": [], "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2"}}), strict=True)
@@ -170,6 +172,8 @@ def make_inspection_fixture(root: Path, *, task_id="inspection-e2e", resolve_sec
     claims = [] if claimed_value is None else [{"identity": "contigs_compatible", "value": claimed_value}]
     effect = {"schema_version": 1, "step_id": first["step_id"], "action_id": action["action_id"], "attempt_id": attempt["attempt_id"], "produces_observations": claims, "status": "validated"}
     execution = {"schema_version": 1, "execution_id": "execution-recorded-contigs", "plan_id": plan["plan_id"], "plan_version": plan["plan_version"], "step_id": first["step_id"], "action_id": action["action_id"], "attempt_id": attempt["attempt_id"], "command_role": "required_validation", "purpose": "validation", "execution_status": "succeeded" if execution_returncode == 0 else "failed", "exit_code": execution_returncode, "code": action["code"], "raw_stdout": "BIOMIND_EFFECT_EVIDENCE_JSON=" + json.dumps({"produces_observations": claims}) + "\n", "raw_stderr": "", "declared_outputs": [], "produced_artifacts": [], "declared_step_effect": deepcopy(step["step_effect"]), "step_effect": deepcopy(step["step_effect"]), "effect_evidence": effect}
+    if recorded_stdout is not None:
+        execution["raw_stdout"] = recorded_stdout
     record_provenance_event(plan, "execution_finished", {"attempt_id": attempt["attempt_id"], "execution_record": execution})
     if execution_returncode == 0:
         mark_step_verification_pending(plan, step_id=first["step_id"], attempt_id=attempt["attempt_id"])

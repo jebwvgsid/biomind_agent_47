@@ -57,10 +57,38 @@ def _full_hash(value: Any) -> str:
     ).hexdigest()
 
 
+def revalidation_fingerprint(projection: Any) -> str:
+    """Verifier inputs, not report IDs, read handles or model wording."""
+    payload = projection.source.get("payload") or {}
+    report = payload.get("completion_report") or {}
+    if not report.get("validation_digest"):
+        return ""
+    return _full_hash({
+        "attempt": projection.recovery_seed.failure_packet.attempt_ref,
+        "validation_digest": report["validation_digest"],
+        "gate": payload.get("completion_gate"),
+        "disposition": report.get("effective_disposition"),
+    })
+
+
+def revalidation_stop_reason(projection: Any, durable: Mapping[str, Any], limit: int) -> str:
+    packet = projection.recovery_seed.failure_packet
+    task = durable.get("task_state") or {}
+    prior = (task.get("typed_recovery_progress") or {}).get(packet.incident_id) or {}
+    if prior.get("action") != "revalidate":
+        return ""
+    fingerprint = revalidation_fingerprint(projection)
+    if fingerprint and fingerprint == prior.get("revalidation_fingerprint"):
+        return "RECOVERY_NO_PROGRESS"
+    if int((task.get("typed_recovery_budget") or {}).get(packet.incident_id) or 0) >= limit:
+        return "RECOVERY_BUDGET_EXHAUSTED"
+    return ""
+
+
 class RecoveryRuntime:
     """Admit one semantic directive and persist one route-blind receipt."""
 
-    BUDGETED_ACTIONS = frozenset({"retry_step", "revise_plan", "run_diagnostic_probe", "organize_result"})
+    BUDGETED_ACTIONS = frozenset({"retry_step", "revise_plan", "run_diagnostic_probe", "organize_result", "revalidate"})
 
     def __init__(
         self,
@@ -305,7 +333,8 @@ class RecoveryRuntime:
                     "ordinal": consumed_before,
                 },
             }
-        elif same_diagnosis and not has_new_evidence:
+        elif (revalidation_stop_reason(projection, durable, self.repair_limit)
+              or (same_diagnosis and not has_new_evidence)):
             outcome_type = "blocked"
             payload = {
                 "reason_code": "RECOVERY_NO_PROGRESS",
@@ -418,12 +447,14 @@ class RecoveryRuntime:
         )
 
         if consumes_budget and outcome_type in {
-            "candidate_repair_required", "plan_revision_required"
+            "candidate_repair_required", "plan_revision_required", "revalidation_required"
         }:
             ledger[incident_id] = consumed_before + 1
             task_state["typed_recovery_budget"] = ledger
         if outcome_type != "blocked":
             progress[incident_id] = {
+                "action": directive.action,
+                "revalidation_fingerprint": revalidation_fingerprint(projection),
                 "semantic_digest": _full_hash(semantic_progress),
                 "evidence_refs": sorted(prior_evidence | set(directive.evidence_refs)),
                 "directive_id": decision_id,

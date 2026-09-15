@@ -48,6 +48,7 @@ from agent_core.semantic_completion import (
     CompletionReport,
     SemanticCompletionError,
     build_completion_report,
+    observation_review_required,
     validate_reviewer_payload,
     reviewer_response_schema, reviewer_assessment_identity,
     REVIEWER_PROTOCOL_CORRECTIONS, REVIEWER_POLICY_VERSION,
@@ -122,6 +123,12 @@ Semantic dispositions:
 - assessment_pending: no defensible assessment is possible from the bounded evidence.
 
 Review rules:
+- A warning-severity missing plain observation is not a failed scientific predicate.
+  Review the execution, artifacts and independent receipts. You may accept this issue
+  with an evidence-based explanation; the original emission remains absent. If facts
+  are insufficient, name the exact missing check. Do not require reprinting a receipt
+  or rerunning computation solely to remove this warning. Explicit predicate failures,
+  invalid receipts, required missing outputs and scope/approval errors remain blocking.
 - observed.produces_bindings includes immutable candidate values with separate acceptance_status.
   A present candidate is not missing because Commit has not accepted it yet. A task-local
   database ID does not claim an external biological assembly identity.
@@ -2355,7 +2362,8 @@ class SupervisorNode:
             advisory_conflict = False
             scientific_checks: List[Dict[str, Any]] = []
             validation_level = str(state.get("validation_level") or "").lower()
-            if self.use_llm_review and (formal_execution or role not in {"probe", "capability_probe"}) and validation_level in {"scientific", "artifact"}:
+            review_requested = validation_level in {"scientific", "artifact"}
+            if self.use_llm_review and (formal_execution or role not in {"probe", "capability_probe"}):
                 try:
                     review_plan_state = load_plan_state(
                         self._llm_reviewer.data_path, task_id
@@ -2384,7 +2392,7 @@ class SupervisorNode:
                         validation=pre_review_validation.to_dict(),
                         execution_evidence=execution,
                         completion_gate=pre_review_gate,
-                        semantic_review_required=True,
+                        semantic_review_required=review_requested,
                     )
                 except (OSError, ValueError, TypeError, SemanticCompletionError) as exc:
                     advisory = {
@@ -2399,86 +2407,88 @@ class SupervisorNode:
                         "suggestions": [],
                         "confidence": None,
                         "parse_status": "completion_report_unavailable",
-                    }
+                    } if review_requested else None
                 else:
-                    task_context = (
-                        f"command_role={role}\n"
-                        f"deterministic_status={status}\n"
-                        f"completion_report_id={pre_review_report.report_id}"
+                    if review_requested or observation_review_required(pre_review_gate):
+                        task_context = (
+                            f"command_role={role}\n"
+                            f"deterministic_status={status}\n"
+                            f"completion_report_id={pre_review_report.report_id}"
+                        )
+                        review_text = await self._llm_reviewer.review(
+                            context["code"],
+                            str(context["stdout"]),
+                            str(context["stderr"]),
+                            task_context,
+                            returncode,
+                            task_id=task_id,
+                            completion_report=pre_review_report.to_dict(),
+                            trace_metadata={
+                                "step_id": step_id,
+                                "action_id": str(execution.get("action_id") or ""),
+                                "attempt_id": str(execution.get("attempt_id") or ""),
+                                "action_contract_ref": str(execution.get("manifest_path") or ""),
+                                "task_context_source_scope": {
+                                    "coverage": "complete_deterministic_validation_context",
+                                    "external_source_read": False,
+                                },
+                                "executed_action_source_scope": {
+                                    "coverage": "complete_execution_evidence_field",
+                                    "field": "execution_evidence.code_or_command",
+                                    "external_source_read": False,
+                                },
+                                "stdout_source_scope": {
+                                    "coverage": (
+                                        "bounded_execution_evidence_field"
+                                        if bool(execution.get("stdout_truncated"))
+                                        else "complete_execution_evidence_field"
+                                    ),
+                                    "field": "execution_evidence.raw_stdout" if execution.get("raw_stdout") is not None else "execution_evidence.stdout_summary",
+                                    "source_ref": str(execution.get("stdout_log") or ""),
+                                    "upstream_truncated": bool(
+                                        execution.get("stdout_truncated")
+                                    ),
+                                    "external_source_read": False,
+                                },
+                                "stderr_source_scope": {
+                                    "coverage": (
+                                        "bounded_execution_evidence_field"
+                                        if bool(execution.get("stderr_truncated"))
+                                        else "complete_execution_evidence_field"
+                                    ),
+                                    "field": "execution_evidence.raw_stderr" if execution.get("raw_stderr") is not None else "execution_evidence.stderr_summary",
+                                    "source_ref": str(execution.get("stderr_log") or ""),
+                                    "upstream_truncated": bool(
+                                        execution.get("stderr_truncated")
+                                    ),
+                                    "external_source_read": False,
+                                },
+                            },
+                        )
+                        try:
+                            advisory = json.loads(review_text)
+                        except (TypeError, json.JSONDecodeError):
+                            advisory = {
+                                "assessment": "UNKNOWN",
+                                "disposition": "assessment_pending",
+                                "report_id": pre_review_report.report_id,
+                                "issue_dispositions": [],
+                                "concerns": ["LLM advisory could not be parsed and was ignored."],
+                                "suggestions": [],
+                                "confidence": None,
+                                "parse_status": "invalid_ignored",
+                            }
+                if advisory is not None:
+                    assessment = str((advisory or {}).get("assessment") or "UNKNOWN").upper()
+                    advisory_conflict = bool(
+                        assessment == "CONCERN"
+                        and status == ValidationStatus.VALID.value
                     )
-                    review_text = await self._llm_reviewer.review(
-                        context["code"],
-                        str(context["stdout"]),
-                        str(context["stderr"]),
-                        task_context,
-                        returncode,
-                        task_id=task_id,
-                        completion_report=pre_review_report.to_dict(),
-                        trace_metadata={
-                            "step_id": step_id,
-                            "action_id": str(execution.get("action_id") or ""),
-                            "attempt_id": str(execution.get("attempt_id") or ""),
-                            "action_contract_ref": str(execution.get("manifest_path") or ""),
-                            "task_context_source_scope": {
-                                "coverage": "complete_deterministic_validation_context",
-                                "external_source_read": False,
-                            },
-                            "executed_action_source_scope": {
-                                "coverage": "complete_execution_evidence_field",
-                                "field": "execution_evidence.code_or_command",
-                                "external_source_read": False,
-                            },
-                            "stdout_source_scope": {
-                                "coverage": (
-                                    "bounded_execution_evidence_field"
-                                    if bool(execution.get("stdout_truncated"))
-                                    else "complete_execution_evidence_field"
-                                ),
-                                "field": "execution_evidence.raw_stdout" if execution.get("raw_stdout") is not None else "execution_evidence.stdout_summary",
-                                "source_ref": str(execution.get("stdout_log") or ""),
-                                "upstream_truncated": bool(
-                                    execution.get("stdout_truncated")
-                                ),
-                                "external_source_read": False,
-                            },
-                            "stderr_source_scope": {
-                                "coverage": (
-                                    "bounded_execution_evidence_field"
-                                    if bool(execution.get("stderr_truncated"))
-                                    else "complete_execution_evidence_field"
-                                ),
-                                "field": "execution_evidence.raw_stderr" if execution.get("raw_stderr") is not None else "execution_evidence.stderr_summary",
-                                "source_ref": str(execution.get("stderr_log") or ""),
-                                "upstream_truncated": bool(
-                                    execution.get("stderr_truncated")
-                                ),
-                                "external_source_read": False,
-                            },
-                        },
-                    )
-                    try:
-                        advisory = json.loads(review_text)
-                    except (TypeError, json.JSONDecodeError):
-                        advisory = {
-                            "assessment": "UNKNOWN",
-                            "disposition": "assessment_pending",
-                            "report_id": pre_review_report.report_id,
-                            "issue_dispositions": [],
-                            "concerns": ["LLM advisory could not be parsed and was ignored."],
-                            "suggestions": [],
-                            "confidence": None,
-                            "parse_status": "invalid_ignored",
-                        }
-                assessment = str((advisory or {}).get("assessment") or "UNKNOWN").upper()
-                advisory_conflict = bool(
-                    assessment == "CONCERN"
-                    and status == ValidationStatus.VALID.value
-                )
-                scientific_checks.append({
-                    "source": "llm_advisory",
-                    "assessment": assessment,
-                    "deterministic_status_unchanged": True,
-                })
+                    scientific_checks.append({
+                        "source": "llm_advisory",
+                        "assessment": assessment,
+                        "deterministic_status_unchanged": True,
+                    })
 
             validation_payload.update({
                 "scientific_checks": scientific_checks,
