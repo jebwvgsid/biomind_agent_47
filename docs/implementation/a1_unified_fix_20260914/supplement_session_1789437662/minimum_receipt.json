@@ -1,0 +1,339 @@
+{
+  "phases": [
+    "validate_wire_and_bind",
+    "compile_resource_bindings",
+    "normalize_handles",
+    "normalize_plan_contracts",
+    "compile_step_effects",
+    "compile_dataflow",
+    "validate_candidate",
+    "compile_step_effects_final",
+    "compile_dataflow_final"
+  ],
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 0,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "plan_review_reader_calls": 1,
+  "planner_outcome": {
+    "schema_version": 1,
+    "type": "plan_review_ready",
+    "summary": "Planner explicitly submitted a durable candidate for review.",
+    "scope": {
+      "task_id": "fix-f6-plan-review-minimum",
+      "plan_id": "plan_440c9b9fd69ae82dccf8",
+      "plan_version": "plan_v1",
+      "step_id": "preflight_inputs"
+    },
+    "payload": {
+      "plan_id": "plan_440c9b9fd69ae82dccf8",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "submission_id": "plan-submission-325dfcff3013ddcdc0b5"
+    },
+    "evidence_refs": []
+  },
+  "plan_review_outcome": {
+    "schema_version": 1,
+    "type": "approval_pending",
+    "summary": "Plan review is durably waiting for human approval.",
+    "scope": {
+      "task_id": "fix-f6-plan-review-minimum",
+      "plan_id": "plan_440c9b9fd69ae82dccf8",
+      "plan_version": "plan_v1",
+      "step_id": "preflight_inputs"
+    },
+    "payload": {
+      "approval_scope": {
+        "content": "## Plan Identity\n- Plan ID: `plan_440c9b9fd69ae82dccf8`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `f2a332ee5a066f73d2af8fa20038b98858c8b77a34ce982b6c6cd2d93dd87d97`\n- Approval Scope: `f40df81a0bf4ad5e00490f8a24fc916568fa8a2257a2eae14c53547cd954d6e2`\n- Execution Cursor: `none`\n- Next Executable Step: `preflight_inputs`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- [required] 禁止使用 tests/demo_ref.fa 或 demo.vcf 作为分析依据。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] 禁止用 taxonomy label 猜测 public snpEff 数据库；必须基于用户提供的 FASTA+GTF 构建任务本地自定义数据库。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] 禁止忽略 chromosome naming mismatch；注释前必须检查 VCF、FASTA 与 GTF 的 contig 命名一致性。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] snpEff/Java/database build 失败时标记 blocked；不得输出假 ANN。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] 只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录，也不得使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] 所有 benchmarks/... 相对路径以项目根目录解析；如当前工作目录不同，先 cd 到项目根目录或改用绝对路径。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] 先识别输入类型、样本、关键参数和依赖；自行规划合理步骤，并在 report.md 中说明为什么选择这些 skill/流程。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] 对能执行的 stage 生成真实结果；对不能执行的 stage 明确写 blocked/stage_blocked 并说明缺少什么；不要伪造结果。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n- [required] 缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。 | source_refs: [\"source-ref-6a157e2f77e904b0\"]\n\n## Effective Plan\n\n### [preflight_inputs] 只读 preflight：确认输入文件存在且可读\n- Action: `EXECUTE`\n- Purpose: `validation`\n- Skills: `genomics/snpeff-annotation`\n- Inputs: `artifact-7e748d80e686b1aef80d, artifact-1c656d5747514a209e81, artifact-64bbfe0cabca594754f0`\n- Outputs: `none`\n- Depends on: `none`\n- Success criteria: `在项目根目录解析 benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/ 下"
+      },
+      "reason_code": "human_plan_review_pending"
+    },
+    "evidence_refs": []
+  },
+  "compilation_receipt": {
+    "schema_version": 1,
+    "compiler_id": "biomind.step_effect_compiler.v1",
+    "compiler_version": 1,
+    "scope": "plan",
+    "status": "compiled",
+    "identity": {
+      "task_id": "fix-f6-plan-review-minimum",
+      "plan_id": "plan_440c9b9fd69ae82dccf8",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "declared_plan_semantic_hash": "a8efe996aacf97cf44fb4e88075164db3c1e9d43eddc2a1b65a51917e01a1ec5"
+    },
+    "source_plan_digest": "sha256:6ef75f3e1b769f1466cae5bd8da6111eaaa5f33d9c0f9b800b3c48927f361cef",
+    "compiled_plan_digest": "sha256:50ce049b825c21ef316ebfdbfc40a4bb4748fb69b0853a6e135b11ff13cd2335",
+    "capability_registry_digest": "sha256:4fde75376367c4913803b19a71ed1d07451e2770a5b46c918f576231781421c6",
+    "resource_binding_digest": "sha256:954d2fb020dd7b1db485cda09288c6c08f253e5faacf353ec4db43e6a53e46f8",
+    "effect_complete": true,
+    "review_compatible": true,
+    "legacy_compatible": false,
+    "step_receipts": [
+      {
+        "schema_version": 1,
+        "compiler_id": "biomind.step_effect_compiler.v1",
+        "compiler_version": 1,
+        "scope": "step",
+        "status": "compiled",
+        "identity": {
+          "task_id": "fix-f6-plan-review-minimum",
+          "plan_id": "plan_440c9b9fd69ae82dccf8",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "declared_plan_semantic_hash": "a8efe996aacf97cf44fb4e88075164db3c1e9d43eddc2a1b65a51917e01a1ec5",
+          "step_id": "preflight_inputs",
+          "step_index": 0,
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "operation": "check_contig_compatibility"
+        },
+        "source_step_digest": "sha256:03e7c13405e93d4868f063b1329d4481b409f42d4303edbc93ef69846fc29842",
+        "compiled_step_digest": "sha256:03e7c13405e93d4868f063b1329d4481b409f42d4303edbc93ef69846fc29842",
+        "step_effect_digest": "sha256:1a4240bc0c130b3fb63f800e931bbc248303c7c6355d4d7d487623411dd91bbd",
+        "capability_contract_digest": "sha256:56395aaa8d51ec79cdaefeb3b9dd37f55989df4b563be0ee605fed25a7e32055",
+        "effect_complete": true,
+        "legacy_compatible": false,
+        "normalizations": [],
+        "issue_dispositions": [],
+        "receipt_digest": "sha256:8a8bd6d27eb5d30bb87bc2dd03ee76f281eb764f60248841dc139149d4862ccb",
+        "receipt_id": "step-effect:8a8bd6d27eb5d30bb87bc2dd"
+      },
+      {
+        "schema_version": 1,
+        "compiler_id": "biomind.step_effect_compiler.v1",
+        "compiler_version": 1,
+        "scope": "step",
+        "status": "compiled",
+        "identity": {
+          "task_id": "fix-f6-plan-review-minimum",
+          "plan_id": "plan_440c9b9fd69ae82dccf8",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "declared_plan_semantic_hash": "a8efe996aacf97cf44fb4e88075164db3c1e9d43eddc2a1b65a51917e01a1ec5",
+          "step_id": "runtime_healthcheck",
+          "step_index": 1,
+          "execution_capability_id": "genomics.snpeff_annotation.prepare_database",
+          "operation": "prepare_database"
+        },
+        "source_step_digest": "sha256:098be06e7e621a43e9a1f651b5ac62a43ca17635748c1815096190a631ef6258",
+        "compiled_step_digest": "sha256:e16f5057ab7bfbd20d0cd3e1b19593d2cb3cce276404ff20f46723954dc458f9",
+        "step_effect_digest": "sha256:c377b0fd99218eb7b8bbee23a7d5eff65cbfb22c25c3aedce6cf7886a1d0873a",
+        "capability_contract_digest": "sha256:6eb6cb57add2563799f49fa8c7087287f81b6303a8e90b1ba5079820500230ce",
+        "effect_complete": true,
+        "legacy_compatible": false,
+        "normalizations": [],
+        "issue_dispositions": [],
+        "receipt_digest": "sha256:926e885d75f51247e6c1388954606dbfb948d4b345d28dea0fabd46dea060dcd",
+        "receipt_id": "step-effect:926e885d75f51247e6c13889"
+      },
+      {
+        "schema_version": 1,
+        "compiler_id": "biomind.step_effect_compiler.v1",
+        "compiler_version": 1,
+        "scope": "step",
+        "status": "compiled",
+        "identity": {
+          "task_id": "fix-f6-plan-review-minimum",
+          "plan_id": "plan_440c9b9fd69ae82dccf8",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "declared_plan_semantic_hash": "a8efe996aacf97cf44fb4e88075164db3c1e9d43eddc2a1b65a51917e01a1ec5",
+          "step_id": "build_database",
+          "step_index": 2,
+          "execution_capability_id": "genomics.snpeff_annotation.build_database",
+          "operation": "build_database"
+        },
+        "source_step_digest": "sha256:d422a353ebbe460c70eeccad36bc1533313cab985b4beac3104b9a5ef603d710",
+        "compiled_step_digest": "sha256:a2796ca11d9bb76e7d9d8c98b435c40bb7c990dcc8585c312bd0e252942b0d26",
+        "step_effect_digest": "sha256:f2d7bc6cbeab774f378521ad031fe7c9ced88911dca9090582f8420e100c94c9",
+        "capability_contract_digest": "sha256:f6c2a64c610c4d19ac004b33714e3aacd23e0b4b92b593eefc5e079496bb94b5",
+        "effect_complete": true,
+        "legacy_compatible": false,
+        "normalizations": [],
+        "issue_dispositions": [],
+        "receipt_digest": "sha256:82edc1a769ff810d3b96a2bcb22baca17fac84ffd1af602dda7271e49e3516b1",
+        "receipt_id": "step-effect:82edc1a769ff810d3b96a2bc"
+      },
+      {
+        "schema_version": 1,
+        "compiler_id": "biomind.step_effect_compiler.v1",
+        "compiler_version": 1,
+        "scope": "step",
+        "status": "compiled",
+        "identity": {
+          "task_id": "fix-f6-plan-review-minimum",
+          "plan_id": "plan_440c9b9fd69ae82dccf8",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "declared_plan_semantic_hash": "a8efe996aacf97cf44fb4e88075164db3c1e9d43eddc2a1b65a51917e01a1ec5",
+          "step_id": "annotate_variants",
+          "step_index": 3,
+          "execution_capability_id": "genomics.snpeff_annotation.annotate_variants",
+          "operation": "annotate_variants"
+        },
+        "source_step_digest": "sha256:e13af94a0fb7bb9009cf6404309827bc81fa3a0ba1c0130ba4bba3fded11bfe8",
+        "compiled_step_digest": "sha256:e13af94a0fb7bb9009cf6404309827bc81fa3a0ba1c0130ba4bba3fded11bfe8",
+        "step_effect_digest": "sha256:bf4f11c902f83e6ae1dfa571e25904cc543991fc940219c91429abb3b1a9b8c4",
+        "capability_contract_digest": "sha256:ec661f7812b3958cdfb2dbc49a8021db22eda77eef6ab3b49c4db8eee9135a78",
+        "effect_complete": true,
+        "legacy_compatible": false,
+        "normalizations": [],
+        "issue_dispositions": [],
+        "receipt_digest": "sha256:ec0ca7c319109508cb052cc61dbfa6bf376fe358d5c20bb0db118c177577c24b",
+        "receipt_id": "step-effect:ec0ca7c319109508cb052cc6"
+      },
+      {
+        "schema_version": 1,
+        "compiler_id": "biomind.step_effect_compiler.v1",
+        "compiler_version": 1,
+        "scope": "step",
+        "status": "compiled",
+        "identity": {
+          "task_id": "fix-f6-plan-review-minimum",
+          "plan_id": "plan_440c9b9fd69ae82dccf8",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "declared_plan_semantic_hash": "a8efe996aacf97cf44fb4e88075164db3c1e9d43eddc2a1b65a51917e01a1ec5",
+          "step_id": "summarize_ann",
+          "step_index": 4,
+          "execution_capability_id": "genomics.snpeff_annotation.summarize_ann",
+          "operation": "summarize_ann"
+        },
+        "source_step_digest": "sha256:f21a95d19fe310af13a75c8a0b1af5b4e1e38cdb555e9476cf0e31f9f3928ac5",
+        "compiled_step_digest": "sha256:f21a95d19fe310af13a75c8a0b1af5b4e1e38cdb555e9476cf0e31f9f3928ac5",
+        "step_effect_digest": "sha256:0d68494b0de052cd80f1e5a6dd1ff5064d6790320ca68a8a8881c2342cfeed6c",
+        "capability_contract_digest": "sha256:c7fe6f897916244a95a9518044482176c091589e3597a68f16dc5fa6998fa6b7",
+        "effect_complete": true,
+        "legacy_compatible": false,
+        "normalizations": [],
+        "issue_dispositions": [],
+        "receipt_digest": "sha256:7b6d604c7dd7d889041d714ee63958de763d3dcad393bf25dd5e54e3951e683f",
+        "receipt_id": "step-effect:7b6d604c7dd7d889041d714e"
+      },
+      {
+        "schema_version": 1,
+        "compiler_id": "biomind.step_effect_compiler.v1",
+        "compiler_version": 1,
+        "scope": "step",
+        "status": "compiled",
+        "identity": {
+          "task_id": "fix-f6-plan-review-minimum",
+          "plan_id": "plan_440c9b9fd69ae82dccf8",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "declared_plan_semantic_hash": "a8efe996aacf97cf44fb4e88075164db3c1e9d43eddc2a1b65a51917e01a1ec5",
+          "step_id": "finalize_outputs",
+          "step_index": 5,
+          "execution_capability_id": "genomics.snpeff_annotation.finalize_outputs",
+          "operation": "finalize_outputs"
+        },
+        "source_step_digest": "sha256:e0a343ee02214e34bccaeb47e49af98690f6e0c3ad86729320510306ae8a5c64",
+        "compiled_step_digest": "sha256:e0a343ee02214e34bccaeb47e49af98690f6e0c3ad86729320510306ae8a5c64",
+        "step_effect_digest": "sha256:7d84b1e4a571abb72145e8258b7b367215874a96eb4a7a98c721e4fd7617af4b",
+        "capability_contract_digest": "sha256:3e32a1876e4061f1d95bbbfd288751f784c08ea0b0863517ea2a19a088760528",
+        "effect_complete": true,
+        "legacy_compatible": false,
+        "normalizations": [],
+        "issue_dispositions": [],
+        "receipt_digest": "sha256:beee86cd54c1a63d25917ba6c222b947bc97a00be0ba875287cbdbb8b2db1119",
+        "receipt_id": "step-effect:beee86cd54c1a63d25917ba6"
+      }
+    ],
+    "normalizations": [],
+    "issue_count": 0,
+    "issue_dispositions": [],
+    "issues_digest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "receipt_digest": "sha256:3de563d7cde5260bc0edd18274c7ae355ecbb54e2c0bf8e8988cf898770775f3",
+    "receipt_id": "plan-step-effects:3de563d7cde5260bc0edd182"
+  },
+  "dataflow_receipt": {
+    "schema_version": 1,
+    "compiler_id": "biomind.plan_dataflow_compiler.v1",
+    "compiler_version": 1,
+    "scope": "plan_dataflow",
+    "status": "compiled",
+    "review_compatible": true,
+    "semantic_source_digest": "sha256:69efd331524b831590740ae74bc0f2e71e4cc61919ca841a505fdd67de629c33",
+    "resource_binding_digest": "sha256:954d2fb020dd7b1db485cda09288c6c08f253e5faacf353ec4db43e6a53e46f8",
+    "compiled_dataflow_digest": "sha256:0a2d3d53f45e0c83cef43bb0c965259bc4ab0e8a9e0cbc2598c690f942894426",
+    "effect_receipt_id": "",
+    "issue_count": 0,
+    "issues_digest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "receipt_digest": "sha256:cd2998ac4b3891c6aefd4d15275822578a0246120fd0a5d462da10044b5bda38",
+    "receipt_id": "plan-dataflow:cd2998ac4b3891c6aefd4d15"
+  },
+  "local_bindings": {
+    "plan.snpeff_config": {
+      "canonical_resource_id": "candidate:candidate-scope-ff5b06de-8082-4195-8263-7745e9ea5f87:plan.snpeff_config",
+      "resource_kind": "immutable_artifact",
+      "availability_origin": "plan_local",
+      "initially_available": false,
+      "aliases": [
+        "candidate:candidate-scope-ff5b06de-8082-4195-8263-7745e9ea5f87:plan.snpeff_config",
+        "plan-artifact-2a8ef7a1f4b3d0fb74d4a773",
+        "plan.snpeff_config"
+      ],
+      "binding_source": "candidate_local_artifact",
+      "contract_revision": "plan-resource-v2",
+      "candidate_scope_id": "candidate-scope-ff5b06de-8082-4195-8263-7745e9ea5f87",
+      "initial_state": "",
+      "binding_id": "plan-resource-binding-7eb0f9b3e0b33930ef58"
+    },
+    "plan.snpeff_data_dir": {
+      "canonical_resource_id": "plan-artifact-39ebd29e8dd879c24404ae3d",
+      "resource_kind": "mutable_workspace",
+      "availability_origin": "plan_local",
+      "initially_available": false,
+      "aliases": [
+        "plan-artifact-39ebd29e8dd879c24404ae3d",
+        "plan.snpeff_data_dir"
+      ],
+      "binding_source": "candidate_local_artifact",
+      "contract_revision": "plan-resource-v2",
+      "candidate_scope_id": "candidate-scope-ff5b06de-8082-4195-8263-7745e9ea5f87",
+      "initial_state": "",
+      "role_associations": [
+        {
+          "capability_id": "genomics.snpeff_annotation.prepare_database",
+          "role": "artifact.snpeff_data_dir",
+          "step_id": "runtime_healthcheck"
+        },
+        {
+          "capability_id": "genomics.snpeff_annotation.build_database",
+          "role": "artifact.snpeff_data_dir",
+          "step_id": "build_database"
+        },
+        {
+          "capability_id": "genomics.snpeff_annotation.annotate_variants",
+          "role": "artifact.snpeff_data_dir",
+          "step_id": "annotate_variants"
+        }
+      ],
+      "role_association_version": 1,
+      "binding_id": "plan-resource-binding-a7525b82bf5435d859db"
+    }
+  },
+  "candidate_scope_not_seeded": true,
+  "approved_ready_succeeded_not_seeded": true,
+  "fixture_intent_admission": "managed_execution_admitted with decision_source=test_fixture; TaskRouter NOT_TESTED",
+  "external_substitutes": [
+    "fixed model leaf",
+    "new input/path declarations",
+    "unavailable human approval reader",
+    "inherited Consultant external preflight observer; no ready database seeded",
+    "inherited _ensure_skill_runtime_ready adapter; not a runtime/science validation"
+  ],
+  "not_run": [
+    "Generate",
+    "code approval",
+    "Execute",
+    "Commit",
+    "scientific tools",
+    "real model/API"
+  ]
+}

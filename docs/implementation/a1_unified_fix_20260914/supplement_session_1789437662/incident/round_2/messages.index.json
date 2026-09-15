@@ -1,0 +1,50 @@
+[
+  {
+    "index": 0,
+    "role": "system",
+    "name": null,
+    "bytes": 23880,
+    "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8",
+    "file": "message_00_system.txt"
+  },
+  {
+    "index": 1,
+    "role": "human",
+    "name": null,
+    "bytes": 34083,
+    "sha256": "afeddfdcf3297ba5602aeea5f61ec7ee43cbfa4a9ab52d8374ed292340def20d",
+    "file": "message_01_human.txt"
+  },
+  {
+    "index": 2,
+    "role": "human",
+    "name": "inherited_skill_material",
+    "bytes": 33777,
+    "sha256": "9fedb747ab2d7fc7dbe6dd38b8bdf8e518d6d9548110764b2c774fed43dbb5cf",
+    "file": "message_02_human.txt"
+  },
+  {
+    "index": 3,
+    "role": "assistant",
+    "name": null,
+    "bytes": 16022,
+    "sha256": "214dfb380af24d843a5af3c6a282f3d8c3410afe996b35871b1d17ea7c7472ab",
+    "file": "message_03_assistant.txt"
+  },
+  {
+    "index": 4,
+    "role": "human",
+    "name": "runtime_observation",
+    "bytes": 12574,
+    "sha256": "308399ad327a3ae17337bad1a1c248e6a8bb09c418ed18271519f1f8944d20f1",
+    "file": "message_04_human.txt"
+  },
+  {
+    "index": 5,
+    "role": "system",
+    "name": null,
+    "bytes": 409,
+    "sha256": "e4d2ffb77bae99c2ef7ea761ca1f904a1b71d5c38a543a980a2000b82be49305",
+    "file": "message_05_system.txt"
+  }
+]

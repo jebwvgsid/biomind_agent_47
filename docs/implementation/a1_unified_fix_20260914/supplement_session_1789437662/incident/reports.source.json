@@ -1,0 +1,14 @@
+[
+  {
+    "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789437662/report.md",
+    "sha256": "0a6197ab950dbb25d220c056b90a0ac552fe5de724c0ce37cd5cec80b95e78a1",
+    "bytes": 4587,
+    "artifact": "report.md.original"
+  },
+  {
+    "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789437662/stage_status.tsv",
+    "sha256": "b6a331bd7a4fe8d9e2283d593957c684173f72ca4af584a60762def925ca116c",
+    "bytes": 102,
+    "artifact": "stage_status.tsv.original"
+  }
+]

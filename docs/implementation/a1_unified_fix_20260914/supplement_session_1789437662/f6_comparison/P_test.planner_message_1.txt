@@ -1,0 +1,579 @@
+<phase_seed_contract schema_version="1">
+{"consultation_handoff":{"goal_interpretation":"Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv","input_files":[{"format":"vcf","required":true,"role":"variant_vcf"},{"format":"fa","required":true,"role":"reference_fasta"},{"format":"gtf","required":true,"role":"annotation_gtf"}],"required_outputs":[{"format":"vcf","path_policy":"managed_exact","required":true,"role":"annotated_vcf"},{"format":"tsv","path_policy":"managed_exact","required":true,"role":"ann_summary"},{"format":"md","path_policy":"managed_exact","required":true,"role":"report"},{"format":"sh","path_policy":"managed_exact","required":true,"role":"reproduce_script"},{"format":"tsv","path_policy":"managed_exact","required":true,"role":"stage_status"}],"selected_skills":["genomics/snpeff-annotation"],"summary":"Authorized new synthetic mechanism only."},"schema_version":1,"selected_skill_manifest":{"manifest_only":true,"skills":[{"scope":"task","skill_id":"genomics/snpeff-annotation"}]}}
+</phase_seed_contract>
+{
+  "semantic_history": {
+    "conversation": [
+      {
+        "ordinal": 1,
+        "role": "user",
+        "content": "Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv"
+      }
+    ],
+    "consultant_handoff": {
+      "summary": "Authorized new synthetic mechanism only.",
+      "goal_interpretation": "Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv"
+    },
+    "task_spec": {
+      "goal": "Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+      "highlighted_constraints": [],
+      "inputs": [
+        {
+          "handle": "input.variant_vcf",
+          "role": "variant_vcf",
+          "format": "vcf",
+          "required": true,
+          "verification_status": "declared",
+          "basename": "两样本.vcf"
+        },
+        {
+          "handle": "input.reference_fasta",
+          "role": "reference_fasta",
+          "format": "fa",
+          "required": true,
+          "verification_status": "declared",
+          "basename": "新参考.fa"
+        },
+        {
+          "handle": "input.annotation_gtf",
+          "role": "annotation_gtf",
+          "format": "gtf",
+          "required": true,
+          "verification_status": "declared",
+          "basename": "新注释.gtf"
+        }
+      ],
+      "outputs": [
+        {
+          "handle": "output.annotated_vcf",
+          "output_id": "annotated_vcf",
+          "role": "annotated_vcf",
+          "artifact_kind": "file",
+          "format": "vcf",
+          "required": true,
+          "path_policy": "managed_exact",
+          "root_ref": "",
+          "producer_owner": "plan_step",
+          "required_basename": "annotated.vcf",
+          "alternative_group": "",
+          "description": "",
+          "placeholder": "{output:annotated_vcf}"
+        },
+        {
+          "handle": "output.ann_summary",
+          "output_id": "ann_summary",
+          "role": "ann_summary",
+          "artifact_kind": "file",
+          "format": "tsv",
+          "required": true,
+          "path_policy": "managed_exact",
+          "root_ref": "",
+          "producer_owner": "plan_step",
+          "required_basename": "ann_summary.tsv",
+          "alternative_group": "",
+          "description": "",
+          "placeholder": "{output:ann_summary}"
+        },
+        {
+          "handle": "output.report",
+          "output_id": "report",
+          "role": "report",
+          "artifact_kind": "file",
+          "format": "md",
+          "required": true,
+          "path_policy": "managed_exact",
+          "root_ref": "",
+          "producer_owner": "plan_step",
+          "required_basename": "report.md",
+          "alternative_group": "",
+          "description": "",
+          "placeholder": "{output:report}"
+        },
+        {
+          "handle": "output.reproduce_script",
+          "output_id": "reproduce_script",
+          "role": "reproduce_script",
+          "artifact_kind": "file",
+          "format": "sh",
+          "required": true,
+          "path_policy": "managed_exact",
+          "root_ref": "",
+          "producer_owner": "plan_step",
+          "required_basename": "reproduce.sh",
+          "alternative_group": "",
+          "description": "",
+          "placeholder": "{output:reproduce_script}"
+        },
+        {
+          "handle": "output.stage_status",
+          "output_id": "stage_status",
+          "role": "stage_status",
+          "artifact_kind": "file",
+          "format": "tsv",
+          "required": true,
+          "path_policy": "managed_exact",
+          "root_ref": "",
+          "producer_owner": "plan_step",
+          "required_basename": "stage_status.tsv",
+          "alternative_group": "",
+          "description": "",
+          "placeholder": "{output:stage_status}"
+        }
+      ]
+    },
+    "selected_skill_refs": [
+      {
+        "skill_id": "genomics/snpeff-annotation",
+        "snapshot_id": "skill-snapshot-3ca02752f20ded033e52",
+        "source_path": "skills/genomics/snpeff-annotation/SKILL.md",
+        "content_hash": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44",
+        "scope": "task",
+        "status": "active",
+        "selected_at_task_revision": 1
+      }
+    ],
+    "available_skill_headings": [
+      {
+        "skill_id": "genomics/snpeff-annotation",
+        "snapshot_id": "skill-snapshot-3ca02752f20ded033e52",
+        "heading_index": [
+          {
+            "heading": "snpEff Annotation",
+            "level": 1,
+            "start_line": 336,
+            "end_line": 542
+          },
+          {
+            "heading": "Core Rules",
+            "level": 2,
+            "start_line": 342,
+            "end_line": 353
+          },
+          {
+            "heading": "Planning Contract",
+            "level": 2,
+            "start_line": 354,
+            "end_line": 378
+          },
+          {
+            "heading": "Official Documentation Anchors",
+            "level": 2,
+            "start_line": 379,
+            "end_line": 384
+          },
+          {
+            "heading": "Runtime and Dependency Discovery",
+            "level": 2,
+            "start_line": 385,
+            "end_line": 394
+          },
+          {
+            "heading": "Generate-Owned Execution (V2)",
+            "level": 2,
+            "start_line": 395,
+            "end_line": 406
+          },
+          {
+            "heading": "Legacy Renderer Reference (`legacy_renderer_v1` only)",
+            "level": 2,
+            "start_line": 407,
+            "end_line": 476
+          },
+          {
+            "heading": "Existing Database Workflow",
+            "level": 2,
+            "start_line": 477,
+            "end_line": 488
+          },
+          {
+            "heading": "Custom Database Workflow",
+            "level": 2,
+            "start_line": 489,
+            "end_line": 512
+          },
+          {
+            "heading": "ANN Interpretation",
+            "level": 2,
+            "start_line": 513,
+            "end_line": 519
+          },
+          {
+            "heading": "Gotchas",
+            "level": 2,
+            "start_line": 520,
+            "end_line": 527
+          },
+          {
+            "heading": "Extended Reference",
+            "level": 2,
+            "start_line": 528,
+            "end_line": 542
+          },
+          {
+            "heading": "Versioned binding input",
+            "level": 3,
+            "start_line": 533,
+            "end_line": 542
+          }
+        ]
+      }
+    ],
+    "selected_capabilities": [
+      "genomics/snpeff-annotation"
+    ],
+    "capabilities": [
+      {
+        "handle": "capability.C1",
+        "skill_id": "genomics/snpeff-annotation",
+        "purpose": "Build or use snpEff databases and annotate VCF variants with ANN effects. Use when the user asks for SNP/indel functional annotation with snpEff, including existing pre-built databases, custom GFF3/GTF/GenBank database builds, ANN interpretation, summary HTML, and safe database/version selection. Do not guess species databases, genome-version names, chromosome names, codon tables, or unchecked-build options from taxonomy labels alone.",
+        "task_types": [
+          "variant_annotation",
+          "variant_effect_annotation"
+        ],
+        "action_mode": "managed_generate",
+        "output_capabilities": [
+          {
+            "output_id": "annotated_vcf",
+            "default_filename": "annotated.vcf",
+            "format": "vcf"
+          },
+          {
+            "output_id": "ann_summary",
+            "default_filename": "ann_summary.tsv",
+            "format": "tsv"
+          },
+          {
+            "output_id": "report",
+            "default_filename": "report.md",
+            "format": "markdown"
+          },
+          {
+            "output_id": "reproduce_script",
+            "default_filename": "reproduce.sh",
+            "format": "bash"
+          },
+          {
+            "output_id": "stage_status",
+            "default_filename": "stage_status.tsv",
+            "format": "tsv"
+          }
+        ],
+        "execution_guidance": [
+          "Resolve and verify the pinned snpEff JAR and Java runtime before annotation.",
+          "For a custom reference, create a task-local snpEff config/data directory, stage the FASTA and matching GTF/GFF3, build the database, then annotate the VCF.",
+          "Generate one structured executable action for the approved step and write every approved output_id at its managed path.",
+          "The prepare_database action chooses one stable genome_version and explicitly declares genome_version and snpeff_db under produced_bindings; the model chooses semantic genome_version and a legal catalog handle; the binder supplies formal machine fields.",
+          "For public_handle_v2 the system derives binding_env from required_binding_env; legacy_full_v1 must supply that exact mapping. Shell source must consume the injected environment values rather than copying the literal identifier again.",
+          "Declare operation metadata and consumed_bindings using exact plan_binding refs so the deterministic Skill contract can reject mismatches before Execute.",
+          "Validate contig-name compatibility and the ANN header; summarize ANN effects without inventing annotations.",
+          "Do not invoke the legacy render_snpeff_annotation_scripts.py Renderer or use its manifest as output authority."
+        ],
+        "runtime": {
+          "language": "bash",
+          "capabilities": [
+            "snpeff-annotation",
+            "snpeff-custom-db",
+            "ann-effect-summary"
+          ]
+        },
+        "execution_capabilities": [
+          {
+            "schema_version": 1,
+            "capability_id": "genomics.snpeff_annotation.annotate_variants",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "required_runtime_binding_ids": [
+              "runtime.java.bin",
+              "runtime.snpeff.jar"
+            ],
+            "required_artifact_binding_ids": [
+              "artifact.snpeff_config",
+              "artifact.snpeff_data_dir",
+              "artifact.variant_vcf"
+            ],
+            "execution_guidance": [
+              "Annotate the approved VCF with the approved database identity.",
+              "Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths."
+            ],
+            "operation": "annotate_variants",
+            "consumes_artifacts": [
+              "artifact.snpeff_config",
+              "artifact.snpeff_data_dir",
+              "artifact.variant_vcf"
+            ],
+            "produces_artifacts": [
+              "artifact.annotated_vcf"
+            ]
+          },
+          {
+            "schema_version": 1,
+            "capability_id": "genomics.snpeff_annotation.build_database",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "required_runtime_binding_ids": [
+              "runtime.java.bin",
+              "runtime.snpeff.jar"
+            ],
+            "required_artifact_binding_ids": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta",
+              "artifact.snpeff_config",
+              "artifact.snpeff_data_dir"
+            ],
+            "execution_guidance": [
+              "Build only the approved task-local custom database.",
+              "Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths."
+            ],
+            "operation": "build_database",
+            "consumes_artifacts": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta",
+              "artifact.snpeff_config"
+            ],
+            "produces_observations": [
+              "snpeff_database_ready"
+            ],
+            "workspace_mutations": [
+              {
+                "workspace_ref": "artifact.snpeff_data_dir",
+                "mutation": "build_database",
+                "requires_available": true,
+                "requires_state": "database_layout_prepared",
+                "available_after_success": true,
+                "establishes_state": "snpeff_database_ready",
+                "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+                "contract_revision": "snpeff-workspace-transition-v1",
+                "evidence_contract": {
+                  "schema_version": 1,
+                  "collector": "bounded_filesystem_snapshot_v1",
+                  "allow_idempotent_revalidation": true,
+                  "postconditions": [
+                    {
+                      "kind": "file_nonempty",
+                      "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "schema_version": 1,
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "required_artifact_binding_ids": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta",
+              "artifact.variant_vcf"
+            ],
+            "execution_guidance": [
+              "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+              "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+              "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+              "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+            ],
+            "operation": "check_contig_compatibility",
+            "consumes_artifacts": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta",
+              "artifact.variant_vcf"
+            ],
+            "produces_observations": [
+              {
+                "observation_id": "contigs_compatible",
+                "predicate": {
+                  "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+                  "operator": "boolean_equals",
+                  "expected": true,
+                  "parser_id": "biomind.genomics.contig_compatibility.v1",
+                  "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                  "failure_disposition": "correction_required",
+                  "missing_disposition": "inspection_required",
+                  "applicability": {
+                    "schema_version": 1,
+                    "kind": "plan_contains_any_execution_capability",
+                    "execution_capability_ids": [
+                      "genomics.snpeff_annotation.prepare_database",
+                      "genomics.snpeff_annotation.build_database",
+                      "genomics.snpeff_annotation.annotate_variants",
+                      "genomics.snpeff_annotation.summarize_ann",
+                      "genomics.snpeff_annotation.finalize_outputs"
+                    ]
+                  }
+                },
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "schema_version": 1,
+            "capability_id": "genomics.snpeff_annotation.finalize_outputs",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "required_artifact_binding_ids": [
+              "artifact.ann_summary",
+              "artifact.annotated_vcf"
+            ],
+            "execution_guidance": [
+              "Write the requested report, reproduction script, and stage-status table from verified task evidence.",
+              "Do not claim scientific completion for outputs that were not actually produced and verified."
+            ],
+            "operation": "finalize_outputs",
+            "consumes_artifacts": [
+              "artifact.ann_summary",
+              "artifact.annotated_vcf"
+            ],
+            "produces_artifacts": [
+              "artifact.report",
+              "artifact.reproduce_script",
+              "artifact.stage_status"
+            ],
+            "produces_observations": [
+              "final_outputs_recorded"
+            ]
+          },
+          {
+            "schema_version": 1,
+            "capability_id": "genomics.snpeff_annotation.prepare_database",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "required_artifact_binding_ids": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta"
+            ],
+            "execution_guidance": [
+              "Choose one stable task-local genome version and declare the genome_version and snpeff_db bindings.",
+              "Prepare the approved task-local config and database layout without discovering or selecting another reference."
+            ],
+            "operation": "prepare_database",
+            "consumes_artifacts": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta"
+            ],
+            "produces_artifacts": [
+              "artifact.snpeff_config"
+            ],
+            "produces_bindings": [
+              "genome_version",
+              "snpeff_db"
+            ],
+            "produces_observations": [
+              "database_layout_prepared"
+            ],
+            "workspace_mutations": [
+              {
+                "workspace_ref": "artifact.snpeff_data_dir",
+                "mutation": "prepare_database",
+                "requires_available": false,
+                "available_after_success": true,
+                "establishes_state": "database_layout_prepared",
+                "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+                "contract_revision": "snpeff-workspace-transition-v1",
+                "evidence_contract": {
+                  "schema_version": 1,
+                  "collector": "bounded_filesystem_snapshot_v1",
+                  "allow_idempotent_revalidation": true,
+                  "postconditions": [
+                    {
+                      "kind": "directory_exists",
+                      "relative_path": "data"
+                    },
+                    {
+                      "kind": "file_nonempty",
+                      "relative_path": "data/genomes/{binding:genome_version}.fa"
+                    },
+                    {
+                      "kind": "file_nonempty",
+                      "relative_path": "data/{binding:genome_version}/genes.gtf"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "schema_version": 1,
+            "capability_id": "genomics.snpeff_annotation.summarize_ann",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "required_artifact_binding_ids": [
+              "artifact.annotated_vcf"
+            ],
+            "execution_guidance": [
+              "Summarize ANN records without invoking the annotation runtime."
+            ],
+            "operation": "summarize_ann",
+            "consumes_artifacts": [
+              "artifact.annotated_vcf"
+            ],
+            "produces_artifacts": [
+              "artifact.ann_summary"
+            ],
+            "produces_observations": [
+              "ann_summary_completed"
+            ]
+          }
+        ],
+        "required_bindings": [
+          {
+            "name": "variant_vcf",
+            "required": true,
+            "required_for_execution": true,
+            "owner": "user",
+            "user_input_required": true,
+            "aliases": [
+              "vcf",
+              "variant_file"
+            ]
+          },
+          {
+            "name": "database_source",
+            "required": true,
+            "required_for_execution": true,
+            "owner": "user",
+            "user_input_required": true
+          },
+          {
+            "name": "genome_version",
+            "required": true,
+            "required_for_execution": true,
+            "owner": "generate",
+            "user_input_required": false,
+            "resolution": "produced_binding"
+          },
+          {
+            "name": "snpeff_db",
+            "required": true,
+            "required_for_execution": true,
+            "owner": "generate",
+            "user_input_required": false,
+            "resolution": "produced_binding_to_managed_artifact"
+          },
+          {
+            "name": "snpeff_jar",
+            "required": true,
+            "required_for_execution": true,
+            "owner": "runtime",
+            "user_input_required": false,
+            "resolution": "runtime_discovery"
+          }
+        ]
+      }
+    ],
+    "runtime": {
+      "runtime_ready": true
+    }
+  },
+  "current_focus": {
+    "planning": {
+      "mode": "create_complete_plan",
+      "attempt": 1,
+      "instruction": {
+        "return_complete_plan": true
+      }
+    },
+    "allowed_operations": [
+      "create_plan",
+      "report_task_semantics_incomplete"
+    ]
+  }
+}

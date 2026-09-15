@@ -1,0 +1,450 @@
+{
+  "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789437662/plan_state.json",
+  "source_sha256": "da68654f2e4c4146dd2e2668dd5339d7218819a116dc78677161480f5ca20430",
+  "source_pointer": "/current_task/task_spec",
+  "task_revision": 1,
+  "goal": "使用 snpEff 对重测序过滤后的 SNP VCF（all.filtered.snp.vcf）进行功能注释：基于用户提供的参考基因组 genome.fasta 与注释 genome.gtf 构建任务本地自定义 snpEff 数据库，完成变异功能效应注释，输出带 ANN 注释的 VCF 与 ANN 汇总，并生成 report.md、reproduce.sh 和 stage_status.tsv；当 snpEff/Java/数据库构建失败时明确标记 blocked，不得输出伪造的 ANN。",
+  "inputs": [
+    {
+      "artifact_id": "artifact-508d45c7878a6e80fe61",
+      "semantic_handle": "input.variant_vcf",
+      "direction": "input",
+      "role": "variant_vcf",
+      "format": "vcf",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/all.filtered.snp.vcf",
+      "required_basename": "all.filtered.snp.vcf",
+      "resolution_base": "/public/home/liusiqi/03.毕设",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    },
+    {
+      "artifact_id": "artifact-3249dbdf634c89efa2f1",
+      "semantic_handle": "input.reference_fasta",
+      "direction": "input",
+      "role": "reference_fasta",
+      "format": "fasta",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta",
+      "required_basename": "genome.fasta",
+      "resolution_base": "/public/home/liusiqi/03.毕设",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    },
+    {
+      "artifact_id": "artifact-8415fe22d2eb9615d68f",
+      "semantic_handle": "input.annotation_gtf",
+      "direction": "input",
+      "role": "annotation_gtf",
+      "format": "gtf",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf",
+      "required_basename": "genome.gtf",
+      "resolution_base": "/public/home/liusiqi/03.毕设",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    }
+  ],
+  "output_contracts": [
+    {
+      "artifact_id": "output_dir",
+      "output_id": "output_dir",
+      "semantic_handle": "output.output_dir",
+      "direction": "output",
+      "role": "output_dir",
+      "artifact_kind": "directory",
+      "format": "directory",
+      "path_policy": "managed_exact",
+      "canonical_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-ANNOT-007/medium",
+      "filename": "medium",
+      "required_basename": "medium",
+      "required": true,
+      "validation_contract_id": "directory-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "user_visible": false,
+      "producer_owner": "plan_step",
+      "relocatable": false,
+      "resolution_base": "/"
+    },
+    {
+      "artifact_id": "annotated_vcf",
+      "output_id": "annotated_vcf",
+      "semantic_handle": "output.annotated_vcf",
+      "direction": "output",
+      "role": "annotated_vcf",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "ann_summary",
+      "output_id": "ann_summary",
+      "semantic_handle": "output.ann_summary",
+      "direction": "output",
+      "role": "ann_summary",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "report",
+      "output_id": "report",
+      "semantic_handle": "output.report",
+      "direction": "output",
+      "role": "report",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "reproduce_script",
+      "output_id": "reproduce_script",
+      "semantic_handle": "output.reproduce_script",
+      "direction": "output",
+      "role": "reproduce_script",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "stage_status",
+      "output_id": "stage_status",
+      "semantic_handle": "output.stage_status",
+      "direction": "output",
+      "role": "stage_status",
+      "artifact_kind": "file",
+      "format": "file",
+      "path_policy": "planner_materialized",
+      "root_ref": "output_dir",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+          "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    }
+  ],
+  "constraints": {
+    "source_field": "requirements",
+    "constraints_field_absent": true,
+    "requirements": [
+      {
+        "requirement_id": "requirement-1",
+        "value": "禁止使用 tests/demo_ref.fa 或 demo.vcf 作为分析依据。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-2",
+        "value": "禁止用 taxonomy label 猜测 public snpEff 数据库；必须基于用户提供的 FASTA+GTF 构建任务本地自定义数据库。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-3",
+        "value": "禁止忽略 chromosome naming mismatch；注释前必须检查 VCF、FASTA 与 GTF 的 contig 命名一致性。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-4",
+        "value": "snpEff/Java/database build 失败时标记 blocked；不得输出假 ANN。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-5",
+        "value": "只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录，也不得使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-6",
+        "value": "所有 benchmarks/... 相对路径以项目根目录解析；如当前工作目录不同，先 cd 到项目根目录或改用绝对路径。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-7",
+        "value": "先识别输入类型、样本、关键参数和依赖；自行规划合理步骤，并在 report.md 中说明为什么选择这些 skill/流程。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-8",
+        "value": "对能执行的 stage 生成真实结果；对不能执行的 stage 明确写 blocked/stage_blocked 并说明缺少什么；不要伪造结果。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      },
+      {
+        "requirement_id": "requirement-9",
+        "value": "缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。",
+        "level": "unknown",
+        "strength": "required",
+        "confidence": 1.0,
+        "ambiguity": false,
+        "needs_clarification": false,
+        "status": "active",
+        "source": "user_explicit",
+        "source_type": "user_explicit",
+        "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+        "provenance": [
+          {
+            "source_type": "user_explicit",
+            "source_ref": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0",
+            "source_id": "object:sha256:c4919756232746b00ec2b582049985c638de0c3d9ecb80e0cf64fcc1bbc228e0"
+          }
+        ]
+      }
+    ]
+  },
+  "parameters": {},
+  "confirmed_decisions": [],
+  "raw_submission_ref": "object:sha256:38ee146e542712078144119649b2c3da16a1375a402a0222e318f4b1df91f05e",
+  "safety": "Original declarations only; no path was opened or materialized."
+}

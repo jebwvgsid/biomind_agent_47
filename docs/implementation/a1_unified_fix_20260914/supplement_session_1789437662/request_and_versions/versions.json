@@ -1,0 +1,241 @@
+{
+  "scope": "Limited Plan producer/consumer source, public prompt/Skill and one existing failure interface; no whole-repository inventory.",
+  "current_worktree_head": "1d0ab2cc6bd8d0c9e7ee2990725f8d41cd92c9c2",
+  "final_acceptance_source_head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+  "final_acceptance_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "source_record_is_not_historical_import_proof": true,
+  "rows": [
+    {
+      "file": "bio_agents.py",
+      "current_worktree_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+      "final08_export_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+      "same": true,
+      "historical_source_at_capture_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+      "historical_source_at_capture_matches_current": true,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "prompts/manager.py",
+      "current_worktree_sha256": "3dad1832cce3ccb9be48dce64fabcb7bc4a8e5faa12000d1ea1565e328f3d654",
+      "final08_export_sha256": "3dad1832cce3ccb9be48dce64fabcb7bc4a8e5faa12000d1ea1565e328f3d654",
+      "same": true,
+      "historical_source_at_capture_sha256": "3dad1832cce3ccb9be48dce64fabcb7bc4a8e5faa12000d1ea1565e328f3d654",
+      "historical_source_at_capture_matches_current": true,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": [
+        "PromptManager.get_planner_v2_system_prompt"
+      ]
+    },
+    {
+      "file": "prompts/templates.py",
+      "current_worktree_sha256": "c8af0020f47de9b28439156bffaffd44d678872c17cc9f970a0b832b7016431d",
+      "final08_export_sha256": "c8af0020f47de9b28439156bffaffd44d678872c17cc9f970a0b832b7016431d",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/node_context.py",
+      "current_worktree_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "final08_export_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/planner_context.py",
+      "current_worktree_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+      "final08_export_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/planner_loop.py",
+      "current_worktree_sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649",
+      "final08_export_sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/planner_output_policy.py",
+      "current_worktree_sha256": "9d937db3705bbda6f18b5e4344a125ab226870c1e7af7b283c925b5f1a5871e2",
+      "final08_export_sha256": "9d937db3705bbda6f18b5e4344a125ab226870c1e7af7b283c925b5f1a5871e2",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/planner_recovery.py",
+      "current_worktree_sha256": "09f311dd02997260a62af1d7477e94b6805cb69ba7244022775f26e56c38bebd",
+      "final08_export_sha256": "09f311dd02997260a62af1d7477e94b6805cb69ba7244022775f26e56c38bebd",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/planner_revision.py",
+      "current_worktree_sha256": "97d01a83695b0b41cbf90e046a43205c91e3fc11fc92b0f5a12256f77e5dd44e",
+      "final08_export_sha256": "97d01a83695b0b41cbf90e046a43205c91e3fc11fc92b0f5a12256f77e5dd44e",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/plan_bindings.py",
+      "current_worktree_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+      "final08_export_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+      "same": true,
+      "historical_source_at_capture_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+      "historical_source_at_capture_matches_current": true,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": [
+        "compile_plan_resource_bindings",
+        "planner_resource_requirements",
+        "capability_workspace_roles"
+      ]
+    },
+    {
+      "file": "agent_core/plan_contract.py",
+      "current_worktree_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+      "final08_export_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+      "same": true,
+      "historical_source_at_capture_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+      "historical_source_at_capture_matches_current": true,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": [
+        "validate_planner_candidate_deterministically",
+        "parse_planner_outcome_envelope"
+      ]
+    },
+    {
+      "file": "agent_core/plan_tracker.py",
+      "current_worktree_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+      "final08_export_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+      "same": true,
+      "historical_source_at_capture_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+      "historical_source_at_capture_matches_current": true,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": [
+        "_semantic_diagnostic_value",
+        "_planning_failure_machine_issue",
+        "_planning_issue_affected_step_ids"
+      ]
+    },
+    {
+      "file": "agent_core/skill_manager.py",
+      "current_worktree_sha256": "18f742c69745a4a0133cb16b7a9ec42b09b474aefb01e586979cb524d6c9932e",
+      "final08_export_sha256": "18f742c69745a4a0133cb16b7a9ec42b09b474aefb01e586979cb524d6c9932e",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/action_runtime.py",
+      "current_worktree_sha256": "5cef4102ba4f8b4a3183314dda845d8c92cd5ebbb0b845276c16e1d786618122",
+      "final08_export_sha256": "5cef4102ba4f8b4a3183314dda845d8c92cd5ebbb0b845276c16e1d786618122",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "current_worktree_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+      "final08_export_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+      "same": true,
+      "historical_source_at_capture_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+      "historical_source_at_capture_matches_current": true,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/controller_audit.py",
+      "current_worktree_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3",
+      "final08_export_sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "agent_core/provider_message_safety.py",
+      "current_worktree_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "final08_export_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "skills/genomics/snpeff-annotation/SKILL.md",
+      "current_worktree_sha256": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44",
+      "final08_export_sha256": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": [],
+      "historical_model_request_exact_body_sha256": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44"
+    },
+    {
+      "file": "skills/genomics/snpeff-annotation/references/snpeff_config_templates.md",
+      "current_worktree_sha256": "1dd82f6a94bb300593ae9d4266454add4c9313a3939794833b9b4c26dec3d5e5",
+      "final08_export_sha256": "1dd82f6a94bb300593ae9d4266454add4c9313a3939794833b9b4c26dec3d5e5",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    },
+    {
+      "file": "skills/genomics/snpeff-annotation/references/snpeff_notes.md",
+      "current_worktree_sha256": "126cfeee7e8f92d9abb450357ea3b36b01bea6b31b527ff9a196b796388d6fb5",
+      "final08_export_sha256": "126cfeee7e8f92d9abb450357ea3b36b01bea6b31b527ff9a196b796388d6fb5",
+      "same": true,
+      "historical_source_at_capture_sha256": "NOT_IN_CAPTURE_ALLOWLIST",
+      "historical_source_at_capture_matches_current": null,
+      "historical_module_loaded_bytes": "UNKNOWN: callable identities are available for selected modules, not an original imported-file byte snapshot",
+      "verified_loaded_callable_symbols": []
+    }
+  ],
+  "all_selected_current_bytes_equal_final08": true,
+  "safety": "Only allowlisted repository source/public Skill text read. No original session business loader, configuration, environment, scientific data or process-profile access.",
+  "historical_identity_ref": "../incident/runtime_identity.static.json",
+  "historical_revision": {
+    "disk_head_at_capture": "1d0ab2cc6bd8d0c9e7ee2990725f8d41cd92c9c2",
+    "loaded_revision": "UNKNOWN",
+    "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+    "related_dirty_paths": [
+      "agent_core/workflow/managed_stop.py",
+      "prompts/manager.py"
+    ],
+    "related_untracked_paths": [],
+    "status": "CAPTURED"
+  },
+  "historical_loaded_revision": "UNKNOWN",
+  "historical_callable_proof": "callable_comparison.json",
+  "request_byte_proof": "request_evidence.json",
+  "historical_loaded_limit": "Nine selected code objects match same-version compilation of current/final08 source. This does not equate all imported module globals, config, dependencies or deployment revision. Planner context/node context were not among runtime_identity source/callable capture allowlist; their received projection effects are directly observable in requests."
+}

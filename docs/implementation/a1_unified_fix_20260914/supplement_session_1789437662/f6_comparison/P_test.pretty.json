@@ -1,0 +1,326 @@
+{
+  "outcome_type": "SUBMIT_PLAN_FOR_REVIEW",
+  "proposed_artifacts": [
+    {
+      "local_ref": "plan.db",
+      "semantic_view": {
+        "role": "snpeff_data_dir",
+        "format": "directory",
+        "description": "New isolated mutable workspace"
+      },
+      "artifact_contract": {
+        "object_kind": "directory",
+        "resource_kind": "mutable_workspace",
+        "lifecycle": "plan_local",
+        "materialization_policy_id": "managed_intermediate_v1"
+      },
+      "role_associations": [
+        {
+          "step_id": "prepare_database",
+          "capability_id": "genomics.snpeff_annotation.prepare_database",
+          "role": "artifact.snpeff_data_dir"
+        },
+        {
+          "step_id": "build_database",
+          "capability_id": "genomics.snpeff_annotation.build_database",
+          "role": "artifact.snpeff_data_dir"
+        },
+        {
+          "step_id": "annotate_variants",
+          "capability_id": "genomics.snpeff_annotation.annotate_variants",
+          "role": "artifact.snpeff_data_dir"
+        }
+      ]
+    },
+    {
+      "local_ref": "plan.config",
+      "semantic_view": {
+        "role": "snpeff_config",
+        "format": "text",
+        "description": "New isolated config"
+      },
+      "artifact_contract": {
+        "object_kind": "file",
+        "lifecycle": "plan_local",
+        "materialization_policy_id": "managed_intermediate_v1"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "step_id": "check_contig_compatibility",
+      "title": "check_contig_compatibility — explicit synthetic mechanism",
+      "action": "execute",
+      "purpose": "validation",
+      "tool": "genomics/snpeff-annotation",
+      "skill_ids": [
+        "genomics/snpeff-annotation"
+      ],
+      "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "operation": "check_contig_compatibility",
+      "inputs": [
+        "input.variant_vcf",
+        "input.reference_fasta",
+        "input.annotation_gtf"
+      ],
+      "outputs": [],
+      "dependencies": [],
+      "batch_id": "",
+      "workflow_stage_ids": [],
+      "risk_level": "low",
+      "success_criteria": [
+        "Establish only actual newly produced synthetic protocol facts for check_contig_compatibility."
+      ],
+      "produces_observations": [
+        {
+          "observation_id": "contigs_compatible",
+          "predicate": {
+            "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+            "operator": "boolean_equals",
+            "expected": true,
+            "parser_id": "biomind.genomics.contig_compatibility.v1",
+            "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+            "failure_disposition": "correction_required",
+            "missing_disposition": "inspection_required",
+            "applicability": {
+              "schema_version": 1,
+              "kind": "plan_contains_any_execution_capability",
+              "execution_capability_ids": [
+                "genomics.snpeff_annotation.prepare_database",
+                "genomics.snpeff_annotation.build_database",
+                "genomics.snpeff_annotation.annotate_variants",
+                "genomics.snpeff_annotation.summarize_ann",
+                "genomics.snpeff_annotation.finalize_outputs"
+              ]
+            }
+          },
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "prepare_database",
+      "title": "prepare_database — explicit synthetic mechanism",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "genomics/snpeff-annotation",
+      "skill_ids": [
+        "genomics/snpeff-annotation"
+      ],
+      "execution_capability_id": "genomics.snpeff_annotation.prepare_database",
+      "operation": "prepare_database",
+      "inputs": [
+        "input.reference_fasta",
+        "input.annotation_gtf"
+      ],
+      "outputs": [
+        "plan.config"
+      ],
+      "dependencies": [
+        "check_contig_compatibility"
+      ],
+      "batch_id": "",
+      "workflow_stage_ids": [],
+      "risk_level": "low",
+      "success_criteria": [
+        "Establish only actual newly produced synthetic protocol facts for prepare_database."
+      ],
+      "produces_bindings": [
+        "genome_version",
+        "snpeff_db"
+      ],
+      "produces_observations": [
+        "database_layout_prepared"
+      ],
+      "workspace_mutations": [
+        {
+          "workspace_ref": "plan.db",
+          "mutation": "prepare_database",
+          "requires_available": false,
+          "available_after_success": true,
+          "establishes_state": "database_layout_prepared",
+          "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+          "contract_revision": "snpeff-workspace-transition-v1",
+          "evidence_contract": {
+            "schema_version": 1,
+            "collector": "bounded_filesystem_snapshot_v1",
+            "allow_idempotent_revalidation": true,
+            "postconditions": [
+              {
+                "kind": "directory_exists",
+                "relative_path": "data"
+              },
+              {
+                "kind": "file_nonempty",
+                "relative_path": "data/genomes/{binding:genome_version}.fa"
+              },
+              {
+                "kind": "file_nonempty",
+                "relative_path": "data/{binding:genome_version}/genes.gtf"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "build_database",
+      "title": "build_database — explicit synthetic mechanism",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "genomics/snpeff-annotation",
+      "skill_ids": [
+        "genomics/snpeff-annotation"
+      ],
+      "execution_capability_id": "genomics.snpeff_annotation.build_database",
+      "operation": "build_database",
+      "inputs": [
+        "input.reference_fasta",
+        "input.annotation_gtf",
+        "plan.config"
+      ],
+      "outputs": [],
+      "dependencies": [
+        "prepare_database"
+      ],
+      "batch_id": "",
+      "workflow_stage_ids": [],
+      "risk_level": "low",
+      "success_criteria": [
+        "Establish only actual newly produced synthetic protocol facts for build_database."
+      ],
+      "produces_observations": [
+        "snpeff_database_ready"
+      ],
+      "workspace_mutations": [
+        {
+          "workspace_ref": "plan.db",
+          "mutation": "build_database",
+          "requires_available": true,
+          "requires_state": "database_layout_prepared",
+          "available_after_success": true,
+          "establishes_state": "snpeff_database_ready",
+          "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+          "contract_revision": "snpeff-workspace-transition-v1",
+          "evidence_contract": {
+            "schema_version": 1,
+            "collector": "bounded_filesystem_snapshot_v1",
+            "allow_idempotent_revalidation": true,
+            "postconditions": [
+              {
+                "kind": "file_nonempty",
+                "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "annotate_variants",
+      "title": "annotate_variants — explicit synthetic mechanism",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "genomics/snpeff-annotation",
+      "skill_ids": [
+        "genomics/snpeff-annotation"
+      ],
+      "execution_capability_id": "genomics.snpeff_annotation.annotate_variants",
+      "operation": "annotate_variants",
+      "inputs": [
+        "input.variant_vcf",
+        "plan.config",
+        "plan.db"
+      ],
+      "outputs": [
+        "output.annotated_vcf"
+      ],
+      "dependencies": [
+        "build_database"
+      ],
+      "batch_id": "",
+      "workflow_stage_ids": [],
+      "risk_level": "low",
+      "success_criteria": [
+        "Establish only actual newly produced synthetic protocol facts for annotate_variants."
+      ]
+    },
+    {
+      "step_id": "summarize_ann",
+      "title": "summarize_ann — explicit synthetic mechanism",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "genomics/snpeff-annotation",
+      "skill_ids": [
+        "genomics/snpeff-annotation"
+      ],
+      "execution_capability_id": "genomics.snpeff_annotation.summarize_ann",
+      "operation": "summarize_ann",
+      "inputs": [
+        "output.annotated_vcf"
+      ],
+      "outputs": [
+        "output.ann_summary"
+      ],
+      "dependencies": [
+        "annotate_variants"
+      ],
+      "batch_id": "",
+      "workflow_stage_ids": [],
+      "risk_level": "low",
+      "success_criteria": [
+        "Establish only actual newly produced synthetic protocol facts for summarize_ann."
+      ],
+      "produces_observations": [
+        "ann_summary_completed"
+      ]
+    },
+    {
+      "step_id": "finalize_outputs",
+      "title": "finalize_outputs — explicit synthetic mechanism",
+      "action": "execute",
+      "purpose": "analysis",
+      "tool": "genomics/snpeff-annotation",
+      "skill_ids": [
+        "genomics/snpeff-annotation"
+      ],
+      "execution_capability_id": "genomics.snpeff_annotation.finalize_outputs",
+      "operation": "finalize_outputs",
+      "inputs": [
+        "output.annotated_vcf",
+        "output.ann_summary"
+      ],
+      "outputs": [
+        "output.report",
+        "output.reproduce_script",
+        "output.stage_status"
+      ],
+      "dependencies": [
+        "summarize_ann"
+      ],
+      "batch_id": "",
+      "workflow_stage_ids": [],
+      "risk_level": "low",
+      "success_criteria": [
+        "Establish only actual newly produced synthetic protocol facts for finalize_outputs."
+      ],
+      "produces_observations": [
+        "final_outputs_recorded"
+      ]
+    }
+  ],
+  "validation_checklist": [
+    {
+      "check_id": "actual-effect-scope",
+      "description": "Six distinct capabilities; actual receipts; no real scientific claim."
+    }
+  ],
+  "metadata": {
+    "schema_version": 2,
+    "planner_contract": "structured_plan_v2"
+  }
+}

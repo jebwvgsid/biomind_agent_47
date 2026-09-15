@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "planning_epoch_id": "planning-epoch-a69d8c7e-99c0-47e4-a6b7-39058ae22aae",
+  "parent_epoch_id": "",
+  "start_reason": "initial_planning",
+  "base_task_revision": 1,
+  "base_task_semantic_identity": "sha256:f6fe833ecd24b1a80914aee4c627e7f0a5bec099e3eb4531243114d140e83102",
+  "base_plan_revision": 0,
+  "base_plan_snapshot_id": "",
+  "base_plan_semantic_identity": "",
+  "base_planner_feedback_revision": 1,
+  "planner_calls_total": 4,
+  "candidate_repairs": 0,
+  "stale_redispatches": 0,
+  "status": "exhausted",
+  "planner_output_policy_version": "planner-output-policy-v1",
+  "planner_response_protocol_version": 3,
+  "call_claim": {
+    "schema_version": 1,
+    "scope": {
+      "task_id": "session_1789437662",
+      "task_revision": 1,
+      "planning_epoch_id": "planning-epoch-a69d8c7e-99c0-47e4-a6b7-39058ae22aae",
+      "invocation_id": "inv-827b8eb1-b03c-47f4-a461-fd9cdbc4caee",
+      "candidate_scope_id": "candidate-scope-8d4315ac-529d-4968-a03f-2b3e8e6e1737"
+    },
+    "ordinal": 4,
+    "output_policy": {
+      "schema_version": 1,
+      "output_policy_source": "planner_engineering_defaults",
+      "output_policy_version": "planner-output-policy-v1",
+      "provider_capability_source": "https://api-docs.deepseek.com/api/create-chat-completion/",
+      "provider_capability_version": "deepseek-v4-chat-completions-20260908",
+      "provider_capability_evidence_level": "documented_official_profile_not_deployment_verified",
+      "provider_documented_output_ceiling": 384000,
+      "provider_documented_output_ceiling_label": "384K",
+      "provider_documented_context_limit": 1000000,
+      "requested_output_limit": 16384,
+      "wire_output_parameter_key": "max_tokens",
+      "wire_output_parameter_value": 16384,
+      "wire_observation_status": "resolved_not_wire_observed",
+      "server_effective_output_limit": null,
+      "application_context_limit": 200000,
+      "input_reserve_used": 16384,
+      "initial_output_token_limit": 16384,
+      "length_recovery_output_token_limit": 32768,
+      "max_length_corrective_calls_per_epoch": 1,
+      "can_increase": true,
+      "apply_output_binding": true,
+      "policy_reason": "EXPLICIT_OUTPUT_POLICY_RESOLVED",
+      "recovery": false,
+      "legacy_epoch": false,
+      "restrictions": [],
+      "model_parameter_hash_version": "planner-model-parameters-v2",
+      "output_policy_hash": "sha256:9609b7544a5e4f7981769b5f386b6033b84668d26d057703c3a1a4f5c4fec593"
+    },
+    "remediation": {},
+    "status": "result_recorded",
+    "claim_id": "planner-call:af2a13ff90ef20c8235a87c64d5982cb9476f3cb8705a3dfd23c0902f897a27d",
+    "outcome": "model_stopped",
+    "raw_digest": "6ef8215faa0c6b65d7dfc97db8dbfeced8e9f192f872672f6ac93dc5b63c9370",
+    "response_integrity": {
+      "schema_version": 1,
+      "scope": {
+        "task_id": "session_1789437662",
+        "task_revision": 1,
+        "planning_epoch_id": "planning-epoch-a69d8c7e-99c0-47e4-a6b7-39058ae22aae",
+        "invocation_id": "inv-827b8eb1-b03c-47f4-a461-fd9cdbc4caee",
+        "candidate_scope_id": "candidate-scope-8d4315ac-529d-4968-a03f-2b3e8e6e1737"
+      },
+      "claim_id": "planner-call:af2a13ff90ef20c8235a87c64d5982cb9476f3cb8705a3dfd23c0902f897a27d",
+      "call_id": "planner_initial-0009-9d7ea8c74d00",
+      "provider_attempt_id": "provider-attempt-1d96fae6da3c-1-d318c79c",
+      "provider_request_id": "lc_run--01a0a2cd-a368-7501-b76d-f5eba2885e4f",
+      "raw_digest": "6ef8215faa0c6b65d7dfc97db8dbfeced8e9f192f872672f6ac93dc5b63c9370",
+      "raw_ref": "",
+      "finish_reason": "stop",
+      "reported_usage": {
+        "input_tokens": 45536,
+        "output_tokens": 547,
+        "total_tokens": 46083
+      },
+      "usage_source": "REPORTED",
+      "usage_status": "REPORTED",
+      "transport_status": "COMPLETED",
+      "content_status": "NORMAL_END",
+      "parser_diagnostic": {
+        "status": "passed",
+        "source": "live_planner_envelope_parser"
+      },
+      "resolved_output_policy": {
+        "schema_version": 1,
+        "output_policy_source": "planner_engineering_defaults",
+        "output_policy_version": "planner-output-policy-v1",
+        "provider_capability_source": "https://api-docs.deepseek.com/api/create-chat-completion/",
+        "provider_capability_version": "deepseek-v4-chat-completions-20260908",
+        "provider_capability_evidence_level": "documented_official_profile_not_deployment_verified",
+        "provider_documented_output_ceiling": 384000,
+        "provider_documented_output_ceiling_label": "384K",
+        "provider_documented_context_limit": 1000000,
+        "requested_output_limit": 16384,
+        "wire_output_parameter_key": "max_tokens",
+        "wire_output_parameter_value": 16384,
+        "wire_observation_status": "resolved_not_wire_observed",
+        "server_effective_output_limit": null,
+        "application_context_limit": 200000,
+        "input_reserve_used": 16384,
+        "initial_output_token_limit": 16384,
+        "length_recovery_output_token_limit": 32768,
+        "max_length_corrective_calls_per_epoch": 1,
+        "can_increase": true,
+        "apply_output_binding": true,
+        "policy_reason": "EXPLICIT_OUTPUT_POLICY_RESOLVED",
+        "recovery": false,
+        "legacy_epoch": false,
+        "restrictions": [],
+        "model_parameter_hash_version": "planner-model-parameters-v2",
+        "output_policy_hash": "sha256:9609b7544a5e4f7981769b5f386b6033b84668d26d057703c3a1a4f5c4fec593"
+      },
+      "attempted_remediation": {}
+    }
+  },
+  "rejected_candidate_comparisons": [
+    {
+      "signature": "64ef0cf2d8243caca82d357ff071980eacc8300930a963047d8774a6d7609884",
+      "issues": "de994f462571bdcb2a605a86acafc8167196937f07f2d323de5ad9e9df5cfba6",
+      "facts": "bcd3b05418fd557139901b0f09e6384693d61b7f5bdb4c9e7c16ff8f8f9034dc",
+      "claim_id": "planner-call:6f7a57c6a4ee8a41acc7474508cbe461ab228373fa3e8b7eac8a2eebc03f54ab"
+    },
+    {
+      "signature": "b91c3c470a6a2b2894297724726a24c801a65101b51cec6c1d0f4bb6d6c0b8b7",
+      "issues": "b7973ea8be6e9fa5ee51d8f99cab72be5e47f358239b79ced6d160cca1181836",
+      "facts": "bcd3b05418fd557139901b0f09e6384693d61b7f5bdb4c9e7c16ff8f8f9034dc",
+      "claim_id": "planner-call:752f5b79bab52c6c1ec74cc345e7173dc7a03b0043f1f07c2bda869b76307b22"
+    },
+    {
+      "signature": "dfdeaa3339caaa45b8382caf3b555c08f49868703ab1d9cd6a219a9919d1345a",
+      "issues": "99bd8116b4f27a88266568b995693dc94db94df8167a38bf86caf4444faa16c9",
+      "facts": "bcd3b05418fd557139901b0f09e6384693d61b7f5bdb4c9e7c16ff8f8f9034dc",
+      "claim_id": "planner-call:c13b35937cd314932eb7f19a74bfeccd2af166a3f4d793ad7ffbef51458489a4"
+    }
+  ]
+}

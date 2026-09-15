@@ -1,0 +1,15 @@
+{
+  "method": "Evaluate only the already-inspected pure F6Graph.plan AST with registry rows extracted from the actual delivered Planner human request. No production import, agent/state load, provider or scientific execution. json.dumps uses the exact original provider encoding.",
+  "source_file": "tests/a1_unified_fix/test_f6_graph.py",
+  "source_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+  "plan_source_lines": [
+    240,
+    273
+  ],
+  "request_source": "P_test.planner_request.json /messages/1/content JSON after phase_seed_contract",
+  "formal_claim": "P_test.original_claim.json /raw_digest",
+  "matching_raw_sha256": "dc029d40dd47fef04b5066bb4d1bca1a890cf144b0899d5f7f789b1b663a9306",
+  "raw_bytes": 7601,
+  "historical_raw_ref": "",
+  "qualification": "Original response file was not in the retained F6 tar (raw_ref empty); this byte-exact deterministic reconstruction is checked against the original recorded raw digest, not represented as a newly captured historical file."
+}

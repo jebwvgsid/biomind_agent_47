@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[base]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[base]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022043846547603607,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[base]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0027244528755545616,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[base]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012526195496320724,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[current]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[current]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018317252397537231,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[current]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001542920246720314,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[current]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.668245911598206e-05,
+    "failure": ""
+  }
+]

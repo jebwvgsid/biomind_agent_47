@@ -1,0 +1,2 @@
+stage	workflow_status	execution_status	committed	notes
+run	failed	stopped	false	PLANNER_MODEL_STOPPED

@@ -1,0 +1,9 @@
+{
+  "task_id": "fix-f6-normal",
+  "plan_id": "plan_780c985c03a482a9ea6c",
+  "plan_version": "plan_v1",
+  "plan_revision": 1,
+  "approved_plan_hash": "544d10c3e45a3dfcc3439693fa034bb18937e1866458805a1ea794ad42fe0ee1",
+  "approval_snapshot_ref": "object:sha256:1d888904f600abc2ba140df25f590c36a68daea696d3dcdbc1634f81003933d3",
+  "task_revision": null
+}

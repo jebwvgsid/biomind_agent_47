@@ -1,0 +1,356 @@
+{
+  "status": "SUPPLEMENTAL_REVIEW_COMPLETE",
+  "original_candidate": "1d0ab2cc6bd8d0c9e7ee2990725f8d41cd92c9c2",
+  "test_source_signature": "aa4cde53398d6723223b80dd331329913b689dc8da081d92ac111d54d6ced19e",
+  "test_export_files": 459,
+  "source_manifest": "final_manifest.json",
+  "actual_load_and_reuse_proof": "replay/final04_reuse.json",
+  "production_source_changed": false,
+  "original_session_resumed": false,
+  "real_model_api_calls": 0,
+  "real_scientific_calls": 0,
+  "push": false,
+  "levels": {
+    "historical_live_outcome": "FAILED_TO_FORM_ADMISSIBLE_PLAN; formal model STOP accepted; no scientific task completion",
+    "incident_original_bytes_witness": "PASS on 4 exact recorded public responses; 1/5/1 issues then STOP",
+    "current_complete_admission": "PASS for P_min one-field correction and bounded legal/illegal variants; PlanReview approval_pending, no execution approval",
+    "preexisting_failure_component_witness": "2 PASS witnesses mean original unchanged assertion FAILS in both classes; not old regression PASS",
+    "new_production_fix": "NOT_IMPLEMENTED_PRODUCTION_READ_ONLY",
+    "original_F1_F6": "REUSED_WITH_ORIGINAL_SCOPE; old fixed-provider downstream mechanism remains evidence; no true Planner reliability claim",
+    "renamed_live_candidate_downstream_graph": "NOT_RUN_IN_THIS_SUPPLEMENT; appended to original master",
+    "real_model_reliability": "NOT_RUN; one historical failure is not a measured success rate",
+    "scientific_E2E": "NOT_RUN"
+  },
+  "tests": {
+    "final_coverage_unique_ids": 20,
+    "admission_and_stop_test_ids": 18,
+    "old_failure_witness_test_ids": 2,
+    "not_one_full_suite_execution": true,
+    "runs": [
+      {
+        "path": "replay/run02_main",
+        "classification": "ADMISSION_AND_ORIGINAL_STOP",
+        "counts": {
+          "passed": 2
+        },
+        "unique_tests": 2
+      },
+      {
+        "path": "replay/run03_variants",
+        "classification": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE",
+        "counts": {
+          "passed": 12,
+          "failed": 1
+        },
+        "unique_tests": 13
+      },
+      {
+        "path": "replay/run04_targeted",
+        "classification": "FINAL_CHANGED_AND_NEW_BOUNDARIES",
+        "counts": {
+          "passed": 3
+        },
+        "unique_tests": 3
+      },
+      {
+        "path": "f6_comparison/run02",
+        "classification": "F6_REVERSE_ADMISSION_ONLY",
+        "counts": {
+          "passed": 2
+        },
+        "unique_tests": 2
+      },
+      {
+        "path": "request_and_versions/existing_assertion_run",
+        "classification": "PREEXISTING_FAILURE_COMPONENT_WITNESS",
+        "counts": {
+          "passed": 2
+        },
+        "unique_tests": 2
+      }
+    ],
+    "effective_latest_results": {
+      "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop": {
+        "outcome": "passed",
+        "evidence": "replay/run02_main",
+        "kind": "ADMISSION_AND_ORIGINAL_STOP"
+      },
+      "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission": {
+        "outcome": "passed",
+        "evidence": "replay/run02_main",
+        "kind": "ADMISSION_AND_ORIGINAL_STOP"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]": {
+        "outcome": "passed",
+        "evidence": "replay/run04_targeted",
+        "kind": "FINAL_CHANGED_AND_NEW_BOUNDARIES"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]": {
+        "outcome": "passed",
+        "evidence": "replay/run03_variants",
+        "kind": "PARAMETER_VARIANTS_WITH_PRESERVED_DRIVER_FAILURE"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority": {
+        "outcome": "passed",
+        "evidence": "replay/run04_targeted",
+        "kind": "FINAL_CHANGED_AND_NEW_BOUNDARIES"
+      },
+      "tests/plan_live_review_20260915/test_variants.py::test_exact_f6_raw_candidate_in_original_context": {
+        "outcome": "passed",
+        "evidence": "replay/run04_targeted",
+        "kind": "FINAL_CHANGED_AND_NEW_BOUNDARIES"
+      },
+      "tests/plan_live_review_20260915/test_f6_variant.py::test_f6_reverse_variant_reaches_real_plan_review[original_f6_names]": {
+        "outcome": "passed",
+        "evidence": "f6_comparison/run02",
+        "kind": "F6_REVERSE_ADMISSION_ONLY"
+      },
+      "tests/plan_live_review_20260915/test_f6_variant.py::test_f6_reverse_variant_reaches_real_plan_review[public_step_id_differs_from_operation]": {
+        "outcome": "passed",
+        "evidence": "f6_comparison/run02",
+        "kind": "F6_REVERSE_ADMISSION_ONLY"
+      },
+      "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[base]": {
+        "outcome": "passed",
+        "evidence": "request_and_versions/existing_assertion_run",
+        "kind": "PREEXISTING_FAILURE_COMPONENT_WITNESS"
+      },
+      "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[current]": {
+        "outcome": "passed",
+        "evidence": "request_and_versions/existing_assertion_run",
+        "kind": "PREEXISTING_FAILURE_COMPONENT_WITNESS"
+      }
+    },
+    "reuse_proof": {
+      "unique_test_ids": 20,
+      "composition": {
+        "main": 2,
+        "variants": 14,
+        "f6_reverse": 2,
+        "old_assertion_components": 2
+      },
+      "single_final04_full_suite_run": false,
+      "run03_driver_failure_preserved": "run03_variants/summary.json",
+      "not_claimed": [
+        "full suite executed once on04",
+        "original old whole-dict regression fixed",
+        "real provider reliability",
+        "real scientific E2E",
+        "production changes"
+      ],
+      "rows": [
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+          "final_status": "PASS_REUSED_IDENTICAL_SOURCES",
+          "source_run": "replay/run02_main",
+          "boundary": "Plan-only formal graph, no execution approval"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+          "final_status": "PASS_REUSED_IDENTICAL_SOURCES",
+          "source_run": "replay/run02_main",
+          "boundary": "Plan-only formal graph, no execution approval"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_f6_variant.py::test_f6_reverse_variant_reaches_real_plan_review[original_f6_names]",
+          "final_status": "PASS_REUSED_IDENTICAL_SOURCES",
+          "source_run": "f6_comparison/run02",
+          "boundary": "Plan-only formal graph, no execution approval"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_f6_variant.py::test_f6_reverse_variant_reaches_real_plan_review[public_step_id_differs_from_operation]",
+          "final_status": "PASS_REUSED_IDENTICAL_SOURCES",
+          "source_run": "f6_comparison/run02",
+          "boundary": "Plan-only formal graph, no execution approval"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[base]",
+          "final_status": "PASS_REUSED_IDENTICAL_SOURCES",
+          "source_run": "request_and_versions/existing_assertion_run",
+          "boundary": "old assertion component witness"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_existing_assertion.py::test_original_audit_dictionary_assertion_fails_on_same_class[current]",
+          "final_status": "PASS_REUSED_IDENTICAL_SOURCES",
+          "source_run": "request_and_versions/existing_assertion_run",
+          "boundary": "old assertion component witness"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+          "final_status": "PASS_REUSED_UNCHANGED_PARAMETER_BRANCH",
+          "source_run": "replay/run03_variants",
+          "boundary": "Exact unchanged branch/CASES/shared assertions; sole changed test file accounted by AST proof"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+          "final_status": "PASS_EXECUTED_FINAL04",
+          "source_run": "replay/run04_targeted",
+          "boundary": "Targeted final04 actual run"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+          "final_status": "PASS_EXECUTED_FINAL04",
+          "source_run": "replay/run04_targeted",
+          "boundary": "Targeted final04 actual run"
+        },
+        {
+          "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_exact_f6_raw_candidate_in_original_context",
+          "final_status": "PASS_EXECUTED_FINAL04",
+          "source_run": "replay/run04_targeted",
+          "boundary": "Targeted final04 actual run"
+        }
+      ]
+    }
+  },
+  "development_failures_preserved": [
+    {
+      "path": "replay/development01",
+      "failed": 2,
+      "scope": "New harness expected abbreviated middle receipt and wrong PlanReview seam; new fixture corrected only"
+    },
+    {
+      "path": "replay/development02_variants",
+      "failed": 3,
+      "scope": "Alias shadowing, explicit-results required flags, earlier controller-field guard; valid input/correct earliest oracle adjusted and negative evidence retained"
+    },
+    {
+      "path": "replay/run03_variants",
+      "failed": 1,
+      "scope": "New cross-task driver read scope from wrong durable location; final04 executes corrected test and real second-task rejection"
+    }
+  ],
+  "existing_failures": {
+    "old_candidate_scope_fixtures": {
+      "count": 9,
+      "this_round": "NOT_RERUN; original ledgers/assertions unchanged"
+    },
+    "old_generate_audit_shape_assertion": {
+      "count": 1,
+      "this_round": "Both byte-exact BASE/current classes reproduce old assertion failure at component scope",
+      "evidence": "request_and_versions/existing_assertion_run"
+    }
+  },
+  "uncovered_and_limits": [
+    "New real Planner/model/API reliability",
+    "Renamed candidate after approval through downstream six operations",
+    "Actual healthcheck/install/snpEff/scientific correctness",
+    "TaskRouter intent admission: inherited fixture precondition",
+    "Same-task cross-epoch foreign reference: cross-task current negative is covered, not this narrower lifetime variant",
+    "Whole historical deployed module globals/config/import snapshot; 9 key callable and actual request bytes proven separately"
+  ],
+  "followup_master": "../changes_and_acceptance.tsv LIVE-PLAN-* five appended items; production NOT_IMPLEMENTED",
+  "safety": "Safe current export, controlled non-login child environment, existing offline guard; no original business load/scientific reads/scripts/API/install/push; no old assertion edits",
+  "evidence_entry": "README.md",
+  "protection": "protection.json",
+  "commit_file_scope": "commit_files.tsv"
+}

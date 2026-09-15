@@ -1,0 +1,471 @@
+{
+  "code": "PLANNER_CANDIDATE_REJECTED",
+  "correction_budget": {
+    "active_stop_available": true,
+    "cycle_detected": false,
+    "limit_condition": "hard total, including the first request; fourth valid response may be accepted; no fifth request",
+    "next_candidate_ordinal": 2,
+    "nominal_call_limit": 4,
+    "planner_calls_total": 1,
+    "remaining_requests": 3,
+    "repeat_count": 0
+  },
+  "requirements": [
+    {
+      "execution_capabilities": {
+        "genomics.snpeff_annotation.annotate_variants": {
+          "binding_applicability": {
+            "applicable": true,
+            "artifact_binding_requirements": {
+              "snpeff_db": {
+                "canonical_resource_id": "artifact.snpeff_data_dir",
+                "required_state": "snpeff_database_ready",
+                "resource_kind": "mutable_workspace"
+              }
+            },
+            "binding_contract_schema_version": 1,
+            "consumes_bindings": [
+              "genome_version",
+              "snpeff_db"
+            ],
+            "contract_source": "generate.binding_contract",
+            "schema_version": 1
+          },
+          "capability_id": "genomics.snpeff_annotation.annotate_variants",
+          "consumes_artifacts": [
+            "artifact.snpeff_config",
+            "artifact.snpeff_data_dir",
+            "artifact.variant_vcf"
+          ],
+          "execution_guidance": [
+            "Annotate the approved VCF with the approved database identity.",
+            "Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths."
+          ],
+          "operation": "annotate_variants",
+          "produces_artifacts": [
+            "artifact.annotated_vcf"
+          ],
+          "required_artifact_binding_ids": [
+            "artifact.snpeff_config",
+            "artifact.snpeff_data_dir",
+            "artifact.variant_vcf"
+          ],
+          "required_runtime_binding_ids": [
+            "runtime.java.bin",
+            "runtime.snpeff.jar"
+          ],
+          "schema_version": 1,
+          "selected_skill_id": "genomics/snpeff-annotation"
+        },
+        "genomics.snpeff_annotation.build_database": {
+          "binding_applicability": {
+            "applicable": true,
+            "artifact_binding_requirements": {
+              "snpeff_db": {
+                "canonical_resource_id": "artifact.snpeff_data_dir",
+                "resource_kind": "mutable_workspace"
+              }
+            },
+            "binding_contract_schema_version": 1,
+            "consumes_bindings": [
+              "genome_version",
+              "snpeff_db"
+            ],
+            "contract_source": "generate.binding_contract",
+            "schema_version": 1
+          },
+          "capability_id": "genomics.snpeff_annotation.build_database",
+          "consumes_artifacts": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta",
+            "artifact.snpeff_config"
+          ],
+          "execution_guidance": [
+            "Build only the approved task-local custom database.",
+            "Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths."
+          ],
+          "operation": "build_database",
+          "produces_observations": [
+            "snpeff_database_ready"
+          ],
+          "required_artifact_binding_ids": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta",
+            "artifact.snpeff_config",
+            "artifact.snpeff_data_dir"
+          ],
+          "required_runtime_binding_ids": [
+            "runtime.java.bin",
+            "runtime.snpeff.jar"
+          ],
+          "schema_version": 1,
+          "selected_skill_id": "genomics/snpeff-annotation",
+          "workspace_mutations": [
+            {
+              "available_after_success": true,
+              "contract_revision": "snpeff-workspace-transition-v1",
+              "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+              "establishes_state": "snpeff_database_ready",
+              "evidence_contract": {
+                "allow_idempotent_revalidation": true,
+                "collector": "bounded_filesystem_snapshot_v1",
+                "postconditions": [
+                  {
+                    "kind": "file_nonempty",
+                    "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+                  }
+                ],
+                "schema_version": 1
+              },
+              "mutation": "build_database",
+              "requires_available": true,
+              "requires_state": "database_layout_prepared",
+              "workspace_ref": "artifact.snpeff_data_dir"
+            }
+          ]
+        },
+        "genomics.snpeff_annotation.check_contig_compatibility": {
+          "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "consumes_artifacts": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta",
+            "artifact.variant_vcf"
+          ],
+          "execution_guidance": [
+            "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+            "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+            "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+            "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+          ],
+          "operation": "check_contig_compatibility",
+          "produces_observations": [
+            {
+              "evidence_contract": {
+                "required_fields": [
+                  "value"
+                ]
+              },
+              "predicate": {
+                "applicability": {
+                  "execution_capability_ids": [
+                    "genomics.snpeff_annotation.prepare_database",
+                    "genomics.snpeff_annotation.build_database",
+                    "genomics.snpeff_annotation.annotate_variants",
+                    "genomics.snpeff_annotation.summarize_ann",
+                    "genomics.snpeff_annotation.finalize_outputs"
+                  ],
+                  "kind": "plan_contains_any_execution_capability",
+                  "schema_version": 1
+                },
+                "expected": true,
+                "failure_disposition": "correction_required",
+                "missing_disposition": "inspection_required",
+                "operator": "boolean_equals",
+                "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                "parser_id": "biomind.genomics.contig_compatibility.v1",
+                "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+              }
+            }
+          ],
+          "required_artifact_binding_ids": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta",
+            "artifact.variant_vcf"
+          ],
+          "schema_version": 1,
+          "selected_skill_id": "genomics/snpeff-annotation"
+        },
+        "genomics.snpeff_annotation.finalize_outputs": {
+          "capability_id": "genomics.snpeff_annotation.finalize_outputs",
+          "consumes_artifacts": [
+            "artifact.ann_summary",
+            "artifact.annotated_vcf"
+          ],
+          "execution_guidance": [
+            "Write the requested report, reproduction script, and stage-status table from verified task evidence.",
+            "Do not claim scientific completion for outputs that were not actually produced and verified."
+          ],
+          "operation": "finalize_outputs",
+          "produces_artifacts": [
+            "artifact.report",
+            "artifact.reproduce_script",
+            "artifact.stage_status"
+          ],
+          "produces_observations": [
+            "final_outputs_recorded"
+          ],
+          "required_artifact_binding_ids": [
+            "artifact.ann_summary",
+            "artifact.annotated_vcf"
+          ],
+          "schema_version": 1,
+          "selected_skill_id": "genomics/snpeff-annotation"
+        },
+        "genomics.snpeff_annotation.prepare_database": {
+          "binding_applicability": {
+            "applicable": true,
+            "artifact_binding_requirements": {
+              "snpeff_db": {
+                "canonical_resource_id": "artifact.snpeff_data_dir",
+                "resource_kind": "mutable_workspace"
+              }
+            },
+            "binding_contract_schema_version": 1,
+            "contract_source": "generate.binding_contract",
+            "produces_bindings": [
+              "genome_version",
+              "snpeff_db"
+            ],
+            "schema_version": 1
+          },
+          "capability_id": "genomics.snpeff_annotation.prepare_database",
+          "consumes_artifacts": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta"
+          ],
+          "execution_guidance": [
+            "Choose one stable task-local genome version and declare the genome_version and snpeff_db bindings.",
+            "Prepare the approved task-local config and database layout without discovering or selecting another reference."
+          ],
+          "operation": "prepare_database",
+          "produces_artifacts": [
+            "artifact.snpeff_config"
+          ],
+          "produces_bindings": [
+            "genome_version",
+            "snpeff_db"
+          ],
+          "produces_observations": [
+            "database_layout_prepared"
+          ],
+          "required_artifact_binding_ids": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta"
+          ],
+          "schema_version": 1,
+          "selected_skill_id": "genomics/snpeff-annotation",
+          "workspace_mutations": [
+            {
+              "available_after_success": true,
+              "contract_revision": "snpeff-workspace-transition-v1",
+              "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+              "establishes_state": "database_layout_prepared",
+              "evidence_contract": {
+                "allow_idempotent_revalidation": true,
+                "collector": "bounded_filesystem_snapshot_v1",
+                "postconditions": [
+                  {
+                    "kind": "directory_exists",
+                    "relative_path": "data"
+                  },
+                  {
+                    "kind": "file_nonempty",
+                    "relative_path": "data/genomes/{binding:genome_version}.fa"
+                  },
+                  {
+                    "kind": "file_nonempty",
+                    "relative_path": "data/{binding:genome_version}/genes.gtf"
+                  }
+                ],
+                "schema_version": 1
+              },
+              "mutation": "prepare_database",
+              "requires_available": false,
+              "workspace_ref": "artifact.snpeff_data_dir"
+            }
+          ]
+        },
+        "genomics.snpeff_annotation.summarize_ann": {
+          "capability_id": "genomics.snpeff_annotation.summarize_ann",
+          "consumes_artifacts": [
+            "artifact.annotated_vcf"
+          ],
+          "execution_guidance": [
+            "Summarize ANN records without invoking the annotation runtime."
+          ],
+          "operation": "summarize_ann",
+          "produces_artifacts": [
+            "artifact.ann_summary"
+          ],
+          "produces_observations": [
+            "ann_summary_completed"
+          ],
+          "required_artifact_binding_ids": [
+            "artifact.annotated_vcf"
+          ],
+          "schema_version": 1,
+          "selected_skill_id": "genomics/snpeff-annotation"
+        }
+      },
+      "existing_resource_reference": {
+        "resource_ref": "exact current resource handle"
+      },
+      "invariants": [
+        "capability identity is not resource identity",
+        "directory shape does not confer mutable permission",
+        "independent files use PRODUCE/READ; a shared workspace requires explicitly ordered MUTATE",
+        "a required state must be established on the SAME resource by a reachable predecessor",
+        "inline typed evidence_contract is supported for otherwise undeclared side effects"
+      ],
+      "new_resource": {
+        "artifact_contract": {
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "object_kind": [
+            "file",
+            "directory"
+          ],
+          "resource_kind": [
+            "immutable_artifact",
+            "mutable_workspace"
+          ]
+        },
+        "local_ref": "plan.<candidate-local-name>",
+        "resource_binding": "omit for a new resource; the binder creates identity",
+        "role_associations": {
+          "item": {
+            "capability_id": "that step's selected capability",
+            "role": "one role enumerated below"
+          },
+          "meaning": "This resource implements the exact role only for that step/capability. Repeat explicitly for each sharing step. This is not an existing resource_binding or a global alias.",
+          "optional": true,
+          "schema_version": 1
+        }
+      },
+      "protocol": "plan_resource_protocol_v2",
+      "resources": [
+        {
+          "handle": "input.annotation_gtf",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "input.reference_fasta",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "input.variant_vcf",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "output.ann_summary",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "output.annotated_vcf",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "output.output_dir",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "output.report",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "output.reproduce_script",
+          "resource_kind": "immutable_artifact"
+        },
+        {
+          "handle": "output.stage_status",
+          "resource_kind": "immutable_artifact"
+        }
+      ],
+      "workspace_roles_by_capability": {
+        "genomics.snpeff_annotation.annotate_variants": {
+          "artifact.snpeff_data_dir": {
+            "access": "read",
+            "required_state": "snpeff_database_ready",
+            "resource_kind": "mutable_workspace"
+          }
+        },
+        "genomics.snpeff_annotation.build_database": {
+          "artifact.snpeff_data_dir": {
+            "access": "mutate",
+            "resource_kind": "mutable_workspace"
+          }
+        },
+        "genomics.snpeff_annotation.prepare_database": {
+          "artifact.snpeff_data_dir": {
+            "access": "mutate",
+            "resource_kind": "mutable_workspace"
+          }
+        }
+      }
+    }
+  ],
+  "response_completion": {
+    "content_status": "NORMAL_END",
+    "finish_reason": "stop",
+    "parser_diagnostic": {
+      "status": "passed"
+    },
+    "reported_usage": {
+      "input_tokens": 21663,
+      "output_tokens": 4255,
+      "total_tokens": 25918
+    }
+  },
+  "validation_issues": [
+    {
+      "actual": {
+        "inputs": [
+          "input.variant_vcf"
+        ],
+        "role": "artifact.snpeff_data_dir"
+      },
+      "affected_artifact": {},
+      "affected_output": {},
+      "affected_step_ids": [
+        "annotate_variants"
+      ],
+      "code": "PLAN_RESOURCE_ROLE_READ_MISSING",
+      "constraint_source": "plan_resource_roles_v1",
+      "disposition": "PROTOCOL_INVALID",
+      "expected": {
+        "access": "read",
+        "resource_binding": "omit for NEW; use role_associations on the chosen declaration",
+        "resource_local_refs": [
+          "plan.snpeff_data_dir"
+        ],
+        "role_association": {
+          "capability_id": "genomics.snpeff_annotation.annotate_variants",
+          "role": "artifact.snpeff_data_dir"
+        }
+      },
+      "field_path": "$.steps[5]",
+      "machine_evidence": {
+        "actual": {
+          "inputs": [
+            "input.variant_vcf"
+          ],
+          "role": "artifact.snpeff_data_dir"
+        },
+        "expected": {
+          "access": "read",
+          "resource_binding": "omit for NEW; use role_associations on the chosen declaration",
+          "resource_local_refs": [
+            "plan.snpeff_data_dir"
+          ],
+          "role_association": {
+            "capability_id": "genomics.snpeff_annotation.annotate_variants",
+            "role": "artifact.snpeff_data_dir"
+          }
+        },
+        "not_evaluated": [
+          "step_effects",
+          "dataflow",
+          "required_workspace_coverage"
+        ],
+        "validator_id": "compile_plan_resource_bindings",
+        "violation_code": "PLAN_RESOURCE_ROLE_READ_MISSING"
+      },
+      "message": "Use this issue's step_key as role_associations[].step_id, with the exact expected capability_id and role on the chosen resource declaration.",
+      "repair_target": "$.steps[5]",
+      "severity": "error",
+      "step_key": "annotate_variants",
+      "validator_id": "compile_plan_resource_bindings",
+      "violation_code": "PLAN_RESOURCE_ROLE_READ_MISSING"
+    }
+  ]
+}

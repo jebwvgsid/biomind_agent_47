@@ -1,0 +1,209 @@
+[
+  {
+    "ordinal": 1,
+    "context_to_provider_delta": [
+      {
+        "pointer": "/requirements/0/new_resource/role_associations/item/step_id",
+        "operation": "removed",
+        "before": "one declared step"
+      },
+      {
+        "pointer": "/response_completion/parser_diagnostic/source",
+        "operation": "removed",
+        "before": "live_planner_envelope_parser"
+      },
+      {
+        "pointer": "/validation_issues/0/actual/step_id",
+        "operation": "removed",
+        "before": "annotate_variants"
+      },
+      {
+        "pointer": "/validation_issues/0/expected/role_association/step_id",
+        "operation": "removed",
+        "before": "annotate_variants"
+      },
+      {
+        "pointer": "/validation_issues/0/machine_evidence/actual/step_id",
+        "operation": "removed",
+        "before": "annotate_variants"
+      },
+      {
+        "pointer": "/validation_issues/0/machine_evidence/expected/role_association/step_id",
+        "operation": "removed",
+        "before": "annotate_variants"
+      },
+      {
+        "pointer": "/validation_issues/0/not_evaluated",
+        "operation": "removed",
+        "before": [
+          "step_effects",
+          "dataflow",
+          "required_workspace_coverage"
+        ]
+      },
+      {
+        "pointer": "/validation_issues/0/step_id",
+        "operation": "removed",
+        "before": "annotate_variants"
+      },
+      {
+        "pointer": "/validation_issues/0/step_key",
+        "operation": "added",
+        "after": "annotate_variants"
+      }
+    ],
+    "provider_to_next_request_delta": []
+  },
+  {
+    "ordinal": 2,
+    "context_to_provider_delta": [
+      {
+        "pointer": "/requirements/0/new_resource/role_associations/item/step_id",
+        "operation": "removed",
+        "before": "one declared step"
+      },
+      {
+        "pointer": "/response_completion/parser_diagnostic/source",
+        "operation": "removed",
+        "before": "live_planner_envelope_parser"
+      },
+      {
+        "pointer": "/validation_issues/0/plan_step_id",
+        "operation": "removed",
+        "before": "preflight_inputs"
+      },
+      {
+        "pointer": "/validation_issues/1/plan_step_id",
+        "operation": "removed",
+        "before": "runtime_healthcheck"
+      },
+      {
+        "pointer": "/validation_issues/2/capability_artifact_effects",
+        "operation": "removed",
+        "before": [
+          "artifact.snpeff_config"
+        ]
+      },
+      {
+        "pointer": "/validation_issues/2/machine_evidence/source",
+        "operation": "removed",
+        "before": "skill.genomics/snpeff-annotation.operation.prepare_database"
+      },
+      {
+        "pointer": "/validation_issues/2/source",
+        "operation": "removed",
+        "before": "skill.genomics/snpeff-annotation.operation.prepare_database"
+      },
+      {
+        "pointer": "/validation_issues/2/step_id",
+        "operation": "removed",
+        "before": "prepare_database"
+      },
+      {
+        "pointer": "/validation_issues/2/step_key",
+        "operation": "added",
+        "after": "prepare_database"
+      },
+      {
+        "pointer": "/validation_issues/3/candidate_sources",
+        "operation": "removed",
+        "before": [
+          "skill.genomics/snpeff-annotation.operation.annotate_variants",
+          "skill.genomics/snpeff-annotation.operation.build_database",
+          "skill.genomics/snpeff-annotation.operation.check_contig_compatibility",
+          "skill.genomics/snpeff-annotation.operation.finalize_outputs",
+          "skill.genomics/snpeff-annotation.operation.prepare_database",
+          "skill.genomics/snpeff-annotation.operation.summarize_ann"
+        ]
+      },
+      {
+        "pointer": "/validation_issues/3/machine_evidence/source",
+        "operation": "removed",
+        "before": "step_effect_compiler"
+      },
+      {
+        "pointer": "/validation_issues/3/source",
+        "operation": "removed",
+        "before": "step_effect_compiler"
+      },
+      {
+        "pointer": "/validation_issues/3/step_id",
+        "operation": "removed",
+        "before": "preflight_inputs"
+      },
+      {
+        "pointer": "/validation_issues/3/step_key",
+        "operation": "added",
+        "after": "preflight_inputs"
+      },
+      {
+        "pointer": "/validation_issues/4/candidate_sources",
+        "operation": "removed",
+        "before": [
+          "skill.genomics/snpeff-annotation.operation.annotate_variants",
+          "skill.genomics/snpeff-annotation.operation.build_database",
+          "skill.genomics/snpeff-annotation.operation.check_contig_compatibility",
+          "skill.genomics/snpeff-annotation.operation.finalize_outputs",
+          "skill.genomics/snpeff-annotation.operation.prepare_database",
+          "skill.genomics/snpeff-annotation.operation.summarize_ann"
+        ]
+      },
+      {
+        "pointer": "/validation_issues/4/machine_evidence/source",
+        "operation": "removed",
+        "before": "step_effect_compiler"
+      },
+      {
+        "pointer": "/validation_issues/4/source",
+        "operation": "removed",
+        "before": "step_effect_compiler"
+      },
+      {
+        "pointer": "/validation_issues/4/step_id",
+        "operation": "removed",
+        "before": "runtime_healthcheck"
+      },
+      {
+        "pointer": "/validation_issues/4/step_key",
+        "operation": "added",
+        "after": "runtime_healthcheck"
+      }
+    ],
+    "provider_to_next_request_delta": []
+  },
+  {
+    "ordinal": 3,
+    "context_to_provider_delta": [
+      {
+        "pointer": "/requirements/0/new_resource/role_associations/item/step_id",
+        "operation": "removed",
+        "before": "one declared step"
+      },
+      {
+        "pointer": "/response_completion/parser_diagnostic/source",
+        "operation": "removed",
+        "before": "live_planner_envelope_parser"
+      },
+      {
+        "pointer": "/validation_issues/0/actual/step_id",
+        "operation": "removed",
+        "before": "prepare_database"
+      },
+      {
+        "pointer": "/validation_issues/0/machine_evidence/actual/step_id",
+        "operation": "removed",
+        "before": "prepare_database"
+      },
+      {
+        "pointer": "/validation_issues/0/not_evaluated",
+        "operation": "removed",
+        "before": [
+          "step_effects",
+          "dataflow",
+          "required_workspace_coverage"
+        ]
+      }
+    ],
+    "provider_to_next_request_delta": []
+  }
+]

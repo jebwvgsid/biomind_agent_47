@@ -1,0 +1,267 @@
+{
+  "source": "agent_core/plan_bindings.py:473-478",
+  "original_candidate_sha256": "9fcc948152ac2b10ed013c9b61f208e372a2620785901b8b19391bd274cc05e9",
+  "current_replay_first_validate_wire_return": [
+    {
+      "input.annotation_gtf": "ArtifactRefKey(kind='authoritative', identity='artifact-c2479bc27ff7a6bc9927', candidate_scope_id='')",
+      "input.reference_fasta": "ArtifactRefKey(kind='authoritative', identity='artifact-540598a175f804b3de9c', candidate_scope_id='')",
+      "input.variant_vcf": "ArtifactRefKey(kind='authoritative', identity='artifact-1efacf3e43a535e64e1b', candidate_scope_id='')",
+      "output.ann_summary": "ArtifactRefKey(kind='authoritative', identity='ann_summary', candidate_scope_id='')",
+      "output.annotated_vcf": "ArtifactRefKey(kind='authoritative', identity='annotated_vcf', candidate_scope_id='')",
+      "output.output_dir": "ArtifactRefKey(kind='authoritative', identity='output_dir', candidate_scope_id='')",
+      "output.report": "ArtifactRefKey(kind='authoritative', identity='report', candidate_scope_id='')",
+      "output.reproduce_script": "ArtifactRefKey(kind='authoritative', identity='reproduce_script', candidate_scope_id='')",
+      "output.stage_status": "ArtifactRefKey(kind='authoritative', identity='stage_status', candidate_scope_id='')",
+      "plan.snpeff_data_dir": "ArtifactRefKey(kind='candidate_local', identity='plan.snpeff_data_dir', candidate_scope_id='candidate-scope-7d050bd9-8409-435e-8398-f634c5b3a336')",
+      "plan.snpeff_config": "ArtifactRefKey(kind='candidate_local', identity='plan.snpeff_config', candidate_scope_id='candidate-scope-7d050bd9-8409-435e-8398-f634c5b3a336')"
+    },
+    [
+      {
+        "step_id": "preflight_inputs",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-1efacf3e43a535e64e1b"
+        }
+      },
+      {
+        "step_id": "preflight_inputs",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-540598a175f804b3de9c"
+        }
+      },
+      {
+        "step_id": "preflight_inputs",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-c2479bc27ff7a6bc9927"
+        }
+      },
+      {
+        "step_id": "runtime_healthcheck",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-540598a175f804b3de9c"
+        }
+      },
+      {
+        "step_id": "runtime_healthcheck",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-c2479bc27ff7a6bc9927"
+        }
+      },
+      {
+        "step_id": "runtime_healthcheck",
+        "relation": "produce",
+        "field": "outputs",
+        "artifact_ref": {
+          "kind": "candidate_local",
+          "identity": "plan.snpeff_config",
+          "candidate_scope_id": "candidate-scope-7d050bd9-8409-435e-8398-f634c5b3a336"
+        }
+      },
+      {
+        "step_id": "build_database",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-540598a175f804b3de9c"
+        }
+      },
+      {
+        "step_id": "build_database",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-c2479bc27ff7a6bc9927"
+        }
+      },
+      {
+        "step_id": "build_database",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "candidate_local",
+          "identity": "plan.snpeff_config",
+          "candidate_scope_id": "candidate-scope-7d050bd9-8409-435e-8398-f634c5b3a336"
+        }
+      },
+      {
+        "step_id": "annotate_variants",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "artifact-1efacf3e43a535e64e1b"
+        }
+      },
+      {
+        "step_id": "annotate_variants",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "candidate_local",
+          "identity": "plan.snpeff_config",
+          "candidate_scope_id": "candidate-scope-7d050bd9-8409-435e-8398-f634c5b3a336"
+        }
+      },
+      {
+        "step_id": "annotate_variants",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "candidate_local",
+          "identity": "plan.snpeff_data_dir",
+          "candidate_scope_id": "candidate-scope-7d050bd9-8409-435e-8398-f634c5b3a336"
+        }
+      },
+      {
+        "step_id": "annotate_variants",
+        "relation": "produce",
+        "field": "outputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "annotated_vcf"
+        }
+      },
+      {
+        "step_id": "summarize_ann",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "annotated_vcf"
+        }
+      },
+      {
+        "step_id": "summarize_ann",
+        "relation": "produce",
+        "field": "outputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "ann_summary"
+        }
+      },
+      {
+        "step_id": "finalize_outputs",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "annotated_vcf"
+        }
+      },
+      {
+        "step_id": "finalize_outputs",
+        "relation": "consume",
+        "field": "inputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "ann_summary"
+        }
+      },
+      {
+        "step_id": "finalize_outputs",
+        "relation": "produce",
+        "field": "outputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "report"
+        }
+      },
+      {
+        "step_id": "finalize_outputs",
+        "relation": "produce",
+        "field": "outputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "reproduce_script"
+        }
+      },
+      {
+        "step_id": "finalize_outputs",
+        "relation": "produce",
+        "field": "outputs",
+        "artifact_ref": {
+          "kind": "authoritative",
+          "identity": "stage_status"
+        }
+      }
+    ],
+    [
+      {
+        "code": "PLAN_RESOURCE_ROLE_SCOPE_INVALID",
+        "field_path": "$.proposed_artifacts[0].role_associations[0]",
+        "actual": {
+          "capability_id": "genomics.snpeff_annotation.prepare_database",
+          "role": "artifact.snpeff_data_dir",
+          "step_id": "prepare_database"
+        },
+        "expected": {
+          "capability_id": null,
+          "roles": {
+            "artifact.snpeff_data_dir": {
+              "resource_kind": "mutable_workspace",
+              "access": "mutate"
+            }
+          },
+          "resource_kind": "mutable_workspace"
+        },
+        "not_evaluated": [
+          "step_effects",
+          "dataflow",
+          "required_workspace_coverage"
+        ],
+        "owner": "planner",
+        "validator_id": "plan_resource_bindings",
+        "repair_target": "$.proposed_artifacts[0].role_associations[0]",
+        "disposition": "PROTOCOL_INVALID"
+      }
+    ]
+  ],
+  "actual_arguments_local_predicate": {
+    "parent_local_ref": "plan.snpeff_data_dir",
+    "parent_resource_kind": "mutable_workspace",
+    "association": {
+      "capability_id": "genomics.snpeff_annotation.prepare_database",
+      "role": "artifact.snpeff_data_dir",
+      "step_id": "prepare_database"
+    },
+    "lookup_found": false,
+    "lookup_step": {},
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "roles": {
+      "artifact.snpeff_data_dir": {
+        "resource_kind": "mutable_workspace",
+        "access": "mutate"
+      }
+    },
+    "failed_conditions": {
+      "step_capability_mismatch": true,
+      "selected_skill_not_in_step": true,
+      "unknown_role": false,
+      "resource_kind_mismatch": false
+    }
+  },
+  "lookup_key_origin": "Public candidate steps[].step_id and role_associations[].step_id, before normalization",
+  "current_isolated_scope": "candidate-scope-7d050bd9-8409-435e-8398-f634c5b3a336",
+  "actually_evaluated_failure": "step.get(execution_capability_id) is None; None != association capability_id; OR short-circuits",
+  "remaining_condition_truths": "Independently calculated on captured real arguments; NOT additional branches observed to execute",
+  "historical_original_pre_serialization_exception": "NOT_AVAILABLE; current null does not prove original null",
+  "original_association_role_exists": true,
+  "parent_kind_matches": true,
+  "association_access_field_allowed": false
+}

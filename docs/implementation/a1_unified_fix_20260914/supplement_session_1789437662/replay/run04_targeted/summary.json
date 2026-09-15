@@ -1,0 +1,105 @@
+{
+  "export_source_signature": "aa4cde53398d6723223b80dd331329913b689dc8da081d92ac111d54d6ced19e",
+  "export_manifest_sha256": "2c0de17bfcd62e176e699e00914204f9c21d1b297d52e14fd107f46610442af6",
+  "returncode": 0,
+  "test_call_counts": {
+    "passed": 3
+  },
+  "test_nodeids": [
+    "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "tests/plan_live_review_20260915/test_variants.py::test_exact_f6_raw_candidate_in_original_context"
+  ],
+  "test_files": {
+    "tests/plan_live_review_20260915/test_variants.py": "7c15e4f82aad7fda3380bd29752b91b6b1b1fe654de41547ef508d73faba37d2"
+  },
+  "reported_loaded_module_count": 132,
+  "unique_reported_source_files": 131,
+  "all_loaded_sources_match_export": true,
+  "source_changes_after_run": [],
+  "archive_files": [
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/invocation.json",
+      "archive_file": "invocation.json",
+      "source_bytes": 1076,
+      "source_sha256": "94a4e3792a8e74716f51846fd702e06737c52893d546fb89f12abe2a6ebba4bc",
+      "archive_sha256": "94a4e3792a8e74716f51846fd702e06737c52893d546fb89f12abe2a6ebba4bc",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/plan-review-plan-review-f6_exact_raw.json.gz",
+      "archive_file": "plan-review-plan-review-f6_exact_raw.json.gz",
+      "source_bytes": 299798,
+      "source_sha256": "57328f586fe776d53f47108a2e41754b9f469d53af9a489d7951cabb1ded5d2c",
+      "archive_sha256": "57328f586fe776d53f47108a2e41754b9f469d53af9a489d7951cabb1ded5d2c",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/plan-review-plan-review-scope_source.json.gz",
+      "archive_file": "plan-review-plan-review-scope_source.json.gz",
+      "source_bytes": 399244,
+      "source_sha256": "9e8ea1f2ae7fa05a8cdf9d85defb199ea86202e50b59525746d1576d90cbde32",
+      "archive_sha256": "9e8ea1f2ae7fa05a8cdf9d85defb199ea86202e50b59525746d1576d90cbde32",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/plan-review-plan-review-scope_target.json.gz",
+      "archive_file": "plan-review-plan-review-scope_target.json.gz",
+      "source_bytes": 198263,
+      "source_sha256": "3114d9a6693386aef2adbec070c5156bf3a643e764999e14ff1a1a753bf06c4c",
+      "archive_sha256": "3114d9a6693386aef2adbec070c5156bf3a643e764999e14ff1a1a753bf06c4c",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/plan-review-plan-review-variant_f6_raw_live_output_context.json.gz",
+      "archive_file": "plan-review-plan-review-variant_f6_raw_live_output_context.json.gz",
+      "source_bytes": 298837,
+      "source_sha256": "4e71909de05b66357fb6bf9a2da506e17067be93f89838b7801cbef7a783d898",
+      "archive_sha256": "4e71909de05b66357fb6bf9a2da506e17067be93f89838b7801cbef7a783d898",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/plan-review-real-cross-candidate-reference.json.gz",
+      "archive_file": "plan-review-real-cross-candidate-reference.json.gz",
+      "source_bytes": 612,
+      "source_sha256": "03826ac0c23f949a25f118bd14a595ef643c9c471443b0c8be5ab2513a422483",
+      "archive_sha256": "03826ac0c23f949a25f118bd14a595ef643c9c471443b0c8be5ab2513a422483",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/plan-review-variant-f6_raw_live_output_context.json.gz",
+      "archive_file": "plan-review-variant-f6_raw_live_output_context.json.gz",
+      "source_bytes": 7776,
+      "source_sha256": "405d1ca2f940a4cabdcf1a6b0c5d8d11fe5171b3c455fe6b61c156592277766e",
+      "archive_sha256": "405d1ca2f940a4cabdcf1a6b0c5d8d11fe5171b3c455fe6b61c156592277766e",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/pytest-results.json",
+      "archive_file": "pytest-results.json",
+      "source_bytes": 2570,
+      "source_sha256": "c9a35c88d44287f9f139e2e5984fe22036d06c72ae20d336e52b9d83e5815994",
+      "archive_sha256": "c9a35c88d44287f9f139e2e5984fe22036d06c72ae20d336e52b9d83e5815994",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/run_exit.json",
+      "archive_file": "run_exit.json",
+      "source_bytes": 523,
+      "source_sha256": "abda9ec14d664d84a8c8ff92c9e9ea6d400a731c08ad5f184e18b54b51410aea",
+      "archive_sha256": "abda9ec14d664d84a8c8ff92c9e9ea6d400a731c08ad5f184e18b54b51410aea",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-04/targeted/stdout.txt",
+      "archive_file": "stdout.txt",
+      "source_bytes": 27593,
+      "source_sha256": "6b29d00532f898a0a098d416da2b8e94bafeb054e255884aec956b0602a3949b",
+      "archive_sha256": "6b29d00532f898a0a098d416da2b8e94bafeb054e255884aec956b0602a3949b",
+      "transformation": "exact_bytes"
+    }
+  ],
+  "classification": "3_PASS_TARGETED_FINAL04; prior run03 driver failure retained separately",
+  "outcome_boundary": "Original raw F6 in live-compatible context rejected for missing materializations; cross-candidate reference rejected on real target admission; exact F6 raw in original context reaches PlanReview approval_pending. No science or execution approval.",
+  "copied_scratch": false
+}

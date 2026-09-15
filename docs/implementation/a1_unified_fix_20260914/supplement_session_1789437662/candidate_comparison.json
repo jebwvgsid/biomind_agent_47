@@ -1,0 +1,1113 @@
+{
+  "P_live_to_P_min": [
+    {
+      "path": "$.proposed_artifacts[0].role_associations[0].step_id",
+      "left": "prepare_database",
+      "right": "runtime_healthcheck"
+    }
+  ],
+  "P_test_to_P_live": [
+    {
+      "path": "$.metadata.resource_contract_version",
+      "left_absent": true,
+      "right": 2
+    },
+    {
+      "path": "$.metadata.result_contract_version",
+      "left_absent": true,
+      "right": 1
+    },
+    {
+      "path": "$.proposed_artifacts[0].artifact_contract.path_policy",
+      "left_absent": true,
+      "right": "model_selectable"
+    },
+    {
+      "path": "$.proposed_artifacts[0].artifact_contract.required",
+      "left_absent": true,
+      "right": true
+    },
+    {
+      "path": "$.proposed_artifacts[0].artifact_contract.source_refs",
+      "left_absent": true,
+      "right": [
+        "source-ref-d9b25daa13f99d8f",
+        "skill-snapshot:skill-snapshot-01ccdd317817bf9532ad"
+      ]
+    },
+    {
+      "path": "$.proposed_artifacts[0].local_ref",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.proposed_artifacts[0].semantic_view.description",
+      "left": "New isolated mutable workspace",
+      "right": "任务本地 snpEff 配置与自定义数据库工作区，包含 snpEff.config、data/genomes/<genome_version>.fa、data/<genome_version>/genes.gtf 以及构建产物 data/<genome_version>/snpEffectPredictor.bin。"
+    },
+    {
+      "path": "$.proposed_artifacts[0].semantic_view.role",
+      "left": "snpeff_data_dir",
+      "right": "snpeff_custom_database_workspace"
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.path_policy",
+      "left_absent": true,
+      "right": "model_selectable"
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.required",
+      "left_absent": true,
+      "right": true
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.resource_kind",
+      "left_absent": true,
+      "right": "immutable_artifact"
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.source_refs",
+      "left_absent": true,
+      "right": [
+        "source-ref-d9b25daa13f99d8f",
+        "skill-snapshot:skill-snapshot-01ccdd317817bf9532ad"
+      ]
+    },
+    {
+      "path": "$.proposed_artifacts[1].local_ref",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.proposed_artifacts[1].semantic_view.description",
+      "left": "New isolated config",
+      "right": "任务本地 snpEff.config，声明 genome_version 对应的数据库条目，供数据库构建与注释使用。"
+    },
+    {
+      "path": "$.proposed_artifacts[1].semantic_view.role",
+      "left": "snpeff_config",
+      "right": "snpeff_config_file"
+    },
+    {
+      "path": "$.public_message",
+      "left_absent": true,
+      "right": "已根据反馈修正：preflight 与运行时健康检查改为绑定 skill 枚举能力并声明明确效果，prepare_database 步骤补上 snpEff 配置产物输出句柄，其余步骤与交付物保持不变，现重新提交原有审查。"
+    },
+    {
+      "path": "$.steps[0].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[0].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[0].produces_observations[0]",
+      "left": {
+        "observation_id": "contigs_compatible",
+        "predicate": {
+          "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+          "operator": "boolean_equals",
+          "expected": true,
+          "parser_id": "biomind.genomics.contig_compatibility.v1",
+          "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+          "failure_disposition": "correction_required",
+          "missing_disposition": "inspection_required",
+          "applicability": {
+            "schema_version": 1,
+            "kind": "plan_contains_any_execution_capability",
+            "execution_capability_ids": [
+              "genomics.snpeff_annotation.prepare_database",
+              "genomics.snpeff_annotation.build_database",
+              "genomics.snpeff_annotation.annotate_variants",
+              "genomics.snpeff_annotation.summarize_ann",
+              "genomics.snpeff_annotation.finalize_outputs"
+            ]
+          }
+        },
+        "evidence_contract": {
+          "required_fields": [
+            "value"
+          ]
+        }
+      },
+      "right": "contigs_compatible"
+    },
+    {
+      "path": "$.steps[0].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[0].step_id",
+      "left": "check_contig_compatibility",
+      "right": "preflight_inputs"
+    },
+    {
+      "path": "$.steps[0].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for check_contig_compatibility."
+      ],
+      "right": [
+        "在项目根目录解析 benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/ 下三个输入文件，确认 all.filtered.snp.vcf、genome.fasta、genome.gtf 均存在且可读（非空、可打开）。",
+        "输出 typed boolean 观察 contigs_compatible，比较 VCF、FASTA 与 GTF 的 contig 命名；仅在证明三者属于同一 assembly 后才允许规范化命名，命名不一致时记录 blocked 并停止后续注释。",
+        "记录每个输入文件的绝对路径、大小与可读性；任一缺失或不可读时记录 blocked 原因，不替换为 demo/toy/tests/fixtures_legacy_toy/expected_answers 文件。"
+      ]
+    },
+    {
+      "path": "$.steps[0].title",
+      "left": "check_contig_compatibility — explicit synthetic mechanism",
+      "right": "只读 preflight：确认输入文件存在且可读"
+    },
+    {
+      "path": "$.steps[0].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.check_contig_compatibility"
+    },
+    {
+      "path": "$.steps[0].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[1].dependencies[0]",
+      "left": "check_contig_compatibility",
+      "right": "preflight_inputs"
+    },
+    {
+      "path": "$.steps[1].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[1].outputs[0]",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.steps[1].purpose",
+      "left": "analysis",
+      "right": "validation"
+    },
+    {
+      "path": "$.steps[1].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[1].step_id",
+      "left": "prepare_database",
+      "right": "runtime_healthcheck"
+    },
+    {
+      "path": "$.steps[1].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for prepare_database."
+      ],
+      "right": [
+        "在 bio_gatk 环境执行 skill 声明的 healthcheck：解析 $CONDA_PREFIX/share 下非空 snpEff.jar，并验证 Java 可执行且 `java -jar snpEff.jar -version` 成功；记录 RESOLVED_ENV_PREFIX、RESOLVED_SNPEFF_JAR、RESOLVED_JAVA_HOME。",
+        "healthcheck 失败时按契约委派 genomics_snpeff_annotation_runtime 安装一次并重跑 healthcheck，仍失败则记录 stage_blocked，不进入数据库构建与注释。",
+        "选定一个任务本地稳定 genome_version（基于实际参考/注释发布版本，禁止用 taxonomy label 猜测公共数据库），创建 snpEff.config 与目录布局：data/genomes/<genome_version>.fa 与 data/<genome_version>/genes.gtf 均存在且非空。"
+      ]
+    },
+    {
+      "path": "$.steps[1].title",
+      "left": "prepare_database — explicit synthetic mechanism",
+      "right": "验证 bio_gatk 环境 Java 与 snpEff.jar 可用"
+    },
+    {
+      "path": "$.steps[1].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.prepare_database"
+    },
+    {
+      "path": "$.steps[1].workspace_mutations[0].evidence_contract",
+      "left": {
+        "schema_version": 1,
+        "collector": "bounded_filesystem_snapshot_v1",
+        "allow_idempotent_revalidation": true,
+        "postconditions": [
+          {
+            "kind": "directory_exists",
+            "relative_path": "data"
+          },
+          {
+            "kind": "file_nonempty",
+            "relative_path": "data/genomes/{binding:genome_version}.fa"
+          },
+          {
+            "kind": "file_nonempty",
+            "relative_path": "data/{binding:genome_version}/genes.gtf"
+          }
+        ]
+      },
+      "right_absent": true
+    },
+    {
+      "path": "$.steps[1].workspace_mutations[0].requires_state",
+      "left_absent": true,
+      "right": ""
+    },
+    {
+      "path": "$.steps[1].workspace_mutations[0].workspace_ref",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.steps[2].dependencies[0]",
+      "left": "prepare_database",
+      "right": "runtime_healthcheck"
+    },
+    {
+      "path": "$.steps[2].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[2].inputs[2]",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.steps[2].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[2].risk_level",
+      "left": "low",
+      "right": "high"
+    },
+    {
+      "path": "$.steps[2].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for build_database."
+      ],
+      "right": [
+        "使用已解析的具体 Java 与 snpEff.jar 路径执行 `build -gtf22`，构建任务本地自定义数据库。",
+        "验收：data/<genome_version>/snpEffectPredictor.bin 存在且非空，构建日志无致命错误（如 Database check failed）；否则保持数据库阶段 failed/partial 且不运行注释。",
+        "cds/protein 一致性文件按 optional_validation 处理：缺失时仅跳过对应校验并记录 optional_validation_skipped 及科学限制，不升级为 required。"
+      ]
+    },
+    {
+      "path": "$.steps[2].title",
+      "left": "build_database — explicit synthetic mechanism",
+      "right": "使用 build -gtf22 构建任务本地自定义 snpEff 数据库"
+    },
+    {
+      "path": "$.steps[2].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.build_database"
+    },
+    {
+      "path": "$.steps[2].workspace_mutations[0].evidence_contract",
+      "left": {
+        "schema_version": 1,
+        "collector": "bounded_filesystem_snapshot_v1",
+        "allow_idempotent_revalidation": true,
+        "postconditions": [
+          {
+            "kind": "file_nonempty",
+            "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+          }
+        ]
+      },
+      "right_absent": true
+    },
+    {
+      "path": "$.steps[2].workspace_mutations[0].workspace_ref",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.steps[3].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[3].inputs[1]",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.steps[3].inputs[2]",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.steps[3].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[3].produces_observations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[3].risk_level",
+      "left": "low",
+      "right": "high"
+    },
+    {
+      "path": "$.steps[3].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for annotate_variants."
+      ],
+      "right": [
+        "使用已解析的具体 Java 与 snpEff.jar 路径，以已构建的 genome_version 数据库注释 all.filtered.snp.vcf，输出带 ANN 的 VCF。",
+        "输出 VCF 头部包含 ##SnpEffVersion 与 ##INFO=<ID=ANN；无系统性 chromosome-not-found 警告。",
+        "数据库构建未通过验收时不得运行本步骤，不得输出伪造 ANN。"
+      ]
+    },
+    {
+      "path": "$.steps[3].title",
+      "left": "annotate_variants — explicit synthetic mechanism",
+      "right": "使用自定义数据库注释 SNP VCF"
+    },
+    {
+      "path": "$.steps[3].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.annotate_variants"
+    },
+    {
+      "path": "$.steps[3].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[4].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[4].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[4].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[4].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for summarize_ann."
+      ],
+      "right": [
+        "按 Annotation_Impact 与 Sequence Ontology effect 计数，保留转录本多重性，输出 ANN 汇总表。",
+        "不虚构注释；仅汇总实际注释 VCF 中存在的 ANN 记录。"
+      ]
+    },
+    {
+      "path": "$.steps[4].title",
+      "left": "summarize_ann — explicit synthetic mechanism",
+      "right": "汇总 ANN 效应"
+    },
+    {
+      "path": "$.steps[4].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.summarize_ann"
+    },
+    {
+      "path": "$.steps[4].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[5].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[5].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[5].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[5].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for finalize_outputs."
+      ],
+      "right": [
+        "report.md 说明为什么选择 snpEff 自定义数据库流程、各 stage 状态与科学限制（含 optional_validation_skipped）。",
+        "reproduce.sh 记录可复现命令；stage_status.tsv 记录每个 stage 的 completed/failed/blocked 状态。",
+        "对未执行或失败的 stage 明确写 blocked/stage_blocked 并说明原因，不声称未实际产生并验证的输出为科学完成。"
+      ]
+    },
+    {
+      "path": "$.steps[5].title",
+      "left": "finalize_outputs — explicit synthetic mechanism",
+      "right": "生成 report.md、reproduce.sh 与 stage_status.tsv"
+    },
+    {
+      "path": "$.steps[5].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.finalize_outputs"
+    },
+    {
+      "path": "$.steps[5].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.task_output_materializations",
+      "left_absent": true,
+      "right": [
+        {
+          "output_ref": "output.annotated_vcf",
+          "path": "annotated.vcf",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "带 ANN 注释的 VCF，是用户要求的核心交付物。"
+        },
+        {
+          "output_ref": "output.ann_summary",
+          "path": "ann_summary.tsv",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "ANN 效应汇总表，按 impact 与 SO effect 计数并保留转录本多重性。"
+        },
+        {
+          "output_ref": "output.report",
+          "path": "report.md",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "说明 skill/流程选择理由、各 stage 状态与科学限制的报告。"
+        },
+        {
+          "output_ref": "output.reproduce_script",
+          "path": "reproduce.sh",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "可复现命令脚本。"
+        },
+        {
+          "output_ref": "output.stage_status",
+          "path": "stage_status.tsv",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "各 stage 的 completed/failed/blocked 状态表。"
+        }
+      ]
+    },
+    {
+      "path": "$.validation_checklist",
+      "left": [
+        {
+          "check_id": "actual-effect-scope",
+          "description": "Six distinct capabilities; actual receipts; no real scientific claim."
+        }
+      ],
+      "right": [
+        {
+          "check_id": "inputs_exist_and_readable",
+          "description": "preflight 确认三个输入文件存在且可读；缺失时记录 blocked 原因，不使用 demo/toy/tests/fixtures_legacy_toy/expected_answers 文件。"
+        },
+        {
+          "check_id": "no_taxonomy_guessing",
+          "description": "genome_version 由实际参考/注释发布版本选定为任务本地稳定标识，未按 taxonomy label 猜测公共 snpEff 数据库。"
+        },
+        {
+          "check_id": "contig_naming_checked",
+          "description": "注释前已检查 VCF/FASTA/GTF contig 命名一致性；不一致时未盲目加/去 chr 前缀，而是 blocked。"
+        },
+        {
+          "check_id": "database_build_accepted",
+          "description": "data/<genome_version>/snpEffectPredictor.bin 存在且非空、构建日志无致命错误，才进入注释阶段。"
+        },
+        {
+          "check_id": "optional_validation_handled",
+          "description": "cds/protein 一致性文件缺失时仅跳过对应校验并记录 optional_validation_skipped 及科学限制，未升级为 required。"
+        },
+        {
+          "check_id": "ann_header_validated",
+          "description": "输出 VCF 头部包含 ##SnpEffVersion 与 ##INFO=<ID=ANN，ANN 汇总按 impact 与 SO effect 计数并保留转录本多重性。"
+        },
+        {
+          "check_id": "blocked_not_faked",
+          "description": "snpEff/Java/数据库构建失败时明确标记 blocked，未输出伪造 ANN。"
+        },
+        {
+          "check_id": "deliverables_present",
+          "description": "输出目录包含 annotated VCF、ANN 汇总、report.md、reproduce.sh 与 stage_status.tsv。"
+        },
+        {
+          "check_id": "workspace_role_associations",
+          "description": "plan.snpeff_data_dir 工作区在 prepare_database、build_database 与 annotate_variants 三个步骤上分别声明了对应的 capability 角色关联，注释步骤为只读访问。"
+        },
+        {
+          "check_id": "step_effects_bound",
+          "description": "每个 execute 步骤均绑定一个枚举的 skill 能力并声明可解释效果（产物、绑定、观察或工作区变更）。"
+        }
+      ]
+    }
+  ],
+  "P_test_to_P_min": [
+    {
+      "path": "$.metadata.resource_contract_version",
+      "left_absent": true,
+      "right": 2
+    },
+    {
+      "path": "$.metadata.result_contract_version",
+      "left_absent": true,
+      "right": 1
+    },
+    {
+      "path": "$.proposed_artifacts[0].artifact_contract.path_policy",
+      "left_absent": true,
+      "right": "model_selectable"
+    },
+    {
+      "path": "$.proposed_artifacts[0].artifact_contract.required",
+      "left_absent": true,
+      "right": true
+    },
+    {
+      "path": "$.proposed_artifacts[0].artifact_contract.source_refs",
+      "left_absent": true,
+      "right": [
+        "source-ref-d9b25daa13f99d8f",
+        "skill-snapshot:skill-snapshot-01ccdd317817bf9532ad"
+      ]
+    },
+    {
+      "path": "$.proposed_artifacts[0].local_ref",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.proposed_artifacts[0].role_associations[0].step_id",
+      "left": "prepare_database",
+      "right": "runtime_healthcheck"
+    },
+    {
+      "path": "$.proposed_artifacts[0].semantic_view.description",
+      "left": "New isolated mutable workspace",
+      "right": "任务本地 snpEff 配置与自定义数据库工作区，包含 snpEff.config、data/genomes/<genome_version>.fa、data/<genome_version>/genes.gtf 以及构建产物 data/<genome_version>/snpEffectPredictor.bin。"
+    },
+    {
+      "path": "$.proposed_artifacts[0].semantic_view.role",
+      "left": "snpeff_data_dir",
+      "right": "snpeff_custom_database_workspace"
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.path_policy",
+      "left_absent": true,
+      "right": "model_selectable"
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.required",
+      "left_absent": true,
+      "right": true
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.resource_kind",
+      "left_absent": true,
+      "right": "immutable_artifact"
+    },
+    {
+      "path": "$.proposed_artifacts[1].artifact_contract.source_refs",
+      "left_absent": true,
+      "right": [
+        "source-ref-d9b25daa13f99d8f",
+        "skill-snapshot:skill-snapshot-01ccdd317817bf9532ad"
+      ]
+    },
+    {
+      "path": "$.proposed_artifacts[1].local_ref",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.proposed_artifacts[1].semantic_view.description",
+      "left": "New isolated config",
+      "right": "任务本地 snpEff.config，声明 genome_version 对应的数据库条目，供数据库构建与注释使用。"
+    },
+    {
+      "path": "$.proposed_artifacts[1].semantic_view.role",
+      "left": "snpeff_config",
+      "right": "snpeff_config_file"
+    },
+    {
+      "path": "$.public_message",
+      "left_absent": true,
+      "right": "已根据反馈修正：preflight 与运行时健康检查改为绑定 skill 枚举能力并声明明确效果，prepare_database 步骤补上 snpEff 配置产物输出句柄，其余步骤与交付物保持不变，现重新提交原有审查。"
+    },
+    {
+      "path": "$.steps[0].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[0].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[0].produces_observations[0]",
+      "left": {
+        "observation_id": "contigs_compatible",
+        "predicate": {
+          "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+          "operator": "boolean_equals",
+          "expected": true,
+          "parser_id": "biomind.genomics.contig_compatibility.v1",
+          "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+          "failure_disposition": "correction_required",
+          "missing_disposition": "inspection_required",
+          "applicability": {
+            "schema_version": 1,
+            "kind": "plan_contains_any_execution_capability",
+            "execution_capability_ids": [
+              "genomics.snpeff_annotation.prepare_database",
+              "genomics.snpeff_annotation.build_database",
+              "genomics.snpeff_annotation.annotate_variants",
+              "genomics.snpeff_annotation.summarize_ann",
+              "genomics.snpeff_annotation.finalize_outputs"
+            ]
+          }
+        },
+        "evidence_contract": {
+          "required_fields": [
+            "value"
+          ]
+        }
+      },
+      "right": "contigs_compatible"
+    },
+    {
+      "path": "$.steps[0].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[0].step_id",
+      "left": "check_contig_compatibility",
+      "right": "preflight_inputs"
+    },
+    {
+      "path": "$.steps[0].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for check_contig_compatibility."
+      ],
+      "right": [
+        "在项目根目录解析 benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/ 下三个输入文件，确认 all.filtered.snp.vcf、genome.fasta、genome.gtf 均存在且可读（非空、可打开）。",
+        "输出 typed boolean 观察 contigs_compatible，比较 VCF、FASTA 与 GTF 的 contig 命名；仅在证明三者属于同一 assembly 后才允许规范化命名，命名不一致时记录 blocked 并停止后续注释。",
+        "记录每个输入文件的绝对路径、大小与可读性；任一缺失或不可读时记录 blocked 原因，不替换为 demo/toy/tests/fixtures_legacy_toy/expected_answers 文件。"
+      ]
+    },
+    {
+      "path": "$.steps[0].title",
+      "left": "check_contig_compatibility — explicit synthetic mechanism",
+      "right": "只读 preflight：确认输入文件存在且可读"
+    },
+    {
+      "path": "$.steps[0].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.check_contig_compatibility"
+    },
+    {
+      "path": "$.steps[0].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[1].dependencies[0]",
+      "left": "check_contig_compatibility",
+      "right": "preflight_inputs"
+    },
+    {
+      "path": "$.steps[1].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[1].outputs[0]",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.steps[1].purpose",
+      "left": "analysis",
+      "right": "validation"
+    },
+    {
+      "path": "$.steps[1].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[1].step_id",
+      "left": "prepare_database",
+      "right": "runtime_healthcheck"
+    },
+    {
+      "path": "$.steps[1].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for prepare_database."
+      ],
+      "right": [
+        "在 bio_gatk 环境执行 skill 声明的 healthcheck：解析 $CONDA_PREFIX/share 下非空 snpEff.jar，并验证 Java 可执行且 `java -jar snpEff.jar -version` 成功；记录 RESOLVED_ENV_PREFIX、RESOLVED_SNPEFF_JAR、RESOLVED_JAVA_HOME。",
+        "healthcheck 失败时按契约委派 genomics_snpeff_annotation_runtime 安装一次并重跑 healthcheck，仍失败则记录 stage_blocked，不进入数据库构建与注释。",
+        "选定一个任务本地稳定 genome_version（基于实际参考/注释发布版本，禁止用 taxonomy label 猜测公共数据库），创建 snpEff.config 与目录布局：data/genomes/<genome_version>.fa 与 data/<genome_version>/genes.gtf 均存在且非空。"
+      ]
+    },
+    {
+      "path": "$.steps[1].title",
+      "left": "prepare_database — explicit synthetic mechanism",
+      "right": "验证 bio_gatk 环境 Java 与 snpEff.jar 可用"
+    },
+    {
+      "path": "$.steps[1].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.prepare_database"
+    },
+    {
+      "path": "$.steps[1].workspace_mutations[0].evidence_contract",
+      "left": {
+        "schema_version": 1,
+        "collector": "bounded_filesystem_snapshot_v1",
+        "allow_idempotent_revalidation": true,
+        "postconditions": [
+          {
+            "kind": "directory_exists",
+            "relative_path": "data"
+          },
+          {
+            "kind": "file_nonempty",
+            "relative_path": "data/genomes/{binding:genome_version}.fa"
+          },
+          {
+            "kind": "file_nonempty",
+            "relative_path": "data/{binding:genome_version}/genes.gtf"
+          }
+        ]
+      },
+      "right_absent": true
+    },
+    {
+      "path": "$.steps[1].workspace_mutations[0].requires_state",
+      "left_absent": true,
+      "right": ""
+    },
+    {
+      "path": "$.steps[1].workspace_mutations[0].workspace_ref",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.steps[2].dependencies[0]",
+      "left": "prepare_database",
+      "right": "runtime_healthcheck"
+    },
+    {
+      "path": "$.steps[2].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[2].inputs[2]",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.steps[2].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[2].risk_level",
+      "left": "low",
+      "right": "high"
+    },
+    {
+      "path": "$.steps[2].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for build_database."
+      ],
+      "right": [
+        "使用已解析的具体 Java 与 snpEff.jar 路径执行 `build -gtf22`，构建任务本地自定义数据库。",
+        "验收：data/<genome_version>/snpEffectPredictor.bin 存在且非空，构建日志无致命错误（如 Database check failed）；否则保持数据库阶段 failed/partial 且不运行注释。",
+        "cds/protein 一致性文件按 optional_validation 处理：缺失时仅跳过对应校验并记录 optional_validation_skipped 及科学限制，不升级为 required。"
+      ]
+    },
+    {
+      "path": "$.steps[2].title",
+      "left": "build_database — explicit synthetic mechanism",
+      "right": "使用 build -gtf22 构建任务本地自定义 snpEff 数据库"
+    },
+    {
+      "path": "$.steps[2].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.build_database"
+    },
+    {
+      "path": "$.steps[2].workspace_mutations[0].evidence_contract",
+      "left": {
+        "schema_version": 1,
+        "collector": "bounded_filesystem_snapshot_v1",
+        "allow_idempotent_revalidation": true,
+        "postconditions": [
+          {
+            "kind": "file_nonempty",
+            "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+          }
+        ]
+      },
+      "right_absent": true
+    },
+    {
+      "path": "$.steps[2].workspace_mutations[0].workspace_ref",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.steps[3].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[3].inputs[1]",
+      "left": "plan.config",
+      "right": "plan.snpeff_config"
+    },
+    {
+      "path": "$.steps[3].inputs[2]",
+      "left": "plan.db",
+      "right": "plan.snpeff_data_dir"
+    },
+    {
+      "path": "$.steps[3].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[3].produces_observations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[3].risk_level",
+      "left": "low",
+      "right": "high"
+    },
+    {
+      "path": "$.steps[3].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for annotate_variants."
+      ],
+      "right": [
+        "使用已解析的具体 Java 与 snpEff.jar 路径，以已构建的 genome_version 数据库注释 all.filtered.snp.vcf，输出带 ANN 的 VCF。",
+        "输出 VCF 头部包含 ##SnpEffVersion 与 ##INFO=<ID=ANN；无系统性 chromosome-not-found 警告。",
+        "数据库构建未通过验收时不得运行本步骤，不得输出伪造 ANN。"
+      ]
+    },
+    {
+      "path": "$.steps[3].title",
+      "left": "annotate_variants — explicit synthetic mechanism",
+      "right": "使用自定义数据库注释 SNP VCF"
+    },
+    {
+      "path": "$.steps[3].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.annotate_variants"
+    },
+    {
+      "path": "$.steps[3].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[4].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[4].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[4].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[4].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for summarize_ann."
+      ],
+      "right": [
+        "按 Annotation_Impact 与 Sequence Ontology effect 计数，保留转录本多重性，输出 ANN 汇总表。",
+        "不虚构注释；仅汇总实际注释 VCF 中存在的 ANN 记录。"
+      ]
+    },
+    {
+      "path": "$.steps[4].title",
+      "left": "summarize_ann — explicit synthetic mechanism",
+      "right": "汇总 ANN 效应"
+    },
+    {
+      "path": "$.steps[4].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.summarize_ann"
+    },
+    {
+      "path": "$.steps[4].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[5].explicit_side_effects",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[5].produces_bindings",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.steps[5].risk_level",
+      "left": "low",
+      "right": "medium"
+    },
+    {
+      "path": "$.steps[5].success_criteria",
+      "left": [
+        "Establish only actual newly produced synthetic protocol facts for finalize_outputs."
+      ],
+      "right": [
+        "report.md 说明为什么选择 snpEff 自定义数据库流程、各 stage 状态与科学限制（含 optional_validation_skipped）。",
+        "reproduce.sh 记录可复现命令；stage_status.tsv 记录每个 stage 的 completed/failed/blocked 状态。",
+        "对未执行或失败的 stage 明确写 blocked/stage_blocked 并说明原因，不声称未实际产生并验证的输出为科学完成。"
+      ]
+    },
+    {
+      "path": "$.steps[5].title",
+      "left": "finalize_outputs — explicit synthetic mechanism",
+      "right": "生成 report.md、reproduce.sh 与 stage_status.tsv"
+    },
+    {
+      "path": "$.steps[5].tool",
+      "left": "genomics/snpeff-annotation",
+      "right": "genomics.snpeff_annotation.finalize_outputs"
+    },
+    {
+      "path": "$.steps[5].workspace_mutations",
+      "left_absent": true,
+      "right": []
+    },
+    {
+      "path": "$.task_output_materializations",
+      "left_absent": true,
+      "right": [
+        {
+          "output_ref": "output.annotated_vcf",
+          "path": "annotated.vcf",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "带 ANN 注释的 VCF，是用户要求的核心交付物。"
+        },
+        {
+          "output_ref": "output.ann_summary",
+          "path": "ann_summary.tsv",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "ANN 效应汇总表，按 impact 与 SO effect 计数并保留转录本多重性。"
+        },
+        {
+          "output_ref": "output.report",
+          "path": "report.md",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "说明 skill/流程选择理由、各 stage 状态与科学限制的报告。"
+        },
+        {
+          "output_ref": "output.reproduce_script",
+          "path": "reproduce.sh",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "可复现命令脚本。"
+        },
+        {
+          "output_ref": "output.stage_status",
+          "path": "stage_status.tsv",
+          "required": true,
+          "path_policy": "model_selectable",
+          "description": "各 stage 的 completed/failed/blocked 状态表。"
+        }
+      ]
+    },
+    {
+      "path": "$.validation_checklist",
+      "left": [
+        {
+          "check_id": "actual-effect-scope",
+          "description": "Six distinct capabilities; actual receipts; no real scientific claim."
+        }
+      ],
+      "right": [
+        {
+          "check_id": "inputs_exist_and_readable",
+          "description": "preflight 确认三个输入文件存在且可读；缺失时记录 blocked 原因，不使用 demo/toy/tests/fixtures_legacy_toy/expected_answers 文件。"
+        },
+        {
+          "check_id": "no_taxonomy_guessing",
+          "description": "genome_version 由实际参考/注释发布版本选定为任务本地稳定标识，未按 taxonomy label 猜测公共 snpEff 数据库。"
+        },
+        {
+          "check_id": "contig_naming_checked",
+          "description": "注释前已检查 VCF/FASTA/GTF contig 命名一致性；不一致时未盲目加/去 chr 前缀，而是 blocked。"
+        },
+        {
+          "check_id": "database_build_accepted",
+          "description": "data/<genome_version>/snpEffectPredictor.bin 存在且非空、构建日志无致命错误，才进入注释阶段。"
+        },
+        {
+          "check_id": "optional_validation_handled",
+          "description": "cds/protein 一致性文件缺失时仅跳过对应校验并记录 optional_validation_skipped 及科学限制，未升级为 required。"
+        },
+        {
+          "check_id": "ann_header_validated",
+          "description": "输出 VCF 头部包含 ##SnpEffVersion 与 ##INFO=<ID=ANN，ANN 汇总按 impact 与 SO effect 计数并保留转录本多重性。"
+        },
+        {
+          "check_id": "blocked_not_faked",
+          "description": "snpEff/Java/数据库构建失败时明确标记 blocked，未输出伪造 ANN。"
+        },
+        {
+          "check_id": "deliverables_present",
+          "description": "输出目录包含 annotated VCF、ANN 汇总、report.md、reproduce.sh 与 stage_status.tsv。"
+        },
+        {
+          "check_id": "workspace_role_associations",
+          "description": "plan.snpeff_data_dir 工作区在 prepare_database、build_database 与 annotate_variants 三个步骤上分别声明了对应的 capability 角色关联，注释步骤为只读访问。"
+        },
+        {
+          "check_id": "step_effects_bound",
+          "description": "每个 execute 步骤均绑定一个枚举的 skill 能力并声明可解释效果（产物、绑定、观察或工作区变更）。"
+        }
+      ]
+    }
+  ],
+  "minimum_raw_delivery_sha256": "8cf9f201a6ac9280b931c622f3631259a66b197fd5e56349319a154b200ae6e7",
+  "P_test_raw_sha256": "dc029d40dd47fef04b5066bb4d1bca1a890cf144b0899d5f7f789b1b663a9306",
+  "context_transport_required": [
+    "new formal user/handoff task and input/output declarations",
+    "historical source_refs remain metadata; no original authority restored",
+    "P_test in live context requires 5 output materializations, explicit result version 1 and both intermediate required=true"
+  ],
+  "all_other_candidate_fields_equal": true,
+  "real_scientific_execution": false
+}

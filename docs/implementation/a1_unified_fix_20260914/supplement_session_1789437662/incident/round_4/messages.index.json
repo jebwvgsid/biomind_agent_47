@@ -1,0 +1,82 @@
+[
+  {
+    "index": 0,
+    "role": "system",
+    "name": null,
+    "bytes": 23880,
+    "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8",
+    "file": "message_00_system.txt"
+  },
+  {
+    "index": 1,
+    "role": "human",
+    "name": null,
+    "bytes": 34083,
+    "sha256": "afeddfdcf3297ba5602aeea5f61ec7ee43cbfa4a9ab52d8374ed292340def20d",
+    "file": "message_01_human.txt"
+  },
+  {
+    "index": 2,
+    "role": "human",
+    "name": "inherited_skill_material",
+    "bytes": 33777,
+    "sha256": "9fedb747ab2d7fc7dbe6dd38b8bdf8e518d6d9548110764b2c774fed43dbb5cf",
+    "file": "message_02_human.txt"
+  },
+  {
+    "index": 3,
+    "role": "assistant",
+    "name": null,
+    "bytes": 16022,
+    "sha256": "214dfb380af24d843a5af3c6a282f3d8c3410afe996b35871b1d17ea7c7472ab",
+    "file": "message_03_assistant.txt"
+  },
+  {
+    "index": 4,
+    "role": "human",
+    "name": "runtime_observation",
+    "bytes": 12574,
+    "sha256": "308399ad327a3ae17337bad1a1c248e6a8bb09c418ed18271519f1f8944d20f1",
+    "file": "message_04_human.txt"
+  },
+  {
+    "index": 5,
+    "role": "assistant",
+    "name": null,
+    "bytes": 16001,
+    "sha256": "c61b56fd0916d479cd32db1d4a81312f5c25bbfdf130e32704c1e53b67031a90",
+    "file": "message_05_assistant.txt"
+  },
+  {
+    "index": 6,
+    "role": "human",
+    "name": "runtime_observation",
+    "bytes": 15646,
+    "sha256": "b13d959d0a2e2dfd98fca680b926d0ae9adfd38856544da4403c11c59208bb79",
+    "file": "message_06_human.txt"
+  },
+  {
+    "index": 7,
+    "role": "assistant",
+    "name": null,
+    "bytes": 15375,
+    "sha256": "9fcc948152ac2b10ed013c9b61f208e372a2620785901b8b19391bd274cc05e9",
+    "file": "message_07_assistant.txt"
+  },
+  {
+    "index": 8,
+    "role": "human",
+    "name": "runtime_observation",
+    "bytes": 12816,
+    "sha256": "c8a2cbefd433edd628fa9da60e266f3efe77339cae80af3d570fd7ef2f77cb8e",
+    "file": "message_08_human.txt"
+  },
+  {
+    "index": 9,
+    "role": "system",
+    "name": null,
+    "bytes": 409,
+    "sha256": "be210ced2005ac1305ffb7a826666993a775ab1bb9ff6e726a2cb46fb178d2e0",
+    "file": "message_09_system.txt"
+  }
+]

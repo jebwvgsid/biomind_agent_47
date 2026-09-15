@@ -1,0 +1,14 @@
+{
+  "source": "/public/home/liusiqi/03.\u6bd5\u8bbe/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789437662/state_contract/objects/b8cfd1f177a93f6dff170869a418dd1a118757a5caa2dbc59e923b1475181c7c.json",
+  "source_sha256": "b8cfd1f177a93f6dff170869a418dd1a118757a5caa2dbc59e923b1475181c7c",
+  "object_ref": "object:sha256:b8cfd1f177a93f6dff170869a418dd1a118757a5caa2dbc59e923b1475181c7c",
+  "pointers": {
+    "feedback.context.json": "/payload/feedback",
+    "provider_feedback.context.json": "/payload/provider_feedback",
+    "occurrence_receipt.context.json": "/payload/occurrence_receipt",
+    "response_integrity.context.json": "/payload/response_integrity",
+    "remediation_authorization.context.json": "/payload/remediation_authorization",
+    "provider_feedback_version.context.json": "/payload/provider_feedback_version",
+    "planning_epoch_id.context.json": "/payload/planning_epoch_id"
+  }
+}

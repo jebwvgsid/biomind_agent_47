@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001360774040222168,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 23.561493043787777,
+    "failure": "def test_live_three_candidates_and_formal_stop():\n        async def scenario():\n            f = AdmissionReplay('live_sequence', [raw_round(i) for i in range(1, 5)])\n            await f.setup()\n            try:\n                values, durable = await f.run_admission()\n                assert f.counts['planner'] == 4\n                assert f.raw_deliveries == [raw_round(i) for i in range(1, 5)]\n                errors = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n                assert errors == [['PLAN_RESOURCE_ROLE_READ_MISSING'], ['ACTION_CAPABILITY_SCOPE_MISSING',\n                    'ACTION_CAPABILITY_SCOPE_MISSING', 'PLAN_STEP_ARTIFACT_EFFECT_UNBOUND'], ['PLAN_RESOURCE_ROLE_SCOPE_INVALID']], errors\n                assert values['planner_outcome']['type'] == 'planning_stopped', values.get('planner_outcome')\n                assert not durable.get('steps')\n            finally:\n                await f.close()\n>       asyncio.run(scenario())\n\ntests/plan_live_review_20260915/test_admission_replay.py:207: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        f = AdmissionReplay('live_sequence', [raw_round(i) for i in range(1, 5)])\n        await f.setup()\n        try:\n            values, durable = await f.run_admission()\n            assert f.counts['planner'] == 4\n            assert f.raw_deliveries == [raw_round(i) for i in range(1, 5)]\n            errors = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n>           assert errors == [['PLAN_RESOURCE_ROLE_READ_MISSING'], ['ACTION_CAPABILITY_SCOPE_MISSING',\n                'ACTION_CAPABILITY_SCOPE_MISSING', 'PLAN_STEP_ARTIFACT_EFFECT_UNBOUND'], ['PLAN_RESOURCE_ROLE_SCOPE_INVALID']], errors\nE               AssertionError: [['PLAN_RESOURCE_ROLE_READ_MISSING'], ['ACTION_CAPABILITY_SCOPE_MISSING', 'ACTION_CAPABILITY_SCOPE_MISSING', 'PLAN_STE...EFFECT_UNBOUND', 'PLAN_STEP_EFFECT_UNSPECIFIED', 'PLAN_STEP_EFFECT_UNSPECIFIED'], ['PLAN_RESOURCE_ROLE_SCOPE_INVALID']]\nE               assert [['PLAN_RESOU...OPE_INVALID']] == [['PLAN_RESOU...OPE_INVALID']]\nE                 \nE                 At index 1 diff: ['ACTION_CAPABILITY_SCOPE_MISSING', 'ACTION_CAPABILITY_SCOPE_MISSING', 'PLAN_STEP_ARTIFACT_EFFECT_UNBOUND', 'PLAN_STEP_EFFECT_UNSPECIFIED', 'PLAN_STEP_EFFECT_UNSPECIFIED'] != ['ACTION_CAPABILITY_SCOPE_MISSING', 'ACTION_CAPABILITY_SCOPE_MISSING', 'PLAN_STEP_ARTIFACT_EFFECT_UNBOUND']\nE                 Use -v to get more diff\n\ntests/plan_live_review_20260915/test_admission_replay.py:201: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003002779558300972,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011639762669801712,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 4.038832191377878,
+    "failure": "def test_minimum_one_field_full_admission():\n        async def scenario():\n            candidate = live_minimum()\n            original = json.loads(raw_round(3))\n            restored = deepcopy(candidate)\n            restored['proposed_artifacts'][0]['role_associations'][0]['step_id'] = 'prepare_database'\n            assert restored == original, 'Exactly one public reference changed; no obligations or other fields changed'\n            f = AdmissionReplay('minimum', [candidate])\n            await f.setup()\n            try:\n                values, durable = await f.run_admission()\n                assert f.counts['planner'] == 1, f.rejections\n                assert values['planner_outcome']['type'] == 'plan_review_ready', values.get('planner_outcome')\n                assert values['plan_review_outcome']['type'] == 'approval_pending', values.get('plan_review_outcome')\n                assert durable['plan_compilation_receipt']['status'] == 'compiled'\n                assert durable['plan_dataflow_receipt']['status'] == 'compiled'\n                assert len(durable['steps']) == 6\n            finally:\n                await f.close()\n>       asyncio.run(scenario())\n\ntests/plan_live_review_20260915/test_admission_replay.py:229: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        candidate = live_minimum()\n        original = json.loads(raw_round(3))\n        restored = deepcopy(candidate)\n        restored['proposed_artifacts'][0]['role_associations'][0]['step_id'] = 'prepare_database'\n        assert restored == original, 'Exactly one public reference changed; no obligations or other fields changed'\n        f = AdmissionReplay('minimum', [candidate])\n        await f.setup()\n        try:\n            values, durable = await f.run_admission()\n            assert f.counts['planner'] == 1, f.rejections\n            assert values['planner_outcome']['type'] == 'plan_review_ready', values.get('planner_outcome')\n>           assert values['plan_review_outcome']['type'] == 'approval_pending', values.get('plan_review_outcome')\nE           AssertionError: {'schema_version': 1, 'type': 'harness_error', 'summary': 'The typed adapter failed closed on ambiguous semantic state...eview-minimum', 'plan_id': 'plan_440c9b9fd69ae82dccf8', 'plan_version': 'plan_v1', 'step_id': 'preflight_inputs'}, ...}\nE           assert 'harness_error' == 'approval_pending'\nE             \nE             - approval_pending\nE             + harness_error\n\ntests/plan_live_review_20260915/test_admission_replay.py:223: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018478743731975555,
+    "failure": ""
+  }
+]

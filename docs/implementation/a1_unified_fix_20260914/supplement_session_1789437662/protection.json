@@ -1,0 +1,40 @@
+{
+  "base": "1d0ab2cc6bd8d0c9e7ee2990725f8d41cd92c9c2",
+  "base_tree": "942d46cb728a56aee4344e5649d2fa2d06a1ff4e",
+  "branch": "refactor/consultant-controller-authority",
+  "normal_index_before_commit_exactly_preserved": true,
+  "index_entries_sha256": "5e7f10606a0eeba7b818216c3c4b94985cda65da38f9d0bdc0114fb253340e29",
+  "unowned_status_metadata_preserved": true,
+  "unowned_status_records": 437,
+  "scoped_current_files_final_export_byte_match": 459,
+  "affected_source_20_match_original_final08": 20,
+  "source_byte_claim_scope": "Only safe export and 20 affected files checked; unowned state additionally protected through absence of mutation and unchanged Git metadata. No full scientific/sensitive resource read.",
+  "existing_document_prefixes": {
+    "docs/implementation/a1_unified_fix_20260914/README.md": {
+      "original_bytes": 8480,
+      "original_sha256": "90864ba6d6d32cece448049053a2e3ff67ac31a386560f9907c79ba4408258ce",
+      "added_bytes": 2375,
+      "prefix_preserved": true
+    },
+    "docs/implementation/a1_unified_fix_20260914/changes_and_acceptance.tsv": {
+      "original_bytes": 5082,
+      "original_sha256": "5c04fabb73f0d5eec3e4891c547558c431b7f8905eae3ef7a1c320081bb4250d",
+      "added_bytes": 5034,
+      "prefix_preserved": true
+    }
+  },
+  "production_source_existing_tests_formal_prompt_changes_this_round": false,
+  "new_test_and_audit_directories": [
+    "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/",
+    "tests/plan_live_review_20260915/"
+  ],
+  "existing_docs_append_only": [
+    "docs/implementation/a1_unified_fix_20260914/README.md",
+    "docs/implementation/a1_unified_fix_20260914/changes_and_acceptance.tsv"
+  ],
+  "commit_method": "Explicit owned files in alternate index, commit-tree and branch HEAD CAS, synchronize owned index entries only; postcheck unowned index equality",
+  "no_reset_clean_stash_or_broad_add": true,
+  "old_A1_F6_evidence_and_old_tests_not_modified": true,
+  "no_sensitive_content_read": "Startup/profile/env/keys/formal scientific data prohibited; only Git metadata for sensitive status entries",
+  "push": false
+}

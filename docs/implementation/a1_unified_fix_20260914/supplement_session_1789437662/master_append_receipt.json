@@ -1,0 +1,16 @@
+{
+  "modified_existing_docs": [
+    "README.md",
+    "changes_and_acceptance.tsv"
+  ],
+  "baseline_prefix_hash_checked": true,
+  "appended_ids": [
+    "LIVE-PLAN-DIAGNOSTIC",
+    "LIVE-PLAN-PROJECTION",
+    "LIVE-PLAN-EXAMPLE",
+    "LIVE-PLAN-F6-REGRESSION",
+    "LIVE-PLAN-REAL-VALIDATION"
+  ],
+  "production_fix": false,
+  "old_ledgers_and_assertions_unchanged": true
+}

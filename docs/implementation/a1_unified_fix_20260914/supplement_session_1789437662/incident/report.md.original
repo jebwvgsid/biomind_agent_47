@@ -1,0 +1,46 @@
+# BioMind managed run stop
+
+Stop identity: managed-stop:fdefa9d5b2a4b39ee3a446a8f223d7532cbad7636c0f4f5383c195e0b8d1ed08
+
+规划已停止，尚未形成批准 Plan；本轮规划没有执行、验证或提交科学步骤。
+
+原任务：使用 snpEff 对重测序过滤后的 SNP VCF（all.filtered.snp.vcf）进行功能注释：基于用户提供的参考基因组 genome.fasta 与注释 genome.gtf 构建任务本地自定义 snpEff 数据库，完成变异功能效应注释，输出带 ANN 注释的 VCF 与 ANN 汇总，并生成 report.md、reproduce.sh 和 stage_status.tsv；当 snpEff/Java/数据库构建失败时明确标记 blocked，不得输出伪造的 ANN。。
+
+停止原因：PLANNER_MODEL_STOPPED。
+
+最初拒绝：PLAN_RESOURCE_ROLE_READ_MISSING；Use this issue's step_key as role_associations[].step_id, with the exact expected capability_id and role on the chosen resource declaration.
+
+末次拒绝：PLAN_RESOURCE_ROLE_SCOPE_INVALID；{'code': 'PLAN_RESOURCE_ROLE_SCOPE_INVALID', 'field_path': '$.proposed_artifacts[0].role_associations[0]', 'actual': {'capability_id': 'genomics.snpeff_annotation.prepare_database', 'role': 'artifact.snpeff_data_dir', 'step_id': 'prepare_database'}, 'expected': {'roles': {'artifact.snpeff_data_dir': {'resource_kind': 'mutable_workspace', 'access': 'mutate'}}, 'resource_kind': 'mutable_workspace'}, 'not_evaluated': ['step_effects', 'dataflow', 'required_workspace_coverage'], 'owner': 'planner', 'validator_id': 'plan_resource_bindings', 'repair_target': '$.proposed_artifacts[0].role_associations[0]', 'disposition': 'PROTOCOL_INVALID'}
+
+本轮已发起 Planner 请求：4；当前连续结构无进展记录：0。
+
+任务 revision=1；planning epoch=planning-epoch-a69d8c7e-99c0-47e4-a6b7-39058ae22aae。
+
+最初 provider：call=planner_initial-0006-b4d94da2af80；finish_reason=stop；content_status=NORMAL_END；用量记录={"input_tokens": 21663, "output_tokens": 4255, "total_tokens": 25918}；用量来源=REPORTED。
+本地请求输出上限=16384；wire 观察=resolved_not_wire_observed；请求参数 max_tokens=16384；服务端实际生效上限=UNKNOWN（不把本地设置或用量当作服务端确认）。
+解析诊断（仅已记录字段）：{"status": "passed", "source": "live_planner_envelope_parser"}
+
+末次 provider：call=planner_initial-0008-4891ab7de2c8；finish_reason=stop；content_status=NORMAL_END；用量记录={"input_tokens": 37895, "output_tokens": 4076, "total_tokens": 41971}；用量来源=REPORTED。
+本地请求输出上限=16384；wire 观察=resolved_not_wire_observed；请求参数 max_tokens=16384；服务端实际生效上限=UNKNOWN（不把本地设置或用量当作服务端确认）。
+解析诊断（仅已记录字段）：{"status": "passed", "source": "live_planner_envelope_parser"}
+
+没有已记录的输出长度补救；不能把未执行的补救描述为已尝试。
+
+末次完整问题清单（详细 actual/expected/来源保留在结构化停止事实中）：
+- PLAN_RESOURCE_ROLE_SCOPE_INVALID / PLAN_RESOURCE_ROLE_SCOPE_INVALID @ $.proposed_artifacts[0].role_associations[0]；诊断={"validator_id": "plan_resource_bindings"}
+
+当前没有获批步骤或执行 attempt；后续科学流程尚未由本轮规划启动。预算结束或读取失败不能证明输入不兼容、资源不存在或依赖不可用。
+
+AI 辅助说明（不改变上述事实）：
+已记录 origin：{"error_code": "PLAN_RESOURCE_ROLE_READ_MISSING", "evidence_refs": ["object:sha256:b8cfd1f177a93f6dff170869a418dd1a118757a5caa2dbc59e923b1475181c7c"], "failure_type": "planning_candidate_rejected", "source_owner": "planner", "source_stage": "planner", "summary": "Use this issue's step_key as role_associations[].step_id, with the exact expected capability_id and role on the chosen resource declaration."}
+已记录 stop_reason：{"budget_receipt": {}, "detail": "Planner explicitly stopped without submitting a Plan; its diagnostic is an unverified model report.", "error_code": "PLANNER_MODEL_STOPPED", "model_turns": 4, "repeat_count": 0}
+
+任务状态：FAILED；自动执行已停止。
+
+停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）
+
+尚未确认生成报告文件。
+
+文件交付状态（截至说明生成时；报告自身最终写入结果以持久 receipt 为准）：report.md=not_attempted / WRITER_NOT_RUN；stage_status.tsv=not_attempted / WRITER_NOT_RUN；reproduce.sh=skipped / NO_EXECUTION_ATTEMPT
+
+没有科学执行 attempt，不生成科学复现脚本；原任务的科学交付尚未完成。

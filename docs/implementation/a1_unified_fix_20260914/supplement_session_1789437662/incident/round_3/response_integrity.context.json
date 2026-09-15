@@ -1,0 +1,60 @@
+{
+  "attempted_remediation": {},
+  "call_id": "planner_initial-0008-4891ab7de2c8",
+  "claim_id": "planner-call:c13b35937cd314932eb7f19a74bfeccd2af166a3f4d793ad7ffbef51458489a4",
+  "content_status": "NORMAL_END",
+  "finish_reason": "stop",
+  "parser_diagnostic": {
+    "source": "live_planner_envelope_parser",
+    "status": "passed"
+  },
+  "provider_attempt_id": "provider-attempt-fa8054ea51a2-1-f9b26917",
+  "provider_request_id": "lc_run--01a0a2cd-610d-79d2-bfb1-d3aad68e1c98",
+  "raw_digest": "9fcc948152ac2b10ed013c9b61f208e372a2620785901b8b19391bd274cc05e9",
+  "raw_ref": "object:sha256:45c7348f3718a835c7ff2e991aa402f9d43a62a7827decba450f0b4a26c60203",
+  "reported_usage": {
+    "input_tokens": 37895,
+    "output_tokens": 4076,
+    "total_tokens": 41971
+  },
+  "resolved_output_policy": {
+    "application_context_limit": 200000,
+    "apply_output_binding": true,
+    "can_increase": true,
+    "initial_output_token_limit": 16384,
+    "input_reserve_used": 16384,
+    "legacy_epoch": false,
+    "length_recovery_output_token_limit": 32768,
+    "max_length_corrective_calls_per_epoch": 1,
+    "model_parameter_hash_version": "planner-model-parameters-v2",
+    "output_policy_hash": "sha256:9609b7544a5e4f7981769b5f386b6033b84668d26d057703c3a1a4f5c4fec593",
+    "output_policy_source": "planner_engineering_defaults",
+    "output_policy_version": "planner-output-policy-v1",
+    "policy_reason": "EXPLICIT_OUTPUT_POLICY_RESOLVED",
+    "provider_capability_evidence_level": "documented_official_profile_not_deployment_verified",
+    "provider_capability_source": "https://api-docs.deepseek.com/api/create-chat-completion/",
+    "provider_capability_version": "deepseek-v4-chat-completions-20260908",
+    "provider_documented_context_limit": 1000000,
+    "provider_documented_output_ceiling": 384000,
+    "provider_documented_output_ceiling_label": "384K",
+    "recovery": false,
+    "requested_output_limit": 16384,
+    "restrictions": [],
+    "schema_version": 1,
+    "server_effective_output_limit": null,
+    "wire_observation_status": "resolved_not_wire_observed",
+    "wire_output_parameter_key": "max_tokens",
+    "wire_output_parameter_value": 16384
+  },
+  "schema_version": 1,
+  "scope": {
+    "candidate_scope_id": "candidate-scope-9d7341dd-9475-4402-b9b2-a76803369bdd",
+    "invocation_id": "inv-92e3a44a-d6aa-492c-a561-c2c6cccac9a7",
+    "planning_epoch_id": "planning-epoch-a69d8c7e-99c0-47e4-a6b7-39058ae22aae",
+    "task_id": "session_1789437662",
+    "task_revision": 1
+  },
+  "transport_status": "COMPLETED",
+  "usage_source": "REPORTED",
+  "usage_status": "REPORTED"
+}

@@ -1,0 +1,15 @@
+{
+  "call_id": "planner_initial-0006-b4d94da2af80",
+  "claim_id": "planner-call:6f7a57c6a4ee8a41acc7474508cbe461ab228373fa3e8b7eac8a2eebc03f54ab",
+  "failure_attempt": 1,
+  "id": "planner-occurrence:6d8d9940422876f4bc8121b48ca00462482adf125265d9c0a7070808f38fd1ce",
+  "ordinal": 1,
+  "schema_version": 1,
+  "scope": {
+    "candidate_scope_id": "candidate-scope-691d6bc6-ac6e-41db-9006-44b31f30c4aa",
+    "invocation_id": "inv-3781e2f4-15ac-4a73-a6b5-85ca9dd86b18",
+    "planning_epoch_id": "planning-epoch-a69d8c7e-99c0-47e4-a6b7-39058ae22aae",
+    "task_id": "session_1789437662",
+    "task_revision": 1
+  }
+}

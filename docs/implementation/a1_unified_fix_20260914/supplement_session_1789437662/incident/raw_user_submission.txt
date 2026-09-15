@@ -1,0 +1,32 @@
+请对这个重测序 SNP VCF 做功能注释，参考基因组和 GTF 已在同一 data 目录。
+
+主要输入或数据位置：
+- benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/all.filtered.snp.vcf
+- benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta
+- benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf
+
+输出目录：
+benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-ANNOT-007/medium
+
+边界条件/禁止：
+- 禁止使用 tests/demo_ref.fa 或 demo.vcf。
+- 禁止用 taxonomy label 猜 public snpEff DB。
+- 禁止忽略 chromosome naming mismatch。
+
+依赖和停止条件：
+- snpEff/Java/database build 失败时 blocked；不得输出假 ANN。
+- 生成 annotated VCF 和 ANN summary，或 blocked。
+
+执行要求：
+- 先识别输入类型、样本、关键参数和依赖。
+- 自行规划合理步骤，并在 report.md 中说明为什么选择这些 skill/流程。
+- 对能执行的 stage 生成真实结果；对不能执行的 stage 明确 blocked 并说明原因。
+
+通用要求：
+- 只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录。
+- 所有 `benchmarks/...` 相对路径都以项目根目录解析；如当前工作目录不同，请先 `cd` 到项目根目录或改用绝对路径。
+- 不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。
+- 缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。
+- 若本提示词明确标注 `KNOWN_ABSENT_FOR_THIS_TASK`，则该输入已知不提供；不要反复询问或借用其他 benchmark/hidden/fixture 文件，应按本任务规则写 skipped/stage_blocked 并继续可执行步骤。
+- 如果依赖、输入或上游结果不足，请明确写 blocked/stage_blocked，并说明缺少什么；不要伪造结果。
+- 最终至少生成 report.md 和 reproduce.sh；多阶段任务还应生成 stage_status.tsv 或等价状态表。

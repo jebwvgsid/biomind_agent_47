@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011884886771440506,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 16.63600612618029,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002518957480788231,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001022806391119957,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.5689022187143564,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013952236622571945,
+    "failure": ""
+  }
+]

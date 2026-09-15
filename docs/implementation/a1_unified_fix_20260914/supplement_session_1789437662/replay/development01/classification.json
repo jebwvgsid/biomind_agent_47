@@ -1,0 +1,21 @@
+{
+  "test_exit": 1,
+  "source_changes": [],
+  "test_driver_failures": [
+    {
+      "test": "live_sequence",
+      "cause": "Expected only three terminal-visible middle-round codes; historical full receipt and replay both contain five. Also formal typed stop is terminal, not planning_stopped."
+    },
+    {
+      "test": "minimum",
+      "cause": "One-field candidate already completed admission; fixture replaced whole _prompt_user and threw at wrong boundary. Next fixture restores production _prompt_user and substitutes only safe_input."
+    }
+  ],
+  "business_findings": {
+    "minimum_planner_outcome": "plan_review_ready",
+    "minimum_rejections": 0,
+    "minimum_compilation_and_dataflow": "compiled",
+    "live_raw_sequence": "all four original business bytes delivered; 3 rejections and formal STOP"
+  },
+  "not_a_production_fix": true
+}

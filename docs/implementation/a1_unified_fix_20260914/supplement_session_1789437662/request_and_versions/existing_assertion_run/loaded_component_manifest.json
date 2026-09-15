@@ -1,0 +1,13 @@
+{
+  "export_source_signature": "003eba3d627b37cb918191b8937cdfc234f8e33614c48b62294802f3514c21ce",
+  "export_manifest_sha256": "58248dc392e94079b805549e925a4345909fc0ed21def52bc4d6dfa4e20fab56",
+  "export_manifest_original": "/tmp/biomind-plan-live-review-02/export/export_manifest.json",
+  "proof": "Test enforces byte-exact SHA before compiling/executing both class fixtures; run_exit source_changes_after_run is empty. Production modules are not imported by this component.",
+  "files": {
+    "tests/plan_live_review_20260915/test_existing_assertion.py": "5a450d2c41d671fa9c4aee80d1926a995e588b0b8ed444a5ebc0e0e592114d55",
+    "tests/plan_live_review_20260915/generate_audit_base.py": "923ed47d5c90b6beda0a452d10e10113c2d81ec44df49a806ebc3846d54e4b6c",
+    "tests/plan_live_review_20260915/generate_audit_current.py": "923ed47d5c90b6beda0a452d10e10113c2d81ec44df49a806ebc3846d54e4b6c"
+  },
+  "outcome": "2 PASSED component witnesses; original assertion fails in both BASE/current by construction of unchanged real to_dict, not FIX PASS",
+  "no_full_base_provider_graph": true
+}

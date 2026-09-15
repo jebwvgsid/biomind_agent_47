@@ -1,0 +1,397 @@
+[
+  [
+    "actual_provider_leaf_delivery",
+    {
+      "stage": "planner",
+      "binding": {
+        "invocation_id": "inv-51991fd1-450c-4239-ac9b-417cf8743af6",
+        "node_type": "planner",
+        "staleness_domain": "planner-v1",
+        "state_generation": 9,
+        "task_semantic_hash": "sha256:325996c300c4bc0161b84d441bcc43817df398a46651bcb4cbf2d2e0f3be359c",
+        "task_record_hash": "sha256:956a9a3057e88445b9193e73491ffacf73c379e0360660dda7091082fcd85061",
+        "plan_semantic_hash": "sha256:9a14fad0fb8a81b16022fcfddb3da07d3d73d186fbf12ed5a95b629569c3cfe4",
+        "plan_record_hash": "sha256:8761ba960c87579ff1c98fbcf7feca45f211dc8fb790fdda0741e35f3e071c7c",
+        "task_revision": 1,
+        "plan_revision": 1,
+        "authoritative_user_turn_revision": 1,
+        "continuation_id": "",
+        "approval_ref": "",
+        "approval_applicability": "",
+        "step_id": "",
+        "execution_epoch": "",
+        "attempt_id": "",
+        "failure_fingerprint": "",
+        "violation_set_identity": "",
+        "action_identity": "",
+        "evidence_identity": "",
+        "candidate_scope_id": "candidate-scope-25a7de91-1184-419c-8776-93689251d870",
+        "touched_entity_versions": {},
+        "semantic_handle_map": {
+          "input.annotation_gtf": {
+            "semantic_handle": "input.annotation_gtf",
+            "object_type": "artifact",
+            "stable_identity": "artifact-5605dd82133301fce98c",
+            "direction": "input",
+            "allowed_usage": [
+              "read",
+              "materialize_input"
+            ],
+            "metadata": {
+              "index": 3,
+              "role": "annotation_gtf",
+              "input_id": "artifact-5605dd82133301fce98c",
+              "artifact_id": "artifact-5605dd82133301fce98c",
+              "artifact_kind": "",
+              "producer_owner": "external_input",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新注释.gtf"
+            }
+          },
+          "input.reference_fasta": {
+            "semantic_handle": "input.reference_fasta",
+            "object_type": "artifact",
+            "stable_identity": "artifact-ff3274f307e7e079ca1f",
+            "direction": "input",
+            "allowed_usage": [
+              "read",
+              "materialize_input"
+            ],
+            "metadata": {
+              "index": 2,
+              "role": "reference_fasta",
+              "input_id": "artifact-ff3274f307e7e079ca1f",
+              "artifact_id": "artifact-ff3274f307e7e079ca1f",
+              "artifact_kind": "",
+              "producer_owner": "external_input",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新参考.fa"
+            }
+          },
+          "input.variant_vcf": {
+            "semantic_handle": "input.variant_vcf",
+            "object_type": "artifact",
+            "stable_identity": "artifact-05dfb5ac674cc8ff3478",
+            "direction": "input",
+            "allowed_usage": [
+              "read",
+              "materialize_input"
+            ],
+            "metadata": {
+              "index": 1,
+              "role": "variant_vcf",
+              "input_id": "artifact-05dfb5ac674cc8ff3478",
+              "artifact_id": "artifact-05dfb5ac674cc8ff3478",
+              "artifact_kind": "",
+              "producer_owner": "external_input",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/两样本.vcf"
+            }
+          },
+          "output.ann_summary": {
+            "semantic_handle": "output.ann_summary",
+            "object_type": "artifact",
+            "stable_identity": "ann_summary",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 2,
+              "role": "ann_summary",
+              "output_id": "ann_summary",
+              "artifact_id": "ann_summary",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv"
+            }
+          },
+          "output.annotated_vcf": {
+            "semantic_handle": "output.annotated_vcf",
+            "object_type": "artifact",
+            "stable_identity": "annotated_vcf",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 1,
+              "role": "annotated_vcf",
+              "output_id": "annotated_vcf",
+              "artifact_id": "annotated_vcf",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf"
+            }
+          },
+          "output.report": {
+            "semantic_handle": "output.report",
+            "object_type": "artifact",
+            "stable_identity": "report",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 3,
+              "role": "report",
+              "output_id": "report",
+              "artifact_id": "report",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+            }
+          },
+          "output.reproduce_script": {
+            "semantic_handle": "output.reproduce_script",
+            "object_type": "artifact",
+            "stable_identity": "reproduce_script",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 4,
+              "role": "reproduce_script",
+              "output_id": "reproduce_script",
+              "artifact_id": "reproduce_script",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh"
+            }
+          },
+          "output.stage_status": {
+            "semantic_handle": "output.stage_status",
+            "object_type": "artifact",
+            "stable_identity": "stage_status",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 5,
+              "role": "stage_status",
+              "output_id": "stage_status",
+              "artifact_id": "stage_status",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv"
+            }
+          }
+        }
+      },
+      "delivered_messages_sha256": "ccb2cc4764663c8816d82bc656ab341d80311400b3a92662edf415075273b1d6",
+      "config_metadata": {
+        "provider_attempt_id": "provider-attempt-debd02637cb4-1-261b57b6",
+        "semantic_invocation_id": "semantic-invocation-d5b2c38c7fbfdebd02637cb4"
+      },
+      "config_tags": [
+        "provider-attempt",
+        "planner"
+      ],
+      "bound_parameters": {
+        "temperature": 0.1
+      },
+      "request_ordinal": 1
+    }
+  ],
+  [
+    "actual_node_dispatch_consumed",
+    {
+      "stage": "planner",
+      "binding": {
+        "invocation_id": "inv-51991fd1-450c-4239-ac9b-417cf8743af6",
+        "node_type": "planner",
+        "staleness_domain": "planner-v1",
+        "state_generation": 9,
+        "task_semantic_hash": "sha256:325996c300c4bc0161b84d441bcc43817df398a46651bcb4cbf2d2e0f3be359c",
+        "task_record_hash": "sha256:956a9a3057e88445b9193e73491ffacf73c379e0360660dda7091082fcd85061",
+        "plan_semantic_hash": "sha256:9a14fad0fb8a81b16022fcfddb3da07d3d73d186fbf12ed5a95b629569c3cfe4",
+        "plan_record_hash": "sha256:8761ba960c87579ff1c98fbcf7feca45f211dc8fb790fdda0741e35f3e071c7c",
+        "task_revision": 1,
+        "plan_revision": 1,
+        "authoritative_user_turn_revision": 1,
+        "continuation_id": "",
+        "approval_ref": "",
+        "approval_applicability": "",
+        "step_id": "",
+        "execution_epoch": "",
+        "attempt_id": "",
+        "failure_fingerprint": "",
+        "violation_set_identity": "",
+        "action_identity": "",
+        "evidence_identity": "",
+        "candidate_scope_id": "candidate-scope-25a7de91-1184-419c-8776-93689251d870",
+        "touched_entity_versions": {},
+        "semantic_handle_map": {
+          "input.annotation_gtf": {
+            "semantic_handle": "input.annotation_gtf",
+            "object_type": "artifact",
+            "stable_identity": "artifact-5605dd82133301fce98c",
+            "direction": "input",
+            "allowed_usage": [
+              "read",
+              "materialize_input"
+            ],
+            "metadata": {
+              "index": 3,
+              "role": "annotation_gtf",
+              "input_id": "artifact-5605dd82133301fce98c",
+              "artifact_id": "artifact-5605dd82133301fce98c",
+              "artifact_kind": "",
+              "producer_owner": "external_input",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新注释.gtf"
+            }
+          },
+          "input.reference_fasta": {
+            "semantic_handle": "input.reference_fasta",
+            "object_type": "artifact",
+            "stable_identity": "artifact-ff3274f307e7e079ca1f",
+            "direction": "input",
+            "allowed_usage": [
+              "read",
+              "materialize_input"
+            ],
+            "metadata": {
+              "index": 2,
+              "role": "reference_fasta",
+              "input_id": "artifact-ff3274f307e7e079ca1f",
+              "artifact_id": "artifact-ff3274f307e7e079ca1f",
+              "artifact_kind": "",
+              "producer_owner": "external_input",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/新参考.fa"
+            }
+          },
+          "input.variant_vcf": {
+            "semantic_handle": "input.variant_vcf",
+            "object_type": "artifact",
+            "stable_identity": "artifact-05dfb5ac674cc8ff3478",
+            "direction": "input",
+            "allowed_usage": [
+              "read",
+              "materialize_input"
+            ],
+            "metadata": {
+              "index": 1,
+              "role": "variant_vcf",
+              "input_id": "artifact-05dfb5ac674cc8ff3478",
+              "artifact_id": "artifact-05dfb5ac674cc8ff3478",
+              "artifact_kind": "",
+              "producer_owner": "external_input",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/输入 新构造/两样本.vcf"
+            }
+          },
+          "output.ann_summary": {
+            "semantic_handle": "output.ann_summary",
+            "object_type": "artifact",
+            "stable_identity": "ann_summary",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 2,
+              "role": "ann_summary",
+              "output_id": "ann_summary",
+              "artifact_id": "ann_summary",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv"
+            }
+          },
+          "output.annotated_vcf": {
+            "semantic_handle": "output.annotated_vcf",
+            "object_type": "artifact",
+            "stable_identity": "annotated_vcf",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 1,
+              "role": "annotated_vcf",
+              "output_id": "annotated_vcf",
+              "artifact_id": "annotated_vcf",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf"
+            }
+          },
+          "output.report": {
+            "semantic_handle": "output.report",
+            "object_type": "artifact",
+            "stable_identity": "report",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 3,
+              "role": "report",
+              "output_id": "report",
+              "artifact_id": "report",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+            }
+          },
+          "output.reproduce_script": {
+            "semantic_handle": "output.reproduce_script",
+            "object_type": "artifact",
+            "stable_identity": "reproduce_script",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 4,
+              "role": "reproduce_script",
+              "output_id": "reproduce_script",
+              "artifact_id": "reproduce_script",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh"
+            }
+          },
+          "output.stage_status": {
+            "semantic_handle": "output.stage_status",
+            "object_type": "artifact",
+            "stable_identity": "stage_status",
+            "direction": "output",
+            "allowed_usage": [
+              "write",
+              "declare_output",
+              "materialize_output"
+            ],
+            "metadata": {
+              "index": 5,
+              "role": "stage_status",
+              "output_id": "stage_status",
+              "artifact_id": "stage_status",
+              "artifact_kind": "file",
+              "producer_owner": "plan_step",
+              "canonical_path": "/tmp/biomind-f6-candidate08-normal/scratch/biomind-plan-local-graph-zx3cejby/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv"
+            }
+          }
+        }
+      },
+      "status": "consumed",
+      "transport_history_count": 2
+    }
+  ]
+]

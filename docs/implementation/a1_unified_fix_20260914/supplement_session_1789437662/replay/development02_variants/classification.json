@@ -1,0 +1,21 @@
+{
+  "test_exit": 1,
+  "passed": 8,
+  "failed": 3,
+  "source_changes": [],
+  "findings": [
+    {
+      "case": "current_input_alias",
+      "cause": "New test reused authoritative input semantic role in a plan-local declaration; formal shadowing guard rejected before resource-reference validation. Use distinct alias role for legal reference counterpart."
+    },
+    {
+      "case": "f6_live_output_context",
+      "cause": "Real context difference: explicit-results1 makes absent required flags optional. Three consumer obligations correctly reject old F6 declarations. Record necessary context adaptation, mark both consumed intermediates required, never lower consumer obligations."
+    },
+    {
+      "case": "stale_candidate_scope",
+      "cause": "Public candidate_scope_id is controller-owned and rejected before binder; expected earliest code was wrong. Preserve this early rejection and separately test a real other-candidate resource_ref produced by formal first admission."
+    }
+  ],
+  "production_edited": false
+}

@@ -1,0 +1,327 @@
+[
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003420962020754814,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 20.12386826891452,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003155963495373726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034886039793491364,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.5996923930943012,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020210258662700653,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003257123753428459,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.47117673791945,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001819860190153122,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00031315628439188004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.36637959536165,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018099509179592133,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003181956708431244,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.588730945251882,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017160829156637192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002898275852203369,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.237664446234703,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001780390739440918,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003046654164791107,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.4780258126556873,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016958732157945633,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003795558586716652,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.102289989590645,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001754695549607277,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003334842622280121,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.8114281371235847,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019267573952674866,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00033378228545188904,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.0999137489125133,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020072422921657562,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003312230110168457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.399444998241961,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017286837100982666,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00031530484557151794,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.600821752101183,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018053501844406128,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.95732843875885e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 3.772046591155231,
+    "failure": "def test_reference_from_real_other_candidate_is_not_authority():\n        async def scenario():\n            first = AdmissionReplay('scope_source', [live_minimum()])\n            await first.setup()\n            try:\n                values, durable = await first.run_admission()\n                assert values['planner_outcome']['type'] == 'plan_review_ready'\n                original_scope = durable['candidate_scope_id']\n                original_resource = durable['plan_resource_bindings']['plan.snpeff_data_dir']['canonical_resource_id']\n            finally:\n                await first.close()\n            candidate = live_minimum()\n            candidate['proposed_artifacts'][0]['resource_binding'] = {'resource_ref': original_resource}\n            second = AdmissionReplay('scope_target', [candidate])\n            await second.setup()\n            try:\n                values, durable = await second.run_admission()\n                first_call = next(x for x in second.validator_calls if x['phase'] == 'validate_wire_and_bind')\n                assert first_call['kwargs']['candidate_scope_id'] != original_scope\n                errors = second.rejections[0]['task_state']['planning_failure']['validation_issues']\n                assert errors[0]['code'] == 'PLAN_RESOURCE_REFERENCE_NOT_DECLARED', errors\n                assert values['planner_outcome']['type'] == 'terminal'\n                assert not durable.get('steps')\n                store('real-cross-candidate-reference', {'original_scope': original_scope,\n                    'original_formally_allocated_resource': original_resource,\n                    'new_scope': first_call['kwargs']['candidate_scope_id'], 'actual_errors': errors,\n                    'old_resource_added_to_authority': False})\n            finally:\n                await second.close()\n>       asyncio.run(scenario())\n\ntests/plan_live_review_20260915/test_variants.py:136: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        first = AdmissionReplay('scope_source', [live_minimum()])\n        await first.setup()\n        try:\n            values, durable = await first.run_admission()\n            assert values['planner_outcome']['type'] == 'plan_review_ready'\n>           original_scope = durable['candidate_scope_id']\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           KeyError: 'candidate_scope_id'\n\ntests/plan_live_review_20260915/test_variants.py:114: KeyError"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016793422400951385,
+    "failure": ""
+  }
+]

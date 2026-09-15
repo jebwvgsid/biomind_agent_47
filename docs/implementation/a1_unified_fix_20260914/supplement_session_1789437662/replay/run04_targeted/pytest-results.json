@@ -1,0 +1,77 @@
+[
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032625719904899597,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 18.018484358675778,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_raw_live_output_context]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003210175782442093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000111323781311512,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.814948943443596,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_reference_from_real_other_candidate_is_not_authority",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017099082469940186,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_exact_f6_raw_candidate_in_original_context",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_exact_f6_raw_candidate_in_original_context",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.193550795316696e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_exact_f6_raw_candidate_in_original_context",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.2986116595566273,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_exact_f6_raw_candidate_in_original_context",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001543993130326271,
+    "failure": ""
+  }
+]

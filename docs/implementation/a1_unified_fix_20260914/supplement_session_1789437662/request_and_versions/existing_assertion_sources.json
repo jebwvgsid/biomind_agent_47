@@ -1,0 +1,45 @@
+{
+  "baseline_commit": "b877b28b2b0366c04e9042bad09e1ee26a138ab0",
+  "boundary": "Exact original class bytes, no BioMind module import or full BASE provider graph execution",
+  "rows": [
+    {
+      "version": "base",
+      "source_file_sha256": "f1f8465abd11dcd98f20451257119cd413f36298b2e221a9507e0b42aa00d91d",
+      "source_start_line": 1316,
+      "source_end_line": 1351,
+      "exact_class_sha256": "923ed47d5c90b6beda0a452d10e10113c2d81ec44df49a806ebc3846d54e4b6c",
+      "fixture": "tests/plan_live_review_20260915/generate_audit_base.py"
+    },
+    {
+      "version": "current",
+      "source_file_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+      "source_start_line": 1317,
+      "source_end_line": 1352,
+      "exact_class_sha256": "923ed47d5c90b6beda0a452d10e10113c2d81ec44df49a806ebc3846d54e4b6c",
+      "fixture": "tests/plan_live_review_20260915/generate_audit_current.py"
+    }
+  ],
+  "original_assertion_source": "assert audit.to_dict() == {\n        \"prompt_assembly_started\": True,\n        \"prompt_assembly_succeeded\": True,\n        \"provider_call_attempted\": True,\n        \"llm_invoked\": True,\n    }",
+  "original_assertion_sha256": "93e26affcb3c054d3870ddb70ecf090c75d462902010c0965de2de3397021195",
+  "original_assertion_line": 166,
+  "old_function_static_recheck": [
+    {
+      "version": "base",
+      "test_file_sha256": "4527289b119ce58fd93bb5c83dd5f8140991257ae4c8aed0ebed389dd7b08b81",
+      "test_function_sha256": "dbca1df9cf6c024f686396c81bf317729948395a695f300e37db0f1d028c00be",
+      "assertion_sha256": "93e26affcb3c054d3870ddb70ecf090c75d462902010c0965de2de3397021195",
+      "line": 166
+    },
+    {
+      "version": "current",
+      "test_file_sha256": "54fdc14b15f94be24ed89f053bd4274a8843abaa98a2cc9935d7004e98bffb88",
+      "test_function_sha256": "dbca1df9cf6c024f686396c81bf317729948395a695f300e37db0f1d028c00be",
+      "assertion_sha256": "93e26affcb3c054d3870ddb70ecf090c75d462902010c0965de2de3397021195",
+      "line": 166
+    }
+  ],
+  "assertion_in_base_and_current_exactly_equal": true,
+  "old_function_exactly_equal": true,
+  "dynamic_result": "existing_assertion_run/pytest-results.json",
+  "old_function_hash_method": "ast.get_source_segment excludes the final newline; with its original final newline both are 0dca22dcfc5e47742c8c36fd43ae64048631ac7d9a5e2854a28c0d0cdaf9084a, matching the prior ledger."
+}

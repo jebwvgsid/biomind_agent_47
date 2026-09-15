@@ -1,0 +1,70 @@
+{
+  "python": "3.12.12",
+  "historical_python": "3.12.12",
+  "method": "Compile safe current source without executing/importing production, use historical co_filename and same Python; marshal_v2 code digest as production capture_runtime_identity. Equality covers these code objects only, not external imports/globals/config.",
+  "rows": [
+    {
+      "file": "agent_core/plan_bindings.py",
+      "symbol": "compile_plan_resource_bindings",
+      "current_compiled_code_sha256": "de2a8288e66f08489e619b259a49b230d9a9d7adea48aa31fc4d0a48c897f4b0",
+      "historical_loaded_callable_sha256": "de2a8288e66f08489e619b259a49b230d9a9d7adea48aa31fc4d0a48c897f4b0",
+      "equal": true
+    },
+    {
+      "file": "agent_core/plan_bindings.py",
+      "symbol": "planner_resource_requirements",
+      "current_compiled_code_sha256": "dd8715831f557c8b230a4d93ca1a10912fa9bf7fded33dd5a025b12071b5b375",
+      "historical_loaded_callable_sha256": "dd8715831f557c8b230a4d93ca1a10912fa9bf7fded33dd5a025b12071b5b375",
+      "equal": true
+    },
+    {
+      "file": "agent_core/plan_bindings.py",
+      "symbol": "capability_workspace_roles",
+      "current_compiled_code_sha256": "e4474c3cd29094e6069cb9a8f90472c920190c3da9dc49aad6b85343f643f741",
+      "historical_loaded_callable_sha256": "e4474c3cd29094e6069cb9a8f90472c920190c3da9dc49aad6b85343f643f741",
+      "equal": true
+    },
+    {
+      "file": "agent_core/plan_contract.py",
+      "symbol": "validate_planner_candidate_deterministically",
+      "current_compiled_code_sha256": "f7b9538e7e2073723e1cb0f32481c3b1036c2eaf19e12868472ae1e0b20d9712",
+      "historical_loaded_callable_sha256": "f7b9538e7e2073723e1cb0f32481c3b1036c2eaf19e12868472ae1e0b20d9712",
+      "equal": true
+    },
+    {
+      "file": "agent_core/plan_contract.py",
+      "symbol": "parse_planner_outcome_envelope",
+      "current_compiled_code_sha256": "d8c0ab60132d6e8d14322afb2a2b92a15a41cf118d5ebccfc38ea1caa85bbdd2",
+      "historical_loaded_callable_sha256": "d8c0ab60132d6e8d14322afb2a2b92a15a41cf118d5ebccfc38ea1caa85bbdd2",
+      "equal": true
+    },
+    {
+      "file": "agent_core/plan_tracker.py",
+      "symbol": "_semantic_diagnostic_value",
+      "current_compiled_code_sha256": "897bec4148b5fc7cd48d25ae81a2fbaaf0733a74e65152fc3bc3875fcbe2eee5",
+      "historical_loaded_callable_sha256": "897bec4148b5fc7cd48d25ae81a2fbaaf0733a74e65152fc3bc3875fcbe2eee5",
+      "equal": true
+    },
+    {
+      "file": "agent_core/plan_tracker.py",
+      "symbol": "_planning_failure_machine_issue",
+      "current_compiled_code_sha256": "58edba487d13e6d8ab57c7efc5a99a45e364a60b7658e01694bed7f2d79f2846",
+      "historical_loaded_callable_sha256": "58edba487d13e6d8ab57c7efc5a99a45e364a60b7658e01694bed7f2d79f2846",
+      "equal": true
+    },
+    {
+      "file": "agent_core/plan_tracker.py",
+      "symbol": "_planning_issue_affected_step_ids",
+      "current_compiled_code_sha256": "77c5c9c5d625d35c236356555263fc4a11a2042e2d3e867b87f813c2c9e76cf5",
+      "historical_loaded_callable_sha256": "77c5c9c5d625d35c236356555263fc4a11a2042e2d3e867b87f813c2c9e76cf5",
+      "equal": true
+    },
+    {
+      "file": "prompts/manager.py",
+      "symbol": "PromptManager.get_planner_v2_system_prompt",
+      "current_compiled_code_sha256": "ddfb0c4330d9b23fba38c7a7e58baae33f53151c2bf01907ed45645757fdaf1a",
+      "historical_loaded_callable_sha256": "ddfb0c4330d9b23fba38c7a7e58baae33f53151c2bf01907ed45645757fdaf1a",
+      "equal": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "version": "current",
+  "class_source_sha256": "923ed47d5c90b6beda0a452d10e10113c2d81ec44df49a806ebc3846d54e4b6c",
+  "original_assertion_sha256": "93e26affcb3c054d3870ddb70ecf090c75d462902010c0965de2de3397021195",
+  "actual_to_dict": {
+    "generate_call_id": "generate-15983e10c52c4832a4c704d209c28378",
+    "scope": {},
+    "source_ref": "",
+    "prompt_assembly_started": true,
+    "prompt_assembly_succeeded": true,
+    "provider_call_attempted": true,
+    "llm_invoked": true
+  },
+  "original_assertion_result": "AssertionError",
+  "four_expected_booleans_match": true,
+  "extra_keys": [
+    "generate_call_id",
+    "scope",
+    "source_ref"
+  ],
+  "full_base_provider_graph_executed": false,
+  "model_or_science_executed": false,
+  "component_input": "Successful assembly booleans supplied; real class mark_provider_call_attempted and to_dict run."
+}

@@ -1,0 +1,13 @@
+{
+  "source_signature": "62238312e511fb57390c126feb74dba2284e772e0c5e38f92034eb3a4eb17998",
+  "loaded_source_manifest": "/tmp/biomind-plan-live-review-01/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/plan_live_review_20260915/test_admission_replay.py"
+  ],
+  "timeout_seconds": 180,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 1,
+  "source_changes_after_run": []
+}

@@ -1,0 +1,1380 @@
+{
+  "self_excluded": "artifact_inventory.json",
+  "files": [
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/README.md",
+      "bytes": 10855,
+      "sha256": "b5ab43a0d7108929bb5f04f6bcae20a53fcb516264c131e3d2f42031a729048f"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/changes_and_acceptance.tsv",
+      "bytes": 10116,
+      "sha256": "c83708dd701ddf488b5794c6e2475d0796d411b241442aa0802d56351b6848b6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/P_min.json",
+      "bytes": 15379,
+      "sha256": "6bcc36645b371cf49c7408d31caf03947534c63f26d7a4b68168f2af539088e5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/README.md",
+      "bytes": 12467,
+      "sha256": "28d77d0e675baa71559877dccee101434cb34818947398b6c50623f97a19996a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/baseline/original_index.entries",
+      "bytes": 647067,
+      "sha256": "5e7f10606a0eeba7b818216c3c4b94985cda65da38f9d0bdc0114fb253340e29"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/baseline/original_status.json",
+      "bytes": 41454,
+      "sha256": "132cc345c04f9bb96999271d48e0fe5ae7ebda9ab4c192f2a6ddb6c374264139"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/baseline/start.json",
+      "bytes": 3157,
+      "sha256": "e773ef6aa72ea58e7f96c4bb910d02dbddd25fc08e1ab346684bf783a0a99fcd"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/candidate_comparison.json",
+      "bytes": 39059,
+      "sha256": "d5bab959df31e94de2c72611d89690b6870e49e683b0ed6b273e751bd604d581"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/commit_files.tsv",
+      "bytes": 39084,
+      "sha256": "30198db38590625885e50965a13cdf9044fc14b36102916d3dd8bae8dcccf744"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/exact_predicate.json",
+      "bytes": 9037,
+      "sha256": "35318b5096088fa34990801cece682ea2b84e0adc2464fce68ddb2e46b3ff6ae"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.actual_transport_receipts.json",
+      "bytes": 16128,
+      "sha256": "35b1ce82f88929920e5a0bfac3fb545b800c2eb821aafb15cd6e84fc5419d577"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.approved_scope.json",
+      "bytes": 352,
+      "sha256": "c87a822ece3d534f9f30bafbc175ecee01dcb41b3620fd754320d25e12dc7aee"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.original_claim.json",
+      "bytes": 4271,
+      "sha256": "83cdeb640ee460cd4ba149c74005b8ca9d6df8ebed648e129eae48c680bdae89"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.planner_message_0.txt",
+      "bytes": 23880,
+      "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.planner_message_1.txt",
+      "bytes": 28664,
+      "sha256": "aec026a15179415a1833fe9c9f8ebbbf419d67255fa322ae01cc2c87a2e51ee6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.planner_message_2.txt",
+      "bytes": 409,
+      "sha256": "fdd1ad11f3a8343a38775c240908af8ca1f71efd7f141fea0c314f4591159769"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.planner_request.json",
+      "bytes": 55860,
+      "sha256": "f930f24031185d17513d846336aa380d3521cec0fadc71bc8aeb407b2a05ec94"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.pretty.json",
+      "bytes": 10226,
+      "sha256": "08531cf8eb6d2968182c3fdb050b36c19d4e6ac33019f581a2a4804de87409f5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.public_capabilities.json",
+      "bytes": 8595,
+      "sha256": "a20897712bcbad0134fdfe7be0d5bb990bf316228e4fa170cbeac009c7a46311"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.public_context.json",
+      "bytes": 26084,
+      "sha256": "d50d98fc9e4530c24e8a4c9c66107667c4948ebf0775ce6ebe9971aa6ae56c29"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.raw.json",
+      "bytes": 7601,
+      "sha256": "dc029d40dd47fef04b5066bb4d1bca1a890cf144b0899d5f7f789b1b663a9306"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/P_test.reconstruction.json",
+      "bytes": 1022,
+      "sha256": "cdecf0513887a27d9fd56016bfa47917bda0aa606c23ca79c15002f6518b508c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/README.md",
+      "bytes": 4633,
+      "sha256": "6ef0844bace301575c903eb5b7691510904180fd0d22708be3655b8507aacc13"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/artifact_inventory.json",
+      "bytes": 4792,
+      "sha256": "09d2831b92f833af78ab2cfc68e2a0e6fb823b4f90ec409a1b92841942f4a731"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/artificial_fields.tsv",
+      "bytes": 4769,
+      "sha256": "2e153e0311986b4e8a6d47b0577c9c7018ad4df97315d778518037fd468cb6de"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/coverage_blindspots.tsv",
+      "bytes": 3490,
+      "sha256": "c647a522539f9f43f25e4352672b46fb91fce757c974fbf186e98eff80c9e0aa"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/followup_master_proposal.tsv",
+      "bytes": 6695,
+      "sha256": "4783e787211aee6b7b5abadd1d1d1c299fdd171c74893f30b94c2278e61ba394"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/reconstruct_p_test.py",
+      "bytes": 2453,
+      "sha256": "79428dce91130bc0feb9acce53f6cb0df4dff95c3fe387f85f0456f10fd6b1d9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/replay_design.md",
+      "bytes": 2699,
+      "sha256": "35a9237c40fb8c92322da12aab5025d7e98e60eda700635b4f77fb0ef3060ce0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/export_manifest.json",
+      "bytes": 146079,
+      "sha256": "58248dc392e94079b805549e925a4345909fc0ed21def52bc4d6dfa4e20fab56"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/invocation.json",
+      "bytes": 949,
+      "sha256": "72178dd0eec3dd302c77bfe0aa61ffa1d6032f139b9f4cd074ba4a093536dcb9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/loaded_modules.json",
+      "bytes": 21955,
+      "sha256": "225a7b407c7ad80fe60e08732c86d46cdc6f93b34b758fbfd4af8cda2683661d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/plan-review-plan-review-f6_reverse_original_f6_names-candidate-and-outcome.json.gz",
+      "bytes": 7252,
+      "sha256": "9c626b5778893a5a775e12de8bdcf1ee4112eed5b6bf6ade06b3e30b11d58c32"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/plan-review-plan-review-f6_reverse_original_f6_names.json.gz",
+      "bytes": 299943,
+      "sha256": "08ee9dce417d87b227fec26c9cabb05bad9bf5dbcc06d13cfc0fe735d5ca66a7"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/plan-review-plan-review-f6_reverse_public_step_id_differs_from_operation-candidate-and-outcome.json.gz",
+      "bytes": 7310,
+      "sha256": "df72634ec07d4dbc9e8288bca4c85d6a44176f8d8752b4fdaa32295c5ca34d44"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/plan-review-plan-review-f6_reverse_public_step_id_differs_from_operation.json.gz",
+      "bytes": 300230,
+      "sha256": "268f731ca011009e4f5bc6aa59c2c5e33fd072ea22854992da063629160c5110"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/pytest-results.json",
+      "bytes": 1914,
+      "sha256": "8bfe6ec920bea4bcc69cbf1b95427f93efe9e50c5fc2196dc87c8ba980f8d5b5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/run_exit.json",
+      "bytes": 416,
+      "sha256": "f5d35fbbf9f19b627c74a45c80ea2f65387ce75aa072a5c2ea6987868bdce24b"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/run02/stdout.txt.gz",
+      "bytes": 4210,
+      "sha256": "731a3af5f9e89e228ff95311afeaa9aa1aa95549909a06163a4dae8fb25ee178"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/source_provenance.json",
+      "bytes": 5134,
+      "sha256": "555420a9be919aa705fa6aec3c5390033257356967e1b1df541f42c4d438078b"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/steps.tsv",
+      "bytes": 4347,
+      "sha256": "b7978ea45a1f4a7ae50d514535c064e48bfa65049aee8bb8859dbc9103032a4f"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/f6_comparison/verification.json",
+      "bytes": 43675,
+      "sha256": "60d1d116d5a16e55622d10d085e178942d12ecd27e97fdc9a7af62675af828f4"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/final_manifest.json",
+      "bytes": 154544,
+      "sha256": "2c0de17bfcd62e176e699e00914204f9c21d1b297d52e14fd107f46610442af6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/call_ledger.tsv",
+      "bytes": 1274,
+      "sha256": "0a7a8c8fe4700e266778d07e11405b32175e7d82721ad280924d86822880de37"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/candidate_deltas.json",
+      "bytes": 36497,
+      "sha256": "bcb596343de8e385368fbfbdf356ddcb5730156fbf103710a8c5323a6da4c038"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/evidence.json",
+      "bytes": 21888,
+      "sha256": "51f49ca77fae3903ba6140e4621134b4f0a5b15f191735116175afe5a843097e"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/feedback_projection_deltas.json",
+      "bytes": 6443,
+      "sha256": "95972de7cba64f68fafeb89a8b291acee2c730e0127204726097dfe5ca364299"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/findings.md",
+      "bytes": 12068,
+      "sha256": "d8d7d382199dc0ba177fa9cc9c2eabe34bd0725fdcfbdf375755408f7e5c84ab"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/four_call_chain.json",
+      "bytes": 24170,
+      "sha256": "2c4fad2205ecb7d4b426bb5e158d2e788faee7a93aa89ac8ed34de11a8e4488c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/planner_loop.static.json",
+      "bytes": 324,
+      "sha256": "f66cb471e8148be6e97fde25f9610183d6b92a5abf406983c7ca8c481ea51720"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/planning_epoch.static.json",
+      "bytes": 6662,
+      "sha256": "b8eb040addf043ae176c6a144372160298c2d2ea2294f642851924e9d6e2aaf7"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/planning_failure.static.json",
+      "bytes": 45795,
+      "sha256": "883a26a44e86b8496c5976cafe7a2124ddca00084b874edc74aaef5a81f8c9fe"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/raw_user_submission.source.json",
+      "bytes": 434,
+      "sha256": "7892fa41fb198cb8092cace350e68d5a3d4c664ae83fdd23a15b74444534eace"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/raw_user_submission.txt",
+      "bytes": 2192,
+      "sha256": "7fba598afad158dba0975b77102e4fe7c14813e740ba198e36146e14a063b08f"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/report.md.original",
+      "bytes": 4587,
+      "sha256": "0a6197ab950dbb25d220c056b90a0ac552fe5de724c0ce37cd5cec80b95e78a1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/reports.source.json",
+      "bytes": 570,
+      "sha256": "8efc268686a482b876bf4706c29e0fe2c3adbd1ff529a4c47116d86aecc46af4"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/business_response.txt",
+      "bytes": 16022,
+      "sha256": "214dfb380af24d843a5af3c6a282f3d8c3410afe996b35871b1d17ea7c7472ab"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/candidate.context.json",
+      "bytes": 15446,
+      "sha256": "a0b43abb8cfde2f743c8ae1ec8be11da10f3b0055ffde57d166ce84a12f432a1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/candidate.parsed.json",
+      "bytes": 16023,
+      "sha256": "1b5da6345f3533392b7cc6e248a600e7dfa1be69abbe0536d2c0b7e8454ac927"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/context.source.json",
+      "bytes": 919,
+      "sha256": "ab45ed0b505f7e273911176048af6485afb50809200d25ee2eab2375fc5f84c2"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/feedback.context.json",
+      "bytes": 18160,
+      "sha256": "6ff17e417647692f4507f31768840fe5536f1f4fae230bc6b40f7dce31c36506"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/feedback.in_next_request.json",
+      "bytes": 17785,
+      "sha256": "2cae42551c2ede8c89e2f20400ef940997e3b760988677dd1dc3b1e0c496d615"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/manifest.json",
+      "bytes": 24407,
+      "sha256": "175385e7366891d089b6faa9d0f80956eddad6744f93983f53a45b1858fc9561"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/message_00_system.txt",
+      "bytes": 23880,
+      "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/message_01_human.txt",
+      "bytes": 34083,
+      "sha256": "afeddfdcf3297ba5602aeea5f61ec7ee43cbfa4a9ab52d8374ed292340def20d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/message_02_human.txt",
+      "bytes": 33777,
+      "sha256": "9fedb747ab2d7fc7dbe6dd38b8bdf8e518d6d9548110764b2c774fed43dbb5cf"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/message_03_system.txt",
+      "bytes": 409,
+      "sha256": "fdd1ad11f3a8343a38775c240908af8ca1f71efd7f141fea0c314f4591159769"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/messages.index.json",
+      "bytes": 831,
+      "sha256": "af00f420af1f45b36bb2ce501a17896e9f58ff864a146983b65151e5d0dabc0e"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/occurrence_receipt.context.json",
+      "bytes": 611,
+      "sha256": "458252228678336cf8cbbd02fdad79f0e3d6f49e2c872a2753466e7bf96c4eba"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/planning_epoch_id.context.json",
+      "bytes": 54,
+      "sha256": "ce8bf7097ed79c4fc2a99732c39839108e9464a574fa89641ad150ace55a2906"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/provider_feedback.context.json",
+      "bytes": 17785,
+      "sha256": "2cae42551c2ede8c89e2f20400ef940997e3b760988677dd1dc3b1e0c496d615"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/provider_feedback_version.context.json",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/remediation_authorization.context.json",
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/request.safe.json",
+      "bytes": 96307,
+      "sha256": "97fec15f1fd9273ba652965199bf28a410f6f083a28937b50ccbd6400d55412e"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/response.envelope.json",
+      "bytes": 17434,
+      "sha256": "4a7b92b71c4e8f448ad3383132ffabefdc90c540515d674b144e567614fc8e84"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_1/response_integrity.context.json",
+      "bytes": 2590,
+      "sha256": "945ae4b6950ae3774fab6540670b98bb2758164185c2940b85f5adacabbf80fa"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/business_response.txt",
+      "bytes": 16001,
+      "sha256": "c61b56fd0916d479cd32db1d4a81312f5c25bbfdf130e32704c1e53b67031a90"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/candidate.context.json",
+      "bytes": 137304,
+      "sha256": "40722bc4b15f7b558995344ff2f5a5193aeaff2f73dbc0e8f1d2afadd0dc8fa6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/candidate.parsed.json",
+      "bytes": 16002,
+      "sha256": "107f4bc69557c6b0215328967f63576c5608a463abd320b4be41395500e17e2f"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/context.source.json",
+      "bytes": 919,
+      "sha256": "f00a56ef03f6034ec1599549510a672c5b66a6bdf39dde1a25c2d8028bf9e3a5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/feedback.context.json",
+      "bytes": 22926,
+      "sha256": "4142c77f1ce2641d77e76d1f1da815ab0bd66ecefbf3fa9b2df43c9cf08b8fb4"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/feedback.in_next_request.json",
+      "bytes": 21407,
+      "sha256": "f979f0181c59c6233eea7b06ab7abb79868cb15b514cae3c76fc41146401ce95"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/manifest.json",
+      "bytes": 24417,
+      "sha256": "42b0318fc0e72629207d3282bd86f0a3b1070f564b870f18a3f6cf40fc5ebc92"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/message_00_system.txt",
+      "bytes": 23880,
+      "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/message_01_human.txt",
+      "bytes": 34083,
+      "sha256": "afeddfdcf3297ba5602aeea5f61ec7ee43cbfa4a9ab52d8374ed292340def20d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/message_02_human.txt",
+      "bytes": 33777,
+      "sha256": "9fedb747ab2d7fc7dbe6dd38b8bdf8e518d6d9548110764b2c774fed43dbb5cf"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/message_03_assistant.txt",
+      "bytes": 16022,
+      "sha256": "214dfb380af24d843a5af3c6a282f3d8c3410afe996b35871b1d17ea7c7472ab"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/message_04_human.txt",
+      "bytes": 12574,
+      "sha256": "308399ad327a3ae17337bad1a1c248e6a8bb09c418ed18271519f1f8944d20f1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/message_05_system.txt",
+      "bytes": 409,
+      "sha256": "e4d2ffb77bae99c2ef7ea761ca1f904a1b71d5c38a543a980a2000b82be49305"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/messages.index.json",
+      "bytes": 1258,
+      "sha256": "9831f9e858312ba6c10b8d6d3c2bb285d0a82bdfbc07fa7bfa9bf5ca2d6af6f4"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/occurrence_receipt.context.json",
+      "bytes": 611,
+      "sha256": "420420a3dd39bca848fac4c8f7f180e839cada9703b1fc3e3307c2d0791968f2"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/planning_epoch_id.context.json",
+      "bytes": 54,
+      "sha256": "ce8bf7097ed79c4fc2a99732c39839108e9464a574fa89641ad150ace55a2906"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/provider_feedback.context.json",
+      "bytes": 21407,
+      "sha256": "f979f0181c59c6233eea7b06ab7abb79868cb15b514cae3c76fc41146401ce95"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/provider_feedback_version.context.json",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/remediation_authorization.context.json",
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/request.safe.json",
+      "bytes": 127411,
+      "sha256": "6b8634930ef68f8e5e02f0bffca4a629ca229a117ca59172b817d738aa916dc0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/response.envelope.json",
+      "bytes": 17428,
+      "sha256": "51942a0fe8b6057d9700f112a1917245a76ad5d95180be31b0705b4e7e93f01c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_2/response_integrity.context.json",
+      "bytes": 2590,
+      "sha256": "2d31cc71d2002e180d34b259429a42841f38cfe2f2d1dedc4e7bf5e91fbf772b"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/business_response.txt",
+      "bytes": 15375,
+      "sha256": "9fcc948152ac2b10ed013c9b61f208e372a2620785901b8b19391bd274cc05e9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/candidate.context.json",
+      "bytes": 15046,
+      "sha256": "79c4e41a87b30ea9aff9f056460b8fadbf28bc0b8f927c4326edb8e550efa75a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/candidate.parsed.json",
+      "bytes": 15376,
+      "sha256": "6704911460167f1f30cbff8ffd5d9c2eba36c3f4e51cbe962076f4c33f4ba0c1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/context.source.json",
+      "bytes": 919,
+      "sha256": "d57a19c572af772be4404138da4d97604a9c267c8104bba97021472eb7d8108c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/feedback.context.json",
+      "bytes": 18219,
+      "sha256": "aa7fc9fedb7568e118039db9814b610d705981d906b006ccbe6fd3c96087c3b6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/feedback.in_next_request.json",
+      "bytes": 17931,
+      "sha256": "25fb51482974445ddf9575cfc532d25bd397f39bfa7c448229cbc4de46a4cf2d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/manifest.json",
+      "bytes": 24425,
+      "sha256": "bd70e7b64e2789b55ed1fcc871c233ccd7b3d1afe54082d05507c02ba38ebc3d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_00_system.txt",
+      "bytes": 23880,
+      "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_01_human.txt",
+      "bytes": 34083,
+      "sha256": "afeddfdcf3297ba5602aeea5f61ec7ee43cbfa4a9ab52d8374ed292340def20d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_02_human.txt",
+      "bytes": 33777,
+      "sha256": "9fedb747ab2d7fc7dbe6dd38b8bdf8e518d6d9548110764b2c774fed43dbb5cf"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_03_assistant.txt",
+      "bytes": 16022,
+      "sha256": "214dfb380af24d843a5af3c6a282f3d8c3410afe996b35871b1d17ea7c7472ab"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_04_human.txt",
+      "bytes": 12574,
+      "sha256": "308399ad327a3ae17337bad1a1c248e6a8bb09c418ed18271519f1f8944d20f1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_05_assistant.txt",
+      "bytes": 16001,
+      "sha256": "c61b56fd0916d479cd32db1d4a81312f5c25bbfdf130e32704c1e53b67031a90"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_06_human.txt",
+      "bytes": 15646,
+      "sha256": "b13d959d0a2e2dfd98fca680b926d0ae9adfd38856544da4403c11c59208bb79"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/message_07_system.txt",
+      "bytes": 409,
+      "sha256": "2369ea4c93291f51ecf1d19ffc404530f9bd553a7c96a938d16edb904955ef06"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/messages.index.json",
+      "bytes": 1685,
+      "sha256": "d98bec52d75887b3a1fb5774bc8ef9a565ad68060a3fe71efe8295c36dc0baff"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/occurrence_receipt.context.json",
+      "bytes": 611,
+      "sha256": "6a8cf6b67023bbc8157a0dff3ab7d012bde18fedefc19542206dd0a8ce69c7f0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/planning_epoch_id.context.json",
+      "bytes": 54,
+      "sha256": "ce8bf7097ed79c4fc2a99732c39839108e9464a574fa89641ad150ace55a2906"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/provider_feedback.context.json",
+      "bytes": 17931,
+      "sha256": "25fb51482974445ddf9575cfc532d25bd397f39bfa7c448229cbc4de46a4cf2d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/provider_feedback_version.context.json",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/remediation_authorization.context.json",
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/request.safe.json",
+      "bytes": 161801,
+      "sha256": "e514a1036f7ab86d77aaec773913595a84af30e13f8654130594c1ca5cd37233"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/response.envelope.json",
+      "bytes": 16693,
+      "sha256": "f9c356ea8225d9da2a183ed1329fb57ead4defb1b2e5f55d4878d988450d4940"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_3/response_integrity.context.json",
+      "bytes": 2590,
+      "sha256": "1968dc901481a2d0247167ec7e4ae81bd1885005eaea1edd09bd01ce6f952ccd"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/budget_reconciliation.json",
+      "bytes": 13577,
+      "sha256": "c658026254ac2759e8ca2b6e147748604bb10306c3c1f8957ee7a221f3b185bc"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/business_response.txt",
+      "bytes": 2091,
+      "sha256": "6ef8215faa0c6b65d7dfc97db8dbfeced8e9f192f872672f6ac93dc5b63c9370"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/candidate.parsed.json",
+      "bytes": 2092,
+      "sha256": "4337262f72d7251a305378997be09767376f4133162048c291cfcc3d879e946a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/managed_stop.static.json",
+      "bytes": 90650,
+      "sha256": "cbe2a1858f60c9c46653f0434c1febad67a8a0f0137267955388fa86627ccaa6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/manifest.json",
+      "bytes": 24110,
+      "sha256": "89330d4e04f87758c1695ddebe7b2193c029b9ab62a2da35f4540f61cc1f48a1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_00_system.txt",
+      "bytes": 23880,
+      "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_01_human.txt",
+      "bytes": 34083,
+      "sha256": "afeddfdcf3297ba5602aeea5f61ec7ee43cbfa4a9ab52d8374ed292340def20d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_02_human.txt",
+      "bytes": 33777,
+      "sha256": "9fedb747ab2d7fc7dbe6dd38b8bdf8e518d6d9548110764b2c774fed43dbb5cf"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_03_assistant.txt",
+      "bytes": 16022,
+      "sha256": "214dfb380af24d843a5af3c6a282f3d8c3410afe996b35871b1d17ea7c7472ab"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_04_human.txt",
+      "bytes": 12574,
+      "sha256": "308399ad327a3ae17337bad1a1c248e6a8bb09c418ed18271519f1f8944d20f1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_05_assistant.txt",
+      "bytes": 16001,
+      "sha256": "c61b56fd0916d479cd32db1d4a81312f5c25bbfdf130e32704c1e53b67031a90"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_06_human.txt",
+      "bytes": 15646,
+      "sha256": "b13d959d0a2e2dfd98fca680b926d0ae9adfd38856544da4403c11c59208bb79"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_07_assistant.txt",
+      "bytes": 15375,
+      "sha256": "9fcc948152ac2b10ed013c9b61f208e372a2620785901b8b19391bd274cc05e9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_08_human.txt",
+      "bytes": 12816,
+      "sha256": "c8a2cbefd433edd628fa9da60e266f3efe77339cae80af3d570fd7ef2f77cb8e"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/message_09_system.txt",
+      "bytes": 409,
+      "sha256": "be210ced2005ac1305ffb7a826666993a775ab1bb9ff6e726a2cb46fb178d2e0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/messages.index.json",
+      "bytes": 2112,
+      "sha256": "d56d7b42f33161d0bdb6431bbc1035f1e2ae2466179f1465b975aeabcb587451"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/request.safe.json",
+      "bytes": 192384,
+      "sha256": "00531cd01aab26335b511fdabfe5b205cdfa3fe0a9a2750659a0e491de8840b9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/round_4/response.envelope.json",
+      "bytes": 2268,
+      "sha256": "8995e4f486e530bf8608c4900565da3cbc93d2aae704c2cb6d41aff94088bbad"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/runtime_identity.static.json",
+      "bytes": 158442,
+      "sha256": "e64b994019f811de2adc0ab9ca2dbee10542e637c5804be28043b37d89ee3b0a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/stage_status.tsv.original",
+      "bytes": 102,
+      "sha256": "b6a331bd7a4fe8d9e2283d593957c684173f72ca4af584a60762def925ca116c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/state_boundary.static.json",
+      "bytes": 43446,
+      "sha256": "03b4e5a13b4f0d76ef9ecffd1f3cc6c84f29d9f19d0135d7e891fa59e4a0d2a5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/task_declarations.json",
+      "bytes": 20150,
+      "sha256": "dfa8886d2ec2ec38562a996ba44bb50277ac2d3a161143f21f657a51a90c3df1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/incident/trace_index.json",
+      "bytes": 11372,
+      "sha256": "6425d8f99891652b7f54400fafbbdf20ade811290c315da038e17ab2102e95c0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/master_append_receipt.json",
+      "bytes": 372,
+      "sha256": "4ed718e56a9c4296840c4f7b7424b423292088c3319956ec71481a9142b33cc3"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/minimum_receipt.json",
+      "bytes": 17559,
+      "sha256": "2fd83a8772a7c0e22e43bb2e45ca71204f75694835999cd7cd0959c55496e4ed"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/obligation_preservation.tsv",
+      "bytes": 9726,
+      "sha256": "c69fd9179428aebc4909e426da1beca3694b9ef5729d064baae4ef37120f0c24"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/protection.json",
+      "bytes": 2125,
+      "sha256": "4096ab08d7807a115366b95f56719961c7dad28d052d39bb6b6295a84df1cd2f"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/classification.json",
+      "bytes": 850,
+      "sha256": "f594faa99a481e1aa731b8a40fed425c85cc0d985ca15cf134a2f2ca477e2d4c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/export_manifest.json",
+      "bytes": 138885,
+      "sha256": "a8df66bbfe28217e9242e94c5d9745fd99f353920761d1504ea2a5ac672bec65"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/invocation.json",
+      "bytes": 955,
+      "sha256": "2254239861fb89c454818da1434bdb21681f436e35bc5cdce4190e10ea06748c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/plan-review-plan-review-live_sequence.json.gz",
+      "bytes": 480295,
+      "sha256": "b24bd465d358adfb577e1a5ea826ec89d70ac68bcec9e4a5c0bc305421281dd8"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/plan-review-plan-review-minimum.json.gz",
+      "bytes": 399237,
+      "sha256": "198d348dfa3d78c659d0dcc071967c95d371b1d67b5e3f1b6e9c0a234995f965"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/pytest-results-test_live_three_candidates_and_formal_stop-facts.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/pytest-results-test_minimum_one_field_full_admission-facts.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/pytest-results.json",
+      "bytes": 8146,
+      "sha256": "805409eb524a65db892868952b08cccbe8b1f0e6db28e3aaeedb1bc6481aa5a5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/run_exit.json",
+      "bytes": 422,
+      "sha256": "ae2611239553fca9dc72e7582c0334b2a0c30c07625115b6c947a566ebe1f951"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/stdout.txt",
+      "bytes": 35389,
+      "sha256": "3168c56cc0d8ea15fa8ced62b40c4f26123e392ad02c496a1e5c2613e0a6da9a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development01/test_admission_replay.original.py",
+      "bytes": 13220,
+      "sha256": "1d48f36824502bb0feb38d28b7839cd0421a49eedf43266bafc6192a19277233"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/classification.json",
+      "bytes": 1027,
+      "sha256": "05228160c5c7fbd429ef825b540869f962a759a28e488256740598048dbb4b6a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/export_manifest.json",
+      "bytes": 146079,
+      "sha256": "58248dc392e94079b805549e925a4345909fc0ed21def52bc4d6dfa4e20fab56"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/invocation.json",
+      "bytes": 967,
+      "sha256": "d2a2193f9d65314c21cdbd67638d0efeebd1adc8c715e0538c871a7e400a44dc"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_additional_supported_read.json.gz",
+      "bytes": 406568,
+      "sha256": "d1fa1a7cd9d741825ecd042524c624fc584db91bdbe2c7a08438942a401859b3"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_current_input_alias.json.gz",
+      "bytes": 197674,
+      "sha256": "35cee553f2d151c5e101d7f84cbb189a70735f8e96f637e4f03c8fa11c658cc1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_distinct_step_ids.json.gz",
+      "bytes": 398226,
+      "sha256": "f731a37263d55a3e2279ed88b224b9f2495d01914db49c1cfb61cd819106848b"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_extra_access_field.json.gz",
+      "bytes": 203468,
+      "sha256": "52dc744b471776045afb68537e3178ab518013a28378cb13e6087fa17249175e"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_f6_live_output_context.json.gz",
+      "bytes": 299805,
+      "sha256": "3936eb97b9186e30c93ac68b3f13944dea8804d157344c6d5e479fb0175d1718"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_missing_config_effect.json.gz",
+      "bytes": 340147,
+      "sha256": "113cc559c1cdccbfe6f9c323dd806af62491a6bd7ef17853225823394344b7b1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_missing_read_role.json.gz",
+      "bytes": 204088,
+      "sha256": "e3a9e1bdb12806ede4e13f8376df0b8dd8fa610045f75905446f9ca00477cef3"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_stale_candidate_scope.json.gz",
+      "bytes": 196006,
+      "sha256": "3792a1278ea48cc150f9ff799b806b4338ebc215beddd0d5ca552863743932eb"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_unknown_capability.json.gz",
+      "bytes": 305687,
+      "sha256": "ce25d24306bc00871a462b3a5f6a3a0bca18fc294bb388ea2050ab68320c4850"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_wrong_existing_step.json.gz",
+      "bytes": 204252,
+      "sha256": "af4f3fed4a472b4618631c023c79b8c633a9a44dd8e39ae925d3f3c0dc81b3bc"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-plan-review-variant_wrong_parent_resource_kind.json.gz",
+      "bytes": 204332,
+      "sha256": "f5f96b327f216a02e5afe306fe971ffd719996b8c52c20d8a398ad19e5fefc92"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-additional_supported_read.json.gz",
+      "bytes": 7923,
+      "sha256": "121a9f5e9365ad61a670c1c24a3de362398c974223b3dfb1ff1d75049ea5a0a9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-current_input_alias.json.gz",
+      "bytes": 9250,
+      "sha256": "48476ec65287b422a8a2e17ab7d650c955bce423603630765f8d466c91e29fc3"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-distinct_step_ids.json.gz",
+      "bytes": 7686,
+      "sha256": "5ad4e21c03ccdccbc498ff468bd5f734b728bc4d6503c8197aed7f0fcf6a9ffb"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-extra_access_field.json.gz",
+      "bytes": 9331,
+      "sha256": "e51f6339607711650c95283ab31065c8f04a8383a7fbe314f011a8f2795ede68"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-f6_live_output_context.json.gz",
+      "bytes": 8403,
+      "sha256": "4ad040c3438ba66bf9cdb83e21dd117348b2cb6974c8849e5e815a3929e2ed6b"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-missing_config_effect.json.gz",
+      "bytes": 11121,
+      "sha256": "eae3b08a19b399ab4914eb3932750bd2fe6843b0312f3c0e42570185a8452fe9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-missing_read_role.json.gz",
+      "bytes": 9352,
+      "sha256": "09850d9a569b11a58d8c6ff9384ed0cda105928435f88ae29e9324721ec27850"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-stale_candidate_scope.json.gz",
+      "bytes": 9139,
+      "sha256": "cca766990b2d873a66f077d09644bc0afdc98904832ae9dcd34320a49b39d3c0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-unknown_capability.json.gz",
+      "bytes": 9028,
+      "sha256": "6c7b52c1dc67d51aa9a2d4609abb4de135ae8eee0350a5b28cfbf1cc6799ecca"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-wrong_existing_step.json.gz",
+      "bytes": 9377,
+      "sha256": "7ae5a9875769969ce55d4fa36163cd357935f9dca33daded9bf142616dec8619"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/plan-review-variant-wrong_parent_resource_kind.json.gz",
+      "bytes": 9373,
+      "sha256": "8e8abc05c0bf253aa3c68b7bcc4966cb02898d7a20c163e7b4adc7ec0d377c29"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/pytest-results-test_current_admission_variant[current_input_alias]-facts.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/pytest-results-test_current_admission_variant[f6_live_output_context]-facts.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/pytest-results-test_current_admission_variant[stale_candidate_scope]-facts.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/pytest-results.json",
+      "bytes": 20863,
+      "sha256": "3e6099846b0b00f97629bbbd050c99925e4d02d38641a0fe8817d9f2657aba59"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/run_exit.json",
+      "bytes": 414,
+      "sha256": "9c30b9d6316c7404c353ac1117122fc6b2ba71569ef4f846faf7d3e2a11abb7a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/stdout.txt",
+      "bytes": 41076,
+      "sha256": "a1debe903f085d176ad2c8c72734f9ebc2a9c9dcca8a144205dd3449562575a5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/development02_variants/test_variants.original.py",
+      "bytes": 5521,
+      "sha256": "fc93caa27761542a3770d49b8045b95ff95d9e06a1d307c1f105d8f546639fce"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/final04_reuse.json",
+      "bytes": 108587,
+      "sha256": "432cc1caaba0fbb8a48d6ba8ce72fdce6bb8cd7e07331de1e886fd11622cba71"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/export_manifest.json",
+      "bytes": 146079,
+      "sha256": "58248dc392e94079b805549e925a4345909fc0ed21def52bc4d6dfa4e20fab56"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/invocation.json",
+      "bytes": 955,
+      "sha256": "89912dd4335c3ad1aaae242e720fc0402a1737266dbd9b9fea079ec7ec39b720"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/loaded_modules.json",
+      "bytes": 75077,
+      "sha256": "cac911e5a46f04e1f7df418eb079e3138fc529dbc1a005671fd7999a24de4fb4"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/plan-review-plan-review-live_sequence.json.gz",
+      "bytes": 480332,
+      "sha256": "f7a686bd31b58e25be2ea4e078b7786f90cb8f0dde64925d8f1728a5a47e6664"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/plan-review-plan-review-minimum.json.gz",
+      "bytes": 398065,
+      "sha256": "b30e60a3f2ffd2155f09274ae7369bbbf531a37366c6cd38bab9348c860082a1"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/pytest-results.json",
+      "bytes": 1663,
+      "sha256": "1c4ce8573784c35b27271b456968da4d373ef433bb9e53395b4fc24992d2479b"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/run_exit.json",
+      "bytes": 422,
+      "sha256": "ba092979b3246bd1f1d26c909481d73683c126ca53063e0b800de1b06385bbb8"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/stdout.txt",
+      "bytes": 27926,
+      "sha256": "ed0abf8fa35a4a8ae0aeee975bbc7ffb772102d59f539cb67a8656a79d3cab32"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run02_main/summary.json",
+      "bytes": 4347,
+      "sha256": "6adedf90e7b8cd0a7b224617d0a846234e4014c70da9baaf4f320aaa57571640"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/export_manifest.json",
+      "bytes": 154414,
+      "sha256": "7d81e63f6783c869b04b5ed11a7a545c2404345241509e2703b5b0268dabd0ff"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/invocation.json",
+      "bytes": 967,
+      "sha256": "68cac126138a23311327436c4c533c69ee50c3e324b3b3752f3c0879799f303d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/loaded_modules.json",
+      "bytes": 75703,
+      "sha256": "d11bf2917be996e34005fadf2390d0699e58e15417068d4b66e1fc607b491141"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-scope_source.json.gz",
+      "bytes": 399229,
+      "sha256": "f8decc4b32cfd9ff9e3985c132109909960bc4d405c665c879f4f234a8314214"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_additional_supported_read.json.gz",
+      "bytes": 406599,
+      "sha256": "0f23908d9db7562452fec43887285c5e5892fc6526119a1abf470d769a73cde0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_current_input_alias.json.gz",
+      "bytes": 402177,
+      "sha256": "d340b818ced7085a7f54916184fa23743e4167781552c2c2aca52dd3cde3ae27"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_distinct_step_ids.json.gz",
+      "bytes": 398234,
+      "sha256": "2d559bd1d3b614fd8e934554faacf5eb958622679beb40091de4671525369525"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_extra_access_field.json.gz",
+      "bytes": 203538,
+      "sha256": "8efb3f0794a655706a564098768ba22531694737db90b798fb8f5c1295032506"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_f6_live_output_context.json.gz",
+      "bytes": 362345,
+      "sha256": "d783f5dae1b10369e4339e66780a530b59a044f0babcfe790457b05af2a19df6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_f6_raw_live_output_context.json.gz",
+      "bytes": 298809,
+      "sha256": "5459699ff76efe8afc50c3f1c38f5f7800687ab2ca6bd6dade6580eff4e66d60"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_missing_config_effect.json.gz",
+      "bytes": 340249,
+      "sha256": "e933d27da828216168c71cddbc8e6e3df6ffa6ee6670f4f245ce8b3bc9c85423"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_missing_read_role.json.gz",
+      "bytes": 204152,
+      "sha256": "65f86b3c02520df1d0a747123196b8746723d150d91def5e507e56b6d8a1feb2"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_stale_candidate_scope.json.gz",
+      "bytes": 196079,
+      "sha256": "9b9a4a53f6a61a478191c73fa065483c629f3fe563266af4595926c94baec74a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_unknown_capability.json.gz",
+      "bytes": 305662,
+      "sha256": "9cfe7d46ee98352842c26c97b54aa9fd262d25854f3d715848aa11759e9ee92c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_wrong_existing_step.json.gz",
+      "bytes": 204249,
+      "sha256": "2f3a8370480e429b95513568d1d6642dfd00107723dbb967f7284b5a2cebe329"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-plan-review-variant_wrong_parent_resource_kind.json.gz",
+      "bytes": 204318,
+      "sha256": "cc2a92ec23716ae5648a66aa62de99b0056cd7b580fd4d6bae5286cb02d6655d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-additional_supported_read.json.gz",
+      "bytes": 7919,
+      "sha256": "5b16b1f7e2237fd5b4661e7ffe43f8559ef67ef97a3aea212e1b8f0305d74e0f"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-current_input_alias.json.gz",
+      "bytes": 7810,
+      "sha256": "1edd3ca0f8becc554a12e994fdabffa926ada729c888bb839352cbb60c8653c9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-distinct_step_ids.json.gz",
+      "bytes": 7687,
+      "sha256": "b3a227c3cf7f4ea01ccc2f6b524ad8b4f7b260cab47ff1017e7d2e584bc1fade"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-extra_access_field.json.gz",
+      "bytes": 9346,
+      "sha256": "4fd4a6a812433551b5379a631b6bc57adb854453bd382d2c8e571aea51ffb96d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-f6_live_output_context.json.gz",
+      "bytes": 6000,
+      "sha256": "43889169c03fbe4e90af9cb5b374b673b14a75129860b2e479cf304a0af8fb22"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-f6_raw_live_output_context.json.gz",
+      "bytes": 7858,
+      "sha256": "fe7df73f48d76606c61ce6e326ded07973a7fa4cb637502abeeae543ca921e36"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-missing_config_effect.json.gz",
+      "bytes": 11133,
+      "sha256": "b6d6fd2f36eee76a613ff47e8214ac37b8c130b1d9ddd4ccbfd6c8ce23a55c20"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-missing_read_role.json.gz",
+      "bytes": 9360,
+      "sha256": "3e9fd7a05959644dba83ac5b7f52043d7ab694eb8eedef75ffff3db6aab3ac6d"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-stale_candidate_scope.json.gz",
+      "bytes": 9125,
+      "sha256": "abb41113c071a47cd178df6354a23dc38d945de1b8f23b3c2f631d0e24b2856c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-unknown_capability.json.gz",
+      "bytes": 9021,
+      "sha256": "6fd6b23dbab975625c58b0f61c3a5631b84e7f6abb05a4bd7f66d2245c26a6bc"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-wrong_existing_step.json.gz",
+      "bytes": 9369,
+      "sha256": "2b150ff6a6df9b5bb2230279158952199af05eefe2191e8c24920f9e3fa189be"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/plan-review-variant-wrong_parent_resource_kind.json.gz",
+      "bytes": 9376,
+      "sha256": "b4932c3c55ff8e1517491856de2888210d6b000cfd345df0b9caa8c8e00da1e9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/pytest-results-test_reference_from_real_other_candidate_is_not_authority-facts.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/pytest-results.json",
+      "bytes": 14189,
+      "sha256": "bc48775ef3d7be96f443f51061ae2e20be32256ac4fb69b42fec041298b1cc96"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/run_exit.json",
+      "bytes": 414,
+      "sha256": "1539dd59303f7b12fa91ce3696c8c82b58018c9567a0d17b144122a50fe2bb75"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/stdout.txt",
+      "bytes": 33886,
+      "sha256": "f00be40ac741ecfe40c9ba51e00b80845553fbf9301bd32f2ad7c06b09d27ad5"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run03_variants/summary.json",
+      "bytes": 21344,
+      "sha256": "fca6e723cd159efadf20a7734ab40652505ee3ffdb97df3621ca35573dc0d478"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/export_manifest.json",
+      "bytes": 154544,
+      "sha256": "2c0de17bfcd62e176e699e00914204f9c21d1b297d52e14fd107f46610442af6"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/invocation.json",
+      "bytes": 1076,
+      "sha256": "94a4e3792a8e74716f51846fd702e06737c52893d546fb89f12abe2a6ebba4bc"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/loaded_modules.json",
+      "bytes": 59390,
+      "sha256": "852fe474c5cf87356f6782a9f7c5b4b19891cb9e4c6809ee313a917492f8c12a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/plan-review-plan-review-f6_exact_raw.json.gz",
+      "bytes": 299798,
+      "sha256": "57328f586fe776d53f47108a2e41754b9f469d53af9a489d7951cabb1ded5d2c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/plan-review-plan-review-scope_source.json.gz",
+      "bytes": 399244,
+      "sha256": "9e8ea1f2ae7fa05a8cdf9d85defb199ea86202e50b59525746d1576d90cbde32"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/plan-review-plan-review-scope_target.json.gz",
+      "bytes": 198263,
+      "sha256": "3114d9a6693386aef2adbec070c5156bf3a643e764999e14ff1a1a753bf06c4c"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/plan-review-plan-review-variant_f6_raw_live_output_context.json.gz",
+      "bytes": 298837,
+      "sha256": "4e71909de05b66357fb6bf9a2da506e17067be93f89838b7801cbef7a783d898"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/plan-review-real-cross-candidate-reference.json.gz",
+      "bytes": 612,
+      "sha256": "03826ac0c23f949a25f118bd14a595ef643c9c471443b0c8be5ab2513a422483"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/plan-review-variant-f6_raw_live_output_context.json.gz",
+      "bytes": 7776,
+      "sha256": "405d1ca2f940a4cabdcf1a6b0c5d8d11fe5171b3c455fe6b61c156592277766e"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/pytest-results.json",
+      "bytes": 2570,
+      "sha256": "c9a35c88d44287f9f139e2e5984fe22036d06c72ae20d336e52b9d83e5815994"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/run_exit.json",
+      "bytes": 523,
+      "sha256": "abda9ec14d664d84a8c8ff92c9e9ea6d400a731c08ad5f184e18b54b51410aea"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/stdout.txt",
+      "bytes": 27593,
+      "sha256": "6b29d00532f898a0a098d416da2b8e94bafeb054e255884aec956b0602a3949b"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/replay/run04_targeted/summary.json",
+      "bytes": 5615,
+      "sha256": "f3453685ed07a965265e08d6f2198726034b0629d2f73cc26ebdabf6fca5334a"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/README.md",
+      "bytes": 10134,
+      "sha256": "7b69a9c3324fa5b56911c4eb645ba9d95d800a739c422bc309d397a0b2bc92ca"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/callable_comparison.json",
+      "bytes": 3458,
+      "sha256": "7c7696c50445a1d2ae667b0b57486d6f2847cfc87a8b937ee90be9ba055ee035"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_run/existing-assertion-base.json",
+      "bytes": 858,
+      "sha256": "01c3dc7dc5a23b07b5203f19794933b6e303e5d199662430e619d08f441fb243"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_run/existing-assertion-current.json",
+      "bytes": 861,
+      "sha256": "7bc8fac8c777a99a86edc0a0144094825816bff1c2d361ae238f6f5e384a8358"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_run/invocation.json",
+      "bytes": 1027,
+      "sha256": "ac106e022f939473f6d4671f6bd1353d212d1f129c69d1e8c48d8324e271a9a9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_run/loaded_component_manifest.json",
+      "bytes": 1081,
+      "sha256": "a577119c1f8dbfd6e4b5b2eb93c3d83f9096251ca524b7ea748d51d586cd7e43"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_run/pytest-results.json",
+      "bytes": 1910,
+      "sha256": "40799b8d28447b55d57bdc4cacccac503e1c04cc790358a21a672f6374b60524"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_run/run_exit.json",
+      "bytes": 424,
+      "sha256": "6b3907cc44c953183a46c43f4253d3c72a1970ae1517c4234db71bf5cc39ccc9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_run/stdout.txt",
+      "bytes": 4502,
+      "sha256": "d1baa3f6881b240a97bc593646e3973576b5c72177419a13a63fb58948ee98c0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/existing_assertion_sources.json",
+      "bytes": 2405,
+      "sha256": "b103cf5a9bfcb192200f96a604305753476dfe9c7c545f9942d3427c043f1ae0"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/request_evidence.json",
+      "bytes": 100756,
+      "sha256": "258907c9f19faf0ac53090eb1772b7650a75003db93298bd602812007d76ab9f"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/request_rules.tsv",
+      "bytes": 4598,
+      "sha256": "c99929a2a60edb4d4564280824fb2c3c82bbb715480448740aed4b632d8fcff9"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/request_and_versions/versions.json",
+      "bytes": 14752,
+      "sha256": "4343fbf245bfab9b974e583c853340dd91ce4d2b9bbe579fd77988ab36a87fff"
+    },
+    {
+      "file": "docs/implementation/a1_unified_fix_20260914/supplement_session_1789437662/verification.json",
+      "bytes": 17808,
+      "sha256": "57a0cac9b20593a09fc44d7a0db93b56424bee8232d0612cd877c6f070229284"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/export_review.py",
+      "bytes": 1752,
+      "sha256": "639f457f14c2c44d42b79b659c5eace6b71173c58b2879f6086ba9c0531904af"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/fixtures/f6_passed_candidate.json",
+      "bytes": 7601,
+      "sha256": "dc029d40dd47fef04b5066bb4d1bca1a890cf144b0899d5f7f789b1b663a9306"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/fixtures/live_public_context.json",
+      "bytes": 10070,
+      "sha256": "d8f71dde6d36be650a05ef39d195e074f6268497ccf30bc9193979f27c11da56"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/fixtures/live_round_1.txt",
+      "bytes": 16022,
+      "sha256": "214dfb380af24d843a5af3c6a282f3d8c3410afe996b35871b1d17ea7c7472ab"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/fixtures/live_round_2.txt",
+      "bytes": 16001,
+      "sha256": "c61b56fd0916d479cd32db1d4a81312f5c25bbfdf130e32704c1e53b67031a90"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/fixtures/live_round_3.txt",
+      "bytes": 15375,
+      "sha256": "9fcc948152ac2b10ed013c9b61f208e372a2620785901b8b19391bd274cc05e9"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/fixtures/live_round_4.txt",
+      "bytes": 2091,
+      "sha256": "6ef8215faa0c6b65d7dfc97db8dbfeced8e9f192f872672f6ac93dc5b63c9370"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/generate_audit_base.py",
+      "bytes": 1720,
+      "sha256": "923ed47d5c90b6beda0a452d10e10113c2d81ec44df49a806ebc3846d54e4b6c"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/generate_audit_current.py",
+      "bytes": 1720,
+      "sha256": "923ed47d5c90b6beda0a452d10e10113c2d81ec44df49a806ebc3846d54e4b6c"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/test_admission_replay.py",
+      "bytes": 13581,
+      "sha256": "d5f8814b700e2fb2cd3b8fc9dd09087734404e3cb43aa51eaac7a4a673ffcbb2"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/test_existing_assertion.py",
+      "bytes": 3158,
+      "sha256": "5a450d2c41d671fa9c4aee80d1926a995e588b0b8ed444a5ebc0e0e592114d55"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/test_f6_variant.py",
+      "bytes": 3715,
+      "sha256": "7f9310ecf00a0cf2d9defee64cda04c491b5860705f54091744a7067da72e18e"
+    },
+    {
+      "file": "tests/plan_live_review_20260915/test_variants.py",
+      "bytes": 8544,
+      "sha256": "7c15e4f82aad7fda3380bd29752b91b6b1b1fe654de41547ef508d73faba37d2"
+    }
+  ]
+}

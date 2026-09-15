@@ -1,0 +1,90 @@
+{
+  "export_source_signature": "003eba3d627b37cb918191b8937cdfc234f8e33614c48b62294802f3514c21ce",
+  "export_manifest_sha256": "58248dc392e94079b805549e925a4345909fc0ed21def52bc4d6dfa4e20fab56",
+  "returncode": 0,
+  "test_call_counts": {
+    "passed": 2
+  },
+  "test_nodeids": [
+    "tests/plan_live_review_20260915/test_admission_replay.py::test_live_three_candidates_and_formal_stop",
+    "tests/plan_live_review_20260915/test_admission_replay.py::test_minimum_one_field_full_admission"
+  ],
+  "test_files": {
+    "tests/plan_live_review_20260915/test_admission_replay.py": "d5f8814b700e2fb2cd3b8fc9dd09087734404e3cb43aa51eaac7a4a673ffcbb2"
+  },
+  "reported_loaded_module_count": 131,
+  "unique_reported_source_files": 130,
+  "all_loaded_sources_match_export": true,
+  "reported_loaded_paths_outside_export": [],
+  "source_changes_after_run": [],
+  "failed_nodes": [],
+  "copied_scratch": false,
+  "archive_files": [
+    {
+      "source_file": "/tmp/biomind-plan-live-review-02/main/invocation.json",
+      "archive_file": "invocation.json",
+      "source_bytes": 955,
+      "source_sha256": "89912dd4335c3ad1aaae242e720fc0402a1737266dbd9b9fea079ec7ec39b720",
+      "archive_sha256": "89912dd4335c3ad1aaae242e720fc0402a1737266dbd9b9fea079ec7ec39b720",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-02/main/plan-review-plan-review-live_sequence.json.gz",
+      "archive_file": "plan-review-plan-review-live_sequence.json.gz",
+      "source_bytes": 480332,
+      "source_sha256": "f7a686bd31b58e25be2ea4e078b7786f90cb8f0dde64925d8f1728a5a47e6664",
+      "archive_sha256": "f7a686bd31b58e25be2ea4e078b7786f90cb8f0dde64925d8f1728a5a47e6664",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-02/main/plan-review-plan-review-minimum.json.gz",
+      "archive_file": "plan-review-plan-review-minimum.json.gz",
+      "source_bytes": 398065,
+      "source_sha256": "b30e60a3f2ffd2155f09274ae7369bbbf531a37366c6cd38bab9348c860082a1",
+      "archive_sha256": "b30e60a3f2ffd2155f09274ae7369bbbf531a37366c6cd38bab9348c860082a1",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-02/main/pytest-results.json",
+      "archive_file": "pytest-results.json",
+      "source_bytes": 1663,
+      "source_sha256": "1c4ce8573784c35b27271b456968da4d373ef433bb9e53395b4fc24992d2479b",
+      "archive_sha256": "1c4ce8573784c35b27271b456968da4d373ef433bb9e53395b4fc24992d2479b",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-02/main/run_exit.json",
+      "archive_file": "run_exit.json",
+      "source_bytes": 422,
+      "source_sha256": "ba092979b3246bd1f1d26c909481d73683c126ca53063e0b800de1b06385bbb8",
+      "archive_sha256": "ba092979b3246bd1f1d26c909481d73683c126ca53063e0b800de1b06385bbb8",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-02/main/stdout.txt",
+      "archive_file": "stdout.txt",
+      "source_bytes": 27926,
+      "source_sha256": "ed0abf8fa35a4a8ae0aeee975bbc7ffb772102d59f539cb67a8656a79d3cab32",
+      "archive_sha256": "ed0abf8fa35a4a8ae0aeee975bbc7ffb772102d59f539cb67a8656a79d3cab32",
+      "transformation": "exact_bytes"
+    },
+    {
+      "source_file": "/tmp/biomind-plan-live-review-02/export/export_manifest.json",
+      "archive_file": "export_manifest.json",
+      "source_sha256": "58248dc392e94079b805549e925a4345909fc0ed21def52bc4d6dfa4e20fab56",
+      "archive_sha256": "58248dc392e94079b805549e925a4345909fc0ed21def52bc4d6dfa4e20fab56",
+      "transformation": "exact_bytes"
+    }
+  ],
+  "final04_comparison": {
+    "signature": "aa4cde53398d6723223b80dd331329913b689dc8da081d92ac111d54d6ced19e",
+    "changed_common_files": [
+      "tests/plan_live_review_20260915/test_variants.py"
+    ],
+    "added_files": [],
+    "removed_files": [],
+    "reported_loaded_source_differences": []
+  },
+  "classification": "2_PASS_ON_EXPORT02; all 131 reported loaded modules unchanged in export04; test_variants.py was not imported by this group",
+  "outcome_boundary": "Four captured public Planner responses replay through real reject/STOP chain; P_min one-field candidate admits to real PlanReview approval_pending, no execution approval or scientific success."
+}

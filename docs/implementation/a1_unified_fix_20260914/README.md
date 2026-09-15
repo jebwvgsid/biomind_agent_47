@@ -42,3 +42,15 @@
 已有失败保持可见：旧9项缺 candidate scope 的 fixture 失败未删；最终公共39项为38 PASS、1项 BASE 已有的整字典形状断言失败（另2个subtest PASS），旧断言未改。相关类和断言的基线等同性见[公共回归](regression/final08/verification.json)；未授权旧事故/其他benchmark输入的测试逐项 NOT_RUN_SAFETY，见[preflight](regression/preflight.json)。开发中的旧失败、外层watchdog124、进程-11、测试输入时序和反馈历史假设均保留原回执，不计成功；-11原因未证实。
 
 [独立限制](remaining_limits.md)：真实模型/API与科学工具未运行；原任务完整历史加载 UNKNOWN；R、external_worker、宿主登录环境及全部OS/断电窗口未验证。Recovery未知远端结果沿既有 at-least-once 协议记账，不宣称远端 exactly-once；已完成缓存的真实Generate重载为零provider调用。原session NOT_RESUMED，原批准脚本 NOT_EXECUTED，未安装、未读正式科学输入/业务库，PUSH NOT_PERFORMED。机制通过不代表原 snpEff业务或真实科学目标已完成。
+
+## 2026-09-15 补充：session_1789437662 真实 Plan 与 F6 差异
+
+[补充验收入口](supplement_session_1789437662/README.md)对照本次三份真实 Plan、第四 STOP、完整反馈/下一请求及最终候选 `1d0ab2cc6bd8d0c9e7ee2990725f8d41cd92c9c2` 的 F6 字节。本节限定上述原结论的适用范围，不覆盖旧回执，也不启动第二次全架构审计。
+
+现场第三候选把 prepare capability 移到 `runtime_healthcheck`，角色关联仍指向不存在的 `prepare_database`。当前 scope gate 的首个失败条件是查表为空后的 capability 不匹配。仅修这一字段、保留其余候选和全部任务义务，新正式 handoff/完整准入可到真实 PlanReview `approval_pending`。第四原始响应选择正式主动停止；合法第四候选仍被允许，预算未扩大。原 session 无 Plan 批准、执行或 Commit，停止报告发布不等于科学目标完成。
+
+原 F6 固定 provider 人工预填同名步骤/operation 与同步引用，没有经历真实 Planner 纠正；旧 P_test 的输出声明与默认结果模式也不同。原下游固定替身机制结论继续按其范围成立，未证明真实模型能从请求形成或纠正 Plan。本次完整请求已有单字段修复所需核心规则，但公开投影删 `step_id`、READ_MISSING 文案混淆输入与关联、SCOPE_INVALID 不区分查表未命中；另有 `skill_ids` 示例身份占位符错误（非现场触发因素）。
+
+以下精确项已并入 [changes_and_acceptance.tsv](changes_and_acceptance.tsv) 的 `LIVE-PLAN-*` 行，**本轮只读复核，生产修复均 NOT_IMPLEMENTED**。依赖顺序是现有诊断与公开投影 → 身份示例 → 复用 F6 接真实候选变体 → 另行授权的有限真实 Planner-only 验收。保持角色作用域校验、原四次预算、主动停止/取消、审批正文/输入及已完成 F1—F6；不增加全局 validator、Controller 或 binder。
+
+补充验证将原始失败 witness、当前完整准入正反例、旧断言失败见证和原 F6 下游机制结果分别登记。实际加载、复用依赖、开发失败、未运行项和本轮提交范围见 [补充账本](supplement_session_1789437662/verification.json)。本轮没有生产修改、新真实 API/科学执行、原 session 恢复或 push；待审批不等于改名候选的下游六操作已通过。

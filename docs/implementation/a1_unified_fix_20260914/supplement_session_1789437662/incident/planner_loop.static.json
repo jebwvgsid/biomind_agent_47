@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "task_id": "session_1789437662",
+  "phase": "failed",
+  "status": "terminal",
+  "agent_disposition": "terminal",
+  "observations": [],
+  "progress": {
+    "last_fingerprint": "",
+    "identical_no_progress_count": 0,
+    "max_identical_no_progress": 2
+  },
+  "updated_at": "2026-09-15T10:02:57"
+}

@@ -1,0 +1,93 @@
+{
+  "current_head_metadata": "1d0ab2cc6bd8d0c9e7ee2990725f8d41cd92c9c2",
+  "final08_source_signature": "332a06e803cba6fef3e54d2648fef1f05703c1f8b3656637725a6a674934c5f9",
+  "final08_baseline": {
+    "head": "dbaa3f8e11bc56524ba2477c986d722657bf2b0c",
+    "tree": "c02d4b431d5d85ec7120cea621ac49c76812a026",
+    "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "interpreter_sha256": "8656aa8eb5213e6eb95a7ad557417dbdd3de2ab3d80323f6dace37a5a5df8238"
+  },
+  "original_full_receipt": {
+    "path": "docs/implementation/a1_unified_fix_20260914/f6/final_cases/normal/f6-normal-full.json.gz",
+    "sha256": "94d5824ad0f34da0c11cf5410cd20c3e13333132dbe9a2cb63c7793e573ee74c",
+    "planner_request_pointer": "/requests/1",
+    "formal_claim_pointer": "/durable/task_state/planning_epoch/call_claim"
+  },
+  "source_files": [
+    {
+      "path": "tests/a1_unified_fix/test_f6_graph.py",
+      "current_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+      "final08_manifest_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+      "same_as_final08": true
+    },
+    {
+      "path": "tests/test_plan_local_preaction_convergence_v2.py",
+      "current_sha256": "2084e2e6c57fde49b710a53bc8ceb593572d927c036f87849eba4f7bb7577988",
+      "final08_manifest_sha256": "2084e2e6c57fde49b710a53bc8ceb593572d927c036f87849eba4f7bb7577988",
+      "same_as_final08": true
+    },
+    {
+      "path": "agent_core/plan_contract.py",
+      "current_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+      "final08_manifest_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+      "same_as_final08": true
+    },
+    {
+      "path": "agent_core/plan_bindings.py",
+      "current_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+      "final08_manifest_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+      "same_as_final08": true
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/SKILL.md",
+      "current_sha256": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44",
+      "final08_manifest_sha256": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44",
+      "same_as_final08": true
+    }
+  ],
+  "selected_skill_ref_from_actual_request": [
+    {
+      "skill_id": "genomics/snpeff-annotation",
+      "snapshot_id": "skill-snapshot-3ca02752f20ded033e52",
+      "source_path": "skills/genomics/snpeff-annotation/SKILL.md",
+      "content_hash": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44",
+      "scope": "task",
+      "status": "active",
+      "selected_at_task_revision": 1
+    }
+  ],
+  "extracted_files": {
+    "P_test.planner_request.json": "f930f24031185d17513d846336aa380d3521cec0fadc71bc8aeb407b2a05ec94",
+    "P_test.planner_message_2.txt": "fdd1ad11f3a8343a38775c240908af8ca1f71efd7f141fea0c314f4591159769",
+    "P_test.approved_scope.json": "c87a822ece3d534f9f30bafbc175ecee01dcb41b3620fd754320d25e12dc7aee",
+    "P_test.raw.json": "dc029d40dd47fef04b5066bb4d1bca1a890cf144b0899d5f7f789b1b663a9306",
+    "P_test.pretty.json": "08531cf8eb6d2968182c3fdb050b36c19d4e6ac33019f581a2a4804de87409f5",
+    "P_test.public_capabilities.json": "a20897712bcbad0134fdfe7be0d5bb990bf316228e4fa170cbeac009c7a46311",
+    "P_test.planner_message_0.txt": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8",
+    "P_test.planner_message_1.txt": "aec026a15179415a1833fe9c9f8ebbbf419d67255fa322ae01cc2c87a2e51ee6",
+    "P_test.original_claim.json": "83cdeb640ee460cd4ba149c74005b8ca9d6df8ebed648e129eae48c680bdae89",
+    "P_test.actual_transport_receipts.json": "35b1ce82f88929920e5a0bfac3fb545b800c2eb821aafb15cd6e84fc5419d577",
+    "P_test.public_context.json": "d50d98fc9e4530c24e8a4c9c66107667c4948ebf0775ce6ebe9971aa6ae56c29",
+    "P_test.reconstruction.json": "cdecf0513887a27d9fd56016bfa47917bda0aa606c23ca79c15002f6518b508c"
+  },
+  "load_limit": "final08 isolated current-byte import/transport proved by old receipts; original live-process load NOT asserted here",
+  "historical_raw_file": "NOT_RETAINED; exact deterministic reconstruction hash matches actual formal raw_digest",
+  "original_execution_source_receipts": {
+    "loaded_modules.json": {
+      "path": "docs/implementation/a1_unified_fix_20260914/f6/final_cases/normal/loaded_modules.json",
+      "sha256": "8f1f0691204778ad397c3362498ffb6c32064f1c2bcdd908aa7f4b3880fb132c"
+    },
+    "run_exit.json": {
+      "path": "docs/implementation/a1_unified_fix_20260914/f6/final_cases/normal/run_exit.json",
+      "sha256": "ed06be498c2a661b01e271ae31476970fae71ffa1064d8d95acda1fb1ad5af57"
+    },
+    "pytest-results.json": {
+      "path": "docs/implementation/a1_unified_fix_20260914/f6/final_cases/normal/pytest-results.json",
+      "sha256": "cf467abe7dbd495bcc4bd0f29756e2ec61d317fe74afd8a6a13d78be44276b5f"
+    },
+    "invocation.json": {
+      "path": "docs/implementation/a1_unified_fix_20260914/f6/final_cases/normal/invocation.json",
+      "sha256": "adef0eb14a418d06d18a58b0723e34a2c589719ee32d78dc0eb842bda283b690"
+    }
+  }
+}

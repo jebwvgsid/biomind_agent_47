@@ -1,0 +1,34 @@
+[
+  {
+    "index": 0,
+    "role": "system",
+    "name": null,
+    "bytes": 23880,
+    "sha256": "f36b16645badb2e0d2a06c2cc42b72f2850405c1ab41373ccdc9ce15c17c32d8",
+    "file": "message_00_system.txt"
+  },
+  {
+    "index": 1,
+    "role": "human",
+    "name": null,
+    "bytes": 34083,
+    "sha256": "afeddfdcf3297ba5602aeea5f61ec7ee43cbfa4a9ab52d8374ed292340def20d",
+    "file": "message_01_human.txt"
+  },
+  {
+    "index": 2,
+    "role": "human",
+    "name": "inherited_skill_material",
+    "bytes": 33777,
+    "sha256": "9fedb747ab2d7fc7dbe6dd38b8bdf8e518d6d9548110764b2c774fed43dbb5cf",
+    "file": "message_02_human.txt"
+  },
+  {
+    "index": 3,
+    "role": "system",
+    "name": null,
+    "bytes": 409,
+    "sha256": "fdd1ad11f3a8343a38775c240908af8ca1f71efd7f141fea0c314f4591159769",
+    "file": "message_03_system.txt"
+  }
+]

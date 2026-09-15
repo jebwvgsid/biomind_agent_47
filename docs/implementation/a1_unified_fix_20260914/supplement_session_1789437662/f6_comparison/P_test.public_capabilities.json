@@ -1,0 +1,237 @@
+{
+  "genomics.snpeff_annotation.annotate_variants": {
+    "schema_version": 1,
+    "capability_id": "genomics.snpeff_annotation.annotate_variants",
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "required_runtime_binding_ids": [
+      "runtime.java.bin",
+      "runtime.snpeff.jar"
+    ],
+    "required_artifact_binding_ids": [
+      "artifact.snpeff_config",
+      "artifact.snpeff_data_dir",
+      "artifact.variant_vcf"
+    ],
+    "execution_guidance": [
+      "Annotate the approved VCF with the approved database identity.",
+      "Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths."
+    ],
+    "operation": "annotate_variants",
+    "consumes_artifacts": [
+      "artifact.snpeff_config",
+      "artifact.snpeff_data_dir",
+      "artifact.variant_vcf"
+    ],
+    "produces_artifacts": [
+      "artifact.annotated_vcf"
+    ]
+  },
+  "genomics.snpeff_annotation.build_database": {
+    "schema_version": 1,
+    "capability_id": "genomics.snpeff_annotation.build_database",
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "required_runtime_binding_ids": [
+      "runtime.java.bin",
+      "runtime.snpeff.jar"
+    ],
+    "required_artifact_binding_ids": [
+      "artifact.annotation_gtf",
+      "artifact.reference_fasta",
+      "artifact.snpeff_config",
+      "artifact.snpeff_data_dir"
+    ],
+    "execution_guidance": [
+      "Build only the approved task-local custom database.",
+      "Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths."
+    ],
+    "operation": "build_database",
+    "consumes_artifacts": [
+      "artifact.annotation_gtf",
+      "artifact.reference_fasta",
+      "artifact.snpeff_config"
+    ],
+    "produces_observations": [
+      "snpeff_database_ready"
+    ],
+    "workspace_mutations": [
+      {
+        "workspace_ref": "artifact.snpeff_data_dir",
+        "mutation": "build_database",
+        "requires_available": true,
+        "requires_state": "database_layout_prepared",
+        "available_after_success": true,
+        "establishes_state": "snpeff_database_ready",
+        "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+        "contract_revision": "snpeff-workspace-transition-v1",
+        "evidence_contract": {
+          "schema_version": 1,
+          "collector": "bounded_filesystem_snapshot_v1",
+          "allow_idempotent_revalidation": true,
+          "postconditions": [
+            {
+              "kind": "file_nonempty",
+              "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "genomics.snpeff_annotation.check_contig_compatibility": {
+    "schema_version": 1,
+    "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "required_artifact_binding_ids": [
+      "artifact.annotation_gtf",
+      "artifact.reference_fasta",
+      "artifact.variant_vcf"
+    ],
+    "execution_guidance": [
+      "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+      "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+      "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+      "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+    ],
+    "operation": "check_contig_compatibility",
+    "consumes_artifacts": [
+      "artifact.annotation_gtf",
+      "artifact.reference_fasta",
+      "artifact.variant_vcf"
+    ],
+    "produces_observations": [
+      {
+        "observation_id": "contigs_compatible",
+        "predicate": {
+          "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+          "operator": "boolean_equals",
+          "expected": true,
+          "parser_id": "biomind.genomics.contig_compatibility.v1",
+          "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+          "failure_disposition": "correction_required",
+          "missing_disposition": "inspection_required",
+          "applicability": {
+            "schema_version": 1,
+            "kind": "plan_contains_any_execution_capability",
+            "execution_capability_ids": [
+              "genomics.snpeff_annotation.prepare_database",
+              "genomics.snpeff_annotation.build_database",
+              "genomics.snpeff_annotation.annotate_variants",
+              "genomics.snpeff_annotation.summarize_ann",
+              "genomics.snpeff_annotation.finalize_outputs"
+            ]
+          }
+        },
+        "evidence_contract": {
+          "required_fields": [
+            "value"
+          ]
+        }
+      }
+    ]
+  },
+  "genomics.snpeff_annotation.finalize_outputs": {
+    "schema_version": 1,
+    "capability_id": "genomics.snpeff_annotation.finalize_outputs",
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "required_artifact_binding_ids": [
+      "artifact.ann_summary",
+      "artifact.annotated_vcf"
+    ],
+    "execution_guidance": [
+      "Write the requested report, reproduction script, and stage-status table from verified task evidence.",
+      "Do not claim scientific completion for outputs that were not actually produced and verified."
+    ],
+    "operation": "finalize_outputs",
+    "consumes_artifacts": [
+      "artifact.ann_summary",
+      "artifact.annotated_vcf"
+    ],
+    "produces_artifacts": [
+      "artifact.report",
+      "artifact.reproduce_script",
+      "artifact.stage_status"
+    ],
+    "produces_observations": [
+      "final_outputs_recorded"
+    ]
+  },
+  "genomics.snpeff_annotation.prepare_database": {
+    "schema_version": 1,
+    "capability_id": "genomics.snpeff_annotation.prepare_database",
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "required_artifact_binding_ids": [
+      "artifact.annotation_gtf",
+      "artifact.reference_fasta"
+    ],
+    "execution_guidance": [
+      "Choose one stable task-local genome version and declare the genome_version and snpeff_db bindings.",
+      "Prepare the approved task-local config and database layout without discovering or selecting another reference."
+    ],
+    "operation": "prepare_database",
+    "consumes_artifacts": [
+      "artifact.annotation_gtf",
+      "artifact.reference_fasta"
+    ],
+    "produces_artifacts": [
+      "artifact.snpeff_config"
+    ],
+    "produces_bindings": [
+      "genome_version",
+      "snpeff_db"
+    ],
+    "produces_observations": [
+      "database_layout_prepared"
+    ],
+    "workspace_mutations": [
+      {
+        "workspace_ref": "artifact.snpeff_data_dir",
+        "mutation": "prepare_database",
+        "requires_available": false,
+        "available_after_success": true,
+        "establishes_state": "database_layout_prepared",
+        "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+        "contract_revision": "snpeff-workspace-transition-v1",
+        "evidence_contract": {
+          "schema_version": 1,
+          "collector": "bounded_filesystem_snapshot_v1",
+          "allow_idempotent_revalidation": true,
+          "postconditions": [
+            {
+              "kind": "directory_exists",
+              "relative_path": "data"
+            },
+            {
+              "kind": "file_nonempty",
+              "relative_path": "data/genomes/{binding:genome_version}.fa"
+            },
+            {
+              "kind": "file_nonempty",
+              "relative_path": "data/{binding:genome_version}/genes.gtf"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "genomics.snpeff_annotation.summarize_ann": {
+    "schema_version": 1,
+    "capability_id": "genomics.snpeff_annotation.summarize_ann",
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "required_artifact_binding_ids": [
+      "artifact.annotated_vcf"
+    ],
+    "execution_guidance": [
+      "Summarize ANN records without invoking the annotation runtime."
+    ],
+    "operation": "summarize_ann",
+    "consumes_artifacts": [
+      "artifact.annotated_vcf"
+    ],
+    "produces_artifacts": [
+      "artifact.ann_summary"
+    ],
+    "produces_observations": [
+      "ann_summary_completed"
+    ]
+  }
+}

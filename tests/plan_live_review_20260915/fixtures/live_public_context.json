@@ -1,0 +1,250 @@
+{
+  "task_spec": {
+    "goal": "使用 snpEff 对重测序过滤后的 SNP VCF（all.filtered.snp.vcf）进行功能注释：基于用户提供的参考基因组 genome.fasta 与注释 genome.gtf 构建任务本地自定义 snpEff 数据库，完成变异功能效应注释，输出带 ANN 注释的 VCF 与 ANN 汇总，并生成 report.md、reproduce.sh 和 stage_status.tsv；当 snpEff/Java/数据库构建失败时明确标记 blocked，不得输出伪造的 ANN。",
+    "highlighted_constraints": [
+      {
+        "text": "禁止使用 tests/demo_ref.fa 或 demo.vcf 作为分析依据。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "禁止用 taxonomy label 猜测 public snpEff 数据库；必须基于用户提供的 FASTA+GTF 构建任务本地自定义数据库。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "禁止忽略 chromosome naming mismatch；注释前必须检查 VCF、FASTA 与 GTF 的 contig 命名一致性。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "snpEff/Java/database build 失败时标记 blocked；不得输出假 ANN。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录，也不得使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "所有 benchmarks/... 相对路径以项目根目录解析；如当前工作目录不同，先 cd 到项目根目录或改用绝对路径。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "先识别输入类型、样本、关键参数和依赖；自行规划合理步骤，并在 report.md 中说明为什么选择这些 skill/流程。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "对能执行的 stage 生成真实结果；对不能执行的 stage 明确写 blocked/stage_blocked 并说明缺少什么；不要伪造结果。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      },
+      {
+        "text": "缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。",
+        "importance": "required",
+        "source_refs": [
+          "source-ref-d9b25daa13f99d8f"
+        ]
+      }
+    ],
+    "inputs": [
+      {
+        "handle": "input.variant_vcf",
+        "role": "variant_vcf",
+        "format": "vcf",
+        "required": true,
+        "verification_status": "declared",
+        "basename": "all.filtered.snp.vcf"
+      },
+      {
+        "handle": "input.reference_fasta",
+        "role": "reference_fasta",
+        "format": "fasta",
+        "required": true,
+        "verification_status": "declared",
+        "basename": "genome.fasta"
+      },
+      {
+        "handle": "input.annotation_gtf",
+        "role": "annotation_gtf",
+        "format": "gtf",
+        "required": true,
+        "verification_status": "declared",
+        "basename": "genome.gtf"
+      }
+    ],
+    "outputs": [
+      {
+        "handle": "output.output_dir",
+        "output_id": "output_dir",
+        "role": "output_dir",
+        "artifact_kind": "directory",
+        "format": "directory",
+        "required": true,
+        "path_policy": "managed_exact",
+        "root_ref": "",
+        "producer_owner": "plan_step",
+        "required_basename": "medium",
+        "alternative_group": "",
+        "description": "",
+        "placeholder": "{output:output_dir}"
+      },
+      {
+        "handle": "output.annotated_vcf",
+        "output_id": "annotated_vcf",
+        "role": "annotated_vcf",
+        "artifact_kind": "file",
+        "format": "file",
+        "required": true,
+        "path_policy": "planner_materialized",
+        "root_ref": "output.output_dir",
+        "producer_owner": "plan_step",
+        "required_basename": "",
+        "alternative_group": "",
+        "description": "",
+        "placeholder": "{output:annotated_vcf}"
+      },
+      {
+        "handle": "output.ann_summary",
+        "output_id": "ann_summary",
+        "role": "ann_summary",
+        "artifact_kind": "file",
+        "format": "file",
+        "required": true,
+        "path_policy": "planner_materialized",
+        "root_ref": "output.output_dir",
+        "producer_owner": "plan_step",
+        "required_basename": "",
+        "alternative_group": "",
+        "description": "",
+        "placeholder": "{output:ann_summary}"
+      },
+      {
+        "handle": "output.report",
+        "output_id": "report",
+        "role": "report",
+        "artifact_kind": "file",
+        "format": "file",
+        "required": true,
+        "path_policy": "planner_materialized",
+        "root_ref": "output.output_dir",
+        "producer_owner": "plan_step",
+        "required_basename": "",
+        "alternative_group": "",
+        "description": "",
+        "placeholder": "{output:report}"
+      },
+      {
+        "handle": "output.reproduce_script",
+        "output_id": "reproduce_script",
+        "role": "reproduce_script",
+        "artifact_kind": "file",
+        "format": "file",
+        "required": true,
+        "path_policy": "planner_materialized",
+        "root_ref": "output.output_dir",
+        "producer_owner": "plan_step",
+        "required_basename": "",
+        "alternative_group": "",
+        "description": "",
+        "placeholder": "{output:reproduce_script}"
+      },
+      {
+        "handle": "output.stage_status",
+        "output_id": "stage_status",
+        "role": "stage_status",
+        "artifact_kind": "file",
+        "format": "file",
+        "required": true,
+        "path_policy": "planner_materialized",
+        "root_ref": "output.output_dir",
+        "producer_owner": "plan_step",
+        "required_basename": "",
+        "alternative_group": "",
+        "description": "",
+        "placeholder": "{output:stage_status}"
+      }
+    ]
+  },
+  "consultation_handoff": {
+    "goal_interpretation": "使用 snpEff 对重测序过滤后的 SNP VCF（all.filtered.snp.vcf）进行功能注释：基于用户提供的参考基因组 genome.fasta 与注释 genome.gtf 构建任务本地自定义 snpEff 数据库，完成变异功能效应注释，输出带 ANN 注释的 VCF 与 ANN 汇总，并生成 report.md、reproduce.sh 和 stage_status.tsv；当 snpEff/Java/数据库构建失败时明确标记 blocked，不得输出伪造的 ANN。",
+    "input_files": [
+      {
+        "format": "vcf",
+        "required": true,
+        "role": "variant_vcf"
+      },
+      {
+        "format": "fasta",
+        "required": true,
+        "role": "reference_fasta"
+      },
+      {
+        "format": "gtf",
+        "required": true,
+        "role": "annotation_gtf"
+      }
+    ],
+    "required_outputs": [
+      {
+        "format": "directory",
+        "path_policy": "managed_exact",
+        "required": true,
+        "role": "output_dir"
+      },
+      {
+        "format": "file",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "annotated_vcf"
+      },
+      {
+        "format": "file",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "ann_summary"
+      },
+      {
+        "format": "file",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "report"
+      },
+      {
+        "format": "file",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "reproduce_script"
+      },
+      {
+        "format": "file",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "stage_status"
+      }
+    ],
+    "selected_skills": [
+      "genomics/snpeff-annotation"
+    ],
+    "summary": "对已提供的过滤后 SNP VCF 执行 snpEff 功能注释。使用 genomics/snpeff-annotation 作为主 skill，基于用户提供的 genome.fasta + genome.gtf 构建任务本地自定义 snpEff 数据库，再注释 VCF，输出带 ANN 的 annotated VCF、ANN 汇总、report.md、reproduce.sh 与 stage_status.tsv。关键未决事实与检查项：(1) 必须先在 bio_gatk 环境验证 Java 与 snpEff.jar 可用（healthcheck 失败则按契约委派 genomics_snpeff_annotation_runtime 安装一次，仍失败则写 stage_blocked，不得伪造 ANN）；(2) genome_version 由 Generate 依据实际参考/注释发布版本选定为任务本地稳定标识，禁止用 taxonomy label 猜测公共数据库；(3) 注释前必须检查 VCF/FASTA/GTF 的 contig 命名一致性（contigs_compatible），命名不一致不得盲目加/去 chr 前缀；(4) 自定义 GTF 构建使用 build -gtf22，cds/protein 一致性文件为 optional_validation，缺失时仅跳过对应校验并记录 optional_validation_skipped；(5) 数据库构建验收须确认 data/<genome-version>/snpEffectPredictor.bin 非空且构建日志无致命错误，否则保持数据库阶段 failed/partial 且不运行注释；(6) 输入路径为相对项目根目录的 benchmarks/... 路径，需先 cd 到项目根目录或解析为绝对路径，且不得使用 demo/toy/tests/fixtures_legacy_toy/expected_answers 等文件；(7) 输入文件尚未做存在性验证，Planner 需在只读 preflight 中确认其存在与可读性，缺失则记录 blocked 原因而非猜测替代文件。"
+  }
+}

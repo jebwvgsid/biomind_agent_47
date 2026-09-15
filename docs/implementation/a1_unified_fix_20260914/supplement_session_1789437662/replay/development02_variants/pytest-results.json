@@ -1,0 +1,277 @@
+[
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003541531041264534,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 16.410320106893778,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[distinct_step_ids]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00032675638794898987,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003370419144630432,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.6210975805297494,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[additional_supported_read]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002034297212958336,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003183167427778244,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 3.2066105641424656,
+    "failure": "name = 'current_input_alias', expected_code = None\n\n    @pytest.mark.parametrize('name,expected_code', CASES, ids=[x[0] for x in CASES])\n    def test_current_admission_variant(name, expected_code):\n        async def scenario():\n            candidate = variant_candidate(name)\n            f = AdmissionReplay('variant_' + name, [candidate])\n            await f.setup()\n            try:\n                values, durable = await f.run_admission()\n                codes = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n                store('variant-' + name, {'candidate': candidate, 'expected_code': expected_code, 'actual_codes': codes,\n                    'planner_outcome': values.get('planner_outcome'), 'plan_review_outcome': values.get('plan_review_outcome'),\n                    'compilation_receipt': durable.get('plan_compilation_receipt'), 'dataflow_receipt': durable.get('plan_dataflow_receipt')})\n                if expected_code is None:\n                    assert f.counts['planner'] == 1 and not codes, codes\n                    assert values['planner_outcome']['type'] == 'plan_review_ready'\n                    assert values['plan_review_outcome']['type'] == 'approval_pending', values.get('plan_review_outcome')\n                    assert durable['plan_compilation_receipt']['status'] == 'compiled'\n                    assert durable['plan_dataflow_receipt']['status'] == 'compiled'\n                else:\n                    assert f.counts['planner'] == 2 and len(codes) == 1, codes\n                    assert expected_code in codes[0], codes\n                    assert values['planner_outcome']['type'] == 'terminal'\n                    assert not durable.get('steps')\n            finally:\n                await f.close()\n>       asyncio.run(scenario())\n\ntests/plan_live_review_20260915/test_variants.py:99: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        candidate = variant_candidate(name)\n        f = AdmissionReplay('variant_' + name, [candidate])\n        await f.setup()\n        try:\n            values, durable = await f.run_admission()\n            codes = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n            store('variant-' + name, {'candidate': candidate, 'expected_code': expected_code, 'actual_codes': codes,\n                'planner_outcome': values.get('planner_outcome'), 'plan_review_outcome': values.get('plan_review_outcome'),\n                'compilation_receipt': durable.get('plan_compilation_receipt'), 'dataflow_receipt': durable.get('plan_dataflow_receipt')})\n            if expected_code is None:\n>               assert f.counts['planner'] == 1 and not codes, codes\nE               AssertionError: [['TASK_INPUT_SHADOWED_BY_PLAN_LOCAL']]\nE               assert (2 == 1)\n\ntests/plan_live_review_20260915/test_variants.py:87: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[current_input_alias]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0007839677855372429,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034247804433107376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 3.4657541029155254,
+    "failure": "name = 'f6_live_output_context', expected_code = None\n\n    @pytest.mark.parametrize('name,expected_code', CASES, ids=[x[0] for x in CASES])\n    def test_current_admission_variant(name, expected_code):\n        async def scenario():\n            candidate = variant_candidate(name)\n            f = AdmissionReplay('variant_' + name, [candidate])\n            await f.setup()\n            try:\n                values, durable = await f.run_admission()\n                codes = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n                store('variant-' + name, {'candidate': candidate, 'expected_code': expected_code, 'actual_codes': codes,\n                    'planner_outcome': values.get('planner_outcome'), 'plan_review_outcome': values.get('plan_review_outcome'),\n                    'compilation_receipt': durable.get('plan_compilation_receipt'), 'dataflow_receipt': durable.get('plan_dataflow_receipt')})\n                if expected_code is None:\n                    assert f.counts['planner'] == 1 and not codes, codes\n                    assert values['planner_outcome']['type'] == 'plan_review_ready'\n                    assert values['plan_review_outcome']['type'] == 'approval_pending', values.get('plan_review_outcome')\n                    assert durable['plan_compilation_receipt']['status'] == 'compiled'\n                    assert durable['plan_dataflow_receipt']['status'] == 'compiled'\n                else:\n                    assert f.counts['planner'] == 2 and len(codes) == 1, codes\n                    assert expected_code in codes[0], codes\n                    assert values['planner_outcome']['type'] == 'terminal'\n                    assert not durable.get('steps')\n            finally:\n                await f.close()\n>       asyncio.run(scenario())\n\ntests/plan_live_review_20260915/test_variants.py:99: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        candidate = variant_candidate(name)\n        f = AdmissionReplay('variant_' + name, [candidate])\n        await f.setup()\n        try:\n            values, durable = await f.run_admission()\n            codes = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n            store('variant-' + name, {'candidate': candidate, 'expected_code': expected_code, 'actual_codes': codes,\n                'planner_outcome': values.get('planner_outcome'), 'plan_review_outcome': values.get('plan_review_outcome'),\n                'compilation_receipt': durable.get('plan_compilation_receipt'), 'dataflow_receipt': durable.get('plan_dataflow_receipt')})\n            if expected_code is None:\n>               assert f.counts['planner'] == 1 and not codes, codes\nE               AssertionError: [['PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER', 'PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER', 'PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER']]\nE               assert (2 == 1)\n\ntests/plan_live_review_20260915/test_variants.py:87: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[f6_live_output_context]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020110327750444412,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00029875244945287704,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.5432133534923196,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_read_role]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016592256724834442,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003074752166867256,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.1810613377019763,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_existing_step]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018762610852718353,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034135300666093826,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.841792800463736,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[wrong_parent_resource_kind]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002027694135904312,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00033158808946609497,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.8213534792885184,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[unknown_capability]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002008611336350441,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032018963247537613,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.1724606128409505,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[extra_access_field]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001895250752568245,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032995641231536865,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 3.217779293656349,
+    "failure": "name = 'stale_candidate_scope'\nexpected_code = 'PLAN_RESOURCE_REFERENCE_STALE_SCOPE'\n\n    @pytest.mark.parametrize('name,expected_code', CASES, ids=[x[0] for x in CASES])\n    def test_current_admission_variant(name, expected_code):\n        async def scenario():\n            candidate = variant_candidate(name)\n            f = AdmissionReplay('variant_' + name, [candidate])\n            await f.setup()\n            try:\n                values, durable = await f.run_admission()\n                codes = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n                store('variant-' + name, {'candidate': candidate, 'expected_code': expected_code, 'actual_codes': codes,\n                    'planner_outcome': values.get('planner_outcome'), 'plan_review_outcome': values.get('plan_review_outcome'),\n                    'compilation_receipt': durable.get('plan_compilation_receipt'), 'dataflow_receipt': durable.get('plan_dataflow_receipt')})\n                if expected_code is None:\n                    assert f.counts['planner'] == 1 and not codes, codes\n                    assert values['planner_outcome']['type'] == 'plan_review_ready'\n                    assert values['plan_review_outcome']['type'] == 'approval_pending', values.get('plan_review_outcome')\n                    assert durable['plan_compilation_receipt']['status'] == 'compiled'\n                    assert durable['plan_dataflow_receipt']['status'] == 'compiled'\n                else:\n                    assert f.counts['planner'] == 2 and len(codes) == 1, codes\n                    assert expected_code in codes[0], codes\n                    assert values['planner_outcome']['type'] == 'terminal'\n                    assert not durable.get('steps')\n            finally:\n                await f.close()\n>       asyncio.run(scenario())\n\ntests/plan_live_review_20260915/test_variants.py:99: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        candidate = variant_candidate(name)\n        f = AdmissionReplay('variant_' + name, [candidate])\n        await f.setup()\n        try:\n            values, durable = await f.run_admission()\n            codes = [[x['code'] for x in d['task_state']['planning_failure']['validation_issues']] for d in f.rejections]\n            store('variant-' + name, {'candidate': candidate, 'expected_code': expected_code, 'actual_codes': codes,\n                'planner_outcome': values.get('planner_outcome'), 'plan_review_outcome': values.get('plan_review_outcome'),\n                'compilation_receipt': durable.get('plan_compilation_receipt'), 'dataflow_receipt': durable.get('plan_dataflow_receipt')})\n            if expected_code is None:\n                assert f.counts['planner'] == 1 and not codes, codes\n                assert values['planner_outcome']['type'] == 'plan_review_ready'\n                assert values['plan_review_outcome']['type'] == 'approval_pending', values.get('plan_review_outcome')\n                assert durable['plan_compilation_receipt']['status'] == 'compiled'\n                assert durable['plan_dataflow_receipt']['status'] == 'compiled'\n            else:\n                assert f.counts['planner'] == 2 and len(codes) == 1, codes\n>               assert expected_code in codes[0], codes\nE               AssertionError: [['PLANNER_CONTROLLER_FIELD_FORBIDDEN']]\nE               assert 'PLAN_RESOURCE_REFERENCE_STALE_SCOPE' in ['PLANNER_CONTROLLER_FIELD_FORBIDDEN']\n\ntests/plan_live_review_20260915/test_variants.py:94: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[stale_candidate_scope]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0007091797888278961,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003282912075519562,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 4.476807710714638,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_live_review_20260915/test_variants.py::test_current_admission_variant[missing_config_effect]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019854586571455002,
+    "failure": ""
+  }
+]
