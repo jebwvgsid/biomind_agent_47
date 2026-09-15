@@ -1,0 +1,292 @@
+{
+  "primary": {
+    "task_id": "session_1789471955",
+    "metrics_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/run_metrics.json",
+    "manifest_count": 79,
+    "completed_calls_with_usage": 77,
+    "physical_attempt_records": 72,
+    "completed_without_physical_attempt_record": 6,
+    "unknown_usage_calls": [
+      "schema2_context_compaction-0078-5cbfacffc6f4",
+      "task_router-0079-fe0d6a64b302"
+    ],
+    "no_observed_application_transport_retries": true,
+    "sdk_internal_retry_count_claim": "not_observable; consultant attempts configure sdk_max_retries=1, other captured primary attempt kinds configure 0; no claim of zero hidden retries",
+    "sdk_max_retries_by_call_kind": {
+      "consultant": [
+        1
+      ],
+      "generate": [
+        0
+      ],
+      "planner_initial": [
+        0
+      ],
+      "recovery_turn": [
+        0
+      ],
+      "schema2_context_compaction": [
+        0
+      ],
+      "supervisor_reviewer": [],
+      "task_router": []
+    },
+    "totals_known_only": {
+      "prompt_tokens": 2959152,
+      "completion_tokens": 111886,
+      "total_tokens": 3071038,
+      "prompt_cache_hit_tokens": 1310976,
+      "prompt_cache_miss_tokens": 1648176,
+      "rows": 79,
+      "usage_known_rows": 77,
+      "cache_covered_input_tokens": 2959152,
+      "cache_usage_known_rows": 77,
+      "cache_hit_rate": 0.4430242177488686
+    },
+    "profiler_summary_tokens": {
+      "prompt_tokens": 2959152,
+      "completion_tokens": 111886,
+      "total_tokens": 3071038,
+      "reasoning_tokens": null,
+      "contains_estimates": false,
+      "prompt_cache_hit_tokens": 1310976,
+      "prompt_cache_miss_tokens": 1648176,
+      "prompt_cache_usage_reported_calls": 77,
+      "cache_metric_status": "reported",
+      "prompt_cache_hit_rate": 0.443024
+    },
+    "usage_outside_profiler": [],
+    "by_call_kind": {
+      "consultant": {
+        "prompt_tokens": 91128,
+        "completion_tokens": 5391,
+        "total_tokens": 96519,
+        "prompt_cache_hit_tokens": 74368,
+        "prompt_cache_miss_tokens": 16760,
+        "rows": 5,
+        "usage_known_rows": 5,
+        "cache_covered_input_tokens": 91128,
+        "cache_usage_known_rows": 5,
+        "cache_hit_rate": 0.8160828724431569
+      },
+      "generate": {
+        "prompt_tokens": 160750,
+        "completion_tokens": 6827,
+        "total_tokens": 167577,
+        "prompt_cache_hit_tokens": 3072,
+        "prompt_cache_miss_tokens": 157678,
+        "rows": 6,
+        "usage_known_rows": 6,
+        "cache_covered_input_tokens": 160750,
+        "cache_usage_known_rows": 6,
+        "cache_hit_rate": 0.019110419906687402
+      },
+      "planner_initial": {
+        "prompt_tokens": 94980,
+        "completion_tokens": 11505,
+        "total_tokens": 106485,
+        "prompt_cache_hit_tokens": 60416,
+        "prompt_cache_miss_tokens": 34564,
+        "rows": 3,
+        "usage_known_rows": 3,
+        "cache_covered_input_tokens": 94980,
+        "cache_usage_known_rows": 3,
+        "cache_hit_rate": 0.636091808801853
+      },
+      "recovery_turn": {
+        "prompt_tokens": 1678449,
+        "completion_tokens": 5512,
+        "total_tokens": 1683961,
+        "prompt_cache_hit_tokens": 1155712,
+        "prompt_cache_miss_tokens": 522737,
+        "rows": 15,
+        "usage_known_rows": 15,
+        "cache_covered_input_tokens": 1678449,
+        "cache_usage_known_rows": 15,
+        "cache_hit_rate": 0.6885594974884551
+      },
+      "schema2_context_compaction": {
+        "prompt_tokens": 822567,
+        "completion_tokens": 77576,
+        "total_tokens": 900143,
+        "prompt_cache_hit_tokens": 6272,
+        "prompt_cache_miss_tokens": 816295,
+        "rows": 43,
+        "usage_known_rows": 42,
+        "cache_covered_input_tokens": 822567,
+        "cache_usage_known_rows": 42,
+        "cache_hit_rate": 0.0076249107975398965
+      },
+      "supervisor_reviewer": {
+        "prompt_tokens": 110345,
+        "completion_tokens": 4974,
+        "total_tokens": 115319,
+        "prompt_cache_hit_tokens": 10368,
+        "prompt_cache_miss_tokens": 99977,
+        "rows": 5,
+        "usage_known_rows": 5,
+        "cache_covered_input_tokens": 110345,
+        "cache_usage_known_rows": 5,
+        "cache_hit_rate": 0.0939598531877294
+      },
+      "task_router": {
+        "prompt_tokens": 933,
+        "completion_tokens": 101,
+        "total_tokens": 1034,
+        "prompt_cache_hit_tokens": 768,
+        "prompt_cache_miss_tokens": 165,
+        "rows": 2,
+        "usage_known_rows": 1,
+        "cache_covered_input_tokens": 933,
+        "cache_usage_known_rows": 1,
+        "cache_hit_rate": 0.8231511254019293
+      }
+    },
+    "metrics_cache_statuses": {
+      "partially_reported_derived": 77
+    },
+    "mapping": "completed manifest chronological order bijects to llm metrics rows; time delta <3s and every available provider usage triple must match",
+    "sdk_policy_conflicts": []
+  },
+  "control_only": {
+    "task_id": "session_1789464978",
+    "metrics_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789464978/run_metrics.json",
+    "manifest_count": 15,
+    "completed_calls_with_usage": 15,
+    "physical_attempt_records": 12,
+    "completed_without_physical_attempt_record": 3,
+    "unknown_usage_calls": [],
+    "no_observed_application_transport_retries": true,
+    "sdk_internal_retry_count_claim": "not_observable; consultant attempts configure sdk_max_retries=1, other captured primary attempt kinds configure 0; no claim of zero hidden retries",
+    "sdk_max_retries_by_call_kind": {
+      "consultant": [
+        1
+      ],
+      "generate": [
+        0
+      ],
+      "planner_initial": [
+        0
+      ],
+      "supervisor_reviewer": [],
+      "task_router": [],
+      "terminal_summary": [
+        0
+      ]
+    },
+    "totals_known_only": {
+      "prompt_tokens": 325119,
+      "completion_tokens": 22619,
+      "total_tokens": 347738,
+      "prompt_cache_hit_tokens": 150016,
+      "prompt_cache_miss_tokens": 170839,
+      "rows": 15,
+      "usage_known_rows": 15,
+      "cache_covered_input_tokens": 320855,
+      "cache_usage_known_rows": 14,
+      "cache_hit_rate": 0.4675507628056287
+    },
+    "profiler_summary_tokens": {
+      "prompt_tokens": 320855,
+      "completion_tokens": 22607,
+      "total_tokens": 343462,
+      "reasoning_tokens": null,
+      "contains_estimates": false,
+      "prompt_cache_hit_tokens": 150016,
+      "prompt_cache_miss_tokens": 170839,
+      "prompt_cache_usage_reported_calls": 14,
+      "cache_metric_status": "reported",
+      "prompt_cache_hit_rate": 0.467551
+    },
+    "usage_outside_profiler": [
+      "terminal_summary-0015-83223f3ee54f"
+    ],
+    "by_call_kind": {
+      "consultant": {
+        "prompt_tokens": 67495,
+        "completion_tokens": 3217,
+        "total_tokens": 70712,
+        "prompt_cache_hit_tokens": 49920,
+        "prompt_cache_miss_tokens": 17575,
+        "rows": 4,
+        "usage_known_rows": 4,
+        "cache_covered_input_tokens": 67495,
+        "cache_usage_known_rows": 4,
+        "cache_hit_rate": 0.7396103415067783
+      },
+      "generate": {
+        "prompt_tokens": 113455,
+        "completion_tokens": 6147,
+        "total_tokens": 119602,
+        "prompt_cache_hit_tokens": 36480,
+        "prompt_cache_miss_tokens": 76975,
+        "rows": 4,
+        "usage_known_rows": 4,
+        "cache_covered_input_tokens": 113455,
+        "cache_usage_known_rows": 4,
+        "cache_hit_rate": 0.3215371733286325
+      },
+      "planner_initial": {
+        "prompt_tokens": 95620,
+        "completion_tokens": 11665,
+        "total_tokens": 107285,
+        "prompt_cache_hit_tokens": 60800,
+        "prompt_cache_miss_tokens": 34820,
+        "rows": 3,
+        "usage_known_rows": 3,
+        "cache_covered_input_tokens": 95620,
+        "cache_usage_known_rows": 3,
+        "cache_hit_rate": 0.6358502405354528
+      },
+      "supervisor_reviewer": {
+        "prompt_tokens": 43352,
+        "completion_tokens": 1484,
+        "total_tokens": 44836,
+        "prompt_cache_hit_tokens": 2048,
+        "prompt_cache_miss_tokens": 41304,
+        "rows": 2,
+        "usage_known_rows": 2,
+        "cache_covered_input_tokens": 43352,
+        "cache_usage_known_rows": 2,
+        "cache_hit_rate": 0.04724118841114597
+      },
+      "task_router": {
+        "prompt_tokens": 933,
+        "completion_tokens": 94,
+        "total_tokens": 1027,
+        "prompt_cache_hit_tokens": 768,
+        "prompt_cache_miss_tokens": 165,
+        "rows": 1,
+        "usage_known_rows": 1,
+        "cache_covered_input_tokens": 933,
+        "cache_usage_known_rows": 1,
+        "cache_hit_rate": 0.8231511254019293
+      },
+      "terminal_summary": {
+        "prompt_tokens": 4264,
+        "completion_tokens": 12,
+        "total_tokens": 4276,
+        "prompt_cache_hit_tokens": null,
+        "prompt_cache_miss_tokens": null,
+        "rows": 1,
+        "usage_known_rows": 1,
+        "cache_covered_input_tokens": 0,
+        "cache_usage_known_rows": 0,
+        "cache_hit_rate": null
+      }
+    },
+    "metrics_cache_statuses": {
+      "partially_reported_derived": 14,
+      "unknown": 1
+    },
+    "mapping": "completed manifest chronological order bijects to llm metrics rows; time delta <3s and every available provider usage triple must match"
+  },
+  "deduplication": "One row per trace invocation, one provider_attempt_id where available. Do not add events.jsonl/manifest/archive duplicated usage. Failed post-cancel logical trace not assumed physical.",
+  "cache_semantics": "hit is provider-returned cached-input telemetry as normalized locally; miss=prompt-hit is derived. Cached tokens remain included in prompt and total. No prices or billed cost inferred.",
+  "limits": [
+    "Provider HTTP IDs/raw HTTP usage not preserved; lc_run IDs are SDK callback IDs.",
+    "SDK internal retries are unobservable; primary consultant attempts configure SDK retries 1, other captured primary attempt kinds configure 0; log and manifest values agree.",
+    "Cancelled 0078 and failed exit triage 0079 have unknown usage, not zero.",
+    "request.json is provider-visible message snapshot, not a complete raw HTTP payload including every provider wrapper."
+  ]
+}

@@ -1,0 +1,631 @@
+{
+  "scope": "Historical explicit source capture and current byte comparison; captured source != proof every loaded callable matches disk. No production imports or reconstruction of loaded revision.",
+  "requests": [
+    {
+      "call_id": "generate-0014-2d202c2437c6",
+      "runtime_identity_object": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/state_contract/objects/6622a5c0b02cfe62192e0dc4ec066e1a10d1c288265bcccb1abca22e67bbbe76.json",
+      "object_sha256": "6622a5c0b02cfe62192e0dc4ec066e1a10d1c288265bcccb1abca22e67bbbe76",
+      "loaded_revision": "UNKNOWN",
+      "disk_head_at_capture": "d9902812603fe02aab12b00a418386efb9f935ed",
+      "loaded_code_identity": "9808b6b2b2a1abf4cbafb3624292c66e925cbd393064758333cb2195db027df1",
+      "source_identity": "92ba6b772652a7c23b4412281ac8c5de894b34d85d8e985993a77656846d42ad",
+      "python": "3.12.12",
+      "source_files": [
+        {
+          "path": "agent_core/approved_resource_locator.py",
+          "captured_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+          "current_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/inspection_readers.py",
+          "captured_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+          "current_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_bindings.py",
+          "captured_sha256": "9568b37b0bd80c4fc1f6e05c68eb4a00608ad309523373b91b8827ddd21a1a87",
+          "current_sha256": "9568b37b0bd80c4fc1f6e05c68eb4a00608ad309523373b91b8827ddd21a1a87",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_contract.py",
+          "captured_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+          "current_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_tracker.py",
+          "captured_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+          "current_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/recovery.py",
+          "captured_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+          "current_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/runtime_identity.py",
+          "captured_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+          "current_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/skill_access.py",
+          "captured_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+          "current_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/state_contract_store.py",
+          "captured_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+          "current_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/step_effects.py",
+          "captured_sha256": "ff53fe2c9518ffc10dc5e47c27fe79d8e47260b9694f6f3d01d2e1387286b4df",
+          "current_sha256": "ff53fe2c9518ffc10dc5e47c27fe79d8e47260b9694f6f3d01d2e1387286b4df",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/commit_step.py",
+          "captured_sha256": "8de2a56381adad243824d4866beb1104b3c7a5eb408fc2769b787795a2340cb4",
+          "current_sha256": "8de2a56381adad243824d4866beb1104b3c7a5eb408fc2769b787795a2340cb4",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/diagnostic_admission.py",
+          "captured_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+          "current_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/execution.py",
+          "captured_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+          "current_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/inspection_evidence.py",
+          "captured_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+          "current_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/managed_stop.py",
+          "captured_sha256": "4f4034d8b5e55b199b9bfe756a57b06ba8014a6b5b41ee699bde49daee58743b",
+          "current_sha256": "4f4034d8b5e55b199b9bfe756a57b06ba8014a6b5b41ee699bde49daee58743b",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/outcomes.py",
+          "captured_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+          "current_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_agent.py",
+          "captured_sha256": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c",
+          "current_sha256": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_node.py",
+          "captured_sha256": "39fa29f3232c68d3ccf85f1ebb68089a28f2489dad98de50f94a84ff1a57ee63",
+          "current_sha256": "39fa29f3232c68d3ccf85f1ebb68089a28f2489dad98de50f94a84ff1a57ee63",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_projection.py",
+          "captured_sha256": "c7e16187e7a6e76d28ac17fe00974b5e1d1933f17d7c8bd8b51b9b31b922134d",
+          "current_sha256": "c7e16187e7a6e76d28ac17fe00974b5e1d1933f17d7c8bd8b51b9b31b922134d",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_runtime.py",
+          "captured_sha256": "bc64bf5e1c5f60f4861ff3c1d1bf47670efe34ce01742b79514d923c8c7a424f",
+          "current_sha256": "bc64bf5e1c5f60f4861ff3c1d1bf47670efe34ce01742b79514d923c8c7a424f",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_tools.py",
+          "captured_sha256": "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a",
+          "current_sha256": "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/runtime_graph.py",
+          "captured_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+          "current_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/stage_contracts.py",
+          "captured_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+          "current_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/verifier.py",
+          "captured_sha256": "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88",
+          "current_sha256": "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88",
+          "matches_current": true
+        },
+        {
+          "path": "bio_agents.py",
+          "captured_sha256": "05bd6979e0abdd7016a4fac83de34fba7d705f5e1e30ffba10b74db3e6f8ec19",
+          "current_sha256": "05bd6979e0abdd7016a4fac83de34fba7d705f5e1e30ffba10b74db3e6f8ec19",
+          "matches_current": true
+        },
+        {
+          "path": "execution/executor.py",
+          "captured_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+          "current_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+          "matches_current": true
+        },
+        {
+          "path": "prompts/manager.py",
+          "captured_sha256": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3",
+          "current_sha256": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3",
+          "matches_current": true
+        },
+        {
+          "path": "supervisor.py",
+          "captured_sha256": "e2e8f0eeb3a42353d84e100d8d6f7a4bcdb2612cfc411f524e2fe51ce7e164ef",
+          "current_sha256": "e2e8f0eeb3a42353d84e100d8d6f7a4bcdb2612cfc411f524e2fe51ce7e164ef",
+          "matches_current": true
+        }
+      ],
+      "loaded_module_names": [
+        "agent_core.approved_resource_locator",
+        "agent_core.plan_bindings",
+        "agent_core.plan_contract",
+        "agent_core.plan_tracker",
+        "agent_core.recovery",
+        "agent_core.runtime_identity",
+        "agent_core.skill_access",
+        "agent_core.state_contract_store",
+        "agent_core.step_effects",
+        "agent_core.workflow.commit_step",
+        "agent_core.workflow.diagnostic_admission",
+        "agent_core.workflow.execution",
+        "agent_core.workflow.inspection_evidence",
+        "agent_core.workflow.managed_stop",
+        "agent_core.workflow.outcomes",
+        "agent_core.workflow.recovery_agent",
+        "agent_core.workflow.recovery_node",
+        "agent_core.workflow.recovery_projection",
+        "agent_core.workflow.recovery_runtime",
+        "agent_core.workflow.recovery_tools",
+        "agent_core.workflow.runtime_graph",
+        "agent_core.workflow.stage_contracts",
+        "agent_core.workflow.verifier",
+        "execution.executor",
+        "prompts.manager",
+        "supervisor"
+      ]
+    },
+    {
+      "call_id": "recovery_turn-0064-99a0cdf59b59",
+      "runtime_identity_object": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/state_contract/objects/6582c505509345e7f0fb8d58a77a560f99a29b0617be35149f693cbcb3b7dcbe.json",
+      "object_sha256": "6582c505509345e7f0fb8d58a77a560f99a29b0617be35149f693cbcb3b7dcbe",
+      "loaded_revision": "UNKNOWN",
+      "disk_head_at_capture": "d9902812603fe02aab12b00a418386efb9f935ed",
+      "loaded_code_identity": "e49a180237f290fff1322c2a925ec5bf06d81996bea875edaaee13664ea1142d",
+      "source_identity": "92ba6b772652a7c23b4412281ac8c5de894b34d85d8e985993a77656846d42ad",
+      "python": "3.12.12",
+      "source_files": [
+        {
+          "path": "agent_core/approved_resource_locator.py",
+          "captured_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+          "current_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/inspection_readers.py",
+          "captured_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+          "current_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_bindings.py",
+          "captured_sha256": "9568b37b0bd80c4fc1f6e05c68eb4a00608ad309523373b91b8827ddd21a1a87",
+          "current_sha256": "9568b37b0bd80c4fc1f6e05c68eb4a00608ad309523373b91b8827ddd21a1a87",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_contract.py",
+          "captured_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+          "current_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_tracker.py",
+          "captured_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+          "current_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/recovery.py",
+          "captured_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+          "current_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/runtime_identity.py",
+          "captured_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+          "current_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/skill_access.py",
+          "captured_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+          "current_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/state_contract_store.py",
+          "captured_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+          "current_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/step_effects.py",
+          "captured_sha256": "ff53fe2c9518ffc10dc5e47c27fe79d8e47260b9694f6f3d01d2e1387286b4df",
+          "current_sha256": "ff53fe2c9518ffc10dc5e47c27fe79d8e47260b9694f6f3d01d2e1387286b4df",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/commit_step.py",
+          "captured_sha256": "8de2a56381adad243824d4866beb1104b3c7a5eb408fc2769b787795a2340cb4",
+          "current_sha256": "8de2a56381adad243824d4866beb1104b3c7a5eb408fc2769b787795a2340cb4",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/diagnostic_admission.py",
+          "captured_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+          "current_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/execution.py",
+          "captured_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+          "current_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/inspection_evidence.py",
+          "captured_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+          "current_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/managed_stop.py",
+          "captured_sha256": "4f4034d8b5e55b199b9bfe756a57b06ba8014a6b5b41ee699bde49daee58743b",
+          "current_sha256": "4f4034d8b5e55b199b9bfe756a57b06ba8014a6b5b41ee699bde49daee58743b",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/outcomes.py",
+          "captured_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+          "current_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_agent.py",
+          "captured_sha256": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c",
+          "current_sha256": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_node.py",
+          "captured_sha256": "39fa29f3232c68d3ccf85f1ebb68089a28f2489dad98de50f94a84ff1a57ee63",
+          "current_sha256": "39fa29f3232c68d3ccf85f1ebb68089a28f2489dad98de50f94a84ff1a57ee63",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_projection.py",
+          "captured_sha256": "c7e16187e7a6e76d28ac17fe00974b5e1d1933f17d7c8bd8b51b9b31b922134d",
+          "current_sha256": "c7e16187e7a6e76d28ac17fe00974b5e1d1933f17d7c8bd8b51b9b31b922134d",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_runtime.py",
+          "captured_sha256": "bc64bf5e1c5f60f4861ff3c1d1bf47670efe34ce01742b79514d923c8c7a424f",
+          "current_sha256": "bc64bf5e1c5f60f4861ff3c1d1bf47670efe34ce01742b79514d923c8c7a424f",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_tools.py",
+          "captured_sha256": "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a",
+          "current_sha256": "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/runtime_graph.py",
+          "captured_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+          "current_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/stage_contracts.py",
+          "captured_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+          "current_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/verifier.py",
+          "captured_sha256": "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88",
+          "current_sha256": "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88",
+          "matches_current": true
+        },
+        {
+          "path": "bio_agents.py",
+          "captured_sha256": "05bd6979e0abdd7016a4fac83de34fba7d705f5e1e30ffba10b74db3e6f8ec19",
+          "current_sha256": "05bd6979e0abdd7016a4fac83de34fba7d705f5e1e30ffba10b74db3e6f8ec19",
+          "matches_current": true
+        },
+        {
+          "path": "execution/executor.py",
+          "captured_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+          "current_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+          "matches_current": true
+        },
+        {
+          "path": "prompts/manager.py",
+          "captured_sha256": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3",
+          "current_sha256": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3",
+          "matches_current": true
+        },
+        {
+          "path": "supervisor.py",
+          "captured_sha256": "e2e8f0eeb3a42353d84e100d8d6f7a4bcdb2612cfc411f524e2fe51ce7e164ef",
+          "current_sha256": "e2e8f0eeb3a42353d84e100d8d6f7a4bcdb2612cfc411f524e2fe51ce7e164ef",
+          "matches_current": true
+        }
+      ],
+      "loaded_module_names": [
+        "agent_core.approved_resource_locator",
+        "agent_core.inspection_readers",
+        "agent_core.plan_bindings",
+        "agent_core.plan_contract",
+        "agent_core.plan_tracker",
+        "agent_core.recovery",
+        "agent_core.runtime_identity",
+        "agent_core.skill_access",
+        "agent_core.state_contract_store",
+        "agent_core.step_effects",
+        "agent_core.workflow.commit_step",
+        "agent_core.workflow.diagnostic_admission",
+        "agent_core.workflow.execution",
+        "agent_core.workflow.inspection_evidence",
+        "agent_core.workflow.managed_stop",
+        "agent_core.workflow.outcomes",
+        "agent_core.workflow.recovery_agent",
+        "agent_core.workflow.recovery_node",
+        "agent_core.workflow.recovery_projection",
+        "agent_core.workflow.recovery_runtime",
+        "agent_core.workflow.recovery_tools",
+        "agent_core.workflow.runtime_graph",
+        "agent_core.workflow.stage_contracts",
+        "agent_core.workflow.verifier",
+        "execution.executor",
+        "prompts.manager",
+        "supervisor"
+      ]
+    },
+    {
+      "call_id": "schema2_context_compaction-0078-5cbfacffc6f4",
+      "runtime_identity_object": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/state_contract/objects/6582c505509345e7f0fb8d58a77a560f99a29b0617be35149f693cbcb3b7dcbe.json",
+      "object_sha256": "6582c505509345e7f0fb8d58a77a560f99a29b0617be35149f693cbcb3b7dcbe",
+      "loaded_revision": "UNKNOWN",
+      "disk_head_at_capture": "d9902812603fe02aab12b00a418386efb9f935ed",
+      "loaded_code_identity": "e49a180237f290fff1322c2a925ec5bf06d81996bea875edaaee13664ea1142d",
+      "source_identity": "92ba6b772652a7c23b4412281ac8c5de894b34d85d8e985993a77656846d42ad",
+      "python": "3.12.12",
+      "source_files": [
+        {
+          "path": "agent_core/approved_resource_locator.py",
+          "captured_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+          "current_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/inspection_readers.py",
+          "captured_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+          "current_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_bindings.py",
+          "captured_sha256": "9568b37b0bd80c4fc1f6e05c68eb4a00608ad309523373b91b8827ddd21a1a87",
+          "current_sha256": "9568b37b0bd80c4fc1f6e05c68eb4a00608ad309523373b91b8827ddd21a1a87",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_contract.py",
+          "captured_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+          "current_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/plan_tracker.py",
+          "captured_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+          "current_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/recovery.py",
+          "captured_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+          "current_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/runtime_identity.py",
+          "captured_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+          "current_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/skill_access.py",
+          "captured_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+          "current_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/state_contract_store.py",
+          "captured_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+          "current_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/step_effects.py",
+          "captured_sha256": "ff53fe2c9518ffc10dc5e47c27fe79d8e47260b9694f6f3d01d2e1387286b4df",
+          "current_sha256": "ff53fe2c9518ffc10dc5e47c27fe79d8e47260b9694f6f3d01d2e1387286b4df",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/commit_step.py",
+          "captured_sha256": "8de2a56381adad243824d4866beb1104b3c7a5eb408fc2769b787795a2340cb4",
+          "current_sha256": "8de2a56381adad243824d4866beb1104b3c7a5eb408fc2769b787795a2340cb4",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/diagnostic_admission.py",
+          "captured_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+          "current_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/execution.py",
+          "captured_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+          "current_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/inspection_evidence.py",
+          "captured_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+          "current_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/managed_stop.py",
+          "captured_sha256": "4f4034d8b5e55b199b9bfe756a57b06ba8014a6b5b41ee699bde49daee58743b",
+          "current_sha256": "4f4034d8b5e55b199b9bfe756a57b06ba8014a6b5b41ee699bde49daee58743b",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/outcomes.py",
+          "captured_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+          "current_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_agent.py",
+          "captured_sha256": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c",
+          "current_sha256": "ae59c403ca3546d4c50a74f39a8718c0646a11af663d8152d29ed9f90014e23c",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_node.py",
+          "captured_sha256": "39fa29f3232c68d3ccf85f1ebb68089a28f2489dad98de50f94a84ff1a57ee63",
+          "current_sha256": "39fa29f3232c68d3ccf85f1ebb68089a28f2489dad98de50f94a84ff1a57ee63",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_projection.py",
+          "captured_sha256": "c7e16187e7a6e76d28ac17fe00974b5e1d1933f17d7c8bd8b51b9b31b922134d",
+          "current_sha256": "c7e16187e7a6e76d28ac17fe00974b5e1d1933f17d7c8bd8b51b9b31b922134d",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_runtime.py",
+          "captured_sha256": "bc64bf5e1c5f60f4861ff3c1d1bf47670efe34ce01742b79514d923c8c7a424f",
+          "current_sha256": "bc64bf5e1c5f60f4861ff3c1d1bf47670efe34ce01742b79514d923c8c7a424f",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/recovery_tools.py",
+          "captured_sha256": "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a",
+          "current_sha256": "f3ac05282185e88829f8c9a18cf5b8891b9ba1885f05cdf0723dcbd8f044851a",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/runtime_graph.py",
+          "captured_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+          "current_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/stage_contracts.py",
+          "captured_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+          "current_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+          "matches_current": true
+        },
+        {
+          "path": "agent_core/workflow/verifier.py",
+          "captured_sha256": "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88",
+          "current_sha256": "3179b0d59c06bdb79dbeebd4466c7148598dd5ceb5eaf6d71ccac1cec30bea88",
+          "matches_current": true
+        },
+        {
+          "path": "bio_agents.py",
+          "captured_sha256": "05bd6979e0abdd7016a4fac83de34fba7d705f5e1e30ffba10b74db3e6f8ec19",
+          "current_sha256": "05bd6979e0abdd7016a4fac83de34fba7d705f5e1e30ffba10b74db3e6f8ec19",
+          "matches_current": true
+        },
+        {
+          "path": "execution/executor.py",
+          "captured_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+          "current_sha256": "89f11c155d2ff79f99d2e639e52e65c25197477e52646dee58b954a18b94be1a",
+          "matches_current": true
+        },
+        {
+          "path": "prompts/manager.py",
+          "captured_sha256": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3",
+          "current_sha256": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3",
+          "matches_current": true
+        },
+        {
+          "path": "supervisor.py",
+          "captured_sha256": "e2e8f0eeb3a42353d84e100d8d6f7a4bcdb2612cfc411f524e2fe51ce7e164ef",
+          "current_sha256": "e2e8f0eeb3a42353d84e100d8d6f7a4bcdb2612cfc411f524e2fe51ce7e164ef",
+          "matches_current": true
+        }
+      ],
+      "loaded_module_names": [
+        "agent_core.approved_resource_locator",
+        "agent_core.inspection_readers",
+        "agent_core.plan_bindings",
+        "agent_core.plan_contract",
+        "agent_core.plan_tracker",
+        "agent_core.recovery",
+        "agent_core.runtime_identity",
+        "agent_core.skill_access",
+        "agent_core.state_contract_store",
+        "agent_core.step_effects",
+        "agent_core.workflow.commit_step",
+        "agent_core.workflow.diagnostic_admission",
+        "agent_core.workflow.execution",
+        "agent_core.workflow.inspection_evidence",
+        "agent_core.workflow.managed_stop",
+        "agent_core.workflow.outcomes",
+        "agent_core.workflow.recovery_agent",
+        "agent_core.workflow.recovery_node",
+        "agent_core.workflow.recovery_projection",
+        "agent_core.workflow.recovery_runtime",
+        "agent_core.workflow.recovery_tools",
+        "agent_core.workflow.runtime_graph",
+        "agent_core.workflow.stage_contracts",
+        "agent_core.workflow.verifier",
+        "execution.executor",
+        "prompts.manager",
+        "supervisor"
+      ]
+    }
+  ]
+}

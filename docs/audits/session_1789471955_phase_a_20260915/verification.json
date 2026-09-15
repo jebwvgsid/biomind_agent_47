@@ -1,0 +1,86 @@
+{
+  "status": "PASS",
+  "verified_at": "2026-09-15T12:46:50.590709+00:00",
+  "verification_kind": "historical_receipt_and_protection_checks_only",
+  "checks": {
+    "completed_usage_arithmetic": {
+      "status": "PASS",
+      "rows": 77,
+      "prompt_tokens": 2959152,
+      "completion_tokens": 111886,
+      "total_tokens": 3071038,
+      "prompt_cache_hit_tokens": 1310976,
+      "prompt_cache_miss_tokens": 1648176
+    },
+    "context_trace_inventory": {
+      "status": "PASS",
+      "calls": 79,
+      "statuses": {
+        "completed": 77,
+        "cancelled": 1,
+        "failed": 1
+      },
+      "boundary": "Trace requests are observable application calls; hidden SDK retries are not counted as known physical requests."
+    },
+    "execution_inventory": {
+      "status": "PASS",
+      "by_step": {
+        "check_inputs_readable": 1,
+        "check_contig_compatibility": 1,
+        "prepare_database": 4
+      },
+      "duration_seconds": 8.072,
+      "boundary": "Exit code zero does not assert postconditions, Commit, database build, or scientific completion."
+    },
+    "terminal_receipt": {
+      "status": "PASS",
+      "runtime_status": "cancelled",
+      "top_level_execution_status": "in_progress",
+      "metrics_status": "cancelled"
+    },
+    "exported_request_ledger": {
+      "status": "PASS",
+      "rows": 79,
+      "known_usage_rows": 77,
+      "unique_observed_attempt_ids": 72
+    },
+    "specialist_offline_witness_receipts": {
+      "status": "PASS",
+      "science": {
+        "status": "PASS",
+        "scientific_validity_verified": false,
+        "database_readiness_verified": false,
+        "binding_values_present_but_review_projection_false": true,
+        "last_layout_matches_archived_contract": true,
+        "three_upstream_receipt_ids_absent_in_each_later_review_request": true,
+        "old_first_attempt_files_survived_second_attempt": true,
+        "no_current_final_delivery_receipts": true
+      },
+      "compaction": "3 actual pure-parser failures and 1 selected/mode predicate match historical rejection",
+      "exit": "existing AST condition reproduces trailing LF/CRLF failure; not a repaired behavior test"
+    },
+    "original_evidence_unchanged": {
+      "status": "PASS",
+      "files": 808,
+      "checks": "bytes, size, mtime_ns; not atime"
+    },
+    "existing_worktree_preserved": {
+      "status": "PASS",
+      "python_files": 918,
+      "non_audit_status_unchanged": true,
+      "whole_index_equals_pre_audit": false
+    },
+    "audit_script_syntax": {
+      "status": "PASS",
+      "files": [
+        "build_wait_evidence.py",
+        "extract_usage_compaction.py",
+        "verify_audit.py",
+        "verify_science_history.py"
+      ]
+    }
+  },
+  "real_model_calls": 0,
+  "real_scientific_calls": 0,
+  "production_tests_run": false
+}

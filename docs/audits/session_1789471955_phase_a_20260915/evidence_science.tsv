@@ -1,0 +1,7 @@
+execution_line	step_id	attempt_id	action_id	started_at	finished_at	duration_seconds	exit_code	execution_status	effect_status	attestation_status	receipt_ref	semantic_disposition	committed
+1	check_inputs_readable	attempt_1a07c13b471c90d37154	action_956d90d34ff4a741	2026-09-15T19:37:03	2026-09-15T19:37:04	0.591	0	succeeded	validated	not_applicable		completion_accepted	True
+2	check_contig_compatibility	attempt_2808a853340abef30084	action_a55f26b00728b814	2026-09-15T19:37:51	2026-09-15T19:37:53	1.188	0	succeeded	validated	not_applicable		completion_accepted	True
+3	prepare_database	attempt_010b75bc2bd8ce10d788	action_742d00ecfda00668	2026-09-15T19:38:42	2026-09-15T19:38:43	0.75	0	succeeded	failed	postcondition_unsatisfied	workspace-receipt-cb788b5cee08db580b4695d9	not_called	False
+4	prepare_database	attempt_37bce55ef62db92f86f1	recovery_action_ddd5cc6bcd2d1c01	2026-09-15T19:40:06	2026-09-15T19:40:09	1.835	0	succeeded	validated	mutated_and_validated	workspace-receipt-d89c959fd0fa1f7ddb7f4635	inspection_required	False
+5	prepare_database	attempt_107cc990faf80ec9d36a	recovery_action_ae7292f6419d5189	2026-09-15T19:41:35	2026-09-15T19:41:37	1.598	0	succeeded	validated	mutated_and_validated	workspace-receipt-a4607cfc1f3cd7d7a591a388	inspection_required	False
+6	prepare_database	attempt_fad0ac69fea46d1d3b0f	recovery_action_af07542bb23ebf25	2026-09-15T19:44:53	2026-09-15T19:44:56	2.11	0	succeeded	validated	mutated_and_validated	workspace-receipt-9932f4e19970f9bc155d1efe	inspection_required	False

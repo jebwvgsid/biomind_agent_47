@@ -1,0 +1,116 @@
+{
+  "parent_commit": "d9902812603fe02aab12b00a418386efb9f935ed",
+  "commit_scope": "Only new files in docs/audits/session_1789471955_phase_a_20260915; no production changes",
+  "files": [
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/README.md",
+      "bytes": 14036,
+      "sha256": "25dd6904638c20c7ad7f9d062b20b5b76fa2d2a1c3d77733ad4a7397b7479dd2"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/build_wait_evidence.py",
+      "bytes": 11678,
+      "sha256": "098d4c9f14b57067ac2362eeebc6b030eafac840094f3a341b0c83492e5418cb"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/compaction_evidence.json",
+      "bytes": 209565,
+      "sha256": "91b2591ad18c0a6517f47be68d32178ecd0e87009b86627a99514d48568b52fd"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/control_request_ledger.tsv",
+      "bytes": 17764,
+      "sha256": "8f045ad24796093443285455b5c8bdc72c061e7345e166d09cca746531bc7f8d"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/evidence_science.json",
+      "bytes": 246396,
+      "sha256": "d0f383985389ca0054272580a04ed61a46620f2d19b10b21620b76bd0a630347"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/evidence_science.tsv",
+      "bytes": 1505,
+      "sha256": "7d75ff37c121815ee86a531efa44edf668aa0f137fbf8b4d563c2c95a4729509"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/evidence_wait.json",
+      "bytes": 106132,
+      "sha256": "35193ed6800b1489a52e411633aa07480cf8404897e142365b3918fcfc311501"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/extract_usage_compaction.py",
+      "bytes": 22013,
+      "sha256": "938c254949641034af6411f4846611e0d865534f96595fb8b3d9295346a20096"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/protection_before.json",
+      "bytes": 148575,
+      "sha256": "b2b4a7c9315999ed817280a79af54d1cf94cfdcf9b8cd0852f89ac4c76c9aad2"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/request_ledger.tsv",
+      "bytes": 101358,
+      "sha256": "9783f243bbd52ea91850e58b7e769ad63965398ef45744253a3ebc1f5439f6d7"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/runtime_provenance.json",
+      "bytes": 31119,
+      "sha256": "0386c2dc3b34baac81cfdfaccb9fcab5e8669bc70910feae7495f4e271100a51"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/science_recovery.md",
+      "bytes": 12540,
+      "sha256": "1f47f0b09e9e78774261343fe3fb9366c0f35e2930c347c5de4d1b56741d25db"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/scope_and_reuse.md",
+      "bytes": 5130,
+      "sha256": "6006d33cda45d75a8dfa6892a36e6c330b3067d7603f7dabfbb096c72cb6a558"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/source_manifest.json",
+      "bytes": 285938,
+      "sha256": "fe892d03c531f1b2a25a661475efc26e025b32461382e3bb0b84504a8271cd64"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/usage_compaction.md",
+      "bytes": 14181,
+      "sha256": "4f77edebe8064e0572389cf1b85dbe9759d6457a185c782f9b37ba1e827ef707"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/usage_summary.json",
+      "bytes": 10281,
+      "sha256": "219a07f1b54ecda5a217fa4bcf39d851b34a6aff525ed8d60f7d4907b5d8c716"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/verification.json",
+      "bytes": 2810,
+      "sha256": "68ac787db4e899de161e2341ccbf69dd6e69eb87dc6a9769573da2d6d9101632"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/verify_audit.py",
+      "bytes": 7305,
+      "sha256": "11c9fbfcf7233f462f931ff53c496a5233229a68a159be2ebaccf1265fbab0f8"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/verify_science_history.py",
+      "bytes": 9877,
+      "sha256": "b9e6c47fa49d7c152066c98326b65f6581688a929db834b6804ef3fcf53c55ee"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/wait_cancel.md",
+      "bytes": 9757,
+      "sha256": "f2afbd5f2e5e34e00e5f2e528946fc44716696bf92bfa12ec9d84860b1e11d68"
+    },
+    {
+      "path": "docs/audits/session_1789471955_phase_a_20260915/wait_intervals.tsv",
+      "bytes": 29048,
+      "sha256": "64cb85b467fea07dea0dadbe911c28d6b984c6486f2c3ca7d0a1326c75a4d11d"
+    }
+  ],
+  "files_excluding_this_manifest": 21,
+  "production_change_count": 0,
+  "push": false,
+  "verification": "verification.json PASS; three specialist offline history witnesses; no production test suite or real calls",
+  "packaging_validation": "TSV exports use LF and explicit NOT_OBSERVED for absent final log-reference cells; final staged diff whitespace check required."
+}
