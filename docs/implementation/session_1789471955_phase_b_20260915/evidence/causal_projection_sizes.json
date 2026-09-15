@@ -1,0 +1,15 @@
+{
+  "old_body_chars": [
+    101790,
+    212914,
+    306985
+  ],
+  "new_body_chars": [
+    8035,
+    7534,
+    7225
+  ],
+  "original_objects_rewritten": false,
+  "four_episodes": 4,
+  "metric": "json.dumps body ensure_ascii=False characters; read-only history vs isolated production publisher"
+}

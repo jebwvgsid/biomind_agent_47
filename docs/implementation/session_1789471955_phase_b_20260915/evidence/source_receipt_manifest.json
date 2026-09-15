@@ -1,0 +1,210 @@
+[
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T01_historical_report_imm0/fact_projection_bfc96a2038a28b03972fc380ce23fe5cd934e23d7f908a7b430b8cf99d17eb6d.json",
+    "sha256": "05686af3dd078c925111094f461c57e6d9718e529089913efaffdfeade235d6b"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T01_historical_report_imm1/fact_projection_bfa8d0c46f6d8dafec0798ff6a01504513629180d48ea51fdad960c6a72a0118.json",
+    "sha256": "10418aaca26fae9c7ddce610568f6def70259eaf093ad85e61984a61e256cf77"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T01_historical_report_imm2/fact_projection_e56c71385ecdc865a1633a1e4467eeab0b87b0a16b1e5b5f7c437a5a02f29f1e.json",
+    "sha256": "8f8095788c65301658d36f05089f18bf73cf314c3b25aaa42037be97d090664f"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T03_historical_attestatio0/layout_contract_receipt.json",
+    "sha256": "83bc591bf5b46393359bfba780fb540f9dc32d8b2cd85c16e536a314cfb02391"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T04_T09_T20_real_read_rev0/phase_b_review_commit.json",
+    "sha256": "1425483e31394d739f90cc622e92b71c3f8ee3c391b60b5076f4fc13d7946648"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T06_T16_four_episode_prod0/four_episode_wire_composition.json",
+    "sha256": "db997ea20edef48744171e329b564a2ece71c413df09207ce5b5be16630feea5"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T06_four_historical_episo0/causal_projection_sizes.json",
+    "sha256": "2b8daff0c86f658649d8a1695a024648ce3b98d3bfcdb258737fb20fca94bc58"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r0/phase_b_compaction_integration.json",
+    "sha256": "795cb38b1d5609b47e44bded7a4464d9ee956092cf587b75260621186b5eb3cf"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r1/phase_b_compaction_integration.json",
+    "sha256": "9b8fdc7568e87cfc4dae9182caeeedf0e86f24530fc3c096e29ce7e798a9b7dd"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r2/phase_b_compaction_integration.json",
+    "sha256": "1cc5bc2b3ff9abd344e3fe48ae95f6fed151af68319a43ba0cd06908ab146c84"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r3/phase_b_compaction_integration.json",
+    "sha256": "4bd2a8455999efd5d36f141d04f7eba9f0e428108026f7c68a3a3e55300f0ae5"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r4/phase_b_compaction_integration.json",
+    "sha256": "a55353433b7a9abe20a5c59637b06d320c0c099674550770e43a36b1906c2bd8"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r5/phase_b_compaction_integration.json",
+    "sha256": "5212086e1c6df69f7def1363c6425b102db0fc5982309a50c87e3bdfc6997277"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r6/phase_b_compaction_integration.json",
+    "sha256": "a406d885eb711146db33caa31951e1bdf080b37d296bde11f9870285efad1bd5"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r7/phase_b_compaction_integration.json",
+    "sha256": "1b13fdfeb79cc8998186637ff88117625371741c856fa0938228ebae0594c22e"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r8/phase_b_compaction_integration.json",
+    "sha256": "5b3b47abe9e6a5bf6f2f9425f942765495c54d37ca55ae3df675928520874c8f"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T09_T10_T14_T15_T16_T18_r9/phase_b_compaction_integration.json",
+    "sha256": "085ac7ba1ea792ce84a690bd80172de733f2b93618873f60ead357eefe9f9885"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T12_three_large_maps_are_0/targeted_large_maps.json",
+    "sha256": "8c451aa8a91311fee0df53726576d7d2cb5bb5226c32bd9e9d784f37c27b468c"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T16_saved_request_prefix_0/saved_prefix_boundaries.json",
+    "sha256": "476f299de1e76f536ad0b839715740fe6024859cd093219fc29bab892877eff6"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo0/control_receipt.json",
+    "sha256": "6f9f80ab67e6f3dbef374c509df54417204cd418fd3886bac09dfb2b7b5eb22e"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo1/control_receipt.json",
+    "sha256": "c3906334ff9deffe2eac7cb05bdb19debd1af4d25dddf29f64d9d0966d697f6f"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo10/control_receipt.json",
+    "sha256": "275c3aea8b53962875601c43bcf879456081484685cca60d950cc541f5718a0a"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo11/control_receipt.json",
+    "sha256": "285a30b7b941291b5b850615a9e46ccec22f790f517f01b7b191faff25f2ddea"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo12/control_receipt.json",
+    "sha256": "c64b34d6e85d6e958f5878c18a168519afdcb5844fc0928c18d18664809dfdf9"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo2/control_receipt.json",
+    "sha256": "262cc99494aa61afd2d23f4a827e23021787a0f7d5506590d91c873b28643eb5"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo3/control_receipt.json",
+    "sha256": "b745c2fc1e8b02535667e99e06ca0c29c5b9a8247d31072c02a854222b70e878"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo4/control_receipt.json",
+    "sha256": "4fb9c96138991e5478f60cf530a07039baf67b2356ce9387952860e1fb7228f7"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo5/control_receipt.json",
+    "sha256": "fa3f42e2051f076d14cb27c254bfa730bed7b081f42c12944fd84f8e5e814aa9"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo6/control_receipt.json",
+    "sha256": "dc9c826f70609da6f05ca32fb824ac1eb27ecc2ce744f08abefc21a696d8ac97"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo7/control_receipt.json",
+    "sha256": "20901ea887cf0c869b687960a8b7e99a2352b26c64a1b77eb502f40ce3ccb806"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo8/control_receipt.json",
+    "sha256": "67a695a5e9b12e4a0e7664f3c6dfcef32b070d92132cab66737e1db946f32d1b"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_actual_interactive_lo9/control_receipt.json",
+    "sha256": "06dae4f2bc651dd5217c56f629c6de694bfc3f1ebd5bbb2df08b7c6f6ed39c9b"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit0/approval_exit_receipt.json",
+    "sha256": "81245af7700a7c0e019a2a2af4d598aa508fa26729cb271d527243c8efc0aa8c"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit1/approval_exit_receipt.json",
+    "sha256": "fdbcc8680cb6a79bd0b1d55998092996f8208cf87b3b1298da5b98169d3fa891"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit2/approval_exit_receipt.json",
+    "sha256": "00b92f28a6cae72957f149606da08329418b65ab304e6c3b3d8ebf53e8d455aa"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit3/approval_exit_receipt.json",
+    "sha256": "d0285aab14c49162800f1d51b693284e876f6682d3e886c8f5d235841118a1d1"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit4/approval_exit_receipt.json",
+    "sha256": "fc11074d544fabc9a0cbd08aa079655124247007b9c096848ebc82daa6e06645"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit5/approval_exit_receipt.json",
+    "sha256": "f8ad7dc72baf91f1a808754888994cfad0ad88daaeaccce891bc7be93c5d35e2"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit6/approval_exit_receipt.json",
+    "sha256": "8a1369835fceb9a25b718a7de8b72bdeefd0eaa04342e07ffd5f5154e6390a7e"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T17_waiting_approval_exit7/approval_exit_receipt.json",
+    "sha256": "a95252289706dfe8f4ed314154373de094e3640f83afe0ac3ba222f9caf4cc6d"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_release_20260915/test_T18_cancellation_views_pr0/cancellation_receipt.json",
+    "sha256": "deeac03a834eb6d5828061bedd148ef7b98385d3c8914eb5b51ecc4cc59c8569"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T04_T09_T20_real_read_rev0/phase_b_review_commit.json",
+    "sha256": "6be83c180d171e6437b697e5e78ec87a0d2f9e9c319519a69e9189b2f8a69605"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r0/phase_b_compaction_integration.json",
+    "sha256": "58a196b9547b75b4b73d9074ad562689ef3574537b00cc9401f360822da31ac3"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r1/phase_b_compaction_integration.json",
+    "sha256": "05d50392480d141792cbd45137df40a4140c5b2db83746299c4a5758295f57bf"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r2/phase_b_compaction_integration.json",
+    "sha256": "c27dd2d8b75df9bdc7caae9f6265cc6ee6ba6d196bc0815b50e412a9b48e45c4"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r3/phase_b_compaction_integration.json",
+    "sha256": "b3b05733698d5df62bd12026e31d3a84f385ab8e5f3dbea3c086595bdf85a48b"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r4/phase_b_compaction_integration.json",
+    "sha256": "7ca0ba7d64f9305bbb3e1e8ca248bbad17f0d6aeb00791bbc910155d25adac50"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r5/phase_b_compaction_integration.json",
+    "sha256": "cf3f0f4805cd78324638f9007bfb0a6f044d5db6e20badef91b13ec2136f22ef"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r6/phase_b_compaction_integration.json",
+    "sha256": "75670982000363bc9303f7907854df5b7915a03dac1552295eb96894b7744e2e"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r7/phase_b_compaction_integration.json",
+    "sha256": "fe3c1c80fdf28985c903d11efab6f2ee4b911dc8e11086e846e24f6db25696a8"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r8/phase_b_compaction_integration.json",
+    "sha256": "bab9bac168813040c421a3a77186ff2ed00dba84b2043cd37e24d52aa268b47b"
+  },
+  {
+    "path": "/tmp/biomind_phase_b_durable_20260915/test_T09_T10_T14_T15_T16_T18_r9/phase_b_compaction_integration.json",
+    "sha256": "da837201b02fa42249b84d15394f4c158dfbae5569a74e9052fc9af6b6c94a45"
+  }
+]

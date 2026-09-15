@@ -243,6 +243,7 @@ def archive_recovery_episode(
     ))
     transcript = deepcopy(list(episode.get("_provider_episode") or ()))
     audit = deepcopy(dict(episode.get("audit") or {}))
+    maintenance = deepcopy(dict((episode.get("_resume_state") or {}).get("compaction_maintenance") or {}))
     episode_digest = _digest({
         "seed_id": seed.seed_id,
         "transcript": transcript,
@@ -251,6 +252,7 @@ def archive_recovery_episode(
         "checkpoint": checkpoint,
         "compaction_required": compaction_required,
         "audit": audit,
+        "compaction_maintenance": maintenance,
         "overflow_epoch": int(overflow_epoch),
         "linked_previous_archive_ref": str(linked_previous_archive_ref or ""),
     })
@@ -281,6 +283,7 @@ def archive_recovery_episode(
             "terminal_error": terminal_error,
             "recovery_checkpoint": checkpoint,
             "context_compaction_required": compaction_required,
+            "compaction_maintenance": maintenance,
             "validator_feedback": deepcopy(list(episode.get("validator_feedback") or ())),
             "provider_observability": {
                 "provider_call_count": int(audit.get("provider_call_count") or 0),

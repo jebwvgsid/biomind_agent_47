@@ -27,8 +27,8 @@ def test_T01_historical_report_immutable_binding_projection(digest,tmp_path):
     descriptors = (plan['task_state']['inspection_ref_registry']).values()
     descriptor = next(row for row in descriptors if row.get('scope', {}).get('object_kind') == 'validation'
         and row['scope']['source_object_id'] == report['scope']['validation_id'])
-    digest = descriptor['locator']['object_ref'].split(':')[-1]
-    validation = json.loads((HISTORY/'state_contract/objects'/f'{digest}.json').read_text())['payload']['body']
+    validation_digest = descriptor['locator']['object_ref'].split(':')[-1]
+    validation = json.loads((HISTORY/'state_contract/objects'/f'{validation_digest}.json').read_text())['payload']['body']
     facts = _derive_report_facts(plan_state=plan, validation=validation, execution_evidence={},
         predicate_results=report['predicate_results'], completion_gate=report['completion_gate'], semantic_review_required=True)
     expected = plan['provenance_state']['actions'][report['scope']['action_id']]['normalized_action']['produced_bindings']
@@ -50,7 +50,8 @@ def test_T01_historical_report_immutable_binding_projection(digest,tmp_path):
         'before':report['effect_presence']['observed']['produces_bindings'],'after':actual,
         'dependency_facts':dependencies,'after_effect_presence_chars':len(json.dumps(facts['effect_presence'],ensure_ascii=False)),
         'before_effect_presence_chars':len(json.dumps(report['effect_presence'],ensure_ascii=False)),
-        'source_report_sha256':digest,'scope':'offline production projection only; no historical Commit or review rewritten'},indent=2))
+        'source_report_object_digest':digest,'source_validation_object_digest':validation_digest,
+        'scope':'offline production projection only; no historical Commit or review rewritten'},indent=2))
 
 
 def test_T01_missing_or_foreign_action_never_fabricates_value():

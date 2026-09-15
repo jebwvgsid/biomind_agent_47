@@ -1,0 +1,205 @@
+{
+  "route": [
+    "Supervisor",
+    "Recovery read",
+    "Supervisor",
+    "Commit",
+    "Commit replay"
+  ],
+  "execute_dispatches": 0,
+  "attempt_id": "attempt_9ef2dc8b905fa90511e1",
+  "review_calls": 2,
+  "recovery_calls": 5,
+  "commits": 1,
+  "declared_dependency": {
+    "step_id": "step.check_contigs",
+    "status": "committed",
+    "commit_ref": "commit-step-2ddbf6cfe1f4f4466bdeffa4",
+    "validation_ref": "validation-57a8a179f0d2de6ddc7c",
+    "attempt_id": "attempt_9ef2dc8b905fa90511e1",
+    "completion_report_ref": "completion-report-a2eaed865fd583245a7ac743ce343ea91ca5075fd1851ce221f402a75f9d06b6",
+    "observations": [
+      {
+        "identity": "contigs_compatible",
+        "value": true
+      }
+    ],
+    "predicate_findings": [
+      {
+        "schema_version": 1,
+        "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+        "observation_id": "contigs_compatible",
+        "operator": "boolean_equals",
+        "expected": true,
+        "claimed_actual": true,
+        "authoritative_actual": true,
+        "status": "passed",
+        "passed": true,
+        "reason_code": "BOOLEAN_PREDICATE_SATISFIED",
+        "disposition": "completion_accepted",
+        "evaluator_id": "biomind.semantic_completion.v1",
+        "parser_id": "biomind.genomics.contig_compatibility.v1",
+        "parser_receipt": {
+          "schema_version": 1,
+          "parser_id": "biomind.genomics.contig_compatibility.v1",
+          "parser_version": 1,
+          "parser_status": "valid",
+          "value": true,
+          "source_inputs": {
+            "variant_vcf": {
+              "path": "/tmp/biomind_phase_b_durable_20260915/test_T04_T09_T20_real_read_rev0/inputs/tiny.vcf",
+              "size": 127,
+              "mtime_ns": 1789484164123365682
+            },
+            "reference_fasta": {
+              "path": "/tmp/biomind_phase_b_durable_20260915/test_T04_T09_T20_real_read_rev0/inputs/tiny.fa",
+              "size": 11,
+              "mtime_ns": 1789484164123365682
+            },
+            "annotation_gtf": {
+              "path": "/tmp/biomind_phase_b_durable_20260915/test_T04_T09_T20_real_read_rev0/inputs/tiny.gtf",
+              "size": 42,
+              "mtime_ns": 1789484164123365682
+            }
+          },
+          "vcf_record_count": 1,
+          "gtf_record_count": 1,
+          "vcf_contigs": {
+            "count": 1,
+            "values": [
+              "chr1"
+            ],
+            "truncated": false,
+            "set_hash": "sha256:b71d7331d6a3472147c71ae012b6d71f4f7cae63b7bc10903cc1c62aac4e9cfc"
+          },
+          "vcf_declared_contigs": {
+            "count": 1,
+            "values": [
+              "chr1"
+            ],
+            "truncated": false,
+            "set_hash": "sha256:b71d7331d6a3472147c71ae012b6d71f4f7cae63b7bc10903cc1c62aac4e9cfc"
+          },
+          "vcf_record_contigs": {
+            "count": 1,
+            "values": [
+              "chr1"
+            ],
+            "truncated": false,
+            "set_hash": "sha256:b71d7331d6a3472147c71ae012b6d71f4f7cae63b7bc10903cc1c62aac4e9cfc"
+          },
+          "vcf_declared_not_observed": {
+            "count": 0,
+            "values": [],
+            "truncated": false,
+            "set_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "vcf_observed_not_declared": {
+            "count": 0,
+            "values": [],
+            "truncated": false,
+            "set_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "fasta_contigs": {
+            "count": 1,
+            "values": [
+              "chr1"
+            ],
+            "truncated": false,
+            "set_hash": "sha256:b71d7331d6a3472147c71ae012b6d71f4f7cae63b7bc10903cc1c62aac4e9cfc"
+          },
+          "annotation_contigs": {
+            "count": 1,
+            "values": [
+              "chr1"
+            ],
+            "truncated": false,
+            "set_hash": "sha256:b71d7331d6a3472147c71ae012b6d71f4f7cae63b7bc10903cc1c62aac4e9cfc"
+          },
+          "missing_vcf_in_fasta": {
+            "count": 0,
+            "values": [],
+            "truncated": false,
+            "set_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "missing_vcf_in_annotation": {
+            "count": 0,
+            "values": [],
+            "truncated": false,
+            "set_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "missing_annotation_in_fasta": {
+            "count": 0,
+            "values": [],
+            "truncated": false,
+            "set_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "receipt_id": "contig-receipt-6eb80a0f84e98df0067e4b8b5b6608ef4e8dbbcb09c17fe37fc742f037664618"
+        },
+        "applicable": true,
+        "applicability_receipt": {
+          "schema_version": 1,
+          "kind": "always",
+          "matched_step_ids": []
+        },
+        "result_id": "predicate-result-de7fc332c813e3b5dd76f2b558a71741c0a1e024883d56f036c81153bcdb5969"
+      },
+      {
+        "schema_version": 1,
+        "predicate_id": "completion_gate:step_effect_satisfied",
+        "observation_id": "completion_gate",
+        "operator": "completion_gate_passed",
+        "expected": true,
+        "claimed_actual": true,
+        "authoritative_actual": true,
+        "status": "passed",
+        "passed": true,
+        "reason_code": "COMPLETION_GATE_SATISFIED",
+        "disposition": "completion_accepted",
+        "evaluator_id": "biomind.semantic_completion.v1",
+        "parser_id": "biomind.completion_gate.v1",
+        "parser_receipt": {
+          "passed": true,
+          "verdict": "PASS",
+          "message": "Validated evidence exactly satisfies the approved StepEffect.",
+          "feedback": "",
+          "missing_artifacts": [],
+          "checked_artifacts": [],
+          "classification": "step_effect_satisfied",
+          "reconciliation": {},
+          "stale_artifacts": [],
+          "invalid_artifacts": [],
+          "attempt_ids": [],
+          "artifact_version_ids": [],
+          "validation_ids": [],
+          "evidence_refs": [
+            "contigs_compatible",
+            "attempt_9ef2dc8b905fa90511e1",
+            "validation-57a8a179f0d2de6ddc7c"
+          ],
+          "declared_effects": {
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              "contigs_compatible"
+            ],
+            "workspace_mutations": [],
+            "explicit_side_effects": []
+          },
+          "satisfied_effects": {
+            "produces_observations": [
+              "contigs_compatible"
+            ]
+          },
+          "missing_effects": {},
+          "unexpected_effects": {},
+          "invalid_effects": {},
+          "plan_version": "plan_v1"
+        },
+        "result_id": "predicate-result-bb391566b56cc19427da69ac35f924525ab398255014191a07f7fd8b457a3369"
+      }
+    ],
+    "parser_evidence_status": "recorded",
+    "applicability": "Only the declared observation/predicate and its recorded input scope; no additional scientific conclusion."
+  }
+}

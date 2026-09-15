@@ -50,10 +50,17 @@ dotenv.main.dotenv_values = dotenv.dotenv_values
 
 if "--baseline" in sys.argv:
     sys.argv.remove("--baseline")
-    import gzip, json, subprocess, importlib.abc, importlib.util
-    before = json.loads(gzip.decompress((ROOT / "docs/implementation/session_1789471955_phase_b_20260915/baseline_targets.json.gz").read_bytes()))
-    for relative in ("agent_core/evidence_projection.py", "agent_core/workflow/commit_step.py",
-                     "agent_core/workflow/recovery_agent.py", "supervisor.py", "agent_core/plan_tracker.py"):
+    import json, subprocess, importlib.abc, importlib.util
+    # These targets were clean at actual BASE. Other preexisting dirty modules
+    # stay byte-identical in the shared workspace, as recorded by protection.json.
+    before = {}
+    for relative in ("agent_core/evidence_projection.py", "agent_core/semantic_completion.py",
+                     "agent_core/workflow/commit_step.py", "agent_core/workflow/context_compaction.py",
+                     "agent_core/workflow/inspection_evidence.py", "agent_core/workflow/recovery_agent.py",
+                     "agent_core/workflow/recovery_context.py",
+                     "agent_core/workflow/recovery_node.py", "agent_core/workflow/recovery_runtime.py",
+                     "agent_core/workflow/recovery_tools.py", "agent_core/workflow/verifier.py",
+                     "prompts/context_compaction.py", "bio_agents.py", "supervisor.py", "agent_core/plan_tracker.py"):
         before[relative] = subprocess.check_output(["git", "show", "de7037f7a522e5a7350c07b6349b80965b8f49ed:" + relative], cwd=ROOT, text=True)
     sources = {path[:-3].replace("/", "."): source for path, source in before.items()}
     class BaselineLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):

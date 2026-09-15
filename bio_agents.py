@@ -3517,8 +3517,13 @@ class BioAnalystAgent:
             ),
             "recovery_tool_started": f"🔎 Recovery tool started: {tool}",
             "recovery_tool_failed": f"{tool} 失败：{bounded.get('error_code') or 'UNKNOWN'}",
-            "recovery_compaction_started": "🧭 Recovery context compaction started.",
-            "recovery_compaction_completed": "✓ Recovery context compaction completed.",
+            "recovery_compaction_started": f"🧭 Recovery 压缩请求 {ordinal} 开始。",
+            "recovery_compaction_completed": ("压缩模型已返回；等待校验与应用。"
+                f"已返回 map {int(bounded.get('returned_map_requests') or 0)}；"
+                f"累计请求等待 {float(bounded.get('provider_wait_seconds') or 0):.1f}s。"),
+            "recovery_compaction_applied": "压缩已通过校验并应用到下一请求。",
+            "recovery_compaction_rejected": ("压缩未应用：" + str(bounded.get("error_code") or "UNKNOWN")
+                + ("；将使用经容量检查的完整请求。" if bounded.get("fallback") == "safe_uncompacted_request" else "；已停止上下文维护。")),
             "recovery_model_turn_cancelled": "⏹ Recovery model turn cancelled.",
             "recovery_tool_cancelled": f"⏹ Recovery tool cancelled: {tool}",
             "recovery_compaction_cancelled": "⏹ Recovery context compaction cancelled.",
@@ -54267,7 +54272,7 @@ question. Never guess a scientific or database identity.
                     started_at=wait_started_at,
                 )
 
-            if user_response.strip().lower() in ["q", "quit", "exit"]:
+            if user_response.strip().lower() in {"/exit", "/quit", "q", "quit", "exit"}:
                 self._commit_user_cancellation(
                     task_id,
                     source="interrupt_prompt",
@@ -54307,7 +54312,19 @@ question. Never guess a scientific or database identity.
                     continue
                 if not user_input.strip():
                     continue
-
+                # Match the entire trimmed input before any task/resume/model dispatch.
+                # Embedded commands and multi-line task content do not match.
+                if user_input.strip().lower() in {"/exit", "/quit", "q", "quit", "exit"}:
+                    self._last_cli_control_receipt = {"schema_version": 1,
+                        "command": user_input.strip().lower(), "raw_input": user_input,
+                        "source": "interactive_prompt", "action": "exit", "model_calls": 0,
+                        "task_dispatched": False, "loop_exit": "requested", "recorded_at": timestamp_now(),
+                        "process_exit": "not_observed_by_loop", "remote_cleanup": "not_asserted"}
+                    try:
+                        logger.info("cli_control_receipt %s", json.dumps(self._last_cli_control_receipt, ensure_ascii=False))
+                    except Exception:
+                        pass  # An observation sink cannot turn exit into a task.
+                    break
                 if "\n" not in user_input and (user_input.lower() in {"继续", "继续执行", "continue", "resume"}):
                     control = self._continue_control_state(current_session_id)
                     if control.get("action") != "new_task":
@@ -54360,9 +54377,6 @@ question. Never guess a scientific or database identity.
                     continue
 
                 # ── 系统命令 ─────────────────────────────────
-                if "\n" not in user_input and (user_input.strip().lower() in {"/exit", "/quit", "q", "quit", "exit"}):
-                    break
-
                 if "\n" not in user_input and (user_input == "/paste"):
                     try:
                         user_input = await self._aprompt_user(
@@ -54622,7 +54636,7 @@ question. Never guess a scientific or database identity.
                             payload if isinstance(payload, dict) else {"content": payload},
                             started_at=wait_started_at,
                         )
-                        if user_response.strip().lower() in ["q", "quit", "exit"]:
+                        if user_response.strip().lower() in {"/exit", "/quit", "q", "quit", "exit"}:
                             self._commit_user_cancellation(
                                 tid,
                                 source="resume_interrupt_prompt",

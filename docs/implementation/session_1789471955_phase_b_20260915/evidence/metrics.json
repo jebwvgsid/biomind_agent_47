@@ -1,0 +1,196 @@
+{
+  "method": "isolated production owners with deterministic provider fixtures; character counts are not provider usage",
+  "cases": [
+    {
+      "mode": "applied",
+      "business_calls": 2,
+      "maintenance_calls": 3,
+      "maps": 2,
+      "final_plans": 1,
+      "applied": true,
+      "same_sample_before_compaction_chars": 150507,
+      "business_wire_content_chars": [
+        57514,
+        57653
+      ],
+      "charged_or_reserved_tokens": 243257,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 3,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 3,
+      "total_maintenance_wire_content_chars": 221550
+    },
+    {
+      "mode": "cancel_before_plan",
+      "business_calls": 1,
+      "maintenance_calls": 3,
+      "maps": 2,
+      "final_plans": 1,
+      "applied": false,
+      "same_sample_before_compaction_chars": null,
+      "business_wire_content_chars": [
+        57514
+      ],
+      "charged_or_reserved_tokens": null,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 3,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 0,
+      "total_maintenance_wire_content_chars": 221550
+    },
+    {
+      "mode": "cancel_after_cas",
+      "business_calls": 2,
+      "maintenance_calls": 3,
+      "maps": 2,
+      "final_plans": 1,
+      "applied": true,
+      "same_sample_before_compaction_chars": 150507,
+      "business_wire_content_chars": [
+        57514,
+        57653
+      ],
+      "charged_or_reserved_tokens": 243257,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 3,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 3,
+      "total_maintenance_wire_content_chars": 221550
+    },
+    {
+      "mode": "cancel_before_cas",
+      "business_calls": 1,
+      "maintenance_calls": 3,
+      "maps": 2,
+      "final_plans": 1,
+      "applied": false,
+      "same_sample_before_compaction_chars": null,
+      "business_wire_content_chars": [
+        57514
+      ],
+      "charged_or_reserved_tokens": 243257,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 3,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 3,
+      "total_maintenance_wire_content_chars": 221550
+    },
+    {
+      "mode": "cas_conflict",
+      "business_calls": 1,
+      "maintenance_calls": 3,
+      "maps": 2,
+      "final_plans": 1,
+      "applied": false,
+      "same_sample_before_compaction_chars": null,
+      "business_wire_content_chars": [
+        57513
+      ],
+      "charged_or_reserved_tokens": 243256,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 3,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 3,
+      "total_maintenance_wire_content_chars": 221549
+    },
+    {
+      "mode": "retry_budget_fallback",
+      "business_calls": 3,
+      "maintenance_calls": 5,
+      "maps": 3,
+      "final_plans": 2,
+      "applied": false,
+      "same_sample_before_compaction_chars": null,
+      "business_wire_content_chars": [
+        57514,
+        150507,
+        163509
+      ],
+      "charged_or_reserved_tokens": 380124,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 5,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 5,
+      "total_maintenance_wire_content_chars": 342962
+    },
+    {
+      "mode": "correct_then_apply",
+      "business_calls": 2,
+      "maintenance_calls": 4,
+      "maps": 2,
+      "final_plans": 2,
+      "applied": true,
+      "same_sample_before_compaction_chars": 150507,
+      "business_wire_content_chars": [
+        57514,
+        57653
+      ],
+      "charged_or_reserved_tokens": 375111,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 4,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 4,
+      "total_maintenance_wire_content_chars": 339273
+    },
+    {
+      "mode": "display_failure",
+      "business_calls": 2,
+      "maintenance_calls": 3,
+      "maps": 2,
+      "final_plans": 1,
+      "applied": true,
+      "same_sample_before_compaction_chars": 150507,
+      "business_wire_content_chars": [
+        57514,
+        57653
+      ],
+      "charged_or_reserved_tokens": 243257,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 3,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 3,
+      "total_maintenance_wire_content_chars": 221550
+    },
+    {
+      "mode": "fallback",
+      "business_calls": 2,
+      "maintenance_calls": 4,
+      "maps": 2,
+      "final_plans": 2,
+      "applied": false,
+      "same_sample_before_compaction_chars": null,
+      "business_wire_content_chars": [
+        57514,
+        150507
+      ],
+      "charged_or_reserved_tokens": 375111,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 4,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 4,
+      "total_maintenance_wire_content_chars": 339273
+    },
+    {
+      "mode": "unsafe",
+      "business_calls": 1,
+      "maintenance_calls": 2,
+      "maps": 2,
+      "final_plans": 0,
+      "applied": false,
+      "same_sample_before_compaction_chars": null,
+      "business_wire_content_chars": [
+        57514
+      ],
+      "charged_or_reserved_tokens": null,
+      "known_provider_usage_requests": 0,
+      "unknown_usage_requests": 2,
+      "usage_basis": "deterministic provider fixture supplies no usage; not real billed requests",
+      "durably_captured_maintenance_calls": 0,
+      "total_maintenance_wire_content_chars": 103945
+    }
+  ],
+  "live_model": "NOT_RUN",
+  "real_cache_rate": "NOT_RUN",
+  "science_e2e": "NOT_RUN",
+  "historical_unknown_usage_not_replaced": true
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0047-42c1addc1f1c/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0064-99a0cdf59b59/request.json",
+    "scope": "same Recovery episode, compaction fallback",
+    "left_sha256": "78540c413ccb7f4011640e660f98fc14ed49f08c35e14e7acb524fe49a6df479",
+    "right_sha256": "88a713269b08f58d502b2e0bfc75c3de23efcf91d029850e47676dac4b6a853d",
+    "exact_leading_messages": 13,
+    "next_message_common_content_chars": 0,
+    "system_content_equal": true,
+    "system_hashes": [
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed",
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0044-76e3fcdc0183/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0058-c58e125a9a6d/request.json",
+    "scope": "same-source map across transactions",
+    "left_sha256": "4ba260ce397bf1c6504ffdd9dd8f508193583797643303e69df2542f376aa09c",
+    "right_sha256": "399ad25a6a76552511d90d21ecd6685848b329abb547be5e87932a2af0c8892b",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 205,
+    "system_content_equal": true,
+    "system_hashes": [
+      "cfec454089144825ecb5c70973ad342d8d74b2e4f8d2ae4b2c9e4552592c5def",
+      "cfec454089144825ecb5c70973ad342d8d74b2e4f8d2ae4b2c9e4552592c5def"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0058-c58e125a9a6d/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0076-4376e060a0d1/request.json",
+    "scope": "same-source map across transactions",
+    "left_sha256": "399ad25a6a76552511d90d21ecd6685848b329abb547be5e87932a2af0c8892b",
+    "right_sha256": "90d3a8849d0e2a127d95120ab464d7642a04a97be17fa02bd601f064b9a2168e",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 205,
+    "system_content_equal": true,
+    "system_hashes": [
+      "cfec454089144825ecb5c70973ad342d8d74b2e4f8d2ae4b2c9e4552592c5def",
+      "cfec454089144825ecb5c70973ad342d8d74b2e4f8d2ae4b2c9e4552592c5def"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0045-3663839396c4/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0046-32ba1f308474/request.json",
+    "scope": "final-plan correction",
+    "left_sha256": "d35b56bc109844f3b400eae91aae4f588bb2993e258a759f3106dfce63ac9f03",
+    "right_sha256": "dea01ee2f01469d7238e65a056b744c96524e62a26659ed9f6c9d8612e2f0091",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 90,
+    "system_content_equal": true,
+    "system_hashes": [
+      "6b3841c89ea11ce23202afbdf27840bddae53f2600918f702ac66e4a15484656",
+      "6b3841c89ea11ce23202afbdf27840bddae53f2600918f702ac66e4a15484656"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0062-501db8922ebc/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0063-05630c5f77e9/request.json",
+    "scope": "final-plan correction",
+    "left_sha256": "a5ebd0143b40ad312339e31315593648891ecca070bd3d30366f705e3178d0a9",
+    "right_sha256": "80d24c0c6fcb9aad25893475bcc016e9791bcf448bfd19611bae3d7414f46b59",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 90,
+    "system_content_equal": true,
+    "system_hashes": [
+      "6b3841c89ea11ce23202afbdf27840bddae53f2600918f702ac66e4a15484656",
+      "6b3841c89ea11ce23202afbdf27840bddae53f2600918f702ac66e4a15484656"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/generate-0022-d196b359ebb0/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/generate-0027-6d617dcfdcd0/request.json",
+    "scope": "corrective Generate",
+    "left_sha256": "56cf51663c335bc8b18c8143904cdcb4f4655e9c54108490c52d7e146a80e73c",
+    "right_sha256": "49a19f964c97b7f433a61c3df59591a0f991e7267baac4b773f952d909572684",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 146,
+    "system_content_equal": true,
+    "system_hashes": [
+      "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+      "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/generate-0027-6d617dcfdcd0/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/generate-0032-0f27856492fc/request.json",
+    "scope": "corrective Generate",
+    "left_sha256": "49a19f964c97b7f433a61c3df59591a0f991e7267baac4b773f952d909572684",
+    "right_sha256": "0230377c1609101e4d5de80d1e1e65203c0071e85c5c1973005acbc684b1276d",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 36,
+    "system_content_equal": true,
+    "system_hashes": [
+      "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+      "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0015-a71f6f46fbda/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0024-fa7e552975af/request.json",
+    "scope": "different Recovery first calls",
+    "left_sha256": "87e393ed0e1b1a86eb517e1e61343be25ad2b61fd283ba0d8bfa21d6ac44cdc7",
+    "right_sha256": "fd9abee59aafa5a7bf6b0df7985f0aa60d447e78a6cd4fbdfb59be08683fe6d4",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 85,
+    "system_content_equal": true,
+    "system_hashes": [
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed",
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0024-fa7e552975af/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0029-82476034b3e5/request.json",
+    "scope": "different Recovery first calls",
+    "left_sha256": "fd9abee59aafa5a7bf6b0df7985f0aa60d447e78a6cd4fbdfb59be08683fe6d4",
+    "right_sha256": "8c9b2ee716d28ce5f83f4c4fa66dde1568cef0d534b63dc0ec2fc1dd675961c1",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 85,
+    "system_content_equal": true,
+    "system_hashes": [
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed",
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  },
+  {
+    "left": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0029-82476034b3e5/request.json",
+    "right": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/recovery_turn-0047-42c1addc1f1c/request.json",
+    "scope": "different Recovery first calls",
+    "left_sha256": "8c9b2ee716d28ce5f83f4c4fa66dde1568cef0d534b63dc0ec2fc1dd675961c1",
+    "right_sha256": "78540c413ccb7f4011640e660f98fc14ed49f08c35e14e7acb524fe49a6df479",
+    "exact_leading_messages": 1,
+    "next_message_common_content_chars": 85,
+    "system_content_equal": true,
+    "system_hashes": [
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed",
+      "734f92b2cfe57b9e029481e335e123961252e5bcc6f0fbaa223926b7afeb05ed"
+    ],
+    "top_level_tools_equal": true,
+    "tools_in_snapshot": false
+  }
+]

@@ -1,0 +1,679 @@
+{
+  "interactive_subprocesses": [
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:15+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "/exit",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "7d802cbceb36a604512eeffe943bad1522c208e165574d87924806e123ac65dc"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:18+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "/exit\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "cbd6b695b549d3e0d16797adfff3e02d68792cfd3993f8a2c7430f3bb6cfabd0"
+    },
+    {
+      "dispatches": [
+        "first line\n/exit\nlast line"
+      ],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:44+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "first line\n/exit\nlast line",
+      "standalone_control": false,
+      "process_returncode": 0,
+      "route_dispatch_count": 1,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "1b7a08b515a6e20029405244aeb201d9d0d3d36727daa6e5e16f0f0736f71616"
+    },
+    {
+      "dispatches": [
+        "/exit\nplease continue"
+      ],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:48+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "/exit\nplease continue",
+      "standalone_control": false,
+      "process_returncode": 0,
+      "route_dispatch_count": 1,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "a726a13c95ab5cf1d9272b6d813d8ee43e56b5c5a6ce3af4e404aa70359f1fe7"
+    },
+    {
+      "dispatches": [
+        "```text\n/exit\n```"
+      ],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:59+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "```text\n/exit\n```",
+      "standalone_control": false,
+      "process_returncode": 0,
+      "route_dispatch_count": 1,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "6932fae7c35095dbbf9b2532ea5ad9ff8c926704823bd38036e5a9070344df16"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit\r\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:19+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "/exit\r\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "8c99104fdb2925644874d771067393515333a8b02b95bd03a86bb07187e137b3"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": " \t/exit \r\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:21+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": " \t/exit \r\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "e20cf37997b02acece550f330ee4cada77fb42eb085bbf533bb14709e427d719"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "\n /exit\n\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:24+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "\n /exit\n\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "89ea8069e6a47dd4f2bddee02f98e861f1324866e711f33584b03347db9324ef"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/quit",
+        "raw_input": "/quit\r\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:26+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "/quit\r\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "0a46a658eb215dcfe4b8dbb5715226eff89ed989bdb3cc534d01c9be4fbd5994"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "q",
+        "raw_input": "q\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:28+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "q\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "e327b15fc626a7895ce7e325bf04a391266ce2fd9474307b72ea8b9e8517496a"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "quit",
+        "raw_input": "QUIT\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:33+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "QUIT\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "728543b61a50dea2a44c66024059c4ddf0a59e77cb38988875fda58290b27a96"
+    },
+    {
+      "dispatches": [],
+      "receipt": {
+        "schema_version": 1,
+        "command": "exit",
+        "raw_input": "exit\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:35+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "exit\n",
+      "standalone_control": true,
+      "process_returncode": 0,
+      "route_dispatch_count": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "eec46c49f93de4aadbe596d097ba5f30102fea07b64ba6907874deb8eed00eaa"
+    },
+    {
+      "dispatches": [
+        "Explain /exit in this text"
+      ],
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-15T22:50:39+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "model_calls": 0,
+      "input": "Explain /exit in this text",
+      "standalone_control": false,
+      "process_returncode": 0,
+      "route_dispatch_count": 1,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "stdout_sha256": "02431e4723eded03ec13424a9f5f86b4e3365a2d429519fa52f8268284c16b43"
+    }
+  ],
+  "approval_boundaries": [
+    {
+      "entry": "code_review",
+      "input": "/exit",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "interrupt_prompt",
+        "reason": "User cancelled at a saved graph interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    },
+    {
+      "entry": "code_review",
+      "input": "/exit\n",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "interrupt_prompt",
+        "reason": "User cancelled at a saved graph interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    },
+    {
+      "entry": "code_review",
+      "input": "/exit\r\n",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "interrupt_prompt",
+        "reason": "User cancelled at a saved graph interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    },
+    {
+      "entry": "code_review",
+      "input": " \t/exit \r\n",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "interrupt_prompt",
+        "reason": "User cancelled at a saved graph interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    },
+    {
+      "entry": "saved_resume",
+      "input": "/exit",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "resume_interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "resume_interrupt_prompt",
+        "reason": "User cancelled while resuming a saved interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    },
+    {
+      "entry": "saved_resume",
+      "input": "/exit\n",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "resume_interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "resume_interrupt_prompt",
+        "reason": "User cancelled while resuming a saved interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    },
+    {
+      "entry": "saved_resume",
+      "input": "/exit\r\n",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "resume_interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "resume_interrupt_prompt",
+        "reason": "User cancelled while resuming a saved interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    },
+    {
+      "entry": "saved_resume",
+      "input": " \t/exit \r\n",
+      "new_graph_dispatches": 0,
+      "model_calls": 0,
+      "execute_calls": 0,
+      "status": "cancelled",
+      "cancellation_receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "resume_interrupt_prompt"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "offline-waiting-approval",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_34dbb0112be0ea9aee96",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "offline-waiting-approval"
+        },
+        "receipt_id": "cancel-34dbb0112be0ea9aee9631ae",
+        "task_id": "offline-waiting-approval",
+        "source": "resume_interrupt_prompt",
+        "reason": "User cancelled while resuming a saved interrupt.",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      }
+    }
+  ],
+  "cancellation_views": [
+    {
+      "receipt": {
+        "schema_version": 2,
+        "initiator_kind": "user",
+        "owner": "interactive_user",
+        "source_evidence": {
+          "kind": "interactive_cancellation_choice",
+          "source": "offline-control"
+        },
+        "attribution_reason": "independent_cancellation_request",
+        "scope": {
+          "task_id": "phase-b-cancellation",
+          "task_revision": 0,
+          "task_semantic_hash": "",
+          "plan_id": "plan_82e043b13e03bbe97bb5",
+          "plan_version": "plan_v1",
+          "step_id": "",
+          "planning_epoch_id": ""
+        },
+        "request_scope": {
+          "task_id": "phase-b-cancellation"
+        },
+        "receipt_id": "cancel-82e043b13e03bbe97bb5f9fd",
+        "task_id": "phase-b-cancellation",
+        "source": "offline-control",
+        "reason": "explicit fixture cancellation",
+        "requested_at": "2026-09-15T22:51:00+08:00",
+        "command_started": false,
+        "active_provider_ref": "",
+        "state_generation_before": 1,
+        "state_generation_after": 2
+      },
+      "task_status": "cancelled",
+      "execution_status": "cancelled",
+      "runtime_status": "cancelled",
+      "idempotent": true,
+      "attempts_and_steps_unchanged": true,
+      "finish_task_calls": 1
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "first_postcondition_passed": false,
+  "early_attestation_passed": true,
+  "wrong_config_read_ref": "artifact:plan-artifact-0775ade74fc2f272398803ca",
+  "wrong_config_read_request_id": "call_00_2bTO2jS9gDxPQTPI5KoJ2261",
+  "wrong_config_content": "# snpEff config for task-local custom database\ndata.dir = /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/plan_artifacts/snpeff/data\nbenchmark_part2_remap_ref.genome : Part2 remap reference (task-local custom build)",
+  "workspace_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/plan_artifacts/snpeff/data",
+  "approved_data_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/plan_artifacts/snpeff/data/data",
+  "final_config_line": "data.dir = /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/plan_artifacts/snpeff/data/data",
+  "new_scientific_review": "NOT_RUN",
+  "historical_commits_added": 0
+}

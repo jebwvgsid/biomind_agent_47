@@ -1,0 +1,62 @@
+{
+  "phase_b_baseline_tests.txt": {
+    "source_sha256": "01195928bfd67c7cfeef7f21c72a66965d01db430b69a397008ad9c57edbd046",
+    "failures": [
+      "FAILED tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+      "FAILED tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_activation_cas_conflict_keeps_old_epoch_inactive",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_crash_after_cas_restores_active_epoch_without_replaying_tool",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_directive_shaped_compactor_output_falls_back_but_is_not_admitted",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_disabled_compaction_fails_closed_at_hard_boundary",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_disabled_compaction_uses_one_safe_fallback_without_compactor",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_failed_compaction_never_dispatches_hard_blocked_context",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_integration_b_exact_script_recovery_and_fresh_generate_seed",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_llm_turn_limit_is_causal_run_wide_not_epoch_local",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_lost_cas_ack_replays_same_active_epoch_idempotently",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_node_archives_compacts_and_continues_same_failure",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_repeat_and_turn_budgets_do_not_reset_across_epoch",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_summarized_residency_is_cas_persisted_and_carries_cross_phase"
+    ],
+    "summary": "14 failed, 67 passed in 30.54s"
+  },
+  "phase_b_first_tests.txt": {
+    "source_sha256": "75d0494f4683417dcaf17e423592e28c8aba6bfb9c53f4dd60dd87ccbb030b42",
+    "failures": [
+      "FAILED tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+      "FAILED tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_activation_cas_conflict_keeps_old_epoch_inactive",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_crash_after_cas_restores_active_epoch_without_replaying_tool",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_directive_shaped_compactor_output_falls_back_but_is_not_admitted",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_disabled_compaction_fails_closed_at_hard_boundary",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_disabled_compaction_uses_one_safe_fallback_without_compactor",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_failed_compaction_never_dispatches_hard_blocked_context",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_integration_b_exact_script_recovery_and_fresh_generate_seed",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_llm_turn_limit_is_causal_run_wide_not_epoch_local",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_lost_cas_ack_replays_same_active_epoch_idempotently",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_node_archives_compacts_and_continues_same_failure",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_repeat_and_turn_budgets_do_not_reset_across_epoch",
+      "FAILED tests/test_recovery_compaction_production.py::RecoveryProductionCompactionTests::test_summarized_residency_is_cas_persisted_and_carries_cross_phase",
+      "FAILED tests/test_schema2_context_compaction.py::AssemblyAndAttemptTests::test_bounded_second_attempt_gets_precise_capacity_feedback",
+      "FAILED tests/test_schema2_context_compaction.py::AssemblyAndAttemptTests::test_soft_threshold_noop_and_trigger_paths"
+    ],
+    "summary": "16 failed, 65 passed in 18.03s"
+  },
+  "phase_b_legacy_first_current.txt": {
+    "source_sha256": "d8be5eb75ae042a65407906a3202f2984e19b67ac3d318441c06084ce100a2ef",
+    "failures": [
+      "FAILED tests/test_inspection_evidence.py::test_I02_I03_I04_I10_real_handoff_reload_and_body"
+    ],
+    "summary": "1 failed in 22.60s"
+  },
+  "phase_b_legacy_first_baseline.txt": {
+    "source_sha256": "5bf04247c3675438dc40535676b13f201c7729812afdca8d6447bddd9d9ea142",
+    "failures": [
+      "FAILED tests/test_inspection_evidence.py::test_I02_I03_I04_I10_real_handoff_reload_and_body"
+    ],
+    "summary": "1 failed in 22.60s"
+  },
+  "other_attempts": {
+    "broader_legacy_runs": "INTERRUPTED, not an acceptance result",
+    "preservation_setup_error": "9 FileNotFoundError writing absent /tmp/biomind_phase_b_preservation_final; mkdir completed, final rerun 80 passed"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "base_head": "de7037f7a522e5a7350c07b6349b80965b8f49ed",
+  "branch": "refactor/consultant-controller-authority",
+  "all_production_targets_clean_at_base": true,
+  "captured_python_files": 918,
+  "unchanged_captured_python_files": 903,
+  "changed_captured_python_files": [
+    "agent_core/evidence_projection.py",
+    "agent_core/plan_tracker.py",
+    "agent_core/semantic_completion.py",
+    "agent_core/workflow/commit_step.py",
+    "agent_core/workflow/context_compaction.py",
+    "agent_core/workflow/inspection_evidence.py",
+    "agent_core/workflow/recovery_agent.py",
+    "agent_core/workflow/recovery_context.py",
+    "agent_core/workflow/recovery_node.py",
+    "agent_core/workflow/recovery_runtime.py",
+    "agent_core/workflow/recovery_tools.py",
+    "agent_core/workflow/verifier.py",
+    "bio_agents.py",
+    "prompts/context_compaction.py",
+    "supervisor.py"
+  ],
+  "missing_captured_python_files": [],
+  "initial_status_sha256": "9e00b4393ff020e67c547efde960c7b30cddaed21e880d54a933e7524d15bc78",
+  "initial_staged_diff_empty": true,
+  "scope": "Content hashes cover captured Python files. Preexisting non-Python/untracked items were not edited; no retrospective whole-tree hash claim.",
+  "baseline_import_mode": "git show actual BASE for clean production targets; unrelated current worktree modules remain unchanged",
+  "all_initial_status_entries_still_present": true
+}

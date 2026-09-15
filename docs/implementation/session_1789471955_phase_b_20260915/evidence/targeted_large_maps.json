@@ -1,0 +1,47 @@
+[
+  {
+    "ordinal": "0044",
+    "request_file": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0044-76e3fcdc0183/request.json",
+    "request_sha256": "4ba260ce397bf1c6504ffdd9dd8f508193583797643303e69df2542f376aa09c",
+    "wire_content_chars": 327305,
+    "body_chars": 299348,
+    "body_sha256": "8b3a4a45217ed667d7d87716e7cf41ef9920070d25c5b8c7bfb72e22964d342b",
+    "segment_sha256": "7fb1c2ce4aaa2ac00f55366ddc4ca28a5c69af165de2cc965a35dfda09b753b6",
+    "source_ref": "inspection:sha256:0f9d3e82fb55ac5958eba648e4e3a1fd93ebe1791a26e1cfc800d2eb5ea85f3f",
+    "coverage": {
+      "kind": "full"
+    },
+    "parent_metadata_chars": 1667,
+    "body_json_chars": 322558
+  },
+  {
+    "ordinal": "0058",
+    "request_file": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0058-c58e125a9a6d/request.json",
+    "request_sha256": "399ad25a6a76552511d90d21ecd6685848b329abb547be5e87932a2af0c8892b",
+    "wire_content_chars": 327305,
+    "body_chars": 299348,
+    "body_sha256": "8b3a4a45217ed667d7d87716e7cf41ef9920070d25c5b8c7bfb72e22964d342b",
+    "segment_sha256": "7fb1c2ce4aaa2ac00f55366ddc4ca28a5c69af165de2cc965a35dfda09b753b6",
+    "source_ref": "inspection:sha256:0f9d3e82fb55ac5958eba648e4e3a1fd93ebe1791a26e1cfc800d2eb5ea85f3f",
+    "coverage": {
+      "kind": "full"
+    },
+    "parent_metadata_chars": 1667,
+    "body_json_chars": 322558
+  },
+  {
+    "ordinal": "0076",
+    "request_file": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955/context_trace/schema2_context_compaction-0076-4376e060a0d1/request.json",
+    "request_sha256": "90d3a8849d0e2a127d95120ab464d7642a04a97be17fa02bd601f064b9a2168e",
+    "wire_content_chars": 327305,
+    "body_chars": 299348,
+    "body_sha256": "8b3a4a45217ed667d7d87716e7cf41ef9920070d25c5b8c7bfb72e22964d342b",
+    "segment_sha256": "7fb1c2ce4aaa2ac00f55366ddc4ca28a5c69af165de2cc965a35dfda09b753b6",
+    "source_ref": "inspection:sha256:0f9d3e82fb55ac5958eba648e4e3a1fd93ebe1791a26e1cfc800d2eb5ea85f3f",
+    "coverage": {
+      "kind": "full"
+    },
+    "parent_metadata_chars": 1667,
+    "body_json_chars": 322558
+  }
+]

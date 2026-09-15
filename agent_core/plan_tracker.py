@@ -12256,6 +12256,10 @@ def set_task_status(state: PlanState, status: str, reason: str = "") -> bool:
         task_state["status_reason"] = str(reason)[:4000]
     task_state["status_updated_at"] = _now()
     state["task_state"] = task_state
+    if normalized == TASK_STATUS_CANCELLED:
+        # Aggregate cancellation never changes immutable attempt/cleanup facts.
+        state["execution_status"] = TASK_STATUS_CANCELLED
+        state["runtime_state"] = {**dict(state.get("runtime_state") or {}), "status": TASK_STATUS_CANCELLED}
     state["updated_at"] = _now()
     return changed
 

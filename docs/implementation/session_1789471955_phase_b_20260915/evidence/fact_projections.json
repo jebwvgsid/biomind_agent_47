@@ -1,0 +1,278 @@
+[
+  {
+    "original_report_id": "completion-report-ed037200bf99fd853f8bd2b3fc4b17612ad16be6bfb8f46fd996a2ab6509cea8",
+    "attempt_id": "attempt_37bce55ef62db92f86f1",
+    "before": [
+      {
+        "identity": "genome_version",
+        "value_present": false
+      },
+      {
+        "identity": "snpeff_db",
+        "value_present": false
+      }
+    ],
+    "after": [
+      {
+        "identity": "genome_version",
+        "value_present": true,
+        "value": "benchmark_part2_remap_ref",
+        "value_type": "string",
+        "source": "immutable_action.normalized_action.produced_bindings",
+        "action_id": "recovery_action_ddd5cc6bcd2d1c01",
+        "attempt_id": "attempt_37bce55ef62db92f86f1",
+        "acceptance_status": "not_accepted",
+        "accepted_binding_ref": ""
+      },
+      {
+        "identity": "snpeff_db",
+        "value_present": true,
+        "value": {
+          "canonical_resource_id": "plan-artifact-af6d4d3308f8b5938c168451",
+          "resource_kind": "mutable_workspace",
+          "binding_revision": 1,
+          "plan_handle": "plan-artifact-af6d4d3308f8b5938c168451",
+          "binding_id": "plan-resource-binding-05b78ab5929226d2265c"
+        },
+        "value_type": "artifact_ref",
+        "source": "immutable_action.normalized_action.produced_bindings",
+        "action_id": "recovery_action_ddd5cc6bcd2d1c01",
+        "attempt_id": "attempt_37bce55ef62db92f86f1",
+        "acceptance_status": "not_accepted",
+        "accepted_binding_ref": ""
+      }
+    ],
+    "dependency_facts": [
+      {
+        "step_id": "check_contig_compatibility",
+        "status": "committed",
+        "commit_ref": "commit-step-48f494e8a6e44d98773dcde3",
+        "validation_ref": "validation-1cbb27e5219f0bdb5bd6",
+        "attempt_id": "attempt_2808a853340abef30084",
+        "completion_report_ref": "completion-report-f2a947f3ad019e9f42351008aab966096e99af8a38f56243ca3d40b0dc7790d6",
+        "observations": [
+          {
+            "identity": "contigs_compatible",
+            "details": {
+              "fasta_only": [],
+              "fasta_sequence_count": 2,
+              "fasta_sequences": [
+                "chr1",
+                "chr2"
+              ],
+              "fasta_vs_gtf_equal": true,
+              "gtf_only": [],
+              "gtf_sequence_count": 2,
+              "gtf_sequences": [
+                "chr1",
+                "chr2"
+              ],
+              "vcf_chrom_body_count": 2,
+              "vcf_contig_header_count": 2,
+              "vcf_contigs": [
+                "chr1",
+                "chr2"
+              ],
+              "vcf_only": [],
+              "vcf_vs_fasta_equal": true,
+              "vcf_vs_gtf_equal": true
+            },
+            "value": true
+          }
+        ],
+        "predicate_findings": [],
+        "parser_evidence_status": "not_saved_in_legacy_receipt",
+        "applicability": "Only the declared observation/predicate and its recorded input scope; no additional scientific conclusion."
+      }
+    ],
+    "after_effect_presence_chars": 7942,
+    "before_effect_presence_chars": 4660,
+    "source_report_object_digest": "bfc96a2038a28b03972fc380ce23fe5cd934e23d7f908a7b430b8cf99d17eb6d",
+    "source_validation_object_digest": "ceb10fb64f0b54306886bce768f206110456b8faebf157bdcdb31b92a44075b8",
+    "scope": "offline production projection only; no historical Commit or review rewritten"
+  },
+  {
+    "original_report_id": "completion-report-4d3a8c69da0d4da298c39368479563409b1e69d9360b21014b54471ef63d4218",
+    "attempt_id": "attempt_107cc990faf80ec9d36a",
+    "before": [
+      {
+        "identity": "genome_version",
+        "value_present": false
+      },
+      {
+        "identity": "snpeff_db",
+        "value_present": false
+      }
+    ],
+    "after": [
+      {
+        "identity": "genome_version",
+        "value_present": true,
+        "value": "benchmark_part2_remap_ref",
+        "value_type": "string",
+        "source": "immutable_action.normalized_action.produced_bindings",
+        "action_id": "recovery_action_ae7292f6419d5189",
+        "attempt_id": "attempt_107cc990faf80ec9d36a",
+        "acceptance_status": "not_accepted",
+        "accepted_binding_ref": ""
+      },
+      {
+        "identity": "snpeff_db",
+        "value_present": true,
+        "value": {
+          "canonical_resource_id": "plan-artifact-af6d4d3308f8b5938c168451",
+          "resource_kind": "mutable_workspace",
+          "binding_revision": 1,
+          "plan_handle": "plan-artifact-af6d4d3308f8b5938c168451",
+          "binding_id": "plan-resource-binding-05b78ab5929226d2265c"
+        },
+        "value_type": "artifact_ref",
+        "source": "immutable_action.normalized_action.produced_bindings",
+        "action_id": "recovery_action_ae7292f6419d5189",
+        "attempt_id": "attempt_107cc990faf80ec9d36a",
+        "acceptance_status": "not_accepted",
+        "accepted_binding_ref": ""
+      }
+    ],
+    "dependency_facts": [
+      {
+        "step_id": "check_contig_compatibility",
+        "status": "committed",
+        "commit_ref": "commit-step-48f494e8a6e44d98773dcde3",
+        "validation_ref": "validation-1cbb27e5219f0bdb5bd6",
+        "attempt_id": "attempt_2808a853340abef30084",
+        "completion_report_ref": "completion-report-f2a947f3ad019e9f42351008aab966096e99af8a38f56243ca3d40b0dc7790d6",
+        "observations": [
+          {
+            "identity": "contigs_compatible",
+            "details": {
+              "fasta_only": [],
+              "fasta_sequence_count": 2,
+              "fasta_sequences": [
+                "chr1",
+                "chr2"
+              ],
+              "fasta_vs_gtf_equal": true,
+              "gtf_only": [],
+              "gtf_sequence_count": 2,
+              "gtf_sequences": [
+                "chr1",
+                "chr2"
+              ],
+              "vcf_chrom_body_count": 2,
+              "vcf_contig_header_count": 2,
+              "vcf_contigs": [
+                "chr1",
+                "chr2"
+              ],
+              "vcf_only": [],
+              "vcf_vs_fasta_equal": true,
+              "vcf_vs_gtf_equal": true
+            },
+            "value": true
+          }
+        ],
+        "predicate_findings": [],
+        "parser_evidence_status": "not_saved_in_legacy_receipt",
+        "applicability": "Only the declared observation/predicate and its recorded input scope; no additional scientific conclusion."
+      }
+    ],
+    "after_effect_presence_chars": 8802,
+    "before_effect_presence_chars": 3199,
+    "source_report_object_digest": "bfa8d0c46f6d8dafec0798ff6a01504513629180d48ea51fdad960c6a72a0118",
+    "source_validation_object_digest": "e5367eb8a2a13131963e858c3485d38c90bea5217510a0ebb2d9b458608dfd07",
+    "scope": "offline production projection only; no historical Commit or review rewritten"
+  },
+  {
+    "original_report_id": "completion-report-3d5cbfdb4883518c938587c3d554a8408fe0e3c8eae80100f9e7d6b81475ccaf",
+    "attempt_id": "attempt_fad0ac69fea46d1d3b0f",
+    "before": [
+      {
+        "identity": "genome_version",
+        "value_present": false
+      },
+      {
+        "identity": "snpeff_db",
+        "value_present": false
+      }
+    ],
+    "after": [
+      {
+        "identity": "genome_version",
+        "value_present": true,
+        "value": "tasklocal_chr1_chr2",
+        "value_type": "string",
+        "source": "immutable_action.normalized_action.produced_bindings",
+        "action_id": "recovery_action_af07542bb23ebf25",
+        "attempt_id": "attempt_fad0ac69fea46d1d3b0f",
+        "acceptance_status": "not_accepted",
+        "accepted_binding_ref": ""
+      },
+      {
+        "identity": "snpeff_db",
+        "value_present": true,
+        "value": {
+          "canonical_resource_id": "plan-artifact-af6d4d3308f8b5938c168451",
+          "resource_kind": "mutable_workspace",
+          "binding_revision": 1,
+          "plan_handle": "plan-artifact-af6d4d3308f8b5938c168451",
+          "binding_id": "plan-resource-binding-05b78ab5929226d2265c"
+        },
+        "value_type": "artifact_ref",
+        "source": "immutable_action.normalized_action.produced_bindings",
+        "action_id": "recovery_action_af07542bb23ebf25",
+        "attempt_id": "attempt_fad0ac69fea46d1d3b0f",
+        "acceptance_status": "not_accepted",
+        "accepted_binding_ref": ""
+      }
+    ],
+    "dependency_facts": [
+      {
+        "step_id": "check_contig_compatibility",
+        "status": "committed",
+        "commit_ref": "commit-step-48f494e8a6e44d98773dcde3",
+        "validation_ref": "validation-1cbb27e5219f0bdb5bd6",
+        "attempt_id": "attempt_2808a853340abef30084",
+        "completion_report_ref": "completion-report-f2a947f3ad019e9f42351008aab966096e99af8a38f56243ca3d40b0dc7790d6",
+        "observations": [
+          {
+            "identity": "contigs_compatible",
+            "details": {
+              "fasta_only": [],
+              "fasta_sequence_count": 2,
+              "fasta_sequences": [
+                "chr1",
+                "chr2"
+              ],
+              "fasta_vs_gtf_equal": true,
+              "gtf_only": [],
+              "gtf_sequence_count": 2,
+              "gtf_sequences": [
+                "chr1",
+                "chr2"
+              ],
+              "vcf_chrom_body_count": 2,
+              "vcf_contig_header_count": 2,
+              "vcf_contigs": [
+                "chr1",
+                "chr2"
+              ],
+              "vcf_only": [],
+              "vcf_vs_fasta_equal": true,
+              "vcf_vs_gtf_equal": true
+            },
+            "value": true
+          }
+        ],
+        "predicate_findings": [],
+        "parser_evidence_status": "not_saved_in_legacy_receipt",
+        "applicability": "Only the declared observation/predicate and its recorded input scope; no additional scientific conclusion."
+      }
+    ],
+    "after_effect_presence_chars": 9328,
+    "before_effect_presence_chars": 4289,
+    "source_report_object_digest": "e56c71385ecdc865a1633a1e4467eeab0b87b0a16b1e5b5f7c437a5a02f29f1e",
+    "source_validation_object_digest": "69aa1a34245a1f54acc2a39ce5e9c66f052f689737c195120ade02bcd21f078b",
+    "scope": "offline production projection only; no historical Commit or review rewritten"
+  }
+]

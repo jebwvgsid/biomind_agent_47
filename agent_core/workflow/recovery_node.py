@@ -7,6 +7,7 @@ import hashlib
 import inspect
 import json
 import logging
+import time
 from copy import deepcopy
 from dataclasses import replace
 from typing import Any, Callable, Mapping, Sequence
@@ -1435,6 +1436,13 @@ class Schema2RecoveryNode:
             "wire_fingerprint": _sha256_text(_canonical(list(messages))),
             "provider_message_count": len(messages),
         }
+        # Observe only the already-built request; this is not a routing parser.
+        try:
+            envelope = json.loads(str(messages[1]["content"]).split("\n", 1)[1].rsplit("\n", 1)[0])
+            record["operation"] = str(envelope["request"].get("operation") or "final_plan")
+        except (KeyError, IndexError, TypeError, ValueError):
+            record["operation"] = "unknown"
+        request_started = time.monotonic()
         event_context = {
             "task_id": str(task_id),
             "seed_id": str(seed_id),
@@ -1443,6 +1451,7 @@ class Schema2RecoveryNode:
             "compaction_request_id": str(compaction_request_id),
             "request_ordinal": record["request_ordinal"],
             "wire_fingerprint": record["wire_fingerprint"],
+            "operation": record["operation"],
         }
         event_prefix = (
             f"recovery:{seed_id}:{source_epoch_id}:compaction:"
@@ -1481,6 +1490,7 @@ class Schema2RecoveryNode:
                 response = await response
         except (asyncio.CancelledError, KeyboardInterrupt):
             record["status"] = "cancelled"
+            record["elapsed_seconds"] = time.monotonic() - request_started
             observability.append(record)
             await self._emit_event(
                 "recovery_compaction_cancelled",
@@ -1488,6 +1498,7 @@ class Schema2RecoveryNode:
                     **event_context,
                     "event_id": f"{event_prefix}:cancelled",
                     "status": "cancelled",
+                    "elapsed_seconds": record["elapsed_seconds"],
                 },
             )
             raise
@@ -1495,6 +1506,7 @@ class Schema2RecoveryNode:
             record.update({
                 "status": "transport_failed",
                 "error_type": type(exc).__name__,
+                "elapsed_seconds": time.monotonic() - request_started,
             })
             observability.append(record)
             await self._emit_event(
@@ -1540,6 +1552,7 @@ class Schema2RecoveryNode:
         )))
         token_usage = response_metadata.get("token_usage") or response_metadata.get("usage")
         record["status"] = "completed"
+        record["elapsed_seconds"] = time.monotonic() - request_started
         if usage:
             record["usage_metadata"] = usage
         if isinstance(token_usage, Mapping):
@@ -1551,6 +1564,8 @@ class Schema2RecoveryNode:
                 **event_context,
                 "event_id": f"{event_prefix}:completed",
                 "status": "completed",
+                "returned_map_requests": sum(row.get("operation") == "map_source_segment" and row.get("status") == "completed" for row in observability),
+                "provider_wait_seconds": sum(float(row.get("elapsed_seconds") or 0) for row in observability),
                 "usage_metadata": deepcopy(usage),
                 "provider_token_usage": (
                     deepcopy(dict(token_usage))
@@ -2077,7 +2092,9 @@ class Schema2RecoveryNode:
                 await self._emit_event("recovery_compaction_rejected", {"task_id": task_id,
                     "source_epoch_id": context_epoch_id, "applied": False,
                     "error_code": str(getattr(exc, "code", "RECOVERY_CONTEXT_COMPACTION_FAILED")),
-                    "maintenance_calls": len(maintenance.get("calls", ()))})
+                    "maintenance_calls": len(maintenance.get("calls", ())),
+                    "maintenance_elapsed_seconds": maintenance.get("elapsed_seconds", 0),
+                    "fallback": "safe_uncompacted_request" if not bool(boundary_budget.get("hard_block")) and len(prior_fallbacks) < 2 else "structured_stop"})
                 if not bool(boundary_budget.get("hard_block")) and len(prior_fallbacks) < 2:
 
                     failure = (
