@@ -122,6 +122,18 @@ Semantic dispositions:
 - assessment_pending: no defensible assessment is possible from the bounded evidence.
 
 Review rules:
+- observed.produces_bindings includes immutable candidate values with separate acceptance_status.
+  A present candidate is not missing because Commit has not accepted it yet. A task-local
+  database ID does not claim an external biological assembly identity.
+- declared_dependency_facts is limited to current declared dependencies. Consume committed
+  observation/predicate findings within their recorded input scope. Contig compatibility
+  does not establish biological assembly identity; missing or stale findings remain unknown.
+- Compare workspace_contracts to the actual attestation and config assignment. If W is the
+  approved workspace and D=W/data, a path W/data/genomes is consistent with that contract.
+  Never strip a repeated data directory based on appearance or require an alternate layout
+  without contract evidence. A wrong config data.dir still requires correction.
+- A missing read or report projection calls for inspection/review of the same execution;
+  request re-execution only for a concrete action defect, not to reprint a validated fact.
 - Select exactly one semantic disposition; do not choose a graph node or route.
 - Copy report_id exactly from the current CompletionReport. Never invent or reuse
   an ID from another attempt.

@@ -30,6 +30,8 @@ from agent_core.evidence_projection import (
     artifact_collection_facts,
     artifact_registration_facts,
     runtime_observation_facts,
+    candidate_binding_facts,
+    committed_dependency_facts,
 )
 
 
@@ -639,7 +641,14 @@ def reviewer_assessment_identity(report: Mapping[str, Any], plan_state: Mapping[
         "process":{k:v for k,v in (report.get('process_outcome') or {}).items()
                    if k not in {'runtime_observations'}},
         "effects":{k:deepcopy((report.get('effect_presence') or {}).get(k))
-                   for k in ('declared','observed','missing','unexpected','invalid','file_collection')},
+                   for k in ('declared','observed','missing','unexpected','invalid','file_collection',
+                             'declared_dependency_facts','workspace_contracts')},
+        "inspection_sources": sorted({
+            (str((row.get("observation") or {}).get("source_ref") or ""),
+             str((row.get("observation") or {}).get("content_sha256") or
+                 _digest((row.get("observation") or {}).get("result") or {})))
+            for row in (report.get("effect_presence") or {}).get("revalidation_inspection_facts", ())
+            if row.get("observation") and not (row["observation"].get("error"))}),
         "predicates":[{k:deepcopy(row.get(k)) for k in (
             'predicate_id','operator','authoritative_actual','expected','passed','status','reason_code','disposition')}
             for row in report.get('predicate_results') or []]}
@@ -1296,6 +1305,11 @@ def _derive_report_facts(
     }
     observed: Dict[str, list[Dict[str, Any]]] = {key: [] for key in _EFFECT_FIELDS}
     for key in _EFFECT_FIELDS:
+        if key == "produces_bindings":
+            candidates = candidate_binding_facts(plan_state, validation)
+            if candidates:
+                observed[key] = candidates
+                continue
         for raw in observed_envelope.get(key, ()) or ():
             item = dict(raw) if isinstance(raw, Mapping) else {"identity": str(raw)}
             row: Dict[str, Any] = {"identity": _effect_identity(item)}
@@ -1321,6 +1335,15 @@ def _derive_report_facts(
                 if (row["identity"] or path) and row not in observed[key]:
                     observed[key].append(row)
                 continue
+            if key == "workspace_mutations":
+                row.update({name: deepcopy(item[name]) for name in (
+                    "receipt_id", "receipt_ref", "attestation_status", "status",
+                    "postcondition_satisfied", "workspace_id", "binding_revision",
+                    "before_evidence", "after_evidence", "postconditions",
+                ) if name in item})
+                row["evidence_kind"] = "workspace_attestation"
+                observed[key].append(row)
+                continue
             if "value" in item:
                 row.update({
                     "value_present": True,
@@ -1331,6 +1354,7 @@ def _derive_report_facts(
                 row["value_present"] = False
             if row["identity"]:
                 observed[key].append(row)
+    from agent_core.evidence_projection import revalidation_inspection_facts
     effect_presence = {
         "declared": declared,
         "observed": observed,
@@ -1343,6 +1367,10 @@ def _derive_report_facts(
             provenance_ids=list(step.get("output_artifact_ids") or []),
         ),
         "completion_verification_source": "completion_gate_and_predicate_results",
+        "declared_dependency_facts": committed_dependency_facts(plan_state, step),
+        "revalidation_inspection_facts": revalidation_inspection_facts(plan_state, validation),
+        "workspace_contracts": deepcopy(effect.get("workspace_mutations") or []),
+        "candidate_binding_semantics": "Candidate value presence is not Commit acceptance or biological assembly identity.",
     }
     process_outcome["runtime_observations"] = runtime_observation_facts(
         dict(plan_state.get("task_state") or {}),

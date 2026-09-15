@@ -100,6 +100,20 @@ class TypedSupervisor:
         decision_id = str(execution.get("recovery_decision_id") or "")
         if recovery.get("type") == "revalidation_required":
             decision_id = str((recovery.get("payload") or {}).get("decision_id") or decision_id)
+        if recovery.get("type") == "revalidation_required":
+            current = load_plan_state(self.data_path, task_id)
+            saved = ((current.get("task_state") or {}).get("typed_recovery_receipts") or {}).get(decision_id) or {}
+            admitted = saved.get("outcome") or {}
+            original = admitted.get("scope") or {}
+            if (admitted != recovery or any(str(original.get(key) or "") != str(expected or "")
+                    for key, expected in (("task_id", task_id), ("plan_id", current.get("plan_id")),
+                        ("plan_version", current.get("plan_version")), ("step_id", current.get("current_step_id")),
+                        ("action_id", execution.get("action_id")), ("attempt_id", execution.get("attempt_id"))))):
+                return {"verification_outcome": VerificationOutcome(schema_version=1,
+                    type="incomplete_evidence", summary="Revalidation requires the exact admitted original execution.",
+                    scope={"task_id": task_id}, payload={"validation_evidence": {}, "eligible_probe_capabilities": [], "missing_evidence": ["REVALIDATION_ORIGINAL_SCOPE_MISMATCH"],
+                        "execution_record": execution}).to_dict()}
+            verifier_state["validation_evidence"] = {}
         if decision_id:
             from agent_core.workflow.result_resolution import (
                 get_result_resolution_request, result_resolution_reconciliation, register_result_resolution,
@@ -240,16 +254,10 @@ class TypedSupervisor:
                         str(item.get("reason_code") or "SEMANTIC_PREDICATE_FAILED")
                         for item in failed_predicates
                     ],
-                    *list(report.effective_decision.concerns),
                 ]))
                 payload = {
                     "validation_evidence": validation_value,
-                    "completion_gate": {
-                        "passed": False,
-                        "classification": "semantic_completion_rejected",
-                        "plan_version": plan_version,
-                        "evidence_refs": list(semantic_refs),
-                    },
+                    "completion_gate": gate,
                     "completion_report": report_value,
                     "semantic_decision": decision_value,
                     "contract_violations": violations or [
@@ -268,9 +276,8 @@ class TypedSupervisor:
                             + report.effective_decision.decision_id.rsplit("-", 1)[-1][:20]
                         ),
                         "question": (
-                            violations[0]
-                            if violations
-                            else "Additional user information is required."
+                            (list(report.effective_decision.concerns) or violations or
+                             ["Additional user information is required."])[0]
                         ),
                     })
                 summary = (

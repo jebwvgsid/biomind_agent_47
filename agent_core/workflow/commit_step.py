@@ -599,9 +599,18 @@ class CommitStep:
         )
         task_state = dict(candidate.get("task_state") or {})
         receipts = dict(task_state.get("typed_step_commit_receipts") or {})
+        from agent_core.evidence_projection import dependency_input_scope
+        from agent_core.step_effects import canonical_step_effect
         receipts[commit_id] = {
             "schema_version": 1,
             "request_fingerprint": request_fingerprint,
+            "dependency_evidence": {
+                "plan_revision": candidate.get("plan_revision"),
+                "step_effect": canonical_step_effect(step),
+                "input_artifact_ids": list(step.get("input_artifact_ids") or ()),
+                "input_scope": dependency_input_scope(candidate, step),
+                "predicate_findings": [deepcopy(dict(item)) for item in report.predicate_results],
+            },
             "outcome": semantic_outcome.to_dict(),
             "successor_projection": {"current_step_id": successor_step_id,
                 "plan_id": str(candidate.get("plan_id") or ""), "plan_version": str(candidate.get("plan_version") or ""),

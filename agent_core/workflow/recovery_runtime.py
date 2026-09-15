@@ -451,6 +451,7 @@ class RecoveryRuntime:
                 "supersedes_packet_ref": packet.supersedes_packet_ref,
             } if packet.incident_id else {}),
             "recovery_archive_ref": str(state.get("recovery_archive_ref") or ""),
+            "causal_observation_receipts": deepcopy(state.get("recovery_causal_observation_receipts") or []),
             "outcome_digest": _full_hash(outcome.to_dict()),
             "outcome": outcome.to_dict(),
             **({"result_resolution_request": result_resolution_request}

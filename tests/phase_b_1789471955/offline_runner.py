@@ -1,0 +1,88 @@
+"""Explicit offline test bootstrap. Run with the existing Python interpreter."""
+from pathlib import Path
+import builtins
+import io
+import os
+import socket
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+os.environ["SKIP_STARTUP_CHECK"] = "true"
+os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+os.environ["BIOMIND_OFFLINE"] = "1"
+
+
+def forbidden_path(path):
+    if isinstance(path, (str, bytes, os.PathLike)):
+        name = os.fsdecode(path)
+        return Path(name).name.startswith(".env") or Path(name).name == "启动.sh"
+    return False
+
+
+def guard_open(original):
+    def guarded(path, *args, **kwargs):
+        if forbidden_path(path):
+            raise AssertionError("OFFLINE_CREDENTIAL_OR_STARTUP_READ_FORBIDDEN")
+        return original(path, *args, **kwargs)
+    return guarded
+
+
+builtins.open = guard_open(builtins.open)
+io.open = guard_open(io.open)
+os.open = guard_open(os.open)
+
+
+def deny_network(*args, **kwargs):
+    raise AssertionError("OFFLINE_NETWORK_FORBIDDEN")
+
+
+socket.socket.connect = deny_network
+socket.socket.connect_ex = deny_network
+socket.create_connection = deny_network
+# Prevent the optional automatic dotenv loader, before any BioMind import.
+import dotenv
+dotenv.load_dotenv = lambda *a, **k: False
+dotenv.dotenv_values = lambda *a, **k: {}
+import dotenv.main
+dotenv.main.load_dotenv = dotenv.load_dotenv
+dotenv.main.dotenv_values = dotenv.dotenv_values
+
+if "--baseline" in sys.argv:
+    sys.argv.remove("--baseline")
+    import gzip, json, subprocess, importlib.abc, importlib.util
+    before = json.loads(gzip.decompress((ROOT / "docs/implementation/session_1789471955_phase_b_20260915/baseline_targets.json.gz").read_bytes()))
+    for relative in ("agent_core/evidence_projection.py", "agent_core/workflow/commit_step.py",
+                     "agent_core/workflow/recovery_agent.py", "supervisor.py", "agent_core/plan_tracker.py"):
+        before[relative] = subprocess.check_output(["git", "show", "de7037f7a522e5a7350c07b6349b80965b8f49ed:" + relative], cwd=ROOT, text=True)
+    sources = {path[:-3].replace("/", "."): source for path, source in before.items()}
+    class BaselineLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+        def find_spec(self, fullname, path=None, target=None):
+            return importlib.util.spec_from_loader(fullname, self) if fullname in sources else None
+        def create_module(self, spec):
+            return None
+        def exec_module(self, module):
+            module.__file__ = str(ROOT / (module.__name__.replace(".", "/") + ".py"))
+            exec(compile(sources[module.__name__], module.__file__, "exec"), module.__dict__)
+    sys.meta_path.insert(0, BaselineLoader())
+
+if len(sys.argv) > 1 and sys.argv[1] == "--control-child":
+    import asyncio, json
+    from bio_agents import BioAnalystAgent
+    inputs = iter([json.loads(sys.argv[2]), "/exit"])
+    agent = BioAnalystAgent.__new__(BioAnalystAgent)
+    calls = []
+    async def prompt(*args, **kwargs): return next(inputs)
+    async def dispatch(text, task_id, **kwargs):
+        calls.append(text)
+        return {"status":"offline_boundary", "model_calls":0}
+    agent._aprompt_user = prompt
+    agent._run_agent_interrupt_loop = dispatch
+    agent._should_auto_rename_session = lambda *args, **kwargs: False
+    asyncio.run(agent.interactive_mode())
+    print("OFFLINE_CONTROL_RESULT=" + json.dumps({"dispatches":calls,
+        "receipt":agent._last_cli_control_receipt, "model_calls":0}))
+    raise SystemExit(0)
+
+import pytest
+raise SystemExit(pytest.main(["--noconftest", "-q", "-p", "no:cacheprovider", *sys.argv[1:]]))
