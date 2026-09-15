@@ -43,7 +43,7 @@
 IMPLEMENTATION_STATUS: COMPLETE（本单限定框架机制）
 BASE_HEAD_AND_PROTECTED_OVERLAY: adf299e661a4996e6405eefe815b22d99bec0562 + protection.json
 PRODUCTION_COMMITS: 2ee4397d20006c1b427ef4904265be18d13bbbc6
-AUDIT_ARTIFACT_COMMITS: 本分册所属Git提交；完整hash见交付回执/git log
+AUDIT_ARTIFACT_COMMITS: 3bfab57ea5dd2a041aac151e854e046f46c89f09；原始字节校正/最终回执提交另见交付hash
 FINAL_TEST_SOURCE_SIGNATURE: e4052102ae2e605901594cb0269836ed77510d20f05d17b80449663f1accde6b
 REPAIR_REFERENCE_LIFECYCLE_RESULT: FIX PASS；退场但不删账/不重置
 RECOVERY_DIRECTIVE_AND_ACTUAL_MESSAGES_RESULT: PASS；实际第三/四次build请求及工具回执
@@ -72,3 +72,5 @@ REMAINING_LIMITS: 非全项目审计/非裸commit部署/非真实科学成功；
 ```
 
 净生产/测试提交为9个生产或Skill文件＋3个新测试文件，925增行/32删行。相交managed_stop两处旧文案hunk留在工作树，其余安全dirty哈希与其他index逐条相同。材料仅本分册和原主单两入口追加；原事故审计目录保持untracked未收编。大块JSON/终端回放的收集副本按[压缩索引](compressed_artifacts.json)无损gzip，原隔离结果未覆盖；实际审批脚本、wrapper、exit、执行回执、状态与报告存于evidence的preserved目录。
+
+材料提交完整性：初始材料提交 `3bfab57ea5dd2a041aac151e854e046f46c89f09` 的三份未压缩plain PTY流受到Git换行归一化；后续材料提交通过局部 `.gitattributes` 保留原始字节并重存原回执，不改测试源或隔离结果。最终逐blob核对见 `artifact_integrity.json` 和交付回执。

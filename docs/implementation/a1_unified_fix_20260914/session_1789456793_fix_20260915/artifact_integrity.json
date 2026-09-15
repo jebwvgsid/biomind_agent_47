@@ -1,0 +1,35 @@
+{
+  "initial_artifact_commit": "3bfab57ea5dd2a041aac151e854e046f46c89f09",
+  "correction_scope": "Only collected artifact byte integrity; no production/test change",
+  "normalization_differences": [
+    {
+      "path": "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/development/current07/pty-plain-approve/terminal.raw",
+      "stored_before_blob": "cd0724c4bd9214325744788f066a92cfb0317b2b",
+      "original_raw_blob": "887bbf1e76a6e450250d673df53e3a2b3283ed0b",
+      "source_sha256": "1de6dd5f44612e17e26ff09a8192d7dab62ba4eabb18f0c5cd89c8605ec64aae"
+    },
+    {
+      "path": "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/evidence/current07/pty-plain-eof/terminal.raw",
+      "stored_before_blob": "eab5d497cbe32c391e84a68aa8a5245acab76e68",
+      "original_raw_blob": "c0b5822bbd397b879c67ca8d937000042110f297",
+      "source_sha256": "7b399533b9dfe3ae1dbc5459deaf07ad836bb7ebfc3f0c74a0a50ad4399e65d6"
+    },
+    {
+      "path": "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/evidence/current07/pty2-plain-approve/terminal.raw",
+      "stored_before_blob": "bae678e34d2191c41cf12489227c7090be34de42",
+      "original_raw_blob": "7e208e69353f3fe04ef383be3fa499683dc65c06",
+      "source_sha256": "ebb8ef9592a120d585164ecc8a7c79e5a5604251e47cce97187f9f5c9ad00c78"
+    }
+  ],
+  "repair": "Store original raw streams unfiltered; per-directory *.raw -text; verify all artifact git blob hashes after final commit",
+  "original_isolated_results_modified": false,
+  "net_followup_files": [
+    "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/implementation_report.md",
+    "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/.gitattributes",
+    "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/artifact_integrity.json",
+    "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/commit_files.tsv",
+    "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/development/current07/pty-plain-approve/terminal.raw",
+    "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/evidence/current07/pty-plain-eof/terminal.raw",
+    "docs/implementation/a1_unified_fix_20260914/session_1789456793_fix_20260915/evidence/current07/pty2-plain-approve/terminal.raw"
+  ]
+}
