@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013034045696258545,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 5.396940857172012,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002910364419221878,
+    "failure": ""
+  }
+]

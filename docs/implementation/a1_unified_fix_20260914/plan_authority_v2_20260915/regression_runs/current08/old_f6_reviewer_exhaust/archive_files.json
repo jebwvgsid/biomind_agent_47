@@ -1,0 +1,49 @@
+[
+  {
+    "original": "f6-reviewer_exhaust-full.json.gz",
+    "sha256": "096f1613cde34cbda380e779831b87aaed41a6469afbb9e89e3560694393d274",
+    "archive": "f6-reviewer_exhaust-full.json.gz",
+    "archive_sha256": "096f1613cde34cbda380e779831b87aaed41a6469afbb9e89e3560694393d274"
+  },
+  {
+    "original": "f6-reviewer_exhaust-heartbeat.jsonl",
+    "sha256": "bc887c81b66bcecb1a9c0d33164576a1f8b106784d8874d26ccd1ded3213a14c",
+    "archive": "f6-reviewer_exhaust-heartbeat.jsonl.gz",
+    "archive_sha256": "f90372046411d07a031c2a397dd72497495b0bf1b476e7a14d39dd35f61dba03"
+  },
+  {
+    "original": "f6-reviewer_exhaust-summary.json",
+    "sha256": "f069859ef3a7612a01b9a4bee550efb87ebfb3d9397dfd4a3f0753e1a0f68f01",
+    "archive": "f6-reviewer_exhaust-summary.json",
+    "archive_sha256": "f069859ef3a7612a01b9a4bee550efb87ebfb3d9397dfd4a3f0753e1a0f68f01"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "3598ea462c2b0be0b05633ab506b24dd2a5fa47cf9b4fc78f7a12b3fbeb11906",
+    "archive": "invocation.json",
+    "archive_sha256": "3598ea462c2b0be0b05633ab506b24dd2a5fa47cf9b4fc78f7a12b3fbeb11906"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "acae26456a9451b9e34bce49cab991c8b776f168eef062b7966eceb45301e294",
+    "archive": "pytest-results.json",
+    "archive_sha256": "acae26456a9451b9e34bce49cab991c8b776f168eef062b7966eceb45301e294"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "05b556052c8ea9318859c4fbe563a080ae60ef7c5bc5eeec4abc3cdb88be9887",
+    "archive": "run_exit.json",
+    "archive_sha256": "05b556052c8ea9318859c4fbe563a080ae60ef7c5bc5eeec4abc3cdb88be9887"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "4450753e1e9d49eb7629b0a0ec59fb3946439e649c77863a1ff3b0ae5ed8ec62",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "bcd8ed3efe314a6460a37564a3bf07e99085b3f5a8b63fd7c8d63027c7119251"
+  },
+  {
+    "original": "f6-preserved-reviewer_exhaust",
+    "archive": "f6-preserved-reviewer_exhaust.tar.gz",
+    "archive_sha256": "6962868137090842f4081f157af7e4f413a1e11baec363b85b6d4985436ca166"
+  }
+]

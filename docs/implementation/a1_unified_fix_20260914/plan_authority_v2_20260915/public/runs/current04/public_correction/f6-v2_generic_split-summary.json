@@ -1,0 +1,150 @@
+{
+  "mode": "v2_generic_split",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 0,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner"
+  ],
+  "executions": [],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current04/public_correction/f6-v2_generic_split-full.json.gz",
+    "sha256": "57a775c0dc2ae88bb62d2e324eeb1293f81aa26c65bba01880b00b1d58a3e7fc",
+    "raw_sha256": "ee4e0a1a89accde4746e25376a3cec10aa20c05f4c6d34a21c9e42c7ba993a8b"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "Production PlanReview _prompt_user reads through real safe_input; only safe_input reply is fixed to explicit y. Actual code-approval interrupts resume with explicit y.",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 1,
+    "finalize": 0,
+    "prepare": 1,
+    "summary": 0,
+    "terminal_summary_provider": 1
+  },
+  "terminal": {
+    "status": "failed",
+    "terminal_diagnostic": {
+      "error_code": "FRONT_HALF_NODE_HARNESS_ERROR",
+      "stage": "planner",
+      "error_owner": "planner",
+      "reason": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv Planner may organize these same synthetic obligations into independent or combined steps. Input presence/readability and contig compatibility must actually be checked; the newly create。\n\n当前步骤：；执行 attempt：。\n\n没有可确认的命令执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：Front-half node harness failed closed.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：FRONT_HALF_NODE_HARNESS_ERROR；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：没有可确认的清单。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n本次尚未确认生成报告文件。\n\n附加问题：REPORT_CONTRACT_FAILED。\n\n文件交付：not_attempted（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=not_attempted ；stage_status.tsv=not_attempted ；reproduce.sh=not_attempted \n\n来源阶段：recovery；原始错误：FRONT_HALF_NODE_HARNESS_ERROR；停止阶段：planner。\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"\", \"concerns\": [], \"error_code\": \"FRONT_HALF_NODE_HARNESS_ERROR\", \"evidence_refs\": [], \"failure_id\": \"\", \"failure_type\": \"harness_error\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": null, \"source_owner\": \"semantic_review\", \"source_stage\": \"recovery\", \"summary\": \"Front-half node harness failed closed.\"}\n已记录 stop_reason：{\"budget_receipt\": {}, \"detail\": \"LLM_CONTROL_METADATA_LEAK: prohibited control metadata at $LLMPayload.current_focus.planning.violations[0].actual.step_id, $LLMPayload.current_focus.planning.violations[0].machine_evidence.actual.step_id; matched rules: CONTROL_METADATA_KEY_OR_VALUE\", \"error_code\": \"FRONT_HALF_NODE_HARNESS_ERROR\", \"failure_stage\": \"\", \"model_turns\": 0, \"no_progress_rounds\": 0, \"termination_reason\": \"\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_authorized\", \"paths\": {}, \"receipts\": {}, \"reason\": \"NO_CURRENT_DIAGNOSTIC_AUTHORIZATION\"}。内部归档不等于指定文件交付成功。\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "detail": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current04/public_correction/scratch/biomind-plan-local-graph-4_vyysv8/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv Planner may organize these same synthetic obligations into independent or combined steps. Input presence/readability and contig compatibility must actually be checked; the newly create。\n\n当前步骤：；执行 attempt：。\n\n没有可确认的命令执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：Front-half node harness failed closed.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：FRONT_HALF_NODE_HARNESS_ERROR；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：没有可确认的清单。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n本次尚未确认生成报告文件。\n\n附加问题：REPORT_CONTRACT_FAILED。\n\n文件交付：not_attempted（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=not_attempted ；stage_status.tsv=not_attempted ；reproduce.sh=not_attempted \n\n来源阶段：recovery；原始错误：FRONT_HALF_NODE_HARNESS_ERROR；停止阶段：planner。\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"\", \"concerns\": [], \"error_code\": \"FRONT_HALF_NODE_HARNESS_ERROR\", \"evidence_refs\": [], \"failure_id\": \"\", \"failure_type\": \"harness_error\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": null, \"source_owner\": \"semantic_review\", \"source_stage\": \"recovery\", \"summary\": \"Front-half node harness failed closed.\"}\n已记录 stop_reason：{\"budget_receipt\": {}, \"detail\": \"LLM_CONTROL_METADATA_LEAK: prohibited control metadata at $LLMPayload.current_focus.planning.violations[0].actual.step_id, $LLMPayload.current_focus.planning.violations[0].machine_evidence.actual.step_id; matched rules: CONTROL_METADATA_KEY_OR_VALUE\", \"error_code\": \"FRONT_HALF_NODE_HARNESS_ERROR\", \"failure_stage\": \"\", \"model_turns\": 0, \"no_progress_rounds\": 0, \"termination_reason\": \"\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_authorized\", \"paths\": {}, \"receipts\": {}, \"reason\": \"NO_CURRENT_DIAGNOSTIC_AUTHORIZATION\"}。内部归档不等于指定文件交付成功。\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "stop_id": "managed-stop:152d6d92607d06237d64518614b183e190c3b66639486eea14147996f72b1d26",
+      "origin": {
+        "source_stage": "recovery",
+        "source_owner": "semantic_review",
+        "failure_id": "",
+        "failure_type": "harness_error",
+        "error_code": "FRONT_HALF_NODE_HARNESS_ERROR",
+        "summary": "Front-half node harness failed closed.",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "primary_cause": {
+        "source_stage": "recovery",
+        "source_owner": "semantic_review",
+        "failure_id": "",
+        "failure_type": "harness_error",
+        "error_code": "FRONT_HALF_NODE_HARNESS_ERROR",
+        "summary": "Front-half node harness failed closed.",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "latest_failure": {},
+      "prior_completed_work": [],
+      "execution": {
+        "attempt_id": "",
+        "step_id": "",
+        "executed": false,
+        "purpose": "UNKNOWN",
+        "returncode": null,
+        "deterministic_passed": false,
+        "validation_status": "unknown",
+        "reviewer_disposition": "inspection_required",
+        "step_status": "verification_pending",
+        "committed": false,
+        "executed_script_ref": "",
+        "command_body_available": false
+      },
+      "causal_execution": {
+        "status": "UNKNOWN"
+      },
+      "current_candidate": {},
+      "inspection_count_scope": {
+        "local_tool_calls": 0,
+        "known_causal_errors": 0,
+        "history_coverage": "bounded_admitted_causal_chain"
+      },
+      "inspection_failures": [],
+      "stop_reason": {
+        "error_code": "FRONT_HALF_NODE_HARNESS_ERROR",
+        "detail": "LLM_CONTROL_METADATA_LEAK: prohibited control metadata at $LLMPayload.current_focus.planning.violations[0].actual.step_id, $LLMPayload.current_focus.planning.violations[0].machine_evidence.actual.step_id; matched rules: CONTROL_METADATA_KEY_OR_VALUE",
+        "transport_receipt": {},
+        "failure_stage": "",
+        "no_progress_rounds": 0,
+        "model_turns": 0,
+        "tool_calls": 0,
+        "termination_reason": "",
+        "budget_receipt": {}
+      },
+      "internal_diagnostic_delivery": {
+        "status": "not_authorized",
+        "paths": {},
+        "receipts": {},
+        "reason": "NO_CURRENT_DIAGNOSTIC_AUTHORIZATION"
+      },
+      "delivery_status": "not_attempted",
+      "report_paths": {},
+      "report_receipts": {},
+      "persistence_status": "committed",
+      "summary_status": "COMPLETED",
+      "summary_llm_calls": 1,
+      "secondary_causes": [
+        {
+          "stage": "report.contract",
+          "error_code": "REPORT_CONTRACT_FAILED",
+          "exception_type": "ValueError",
+          "detail": "INSPECTION_REPORT_OUTPUT_NOT_APPROVED"
+        }
+      ]
+    }
+  },
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0,
+  "v2_driver_evidence": "/tmp/biomind-plan-authority-v2-current04/public_correction/v2_generic_split-driver.json.gz"
+}

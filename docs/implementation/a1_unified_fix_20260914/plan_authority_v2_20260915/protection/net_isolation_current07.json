@@ -1,0 +1,184 @@
+[
+  {
+    "path": "agent_core/action_runtime.py",
+    "base_sha256": "5cef4102ba4f8b4a3183314dda845d8c92cd5ebbb0b845276c16e1d786618122",
+    "head_sha256": "5cef4102ba4f8b4a3183314dda845d8c92cd5ebbb0b845276c16e1d786618122",
+    "tested_sha256": "fbbe863855481a2dfe97d30ebc672073335d1fa841f3510266a4e40de8750f0c",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "fbbe863855481a2dfe97d30ebc672073335d1fa841f3510266a4e40de8750f0c"
+  },
+  {
+    "path": "agent_core/completion_gate.py",
+    "base_sha256": "9612cda9a880357e9a584301abc2c29f30a554d30f8496209f1c75ba907cc15d",
+    "head_sha256": "9612cda9a880357e9a584301abc2c29f30a554d30f8496209f1c75ba907cc15d",
+    "tested_sha256": "a411bb61208f0534e9a70baa02cc8f86ab8dd2d78abb8d0444ab64367c630466",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "a411bb61208f0534e9a70baa02cc8f86ab8dd2d78abb8d0444ab64367c630466"
+  },
+  {
+    "path": "agent_core/node_context.py",
+    "base_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+    "head_sha256": "9e4de84db915a1739facc22e27b2832ada562403342deb06f0f950196c411f03",
+    "tested_sha256": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff",
+    "committable": true,
+    "protected_chunks_preserved": 5,
+    "intersections": [],
+    "net_commit_sha256": "15ffa90233ce4212537daa67c26216a3ba1b1dc78d0c3c7e04b704e9a3ea8d3c"
+  },
+  {
+    "path": "agent_core/plan_bindings.py",
+    "base_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+    "head_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+    "tested_sha256": "b75d8d53ae873d95aadff7fc5c05b9ef88b4b3076aa4a4a732c4152928b4ac09",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "b75d8d53ae873d95aadff7fc5c05b9ef88b4b3076aa4a4a732c4152928b4ac09"
+  },
+  {
+    "path": "agent_core/plan_contract.py",
+    "base_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+    "head_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+    "tested_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde"
+  },
+  {
+    "path": "agent_core/plan_tracker.py",
+    "base_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+    "head_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+    "tested_sha256": "ad8b9b05143f99abbf3b07ea4770b6bb55e39b1bbd34b0838ab73a8be5fc6f50",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "ad8b9b05143f99abbf3b07ea4770b6bb55e39b1bbd34b0838ab73a8be5fc6f50"
+  },
+  {
+    "path": "agent_core/planner_context.py",
+    "base_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+    "head_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d",
+    "tested_sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a",
+    "committable": false,
+    "protected_chunks_preserved": 5,
+    "intersections": [
+      {
+        "head": [
+          11,
+          11
+        ],
+        "base": [
+          11,
+          63
+        ],
+        "matching_spans": []
+      }
+    ],
+    "net_commit_sha256": null
+  },
+  {
+    "path": "agent_core/skill_manager.py",
+    "base_sha256": "18f742c69745a4a0133cb16b7a9ec42b09b474aefb01e586979cb524d6c9932e",
+    "head_sha256": "18f742c69745a4a0133cb16b7a9ec42b09b474aefb01e586979cb524d6c9932e",
+    "tested_sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92"
+  },
+  {
+    "path": "agent_core/step_effects.py",
+    "base_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+    "head_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+    "tested_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179"
+  },
+  {
+    "path": "bio_agents.py",
+    "base_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+    "head_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+    "tested_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045"
+  },
+  {
+    "path": "prompts/manager.py",
+    "base_sha256": "3dad1832cce3ccb9be48dce64fabcb7bc4a8e5faa12000d1ea1565e328f3d654",
+    "head_sha256": "e8a4eb86dba48bd3cb1eb30670346f7dbad439c08ba72a4f83e11956160c6522",
+    "tested_sha256": "fe29c14293813db6e7a3bc05721ebf72367a6d3a3b2ae4c11c40d8bfe68fbc68",
+    "committable": true,
+    "protected_chunks_preserved": 7,
+    "intersections": [],
+    "net_commit_sha256": "e5255d83b1ba24cd8db56ee174987da26748d543ceee48dac0da85d2bd5432c2"
+  },
+  {
+    "path": "tests/a1_unified_fix/run_final.py",
+    "base_sha256": "4b7411971932215cc4a9f1e5e77fb981424288148ca3c2f79e14671a437ae829",
+    "head_sha256": "4b7411971932215cc4a9f1e5e77fb981424288148ca3c2f79e14671a437ae829",
+    "tested_sha256": "f0d1d9f926aab484cb968595c6d4917af3cc302892edb29ba6a4236fb9dbdba7",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "f0d1d9f926aab484cb968595c6d4917af3cc302892edb29ba6a4236fb9dbdba7"
+  },
+  {
+    "path": "tests/a1_unified_fix/test_f1_f2.py",
+    "base_sha256": "37ddb9573621246ac06e659ae6a920fc0dd0f99678309d9e1ec7e65086ae68ff",
+    "head_sha256": "37ddb9573621246ac06e659ae6a920fc0dd0f99678309d9e1ec7e65086ae68ff",
+    "tested_sha256": "f432a364fdc512fa747aa2444ea654ead93ccc0cf2f409459b21f820109fb7d2",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "f432a364fdc512fa747aa2444ea654ead93ccc0cf2f409459b21f820109fb7d2"
+  },
+  {
+    "path": "tests/a1_unified_fix/test_f6_graph.py",
+    "base_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+    "head_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+    "tested_sha256": "4cecaaf2ff388d56a55e83b79249d3de4c8ecc771b69e3be9817b09f94e3a078",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "4cecaaf2ff388d56a55e83b79249d3de4c8ecc771b69e3be9817b09f94e3a078"
+  },
+  {
+    "path": "tests/cli_model_progress_support.py",
+    "base_sha256": "a50d07e38d4204d1f8faf236b5bb31890dd7c47564e453feeea9672ae2fe33d7",
+    "head_sha256": "a50d07e38d4204d1f8faf236b5bb31890dd7c47564e453feeea9672ae2fe33d7",
+    "tested_sha256": "6d15aed8d1a60fa8208eb205b0b06d89a53b371a7b0cba1d6c29e342693055c0",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "6d15aed8d1a60fa8208eb205b0b06d89a53b371a7b0cba1d6c29e342693055c0"
+  },
+  {
+    "path": "tests/ger_fixture_support.py",
+    "base_sha256": "72568d2b46d6897a5fbbf989603dd1fb4cf1801f2e06713ac2a641b92946fa33",
+    "head_sha256": "72568d2b46d6897a5fbbf989603dd1fb4cf1801f2e06713ac2a641b92946fa33",
+    "tested_sha256": "e63e2f425d696a3f72aafb27041041902630203d409daa1ae904a3a403f1b0a9",
+    "committable": true,
+    "protected_chunks_preserved": 0,
+    "intersections": [],
+    "net_commit_sha256": "e63e2f425d696a3f72aafb27041041902630203d409daa1ae904a3a403f1b0a9"
+  },
+  {
+    "path": "tests/test_plan_local_preaction_convergence_v2.py",
+    "base_sha256": "2084e2e6c57fde49b710a53bc8ceb593572d927c036f87849eba4f7bb7577988",
+    "head_sha256": "98f32db5a1cab39953a8ffd88c076f1e9e9f06dca13aa923036ae325a6cbe275",
+    "tested_sha256": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591",
+    "committable": true,
+    "protected_chunks_preserved": 49,
+    "intersections": [],
+    "net_commit_sha256": "c3c3b5b00dc84ba2ee0f94d9718d590174c111d9ca311427bb6d9fb6382ea2fa"
+  }
+]

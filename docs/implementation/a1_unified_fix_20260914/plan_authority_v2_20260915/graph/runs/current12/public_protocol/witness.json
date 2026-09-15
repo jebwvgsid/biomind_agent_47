@@ -1,0 +1,49 @@
+{
+  "actual_version": "current12",
+  "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+  "run_exit": {
+    "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+    "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current12/export/export_manifest.json",
+    "test_targets": [
+      "-s",
+      "-q",
+      "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+      "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode",
+      "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission"
+    ],
+    "timeout_seconds": 360,
+    "watchdog_is_not_production_termination": true,
+    "returncode": 1,
+    "source_changes_after_run": []
+  },
+  "nodeids": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+      "outcome": "passed",
+      "duration_seconds": 30.717207627370954
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[False]",
+      "outcome": "passed",
+      "duration_seconds": 0.0007096761837601662
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[True]",
+      "outcome": "passed",
+      "duration_seconds": 0.0006962083280086517
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[bash]",
+      "outcome": "failed",
+      "duration_seconds": 7.229019016027451
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[python]",
+      "outcome": "failed",
+      "duration_seconds": 7.474371153861284
+    }
+  ],
+  "excluded_from_archive": [
+    "scratch: configured offline process state, not evidence"
+  ]
+}

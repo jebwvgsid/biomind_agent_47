@@ -1,0 +1,630 @@
+[
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003225039690732956,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00043292436748743057,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010354071855545044,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015564542263746262,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00040220096707344055,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.449276745319366e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014957692474126816,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0026750024408102036,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.21780413389206e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014313403517007828,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008358165621757507,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.798670023679733e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001527983695268631,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003677932545542717,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.843691855669022e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014161504805088043,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003258557990193367,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.29123130440712e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013500452041625977,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1770809656009078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015711039304733276,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003339415416121483,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 3.0882787853479385,
+    "failure": "boundary = 'pre_claim', requests = 0, charged = 0\n\n    @pytest.mark.parametrize('boundary,requests,charged',[('pre_claim',0,0),('pre_claim_lock',0,0),('pre_dispatch',0,1),('atomic',1,1)])\n    def test_cancellation_barriers_prevent_admission(boundary,requests,charged):\n>       result=asyncio.run(scenario([c_fix(),c_fix()], 'FIX_cancel_'+boundary,bounded_rejection=False,\n            setup=barrier_setup(boundary),after_plan=cancellation_facts))\n\ntests/test_plan_cancel_fix.py:77: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002602823078632355,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000344633124768734,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.3631082158535719,
+    "failure": "boundary = 'pre_claim_lock', requests = 0, charged = 0\n\n    @pytest.mark.parametrize('boundary,requests,charged',[('pre_claim',0,0),('pre_claim_lock',0,0),('pre_dispatch',0,1),('atomic',1,1)])\n    def test_cancellation_barriers_prevent_admission(boundary,requests,charged):\n>       result=asyncio.run(scenario([c_fix(),c_fix()], 'FIX_cancel_'+boundary,bounded_rejection=False,\n            setup=barrier_setup(boundary),after_plan=cancellation_facts))\n\ntests/test_plan_cancel_fix.py:77: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016865041106939316,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032523181289434433,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.34188379626721144,
+    "failure": "boundary = 'pre_dispatch', requests = 0, charged = 1\n\n    @pytest.mark.parametrize('boundary,requests,charged',[('pre_claim',0,0),('pre_claim_lock',0,0),('pre_dispatch',0,1),('atomic',1,1)])\n    def test_cancellation_barriers_prevent_admission(boundary,requests,charged):\n>       result=asyncio.run(scenario([c_fix(),c_fix()], 'FIX_cancel_'+boundary,bounded_rejection=False,\n            setup=barrier_setup(boundary),after_plan=cancellation_facts))\n\ntests/test_plan_cancel_fix.py:77: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017596688121557236,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00031788554042577744,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.33720698300749063,
+    "failure": "boundary = 'atomic', requests = 1, charged = 1\n\n    @pytest.mark.parametrize('boundary,requests,charged',[('pre_claim',0,0),('pre_claim_lock',0,0),('pre_dispatch',0,1),('atomic',1,1)])\n    def test_cancellation_barriers_prevent_admission(boundary,requests,charged):\n>       result=asyncio.run(scenario([c_fix(),c_fix()], 'FIX_cancel_'+boundary,bounded_rejection=False,\n            setup=barrier_setup(boundary),after_plan=cancellation_facts))\n\ntests/test_plan_cancel_fix.py:77: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017128325998783112,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023107696324586868,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.4217713912948966,
+    "failure": "response = 'valid'\n\n    @pytest.mark.parametrize('response',['valid','invalid','stop'])\n    def test_post_await_cancel_has_priority_over_any_response(response):\n        from agent_core.plan_contract import planner_stop_wire_example\n        value=c_fix() if response=='valid' else bad('B') if response=='invalid' else planner_stop_wire_example()\n>       result=asyncio.run(scenario([value,c_fix()], 'FIX_cancel_late_'+response,bounded_rejection=False,late_cancel=True,after_plan=cancellation_facts))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_plan_cancel_fix.py:95: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001522023230791092,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002146465703845024,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.34022821113467216,
+    "failure": "response = 'invalid'\n\n    @pytest.mark.parametrize('response',['valid','invalid','stop'])\n    def test_post_await_cancel_has_priority_over_any_response(response):\n        from agent_core.plan_contract import planner_stop_wire_example\n        value=c_fix() if response=='valid' else bad('B') if response=='invalid' else planner_stop_wire_example()\n>       result=asyncio.run(scenario([value,c_fix()], 'FIX_cancel_late_'+response,bounded_rejection=False,late_cancel=True,after_plan=cancellation_facts))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_plan_cancel_fix.py:95: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015119556337594986,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021889526396989822,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.33805464673787355,
+    "failure": "response = 'stop'\n\n    @pytest.mark.parametrize('response',['valid','invalid','stop'])\n    def test_post_await_cancel_has_priority_over_any_response(response):\n        from agent_core.plan_contract import planner_stop_wire_example\n        value=c_fix() if response=='valid' else bad('B') if response=='invalid' else planner_stop_wire_example()\n>       result=asyncio.run(scenario([value,c_fix()], 'FIX_cancel_late_'+response,bounded_rejection=False,late_cancel=True,after_plan=cancellation_facts))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_plan_cancel_fix.py:95: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015578605234622955,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.315833449363708e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.34037123527377844,
+    "failure": "def test_nonsemantic_generation_still_accepts_valid_plan():\n>       result=asyncio.run(scenario([c_fix()], 'FIX_nonsemantic_generation',bounded_rejection=False,before_dispatch=harmless_generation))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_plan_cancel_fix.py:111: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001413309946656227,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.56859439611435e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.4043843746185303,
+    "failure": "def test_admission_first_preserves_history_and_closes_execution():\n>       result=asyncio.run(scenario([c_fix()], 'FIX_admission_first',bounded_rejection=False,after_plan=admission_then_cancel))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_plan_cancel_fix.py:143: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/plan_resource_fix_support.py:74: in scenario\n    declarations = json.loads((AUDIT/'task_declarations.json').read_text())\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = PosixPath('/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json')\nmode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None\n\n    def open(self, mode='r', buffering=-1, encoding=None,\n             errors=None, newline=None):\n        \"\"\"\n        Open the file pointed to by this path and return a file object, as\n        the built-in open() function does.\n        \"\"\"\n        if \"b\" not in mode:\n            encoding = io.text_encoding(encoding)\n>       return io.open(self, mode, buffering, encoding, errors, newline)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current08/export/docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json'\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: FileNotFoundError"
+  },
+  {
+    "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001342790201306343,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_closed_capability_rejects_workspace_mutation_with_source_and_revision",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_closed_capability_rejects_workspace_mutation_with_source_and_revision",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00029024388641119003,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_closed_capability_rejects_workspace_mutation_with_source_and_revision",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01832923199981451,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_closed_capability_rejects_workspace_mutation_with_source_and_revision",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001340620219707489,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018191523849964142,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.017898048274219036,
+    "failure": "self = <test_planner_wgs_skill_contracts.PlannerWGSSkillContractTests testMethod=test_formal_declarations_reach_registry_semantic_and_runtime_views>\n\n    def test_formal_declarations_reach_registry_semantic_and_runtime_views(self):\n        domain_registry = {key: contract for key, contract in self.registry.items()\n                           if contract.get(\"selected_skill_id\") in SKILLS}\n        self.assertEqual(set(domain_registry), {\n            MAPPING + \".execute\", MAPPING + \".inspect\", MAPPING + \".prepare_reference\",\n            GATK + \".execute\", GATK + \".inspect\",\n        })\n        self.assertEqual(set(self.registry), set(domain_registry) | {\"framework.generic.execute\"})\n        self.assertEqual(self.registry[\"framework.generic.execute\"][\"selected_skill_id\"], \"\")\n        self.assertEqual(set(self.registry[\"framework.generic.execute\"][\"supported_tools\"]), {\"bash\", \"python\"})\n        semantic, _ = self.manager.get_semantic_execution_capabilities(list(SKILLS))\n        projected = {\n            item[\"capability_id\"]: item\n            for skill in semantic for item in skill[\"execution_capabilities\"]\n        }\n        for capability_id, contract in domain_registry.items():\n            self.assertIn(\"SKILL.md#generate.execution_capabilities\", contract[\"contract_source\"])\n            self.assertTrue(contract[\"contract_revision\"].endswith(\"-effects-v1\"))\n            self.assertEqual(projected[capability_id], contract)\n            self.assertEqual(contract[\"workspace_mutations\"], [])\n            provider = project_action_runtime_for_provider({\"capability_contract\": contract})\n            self.assertEqual(provider[\"current_action_capability\"][\"contract_source\"], contract[\"contract_source\"])\n            self.assertEqual(provider[\"current_action_capability\"][\"contract_revision\"], contract[\"contract_revision\"])\n        for skill in SKILLS:\n>           self.assertEqual(self.manager.get_skill_meta(skill)[\"version\"], \"1.1.0\")\nE           AssertionError: '1.1.3' != '1.1.0'\nE           - 1.1.3\nE           ?     ^\nE           + 1.1.0\nE           ?     ^\n\ntests/test_planner_wgs_skill_contracts.py:80: AssertionError"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010324176400899887,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inline_typed_side_effect_remains_legal_without_a_static_event_name",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inline_typed_side_effect_remains_legal_without_a_static_event_name",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017273519188165665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inline_typed_side_effect_remains_legal_without_a_static_event_name",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01702963188290596,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inline_typed_side_effect_remains_legal_without_a_static_event_name",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012942776083946228,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inspect_requires_actual_typed_value_without_fabricating_success",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inspect_requires_actual_typed_value_without_fabricating_success",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017353612929582596,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inspect_requires_actual_typed_value_without_fabricating_success",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.018947631120681763,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inspect_requires_actual_typed_value_without_fabricating_success",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001218598335981369,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_legacy_contract_hash_is_unchanged_when_revision_was_not_declared",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_legacy_contract_hash_is_unchanged_when_revision_was_not_declared",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017100945115089417,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_legacy_contract_hash_is_unchanged_when_revision_was_not_declared",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01611100696027279,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_legacy_contract_hash_is_unchanged_when_revision_was_not_declared",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013320334255695343,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_produce_files_binds_only_step_outputs_not_semantic_effect_placeholder",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_produce_files_binds_only_step_outputs_not_semantic_effect_placeholder",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017101038247346878,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_produce_files_binds_only_step_outputs_not_semantic_effect_placeholder",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.019223921932280064,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_produce_files_binds_only_step_outputs_not_semantic_effect_placeholder",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012268032878637314,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_supported_reference_effect_retains_evidence_requirements",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_supported_reference_effect_retains_evidence_requirements",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016819220036268234,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_supported_reference_effect_retains_evidence_requirements",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.017795778810977936,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_supported_reference_effect_retains_evidence_requirements",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012436416000127792,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_unsupported_side_effect_keeps_subcode_objects_and_contract_requirement",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_unsupported_side_effect_keeps_subcode_objects_and_contract_requirement",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017191097140312195,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_unsupported_side_effect_keeps_subcode_objects_and_contract_requirement",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.016508151777088642,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_unsupported_side_effect_keeps_subcode_objects_and_contract_requirement",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016442127525806427,
+    "failure": ""
+  }
+]

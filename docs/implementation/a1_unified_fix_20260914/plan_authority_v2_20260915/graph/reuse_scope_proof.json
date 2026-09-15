@@ -1,0 +1,62 @@
+{
+  "production_changed_files_by_frozen_version": {
+    "current07->current09": [],
+    "current09->current10": [
+      "bio_agents.py"
+    ],
+    "current10->current11": []
+  },
+  "nonproduction_manifest_differences": [
+    {
+      "transition": "current07->current09",
+      "path": "docs/audits/session_1789369423_plan_resource_cycle/candidate_C_rejected.json",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current07->current09",
+      "path": "docs/audits/session_1789369423_plan_resource_cycle/task_declarations.json",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current07->current09",
+      "path": "tests/a1_unified_fix/test_f3_env_progress.py",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current07->current09",
+      "path": "tests/a1_unified_fix/test_f3_late_result.py",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current07->current09",
+      "path": "tests/a1_unified_fix/test_f3_progress.py",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current07->current09",
+      "path": "tests/plan_authority_v2_20260915/export_review.py",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current07->current09",
+      "path": "tests/plan_authority_v2_20260915/resource_artifact_plugin.py",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current07->current09",
+      "path": "tests/test_planner_wgs_skill_contracts.py",
+      "classification": "test_or_public_audit_fixture_not_production"
+    },
+    {
+      "transition": "current10->current11",
+      "path": "tests/plan_authority_v2_20260915/test_graph.py",
+      "classification": "test_or_public_audit_fixture_not_production"
+    }
+  ],
+  "producer_branch_proof": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/protection_runs/current10_vs09_exit_literal_proof.json",
+  "producer_branch_proof_sha256": "b12339c96bc5c2552d14ea8ec823b3a777aa73627f04527c363f4a6f3edd3a1e",
+  "driver_branch_proof": "driver07_to11_equivalence.json",
+  "basis": "For 07 reused cases, no candidate triggered GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH; successful actual actions or missing-observation post-execution failure occurred outside the changed except branch. For 10 language case, production bytes equal 11; blocked-only assertion branch was not entered.",
+  "explicit_nonclaim": "bio_agents.py as a whole is not byte-equal between 07 and 11; only one exception exit constant changed, with its affected language path freshly passed under10.",
+  "static_proof_preflight_correction": "First helper grouped all non-tests as production and asserted on two newly exported public audit JSON fixtures. Corrected classification explicitly excludes docs; only manifest metadata was compared, and those fixture contents were not read or used by this graph audit."
+}

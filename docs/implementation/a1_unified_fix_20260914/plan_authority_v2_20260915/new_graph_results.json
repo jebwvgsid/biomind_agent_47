@@ -1,0 +1,757 @@
+{
+  "unique_scenarios": 8,
+  "passed": 8,
+  "actual_versions_preserved": true,
+  "cases": [
+    {
+      "scenario": "generic_split",
+      "evidence": "graph/runs/current11/generic_split",
+      "version": "current11",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 179.62333585321903,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 8,
+          "reviewer": 8,
+          "recovery": 0
+        },
+        "plan_review_input_count": 1,
+        "approved_actions": 8,
+        "executions": [
+          {
+            "step_id": "probe-731",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_08aec148b3028505093b",
+            "approved_sha256": "9a0fb5311fcc3cb0be0b350b9d871add994eac8e7dbc81572318f6ba7693c8bc",
+            "executed_sha256": "34216946cc30d25b60d837ee8390ae818f159aecb0a4f11ac343773f75dfa12c"
+          },
+          {
+            "step_id": "ledger-205",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_7efb182b0914a5714274",
+            "approved_sha256": "b1c62bffa0eea72f003f219f2252d1552e5ba423d5fd44a16eef53fc3a2c2c6d",
+            "executed_sha256": "a7186007d03281b2030bbb0db820d8f80cfcda42546d9b27a75bb9f44774fdd5"
+          },
+          {
+            "step_id": "gate-418",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_e36479267a5d2c6b7f32",
+            "approved_sha256": "65ca82a7eeb4aae0f8b10f31b0319a1c402461119e4e9d3c38f3ef6e714802b5",
+            "executed_sha256": "80b5a215e957a72812b4575b8bbf79e56a866b22c40127a908927ab2a806bbc4"
+          },
+          {
+            "step_id": "layout-563",
+            "operation": "prepare_database",
+            "rc": 0,
+            "attempt_id": "attempt_6612bb35b1b7523480dc",
+            "approved_sha256": "c744deca213054b434ba8fa858aeb9392094bc87b851c34e90d25f70cc92934a",
+            "executed_sha256": "f745d5b3d8f5dc347e445e0e0982880aa0297d33b6072980ad0431fd98fe2b87"
+          },
+          {
+            "step_id": "compile-927",
+            "operation": "build_database",
+            "rc": 0,
+            "attempt_id": "attempt_e715b0e8e89c131cb7fa",
+            "approved_sha256": "442cceb62c32b1e5e3a4306f2ab089ef4153ffecfbf6fc8b9c8aa00bc4fa9252",
+            "executed_sha256": "9b870e6921b4fb6f2a45c3d55ec9b8b1f4459b56e5a99383d9edc75149f1d2c6"
+          },
+          {
+            "step_id": "effects-146",
+            "operation": "annotate_variants",
+            "rc": 0,
+            "attempt_id": "attempt_863f7d148960c6a55ee3",
+            "approved_sha256": "8aca44db1953f743ed6f7e59625092d20d7f8ddb77c8645002dc64a01da4ba77",
+            "executed_sha256": "290fe80671cbbbe52b79dac8808872faf6bb8c5c403636856ee970d924a31d5f"
+          },
+          {
+            "step_id": "aggregate-832",
+            "operation": "summarize_ann",
+            "rc": 0,
+            "attempt_id": "attempt_dae9b441745b5175447d",
+            "approved_sha256": "569ad621c449b029c2f2595bbff59acf13a673eaa15b54fca01df97e0049de31",
+            "executed_sha256": "14e8c8fa0a7fb3239d683b36e9ee91af42691533c13a668efbfa2ecc663c4294"
+          },
+          {
+            "step_id": "deliver-604",
+            "operation": "finalize_outputs",
+            "rc": 0,
+            "attempt_id": "attempt_e6ff90465e7854bbf469",
+            "approved_sha256": "be4342a8d2d0734356bcfb850f50f6f36f0a2a0fd29c9acb17f0c42a8d4647e4",
+            "executed_sha256": "2005844028fa804d3854745ca4f64c1042b3da0e172aaa9a5b55db9ce9909403"
+          }
+        ],
+        "commits": 8,
+        "final_outcome": "task_verified",
+        "generate_outcome_type": "action_ready",
+        "durable_status": "completed",
+        "gate_counterfactuals": [
+          {
+            "removed_paths": [
+              "/plan_dataflow_receipt"
+            ],
+            "result": {
+              "passed": false,
+              "verdict": "FAIL",
+              "message": "Required workspaces lack an evidenced state chain or their exact bound directory.",
+              "feedback": "Inspect the approved state transitions and workspace evidence for: plan-artifact-bef5199561a24fe061ebe6b6",
+              "missing_artifacts": [
+                "plan-artifact-bef5199561a24fe061ebe6b6"
+              ],
+              "checked_artifacts": [],
+              "classification": "plan_workspace_state_incomplete",
+              "reconciliation": {},
+              "stale_artifacts": [],
+              "invalid_artifacts": [],
+              "attempt_ids": [],
+              "artifact_version_ids": [],
+              "validation_ids": [],
+              "evidence_refs": [],
+              "declared_effects": {},
+              "satisfied_effects": {},
+              "missing_effects": {},
+              "unexpected_effects": {},
+              "invalid_effects": {},
+              "plan_version": ""
+            }
+          },
+          {
+            "removed_paths": [
+              "/provenance_state/attempts/attempt_6612bb35b1b7523480dc/effect_evidence/workspace_mutations",
+              "/provenance_state/attempts/attempt_e715b0e8e89c131cb7fa/effect_evidence/workspace_mutations",
+              "/provenance_state/validations/validation-2b9549bc95aece6b21ea/effect_results/workspace_mutations",
+              "/provenance_state/validations/validation-43b7b27f831b870df042/effect_results/workspace_mutations"
+            ],
+            "result": {
+              "passed": false,
+              "verdict": "FAIL",
+              "message": "The approved Plan still has incomplete results or steps.",
+              "feedback": "Complete or resolve the recorded step evidence: layout-563, compile-927",
+              "missing_artifacts": [],
+              "checked_artifacts": [],
+              "classification": "plan_result_incomplete",
+              "reconciliation": {},
+              "stale_artifacts": [],
+              "invalid_artifacts": [],
+              "attempt_ids": [],
+              "artifact_version_ids": [],
+              "validation_ids": [],
+              "evidence_refs": [],
+              "declared_effects": {},
+              "satisfied_effects": {},
+              "missing_effects": {},
+              "unexpected_effects": {},
+              "invalid_effects": {},
+              "plan_version": ""
+            }
+          }
+        ],
+        "provider_modes": [
+          "native_action_json",
+          "script_block_v1"
+        ],
+        "internal_temp_paths": {
+          "ledger-205": "/tmp/biomind-plan-authority-v2-current11/graph_generic_split/scratch/biomind-plan-local-graph-grw_xb13/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+        },
+        "limits": [
+          "fixed model leaf; no real model reliability claim",
+          "synthetic algorithm; no scientific E2E",
+          "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+          "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+          "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+          "reload uses production readers in this process; not an independent restarted graph"
+        ]
+      },
+      "final_claim_scope": "Real 8-step completion; generic read/local write and implementation temp; strict final gate missing-chain and missing-attestation negatives.",
+      "final_applicability": "SCOPED_FIXED_PROVIDER_REUSE"
+    },
+    {
+      "scenario": "generic_recovery",
+      "evidence": "graph/runs/current11/generic_recovery",
+      "version": "current11",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 211.1743526123464,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 10,
+          "reviewer": 9,
+          "recovery": 1
+        },
+        "plan_review_input_count": 1,
+        "approved_actions": 10,
+        "executions": [
+          {
+            "step_id": "probe-731",
+            "operation": "execute",
+            "rc": 7,
+            "attempt_id": "attempt_9088552ceaf04b93c569",
+            "approved_sha256": "7536d4ac099f01c99d4875111c5860264ca3eedde759f60524467f1923971e00",
+            "executed_sha256": "427ebfb614f5736895a65eee07f64e2b616c9164afb1de2f09a4437909f628d1"
+          },
+          {
+            "step_id": "probe-731",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_063e04adda5944d07ae2",
+            "approved_sha256": "c333a56b8428d25db1646a2c78ce6e9517bbcfa7a7440638b25f8c89f5f4c1c9",
+            "executed_sha256": "2d431bc156193d9839f5d04e5d4c88aef7089a9c9137796930a5b1a1f88696c5"
+          },
+          {
+            "step_id": "ledger-205",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_94b358302e99d3fd97bc",
+            "approved_sha256": "19a93e9855c1f105a515db2b118e990331d463ee4195081b2fe11ee07cd03e61",
+            "executed_sha256": "91d719d35f580b6f6bcc173fc402317d27c813e5eca2954b8dd433ddf21a471f"
+          },
+          {
+            "step_id": "gate-418",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_b26c22bf9a4d5db7d22e",
+            "approved_sha256": "0c92657ef59f1cfbc315df29c02134513448dac3504c550f9d7df92d17fe9cb1",
+            "executed_sha256": "d938c2a7d10212e5664054112f199c1982e711532893842c024432955f89430e"
+          },
+          {
+            "step_id": "independent-944",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_aa833827fb7e8b02c7f8",
+            "approved_sha256": "0c92657ef59f1cfbc315df29c02134513448dac3504c550f9d7df92d17fe9cb1",
+            "executed_sha256": "b2017900f2660cb336a9efa1d7d5a82503b94dafebdc5b4cb22abed0a6ed8b17"
+          },
+          {
+            "step_id": "layout-563",
+            "operation": "prepare_database",
+            "rc": 0,
+            "attempt_id": "attempt_0fe58b5dac68f71301e3",
+            "approved_sha256": "5ee9cc11350ea5beb4d7be216a7e7f2f0b3fbf68159de36dc33856bd8bc86353",
+            "executed_sha256": "eed0c7cc60fe2514c21700b5abce76210936515a75d23dc25f2b29f1e792df33"
+          },
+          {
+            "step_id": "compile-927",
+            "operation": "build_database",
+            "rc": 0,
+            "attempt_id": "attempt_838d1939137b05df2fc0",
+            "approved_sha256": "9ed546a36778a59c1fee053202272c40340208bd34ecc2f951415d296f52d90d",
+            "executed_sha256": "60d787a3b0394f574dc32e97882e46a103e1a1f04c23977ec583e015d3169dc0"
+          },
+          {
+            "step_id": "effects-146",
+            "operation": "annotate_variants",
+            "rc": 0,
+            "attempt_id": "attempt_b87c526b83a9eb379969",
+            "approved_sha256": "17c53833daee23386f4ce6af460b6a6002db01458810bcc130f711637699aab6",
+            "executed_sha256": "0354a226c07c3d146c4a823a876e35b7c86c25bfe2ab84853a41a35c8fbde713"
+          },
+          {
+            "step_id": "aggregate-832",
+            "operation": "summarize_ann",
+            "rc": 0,
+            "attempt_id": "attempt_44832a119adbb3d11bd7",
+            "approved_sha256": "8d1fcf483867c3464f64a248f614229daefd041d2fa0c7ae6d776611acbc3762",
+            "executed_sha256": "7539e0a23bec715c4e7af4534e25612c790ff370500907c257362d1ea470c227"
+          },
+          {
+            "step_id": "deliver-604",
+            "operation": "finalize_outputs",
+            "rc": 0,
+            "attempt_id": "attempt_6f4a12cb54ea1b6f90d7",
+            "approved_sha256": "e6d3864f23ead6d3285c0ea8245ba9e89c9caf60688bdbd847999e827edeae97",
+            "executed_sha256": "4c9c372f0c0803bf73192157a073e180e1cd4d2dfe4e11d234c57c6ad74fe396"
+          }
+        ],
+        "commits": 9,
+        "final_outcome": "task_verified",
+        "generate_outcome_type": "action_ready",
+        "durable_status": "completed",
+        "gate_counterfactuals": [],
+        "provider_modes": [
+          "native_action_json",
+          "script_block_v1"
+        ],
+        "internal_temp_paths": {
+          "ledger-205": "/tmp/biomind-plan-authority-v2-current11/graph_generic_recovery/scratch/biomind-plan-local-graph-8w6a51i8/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+        },
+        "limits": [
+          "fixed model leaf; no real model reliability claim",
+          "synthetic algorithm; no scientific E2E",
+          "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+          "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+          "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+          "reload uses production readers in this process; not an independent restarted graph"
+        ]
+      },
+      "final_claim_scope": "Actual rc7, real Recovery retry, new approval, rc0, all 9 Commit receipts and task_verified.",
+      "final_applicability": "SCOPED_FIXED_PROVIDER_REUSE"
+    },
+    {
+      "scenario": "generic_blocked",
+      "evidence": "graph/runs/current11/generic_blocked",
+      "version": "current11",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 96.68055841233581,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 5,
+          "reviewer": 4,
+          "recovery": 1
+        },
+        "plan_review_input_count": 1,
+        "approved_actions": 5,
+        "executions": [
+          {
+            "step_id": "probe-731",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_cddf9c104e40d365b184",
+            "approved_sha256": "c56afb653e49b5ab83eebccf66e07d4be8a4f9b8ea16e25f8b33678d63c38972",
+            "executed_sha256": "0c4e72cc9d4da71d84f87751fd04cb11fd63d0e126c9a0ab78c6fcbd8f6bb13b"
+          },
+          {
+            "step_id": "ledger-205",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_9b779971305e71117f77",
+            "approved_sha256": "375a81f7b108a219a60987c89b8052e762d740c980a911e56b4c9316c24cb9e9",
+            "executed_sha256": "bc2c5a65ffa8e14e6bd0314db67d4482ba957731e88f8c5c60e789dc64f9ef76"
+          },
+          {
+            "step_id": "gate-418",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_0a5e6690a378a7b47439",
+            "approved_sha256": "a7ad0e205ebccaf38efab50f18f8ebf86dec1b0790393a545a3b8d68f36ea136",
+            "executed_sha256": "4933cb050d14ad26d59c8a6da97a25602b1cf35d224716e52008293ca0cd9bb4"
+          },
+          {
+            "step_id": "layout-563",
+            "operation": "prepare_database",
+            "rc": 0,
+            "attempt_id": "attempt_a9e1335d00429470793b",
+            "approved_sha256": "52297cc62e2eb57ba64ffd8373834a33f5386259aee41d2469f350d7bdfb7b01",
+            "executed_sha256": "8af1d8fabd4426b851fc96782096189a2c25f106215c22a699ae69e703816296"
+          },
+          {
+            "step_id": "compile-927",
+            "operation": "build_database",
+            "rc": 23,
+            "attempt_id": "attempt_dc80fa0a7c89fe7f7acf",
+            "approved_sha256": "abec34d8cf0d3b81bb1cf5ff41ccc3b3bb24a02b996455d5721f490da87ed499",
+            "executed_sha256": "0b64ccedcb7fb50c9d209258f28f3a0f46dd390d169f7ed598729b4f473f9e53"
+          }
+        ],
+        "commits": 4,
+        "final_outcome": null,
+        "generate_outcome_type": "action_ready",
+        "durable_status": "blocked",
+        "gate_counterfactuals": [],
+        "provider_modes": [
+          "native_action_json",
+          "script_block_v1"
+        ],
+        "internal_temp_paths": {
+          "ledger-205": "/tmp/biomind-plan-authority-v2-current11/graph_generic_blocked/scratch/biomind-plan-local-graph-txieqx20/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+        },
+        "limits": [
+          "fixed model leaf; no real model reliability claim",
+          "synthetic algorithm; no scientific E2E",
+          "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+          "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+          "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+          "reload uses production readers in this process; not an independent restarted graph"
+        ]
+      },
+      "final_claim_scope": "Actual rc23 at build; real Recovery legal blocked consumes exact failure packet; primary execution/origin retain actual attempt; no dependent success.",
+      "final_applicability": "SCOPED_FIXED_PROVIDER_REUSE"
+    },
+    {
+      "scenario": "generic_language_mismatch",
+      "evidence": "graph/runs/current14/public_protocol",
+      "version": "current14",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 30.415692855603993,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 2,
+          "reviewer": 0,
+          "recovery": 0
+        },
+        "approved_actions": 0,
+        "executions": [],
+        "commits": 0,
+        "durable_status": "blocked",
+        "generate_outcome_type": "blocked",
+        "reason_code": "GENERATE_STOP_REQUESTED",
+        "actual_receipt": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/run_exit.json",
+        "claim_scope": "Actual valid Python carrier rejected for approved Bash; next fixed leaf copies public blocked_example unchanged; real parser accepts, original GENERATE_STOP_REQUESTED ends blocked, with zero code approval/execution/Commit and three reports."
+      },
+      "final_claim_scope": "Actual valid Python carrier rejected for approved Bash; next fixed leaf copies public blocked_example unchanged; real parser accepts, original GENERATE_STOP_REQUESTED ends blocked, with zero code approval/execution/Commit and three reports.",
+      "final_applicability": "DIRECT_RUN",
+      "superseded_witness": {
+        "evidence": "graph/runs/current10/generic_language_mismatch",
+        "version": "current10",
+        "meaning": "Scope rejection passed; formal blocked obligation failed because the public stop example used wrong discriminator. Original witness retained at old evidence path."
+      }
+    },
+    {
+      "scenario": "renamed_repeated",
+      "evidence": "graph/runs/current07/renamed_repeated",
+      "version": "current07",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 124.25488444417715,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 7,
+          "reviewer": 7,
+          "recovery": 0
+        },
+        "plan_review_input_count": 1,
+        "approved_actions": 7,
+        "executions": [
+          {
+            "step_id": "gate-418",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_f85edcd1a143a248199a",
+            "approved_sha256": "f10858fa73c28075dd49df7e528631c6e291acf0dc02924e67e5fa92525adca0",
+            "executed_sha256": "af4ffb4f3443325939affa03a0c4cafc347f18a1cf98615514fa4e3166662c1b"
+          },
+          {
+            "step_id": "independent-944",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_0ebbf06d0dddc279ef90",
+            "approved_sha256": "f10858fa73c28075dd49df7e528631c6e291acf0dc02924e67e5fa92525adca0",
+            "executed_sha256": "4be5e324fcbf73bdc7d24a5e659c596a8239cef5b57574ab0a44cdb53a9a13fa"
+          },
+          {
+            "step_id": "layout-563",
+            "operation": "prepare_database",
+            "rc": 0,
+            "attempt_id": "attempt_043d56fd1ae7fc368782",
+            "approved_sha256": "8fa24b98c8fecf9c1352159030dc946d0daf5b2be732c3026bcc50a3a40548aa",
+            "executed_sha256": "5189b132aa66e77ab536b1700570e9554112924b7599ce8370b6dae7362f4b5b"
+          },
+          {
+            "step_id": "compile-927",
+            "operation": "build_database",
+            "rc": 0,
+            "attempt_id": "attempt_d0c0ac2bb909992c340a",
+            "approved_sha256": "3169287453bf32fbe94a0073cd689aac456064ba431f9348e629d447c51de2b6",
+            "executed_sha256": "578f89096d15339396c6468af39396b3a856c6bd2acb1f4add033b6b8465a733"
+          },
+          {
+            "step_id": "effects-146",
+            "operation": "annotate_variants",
+            "rc": 0,
+            "attempt_id": "attempt_9f5999bddf036e84c953",
+            "approved_sha256": "f38d6ebdb934ce36c1ef21b0f62846602d527cdb4373077b1d66a5678e612095",
+            "executed_sha256": "ef2e48ae57da842109bb15f1016bb00fb79c180340c6b08b8e06c0e6101eb585"
+          },
+          {
+            "step_id": "aggregate-832",
+            "operation": "summarize_ann",
+            "rc": 0,
+            "attempt_id": "attempt_55bbef91be17ca0f2b5e",
+            "approved_sha256": "55c9cd895e429c3e015f0d158c50004321dcdd28b2b8038f8ee1ba04eac828f0",
+            "executed_sha256": "ee519954471874cef5a7787ee7ae7ee4d3c44ad310e76de6b6da28775d373494"
+          },
+          {
+            "step_id": "deliver-604",
+            "operation": "finalize_outputs",
+            "rc": 0,
+            "attempt_id": "attempt_944ace4e03e02d6611de",
+            "approved_sha256": "1d0df4c18dfb29bc5bb05734f279843e50a6a178e868c4a1418035f714c667ac",
+            "executed_sha256": "51201fb45ee740e49eedf8e3afc66b0b5a68e9f3f1d0c7a08371648e932630d1"
+          }
+        ],
+        "commits": 7,
+        "final_outcome": "task_verified",
+        "generate_outcome_type": "action_ready",
+        "durable_status": "completed",
+        "gate_counterfactuals": [],
+        "provider_modes": [
+          "native_action_json"
+        ],
+        "internal_temp_paths": {},
+        "limits": [
+          "fixed model leaf; no real model reliability claim",
+          "synthetic algorithm; no scientific E2E",
+          "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+          "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+          "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+          "reload uses production readers in this process; not an independent restarted graph"
+        ]
+      },
+      "final_claim_scope": "Real 7-step completion with renamed identifiers and two independent instances of one domain operation.",
+      "final_applicability": "SCOPED_FIXED_PROVIDER_REUSE"
+    },
+    {
+      "scenario": "generic_merged",
+      "evidence": "graph/runs/current07/generic_merged",
+      "version": "current07",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 119.80976629443467,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 7,
+          "reviewer": 7,
+          "recovery": 0
+        },
+        "plan_review_input_count": 1,
+        "approved_actions": 7,
+        "executions": [
+          {
+            "step_id": "probe-731",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_29e8e157ecb6658554ce",
+            "approved_sha256": "f51b1e6085180514b1998babf0e5b1441c944c509d4d611c0f2e9774de9c4da7",
+            "executed_sha256": "6c2441cc255d36cf504d6ea9b1b9060a61552aab25fc9e5ed944adc77c31202d"
+          },
+          {
+            "step_id": "ledger-205",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_0c7d344fdb1296beb86b",
+            "approved_sha256": "6edf995c010fdb4679bee108761bc5e1d744a81fa705e1564a21d7502c4b9f5a",
+            "executed_sha256": "3646e2fceb3cfbaec60ad477b38c2e351d2fa9db04b8514105e29853cfc963f2"
+          },
+          {
+            "step_id": "gate-418",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_3bdf4af1c7d0b8e11e1b",
+            "approved_sha256": "1c432dc39ae8e30fbe224f918a57fa2137b1f7c21045c142a62080e54789e317",
+            "executed_sha256": "d44f0df41e4d21b16633a20e3f78aec9d488c301b9be070904ab1ef27fc5751e"
+          },
+          {
+            "step_id": "layout-563",
+            "operation": "prepare_database",
+            "rc": 0,
+            "attempt_id": "attempt_c8a7769dbd71573a4717",
+            "approved_sha256": "d78677ac44dec772d696ce02ea19b596d3477644ee7c0e7ceeeedd54cc785325",
+            "executed_sha256": "60990f7ddf35d51e76ae8fbcfd29d391f3fc4ec39d4912b9de592c62764fcf05"
+          },
+          {
+            "step_id": "compile-927",
+            "operation": "build_database",
+            "rc": 0,
+            "attempt_id": "attempt_55482ef090bce956b5e9",
+            "approved_sha256": "5c2fdad41400ecfc36cff00c18b882db8ccfa6a28cd23249857884d43b0356f0",
+            "executed_sha256": "ee9fb4738ce10eb1250177a3fdac59358e9826126238d954454abdaa1ae40594"
+          },
+          {
+            "step_id": "effects-146",
+            "operation": "annotate_variants",
+            "rc": 0,
+            "attempt_id": "attempt_7c57ce5c02290680e289",
+            "approved_sha256": "09de01cadd0ccd55a95a71ebc4a77d6984ef53bdc1a6c3bf2ea646bb724b0481",
+            "executed_sha256": "fd6f68ab93321a71be027887b82f55fb0f61557d2892a4c7d200defac395cbee"
+          },
+          {
+            "step_id": "publish-386",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_ec03baf97e977da6e8ff",
+            "approved_sha256": "b01cfe437c71003b5739cac80b7bc0c251d03acd74507bff6606d998060f184b",
+            "executed_sha256": "67383c662628727b68ecf51bbb31426aa343631c3be337d735aeae8d98860774"
+          }
+        ],
+        "commits": 7,
+        "final_outcome": "task_verified",
+        "generate_outcome_type": "action_ready",
+        "durable_status": "completed",
+        "gate_counterfactuals": [],
+        "provider_modes": [
+          "native_action_json",
+          "script_block_v1"
+        ],
+        "internal_temp_paths": {
+          "ledger-205": "/tmp/biomind-plan-authority-v2-current07/graph_generic_merged/scratch/biomind-plan-local-graph-1hggorhk/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+        },
+        "limits": [
+          "fixed model leaf; no real model reliability claim",
+          "synthetic algorithm; no scientific E2E",
+          "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+          "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+          "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+          "reload uses production readers in this process; not an independent restarted graph"
+        ]
+      },
+      "final_claim_scope": "Real 7-step completion; generic script actually parses ANN and generates summary plus reports in one step.",
+      "final_applicability": "SCOPED_FIXED_PROVIDER_REUSE"
+    },
+    {
+      "scenario": "advisory_context",
+      "evidence": "graph/runs/current07/advisory_context",
+      "version": "current07",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 143.30214219819754,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 8,
+          "reviewer": 8,
+          "recovery": 0
+        },
+        "plan_review_input_count": 1,
+        "approved_actions": 8,
+        "executions": [
+          {
+            "step_id": "probe-731",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_7bb946b36fde40924a8b",
+            "approved_sha256": "a04e3210ba1e0fa982b7c4a2c7efca49bef913853b770e3706c30b8e911fb9fe",
+            "executed_sha256": "e405e7b3917933850ee53a35f49c8227de2b639f00499d9c9ad65849d014b962"
+          },
+          {
+            "step_id": "ledger-205",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_d727bfbfe7c1335bbe98",
+            "approved_sha256": "7f3a0f42abef7940eb824caab4e29fbd30e5bbe173ade55ea072a89813267a7a",
+            "executed_sha256": "eaf0a58b5a63a8111c97cf29ec42c711adbb453d5bf23a514f20f66d163e791a"
+          },
+          {
+            "step_id": "gate-418",
+            "operation": "check_contig_compatibility",
+            "rc": 0,
+            "attempt_id": "attempt_3b43ce854e9a5b156c37",
+            "approved_sha256": "6621f304999f2ac9156a1dcd3842c701f5d5c4d1e19d4aca07d37b87c0546227",
+            "executed_sha256": "7c03eedd6dd7ff120369483c89499c6a9533089d8c0862ac545bd006d23acd61"
+          },
+          {
+            "step_id": "layout-563",
+            "operation": "prepare_database",
+            "rc": 0,
+            "attempt_id": "attempt_e66240da08e051dbd784",
+            "approved_sha256": "efac4846c26a7941d342594a7593685d6b88fdf3bb06402b7b033be4ac1ba293",
+            "executed_sha256": "a7ceb48a94ad718a86ff7c20cc6f85e18d2ef9d6a4e62f33ccd9e2cb0fab4305"
+          },
+          {
+            "step_id": "compile-927",
+            "operation": "build_database",
+            "rc": 0,
+            "attempt_id": "attempt_61cfa2ce10e8e919912d",
+            "approved_sha256": "bf929b47f96c23c66df6a135e2f0bebd8da55ad1d193f8749a60d2d106323abe",
+            "executed_sha256": "45e4c208a051a1c10e5786c1db21d7a89dafbc85c9733c00fc2aa24b5fb3625c"
+          },
+          {
+            "step_id": "effects-146",
+            "operation": "annotate_variants",
+            "rc": 0,
+            "attempt_id": "attempt_aa139841812c6b778fe3",
+            "approved_sha256": "a46b3abec2b1bbca89ee0d46558625756fb034fd4c932a1c0fb8fccfc61f6839",
+            "executed_sha256": "98ec8c782cfdbbcd9ad7bfe830029fc4b2c370c9e3c0352afb5feb690de6144c"
+          },
+          {
+            "step_id": "aggregate-832",
+            "operation": "summarize_ann",
+            "rc": 0,
+            "attempt_id": "attempt_f922b99218624eb180c3",
+            "approved_sha256": "50ad64d2cd36cbbc18fe5bdddf513a997150042a5298e01354b611beffa30e27",
+            "executed_sha256": "cc81868a292d833ba3501024cf6ee49cf314cc586247b64186420c68a3e45abe"
+          },
+          {
+            "step_id": "deliver-604",
+            "operation": "finalize_outputs",
+            "rc": 0,
+            "attempt_id": "attempt_53bf1bd1eed16a890282",
+            "approved_sha256": "2b9c90826e9337412db4dfa50952dc0c518c2fcbf96e6b221e6b62dc0de35e12",
+            "executed_sha256": "3878b88f700125ef49431082074ebab3e09f9ccaf77d7770aad567e744cf0dfe"
+          }
+        ],
+        "commits": 8,
+        "final_outcome": "task_verified",
+        "generate_outcome_type": "action_ready",
+        "durable_status": "completed",
+        "gate_counterfactuals": [],
+        "provider_modes": [
+          "native_action_json",
+          "script_block_v1"
+        ],
+        "internal_temp_paths": {
+          "ledger-205": "/tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+        },
+        "limits": [
+          "fixed model leaf; no real model reliability claim",
+          "synthetic algorithm; no scientific E2E",
+          "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+          "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+          "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+          "reload uses production readers in this process; not an independent restarted graph"
+        ]
+      },
+      "final_claim_scope": "Four Skills actually visible for one generic step; warning retained, Planner1/candidate_repairs0/Recovery0; task_verified.",
+      "final_applicability": "SCOPED_FIXED_PROVIDER_REUSE"
+    },
+    {
+      "scenario": "generic_no_observation",
+      "evidence": "graph/runs/current07/generic_no_observation",
+      "version": "current07",
+      "witness": {
+        "status": "PASS",
+        "test_duration_seconds": 32.14806754607707,
+        "counts": {
+          "consultant": 1,
+          "planner": 1,
+          "generate": 1,
+          "reviewer": 1,
+          "recovery": 1
+        },
+        "plan_review_input_count": 1,
+        "approved_actions": 1,
+        "executions": [
+          {
+            "step_id": "probe-731",
+            "operation": "execute",
+            "rc": 0,
+            "attempt_id": "attempt_4f2aa12a0f415c1c998f",
+            "approved_sha256": "def807aab62be91fc549212a0d5ce2bc76490a521e5e4cad151e43ea284039e9",
+            "executed_sha256": "c53b732b1aee5736341926b94356979e7941be10b24bd091ac340e551f65268b"
+          }
+        ],
+        "commits": 0,
+        "final_outcome": null,
+        "generate_outcome_type": "action_ready",
+        "durable_status": "blocked",
+        "gate_counterfactuals": [],
+        "provider_modes": [
+          "script_block_v1"
+        ],
+        "internal_temp_paths": {},
+        "limits": [
+          "fixed model leaf; no real model reliability claim",
+          "synthetic algorithm; no scientific E2E",
+          "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+          "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+          "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+          "reload uses production readers in this process; not an independent restarted graph"
+        ]
+      },
+      "final_claim_scope": "Actual rc0 missing declared observation cannot Commit; actual Reviewer/Recovery blocked and reports.",
+      "final_applicability": "SCOPED_FIXED_PROVIDER_REUSE"
+    }
+  ],
+  "final_candidate": "current14",
+  "version_proof": "graph/reuse_to_final14.json",
+  "not_all_final_version_runs": true
+}

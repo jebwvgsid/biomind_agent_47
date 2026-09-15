@@ -1,0 +1,1975 @@
+{
+  "counting_rule": "Unique pytest nodeid; multiple phase-call/subTest records are not new tests. PTY 14 scenarios counted separately. Development and reruns not added to denominator.",
+  "unique_nodeids": 244,
+  "passed": 243,
+  "failed_known_baseline": 1,
+  "cases": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[empty_id-PLAN_STEP_ID_MISSING]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[duplicate_id-PLAN_STEP_ID_DUPLICATE]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[missing_dependency-PLAN_DEPENDENCY_UNKNOWN]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[cycle-PLAN_DEPENDENCY_CYCLE]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_authority_cannot_be_added_by_resource_use[forged_scope]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_authority_cannot_be_added_by_resource_use[foreign_resource]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_mutate_cannot_promote_an_immutable_resource",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_read_needs_actual_planned_source_even_without_template",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_task_output_necessity_is_not_repeated",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_required_unresolved_path_still_needs_choice[planner_materialized]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_required_unresolved_path_still_needs_choice[model_selectable]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_task_output_cannot_be_downgraded",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_exact_task_output_needs_no_materialization_copy",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_frozen_output_projection_requires_its_reader",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_changed_consumption_is_advice_without_confirmation",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[None-True]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[False-False]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[True-True]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_explicit_optional_local_cannot_feed_unconditional_read",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_required_workspace_needs_a_sealed_planned_state_chain",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_public_generic_example_has_no_legacy_workflow_obligation",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_workflow_fields_keep_real_types[batch_id-value0]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_workflow_fields_keep_real_types[workflow_stage_ids-]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v2_workflow_presence_compatibility_is_unchanged",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+      "outcome": "passed",
+      "category": "components",
+      "evidence": "resource_runs/current07"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_formal_stop.py::test_first_formal_stop_consumes_one_request_without_approval_or_execution",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_components"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_empty_execute"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_fourth_stop"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_fourth_valid"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_example"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan",
+      "outcome": "passed",
+      "category": "public_contract_or_graph",
+      "evidence": "public/runs/current07/public_correction_retry01"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current11/generic_split/run_exit.json",
+      "actual_version": "current11",
+      "source_signature": "0ed5f31bfe4d996a4799559701d63b551ea814bcf005d9e5e6d1e217f5e5ea09",
+      "scope": "Real 8-step completion; generic read/local write and implementation temp; strict final gate missing-chain and missing-attestation negatives."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_recovery]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current11/generic_recovery/run_exit.json",
+      "actual_version": "current11",
+      "source_signature": "0ed5f31bfe4d996a4799559701d63b551ea814bcf005d9e5e6d1e217f5e5ea09",
+      "scope": "Actual rc7, real Recovery retry, new approval, rc0, all 9 Commit receipts and task_verified."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_blocked]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current11/generic_blocked/run_exit.json",
+      "actual_version": "current11",
+      "source_signature": "0ed5f31bfe4d996a4799559701d63b551ea814bcf005d9e5e6d1e217f5e5ea09",
+      "scope": "Actual rc23 at build; real Recovery legal blocked consumes exact failure packet; primary execution/origin retain actual attempt; no dependent success."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/run_exit.json",
+      "actual_version": "current14",
+      "source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+      "scope": "Actual valid Python carrier rejected for approved Bash; next fixed leaf copies public blocked_example unchanged; real parser accepts, original GENERATE_STOP_REQUESTED ends blocked, with zero code approval/execution/Commit and three reports."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[renamed_repeated]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current07/renamed_repeated/run_exit.json",
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "scope": "Real 7-step completion with renamed identifiers and two independent instances of one domain operation."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_merged]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current07/generic_merged/run_exit.json",
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "scope": "Real 7-step completion; generic script actually parses ANN and generates summary plus reports in one step."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[advisory_context]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current07/advisory_context/run_exit.json",
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "scope": "Four Skills actually visible for one generic step; warning retained, Planner1/candidate_repairs0/Recovery0; task_verified."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_no_observation]",
+      "outcome": "passed",
+      "category": "new_graph",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current07/generic_no_observation/run_exit.json",
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "scope": "Actual rc0 missing declared observation cannot Commit; actual Reviewer/Recovery blocked and reports."
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_diagnostic]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current07/old_f6_false_diagnostic"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_required]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current07/old_f6_false_required"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_IT01_six_distinct_snpeff_capabilities_native_argv",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current07/old_f6_normal"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[partial_build]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current07/old_f6_partial_build"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[recovery]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current07/old_f6_recovery"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[reviewer_correct]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current07/old_f6_reviewer_correct"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[empty_observation]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current08/old_f6_empty_observation"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[empty_summary]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current08/old_f6_empty_summary"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[missing_build_dependency]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current08/old_f6_missing_build_dependency"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[no_evidence]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current08/old_f6_no_evidence"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[reviewer_exhaust]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current08/old_f6_reviewer_exhaust"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[reviewer_veto]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current08/old_f6_reviewer_veto"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_python]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current09/old_carrier_legacy_python"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current09/old_carrier_native_code_python"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_bash]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current10/old_carrier_legacy_bash"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[recovery_event_failure]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current10/old_f6_recovery_event_failure"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current10/old_f6_report_conflict"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[voluntary_stop]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current10/old_f6_voluntary_stop"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[aba]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current10/old_repeat_aba"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[env_reorder]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current10/old_repeat_env_reorder"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[repeat]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current10/old_repeat_repeat"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[env_unrelated]",
+      "outcome": "passed",
+      "category": "affected_old_graph",
+      "evidence": "regression_runs/current11/old_repeat_env_unrelated"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current12/f1f2_components",
+      "known_baseline_failure": false,
+      "actual_version": "current12",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_05",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_05",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_05",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_05",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_05",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_05",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_05",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_late_result",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_late_result",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_late_result",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_late_result",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_03",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_04",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_04",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_03",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_02",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_04",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_01",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current10/f3_correction_representatives",
+      "known_baseline_failure": false,
+      "actual_version": "current10",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current10/f3_correction_representatives",
+      "known_baseline_failure": false,
+      "actual_version": "current10",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_03",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_04",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current10/f3_correction_representatives",
+      "known_baseline_failure": false,
+      "actual_version": "current10",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current10/f3_correction_representatives",
+      "known_baseline_failure": false,
+      "actual_version": "current10",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current10/f3_correction_representatives",
+      "known_baseline_failure": false,
+      "actual_version": "current10",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/f3_components_03",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/f3_reload",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_actual_answer_missing_question_and_old_answer_stay_distinct",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[cancel]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[interrupt]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_real_question_interrupt_and_eof_wait_without_answer_or_approval",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[OSError]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[ValueError]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/schema2_hooks",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/schema2_hooks",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/schema2_hooks",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/schema2_hooks",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/schema2_hooks",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/terminal_hook_cancel",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/terminal_hook_exception",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[none]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/terminal_hook_none",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[timeout]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/terminal_hook_timeout",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_legacy_non_safe_enter_keeps_its_original_rule",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_pending_tty_view_cannot_be_replaced_by_late_review_or_detail",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_details_is_same_request_and_does_not_decide",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_eof_is_not_empty_enter",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_finite_prior_writer_batch_precedes_input",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_paste_keeps_details_text_inside_feedback",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[False]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[True]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[close]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[predicate]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_second_reader_and_stale_context_are_rejected",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_urgent_output_preserves_input_for_same_request",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_writer_failure_never_enables_input",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_queued_tty_read_moves_once_to_already_cancelled_plain_owner",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[eof]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[n]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[y]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_unfinished_tty_writer_cannot_create_a_competing_plain_writer",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_existing_safe_automatic_approval_and_unknown_manual_scope",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[   -approve]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[-approve]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[None-reject]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[e: printf edited-edit]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[edit: printf edited-edit]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n-reject]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n: keep the current input-reject]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[please use the current scope-reject]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[q-quit]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[this is pasted feedback\\n/details\\nkeep the original files-reject]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[y-approve]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[yes-approve]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[  ]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[\\n\\n]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[\\x1b[200~\\n\\n]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[\\x1b[200~unfinished\\n]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[y]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_explicit_multiline_preserves_blank_lines_and_next_decision",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_framed_task_tail_and_intentional_identical_feedback[\\x1b[200~first\\nlast\\n\\n\\x1b[201~\\n-first\\nlast\\n\\n]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_framed_task_tail_and_intentional_identical_feedback[\\x1b[200~first\\r\\nlast\\r\\n\\r\\n\\x1b[201~\\r\\n-first\\nlast\\n\\n]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_no_paste_drain_called_by_production_prompt",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_preexisting_pipe_tail_is_retained_and_cannot_approve",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current07/input_approval_askuser",
+      "known_baseline_failure": false,
+      "actual_version": "current07",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current09/cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current09",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6"
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_closed_capability_rejects_workspace_mutation_with_source_and_revision",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+      "outcome": "failed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": true,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inline_typed_side_effect_remains_legal_without_a_static_event_name",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inspect_requires_actual_typed_value_without_fabricating_success",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_legacy_contract_hash_is_unchanged_when_revision_was_not_declared",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_produce_files_binds_only_step_outputs_not_semantic_effect_placeholder",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_supported_reference_effect_retains_evidence_requirements",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_unsupported_side_effect_keeps_subcode_objects_and_contract_requirement",
+      "outcome": "passed",
+      "category": "protection",
+      "evidence": "protection_runs/current08/resource_scope_cancellation",
+      "known_baseline_failure": false,
+      "actual_version": "current08",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[False]",
+      "outcome": "passed",
+      "category": "public_generate_examples",
+      "actual_version": "current14",
+      "source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/run_exit.json",
+      "scope": "Real public response display and structured parser"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[True]",
+      "outcome": "passed",
+      "category": "public_generate_examples",
+      "actual_version": "current14",
+      "source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/run_exit.json",
+      "scope": "Real public response display and structured parser"
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[bash]",
+      "outcome": "passed",
+      "category": "public_generate_examples",
+      "actual_version": "current14",
+      "source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/run_exit.json",
+      "scope": "Fresh handoff, real Plan/PlanReview/Generate, actual published action example unchanged to action_ready and tool scope; no code approval or execution."
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[python]",
+      "outcome": "passed",
+      "category": "public_generate_examples",
+      "actual_version": "current14",
+      "source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+      "evidence": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/run_exit.json",
+      "scope": "Fresh handoff, real Plan/PlanReview/Generate, actual published action example unchanged to action_ready and tool scope; no code approval or execution."
+    }
+  ],
+  "final_candidate": "current14",
+  "final_source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212"
+}

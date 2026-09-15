@@ -1,0 +1,28 @@
+{
+  "classification": "FOURTH_COMPLETE_CANDIDATE_REAL_ADMISSION_REVIEW_PENDING_NO_FIFTH_PASS",
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "returncode": 0,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request",
+      "outcome": "passed",
+      "duration": 17.211024438031018
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 132,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "f6-v2_fourth_valid-summary.json": "ecaaa3aa6fd26f680ad71c8434b4841f856e0311ffaeb6f156814adad1470618",
+    "pytest-results.json": "70b980bc0e189ac05c338aeb76f79f443e2410901c41946a942186a681d1c4d0",
+    "v2-public-fourth-valid.json.gz": "ddef3b18fbfb341b82f160eb18b5e5a6bf61f8f3de08f5fe09456203f785c3eb",
+    "invocation.json": "b28f9591d17533b5592be2c8e0e525c9a009e2fce1a0dd61a3011202d7fe93cb",
+    "v2_fourth_valid-driver.json.gz": "6b3f1d1b77f953713ca7830e776dc67a7d2d6947ceb0792f122f816945f31cc3",
+    "stdout.txt": "e54766cab230d230f643caa864ea58a5c0e98f2780d44f767a1ba72377cc07f0",
+    "f6-v2_fourth_valid-full.json.gz": "1b59602a6d0b1492715aa70dd2cf9a322630ebb352cf4c7a63b6dbe17a049ec7",
+    "run_exit.json": "1784380663241cef1ae596a3d4fb3ad8227f8edf631f0f3991d52654c2b10526"
+  },
+  "copied_scope": "top-level results only; no scratch or nested preserved runtime trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

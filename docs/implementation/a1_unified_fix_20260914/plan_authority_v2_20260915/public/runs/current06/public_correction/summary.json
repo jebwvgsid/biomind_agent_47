@@ -1,0 +1,18 @@
+{
+  "classification": "TEST_WATCHDOG_180S_NOT_PASS_NO_FINAL_LOADED_RECEIPT",
+  "source_signature": "86bd08c596e2c4ef34f9357abb8dfc484216d52f584e1e117813b630ffc41b24",
+  "returncode": 124,
+  "calls": [],
+  "source_changed": false,
+  "loaded_count": null,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "pytest-results.json": "adcf1c5ec136e9c0e7c398393741c365b478f9f5faef5ab5c6b9326360d0ccff",
+    "invocation.json": "eeabf9bbfc27c7028b1f702500da9a17a3fa426dd6f11a64f970daa09d240453",
+    "stdout.txt": "e9e0cd756e37c6be7ad3ebe66a62d9d6f37ad75b7c92ee8b11150e5ad97e080e",
+    "run_exit.json": "9243e3b5a083a6269f5e4ba87da48be9ec74a3185dff75b94d9a1d63cfd0deda"
+  },
+  "copied_scope": "top-level results only; no scratch or nested preserved runtime trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

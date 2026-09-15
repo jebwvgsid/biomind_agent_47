@@ -1,0 +1,127 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.04686837922781706,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.582368620671332,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002731895074248314,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006764661520719528,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8874514568597078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021251291036605835,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006858287379145622,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8027486819773912,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018506590276956558,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000704730860888958,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.8511739671230316,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019297469407320023,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006844960153102875,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.6026770984753966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002286173403263092,
+    "failure": ""
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "tool_session_id": 84536,
+  "observed_errors": [
+    "code-mode host closed its stdout",
+    "write_stdin failed: Unknown process id 84536"
+  ],
+  "classification": "TOOL_SESSION_LOST_NOT_TEST_PASS",
+  "run_exit_present": false,
+  "observed_at_epoch": 1789452524.7105863,
+  "new_tests_may_resume_after_original_external_watchdog_deadline": 1789452714.1230597,
+  "production_failure_not_inferred": true
+}

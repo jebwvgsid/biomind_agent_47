@@ -1,0 +1,49 @@
+[
+  {
+    "original": "f6-recovery_event_failure-full.json.gz",
+    "sha256": "1b71a424751b3edcf69247d1c41a069d30c90d0ac72f7d09b3857e715b33be1c",
+    "archive": "f6-recovery_event_failure-full.json.gz",
+    "archive_sha256": "1b71a424751b3edcf69247d1c41a069d30c90d0ac72f7d09b3857e715b33be1c"
+  },
+  {
+    "original": "f6-recovery_event_failure-heartbeat.jsonl",
+    "sha256": "db17468a53b280f013d54b8221dab9cdf667faf040bced1f2dc57d09d38a47fb",
+    "archive": "f6-recovery_event_failure-heartbeat.jsonl.gz",
+    "archive_sha256": "12bc0cb6a96aa8aaed2f23ae90076230ba6d9aaeb5a8cc20306f5fe900dd395d"
+  },
+  {
+    "original": "f6-recovery_event_failure-summary.json",
+    "sha256": "5637c0955fa920e5d49e3dd450658113a48a0122b9cf594d43b5059f60c17cec",
+    "archive": "f6-recovery_event_failure-summary.json",
+    "archive_sha256": "5637c0955fa920e5d49e3dd450658113a48a0122b9cf594d43b5059f60c17cec"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "ee032e08797b93159fb47949b5ebb3b0665a36641b4f8972b98b4cb01acdee42",
+    "archive": "invocation.json",
+    "archive_sha256": "ee032e08797b93159fb47949b5ebb3b0665a36641b4f8972b98b4cb01acdee42"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "6a61edb61f070e8815ee8b41fff854e8aeb4ed8894a7047ac8ae49e563cd6fa0",
+    "archive": "pytest-results.json",
+    "archive_sha256": "6a61edb61f070e8815ee8b41fff854e8aeb4ed8894a7047ac8ae49e563cd6fa0"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "99af14791ca41454f734e58bdbf813a20fe840bccd6ff3b38cf9310408a14e61",
+    "archive": "run_exit.json",
+    "archive_sha256": "99af14791ca41454f734e58bdbf813a20fe840bccd6ff3b38cf9310408a14e61"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "083dbeb31e1c6bf87e23de46025ccfab1bbf676fb200b82c8af3265fe507664a",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "a2cd8c8cd9d08a3fcea7f66c9cae9e3a7fd179030cb607f422d3abbc3a2cc7aa"
+  },
+  {
+    "original": "f6-preserved-recovery_event_failure",
+    "archive": "f6-preserved-recovery_event_failure.tar.gz",
+    "archive_sha256": "292727027ef754447171ec9d169f627065719b1742d119f5b4a6eeaccc5aaabe"
+  }
+]

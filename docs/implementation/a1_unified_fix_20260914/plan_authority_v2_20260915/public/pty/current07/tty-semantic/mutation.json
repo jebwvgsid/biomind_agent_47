@@ -1,0 +1,30 @@
+{
+  "scenario": "semantic",
+  "readiness": {
+    "ready": false,
+    "identity_matches": false,
+    "reason_code": "PLAN_REVIEW_SUBMISSION_MISSING_OR_STALE",
+    "submission_id": "plan-submission-c045e429baacce3c4efe",
+    "receipt": {
+      "schema_version": 1,
+      "protocol_version": 1,
+      "submission_id": "plan-submission-c045e429baacce3c4efe",
+      "action_type": "submit_plan_for_review",
+      "agent_initiated": true,
+      "status": "pending_review",
+      "task_id": "f5-plan-current",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+      "plan_snapshot_ref": "object:sha256:15bcd0740dd8881ec5cd49d4e7676d07bc712c5aec06147fdb896ee018535b4e",
+      "task_revision": 1,
+      "generated_from_task_revision": 1,
+      "authoritative_user_turn_revision": 1,
+      "planner_claim_id": "planner-call:b5f866de7231b70bd28269681644354369eef0795462aecbcd46282c833a41df",
+      "planning_epoch_id": "planning-epoch-e7afe04d-d095-4755-a6d6-344fd66c93d6",
+      "candidate_scope_id": "candidate-scope-c5b31fe8-bc91-4095-829b-c51235af0b69",
+      "submitted_at": "2026-09-15T06:14:16.603842+00:00"
+    }
+  }
+}

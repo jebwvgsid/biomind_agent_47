@@ -1,0 +1,56 @@
+{
+  "mode": "v2_fourth_stop",
+  "counts": {
+    "consultant": 1,
+    "planner": 3,
+    "generate": 0,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner"
+  ],
+  "executions": [],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current06/public_fourth_stop/f6-v2_fourth_stop-full.json.gz",
+    "sha256": "3718a92df97ee7dabe058e4d175a20bc3be7e17fd4aeb894009192ff4fcd8350",
+    "raw_sha256": "36966683ec1c920b3af36d96ee0978ee87ddb16c16ec5626d227f4070de84f3e"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "Production PlanReview _prompt_user reads through real safe_input; only safe_input reply is fixed to explicit y. Actual code-approval interrupts resume with explicit y.",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 2,
+    "finalize": 1,
+    "prepare": 3,
+    "summary": 1
+  },
+  "terminal": {},
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0,
+  "v2_driver_evidence": "/tmp/biomind-plan-authority-v2-current06/public_fourth_stop/v2_fourth_stop-driver.json.gz"
+}

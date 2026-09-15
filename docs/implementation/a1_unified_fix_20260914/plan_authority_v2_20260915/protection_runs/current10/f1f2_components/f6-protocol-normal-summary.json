@@ -1,0 +1,57 @@
+{
+  "mode": "protocol-normal",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate"
+  ],
+  "executions": [],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current10/protection/f1f2_components/f6-protocol-normal-full.json.gz",
+    "sha256": "e5e5ce6e73a58c553e7ce7c11875d7ad88fbcf313d79a4e816a26224be1a2d4c",
+    "raw_sha256": "1aadde4769de18f740e25e10bd43021e5394497265f3ca7a511b514a1ed0da15"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 4,
+    "finalize": 0,
+    "prepare": 2,
+    "summary": 0
+  },
+  "terminal": {},
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

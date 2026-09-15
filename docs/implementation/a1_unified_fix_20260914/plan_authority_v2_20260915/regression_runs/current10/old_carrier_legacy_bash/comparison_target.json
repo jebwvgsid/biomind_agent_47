@@ -1,0 +1,7 @@
+{
+  "archive_helper_comparison_target": "current08",
+  "archive_helper_comparison_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+  "actual_execution_candidate": "current10",
+  "actual_execution_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+  "note": "classification.loaded_final_equivalence and loaded_modules.*.matches_final_candidate were emitted by the root archive helper against current08. They are not a current10 execution claim or proof; actual loaded bytes match this run export. Root final ledger supplies later bounded branch reuse."
+}

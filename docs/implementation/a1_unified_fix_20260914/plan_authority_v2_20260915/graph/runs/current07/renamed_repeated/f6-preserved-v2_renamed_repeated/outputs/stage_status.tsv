@@ -1,0 +1,9 @@
+# Durable status snapshot taken before this action execution and Commit.
+step_id	operation	observed_status
+gate-418	check_contig_compatibility	passed
+independent-944	check_contig_compatibility	passed
+layout-563	prepare_database	passed
+compile-927	build_database	passed
+effects-146	annotate_variants	passed
+aggregate-832	summarize_ann	passed
+deliver-604	finalize_outputs	running

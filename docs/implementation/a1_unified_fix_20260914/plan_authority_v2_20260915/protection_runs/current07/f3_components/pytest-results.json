@@ -1,0 +1,727 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003776261582970619,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0012621190398931503,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013680476695299149,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025107618421316147,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003129905089735985,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.729433804750443e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020327698439359665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002699410542845726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010585971176624298,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021780095994472504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003094002604484558,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.727105498313904e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021976325660943985,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00013975054025650024,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.530262857675552e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002119438722729683,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001376112923026085,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.707679808139801e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002639293670654297,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00013212207704782486,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.795969188213348e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002132868394255638,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00016257725656032562,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.072385728359222e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001710234209895134,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.43593283742666245,
+    "failure": "env = []\n\n    @pytest.mark.parametrize('env',[[],None,'text'])\n    def test_multiround_same_script_reaches_admission_on_last_allowed_response(env):\n>       asyncio.run(graph_sequence('valid',env))\n\ntests/a1_unified_fix/test_f3_progress.py:157: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002062097191810608,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002547912299633026,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.36065457947552204,
+    "failure": "env = None\n\n    @pytest.mark.parametrize('env',[[],None,'text'])\n    def test_multiround_same_script_reaches_admission_on_last_allowed_response(env):\n>       asyncio.run(graph_sequence('valid',env))\n\ntests/a1_unified_fix/test_f3_progress.py:157: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021679513156414032,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024899281561374664,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.3669294975697994,
+    "failure": "env = 'text'\n\n    @pytest.mark.parametrize('env',[[],None,'text'])\n    def test_multiround_same_script_reaches_admission_on_last_allowed_response(env):\n>       asyncio.run(graph_sequence('valid',env))\n\ntests/a1_unified_fix/test_f3_progress.py:157: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020754151046276093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010011810809373856,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.47027955669909716,
+    "failure": "def test_decoded_empty_object_preserves_json_progress():\n>       asyncio.run(graph_sequence('empty_object',[]))\n\ntests/a1_unified_fix/test_f3_progress.py:161: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001996522769331932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025752000510692596,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.36862093955278397,
+    "failure": "mode = 'blocked'\n\n    @pytest.mark.parametrize('mode',['blocked','repeat','uuid'])\n    def test_formal_stop_and_genuine_repeat(mode):\n>       asyncio.run(graph_sequence(mode,[]))\n\ntests/a1_unified_fix/test_f3_progress.py:166: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000210651196539402,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002539586275815964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.3499008696526289,
+    "failure": "mode = 'repeat'\n\n    @pytest.mark.parametrize('mode',['blocked','repeat','uuid'])\n    def test_formal_stop_and_genuine_repeat(mode):\n>       asyncio.run(graph_sequence(mode,[]))\n\ntests/a1_unified_fix/test_f3_progress.py:166: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002048751339316368,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00030201487243175507,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.35771399457007647,
+    "failure": "mode = 'uuid'\n\n    @pytest.mark.parametrize('mode',['blocked','repeat','uuid'])\n    def test_formal_stop_and_genuine_repeat(mode):\n>       asyncio.run(graph_sequence(mode,[]))\n\ntests/a1_unified_fix/test_f3_progress.py:166: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002185506746172905,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010289344936609268,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005851453170180321,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.434522897005081e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.104275912046432e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006658043712377548,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.9242123067379e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.007472544908524e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006870664656162262,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.409229874610901e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.112192153930664e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.529277665540576,
+    "failure": "def test_legacy_progress_metadata_is_compared_without_rewriting_history():\n>       asyncio.run(graph_sequence('legacy',[]))\n\ntests/a1_unified_fix/test_f3_progress.py:223: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001802649348974228,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010900665074586868,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.3752227211371064,
+    "failure": "def test_exact_rejection_event_replay_does_not_charge_or_rewrite():\n>       asyncio.run(graph_sequence('replay',[]))\n\ntests/a1_unified_fix/test_f3_progress.py:227: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018208008259534836,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002522105351090431,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.4729874236509204,
+    "failure": "mode = 'helper_checkpoint'\n\n    @pytest.mark.parametrize('mode',['helper_checkpoint','syntax_checkpoint'])\n    def test_actual_helper_and_syntax_success_survive_next_real_admission_rejection(mode):\n>       asyncio.run(graph_sequence(mode,[]))\n\ntests/a1_unified_fix/test_f3_progress.py:232: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021667033433914185,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002595558762550354,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.5940687535330653,
+    "failure": "mode = 'syntax_checkpoint'\n\n    @pytest.mark.parametrize('mode',['helper_checkpoint','syntax_checkpoint'])\n    def test_actual_helper_and_syntax_success_survive_next_real_admission_rejection(mode):\n>       asyncio.run(graph_sequence(mode,[]))\n\ntests/a1_unified_fix/test_f3_progress.py:232: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_progress.py:53: in graph_sequence\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021356157958507538,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.1586103057488799,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.283051990903914,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00032594427466392517,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010527856647968292,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00044413749128580093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.274521678686142e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.75331461429596e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001502620056271553,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.722208440303802e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.126161992549896e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011023487895727158,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.811522275209427e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.006952702999115e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001864253543317318,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.574873208999634e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.822737097740173e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0012657204642891884,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.107310324907303e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.719693869352341e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.6340680085122585,
+    "failure": "def test_fully_legal_env_is_admitted_on_last_allowed_response():\n>       asyncio.run(last_chance_graph())\n\ntests/a1_unified_fix/test_f3_env_progress.py:181: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\ntests/a1_unified_fix/test_f3_env_progress.py:134: in last_chance_graph\n    case._configure_one_step_no_output_plan()\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017541740089654922,
+    "failure": ""
+  }
+]

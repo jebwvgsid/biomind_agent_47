@@ -1,0 +1,69 @@
+{
+  "status": "3/3 independent old graph parameter cases PASS",
+  "actual_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+  "bio_agents_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d",
+  "test_f6_graph_sha256": "4cecaaf2ff388d56a55e83b79249d3de4c8ecc771b69e3be9817b09f94e3a078",
+  "export_manifest_sha256": "89e6f8ec1c2591a4fe5338760bcf0e61d6a4d9f8308be34fb2354de5f71b588b",
+  "cases": [
+    {
+      "case": "old_f6_voluntary_stop",
+      "actual_returncode": 0,
+      "pytest_outcome": "passed",
+      "pytest_nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[voluntary_stop]",
+      "business_terminal_status": "blocked",
+      "diagnostic_code": "GENERATE_BLOCKED",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "execution_count": 1,
+      "commit_count": 1,
+      "actual_loaded_modules": 134,
+      "classification": "old_f6_voluntary_stop/classification.json",
+      "scope": "New isolated fixture state and inputs; fixed external replies and synthetic science; mechanism PASS is not scientific or business success."
+    },
+    {
+      "case": "old_f6_report_conflict",
+      "actual_returncode": 0,
+      "pytest_outcome": "passed",
+      "pytest_nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]",
+      "business_terminal_status": "blocked",
+      "diagnostic_code": "F6_SYNTHETIC_CAUSE",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "execution_count": 1,
+      "commit_count": 0,
+      "actual_loaded_modules": 134,
+      "classification": "old_f6_report_conflict/classification.json",
+      "scope": "New isolated fixture state and inputs; fixed external replies and synthetic science; mechanism PASS is not scientific or business success."
+    },
+    {
+      "case": "old_f6_recovery_event_failure",
+      "actual_returncode": 0,
+      "pytest_outcome": "passed",
+      "pytest_nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[recovery_event_failure]",
+      "business_terminal_status": "failed",
+      "diagnostic_code": "RECOVERY_EVENT_PERSISTENCE_FAILED",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "execution_count": 1,
+      "commit_count": 0,
+      "actual_loaded_modules": 134,
+      "classification": "old_f6_recovery_event_failure/classification.json",
+      "scope": "New isolated fixture state and inputs; fixed external replies and synthetic science; mechanism PASS is not scientific or business success."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "current": false,
+  "not_final_acceptance": true,
+  "cases": {
+    "generic_split": {
+      "status": "FAIL_CURRENT_PRODUCTION_FINAL_AUDIT",
+      "returncode": 1,
+      "source_signature": "bf53d050d9800f300aaed29c2a2336e0bc338c30689b50dc65c34c25e6798965",
+      "source_changes_after_run": [],
+      "witness": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/development_current04/generic_split/witness.json",
+      "witness_sha256": "421cb0b898e7f2a8f529b560c8d4b2ecd207da782c3f1dd84fa9c1fe070600fd"
+    },
+    "generic_no_observation": {
+      "status": "PASS",
+      "returncode": 0,
+      "source_signature": "bf53d050d9800f300aaed29c2a2336e0bc338c30689b50dc65c34c25e6798965",
+      "source_changes_after_run": [],
+      "witness": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/development_current04/generic_no_observation/witness.json",
+      "witness_sha256": "f0cd29d27154838c965f896eabeebbb5ad3045b3c87e5bf06c89e7f83ab55bbd"
+    },
+    "generic_language_mismatch": {
+      "status": "FAIL_EXACT_SCOPE_ERROR_LOST_AT_GENERATE",
+      "returncode": 1,
+      "source_signature": "bf53d050d9800f300aaed29c2a2336e0bc338c30689b50dc65c34c25e6798965",
+      "source_changes_after_run": [],
+      "witness": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/development_current04/generic_language_mismatch/witness.json",
+      "witness_sha256": "a4500e0ab3011da44451166e68e09b64a720862df1b30e68aa7e300e2e25a101"
+    }
+  },
+  "not_run": [
+    "renamed_repeated",
+    "generic_merged",
+    "generic_recovery",
+    "generic_blocked",
+    "advisory_context"
+  ],
+  "reason_not_run": "After three bounded runs, a shared FinalAudit mutable-workspace defect and a Generate scope-feedback defect require next unified source; original failures retained.",
+  "test_driver_sha256": "0c10667248cce3e49d908acdfb3157d2c01043b2a87e8d7c18590c25b927d726"
+}

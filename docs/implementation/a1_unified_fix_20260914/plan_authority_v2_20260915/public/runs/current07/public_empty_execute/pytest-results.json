@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013796333223581314,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 27.918016646057367,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0005479156970977783,
+    "failure": ""
+  }
+]

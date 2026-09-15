@@ -1,0 +1,30 @@
+{
+  "mode": "native_action_json",
+  "receipts": [
+    {
+      "example": "blocked_example",
+      "raw": "{\"action_type\": \"blocked\", \"reason\": \"The current rejection remains unresolved after the attempted correction. No new evidence supports another candidate; the unresolved requirement must be checked before continuing. This does not complete the scientific step.\"}",
+      "raw_sha256": "b3164df56c1ca89268a8702e2ac1c090c756d55677b8a59951142d883ff3f81d",
+      "parser_error": {},
+      "parsed_action": {
+        "type": "blocked",
+        "source": "action_json",
+        "reason": "The current rejection remains unresolved after the attempted correction. No new evidence supports another candidate; the unresolved requirement must be checked before continuing. This does not complete the scientific step.",
+        "missing_evidence": []
+      }
+    },
+    {
+      "example": "action_example",
+      "raw": "{\"action_type\": \"blocked\", \"reason\": \"A complete current-step executable example cannot determine these required values from the published frozen context: current_action_capability. No values, handles, paths or scientific facts have been guessed. Resolve these facts before proposing execution.\"}",
+      "raw_sha256": "b2f439e6326eecb3066fc7e7cce3312e96d51b916a00bba07c851fc8b80c69f9",
+      "parser_error": {},
+      "parsed_action": {
+        "type": "blocked",
+        "source": "action_json",
+        "reason": "A complete current-step executable example cannot determine these required values from the published frozen context: current_action_capability. No values, handles, paths or scientific facts have been guessed. Resolve these facts before proposing execution.",
+        "missing_evidence": []
+      }
+    }
+  ],
+  "scope": "Real display and structured parser; script whole-object terminal admission is asserted by the full graph."
+}

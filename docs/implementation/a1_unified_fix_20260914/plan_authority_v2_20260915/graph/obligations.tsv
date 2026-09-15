@@ -1,0 +1,11 @@
+obligation	baseline	V2	evidence
+readonly_input_roles	variant_vcf;reference_fasta;annotation_gtf	same three explicit new synthetic inputs; no formal data reads	real Consultant TaskSpec and provider-visible exact paths
+required_task_output_roles	annotated_vcf;ann_summary;report;reproduce_script;stage_status	all five retained required; actual produced files checked	real handoff + final physical outputs + CompletionGate
+extra_task_output	none	preflight_log required in every scenario except renamed_repeated	explicit appended user goal and real handoff output_contract operation
+contig_compatibility	actual synthetic VCF/ref/GTF comparison	retained; renamed_repeated and generic_recovery also run separate second instance	approved code + actual contigs_compatible evidence per step
+prepare_database	copy actual new reference/GTF into isolated workspace; write config	retained same binding/attester contract; resource_uses mutate is explicit	actual domain helper binding and attested workspace transition
+build_database	new synthetic executable creates predictor; actual readiness observation	retained; required workspace final gate follows actual sealed/attested state	actual rc/evidence + positive final gate; two removal negatives
+annotate_variants	new synthetic ANN records physically produced	retained, only after true predecessor Commit	actual generated VCF + final required output evidence
+summary_and_reporting	separate domain summary and final reports	split keeps separate operations; merged generic action actually parses ANN then writes summary+3 reports	raw approved body, actual helper evidence and Commit
+internal_temporary_file	no dedicated Plan delivery obligation	approved same-directory temp write/stat/rename, not separately declared Plan output	raw Plan absence + actual approval literal path + measured helper facts
+scientific_or_model_claim	fixed model and synthetic science	same explicit limitation; no real-model/science validation	driver limits and guarded invocation

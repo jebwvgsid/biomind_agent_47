@@ -1,0 +1,127 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00029019638895988464,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 30.415692855603993,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00027718953788280487,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026260968297719955,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007121199741959572,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.783729910850525e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018623657524585724,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006986856460571289,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.712483733892441e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[bash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[bash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001619737595319748,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[bash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.91117162629962,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[bash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014579854905605316,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022681988775730133,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.647356376983225,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018015969544649124,
+    "failure": ""
+  }
+]

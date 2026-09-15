@@ -1,0 +1,19 @@
+{
+  "source_signature": "86bd08c596e2c4ef34f9357abb8dfc484216d52f584e1e117813b630ffc41b24",
+  "completed": true,
+  "returncode": 0,
+  "source_changes_after_run": [],
+  "tests": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[no_evidence]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 26.0189946629107,
+      "failure": ""
+    }
+  ],
+  "loaded_modules_count": 134,
+  "loaded_final_equivalence": false,
+  "loaded_proof": "ACTUAL_MODULE_LIST_PLUS_EXPORTED_BYTE_HASH",
+  "mechanism_pass": true
+}

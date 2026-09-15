@@ -1,0 +1,4 @@
+{
+  "root_f1f2": "38 PASS / 1 FAIL: old legacy fixture selected the newly visible generic entry via next(iter(registry)), causing Plan tool-scope rejection before Generate. Fixed test producer now selects the exact single Skill owner; no business assertion removed.",
+  "other_results": "See public/runs/current04, resource_runs/current04, graph/development_current04; all original failures retained."
+}

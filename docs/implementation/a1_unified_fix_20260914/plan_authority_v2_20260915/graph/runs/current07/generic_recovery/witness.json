@@ -1,0 +1,114 @@
+{
+  "status": "PASS",
+  "test_duration_seconds": 222.45382140483707,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 10,
+    "reviewer": 9,
+    "recovery": 1
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 10,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 7,
+      "attempt_id": "attempt_d3b02856d8aeb80fad72",
+      "approved_sha256": "53f12c2b19c295fe1abdc520278b3df5362b2710c4cfcbd49ed7c8f507568c20",
+      "executed_sha256": "354d19f792247b41a19d869a101e01dd32517f7f60fc5744a9d6489b203413ed"
+    },
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_7a07e0c513cb8736ed2c",
+      "approved_sha256": "1c637e73cef3911f3061aa52aa3f6ce36878d0a08445f1b902608d9f837883ca",
+      "executed_sha256": "b7ba249e234954f45881705fe76f35d4d5af15be5b31dbe29bd878948ffd16c2"
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_bcd09c72222296502ea5",
+      "approved_sha256": "ceccb4f598ee4990ace161ec0c1723a88f8d39169eba05c86a4faddac9a4e643",
+      "executed_sha256": "81b37972d3ca0e8cf9ed3bfb1997d68f932faed06b19ac5f4ee544d7658f89ce"
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_d7a662a70dd3717769e1",
+      "approved_sha256": "5c9ebb19c054a8bec05725223d0ed32ca9febc504440a5424a3d382e1c6e8c31",
+      "executed_sha256": "7c541e9c812704f9d6431db7884e0dcbda18464af9aa21c7447442c0c7392fb1"
+    },
+    {
+      "step_id": "independent-944",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_f4615dd754a51b5e6d6c",
+      "approved_sha256": "5c9ebb19c054a8bec05725223d0ed32ca9febc504440a5424a3d382e1c6e8c31",
+      "executed_sha256": "3c57f8c058f6b7ec5743fbf2a3c773d245508c4bb0f828e4f47256b5702ec048"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "rc": 0,
+      "attempt_id": "attempt_313c596167c8d0905158",
+      "approved_sha256": "8339217a416ccb6586e3bbd2cc7b40e513f61e4bb99f46e9b6d2233f4b1ad1e3",
+      "executed_sha256": "a355c9d72d954c777164af9083c1ba2d05e9d56f6814881d385c403623795d0b"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "rc": 0,
+      "attempt_id": "attempt_59171418e022e6644bf9",
+      "approved_sha256": "09e7f3f2ee7177dd6ce881030b1495dab9631816b95bec1773f77ee8d67843f6",
+      "executed_sha256": "f0da4f3e1bdf1e71676af3cc45d9488272b7e8b10c89d8ebcc2c876628079543"
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "rc": 0,
+      "attempt_id": "attempt_123a2afc91640813d488",
+      "approved_sha256": "dd0b5f4ca150d5c7f8486d94ceca55c9410904d1ff5b6d7f887653e0fa492a5b",
+      "executed_sha256": "628313b3609e749241df2a55e047ec04795c5e461f186196a35929cc518fabb6"
+    },
+    {
+      "step_id": "aggregate-832",
+      "operation": "summarize_ann",
+      "rc": 0,
+      "attempt_id": "attempt_9e90d100b8faadf944ff",
+      "approved_sha256": "644c518a47907e5e663899d162bd6ab80c552191887f3933b69556290533d428",
+      "executed_sha256": "e83cb5c47bcce9dfae5c39887347c21c0ffa306bb75a5ebe740fdfc391a85d2a"
+    },
+    {
+      "step_id": "deliver-604",
+      "operation": "finalize_outputs",
+      "rc": 0,
+      "attempt_id": "attempt_8753f5f2f304044230ad",
+      "approved_sha256": "7dd070206263f9e6cbeef3d667a20e670f30903e00b5e9d17f7a17aecce98e5f",
+      "executed_sha256": "d9e6e39cb8cf36fd70d28358349dd06219ef5693274279727447894e8415d690"
+    }
+  ],
+  "commits": 9,
+  "final_outcome": "task_verified",
+  "durable_status": "completed",
+  "gate_counterfactuals": [],
+  "provider_modes": [
+    "native_action_json",
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {
+    "ledger-205": "/tmp/biomind-plan-authority-v2-current07/graph_generic_recovery/scratch/biomind-plan-local-graph-relumkm6/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+  },
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "purpose": "Pointers to retained failures and unexecuted/incomplete runs; no development result is added to final pass denominator. Exact raw records remain in original versioned subdirectories.",
+  "entries": [
+    {
+      "version": "red01/red02",
+      "classification": "BASE_WITNESS",
+      "finding": "V3/generic Plan rejected under BASE; new tests record rejection, not a repair pass",
+      "evidence": "development_evidence"
+    },
+    {
+      "version": "current01",
+      "classification": "NEW_FIXTURE_MODE_ERROR",
+      "finding": "Native JSON was sent under script mode; corrected new driver, original failure retained",
+      "evidence": "graph/runs"
+    },
+    {
+      "version": "current02",
+      "classification": "PRODUCTION_DIRECT_CONSUMER",
+      "finding": "V3 unmarked local artifact incorrectly optional, blocking mandatory consumer; V3 default corrected, v2 preserved",
+      "evidence": "development_evidence"
+    },
+    {
+      "version": "current03",
+      "classification": "NOT_RUN",
+      "finding": "Export/run cohort race; no result counted",
+      "evidence": "development_evidence"
+    },
+    {
+      "version": "current04",
+      "classification": "PRODUCTION_DIRECT_SEAMS",
+      "finding": "Exact public diagnostic scanner, empty-Skill Planner early exit, mutable-final-result mismatch; isolated target witnesses retained",
+      "evidence": "public/runs/current04"
+    },
+    {
+      "version": "current05",
+      "classification": "PRODUCTION_AND_NEW_FIXTURE",
+      "finding": "Unused workflow/batch required fields; obsolete registry position fixtures; watchdog 180 seconds without final success",
+      "evidence": "public/runs/current05"
+    },
+    {
+      "version": "current06",
+      "classification": "PRODUCTION_AND_HARNESS",
+      "finding": "Machine ABI omitted capability diagnostic fields; Python approved carrier path in new fixture; watchdog incomplete; old carrier launch never dispatched",
+      "evidence": "development_evidence/current06"
+    },
+    {
+      "version": "current07",
+      "classification": "KNOWN_BASELINE_ASSERTION",
+      "finding": "WGS old version=1.1.0 assertion disagrees with unchanged BASE Skill versions; not removed",
+      "evidence": "protection_runs/baseline_wgs_version_assertion.json"
+    },
+    {
+      "version": "current07/current08",
+      "classification": "FIXTURE_TARGET_SETUP",
+      "finding": "Exact capability selection and explicitly exported old public JSON/result sink needed for old regressions; old business assertions preserved",
+      "evidence": "protection_runs"
+    },
+    {
+      "version": "current07",
+      "classification": "HOST_INTERRUPTION",
+      "finding": "Some runs externally terminated with no completed child receipt; no claim this is production stop or successful timeout",
+      "evidence": "graph/development_current07_host_interruption"
+    },
+    {
+      "version": "current07",
+      "classification": "PRODUCTION_EXIT_ABI",
+      "finding": "New generic language rejection initially used unregistered typed exit; reused existing binding_operation_contract_mismatch",
+      "evidence": "commits/generic_exit.patch"
+    },
+    {
+      "version": "current10",
+      "classification": "ASSERTION_COVERAGE_GAP",
+      "finding": "Tool mismatch rejected correctly; wrong stop representation caused failed/no-progress END despite weak new pytest PASS; original witness kept, new target strengthened",
+      "evidence": "graph/runs/current10/generic_language_mismatch"
+    },
+    {
+      "version": "current11",
+      "classification": "NEW_BLOCKED_ORACLE",
+      "finding": "Correct consumed packet path may have causal_execution UNKNOWN; strengthened new test to exact observed owner/attempt/consumed packet/report chain rather than fabricate causal identity",
+      "evidence": "graph/driver07_to11.patch"
+    },
+    {
+      "version": "final_protocol_followup",
+      "classification": "PRODUCTION_PUBLIC_EXAMPLE_GAP",
+      "finding": "Current script-mode blocked example had native discriminator; generic Bash action example used Python. Correct same-source projection and test actual published replies with production parsers",
+      "evidence": "graph/late_public_protocol_defects.json"
+    }
+  ]
+}

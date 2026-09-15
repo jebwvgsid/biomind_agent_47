@@ -1,0 +1,45 @@
+{
+  "level": "COMPONENT_FIX",
+  "action": {
+    "type": "execute",
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "-I",
+      "-S",
+      "-c",
+      "\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"renamed_result\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nimport sys\nobserved = len(sys.argv[1:]) == 99\nprint(emit_effect_evidence({'produces_observations': {'renamed_result': {'value': observed, 'items': []}}}))\n",
+      "中文 空格",
+      "single'double\""
+    ]
+  },
+  "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"renamed_result\",\"value\":false,\"items\":[]}]}\n",
+  "stderr": "",
+  "rc": 0,
+  "parser_receipt": {
+    "schema_version": 1,
+    "parser_id": "biomind.structured_effect_emission.v1",
+    "raw_stdout_sha256": "1d010737a304f75abba5e142d344082331a3cdcf30921eb754424d475df76418",
+    "emission_count": 1,
+    "status": "parsed",
+    "issues": [],
+    "emission_contract": {
+      "schema_version": 1,
+      "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+      "approved_observation_ids": [
+        "renamed_result"
+      ],
+      "examples": [
+        "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"renamed_result\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+      ],
+      "rules": [
+        "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+        "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+        "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+        "Reader errors and sampling limits do not establish absence or full scientific validity."
+      ]
+    }
+  },
+  "template_sha256": "6abe36a0fb789b73d0df894a1b8687a794292ababc7d03818c3a72b512efce1d",
+  "formal_approval": "covered in F6 graph, not this serializer/carrier component",
+  "substitution": "only new synthetic computation and known interpreter"
+}

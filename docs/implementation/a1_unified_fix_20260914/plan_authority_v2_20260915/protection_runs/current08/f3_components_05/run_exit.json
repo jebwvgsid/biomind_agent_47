@@ -1,0 +1,19 @@
+{
+  "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+  "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current08/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response"
+  ],
+  "timeout_seconds": 360,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

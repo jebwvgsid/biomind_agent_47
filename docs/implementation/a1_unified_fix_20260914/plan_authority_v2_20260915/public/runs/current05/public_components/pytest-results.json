@@ -1,0 +1,327 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001292610540986061,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006721671670675278,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011122506111860275,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.744226604700089e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003092372789978981,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.335655391216278e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.686151027679443e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.02787376195192337,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010008644312620163,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.450766861438751e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00037070922553539276,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.890017539262772e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.9374760389328e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002992423251271248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.384309381246567e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.462633609771729e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000539078377187252,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.340498268604279e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.599234908819199e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005309609696269035,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.002055644989014e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.269158959388733e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002096940763294697,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.700454443693161e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.304735481739044e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003612935543060303,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.192976772785187e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.791297346353531e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001516612246632576,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.888899952173233e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0010278336703777313,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00017281994223594666,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.601322770118713e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001807175576686859,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001536952331662178,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.888581603765488e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.706826388835907e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005460837855935097,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.514057844877243e-05,
+    "failure": ""
+  }
+]

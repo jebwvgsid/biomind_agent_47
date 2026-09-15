@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013397261500358582,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 17.211024438031018,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00025642290711402893,
+    "failure": ""
+  }
+]

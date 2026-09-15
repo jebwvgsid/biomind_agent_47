@@ -1,0 +1,16 @@
+{
+  "status": "PROTECTED_OVERLAY_DEPENDENCY_NOT_COMMITTABLE_ALONE",
+  "file": "agent_core/planner_context.py",
+  "base_head": "81d10c58a236f44c7987f1913190e6927ce23248",
+  "protected_function": "provider_correction_feedback; added before this task and absent from HEAD",
+  "protected_base_lines": [
+    12,
+    63
+  ],
+  "tested_sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a",
+  "net_patch": "planner_context_v2_over_protected_base.patch",
+  "worktree_changed_by_authorized_V2": true,
+  "old_overlay_coopted": false,
+  "worktree_reset": false,
+  "limitation": "Exact tested production is commits plus protected prior overlay plus this recorded V2 delta; bare commit is not the tested source."
+}

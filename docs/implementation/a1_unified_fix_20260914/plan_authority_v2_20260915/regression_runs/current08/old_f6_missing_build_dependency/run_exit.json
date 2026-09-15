@@ -1,0 +1,13 @@
+{
+  "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+  "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current08/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[missing_build_dependency]"
+  ],
+  "timeout_seconds": 360,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

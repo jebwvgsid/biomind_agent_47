@@ -1,0 +1,135 @@
+{
+  "basis": "baseline/source_manifest.json; current export plus only changed safe bytes",
+  "changes": [
+    {
+      "file": "agent_core/action_runtime.py",
+      "base_sha256": "5cef4102ba4f8b4a3183314dda845d8c92cd5ebbb0b845276c16e1d786618122",
+      "sha256": "fbbe863855481a2dfe97d30ebc672073335d1fa841f3510266a4e40de8750f0c"
+    },
+    {
+      "file": "agent_core/completion_gate.py",
+      "base_sha256": "9612cda9a880357e9a584301abc2c29f30a554d30f8496209f1c75ba907cc15d",
+      "sha256": "a411bb61208f0534e9a70baa02cc8f86ab8dd2d78abb8d0444ab64367c630466"
+    },
+    {
+      "file": "agent_core/node_context.py",
+      "base_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "sha256": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff"
+    },
+    {
+      "file": "agent_core/plan_bindings.py",
+      "base_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+      "sha256": "b75d8d53ae873d95aadff7fc5c05b9ef88b4b3076aa4a4a732c4152928b4ac09"
+    },
+    {
+      "file": "agent_core/plan_contract.py",
+      "base_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+      "sha256": "32b120f61a58eb4d3ff17707bbaf20564f0caedfd1d5c0068a40293bff10f2de"
+    },
+    {
+      "file": "agent_core/plan_tracker.py",
+      "base_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+      "sha256": "87dd286d5717f9da8b4fb7c5dea1525f39bf619b4efcdd4a35f37616ebeb2616"
+    },
+    {
+      "file": "agent_core/planner_context.py",
+      "base_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+      "sha256": "a55a37b9c634205c1c05fffa1ed5045869c657e7da05f359697a4f8e52af8fa8"
+    },
+    {
+      "file": "agent_core/skill_manager.py",
+      "base_sha256": "18f742c69745a4a0133cb16b7a9ec42b09b474aefb01e586979cb524d6c9932e",
+      "sha256": "b4f0133acf5eddb2ac0dd0199a6d23bfaff9c996ba62a03760a20b9af2e89b22"
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "base_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+      "sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179"
+    },
+    {
+      "file": "bio_agents.py",
+      "base_sha256": "56c044c3a7d48153ffbd84a7f12295a90443aba81748a299482df0c4bf26605b",
+      "sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045"
+    },
+    {
+      "file": "prompts/manager.py",
+      "base_sha256": "3dad1832cce3ccb9be48dce64fabcb7bc4a8e5faa12000d1ea1565e328f3d654",
+      "sha256": "5d54037e5e3aa32e2511b7f4c55f5ef066548ffbb0177bfb3fa8a4f545be86c9"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f6_graph.py",
+      "base_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+      "sha256": "4cecaaf2ff388d56a55e83b79249d3de4c8ecc771b69e3be9817b09f94e3a078"
+    },
+    {
+      "file": "tests/ger_fixture_support.py",
+      "base_sha256": "72568d2b46d6897a5fbbf989603dd1fb4cf1801f2e06713ac2a641b92946fa33",
+      "sha256": "4bc2c97d5195c2fed9eeb46841e38663b90a67eaa44553166562a69ca54502d4"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/export_review.py",
+      "base_sha256": null,
+      "sha256": "60a65d989b579eb7277bf0b03a86c368a926064bf76bec5fb640560444929d6b"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_generic_runtime.py",
+      "base_sha256": null,
+      "sha256": "0cd4888940e9c396308b43c55e11991fb3b89da48f25775494c7257962319fa3"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_graph.py",
+      "base_sha256": null,
+      "sha256": "da7999452c8b9b0997e5436f78205fa70d77c330acfcbc251047ba00e3a8005b"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_public_graph.py",
+      "base_sha256": null,
+      "sha256": "7e49e118d850e93b11ec04a59b10fd61a5cfa1f54ade49c6e484a7dabc9da64c"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_public_projection.py",
+      "base_sha256": null,
+      "sha256": "a2ceb3640f355ad96839e5acaa8ab9f41705948a05ec42dc18f80a61d6005111"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_resource_contract.py",
+      "base_sha256": null,
+      "sha256": "20daae70db10aabbed05268fc6c32631a7636af272a7d3acaa109ee9bbc47585"
+    },
+    {
+      "file": "tests/plan_resource_fix_support.py",
+      "base_sha256": null,
+      "sha256": "c7ca098d587fdc9361a30a40494ed9a3a5e4926637408ef741e3a6b12a6c8d13"
+    },
+    {
+      "file": "tests/test_plan_cancel_fix.py",
+      "base_sha256": null,
+      "sha256": "0367e87606240d6ea6512f42b14495c3e096ba487e7b1bfeeaf15568101b2c1d"
+    },
+    {
+      "file": "tests/test_plan_local_preaction_convergence_v2.py",
+      "base_sha256": "2084e2e6c57fde49b710a53bc8ceb593572d927c036f87849eba4f7bb7577988",
+      "sha256": "e196eb0d6da180e6396381e80bb85c22744a42ab097cee22eae5436292686945"
+    },
+    {
+      "file": "tests/test_plan_resource_fix.py",
+      "base_sha256": null,
+      "sha256": "462b4fabd8e9291b45856a8e64de9f1a6bc5e2350308c9a44aa5b5235e29dbde"
+    },
+    {
+      "file": "tests/test_plan_stop_fix.py",
+      "base_sha256": null,
+      "sha256": "b87104da8159f178a2f6c234ae6a63fa159db1f9e8288ef31dad1a174c6e1568"
+    },
+    {
+      "file": "tests/test_planner_resource_protocol_v2.py",
+      "base_sha256": null,
+      "sha256": "6f5ee8906efebd21bbdbd1abf7503b9420ad5b1d501b72c93d5f27f84ee7f580"
+    },
+    {
+      "file": "tests/test_planner_wgs_skill_contracts.py",
+      "base_sha256": null,
+      "sha256": "f2e00aea3aa01cf07d3cc10bc9c6adc4da8450e9b47f33ec9ce5daf62fd979f4"
+    }
+  ]
+}

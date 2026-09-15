@@ -1,0 +1,140 @@
+--- current11/test_graph.py
++++ final/test_graph.py
+@@ -222,8 +222,13 @@
+         if self.scenario == 'generic_language_mismatch' and self.step_generations[identity] > 1:
+             assert self.step_generations[identity] == 2
+             assert 'GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH' in str(messages)
+-            raw = json.dumps({'action_type': 'blocked', 'reason':
+-                'The observed action language does not match the frozen generic tool. This fixed negative witness stops without an approved action.'})
++            assert '{"type":"blocked","reason":' in str(messages)
++            protocol = json.loads(next(m.content for m in messages
++                if getattr(m, 'name', '') == 'current_generate_output_protocol'))
++            assert protocol['mode'] == 'script_block_v1'
++            stop = deepcopy(protocol['blocked_example'])
++            assert set(stop) == {'type', 'reason'} and stop['type'] == 'blocked'
++            raw = json.dumps(stop, ensure_ascii=False)
+             self.provider_candidates.append({'step_id': identity, 'raw_response': raw,
+                 'observed_rejection': 'GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH'})
+             return AIMessage(content=raw, response_metadata={'finish_reason': 'stop'})
+@@ -569,6 +574,13 @@
+                 assert not self.executions and not self.approvals
+                 assert self.counts['generate'] == 2 and self.counts['recovery'] == 0
+                 assert 'GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH' in json.dumps(self.events, default=str)
++                outcome = self.values['generate_outcome']
++                assert outcome['type'] == 'blocked', outcome
++                assert outcome['payload']['reason_code'] == 'GENERATE_STOP_REQUESTED', outcome
++                assert self.durable['task_state']['status'] == 'blocked'
++                assert self.terminal['terminal_diagnostic']['error_code'] == 'GENERATE_STOP_REQUESTED'
++                assert all(self.outputs[role].is_file() for role in ('report', 'reproduce_script', 'stage_status'))
++                assert 'GENERATE_SCRIPT_BLOCK_INVALID' not in json.dumps(self.events, default=str)
+             return self.values, self.durable
+         if self.scenario == 'generic_blocked':
+             declared = self.plan()['steps']
+@@ -776,3 +788,107 @@
+         finally:
+             await case.close()
+     asyncio.run(exercise())
++
++
++@pytest.mark.parametrize('script_protocol', [False, True])
++def test_public_blocked_examples_parse_in_their_actual_mode(script_protocol):
++    from bio_agents import BioAnalystAgent
++    from agent_core.public_response import project_generate_response
++    from agent_core.step_effects import generate_output_examples
++    published = generate_output_examples({}, script_protocol=script_protocol)
++    expected_key = 'type' if script_protocol else 'action_type'
++    receipts = []
++    # The incomplete-context action example is also a public blocked fallback.
++    for name in ('blocked_example', 'action_example'):
++        candidate = published[name]
++        assert set(candidate) == {expected_key, 'reason'}
++        assert candidate[expected_key] == 'blocked' and candidate['reason'].strip()
++        raw = json.dumps(candidate, ensure_ascii=False)
++        display = project_generate_response(raw, script_protocol=script_protocol,
++            response_metadata={'finish_reason': 'stop'})
++        assert not display.error and display.payload == raw
++        parsed = BioAnalystAgent._extract_structured_action_result(display.payload)
++        assert not parsed.error and parsed.action['type'] == 'blocked'
++        assert parsed.action['reason'] == candidate['reason']
++        receipts.append({'example': name, 'raw': raw, 'raw_sha256': digest(raw),
++            'parser_error': parsed.error, 'parsed_action': parsed.action})
++    output = Path(os.environ['BIOMIND_GER_ARTIFACTS'])
++    (output / ('v2-blocked-example-' + published['mode'] + '.json')).write_text(
++        json.dumps({'mode': published['mode'], 'receipts': receipts,
++            'scope': 'Real display and structured parser; script whole-object terminal admission is asserted by the full graph.'},
++            ensure_ascii=False, indent=2) + '\n')
++
++
++@pytest.mark.parametrize('tool', ['bash', 'python'])
++def test_actual_request_generic_example_reaches_real_generate_admission(tool):
++    class ExampleGraph(AuthorityGraph):
++        def __init__(self):
++            super().__init__('generic_split')
++            self.mode = 'v2_public_example_' + tool
++            self.selected_example = {}
++
++        def plan(self):
++            candidate = super().plan()
++            candidate['steps'][0]['tool'] = tool
++            return candidate
++
++        async def provider(self, messages, *, stage, **kwargs):
++            if stage != 'generate':
++                return await super().provider(messages, stage=stage, **kwargs)
++            self.counts[stage] += 1
++            assert self.counts[stage] == 1
++            _, step = self.current_step(approved=True)
++            assert step['step_id'] == 'probe-731' and step['tool'] == tool
++            protocol = json.loads(next(m.content for m in messages
++                if getattr(m, 'name', '') == 'current_generate_output_protocol'))
++            assert protocol['mode'] == 'script_block_v1'
++            raw = json.dumps(protocol['action_example'], ensure_ascii=False)
++            self.selected_example = {'request_messages': [
++                {'type': m.type, 'name': getattr(m, 'name', None), 'content': m.content} for m in messages],
++                'step': deepcopy(step), 'protocol': protocol, 'raw_response': raw, 'raw_sha256': digest(raw)}
++            return AIMessage(content=raw, response_metadata={'finish_reason': 'stop'})
++
++    async def exercise():
++        import bio_agents
++        from agent_core.plan_tracker import load_plan_state
++        case = ExampleGraph()
++        await case.setup()
++        async def pulse():
++            while True:
++                await asyncio.sleep(.001)
++        case.service = asyncio.create_task(pulse())
++        try:
++            runner = case.case._runner_state(case.task)
++            runner['workflow_routing_schema_version'] = 2
++            runner['messages'] = [HumanMessage(content=case.goal)]
++            app = case.agent._app_for_task(case.task, runner)
++            config = {'configurable': {'thread_id': case.task}, 'recursion_limit': 45}
++            stream = app.astream(runner, config=config, stream_mode='updates')
++            with patch.object(bio_agents, 'run_script_path', case.execute):
++                try:
++                    async for event in stream:
++                        case.events.append(deepcopy(event))
++                        if 'generate' in event:
++                            outcome = event['generate']['generate_outcome']
++                            case.values = app.get_state(config).values
++                            case.durable = load_plan_state(case.root, case.task)
++                            assert outcome['type'] == 'action_ready', outcome
++                            action = outcome['payload']['action']
++                            assert action['language'] == tool
++                            assert action['execution_capability_id'] == GENERIC
++                            assert case.plan_review_inputs and not case.executions and not case.approvals and not case.commits
++                            assert case.counts['planner'] == case.counts['generate'] == 1
++                            assert not case.durable['task_state'].get('typed_step_commit_receipts')
++                            case.selected_example.update(outcome=outcome, pending_action=action,
++                                plan_review_input_count=len(case.plan_review_inputs),
++                                scope='Actual request example unchanged through real display/parser/helper/tool-scope admission; no code approval or execution, no scientific result.')
++                            return
++                finally:
++                    await stream.aclose()
++            raise AssertionError('Published example did not reach actual Generate admission')
++        finally:
++            output = Path(os.environ['BIOMIND_GER_ARTIFACTS'])
++            (output / ('v2-public-example-' + tool + '.json')).write_text(
++                json.dumps(case.selected_example, ensure_ascii=False, indent=2, default=str) + '\n')
++            await case.close()
++    asyncio.run(exercise())

@@ -1,0 +1,1 @@
+BIOMIND_EFFECT_EVIDENCE_JSON={"schema_version":1,"produces_observations":[{"identity":"input_probe","value":true,"details":{"input_names":["两样本.vcf","新参考.fa","新注释.gtf"],"byte_counts":[149,38,53]}}]}

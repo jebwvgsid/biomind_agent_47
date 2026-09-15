@@ -1,0 +1,174 @@
+{
+  "classification": "REAL_KERNEL_PTY_EXISTING_UI_PROTECTION_PASS",
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "mode": "plain",
+  "scenario": "feedback",
+  "returncode": 0,
+  "actual_kernel_pty": true,
+  "checks": {
+    "passed": true,
+    "checks": {
+      "child_rc0": true,
+      "business_done": true,
+      "source_unchanged": true,
+      "one_frozen_plan": true,
+      "no_execution_or_code_approval": true,
+      "fixed_provider_only": true,
+      "full_body_bound_before_confirmation": true,
+      "default_body_visible": true,
+      "correct_acceptance": true,
+      "feedback_not_approval": true,
+      "multiline_feedback_is_one_input": true
+    }
+  },
+  "parent_and_child_harness_sha256": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538",
+  "source_unchanged": true,
+  "loaded_count": 117,
+  "raw_files": {
+    "before-decision.screen.txt": {
+      "original_sha256": "8a3e28da5d319668c966f2856214cd83a42e813f02103ec9238df9783df76ba1",
+      "bytes": 1786,
+      "archive_path": "before-decision.screen.txt",
+      "archive_sha256": "8a3e28da5d319668c966f2856214cd83a42e813f02103ec9238df9783df76ba1"
+    },
+    "business.json": {
+      "original_sha256": "82978ee53f0df123a1566f0c22c438db10b370aed53cc42759affce4f8e15fb6",
+      "bytes": 149885,
+      "archive_path": "business.json",
+      "archive_sha256": "82978ee53f0df123a1566f0c22c438db10b370aed53cc42759affce4f8e15fb6"
+    },
+    "checks.json": {
+      "original_sha256": "e832e86404f93bb613a5068a2b4ba39b19544148b2a194f8222ba9e7c006a03d",
+      "bytes": 418,
+      "archive_path": "checks.json",
+      "archive_sha256": "e832e86404f93bb613a5068a2b4ba39b19544148b2a194f8222ba9e7c006a03d"
+    },
+    "default.screen.txt": {
+      "original_sha256": "8a3e28da5d319668c966f2856214cd83a42e813f02103ec9238df9783df76ba1",
+      "bytes": 1786,
+      "archive_path": "default.screen.txt",
+      "archive_sha256": "8a3e28da5d319668c966f2856214cd83a42e813f02103ec9238df9783df76ba1"
+    },
+    "done.screen.txt": {
+      "original_sha256": "d4a5dc3a5e9ad9effb7d58496fb2a664e16a1ca31f37e988918f8a7ce83da4e3",
+      "bytes": 1514,
+      "archive_path": "done.screen.txt",
+      "archive_sha256": "d4a5dc3a5e9ad9effb7d58496fb2a664e16a1ca31f37e988918f8a7ce83da4e3"
+    },
+    "durable.json": {
+      "original_sha256": "1bdf076377eef1fd791c85864f33c2988053da8fd0d3aa83c15cf209a0af9989",
+      "bytes": 168135,
+      "archive_path": "durable.json",
+      "archive_sha256": "1bdf076377eef1fd791c85864f33c2988053da8fd0d3aa83c15cf209a0af9989"
+    },
+    "finish": {
+      "original_sha256": "b737815f5ca9697f685dfe2b5fe1f7b12a180562f97da5a72e90eaedd9890876",
+      "bytes": 8,
+      "archive_path": "finish",
+      "archive_sha256": "b737815f5ca9697f685dfe2b5fe1f7b12a180562f97da5a72e90eaedd9890876"
+    },
+    "frame.json": {
+      "original_sha256": "d173bcf2b1c16c6d54d0dce7e51b0bfe3c8a87536726435ed6edffac933df5bb",
+      "bytes": 266,
+      "archive_path": "frame.json",
+      "archive_sha256": "d173bcf2b1c16c6d54d0dce7e51b0bfe3c8a87536726435ed6edffac933df5bb"
+    },
+    "invocation.json": {
+      "original_sha256": "2536fe8c9e5cd7ed0cffdb7518f776298726eb1cd76c487518ff85f40a84d147",
+      "bytes": 1250,
+      "archive_path": "invocation.json",
+      "archive_sha256": "2536fe8c9e5cd7ed0cffdb7518f776298726eb1cd76c487518ff85f40a84d147"
+    },
+    "loaded.json": {
+      "original_sha256": "6ed745899e9c8e1ce1184a88692fb9e27296c0ec3984e171c57346cbfa82fd75",
+      "bytes": 25208,
+      "archive_path": "loaded.json",
+      "archive_sha256": "6ed745899e9c8e1ce1184a88692fb9e27296c0ec3984e171c57346cbfa82fd75"
+    },
+    "phase.json": {
+      "original_sha256": "74532556b7685c0f79076bbb8f5cb1d73620c60646f7ce093e8932e07a340ef2",
+      "bytes": 30,
+      "archive_path": "phase.json",
+      "archive_sha256": "74532556b7685c0f79076bbb8f5cb1d73620c60646f7ce093e8932e07a340ef2"
+    },
+    "pytest-results.json": {
+      "original_sha256": "d670f50e27b8ca9197b594fd462161280bf56bccca59cdc946f1925d33d352e8",
+      "bytes": 690,
+      "archive_path": "pytest-results.json",
+      "archive_sha256": "d670f50e27b8ca9197b594fd462161280bf56bccca59cdc946f1925d33d352e8"
+    },
+    "result.json": {
+      "original_sha256": "7a07a456a5172f0353693609818216c1d3c06037c2563f002ee294f8484a6643",
+      "bytes": 554945,
+      "archive_path": "result.json.gz",
+      "archive_sha256": "7bc5361855500ec48ae16d5721923792c1025481e072f45925d94a52979502c9"
+    },
+    "terminal.raw": {
+      "original_sha256": "f34286704b8bff891baa2ecb3a5989e29d7d61277c9f4923bf9b2600218907cb",
+      "bytes": 39542,
+      "archive_path": "terminal.raw",
+      "archive_sha256": "f34286704b8bff891baa2ecb3a5989e29d7d61277c9f4923bf9b2600218907cb"
+    }
+  },
+  "provider_boundary": "fixed whole invocation methods in existing F5 harness; UI/PlanReview/CAS regression, not leaf transport validation",
+  "real_provider_calls": 0,
+  "real_scientific_calls": 0,
+  "execution_calls": 0,
+  "code_approval_calls": 0,
+  "review_binding": {
+    "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+    "plan_id": "plan_e33c5694231df57920a4",
+    "plan_version": "plan_v1",
+    "submission": {
+      "ready": true,
+      "identity_matches": true,
+      "reason_code": "PLAN_REVIEW_SUBMISSION_COMMITTED",
+      "submission_id": "plan-submission-87051991a22d976556b2",
+      "receipt": {
+        "schema_version": 1,
+        "protocol_version": 1,
+        "submission_id": "plan-submission-87051991a22d976556b2",
+        "action_type": "submit_plan_for_review",
+        "agent_initiated": true,
+        "status": "pending_review",
+        "task_id": "f5-plan-current",
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+        "plan_snapshot_ref": "object:sha256:953af79edfdfbc3f7fea75048d8acec681feae10acace7839731d5ee06ab1366",
+        "task_revision": 1,
+        "generated_from_task_revision": 1,
+        "authoritative_user_turn_revision": 1,
+        "planner_claim_id": "planner-call:8f9840961e59328f81d92382ed08125977cdc54a575b371fad85b0ccd61e649b",
+        "planning_epoch_id": "planning-epoch-3d155f29-e339-48c5-88fe-552b43db6fc8",
+        "candidate_scope_id": "candidate-scope-19593004-c266-410f-b23a-a7e0bbf4a63f",
+        "submitted_at": "2026-09-15T06:18:32.959380+00:00"
+      }
+    }
+  },
+  "actual_body_saved_in": "result.json.gz",
+  "acceptance": {
+    "ready": false,
+    "reason_code": "PLAN_REVIEW_ACCEPTANCE_MISSING_OR_STALE",
+    "review_receipt_id": "",
+    "submission_id": "plan-submission-87051991a22d976556b2",
+    "receipt": {}
+  },
+  "outcome": {
+    "schema_version": 1,
+    "type": "reconsultation_required",
+    "summary": "Plan-review feedback requires Consultant classification.",
+    "scope": {
+      "task_id": "f5-plan-current",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "step_id": "plan-inspect-0"
+    },
+    "payload": {
+      "reason_code": "review_feedback_needs_semantic_classification"
+    },
+    "evidence_refs": []
+  },
+  "copied_scope": "top-level actual artifacts only; no scratch or nested runtime state"
+}

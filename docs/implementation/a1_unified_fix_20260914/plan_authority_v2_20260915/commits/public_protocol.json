@@ -1,0 +1,18 @@
+{
+  "commit": "5673b236c80a694e27e72e7b0f90f0a9946bf4b9",
+  "parent": "4d0d9c546a401819dc9af1cb93f355600e3bc256",
+  "tree": "dc4f4540652eaa72a41fb910b5948af8031c3594",
+  "files": [
+    "agent_core/step_effects.py",
+    "tests/plan_authority_v2_20260915/test_graph.py"
+  ],
+  "patch_sha256": "818abc4f017e8a8e8a71b7896f6bafeafcf30bc63bb2dee26a760a45b9531bed",
+  "other_index_entries_preserved": true,
+  "validation": {
+    "current14": "5 new public example/stop target cases PASS; source_changes_after_run=[]",
+    "current12": "39 affected F1/F2 tests PASS; final14 only further changes generic Bash example resource literals, separately covered in final14",
+    "signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+    "production_boundary": "generate_output_examples only; no parser or execution guard weakened"
+  },
+  "push": false
+}

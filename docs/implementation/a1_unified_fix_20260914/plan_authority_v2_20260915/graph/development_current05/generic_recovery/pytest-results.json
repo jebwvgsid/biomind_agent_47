@@ -1,0 +1,13 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_recovery]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_recovery]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002517029643058777,
+    "failure": ""
+  }
+]

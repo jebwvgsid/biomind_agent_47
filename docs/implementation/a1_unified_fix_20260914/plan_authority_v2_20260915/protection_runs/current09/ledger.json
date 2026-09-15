@@ -1,0 +1,12 @@
+[
+  {
+    "group": "cancellation",
+    "returncode": 0,
+    "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+    "source_changes": [],
+    "phase_call_count": 9,
+    "phase_call_pass": 9,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  }
+]

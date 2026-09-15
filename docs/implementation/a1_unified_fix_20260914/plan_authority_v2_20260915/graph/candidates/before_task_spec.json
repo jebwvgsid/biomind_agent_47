@@ -1,0 +1,241 @@
+{
+  "schema_version": 6,
+  "canonicalization_version": "task-c14n-v3",
+  "task_id": "fix-f6-normal",
+  "revision": 1,
+  "goal": "Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+  "inputs": [
+    {
+      "artifact_id": "artifact-04902687db1c7a847103",
+      "semantic_handle": "input.variant_vcf",
+      "direction": "input",
+      "role": "variant_vcf",
+      "format": "vcf",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/输入 新构造/两样本.vcf",
+      "required_basename": "两样本.vcf",
+      "resolution_base": "/",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    },
+    {
+      "artifact_id": "artifact-01ba53e3c5179ff38b4d",
+      "semantic_handle": "input.reference_fasta",
+      "direction": "input",
+      "role": "reference_fasta",
+      "format": "fa",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/输入 新构造/新参考.fa",
+      "required_basename": "新参考.fa",
+      "resolution_base": "/",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    },
+    {
+      "artifact_id": "artifact-931b950fce31067570f5",
+      "semantic_handle": "input.annotation_gtf",
+      "direction": "input",
+      "role": "annotation_gtf",
+      "format": "gtf",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/输入 新构造/新注释.gtf",
+      "required_basename": "新注释.gtf",
+      "resolution_base": "/",
+      "required": true,
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "verified": false,
+      "status": "declared"
+    }
+  ],
+  "parameters": {},
+  "output_contracts": [
+    {
+      "artifact_id": "annotated_vcf",
+      "output_id": "annotated_vcf",
+      "semantic_handle": "output.annotated_vcf",
+      "direction": "output",
+      "role": "annotated_vcf",
+      "artifact_kind": "file",
+      "format": "vcf",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf",
+      "filename": "annotated.vcf",
+      "required_basename": "annotated.vcf",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "ann_summary",
+      "output_id": "ann_summary",
+      "semantic_handle": "output.ann_summary",
+      "direction": "output",
+      "role": "ann_summary",
+      "artifact_kind": "file",
+      "format": "tsv",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv",
+      "filename": "ann_summary.tsv",
+      "required_basename": "ann_summary.tsv",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "report",
+      "output_id": "report",
+      "semantic_handle": "output.report",
+      "direction": "output",
+      "role": "report",
+      "artifact_kind": "file",
+      "format": "md",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+      "filename": "report.md",
+      "required_basename": "report.md",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "reproduce_script",
+      "output_id": "reproduce_script",
+      "semantic_handle": "output.reproduce_script",
+      "direction": "output",
+      "role": "reproduce_script",
+      "artifact_kind": "file",
+      "format": "sh",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+      "filename": "reproduce.sh",
+      "required_basename": "reproduce.sh",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    },
+    {
+      "artifact_id": "stage_status",
+      "output_id": "stage_status",
+      "semantic_handle": "output.stage_status",
+      "direction": "output",
+      "role": "stage_status",
+      "artifact_kind": "file",
+      "format": "tsv",
+      "path_policy": "managed_exact",
+      "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+      "filename": "stage_status.tsv",
+      "required_basename": "stage_status.tsv",
+      "required": true,
+      "validation_contract_id": "nonempty-file-v1",
+      "source": "user_explicit",
+      "source_type": "user_explicit",
+      "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+      "provenance": [
+        {
+          "source_type": "user_explicit",
+          "source_ref": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b",
+          "source_id": "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+        }
+      ],
+      "user_visible": true,
+      "producer_owner": "plan_step",
+      "relocatable": false
+    }
+  ],
+  "confirmed_decisions": [],
+  "unresolved_questions": [],
+  "requirements": [],
+  "source_refs": [
+    "msg-4a7f65980b8da6ec0c79",
+    "object:sha256:44ce182ae6b312393c9ebfc88740471df0650557b7867111d0207c5f4c7603f8",
+    "object:sha256:e7dc02eb73e5594692d7a5aacbb086f0c72b3bf8bfd8506ebb1879ef2613231b"
+  ],
+  "raw_submission_ref": "object:sha256:44ce182ae6b312393c9ebfc88740471df0650557b7867111d0207c5f4c7603f8"
+}

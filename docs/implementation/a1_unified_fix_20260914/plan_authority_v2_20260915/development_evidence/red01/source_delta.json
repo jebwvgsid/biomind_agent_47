@@ -1,0 +1,9 @@
+{
+  "baseline": "../../baseline/source_manifest.json",
+  "files": {
+    "tests/plan_authority_v2_20260915/export_review.py": "90d119146e120129d9a4dfe10809af6eb352b31f023ae9e55cc4f81a1ce29a60",
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py": "0cd4888940e9c396308b43c55e11991fb3b89da48f25775494c7257962319fa3",
+    "tests/plan_authority_v2_20260915/test_graph.py": "d2d5a584d8d8d14a3b8114fe76bce223ff862126886b76a652eefdbf6aca9ed1",
+    "tests/plan_authority_v2_20260915/test_resource_contract.py": "8cec67ebe55eabf10d02fd113db02eb8d162043995a8b009ab0e0b93dcc74d6d"
+  }
+}

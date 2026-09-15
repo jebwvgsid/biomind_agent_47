@@ -1,0 +1,85 @@
+{
+  "status": "19 unique pytest IDs PASS across 6 separate completed runs; 1 external interruption retained UNKNOWN",
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "runs": [
+    {
+      "run": "public_components",
+      "classification": "PUBLIC_COMPONENTS_13_PLUS_REAL_FIRST_REPLY_STOP_1_PASS",
+      "returncode": 0,
+      "test_ids": [
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+        "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+        "tests/plan_authority_v2_20260915/test_formal_stop.py::test_first_formal_stop_consumes_one_request_without_approval_or_execution"
+      ],
+      "loaded_count": 133
+    },
+    {
+      "run": "public_correction_interrupted",
+      "classification": "INCOMPLETE_EXTERNAL_INTERRUPTION",
+      "returncode": null,
+      "test_ids": [],
+      "loaded_count": null
+    },
+    {
+      "run": "public_correction_retry01",
+      "classification": "ACTUAL_SECOND_REQUEST_PUBLIC_REFERENCE_THEN_V3_EIGHT_EXECUTIONS_COMMITS_FINALAUDIT_PASS",
+      "returncode": 0,
+      "test_ids": [
+        "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan"
+      ],
+      "loaded_count": 136
+    },
+    {
+      "run": "public_empty_execute",
+      "classification": "EXACT_ACTUAL_REQUEST_EXAMPLE_EMPTY_SKILLS_TWO_REAL_PYTHON_EXECUTIONS_COMMITS_FINALAUDIT_PASS",
+      "returncode": 0,
+      "test_ids": [
+        "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits"
+      ],
+      "loaded_count": 136
+    },
+    {
+      "run": "public_example",
+      "classification": "EXACT_ACTUAL_REQUEST_EXAMPLE_FULL_ADMISSION_REVIEW_PENDING_PASS",
+      "returncode": 0,
+      "test_ids": [
+        "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review"
+      ],
+      "loaded_count": 132
+    },
+    {
+      "run": "public_fourth_stop",
+      "classification": "FOURTH_FORMAL_STOP_NON_SUCCESS_TERMINAL_NO_FIFTH_PASS",
+      "returncode": 0,
+      "test_ids": [
+        "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request"
+      ],
+      "loaded_count": 131
+    },
+    {
+      "run": "public_fourth_valid",
+      "classification": "FOURTH_COMPLETE_CANDIDATE_REAL_ADMISSION_REVIEW_PENDING_NO_FIFTH_PASS",
+      "returncode": 0,
+      "test_ids": [
+        "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request"
+      ],
+      "loaded_count": 132
+    }
+  ],
+  "real_model_validation": false,
+  "real_scientific_e2e": false,
+  "fixed_provider_leaf": true,
+  "scoped_real_python_executions": true,
+  "test_watchdog_360_seconds_is_not_production_budget": true
+}

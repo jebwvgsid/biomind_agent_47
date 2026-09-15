@@ -1,0 +1,49 @@
+[
+  {
+    "original": "f6-no_evidence-full.json.gz",
+    "sha256": "ad72ecc35f7906d9bec69bed15309812b5c3702ded4177d993c21324f64863d8",
+    "archive": "f6-no_evidence-full.json.gz",
+    "archive_sha256": "ad72ecc35f7906d9bec69bed15309812b5c3702ded4177d993c21324f64863d8"
+  },
+  {
+    "original": "f6-no_evidence-heartbeat.jsonl",
+    "sha256": "9a7f2391650fcf73e774f325c80c630e3e8a333dc8a53491545c5d86aa4396ba",
+    "archive": "f6-no_evidence-heartbeat.jsonl.gz",
+    "archive_sha256": "fb47107dc0f49e586f8dd3f9c1a55ca68363c28f695828388a6f7561ddfbc32c"
+  },
+  {
+    "original": "f6-no_evidence-summary.json",
+    "sha256": "1c42a4f359d3f672a43cdb0d99d8e30b3b8d3b81fd4029603d08b25b8e9b4631",
+    "archive": "f6-no_evidence-summary.json",
+    "archive_sha256": "1c42a4f359d3f672a43cdb0d99d8e30b3b8d3b81fd4029603d08b25b8e9b4631"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "445f812ed85831b867593a7f72876b65fb8c1f1d1d3fce198730354832c0f7b2",
+    "archive": "invocation.json",
+    "archive_sha256": "445f812ed85831b867593a7f72876b65fb8c1f1d1d3fce198730354832c0f7b2"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "f65103fe952bc76c1ff7925c397133ce3a6264ad1e46916943852258ba26b5f3",
+    "archive": "pytest-results.json",
+    "archive_sha256": "f65103fe952bc76c1ff7925c397133ce3a6264ad1e46916943852258ba26b5f3"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "c87eb83e19df42b69797b82984661d01a00f2b96c203ad31122d07bd86262f95",
+    "archive": "run_exit.json",
+    "archive_sha256": "c87eb83e19df42b69797b82984661d01a00f2b96c203ad31122d07bd86262f95"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "4d4e2c83bb985ff423d9159a2130f3c94ee7fc5d74b63296012634a841837f87",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "2132fb69199fb4848e9779375705776d7855e44a86ca34ec4c8a67255c88da89"
+  },
+  {
+    "original": "f6-preserved-no_evidence",
+    "archive": "f6-preserved-no_evidence.tar.gz",
+    "archive_sha256": "6621bf380deb3c0d68d0cee18588000099062a4273470cd409155c63dbccdfb3"
+  }
+]

@@ -1,0 +1,93 @@
+{
+  "classification": "PUBLIC_COMPONENTS_13_PLUS_REAL_FIRST_REPLY_STOP_1_PASS",
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "returncode": 0,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+      "outcome": "passed",
+      "duration": 0.0006795851513743401
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+      "outcome": "passed",
+      "duration": 0.0003054160624742508
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+      "outcome": "passed",
+      "duration": 0.02876222785562277
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+      "outcome": "passed",
+      "duration": 0.0003726668655872345
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+      "outcome": "passed",
+      "duration": 0.0003031902015209198
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+      "outcome": "passed",
+      "duration": 0.0004891864955425262
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+      "outcome": "passed",
+      "duration": 0.0005354415625333786
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+      "outcome": "passed",
+      "duration": 0.0020711999386548996
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+      "outcome": "passed",
+      "duration": 0.00035955198109149933
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+      "outcome": "passed",
+      "duration": 0.0001510409638285637
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+      "outcome": "passed",
+      "duration": 0.00015952158719301224
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+      "outcome": "passed",
+      "duration": 0.0001479843631386757
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+      "outcome": "passed",
+      "duration": 0.0005177352577447891
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_formal_stop.py::test_first_formal_stop_consumes_one_request_without_approval_or_execution",
+      "outcome": "passed",
+      "duration": 11.409597405232489
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 133,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "pytest-results.json": "ba999c51e199d6b06f318ea033e7c6d98c9864a4912e3960702037e915ab42e3",
+    "f6-v2_first_formal_stop-full.json.gz": "de4c408936c8104dd86b2c700267d3a65441176899f6986e906a25d1f2b8def7",
+    "invocation.json": "9ba9cc0d326511fe4609773ac4c93c401280c74a294c0b49e96edd532f296430",
+    "stdout.txt": "4bd02edc179a4d2ed3f3bef2194d4b00cb378662a238e2f812a76f1141e2f9e8",
+    "f6-v2_first_formal_stop-summary.json": "c001c11873f86d697ec5c489271906836fa4299f3dd420b755febd56bac0b24a",
+    "run_exit.json": "d2fd31d6d5bcaf939d5b258681743a36fb7b7bb925b331a7ce367a07ef0ceb16",
+    "v2-public-first-formal-stop.json.gz": "d3ee0d15b3af2ea1e5e10902bebd5120086f1f7e04904eb4b5ec0a617609534d",
+    "v2_first_formal_stop-driver.json.gz": "b40189b318a719e721c9beacbb61ed77d294add93961ee99b38c0f83b514271b"
+  },
+  "copied_scope": "top-level results only; no scratch or nested preserved runtime trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

@@ -1,0 +1,39 @@
+{
+  "classification": "REAL_NEXT_REQUEST_REFERENCE_CORRECTION_AND_V3_FULL_GRAPH_PASS",
+  "source_signature": "44073bcdb2e78e1bd3e95fa41518dafd28bfa8c21ddb81f7d19267c7158c69e5",
+  "returncode": 0,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan",
+      "outcome": "passed",
+      "duration": 147.4099217345938
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 136,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "pytest-results.json": "c890a26e562d25b689215176bc0117dcc47331514a7f521f290b670e6ef566a4",
+    "invocation.json": "b80a50c4df9deda018a3f8756845093263e8287b4aa43e496318a1a294e424d5",
+    "f6-v2_generic_split-summary.json": "cf1c9291f901061d8274e3bbc71f5bcdc2bbf3e804945e02ea367ae570e7630f",
+    "f6-v2_generic_split-full.json.gz": "138c6ea88d85f3878f152f2cde2cb652e537c572583c8aff7dc62209939741fe",
+    "v2-public-correction-chain.json.gz": "758ec1be5a23b9af6faabe89176cf0de35a219a8e10c867187c4748699db9ced",
+    "stdout.txt": "860ff276ca2c373e15c5930275d11b45362422eda6f4ffa84948b5187395b388",
+    "run_exit.json": "aba10b89d0c45b0543b5733311645c089c8be728b9f65c28102cbed767c77133",
+    "v2_generic_split-driver.json.gz": "41df51e8e8a302e68ebefe4b89ce9788cc7dfbc8eaf941f6ced6b68ad622ecea"
+  },
+  "copied_scope": "top-level results only; no scratch or nested runtime preserved trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0,
+  "actual_counts": {
+    "consultant": 1,
+    "planner": 2,
+    "generate": 8,
+    "reviewer": 8,
+    "recovery": 0
+  },
+  "actual_commits": 8,
+  "actual_approvals": 8,
+  "actual_executions": 8,
+  "final_audit_type": "task_verified"
+}

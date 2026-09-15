@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002621067687869072,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 28.029564205557108,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002643568441271782,
+    "failure": ""
+  }
+]

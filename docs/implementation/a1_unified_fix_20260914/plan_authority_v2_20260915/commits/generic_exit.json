@@ -1,0 +1,18 @@
+{
+  "commit": "1ace58d1fe3a04d4c0e40648a0349aa8a6126a5a",
+  "parent": "fda82d91a12c4965723dc8482529a0991788d59b",
+  "tree": "894ea9c41fba5247c72489789ca93c3ef8654923",
+  "files": [
+    "bio_agents.py"
+  ],
+  "patch_sha256": "5784b749b4c3eb43d81c9586109f4ada265db86c4d814da31afc3b25ecc99127",
+  "other_index_entries_preserved": true,
+  "validation": {
+    "current10_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+    "current11_same_production": true,
+    "actual_graph": "generic_language_mismatch PASS:2Generate,0approval,0execute,0Commit",
+    "f1_f2": "39 PASS",
+    "source_scope": "one string literal in specific exception catch only"
+  },
+  "push": false
+}

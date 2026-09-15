@@ -1,0 +1,73 @@
+{
+  "mode": "recovery",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 0,
+    "recovery": 1
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "recovery",
+    "generate"
+  ],
+  "executions": [
+    {
+      "operation": "check_contig_compatibility",
+      "attempt_id": "attempt_99132e1cf5b48f1a16a1",
+      "rc": 7,
+      "stdout": "",
+      "stderr": "NEW_SYNTHETIC_RC_FAILURE\n",
+      "approved_sha256": "063036f389c36dc15cfc2dc5f214f2ae53088471021bf7a8299d0c472138a21b",
+      "executed_sha256": "333048ae9edf642c97ed39994a2658ffa7679f8ed946b0dc97ba8728f1d043a3",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    }
+  ],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current04/root_f1f2/f6-recovery-full.json.gz",
+    "sha256": "830480d9e05067318b8706566e17160564c3331bf94c137002c14eb679afc2b6",
+    "raw_sha256": "784e55d171efecc7e31a9b58bdcd2394a506fa322657634eba632b09c0b0d1bb"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 6,
+    "finalize": 0,
+    "prepare": 3,
+    "summary": 0
+  },
+  "terminal": {},
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

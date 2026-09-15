@@ -1,0 +1,202 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003637447953224182,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011095376685261726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013955403119325638,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023882277309894562,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003222515806555748,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010065082460641861,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000214417465031147,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00026901625096797943,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.716247975826263e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021104700863361359,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003173192963004112,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.441003203392029e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021568592637777328,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00013799779117107391,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.390285074710846e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020870380103588104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00012686196714639664,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.266884833574295e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002236589789390564,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00012796558439731598,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.211936801671982e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000196174718439579,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00015451572835445404,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.807331323623657e-05,
+    "failure": ""
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-plan-authority-v2-current08/export/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-plan-authority-v2-current08/export",
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_05/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_05/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_05",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_05",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_05/scratch/executor-logs"
+  },
+  "external_test_watchdog_seconds": 360
+}

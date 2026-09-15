@@ -1,0 +1,10 @@
+stage	workflow_status	execution_status	committed	notes
+probe-731	verification_pending	succeeded	False	latest attempt purpose=validation; primary causal returncode=None; formal verification/commit remain authoritative
+ledger-205	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+gate-418	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+layout-563	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+compile-927	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+effects-146	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+aggregate-832	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+deliver-604	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+run	blocked	stopped	false	V2_NEW_SYNTHETIC_RC

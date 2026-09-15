@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002927631139755249,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 20.56142232567072,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00030102021992206573,
+    "failure": ""
+  }
+]

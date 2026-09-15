@@ -1,0 +1,12 @@
+{
+  "rc": 0,
+  "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"scope_probe\",\"value\":false,\"items\":[]}]}\n",
+  "stderr": "",
+  "actual_script_arguments": [
+    "space and \u4e2d\u6587",
+    "single'double\"",
+    "-",
+    ";"
+  ],
+  "scope": "real materializer and tiny process; categorized actual False/empty result under synthetic declaration"
+}

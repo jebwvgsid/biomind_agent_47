@@ -1,0 +1,31 @@
+{
+  "status": "FAIL",
+  "test_duration_seconds": 13.708527620881796,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 0,
+  "executions": [],
+  "commits": 0,
+  "final_outcome": null,
+  "generate_outcome_type": "internal_protocol_error",
+  "durable_status": "failed",
+  "gate_counterfactuals": [],
+  "provider_modes": [
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {},
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

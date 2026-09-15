@@ -1,0 +1,12 @@
+[
+  {
+    "group": "f1f2_components",
+    "returncode": 0,
+    "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+    "source_changes": [],
+    "phase_call_count": 39,
+    "phase_call_pass": 39,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  }
+]

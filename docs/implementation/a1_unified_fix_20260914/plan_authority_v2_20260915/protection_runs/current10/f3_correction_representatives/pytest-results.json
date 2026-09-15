@@ -1,0 +1,127 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002679619938135147,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.658247051760554,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001500910148024559,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024027284234762192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.721431649290025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015581026673316956,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021131150424480438,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.495740773156285,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017295312136411667,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021385494619607925,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 5.6918706046417356,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013809092342853546,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021842308342456818,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.180898473598063,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013695284724235535,
+    "failure": ""
+  }
+]

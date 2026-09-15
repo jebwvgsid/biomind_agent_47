@@ -1,0 +1,323 @@
+{
+  "source_container": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current10/generic_language_mismatch/f6-v2_generic_language_mismatch-full.json.gz",
+  "source_sha256": "c78786a3f9d3ead8b194c7e3396b72757978b416054dffcf036868cb03a530d2",
+  "actual_request_pointer": "/requests/3/messages/3/content",
+  "actual_request_protocol": {
+    "action_example": {
+      "payload": "<python>\n# BIOMIND_EFFECT_HELPER\ndef perform_approved_operation(operation, resources):\n    # Implement the approved scientific calculation; do not infer facts from paths.\n    raise RuntimeError('Admission example only: the approved scientific operation is not implemented')\n\nactual_facts = perform_approved_operation('execute', {'artifacts': {'input.annotation_gtf': {'direction': 'input', 'path': '/tmp/biomind-plan-authority-v2-current10/graph_generic_language_mismatch/scratch/biomind-plan-local-graph-ct2x38ad/中文 两样本/输入 新构造/新注释.gtf'}, 'input.reference_fasta': {'direction': 'input', 'path': '/tmp/biomind-plan-authority-v2-current10/graph_generic_language_mismatch/scratch/biomind-plan-local-graph-ct2x38ad/中文 两样本/输入 新构造/新参考.fa'}, 'input.variant_vcf': {'direction': 'input', 'path': '/tmp/biomind-plan-authority-v2-current10/graph_generic_language_mismatch/scratch/biomind-plan-local-graph-ct2x38ad/中文 两样本/输入 新构造/两样本.vcf'}}, 'runtime': {}, 'workspaces': {}})\nprint(emit_effect_evidence(actual_facts))\n</python>",
+      "public_message": "候选已形成，等待检查与审批。",
+      "response_type": "biomind_generate_display_v1"
+    },
+    "blocked_example": {
+      "action_type": "blocked",
+      "reason": "The current rejection remains unresolved after the attempted correction. No new evidence supports another candidate; the unresolved requirement must be checked before continuing. This does not complete the scientific step."
+    },
+    "example_scope": "The complete action uses current published operation/resources and only determinate binding values for admission. It intentionally fails without publishing facts until the MODEL implements the approved scientific calculation. Admission is not scientific completion. Unknown required values produce a complete blocked alternative. The separate synthetic demo is never a current-step action or observation.",
+    "facts_example": {
+      "produces_observations": {
+        "input_probe": {
+          "details": "actual observed value",
+          "value": "actual observed value"
+        }
+      }
+    },
+    "facts_example_scope": "Non-executable shape template only. Placeholder values are not measured facts and must not be published.",
+    "facts_rule": "action JSON precedes approval; categorized actual_facts is helper input inside the Python process; BIOMIND_EFFECT_EVIDENCE_JSON is execution stdout. Workspace mutations and produced binding acceptance belong to their attester and Commit, not this serializer.",
+    "feedback_rule": "Correct the precise current representation or binding error in this node. If there is no new basis after attempted corrections, submit blocked before the remaining budget is exhausted. Changing an error code or script alone proves neither progress nor success.",
+    "mode": "script_block_v1",
+    "synthetic_protocol_demo": {
+      "code": "# BIOMIND_EFFECT_HELPER\nitems = [item for item in [1, 2, 3] if item < 0]\nobserved = bool(items)\nprint(emit_effect_evidence({'produces_observations': {'synthetic_demo_matches': {'value': observed, 'items': items}}}))\n",
+      "helper_scope": "Materialize this demonstration using only its own step declarations. Actual execution computes False and an empty list; these are not current-step observations.",
+      "scope": "Standalone synthetic protocol demonstration only. This is NOT an action for the current step; never publish this identity under the current declarations.",
+      "step": {
+        "produces_observations": [
+          {
+            "evidence_contract": {
+              "required_fields": [
+                "value",
+                "items"
+              ]
+            },
+            "identity": "synthetic_demo_matches"
+          }
+        ],
+        "step_id": "synthetic-protocol-demo"
+      }
+    },
+    "top_level": "Return one supported executable block/display envelope or the complete blocked JSON."
+  },
+  "second_fixed_response_pointer": "/provider_candidates/1",
+  "second_fixed_response": {
+    "step_id": "probe-731",
+    "raw_response": "{\"action_type\": \"blocked\", \"reason\": \"The observed action language does not match the frozen generic tool. This fixed negative witness stops without an approved action.\"}",
+    "observed_rejection": "GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH"
+  },
+  "terminal_generate_outcome_pointer": "/values/generate_outcome",
+  "terminal_generate_outcome": {
+    "schema_version": 1,
+    "type": "internal_protocol_error",
+    "summary": "Generate encountered an internal protocol violation and failed closed.",
+    "scope": {
+      "task_id": "fix-f6-v2_generic_language_mismatch",
+      "task_revision": 1,
+      "plan_id": "plan_16491f5ef1a1957253cd",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "step_id": "probe-731",
+      "attempt_id": ""
+    },
+    "payload": {
+      "error_code": "GENERATE_REPAIR_NO_VALIDATED_PROGRESS",
+      "component": "generate",
+      "actual_outcome": "internal_protocol_error",
+      "actual_route": "END",
+      "execution_status": "not_started",
+      "recovery_entered": false,
+      "outputs_produced": [],
+      "primary_cause": {
+        "error_code": "GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "The action language must match the explicitly approved generic tool.",
+        "reason": "The action language must match the explicitly approved generic tool.",
+        "current_step": "probe-731",
+        "fingerprint": "a77f3d162aefb7709f00ecee087e887690a336a74adc645607d5508de6699790",
+        "candidate_fingerprint": "32b451e3268316aaae8e75fa03056c12901acdb0414746119e4ed0c577378bf9",
+        "execution_started": false,
+        "repair_attempted": true,
+        "repair_exhausted": true,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "The action language must match the explicitly approved generic tool.",
+        "summary": "The action language must match the explicitly approved generic tool.",
+        "recorded_at": "2026-09-15T14:25:33",
+        "expected_realization": "bash",
+        "latest_failure": {
+          "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+          "fingerprint": "498ee3546cf94acd4028cbd49820f6295dc287992e74dba78ece188ff76c2fe9",
+          "candidate_fingerprint": "ad30637ff54f002dd927f7da9fa7674ffbeb3ca85671be8ac6d9ce259b06fc25",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "fix-f6-v2_generic_language_mismatch",
+            "plan_id": "plan_16491f5ef1a1957253cd",
+            "plan_version": "plan_v1",
+            "step_id": "probe-731"
+          },
+          "repair_attempt_count": 2,
+          "recorded_at": "2026-09-15T14:25:37",
+          "field_path": "response",
+          "expected": "one current-step action matching the active Generate protocol"
+        },
+        "last_seen_at": "2026-09-15T14:25:37",
+        "repair_attempt_count": 2,
+        "last_candidate_fingerprint": "ad30637ff54f002dd927f7da9fa7674ffbeb3ca85671be8ac6d9ce259b06fc25",
+        "last_error_fingerprint": "498ee3546cf94acd4028cbd49820f6295dc287992e74dba78ece188ff76c2fe9",
+        "termination_reason": "repair_no_progress",
+        "terminal_failure": {
+          "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+          "fingerprint": "498ee3546cf94acd4028cbd49820f6295dc287992e74dba78ece188ff76c2fe9",
+          "candidate_fingerprint": "ad30637ff54f002dd927f7da9fa7674ffbeb3ca85671be8ac6d9ce259b06fc25",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "fix-f6-v2_generic_language_mismatch",
+            "plan_id": "plan_16491f5ef1a1957253cd",
+            "plan_version": "plan_v1",
+            "step_id": "probe-731"
+          },
+          "repair_attempt_count": 2,
+          "recorded_at": "2026-09-15T14:25:37",
+          "field_path": "response",
+          "expected": "one current-step action matching the active Generate protocol",
+          "termination_reason": "repair_no_progress"
+        }
+      },
+      "latest_failure": {
+        "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+        "fingerprint": "498ee3546cf94acd4028cbd49820f6295dc287992e74dba78ece188ff76c2fe9",
+        "candidate_fingerprint": "ad30637ff54f002dd927f7da9fa7674ffbeb3ca85671be8ac6d9ce259b06fc25",
+        "execution_started": false,
+        "attempt_id": "",
+        "scope": {
+          "task_id": "fix-f6-v2_generic_language_mismatch",
+          "plan_id": "plan_16491f5ef1a1957253cd",
+          "plan_version": "plan_v1",
+          "step_id": "probe-731"
+        },
+        "repair_attempt_count": 2,
+        "recorded_at": "2026-09-15T14:25:37",
+        "field_path": "response",
+        "expected": "one current-step action matching the active Generate protocol"
+      },
+      "termination_reason": "repair_no_progress",
+      "budget_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "fix-f6-v2_generic_language_mismatch",
+          "task_revision": 1,
+          "plan_id": "plan_16491f5ef1a1957253cd",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "probe-731"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 2,
+        "corrections_authorized_before": 1,
+        "corrections_observed_before_rejection": 1,
+        "remaining_before_authorization": 3,
+        "category": "representation",
+        "progress_assessment": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "progress_proven": false,
+          "basis": "no_validated_target_progress",
+          "comparison_fingerprint": "cf4c0ef2270905da9753f0e8dcdd9b8efba9fbc726fee0e83f578e887d13e3b2",
+          "validation_signature": "bd88c0eb18f4054da99aabcf2a690b07a94183ed169b046bbffc17077942fbda",
+          "comparison_context_fingerprint": "a043cc5daef75b0f688521e60b7b4512ac974d33b4b052845cca563a5aee2543",
+          "representation_targets": [],
+          "binding_facts": null,
+          "binding_axis": "not_evaluated",
+          "newly_satisfied_targets": [],
+          "resolved_targets": [
+            "$.language"
+          ],
+          "pending_targets": [
+            "response"
+          ],
+          "scientific_success": "not_assessed"
+        },
+        "correction_authorized": false,
+        "corrections_authorized": 1,
+        "remaining": 3,
+        "repair_ordinal": 2,
+        "repair_limit": 4,
+        "event_id": "candidate-rejection:f88a1f3777277e9313adcd8f",
+        "correction_category": "representation"
+      },
+      "causal_generation": {},
+      "current_candidate": {
+        "attempt_id": "",
+        "execution_started": false,
+        "approved": false,
+        "candidate_fingerprint": "ad30637ff54f002dd927f7da9fa7674ffbeb3ca85671be8ac6d9ce259b06fc25",
+        "candidate_event_id": "candidate-call:52a00b226933b4ddb015e459198bb945eb83fac34fb6c17d266b802ef0846bf6",
+        "cause_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "correction_category": "representation"
+      },
+      "generate_invocation": {
+        "generate_call_id": "generate-ca0b6423651544798a0e0252fa35e87d",
+        "scope": {
+          "task_id": "fix-f6-v2_generic_language_mismatch",
+          "task_revision": 1,
+          "plan_id": "plan_16491f5ef1a1957253cd",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "probe-731",
+          "attempt_id": ""
+        },
+        "source_ref": "object:sha256:17bba46e5928ec019412480fc6ed4711ee8c552244287aaa5e0b1021619c2962",
+        "prompt_assembly_started": true,
+        "prompt_assembly_succeeded": true,
+        "provider_call_attempted": true,
+        "llm_invoked": true
+      }
+    },
+    "evidence_refs": []
+  },
+  "defects": [
+    {
+      "code": "SCRIPT_BLOCK_PUBLIC_STOP_KEY_MISMATCH",
+      "producer": "agent_core/step_effects.py generate_output_examples blocked_example and missing-context action_example",
+      "consumer": "bio_agents.py script_stop_requested exact whole object type/reason at lines43853-43867",
+      "before": "Actual named public protocol published action_type=blocked while separate script protocol prose and whole-object consumer require type=blocked. Old fixed responder followed action_type; formal stop was rejected.",
+      "old_pytest_status": "PASS_FOR_WEAKER_ASSERTIONS",
+      "old_scope_guard_obligation": "PASS: first valid Python carrier rejected against approved Bash; no approvals, execution or Commit.",
+      "old_formal_stop_obligation": "FAIL: second reply became GENERATE_SCRIPT_BLOCK_INVALID and no-progress internal failure.",
+      "new": "Both published blocked shapes select type for script mode, action_type for native. Full graph uses actual request blocked_example unchanged and asserts original GENERATE_STOP_REQUESTED, durable blocked and reports; two parser cases cover both modes and both example positions."
+    },
+    {
+      "code": "GENERIC_BASH_PUBLIC_ACTION_LANGUAGE_MISMATCH",
+      "producer": "agent_core/step_effects.py generate_output_examples action_example",
+      "actual_step": "probe-731 / framework.generic.execute / bash",
+      "before_example": {
+        "payload": "<python>\n# BIOMIND_EFFECT_HELPER\ndef perform_approved_operation(operation, resources):\n    # Implement the approved scientific calculation; do not infer facts from paths.\n    raise RuntimeError('Admission example only: the approved scientific operation is not implemented')\n\nactual_facts = perform_approved_operation('execute', {'artifacts': {'input.annotation_gtf': {'direction': 'input', 'path': '/tmp/biomind-plan-authority-v2-current10/graph_generic_language_mismatch/scratch/biomind-plan-local-graph-ct2x38ad/中文 两样本/输入 新构造/新注释.gtf'}, 'input.reference_fasta': {'direction': 'input', 'path': '/tmp/biomind-plan-authority-v2-current10/graph_generic_language_mismatch/scratch/biomind-plan-local-graph-ct2x38ad/中文 两样本/输入 新构造/新参考.fa'}, 'input.variant_vcf': {'direction': 'input', 'path': '/tmp/biomind-plan-authority-v2-current10/graph_generic_language_mismatch/scratch/biomind-plan-local-graph-ct2x38ad/中文 两样本/输入 新构造/两样本.vcf'}}, 'runtime': {}, 'workspaces': {}})\nprint(emit_effect_evidence(actual_facts))\n</python>",
+        "public_message": "候选已形成，等待检查与审批。",
+        "response_type": "biomind_generate_display_v1"
+      },
+      "before": "Actual public generic Bash action example used a Python block. Earlier full graphs used fixed responder custom valid shell, ignoring action_example; their execution PASS did not test this published example.",
+      "new": "Use pure Bash fail-fast representation scaffold for explicitly approved generic Bash, with safe-quoted existing public resource values. No interpreter guess, helper marker or emitted observation; Python keeps its Python helper scaffold. Two fresh formal graph tests submit actual published action_example unchanged through Generate tool-scope admission and stop before code approval/execution.",
+      "scientific_completion": "NOT_CLAIMED: carrying resource values is not actual input use or scientific success; both scaffolds deliberately fail until actual operation is implemented."
+    }
+  ],
+  "development12": {
+    "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+    "pytest_passed": [
+      "language formal stop",
+      "native blocked parser",
+      "script blocked parser"
+    ],
+    "pytest_failed": {
+      "bash_actual_example": "Actual candidate_rejected: pure Bash scaffold omitted declared input concrete values; original managed-artifact gate requires them. Fixed example to carry only already published resources, without changing gate.",
+      "python_actual_example": "Actual action_ready; new test used event.pending_action rather than typed outcome.payload.action and raised KeyError. Corrected only test reader."
+    }
+  },
+  "development13": {
+    "status": "NOT_RUN",
+    "reason": "Export existed before full12 failure classification; superseded before dispatch."
+  },
+  "final_current14": {
+    "source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+    "returncode": 0,
+    "source_changes_after_run": [],
+    "five_cases": [
+      {
+        "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]",
+        "outcome": "passed",
+        "duration_seconds": 30.415692855603993
+      },
+      {
+        "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[False]",
+        "outcome": "passed",
+        "duration_seconds": 0.0007121199741959572
+      },
+      {
+        "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_public_blocked_examples_parse_in_their_actual_mode[True]",
+        "outcome": "passed",
+        "duration_seconds": 0.0006986856460571289
+      },
+      {
+        "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[bash]",
+        "outcome": "passed",
+        "duration_seconds": 7.91117162629962
+      },
+      {
+        "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_actual_request_generic_example_reaches_real_generate_admission[python]",
+        "outcome": "passed",
+        "duration_seconds": 7.647356376983225
+      }
+    ],
+    "actual_request_examples": {
+      "bash": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/v2-public-example-bash.json",
+      "python": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/v2-public-example-python.json"
+    },
+    "formal_stop_container": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current14/public_protocol/f6-v2_generic_language_mismatch-full.json.gz"
+  }
+}

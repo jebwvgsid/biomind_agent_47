@@ -1,0 +1,28 @@
+{
+  "baseline": "../../baseline/source_manifest.json",
+  "files": {
+    "agent_core/action_runtime.py": "fbbe863855481a2dfe97d30ebc672073335d1fa841f3510266a4e40de8750f0c",
+    "agent_core/node_context.py": "a2a2dd882585596dddb2cc617d7de11af0d392308fa007b82787b65406a116c9",
+    "agent_core/plan_bindings.py": "b75d8d53ae873d95aadff7fc5c05b9ef88b4b3076aa4a4a732c4152928b4ac09",
+    "agent_core/plan_contract.py": "32b120f61a58eb4d3ff17707bbaf20564f0caedfd1d5c0068a40293bff10f2de",
+    "agent_core/plan_tracker.py": "87dd286d5717f9da8b4fb7c5dea1525f39bf619b4efcdd4a35f37616ebeb2616",
+    "agent_core/planner_context.py": "a55a37b9c634205c1c05fffa1ed5045869c657e7da05f359697a4f8e52af8fa8",
+    "agent_core/skill_manager.py": "b4f0133acf5eddb2ac0dd0199a6d23bfaff9c996ba62a03760a20b9af2e89b22",
+    "agent_core/step_effects.py": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+    "bio_agents.py": "1052328d7347af96b9156ef194544a2edea283be569e0f837c225f396ccdb2ab",
+    "prompts/manager.py": "c259591fcc67c6ab03d57ffbeb249f1ccd175d1569cc5fc9c653a3fd78d27ce5",
+    "tests/a1_unified_fix/test_f6_graph.py": "4cecaaf2ff388d56a55e83b79249d3de4c8ecc771b69e3be9817b09f94e3a078",
+    "tests/plan_authority_v2_20260915/export_review.py": "60a65d989b579eb7277bf0b03a86c368a926064bf76bec5fb640560444929d6b",
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py": "0cd4888940e9c396308b43c55e11991fb3b89da48f25775494c7257962319fa3",
+    "tests/plan_authority_v2_20260915/test_graph.py": "0c10667248cce3e49d908acdfb3157d2c01043b2a87e8d7c18590c25b927d726",
+    "tests/plan_authority_v2_20260915/test_public_graph.py": "8a43b1544f88286c31a83178197566ab79c6948c5265bc42002e8bec4c394f53",
+    "tests/plan_authority_v2_20260915/test_public_projection.py": "f4c56145421e1f813d5f231636fa94c650e90d035ec3ac99738cd078923cf5e1",
+    "tests/plan_authority_v2_20260915/test_resource_contract.py": "93ca7b075174898ecb4d51d8702cce4110c11b7c54e04a9423314e11825df5b9",
+    "tests/plan_resource_fix_support.py": "c7ca098d587fdc9361a30a40494ed9a3a5e4926637408ef741e3a6b12a6c8d13",
+    "tests/test_plan_cancel_fix.py": "0367e87606240d6ea6512f42b14495c3e096ba487e7b1bfeeaf15568101b2c1d",
+    "tests/test_plan_resource_fix.py": "462b4fabd8e9291b45856a8e64de9f1a6bc5e2350308c9a44aa5b5235e29dbde",
+    "tests/test_plan_stop_fix.py": "b87104da8159f178a2f6c234ae6a63fa159db1f9e8288ef31dad1a174c6e1568",
+    "tests/test_planner_resource_protocol_v2.py": "6f5ee8906efebd21bbdbd1abf7503b9420ad5b1d501b72c93d5f27f84ee7f580",
+    "tests/test_planner_wgs_skill_contracts.py": "f2e00aea3aa01cf07d3cc10bc9c6adc4da8450e9b47f33ec9ce5daf62fd979f4"
+  }
+}

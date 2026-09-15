@@ -1,0 +1,24 @@
+{
+  "decision_id": "v2-causal-1",
+  "failure_packet_ref": "failure-packet:sha256:304645310f2c390fb87f896a47e5b78d9072eceb6912b16a004f0bf570684c2b",
+  "source_fingerprint": "8dd64774325d2454fa126bd3",
+  "held_scope": {
+    "task_id": "fix-f6-v2_generic_blocked",
+    "plan_id": "plan_305e1b8aab8b869610cb",
+    "plan_version": "plan_v1",
+    "step_id": "compile-927",
+    "attempt_id": "attempt_dc80fa0a7c89fe7f7acf",
+    "episode_id": "recovery-seed-8dd64774325d2454fa126bd3"
+  },
+  "primary_execution": {
+    "attempt_id": "attempt_dc80fa0a7c89fe7f7acf",
+    "step_id": "compile-927",
+    "returncode": 23,
+    "executed": true,
+    "committed": false
+  },
+  "active_packet_consumed": true,
+  "causal_execution": {
+    "status": "UNKNOWN"
+  }
+}

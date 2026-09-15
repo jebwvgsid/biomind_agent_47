@@ -1,0 +1,138 @@
+[
+  {
+    "first_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.BAD",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "next_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.BAD",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "first_targets": [
+      "json_object",
+      "action_type",
+      "execute.argv_shape",
+      "execute.executable_body",
+      "execute.outputs_shape",
+      "execute.env_object",
+      "execute.env.VALID",
+      "execute.env_keys"
+    ],
+    "next_targets": [
+      "json_object",
+      "action_type",
+      "execute.argv_shape",
+      "execute.executable_body",
+      "execute.outputs_shape",
+      "execute.env_object",
+      "execute.env.VALID",
+      "execute.env_keys"
+    ],
+    "assessment": {
+      "schema_version": 1,
+      "producer": "biomind.generate_candidate_admission.v1",
+      "progress_proven": false,
+      "basis": "recurrent_rejected_candidate",
+      "comparison_fingerprint": "52516254910e064628bb2712f1986eb036d8e29858f644e16f1dba358c672b03",
+      "validation_signature": "e0320d3d5ee5e2411b0ea30db33f585bc18493bbd625d39ae8df48994424003a",
+      "comparison_context_fingerprint": "d7cf4d78b601fb6d718d5690be6cb0bbd986f749befa3f91361329929f0a4c47",
+      "representation_targets": [
+        "action_type",
+        "execute.argv_shape",
+        "execute.env.VALID",
+        "execute.env_keys",
+        "execute.env_object",
+        "execute.executable_body",
+        "execute.outputs_shape",
+        "json_object"
+      ],
+      "binding_facts": null,
+      "binding_axis": "not_evaluated",
+      "newly_satisfied_targets": [],
+      "resolved_targets": [],
+      "pending_targets": [
+        "env.BAD"
+      ],
+      "scientific_success": "not_assessed"
+    },
+    "same_full_fingerprint": true
+  },
+  {
+    "first_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.BAD",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "next_error": {
+      "stage": "action_schema",
+      "code": "ACTION_SCHEMA_TYPE_ERROR",
+      "message": "execute.env values must be strings.",
+      "field_path": "env.NEXT",
+      "expected": "string",
+      "actual": "number",
+      "response_container_source": "raw_json"
+    },
+    "first_targets": [
+      "json_object",
+      "action_type",
+      "execute.argv_shape",
+      "execute.executable_body",
+      "execute.outputs_shape",
+      "execute.env_object",
+      "execute.env.VALID",
+      "execute.env_keys"
+    ],
+    "next_targets": [
+      "json_object",
+      "action_type",
+      "execute.argv_shape",
+      "execute.executable_body",
+      "execute.outputs_shape",
+      "execute.env_object",
+      "execute.env.VALID",
+      "execute.env_keys"
+    ],
+    "assessment": {
+      "schema_version": 1,
+      "producer": "biomind.generate_candidate_admission.v1",
+      "progress_proven": false,
+      "basis": "recurrent_rejected_candidate",
+      "comparison_fingerprint": "785baf3143ef41b22b52eb3bf197fc895ef86385701d7e5aa687f8390dc7ac45",
+      "validation_signature": "e0320d3d5ee5e2411b0ea30db33f585bc18493bbd625d39ae8df48994424003a",
+      "comparison_context_fingerprint": "d7cf4d78b601fb6d718d5690be6cb0bbd986f749befa3f91361329929f0a4c47",
+      "representation_targets": [
+        "action_type",
+        "execute.argv_shape",
+        "execute.env.VALID",
+        "execute.env_keys",
+        "execute.env_object",
+        "execute.executable_body",
+        "execute.outputs_shape",
+        "json_object"
+      ],
+      "binding_facts": null,
+      "binding_axis": "not_evaluated",
+      "newly_satisfied_targets": [],
+      "resolved_targets": [],
+      "pending_targets": [
+        "env.NEXT"
+      ],
+      "scientific_success": "not_assessed"
+    },
+    "same_full_fingerprint": true
+  }
+]

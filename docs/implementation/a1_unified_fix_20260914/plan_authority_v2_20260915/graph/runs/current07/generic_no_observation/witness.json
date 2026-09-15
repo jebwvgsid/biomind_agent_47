@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "test_duration_seconds": 32.14806754607707,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 1,
+    "recovery": 1
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 1,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_4f2aa12a0f415c1c998f",
+      "approved_sha256": "def807aab62be91fc549212a0d5ce2bc76490a521e5e4cad151e43ea284039e9",
+      "executed_sha256": "c53b732b1aee5736341926b94356979e7941be10b24bd091ac340e551f65268b"
+    }
+  ],
+  "commits": 0,
+  "final_outcome": null,
+  "generate_outcome_type": "action_ready",
+  "durable_status": "blocked",
+  "gate_counterfactuals": [],
+  "provider_modes": [
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {},
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

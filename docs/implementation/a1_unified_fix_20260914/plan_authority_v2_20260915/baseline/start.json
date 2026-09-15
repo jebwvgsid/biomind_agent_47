@@ -1,0 +1,21 @@
+{
+  "BASE_HEAD": "81d10c58a236f44c7987f1913190e6927ce23248",
+  "BASE_TREE": "d53c5ca94271ce4c6a5a0c2d7305238c1e955adf",
+  "branch": "refactor/consultant-controller-authority",
+  "source_signature": "aa4cde53398d6723223b80dd331329913b689dc8da081d92ac111d54d6ced19e",
+  "files": 459,
+  "index_sha256": "def40d473d200b3a2b2e1c7ec9f913895c311052ff28f57c9714d38382fe74fa",
+  "status_count": 439,
+  "safety": "Safe manifest source only; sensitive status metadata only, no contents; original session not loaded",
+  "production_owned_before": {},
+  "master_before": {
+    "docs/implementation/a1_unified_fix_20260914/README.md": {
+      "sha256": "b5ab43a0d7108929bb5f04f6bcae20a53fcb516264c131e3d2f42031a729048f",
+      "bytes": 10855
+    },
+    "docs/implementation/a1_unified_fix_20260914/changes_and_acceptance.tsv": {
+      "sha256": "c83708dd701ddf488b5794c6e2475d0796d411b241442aa0802d56351b6848b6",
+      "bytes": 10116
+    }
+  }
+}

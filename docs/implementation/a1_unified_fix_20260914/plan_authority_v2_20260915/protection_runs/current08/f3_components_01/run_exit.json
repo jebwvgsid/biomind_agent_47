@@ -1,0 +1,20 @@
+{
+  "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+  "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current08/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]"
+  ],
+  "timeout_seconds": 360,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

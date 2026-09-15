@@ -1,0 +1,58 @@
+{
+  "final_production_source_signature": "6527a327155fcecf485d82cc4eb42a1896899bbed41637fcde9f76f5ec79c728",
+  "production_files": 343,
+  "production_bytes_identical_current07_current08": true,
+  "current07_source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "differences": [
+    {
+      "file": "tests/a1_unified_fix/test_f3_env_progress.py",
+      "old_sha256": "40a7b5afe03250570c397d617b4e001bc5d40aec203f5e19dd93b20b978a36a7",
+      "sha256": "fa90cadcdbd5fff90eff4869a680e1134c3e07a673439f321e5dc5c10908e58c"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f3_late_result.py",
+      "old_sha256": "33cacccb09b60ff2d57d54631fea17ead1512aeccddf860c885ef986e228fdee",
+      "sha256": "813e69f2f8027c93824241314ae53ee16d2fd10cf4fb8a53b9178e535c1c55bf"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f3_progress.py",
+      "old_sha256": "c7b986951d1cb35d42f3856c757ff6cbf7a1fca5799b0ec7c4c39244cbb02c2a",
+      "sha256": "02a9c1f104cdf8c8b197d2ae33d13fee46d9810b1a40d3a09ff5fdbee6e90e5e"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/export_review.py",
+      "old_sha256": "60a65d989b579eb7277bf0b03a86c368a926064bf76bec5fb640560444929d6b",
+      "sha256": "5388041c198aaf4a9023f5c2e0a069ba5724c36730e974362373e16ee626bdfc"
+    },
+    {
+      "file": "tests/test_planner_wgs_skill_contracts.py",
+      "old_sha256": "f2e00aea3aa01cf07d3cc10bc9c6adc4da8450e9b47f33ec9ce5daf62fd979f4",
+      "sha256": "16d7ea4a65bcbabb3f42ebcc56b3f55ddc2f86df2cad291b11e5906f1dce37d3"
+    },
+    {
+      "file": "docs/audits/session_1789369423_plan_resource_cycle/candidate_C_rejected.json",
+      "old_sha256": null,
+      "sha256": "a01148ca8409492b26116d7341ea83366bd26f579e909fda7e92142c032dd354"
+    }
+  ],
+  "reuse_rule": "Actual loaded versions are never rewritten. Final applicability needs exact same dependencies or the named function/branch delta plus affected-path regression. Final14 public examples are separately tested; a fixed provider graph that ignored old examples proves the core graph path, not the new examples.",
+  "superseded_final_test_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+  "final_test_source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+  "final_files": 468,
+  "current10_current11_production_bytes_equal": true,
+  "later_production_change_proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+  "previous_final_candidate": {
+    "version": "current11",
+    "source_signature": "0ed5f31bfe4d996a4799559701d63b551ea814bcf005d9e5e6d1e217f5e5ea09"
+  },
+  "final_version": "current14",
+  "later_public_example_change": "step_effects.generate_output_examples only: mode discriminator in both blocked positions, generic Bash current-resource scaffold; public example tests run final14 and old F1/F2 39 final12 with exact final14 branch proof",
+  "final_reuse_evidence": [
+    "protection_runs/current10_vs09_exit_literal_proof.json",
+    "protection_runs/final_unique_verification.json",
+    "public/final_candidate_reuse.json",
+    "graph/reuse_scope_proof.json",
+    "regression_final_verification.json"
+  ],
+  "current09_to11_test_changes": "current11 strengthens only new blocked oracle and serializes its evidence; each affected blocked case rerun, untouched branches explicitly mapped"
+}

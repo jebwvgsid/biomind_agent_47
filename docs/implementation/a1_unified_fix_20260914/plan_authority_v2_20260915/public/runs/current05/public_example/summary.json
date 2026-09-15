@@ -1,0 +1,28 @@
+{
+  "classification": "PUBLIC_EXAMPLE_REJECTED_BY_V3_LEGACY_BATCH_FIELDS_REQUIRED",
+  "source_signature": "44073bcdb2e78e1bd3e95fa41518dafd28bfa8c21ddb81f7d19267c7158c69e5",
+  "returncode": 1,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+      "outcome": "failed",
+      "duration": 6.524513280950487
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 131,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "f6-v2_public_example-summary.json": "79bf6c7a01b99674f371012d06a4b2a6a6d73e43fde5b1880f62dd99b2d2aad7",
+    "pytest-results-test_exact_example_from_actual_planner_request_reaches_real_review-facts.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "pytest-results.json": "dbc869f69224025f4e97911770baa7b16a1bb93091b89bcd7ec76b12bf443b32",
+    "v2_public_example-driver.json.gz": "b23be57f48c1f88a285c0a5688906261affb3892cd09bde9af459b44e3458c8f",
+    "invocation.json": "9358c9f7bb5298b96b0bd2bc70286241fe93168cee98c174fa3073616bba02f0",
+    "stdout.txt": "f5c5c4b9a824610083382f21077d2223df9dd384e988f655a98acddfe0c6701c",
+    "run_exit.json": "d06a488422b16f534346505ee7c90daaa44259cb1b5d97c110dd844a5d14092e",
+    "f6-v2_public_example-full.json.gz": "73b687f76c7b5677ee2e8fb0dd5473074cc46d698e8a8b3e79e6268edcd65458"
+  },
+  "copied_scope": "top-level results only; no scratch or nested runtime preserved trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

@@ -1,0 +1,22 @@
+{
+  "baseline": "../../baseline/source_manifest.json",
+  "files": {
+    "agent_core/action_runtime.py": "fbbe863855481a2dfe97d30ebc672073335d1fa841f3510266a4e40de8750f0c",
+    "agent_core/node_context.py": "a2a2dd882585596dddb2cc617d7de11af0d392308fa007b82787b65406a116c9",
+    "agent_core/plan_bindings.py": "b75d8d53ae873d95aadff7fc5c05b9ef88b4b3076aa4a4a732c4152928b4ac09",
+    "agent_core/plan_contract.py": "a0266cdd75033871649027971af54ed683a16d726bf8f66cd03be49414702f15",
+    "agent_core/plan_tracker.py": "f25e6d5511ca8fa5668d929ca4fb131ffd412592638e4edbf9ff62934a7847a5",
+    "agent_core/planner_context.py": "022741b7cb49737ee640d7fd6fb19383d917b22fd9dd4abb54e1f434645443c0",
+    "agent_core/skill_manager.py": "b4f0133acf5eddb2ac0dd0199a6d23bfaff9c996ba62a03760a20b9af2e89b22",
+    "agent_core/step_effects.py": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+    "bio_agents.py": "1052328d7347af96b9156ef194544a2edea283be569e0f837c225f396ccdb2ab",
+    "prompts/manager.py": "59552a416605c52d1fabb7b55cf7852e1e938d3cc08b2a1f4e2861c3ccdd54b0",
+    "tests/a1_unified_fix/test_f6_graph.py": "4cecaaf2ff388d56a55e83b79249d3de4c8ecc771b69e3be9817b09f94e3a078",
+    "tests/plan_authority_v2_20260915/export_review.py": "90d119146e120129d9a4dfe10809af6eb352b31f023ae9e55cc4f81a1ce29a60",
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py": "0cd4888940e9c396308b43c55e11991fb3b89da48f25775494c7257962319fa3",
+    "tests/plan_authority_v2_20260915/test_graph.py": "467dd1e0462937708e6d1ad86dda7f7cd458bf66f31982287906ba28a82ebf7e",
+    "tests/plan_authority_v2_20260915/test_public_graph.py": "b1f0edbac8df8022f5cb50f43efbdc4ec79b904e0fd0aad7da93a0ab2440acbd",
+    "tests/plan_authority_v2_20260915/test_public_projection.py": "d1c676e803e9b3c35c19c93a6f4b3156fe36ef89b5a0c08937369f28b1862f46",
+    "tests/plan_authority_v2_20260915/test_resource_contract.py": "8cec67ebe55eabf10d02fd113db02eb8d162043995a8b009ab0e0b93dcc74d6d"
+  }
+}

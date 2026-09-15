@@ -1,0 +1,552 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013529788702726364,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0012643113732337952,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011596828699111938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003398554399609566,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00012984219938516617,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.490456432104111e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025371741503477097,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00011689309030771255,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.072797209024429e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022342801094055176,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00012760236859321594,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.40257853269577e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.734393537044525e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002911696210503578,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.033068686723709e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.976444274187088e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005014548078179359,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.458046406507492e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001687733456492424,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003825100138783455,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.842108607292175e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016222521662712097,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001763422042131424,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.639080286026001e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.130073547363281e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004001455381512642,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.01267272233963e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.868146687746048e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00031824689358472824,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.61732628941536e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.398799061775208e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0021414784714579582,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.222235530614853e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.157175034284592e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00024653971195220947,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.714742630720139e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.559917867183685e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0028574438765645027,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.120240479707718e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.167551666498184e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00031304731965065,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.604287773370743e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.943583816289902e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00032690446823835373,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.737373769283295e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.485838770866394e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005174605175852776,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.362104952335358e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.012300193309784e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005185706540942192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.308833301067352e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.201451808214188e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00037021003663539886,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.416680455207825e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.205549627542496e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001440197229385376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 6.606709212064743e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001811617985367775,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00016269925981760025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.103810250759125e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017488375306129456,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00015505868941545486,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.895193994045258e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.269678801298141e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005402509123086929,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.525699377059937e-05,
+    "failure": ""
+  }
+]

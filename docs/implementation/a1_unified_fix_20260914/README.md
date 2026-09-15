@@ -54,3 +54,12 @@
 以下精确项已并入 [changes_and_acceptance.tsv](changes_and_acceptance.tsv) 的 `LIVE-PLAN-*` 行，**本轮只读复核，生产修复均 NOT_IMPLEMENTED**。依赖顺序是现有诊断与公开投影 → 身份示例 → 复用 F6 接真实候选变体 → 另行授权的有限真实 Planner-only 验收。保持角色作用域校验、原四次预算、主动停止/取消、审批正文/输入及已完成 F1—F6；不增加全局 validator、Controller 或 binder。
 
 补充验证将原始失败 witness、当前完整准入正反例、旧断言失败见证和原 F6 下游机制结果分别登记。实际加载、复用依赖、开发失败、未运行项和本轮提交范围见 [补充账本](supplement_session_1789437662/verification.json)。本轮没有生产修改、新真实 API/科学执行、原 session 恢复或 push；待审批不等于改名候选的下游六操作已通过。
+
+
+## Plan 规划权 V2 实施与补充验收（2026-09-15）
+
+本轮 V2 已实际修改 Plan 准入、同源公开 schema/prompt 和直接消费者，替代此前 LIVE-PLAN 中原准入集合与重复布局冻结的限制。原 F1—F6、旧事故与失败账本保持原范围。入口：[Plan 规划权 V2 README](plan_authority_v2_20260915/README.md)；[第 10 节完整回执](plan_authority_v2_20260915/implementation_report.md)；[机器验证账本](plan_authority_v2_20260915/verification.json)。
+
+已增加显式通用 Bash/Python 执行，v3 resource_uses 单来源和 TaskSpec 输出义务读取，降级无硬依据的三 Skill/READ 文字解释偏好，并同步当前公开动作/停止示例。保留未知对象、来源与依赖、权限、批准对象、证据、必需输出、预算/去重/停止/取消和输入保护。新 8 个完整图场景、旧 22 个图场景、额外公开协议与保护回归逐场列版本；244 个唯一 pytest ID 为 243 PASS + 1 已存在的 WGS 版本断言 FAIL，另有真实 PTY/plain 14 场景 PASS。固定 provider/科学替身不构成真实模型或科学 E2E。
+
+整体状态 **PARTIAL**：10 个生产文件及 18 个测试文件的可隔离净补丁已提交；公开投影的另一处 V2 增量与先存未提交 planner_context 基础函数相交，保留工作树改动及精确 patch，未收编旧函数。已测候选是安全工作树 + 保护 overlay，不等于裸提交。最终 current14 468 文件签名 `5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212`；逐进程实际加载证明另存，导出清单不冒充加载证明。生产逻辑最后提交 `5673b236c80a694e27e72e7b0f90f0a9946bf4b9`，完整链与净文件范围见分册 commit_files.tsv / net_change_summary.json。未恢复原 session、未调用真实 API/科学工具、未 push。

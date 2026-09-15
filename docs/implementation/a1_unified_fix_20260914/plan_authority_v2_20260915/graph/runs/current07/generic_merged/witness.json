@@ -1,0 +1,91 @@
+{
+  "status": "PASS",
+  "test_duration_seconds": 119.80976629443467,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 7,
+    "reviewer": 7,
+    "recovery": 0
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 7,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_29e8e157ecb6658554ce",
+      "approved_sha256": "f51b1e6085180514b1998babf0e5b1441c944c509d4d611c0f2e9774de9c4da7",
+      "executed_sha256": "6c2441cc255d36cf504d6ea9b1b9060a61552aab25fc9e5ed944adc77c31202d"
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_0c7d344fdb1296beb86b",
+      "approved_sha256": "6edf995c010fdb4679bee108761bc5e1d744a81fa705e1564a21d7502c4b9f5a",
+      "executed_sha256": "3646e2fceb3cfbaec60ad477b38c2e351d2fa9db04b8514105e29853cfc963f2"
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_3bdf4af1c7d0b8e11e1b",
+      "approved_sha256": "1c432dc39ae8e30fbe224f918a57fa2137b1f7c21045c142a62080e54789e317",
+      "executed_sha256": "d44f0df41e4d21b16633a20e3f78aec9d488c301b9be070904ab1ef27fc5751e"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "rc": 0,
+      "attempt_id": "attempt_c8a7769dbd71573a4717",
+      "approved_sha256": "d78677ac44dec772d696ce02ea19b596d3477644ee7c0e7ceeeedd54cc785325",
+      "executed_sha256": "60990f7ddf35d51e76ae8fbcfd29d391f3fc4ec39d4912b9de592c62764fcf05"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "rc": 0,
+      "attempt_id": "attempt_55482ef090bce956b5e9",
+      "approved_sha256": "5c2fdad41400ecfc36cff00c18b882db8ccfa6a28cd23249857884d43b0356f0",
+      "executed_sha256": "ee9fb4738ce10eb1250177a3fdac59358e9826126238d954454abdaa1ae40594"
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "rc": 0,
+      "attempt_id": "attempt_7c57ce5c02290680e289",
+      "approved_sha256": "09de01cadd0ccd55a95a71ebc4a77d6984ef53bdc1a6c3bf2ea646bb724b0481",
+      "executed_sha256": "fd6f68ab93321a71be027887b82f55fb0f61557d2892a4c7d200defac395cbee"
+    },
+    {
+      "step_id": "publish-386",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_ec03baf97e977da6e8ff",
+      "approved_sha256": "b01cfe437c71003b5739cac80b7bc0c251d03acd74507bff6606d998060f184b",
+      "executed_sha256": "67383c662628727b68ecf51bbb31426aa343631c3be337d735aeae8d98860774"
+    }
+  ],
+  "commits": 7,
+  "final_outcome": "task_verified",
+  "generate_outcome_type": "action_ready",
+  "durable_status": "completed",
+  "gate_counterfactuals": [],
+  "provider_modes": [
+    "native_action_json",
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {
+    "ledger-205": "/tmp/biomind-plan-authority-v2-current07/graph_generic_merged/scratch/biomind-plan-local-graph-1hggorhk/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+  },
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

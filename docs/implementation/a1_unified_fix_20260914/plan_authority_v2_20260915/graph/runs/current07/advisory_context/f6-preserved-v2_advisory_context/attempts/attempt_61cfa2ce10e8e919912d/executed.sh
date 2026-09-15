@@ -1,0 +1,12 @@
+#!/bin/bash
+set +e
+: > /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/stdout.log
+: > /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/stderr.log
+printf 'runner=%s script=%s\n' '/usr/bin/bash -o pipefail' /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/approved.sh > /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/command_trace.log
+/usr/bin/bash -o pipefail /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/approved.sh > /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/stdout.log 2> /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/stderr.log
+rc=$?
+printf 'returncode=%s\n' "$rc" >> /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/command_trace.log
+finished_at=$(date -Iseconds 2>/dev/null || date)
+printf '{"attempt_id":"attempt_61cfa2ce10e8e919912d","returncode":%s,"finished_at":"%s"}\n' "$rc" "$finished_at" > '/tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/exit_status.json.tmp.$$'
+mv '/tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/exit_status.json.tmp.$$' /tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/task_outputs/fix-f6-v2_advisory_context/attempts/attempt_61cfa2ce10e8e919912d/exit_status.json
+exit "$rc"

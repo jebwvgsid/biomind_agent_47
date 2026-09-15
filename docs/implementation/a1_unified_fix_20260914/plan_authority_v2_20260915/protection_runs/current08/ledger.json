@@ -1,0 +1,83 @@
+[
+  {
+    "group": "f3_components_01",
+    "returncode": 0,
+    "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "source_changes": [],
+    "phase_call_count": 8,
+    "phase_call_pass": 8,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_components_02",
+    "returncode": 0,
+    "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "source_changes": [],
+    "phase_call_count": 4,
+    "phase_call_pass": 4,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_components_03",
+    "returncode": 0,
+    "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "source_changes": [],
+    "phase_call_count": 6,
+    "phase_call_pass": 6,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_components_04",
+    "returncode": 0,
+    "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "source_changes": [],
+    "phase_call_count": 4,
+    "phase_call_pass": 4,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_components_05",
+    "returncode": 0,
+    "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "source_changes": [],
+    "phase_call_count": 7,
+    "phase_call_pass": 7,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_late_result",
+    "returncode": 0,
+    "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "source_changes": [],
+    "phase_call_count": 4,
+    "phase_call_pass": 4,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "resource_scope_cancellation",
+    "returncode": 1,
+    "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "source_changes": [],
+    "phase_call_count": 28,
+    "phase_call_pass": 18,
+    "failed_nodeids": [
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+      "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+      "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+      "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views"
+    ],
+    "watchdog_seconds": 360
+  }
+]

@@ -1,0 +1,184 @@
+{
+  "base_commit": "81d10c58a236f44c7987f1913190e6927ce23248",
+  "final_code_commit": "5673b236c80a694e27e72e7b0f90f0a9946bf4b9",
+  "net_committed_file_count": 28,
+  "net_production_files": 10,
+  "net_test_files": 18,
+  "files": [
+    {
+      "file": "agent_core/action_runtime.py",
+      "added_lines": 32,
+      "deleted_lines": 0,
+      "scope": "production"
+    },
+    {
+      "file": "agent_core/completion_gate.py",
+      "added_lines": 51,
+      "deleted_lines": 2,
+      "scope": "production"
+    },
+    {
+      "file": "agent_core/node_context.py",
+      "added_lines": 60,
+      "deleted_lines": 27,
+      "scope": "production"
+    },
+    {
+      "file": "agent_core/plan_bindings.py",
+      "added_lines": 134,
+      "deleted_lines": 18,
+      "scope": "production"
+    },
+    {
+      "file": "agent_core/plan_contract.py",
+      "added_lines": 128,
+      "deleted_lines": 69,
+      "scope": "production"
+    },
+    {
+      "file": "agent_core/plan_tracker.py",
+      "added_lines": 45,
+      "deleted_lines": 17,
+      "scope": "production"
+    },
+    {
+      "file": "agent_core/skill_manager.py",
+      "added_lines": 25,
+      "deleted_lines": 7,
+      "scope": "production"
+    },
+    {
+      "file": "agent_core/step_effects.py",
+      "added_lines": 26,
+      "deleted_lines": 9,
+      "scope": "production"
+    },
+    {
+      "file": "bio_agents.py",
+      "added_lines": 70,
+      "deleted_lines": 18,
+      "scope": "production"
+    },
+    {
+      "file": "prompts/manager.py",
+      "added_lines": 140,
+      "deleted_lines": 55,
+      "scope": "production"
+    },
+    {
+      "file": "tests/a1_unified_fix/run_final.py",
+      "added_lines": 5,
+      "deleted_lines": 3,
+      "scope": "test"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f1_f2.py",
+      "added_lines": 3,
+      "deleted_lines": 1,
+      "scope": "test"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f3_env_progress.py",
+      "added_lines": 3,
+      "deleted_lines": 2,
+      "scope": "test"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f3_late_result.py",
+      "added_lines": 3,
+      "deleted_lines": 1,
+      "scope": "test"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f3_progress.py",
+      "added_lines": 3,
+      "deleted_lines": 1,
+      "scope": "test"
+    },
+    {
+      "file": "tests/a1_unified_fix/test_f6_graph.py",
+      "added_lines": 11,
+      "deleted_lines": 6,
+      "scope": "test"
+    },
+    {
+      "file": "tests/cli_model_progress_support.py",
+      "added_lines": 8,
+      "deleted_lines": 3,
+      "scope": "test"
+    },
+    {
+      "file": "tests/ger_fixture_support.py",
+      "added_lines": 7,
+      "deleted_lines": 2,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/export_review.py",
+      "added_lines": 72,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/resource_artifact_plugin.py",
+      "added_lines": 14,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_formal_stop.py",
+      "added_lines": 40,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_generic_runtime.py",
+      "added_lines": 69,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_graph.py",
+      "added_lines": 894,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_public_graph.py",
+      "added_lines": 416,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_public_projection.py",
+      "added_lines": 232,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/plan_authority_v2_20260915/test_resource_contract.py",
+      "added_lines": 299,
+      "deleted_lines": 0,
+      "scope": "test"
+    },
+    {
+      "file": "tests/test_plan_local_preaction_convergence_v2.py",
+      "added_lines": 8,
+      "deleted_lines": 2,
+      "scope": "test"
+    },
+    {
+      "file": "tests/test_planner_wgs_skill_contracts.py",
+      "added_lines": 7,
+      "deleted_lines": 2,
+      "scope": "test"
+    }
+  ],
+  "additional_worktree_only_production_delta": {
+    "file": "agent_core/planner_context.py",
+    "reason": "intersects protected preexisting uncommitted function",
+    "patch": "protection/planner_context_v2_over_protected_base.patch",
+    "sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a"
+  },
+  "not_included": "Protected prior overlay; sensitive config; historical audit deletions and untracked work; no push"
+}

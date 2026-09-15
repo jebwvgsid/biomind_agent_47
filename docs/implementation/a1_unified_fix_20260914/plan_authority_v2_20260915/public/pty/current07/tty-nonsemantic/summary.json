@@ -1,0 +1,213 @@
+{
+  "classification": "REAL_KERNEL_PTY_EXISTING_UI_PROTECTION_PASS",
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "mode": "tty",
+  "scenario": "nonsemantic",
+  "returncode": 0,
+  "actual_kernel_pty": true,
+  "checks": {
+    "passed": true,
+    "checks": {
+      "child_rc0": true,
+      "business_done": true,
+      "source_unchanged": true,
+      "one_frozen_plan": true,
+      "no_execution_or_code_approval": true,
+      "fixed_provider_only": true,
+      "full_body_bound_before_confirmation": true,
+      "entire_frozen_body_in_current_view": true,
+      "default_body_visible": true,
+      "correct_acceptance": true,
+      "formal_review_receipt": true,
+      "one_current_owner_decision": true,
+      "receipt_current_frozen_version": true
+    }
+  },
+  "parent_and_child_harness_sha256": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538",
+  "source_unchanged": true,
+  "loaded_count": 117,
+  "raw_files": {
+    "before-decision.screen.txt": {
+      "original_sha256": "8bcd7ca5d87132eabb0e0d76b8b97d0d7e2f0e41a5a9bf712fa3a3d852a2876c",
+      "bytes": 1310,
+      "archive_path": "before-decision.screen.txt",
+      "archive_sha256": "8bcd7ca5d87132eabb0e0d76b8b97d0d7e2f0e41a5a9bf712fa3a3d852a2876c"
+    },
+    "business.json": {
+      "original_sha256": "3f22435a5a57a933cac1e6bf770b5268e0460b9d9e66f18fe9b76113d6837cad",
+      "bytes": 168361,
+      "archive_path": "business.json",
+      "archive_sha256": "3f22435a5a57a933cac1e6bf770b5268e0460b9d9e66f18fe9b76113d6837cad"
+    },
+    "checks.json": {
+      "original_sha256": "7635ed77a3e796f08334e860942317fbc71c8d7cd5afde383c15c337e8b9e328",
+      "bytes": 505,
+      "archive_path": "checks.json",
+      "archive_sha256": "7635ed77a3e796f08334e860942317fbc71c8d7cd5afde383c15c337e8b9e328"
+    },
+    "default.screen.txt": {
+      "original_sha256": "8bcd7ca5d87132eabb0e0d76b8b97d0d7e2f0e41a5a9bf712fa3a3d852a2876c",
+      "bytes": 1310,
+      "archive_path": "default.screen.txt",
+      "archive_sha256": "8bcd7ca5d87132eabb0e0d76b8b97d0d7e2f0e41a5a9bf712fa3a3d852a2876c"
+    },
+    "done.screen.txt": {
+      "original_sha256": "20d09bb9ba264043fba8702d6cab6cfe21290a9421a71e856074daedae60b7dd",
+      "bytes": 781,
+      "archive_path": "done.screen.txt",
+      "archive_sha256": "20d09bb9ba264043fba8702d6cab6cfe21290a9421a71e856074daedae60b7dd"
+    },
+    "durable.json": {
+      "original_sha256": "2e4f79634d515907c1bbe0af54d38fe1b00260585f0308f83ed2d00ad9f0467e",
+      "bytes": 203358,
+      "archive_path": "durable.json.gz",
+      "archive_sha256": "19db7d7cf02b2127452174595d1971886b8602a9c2e8f5a3d23fd457ab4339c6"
+    },
+    "finish": {
+      "original_sha256": "b737815f5ca9697f685dfe2b5fe1f7b12a180562f97da5a72e90eaedd9890876",
+      "bytes": 8,
+      "archive_path": "finish",
+      "archive_sha256": "b737815f5ca9697f685dfe2b5fe1f7b12a180562f97da5a72e90eaedd9890876"
+    },
+    "frame.json": {
+      "original_sha256": "50d5526817d86e1603fc56c25f6473d05b44dad4576524f16864006a8612f2b9",
+      "bytes": 19659,
+      "archive_path": "frame.json",
+      "archive_sha256": "50d5526817d86e1603fc56c25f6473d05b44dad4576524f16864006a8612f2b9"
+    },
+    "invocation.json": {
+      "original_sha256": "4b4d875de16aba2cd478d753d76a574f197ba988ebdf4412fc7b016609d20542",
+      "bytes": 1256,
+      "archive_path": "invocation.json",
+      "archive_sha256": "4b4d875de16aba2cd478d753d76a574f197ba988ebdf4412fc7b016609d20542"
+    },
+    "loaded.json": {
+      "original_sha256": "6ed745899e9c8e1ce1184a88692fb9e27296c0ec3984e171c57346cbfa82fd75",
+      "bytes": 25208,
+      "archive_path": "loaded.json",
+      "archive_sha256": "6ed745899e9c8e1ce1184a88692fb9e27296c0ec3984e171c57346cbfa82fd75"
+    },
+    "mutate": {
+      "original_sha256": "4e79d86dabec7e80529cb2fbaa10998244eb1053f07e20a68ea8d6f4215876ab",
+      "bytes": 18,
+      "archive_path": "mutate",
+      "archive_sha256": "4e79d86dabec7e80529cb2fbaa10998244eb1053f07e20a68ea8d6f4215876ab"
+    },
+    "mutated.screen.txt": {
+      "original_sha256": "8bcd7ca5d87132eabb0e0d76b8b97d0d7e2f0e41a5a9bf712fa3a3d852a2876c",
+      "bytes": 1310,
+      "archive_path": "mutated.screen.txt",
+      "archive_sha256": "8bcd7ca5d87132eabb0e0d76b8b97d0d7e2f0e41a5a9bf712fa3a3d852a2876c"
+    },
+    "mutation.json": {
+      "original_sha256": "0d2f62cb145f7240846193141b022d8fcbbbb7dcf1d1628882827a0617ec2238",
+      "bytes": 1260,
+      "archive_path": "mutation.json",
+      "archive_sha256": "0d2f62cb145f7240846193141b022d8fcbbbb7dcf1d1628882827a0617ec2238"
+    },
+    "phase.json": {
+      "original_sha256": "74532556b7685c0f79076bbb8f5cb1d73620c60646f7ce093e8932e07a340ef2",
+      "bytes": 30,
+      "archive_path": "phase.json",
+      "archive_sha256": "74532556b7685c0f79076bbb8f5cb1d73620c60646f7ce093e8932e07a340ef2"
+    },
+    "pytest-results.json": {
+      "original_sha256": "c10896b2074e5bd104871026c2bb70defae8765cb805138c9a3017895181d8e7",
+      "bytes": 690,
+      "archive_path": "pytest-results.json",
+      "archive_sha256": "c10896b2074e5bd104871026c2bb70defae8765cb805138c9a3017895181d8e7"
+    },
+    "result.json": {
+      "original_sha256": "1dd3087a8f0442614d2dc6b6fed1307f3c94973c8dfa0322195cc73a8fa2a400",
+      "bytes": 792378,
+      "archive_path": "result.json.gz",
+      "archive_sha256": "8a3fcd4e5aff03a9fb12544999033a06cf6e4ac9186912aefe8f692ddd187262"
+    },
+    "terminal.raw": {
+      "original_sha256": "96684fd83cb8087c261452822ac05c90c2bc88021291be623a13b7c90d931b85",
+      "bytes": 23868,
+      "archive_path": "terminal.raw",
+      "archive_sha256": "96684fd83cb8087c261452822ac05c90c2bc88021291be623a13b7c90d931b85"
+    }
+  },
+  "provider_boundary": "fixed whole invocation methods in existing F5 harness; UI/PlanReview/CAS regression, not leaf transport validation",
+  "real_provider_calls": 0,
+  "real_scientific_calls": 0,
+  "execution_calls": 0,
+  "code_approval_calls": 0,
+  "review_binding": {
+    "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+    "plan_id": "plan_e33c5694231df57920a4",
+    "plan_version": "plan_v1",
+    "submission": {
+      "ready": true,
+      "identity_matches": true,
+      "reason_code": "PLAN_REVIEW_SUBMISSION_COMMITTED",
+      "submission_id": "plan-submission-58d046f62b83c68c7f3d",
+      "receipt": {
+        "schema_version": 1,
+        "protocol_version": 1,
+        "submission_id": "plan-submission-58d046f62b83c68c7f3d",
+        "action_type": "submit_plan_for_review",
+        "agent_initiated": true,
+        "status": "pending_review",
+        "task_id": "f5-plan-current",
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+        "plan_snapshot_ref": "object:sha256:68925865fcbf4959ad3c91129d99fa7b0709581678a1e2a5f8f0b34772e8ed22",
+        "task_revision": 1,
+        "generated_from_task_revision": 1,
+        "authoritative_user_turn_revision": 1,
+        "planner_claim_id": "planner-call:3833273151ef4967eed763137ce95515cff4d51eba2420706e5acb53ba5ed5b9",
+        "planning_epoch_id": "planning-epoch-128195f0-8c38-420d-845f-93e1d8e09125",
+        "candidate_scope_id": "candidate-scope-250c1d2a-69eb-434f-906f-567471aa67b8",
+        "submitted_at": "2026-09-15T06:19:53.256814+00:00"
+      }
+    }
+  },
+  "actual_body_saved_in": "result.json.gz",
+  "acceptance": {
+    "ready": true,
+    "reason_code": "PLAN_REVIEW_ACCEPTANCE_COMMITTED",
+    "review_receipt_id": "plan-review-de49a1f69d9749ccb202",
+    "submission_id": "plan-submission-58d046f62b83c68c7f3d",
+    "receipt": {
+      "schema_version": 1,
+      "protocol_version": 1,
+      "review_receipt_id": "plan-review-de49a1f69d9749ccb202",
+      "status": "accepted",
+      "submission_id": "plan-submission-58d046f62b83c68c7f3d",
+      "approval_id": "approval-0b2219cd86f347be4e64",
+      "review_event_id": "review-4ee025aaabad23a606a2",
+      "task_id": "f5-plan-current",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+      "plan_snapshot_ref": "object:sha256:68925865fcbf4959ad3c91129d99fa7b0709581678a1e2a5f8f0b34772e8ed22",
+      "accepted_at": "2026-09-15T06:19:54.123248+00:00"
+    }
+  },
+  "outcome": {
+    "schema_version": 1,
+    "type": "approved_for_execution",
+    "summary": "Plan review approved the plan for execution.",
+    "scope": {
+      "task_id": "f5-plan-current",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "step_id": "plan-inspect-0"
+    },
+    "payload": {
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "approval_status": "approved",
+      "execution_backend": "in_process",
+      "review_receipt_id": "plan-review-de49a1f69d9749ccb202"
+    },
+    "evidence_refs": []
+  },
+  "copied_scope": "top-level actual artifacts only; no scratch or nested runtime state"
+}

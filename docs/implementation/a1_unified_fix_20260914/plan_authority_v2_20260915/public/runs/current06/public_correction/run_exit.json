@@ -1,0 +1,15 @@
+{
+  "source_signature": "86bd08c596e2c4ef34f9357abb8dfc484216d52f584e1e117813b630ffc41b24",
+  "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current06/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan"
+  ],
+  "timeout_seconds": 180,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 124,
+  "timeout": true,
+  "classification": "TEST_WATCHDOG_NOT_PASS",
+  "source_changes_after_run": []
+}

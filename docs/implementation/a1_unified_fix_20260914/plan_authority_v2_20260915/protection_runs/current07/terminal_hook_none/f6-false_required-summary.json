@@ -1,0 +1,242 @@
+{
+  "mode": "false_required",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 1,
+    "recovery": 1
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "recovery"
+  ],
+  "executions": [
+    {
+      "operation": "check_contig_compatibility",
+      "attempt_id": "attempt_9198182e172fd5c1ad08",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}\n",
+      "stderr": "",
+      "approved_sha256": "84f8a6997cac4ac5946a137f878b5a87d7a12b1918724a9d6b2349ee72e3eefa",
+      "executed_sha256": "13780d2cb637ec9b17d1bcb9462fd7d6a329e422dab775b8c4b13cf2784405d6",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    }
+  ],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/f6-false_required-full.json.gz",
+    "sha256": "f806cabe83b4bc22a5062d56e236077823ad89eb96768d0d00d62948a46df39e",
+    "raw_sha256": "8c5dc2f5f9b9e5367db1fca174ea7f386febb0b5fe6df0449dca1b97ace96088"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 5,
+    "finalize": 0,
+    "prepare": 2,
+    "summary": 0
+  },
+  "terminal": {
+    "status": "blocked",
+    "terminal_diagnostic": {
+      "error_code": "F6_SYNTHETIC_CAUSE",
+      "stage": "recovery",
+      "error_owner": "recovery",
+      "reason": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/stage_status.tsv。\n\n当前步骤：check_contig_compatibility；执行 attempt：attempt_9198182e172fd5c1ad08。\n\n命令已执行，returncode=0。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：BOOLEAN_PREDICATE_NOT_SATISFIED。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：F6_SYNTHETIC_CAUSE；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nExplicit synthetic causal follow-up.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：check_contig_compatibility=verification_pending；prepare_database=pending；build_database=pending；annotate_variants=pending；summarize_ann=pending；finalize_outputs=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md。\n\n附加问题：SUMMARY_RESPONSE_INVALID。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：supervisor；原始错误：F6_SYNTHETIC_CAUSE；停止阶段：recovery。\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\nstdout（脚本输出，未经独立复核）：BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}\n\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：BLOCKED；自动执行已停止。\n\n停止总结生成状态：FAILED（仅表示总结处理状态，不代表任务成功）",
+      "detail": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/stage_status.tsv。\n\n当前步骤：check_contig_compatibility；执行 attempt：attempt_9198182e172fd5c1ad08。\n\n命令已执行，returncode=0。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：BOOLEAN_PREDICATE_NOT_SATISFIED。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：F6_SYNTHETIC_CAUSE；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nExplicit synthetic causal follow-up.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：check_contig_compatibility=verification_pending；prepare_database=pending；build_database=pending；annotate_variants=pending；summarize_ann=pending；finalize_outputs=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md。\n\n附加问题：SUMMARY_RESPONSE_INVALID。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：supervisor；原始错误：F6_SYNTHETIC_CAUSE；停止阶段：recovery。\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\nstdout（脚本输出，未经独立复核）：BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}\n\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：BLOCKED；自动执行已停止。\n\n停止总结生成状态：FAILED（仅表示总结处理状态，不代表任务成功）",
+      "stop_id": "managed-stop:f0647eed39b121420d4169624916ce043db23856ceff8751c3f2a2a586803a22",
+      "origin": {
+        "source_stage": "supervisor",
+        "source_owner": "deterministic_predicate",
+        "failure_id": "failure-5b2cd797b371a096c3128e22",
+        "failure_type": "correction_required",
+        "error_code": "F6_SYNTHETIC_CAUSE",
+        "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果",
+        "concerns": [
+          "BOOLEAN_PREDICATE_NOT_SATISFIED"
+        ],
+        "evidence_refs": [
+          "validation-cfe8556a2b118f432ee4",
+          "completion-report-dce29495e770c7858ecc39b6de0236e768fdd833539e6d879a6b199a62cd5196",
+          "semantic-decision-883046a0b3275bc325ef0f39e500a74da928eb14e5e411eaa848ecb13f8db453"
+        ],
+        "returncode": null,
+        "attempt_id": "attempt_9198182e172fd5c1ad08",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "primary_cause": {
+        "source_stage": "supervisor",
+        "source_owner": "deterministic_predicate",
+        "failure_id": "failure-5b2cd797b371a096c3128e22",
+        "failure_type": "correction_required",
+        "error_code": "F6_SYNTHETIC_CAUSE",
+        "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果",
+        "concerns": [
+          "BOOLEAN_PREDICATE_NOT_SATISFIED"
+        ],
+        "evidence_refs": [
+          "validation-cfe8556a2b118f432ee4",
+          "completion-report-dce29495e770c7858ecc39b6de0236e768fdd833539e6d879a6b199a62cd5196",
+          "semantic-decision-883046a0b3275bc325ef0f39e500a74da928eb14e5e411eaa848ecb13f8db453"
+        ],
+        "returncode": null,
+        "attempt_id": "attempt_9198182e172fd5c1ad08",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "latest_failure": {},
+      "prior_completed_work": [],
+      "execution": {
+        "attempt_id": "attempt_9198182e172fd5c1ad08",
+        "step_id": "check_contig_compatibility",
+        "executed": true,
+        "purpose": "validation",
+        "returncode": 0,
+        "deterministic_passed": false,
+        "validation_status": "VALID",
+        "reviewer_disposition": "correction_required",
+        "step_status": "verification_pending",
+        "committed": false,
+        "executed_script_ref": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/task_outputs/fix-f6-false_required/attempts/attempt_9198182e172fd5c1ad08/executed.sh",
+        "command_body_available": true,
+        "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}\n",
+        "stderr": "",
+        "command_body": "/bin/bash --noprofile --norc -c 'set -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'\"'\"'PY'\"'\"'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('\"'\"'{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}'\"'\"')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, '\"'\"'BIOMIND_EFFECT_EVIDENCE_JSON='\"'\"', publication=True)\nfrom pathlib import Path\nimport os\nvcf=Path('\"'\"'/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/两样本.vcf'\"'\"'); ref=Path('\"'\"'/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新参考.fa'\"'\"'); gtf=Path('\"'\"'/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/输入 新构造/新注释.gtf'\"'\"')\nv={r.split('\"'\"'\\t'\"'\"')[0] for r in vcf.read_text().splitlines() if r and not r.startswith('\"'\"'#'\"'\"')}\nr={x[1:].split()[0] for x in ref.read_text().splitlines() if x.startswith('\"'\"'>'\"'\"')}\ng={x.split('\"'\"'\\t'\"'\"')[0] for x in gtf.read_text().splitlines() if x and not x.startswith('\"'\"'#'\"'\"')}\nvalue=bool(v) and v.issubset(r) and bool(v & g)\nprint(emit_effect_evidence({'\"'\"'produces_artifacts'\"'\"': {}, '\"'\"'produces_observations'\"'\"': {'\"'\"'contigs_compatible'\"'\"': {'\"'\"'value'\"'\"': value}}}))\nPY\n'"
+      },
+      "causal_execution": {
+        "status": "UNKNOWN"
+      },
+      "current_candidate": {},
+      "inspection_count_scope": {
+        "local_tool_calls": 0,
+        "known_causal_errors": 0,
+        "history_coverage": "bounded_admitted_causal_chain"
+      },
+      "inspection_failures": [],
+      "stop_reason": {
+        "error_code": "F6_SYNTHETIC_CAUSE",
+        "detail": "Explicit synthetic causal follow-up.",
+        "transport_receipt": {},
+        "failure_stage": "",
+        "no_progress_rounds": 0,
+        "model_turns": 1,
+        "tool_calls": 0,
+        "termination_reason": "",
+        "budget_receipt": {
+          "error_code": "F6_SYNTHETIC_CAUSE",
+          "detail": "Explicit synthetic causal follow-up.",
+          "transport_receipt": {},
+          "failure_stage": "",
+          "no_progress_rounds": 0,
+          "model_turns": 1,
+          "tool_calls": 0
+        }
+      },
+      "internal_diagnostic_delivery": {
+        "status": "not_needed",
+        "paths": {},
+        "receipts": {}
+      },
+      "delivery_status": "complete",
+      "report_paths": {
+        "stage_status.tsv": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "reproduce.sh": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "report.md": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md"
+      },
+      "report_receipts": {
+        "stage_status.tsv": {
+          "path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+          "operation_id": "12e5251d8d9d792fa1aca61ab0b31bd34927e81a277dcecb2bd583895c74736b",
+          "ownership": {
+            "operation_id": "12e5251d8d9d792fa1aca61ab0b31bd34927e81a277dcecb2bd583895c74736b",
+            "path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+            "sha256": "b073f69068b1d32195e1ab4fb085c09a3fa316fcc599a9e55f758b93b2275584",
+            "proof_name": ".runtime-report-proof-12e5251d8d9d792fa1aca61ab0b31bd34927e81a277dcecb2bd583895c74736b",
+            "device": 2051,
+            "inode": 10774369
+          },
+          "status": "created",
+          "stop_id": "managed-stop:f0647eed39b121420d4169624916ce043db23856ceff8751c3f2a2a586803a22",
+          "task_id": "fix-f6-false_required"
+        },
+        "reproduce.sh": {
+          "path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "sha256": "215d822e87a94fd6fec6ab35017f77aecc1b79ab2f9ea23b3782d9b8af805394",
+          "operation_id": "bce19762a82ee1066bde1db999eb59d59d34a14151c5877a09ce54cc44ecb891",
+          "ownership": {
+            "operation_id": "bce19762a82ee1066bde1db999eb59d59d34a14151c5877a09ce54cc44ecb891",
+            "path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/reproduce.sh",
+            "sha256": "215d822e87a94fd6fec6ab35017f77aecc1b79ab2f9ea23b3782d9b8af805394",
+            "proof_name": ".runtime-report-proof-bce19762a82ee1066bde1db999eb59d59d34a14151c5877a09ce54cc44ecb891",
+            "device": 2051,
+            "inode": 10774374
+          },
+          "status": "created",
+          "stop_id": "managed-stop:f0647eed39b121420d4169624916ce043db23856ceff8751c3f2a2a586803a22",
+          "task_id": "fix-f6-false_required"
+        },
+        "report.md": {
+          "path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md",
+          "sha256": "32b0b0d91c90829505c1d479dfc18a26d790b1438143631e023df737e97acdd1",
+          "operation_id": "728e10bf7994ddb530189e044b734c3b6ab619eac4947bbb83f8c2f24ea3e264",
+          "ownership": {
+            "operation_id": "728e10bf7994ddb530189e044b734c3b6ab619eac4947bbb83f8c2f24ea3e264",
+            "path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md",
+            "sha256": "32b0b0d91c90829505c1d479dfc18a26d790b1438143631e023df737e97acdd1",
+            "proof_name": ".runtime-report-proof-728e10bf7994ddb530189e044b734c3b6ab619eac4947bbb83f8c2f24ea3e264",
+            "device": 2051,
+            "inode": 10774436
+          },
+          "status": "created",
+          "stop_id": "managed-stop:f0647eed39b121420d4169624916ce043db23856ceff8751c3f2a2a586803a22",
+          "task_id": "fix-f6-false_required"
+        }
+      },
+      "persistence_status": "committed",
+      "summary_status": "FAILED",
+      "summary_llm_calls": 1,
+      "secondary_causes": [
+        {
+          "stage": "summary.parse",
+          "error_code": "SUMMARY_RESPONSE_INVALID",
+          "exception_type": "AttributeError",
+          "detail": "'NoneType' object has no attribute 'content'"
+        }
+      ],
+      "report_path": "/tmp/biomind-plan-authority-v2-current07/protection/terminal_hook_none/scratch/biomind-plan-local-graph-d554kfz1/终态回调 none/Part2.vairant_annotation/新机制结果/report.md"
+    }
+  },
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

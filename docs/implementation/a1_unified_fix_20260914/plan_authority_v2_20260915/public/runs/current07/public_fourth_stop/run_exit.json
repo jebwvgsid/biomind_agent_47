@@ -1,0 +1,13 @@
+{
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current07/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request"
+  ],
+  "timeout_seconds": 360,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

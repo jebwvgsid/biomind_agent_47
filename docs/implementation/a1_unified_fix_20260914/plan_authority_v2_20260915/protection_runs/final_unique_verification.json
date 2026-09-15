@@ -1,0 +1,4042 @@
+{
+  "status": "154_UNIQUE_PASS_1_KNOWN_BASE_ASSERTION_FAIL",
+  "through_export": "current14 branch-specific reuse of actual current12 targeted39 PASS; current10 correction5; remaining cases retain exact selected07/08/09 evidence",
+  "unique_nodeids": 155,
+  "unique_passed": 154,
+  "unique_failed": 1,
+  "phase_call_records_including_subtests": 159,
+  "phase_call_passed": 158,
+  "subtest_record_multiplicity": [
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+      "call_records": 5,
+      "meaning": "One unittest method and four subTests share its nodeid"
+    }
+  ],
+  "counts_by_selected_export": {
+    "current12": 39,
+    "current08": 43,
+    "current10": 5,
+    "current07": 59,
+    "current09": 9
+  },
+  "cases": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current12",
+      "group": "f1f2_components",
+      "source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+      "group_returncode": 0,
+      "evidence": "current12/f1f2_components",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current12",
+          "group": "f1f2_components",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_05",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_05",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_05",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_05",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_05",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_05",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_05",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_05",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_05",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_05",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_05",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_05",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_05",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_05",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_05",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_05",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_05",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_05",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_05",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_05",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_05",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_late_result",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_late_result",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_late_result",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_late_result",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_late_result",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_late_result",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_late_result",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_late_result",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_late_result",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_late_result",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_late_result",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_late_result",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_late_result",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_late_result",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_late_result",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_late_result",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_03",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_03",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_03",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_04",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_04",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_04",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_04",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_04",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_04",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_03",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_03",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_03",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_02",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_02",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_02",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_04",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_04",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_04",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_01",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_01",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_01",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current10",
+      "group": "f3_correction_representatives",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "group_returncode": 0,
+      "evidence": "current10/f3_correction_representatives",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_03",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f3_correction_representatives",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current10",
+      "group": "f3_correction_representatives",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "group_returncode": 0,
+      "evidence": "current10/f3_correction_representatives",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_03",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f3_correction_representatives",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_03",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_03",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_03",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_04",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_04",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_04",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current10",
+      "group": "f3_correction_representatives",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "group_returncode": 0,
+      "evidence": "current10/f3_correction_representatives",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_02",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f3_correction_representatives",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current10",
+      "group": "f3_correction_representatives",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "group_returncode": 0,
+      "evidence": "current10/f3_correction_representatives",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_02",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f3_correction_representatives",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current10",
+      "group": "f3_correction_representatives",
+      "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "group_returncode": 0,
+      "evidence": "current10/f3_correction_representatives",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_02",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current10",
+          "group": "f3_correction_representatives",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "f3_components_03",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 0,
+      "evidence": "current08/f3_components_03",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_components",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "f3_components_03",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "f3_reload",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/f3_reload",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "f3_reload",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_actual_answer_missing_question_and_old_answer_stay_distinct",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[cancel]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[interrupt]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_real_question_interrupt_and_eof_wait_without_answer_or_approval",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[OSError]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[ValueError]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "schema2_hooks",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/schema2_hooks",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "schema2_hooks",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "schema2_hooks",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/schema2_hooks",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "schema2_hooks",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "schema2_hooks",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/schema2_hooks",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "schema2_hooks",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "schema2_hooks",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/schema2_hooks",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "schema2_hooks",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "schema2_hooks",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/schema2_hooks",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "schema2_hooks",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "terminal_hook_cancel",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/terminal_hook_cancel",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "terminal_hook_cancel",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "terminal_hook_exception",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/terminal_hook_exception",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "terminal_hook_exception",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[none]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "terminal_hook_none",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/terminal_hook_none",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "terminal_hook_none",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[timeout]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "terminal_hook_timeout",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/terminal_hook_timeout",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "terminal_hook_timeout",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_legacy_non_safe_enter_keeps_its_original_rule",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_pending_tty_view_cannot_be_replaced_by_late_review_or_detail",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_details_is_same_request_and_does_not_decide",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_eof_is_not_empty_enter",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_finite_prior_writer_batch_precedes_input",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_paste_keeps_details_text_inside_feedback",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[False]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_pending_is_last_and_late_output_cannot_execute[True]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[close]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_real_pipe_wait_is_cancellable_without_a_human_deadline[predicate]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_second_reader_and_stale_context_are_rejected",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_urgent_output_preserves_input_for_same_request",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_plain_writer_failure_never_enables_input",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_queued_tty_read_moves_once_to_already_cancelled_plain_owner",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[eof]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[n]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_real_run_terminal_transfers_original_request_after_renderer_failure[y]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_owner_lifecycle.py::test_unfinished_tty_writer_cannot_create_a_competing_plain_writer",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_existing_safe_automatic_approval_and_unknown_manual_scope",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[   -approve]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[-approve]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[None-reject]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[e: printf edited-edit]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[edit: printf edited-edit]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n-reject]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[n: keep the current input-reject]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[please use the current scope-reject]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[q-quit]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[this is pasted feedback\\n/details\\nkeep the original files-reject]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[y-approve]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_approval_visibility.py::test_original_approval_parser_controls[yes-approve]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[  ]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[\\n\\n]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_blank_paste_is_not_the_explicit_empty_approval[]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[\\x1b[200~\\n\\n]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[\\x1b[200~unfinished\\n]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_eof_and_incomplete_paste_are_never_blank_approval[y]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_explicit_multiline_preserves_blank_lines_and_next_decision",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_framed_task_tail_and_intentional_identical_feedback[\\x1b[200~first\\nlast\\n\\n\\x1b[201~\\n-first\\nlast\\n\\n]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_framed_task_tail_and_intentional_identical_feedback[\\x1b[200~first\\r\\nlast\\r\\n\\r\\n\\x1b[201~\\r\\n-first\\nlast\\n\\n]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_no_paste_drain_called_by_production_prompt",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_input_boundary.py::test_preexisting_pipe_tail_is_retained_and_cannot_approve",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current07",
+      "group": "input_approval_askuser",
+      "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "group_returncode": 0,
+      "evidence": "current07/input_approval_askuser",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "input_approval_askuser",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current09",
+      "group": "cancellation",
+      "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "group_returncode": 0,
+      "evidence": "current09/cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current09",
+          "group": "cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_capability_domain_is_not_resource_authority_and_all_fields_reported",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_conflicting_authoritative_revisions_are_not_merged",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_existing_reference_copies_current_authority_and_rejects_stale_revision_scope_alias",
+      "outcome": "passed",
+      "call_records_including_subtests": 5,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 5
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 5
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_explicit_workspace_intent_supports_future_state_without_disk",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_legacy_reader_keeps_its_explicit_binding_but_live_gate_rejects_it",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_new_identity_is_scoped_without_alias_and_directory_stays_immutable",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_resource_protocol_v2.py::PlannerResourceProtocolV2Tests::test_task_lifecycle_declaration_reaches_provider_and_authoritative_binding",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_closed_capability_rejects_workspace_mutation_with_source_and_revision",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+      "outcome": "failed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": false,
+      "run_source_changes": [],
+      "classification": "BASE_PRESENT_SKILL_VERSION_ASSERTION_MISMATCH",
+      "proof": "baseline_wgs_version_assertion.json",
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "failed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inline_typed_side_effect_remains_legal_without_a_static_event_name",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_inspect_requires_actual_typed_value_without_fabricating_success",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_legacy_contract_hash_is_unchanged_when_revision_was_not_declared",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_produce_files_binds_only_step_outputs_not_semantic_effect_placeholder",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_supported_reference_effect_retains_evidence_requirements",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    },
+    {
+      "nodeid": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_unsupported_side_effect_keeps_subcode_objects_and_contract_requirement",
+      "outcome": "passed",
+      "call_records_including_subtests": 1,
+      "version": "current08",
+      "group": "resource_scope_cancellation",
+      "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "group_returncode": 1,
+      "evidence": "current08/resource_scope_cancellation",
+      "all_recorded_phases_passed": true,
+      "run_source_changes": [],
+      "execution_history": [
+        {
+          "version": "current07",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        },
+        {
+          "version": "current08",
+          "group": "resource_scope_cancellation",
+          "outcome": "passed",
+          "call_records": 1
+        }
+      ]
+    }
+  ],
+  "partial_interruption_not_counted": "current08/f3_components_interrupted; outer143, no completed child exit receipt; all29 intended cases later replayed successfully",
+  "equivalence_boundary": "Production07/08/09 byte equivalence is recorded by root. 09→10 bio_agents.py differs by one AST string constant in generic wrong-language catch, not whole-module byte equality. Current10 rechecks39 F1/F2 and5 actual ordinary correction/stop cases. Remaining selected cases are retained with their exact versions and root branch-specific reuse evidence; real generic wrong-language/fullgraph is in root/incident current10 results. 11→12 changes only generate_output_examples in production. Current12 reruns39 including actual ordinary/local/Recovery and legacy requests; native return-value equivalence and other-producer nonreachability are limited arguments, not module-byte equality. New generic action/STOP tests are separately owned by root/incident. 12→14 adds only one safely quoted public-resources assignment inside an unchanged generic Bash/script-only branch. Actual old39 native modes and legacy cap/tool show nonreachability; all141 other recorded modules and all3 test files are byte-identical. Root owns other-group dependency comparisons. No14 rerun is invented.",
+  "current10_targeted_rerun": {
+    "f1f2_components": 39,
+    "f3_correction_representatives": 5,
+    "passed": 44,
+    "failed": 0,
+    "all_groups_rc0": true,
+    "source_changes": []
+  },
+  "current10_change_proof": "current10_vs09_exit_literal_proof.json",
+  "current12_targeted_rerun": {
+    "f1f2_components": 39,
+    "passed": 39,
+    "failed": 0,
+    "returncode": 0,
+    "source_changes": []
+  },
+  "current12_change_proof": "current12_vs11_generate_examples_proof.json",
+  "current14_change_proof": "current14_vs12_generic_bash_resources_proof.json",
+  "current14_not_a_new_run": true
+}

@@ -1,0 +1,2 @@
+SYNTHETIC_ALGORITHM_COMPLETED:build
+BIOMIND_EFFECT_EVIDENCE_JSON={"schema_version":1,"produces_observations":[{"identity":"snpeff_database_ready","value":true}]}

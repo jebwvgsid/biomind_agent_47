@@ -1,0 +1,162 @@
+{
+  "IMPLEMENTATION_STATUS": "PARTIAL",
+  "implementation_scope": "Plan admission/public representation and direct Generate/approval/execution/evidence/Commit/result consumers; no claim of full architecture Controller removal",
+  "BASE_HEAD": "81d10c58a236f44c7987f1913190e6927ce23248",
+  "BASE_TREE": "d53c5ca94271ce4c6a5a0c2d7305238c1e955adf",
+  "FINAL_PRODUCTION_COMMITS": [
+    "fda82d91a12c4965723dc8482529a0991788d59b",
+    "1ace58d1fe3a04d4c0e40648a0349aa8a6126a5a",
+    "5673b236c80a694e27e72e7b0f90f0a9946bf4b9"
+  ],
+  "TEST_FIXTURE_COMMITS": [
+    "4d0d9c546a401819dc9af1cb93f355600e3bc256"
+  ],
+  "ARTIFACT_COMMITS": {
+    "reference": "The Git commit containing this report; full hash returned in final response",
+    "parent": "5673b236c80a694e27e72e7b0f90f0a9946bf4b9",
+    "scope": "Only plan_authority_v2_20260915 artifacts and append-only original README/changes_and_acceptance.tsv"
+  },
+  "FINAL_TEST_SOURCE": {
+    "version": "current14",
+    "signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+    "safe_files": 468,
+    "production_resource_signature": "6527a327155fcecf485d82cc4eb42a1896899bbed41637fcde9f76f5ec79c728",
+    "production_resource_files": 343,
+    "manifest": "final_export_manifest.json",
+    "actual_basis": "production commits + protected BASE overlay + documented uncommitted V2 projector delta",
+    "bare_HEAD_is_tested_source": false,
+    "manifest_is_not_proof_all_files_loaded": true
+  },
+  "RESULT_LAYERS": {
+    "BASE_WITNESSES": "Retained; a witnessed rejection PASS does not mean FIX PASS",
+    "COMPONENTS": "Resource/generic/public/parser target passes individually recorded; one unrelated existing WGS assertion remains FAIL",
+    "GRAPH_MECHANISM_FIX": "PASS in the explicitly scoped isolated candidate and tested/reused branches; fixed provider/scientific leaves and intent/preflight fixtures disclosed",
+    "PRODUCTION_FIX": "Implemented; 10 production files committed plus one exact V2 projector delta retained over protected prior uncommitted function",
+    "FULLY_SELF_CONTAINED_PRODUCTION_COMMIT": "PARTIAL; protected-overlay dependency cannot be silently co-opted",
+    "REAL_MODEL_RELIABILITY": "NOT_RUN / NOT_AUTHORIZED",
+    "SCIENTIFIC_E2E": "NOT_RUN / NOT_AUTHORIZED"
+  },
+  "FINAL_TEST_COUNTS": {
+    "unique_pytest_nodeids": 244,
+    "passed": 243,
+    "known_baseline_failed": 1,
+    "categories": {
+      "resource_and_generic_components": 36,
+      "public_contract_and_graph": 19,
+      "new_full_graph_scenarios": 8,
+      "new_public_stop_and_action_example_cases": 4,
+      "affected_old_F6_graph_scenarios": 22,
+      "existing_protection_unique_cases": 155
+    },
+    "pty_plain_scenarios_separate": 14,
+    "pty_plain_passed": 14,
+    "counting_rule": "Unique pytest IDs, not repeated runs/subTests/phase receipts. PTY scenarios are separately counted and not added as 14 unique pytest IDs."
+  },
+  "FINAL_TEST_LEDGER": "final_test_cases.json",
+  "DIRECT_DEFECTS": [
+    {
+      "defect": "Domain capability monopoly",
+      "result": "Explicit generic Bash/Python route and empty selected-Skill Plan full chain; unknown capability still rejects",
+      "evidence": [
+        "graph/verification.json",
+        "public/runs/current07"
+      ]
+    },
+    {
+      "defect": "Repeated resource facts and TaskSpec obligations",
+      "result": "V3 resource_uses exact single source; authoritative TaskSpec snapshot; outputs/state/evidence remain distinct facts",
+      "evidence": [
+        "resource_contract.md",
+        "resource_runs/current07/classification.json"
+      ]
+    },
+    {
+      "defect": "Preference becoming Plan gate",
+      "result": "Four-Skill advisory full graph no additional Planner request/repair/approval/Recovery; READ prose advice no gate; unused workflow fields optional in v3",
+      "evidence": [
+        "graph/verification.json",
+        "public/rule_disposition.tsv"
+      ]
+    },
+    {
+      "defect": "Public corrective feedback stripped or scanner rejected",
+      "result": "Exact candidate references, capability and short-circuit diagnostic fields survive next actual request; protected projector delta remains uncommitted dependency",
+      "evidence": [
+        "public/README.md",
+        "protection/intersecting_hunk.json"
+      ]
+    },
+    {
+      "defect": "Mutable workspace treated as immutable artifact at final result",
+      "result": "Sealed state chain and attested exact directory required; actual complete chain passes, removing state/attestation rejects",
+      "evidence": [
+        "new_graph_results.json",
+        "resource_direct_review.json"
+      ]
+    },
+    {
+      "defect": "Unregistered typed exit on generic tool mismatch",
+      "result": "Existing exit ABI reused; actual public STOP ends blocked without code approval/execution/Commit",
+      "evidence": [
+        "commits/generic_exit.patch",
+        "graph/late_public_protocol_defects.json"
+      ]
+    },
+    {
+      "defect": "Current-mode blocked example and generic Bash action example contradict actual parser/tool/resource scope",
+      "result": "Same-source mode-correct STOP and tool/resource-correct action examples; final14 five targets PASS including strengthened actual-request terminal/positive oracles",
+      "evidence": [
+        "commits/public_protocol.patch",
+        "graph/late_public_protocol_defects.json"
+      ]
+    }
+  ],
+  "REUSE": {
+    "not_all_tests_run_at_final14": true,
+    "actual_versions_preserved": true,
+    "proofs": [
+      "final_candidate_equivalence.json",
+      "public/final_candidate_reuse.json",
+      "regression_final_verification.json",
+      "protection_runs/final_unique_verification.json",
+      "graph/reuse_scope_proof.json"
+    ],
+    "critical_boundary": "Old fixed responder core graph PASS does not validate a published example it ignored. Final14 directly reuses the actual current example as the response; final12 old 39 covers the three producer entries."
+  },
+  "EXISTING_FAILURES_PRESERVED": {
+    "WGS_version_assertion": "One old test asserts every Skill version 1.1.0, while BASE and final public resources already contain 1.1.3 and 1.1.1; original business assertion retained",
+    "baseline_evidence": "protection_runs/baseline_wgs_version_assertion.json",
+    "development_index": "development_failure_index.json",
+    "old_ledgers": "Original A1/F1-F6/LIVE-PLAN ledgers retained, not overwritten or relabeled as fixed"
+  },
+  "BEFORE_AFTER_PLAN_COMPARISON": {
+    "evidence": "graph/same_obligation_comparison.json",
+    "limitation": "Old side is actual admitted snapshot plus raw digest where raw provider response was not retained; no static reconstruction is called the raw response. Renamed repeated candidate keeps the same 3 inputs and 5 required outputs; generic split extra authorized log is a separate example."
+  },
+  "ORIGINAL_F1_F6": "Original implementation and limited evidence preserved; affected regressions separately listed",
+  "REAL_MODEL_RELIABILITY": "NOT_RUN / NOT_AUTHORIZED",
+  "SCIENTIFIC_E2E": "NOT_RUN / NOT_AUTHORIZED",
+  "ORIGINAL_SESSION_RESUMED": "NO",
+  "PUSH": "NOT_PERFORMED",
+  "PROTECTED_DIRTY_STAGED_UNTRACKED_PRESERVED": {
+    "status": "YES",
+    "evidence": "protection/final_integrity.json",
+    "commit_method": "Owned file/net-hunk temporary index and CAS update-ref; no reset/clean/stash, no other index entries modified"
+  },
+  "REMAINING_BLOCKERS_AND_LIMITS": [
+    "agent_core/planner_context.py V2 delta intersects a preexisting uncommitted provider_correction_feedback function absent from BASE HEAD; exact patch delivered without committing someone else's function.",
+    "One unchanged BASE WGS version assertion fails; no global green claim.",
+    "No historical real-process loaded bytes claimed, no original-session recovery, no original scientific inputs, no real provider/API/scientific tools.",
+    "Fixed external replies and scientific leaves, inherited intent_admission and preflight capability fixtures are disclosed; not a live model or science success rate.",
+    "Production reader reload is within the same test process, not a separately restarted whole graph.",
+    "New tiny approved processes and existing guards are tested; arbitrary syscall sandboxing is not established.",
+    "Old F6 raw Plan provider response not retained where only admitted snapshot/digest is available."
+  ],
+  "NET_COMMITTED_SCOPE": 28,
+  "FINAL_LOADED_MODULE_RECEIPT": {
+    "observed_modules": 135,
+    "evidence": "graph/runs/current14/public_protocol/loaded_modules.json",
+    "origin": "graph/runs/current14/public_protocol/loaded_modules_provenance.json",
+    "scope": "Observed sys.modules file origins plus immutable export hashes and no runtime source drift; not a claim every exported file loaded or every function executed."
+  }
+}

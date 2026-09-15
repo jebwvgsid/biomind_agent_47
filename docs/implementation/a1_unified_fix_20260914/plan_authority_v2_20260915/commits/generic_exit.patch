@@ -1,0 +1,13 @@
+diff --git a/bio_agents.py b/bio_agents.py
+index 89c9b7c..66214a9 100644
+--- a/bio_agents.py
++++ b/bio_agents.py
+@@ -45047,7 +45047,7 @@ question. Never guess a scientific or database identity.
+                         repair_stage="generic_executor_scope",
+                         validation_source="BioAnalystAgent._bind_pending_action",
+                         contract_ref={"capability_id": str(generate_step.get("execution_capability_id") or "")},
+-                        exit_reason="generic_executor_scope_rejected",
++                        exit_reason="binding_operation_contract_mismatch",
+                         candidate_event_id=candidate_event_id, recovery_generated=recovery_generated)}
+             if (
+                 structured_action

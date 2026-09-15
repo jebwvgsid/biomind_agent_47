@@ -1,0 +1,103 @@
+{
+  "status": "TEST_WATCHDOG_NOT_PASS",
+  "source_plan_state_sha256": "766978eab5807b8d6c52fc4486f0a36115cfdf42be870358cd8c86a2a076d623",
+  "final_audit_not_reached": true,
+  "current_step_id": "deliver-604",
+  "task_status": "running",
+  "commits": 8,
+  "steps": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "status": "passed"
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "status": "passed"
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "status": "passed"
+    },
+    {
+      "step_id": "independent-944",
+      "operation": "check_contig_compatibility",
+      "status": "passed"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "status": "passed"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "status": "passed"
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "status": "passed"
+    },
+    {
+      "step_id": "aggregate-832",
+      "operation": "summarize_ann",
+      "status": "passed"
+    },
+    {
+      "step_id": "deliver-604",
+      "operation": "finalize_outputs",
+      "status": "running"
+    }
+  ],
+  "attempts": [
+    {
+      "step_id": "probe-731",
+      "status": "EVIDENCE_COMMITTED",
+      "returncode": 7
+    },
+    {
+      "step_id": "probe-731",
+      "status": "COMPLETED",
+      "returncode": 0
+    },
+    {
+      "step_id": "ledger-205",
+      "status": "COMPLETED",
+      "returncode": 0
+    },
+    {
+      "step_id": "gate-418",
+      "status": "COMPLETED",
+      "returncode": 0
+    },
+    {
+      "step_id": "independent-944",
+      "status": "COMPLETED",
+      "returncode": 0
+    },
+    {
+      "step_id": "layout-563",
+      "status": "COMPLETED",
+      "returncode": 0
+    },
+    {
+      "step_id": "compile-927",
+      "status": "COMPLETED",
+      "returncode": 0
+    },
+    {
+      "step_id": "effects-146",
+      "status": "COMPLETED",
+      "returncode": 0
+    },
+    {
+      "step_id": "aggregate-832",
+      "status": "COMPLETED",
+      "returncode": 0
+    }
+  ],
+  "limitation": "External 180s watchdog terminated the test during last Generate; no terminal success or remaining postconditions verified."
+}

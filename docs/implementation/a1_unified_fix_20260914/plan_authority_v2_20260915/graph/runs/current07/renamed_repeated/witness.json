@@ -1,0 +1,88 @@
+{
+  "status": "PASS",
+  "test_duration_seconds": 124.25488444417715,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 7,
+    "reviewer": 7,
+    "recovery": 0
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 7,
+  "executions": [
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_f85edcd1a143a248199a",
+      "approved_sha256": "f10858fa73c28075dd49df7e528631c6e291acf0dc02924e67e5fa92525adca0",
+      "executed_sha256": "af4ffb4f3443325939affa03a0c4cafc347f18a1cf98615514fa4e3166662c1b"
+    },
+    {
+      "step_id": "independent-944",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_0ebbf06d0dddc279ef90",
+      "approved_sha256": "f10858fa73c28075dd49df7e528631c6e291acf0dc02924e67e5fa92525adca0",
+      "executed_sha256": "4be5e324fcbf73bdc7d24a5e659c596a8239cef5b57574ab0a44cdb53a9a13fa"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "rc": 0,
+      "attempt_id": "attempt_043d56fd1ae7fc368782",
+      "approved_sha256": "8fa24b98c8fecf9c1352159030dc946d0daf5b2be732c3026bcc50a3a40548aa",
+      "executed_sha256": "5189b132aa66e77ab536b1700570e9554112924b7599ce8370b6dae7362f4b5b"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "rc": 0,
+      "attempt_id": "attempt_d0c0ac2bb909992c340a",
+      "approved_sha256": "3169287453bf32fbe94a0073cd689aac456064ba431f9348e629d447c51de2b6",
+      "executed_sha256": "578f89096d15339396c6468af39396b3a856c6bd2acb1f4add033b6b8465a733"
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "rc": 0,
+      "attempt_id": "attempt_9f5999bddf036e84c953",
+      "approved_sha256": "f38d6ebdb934ce36c1ef21b0f62846602d527cdb4373077b1d66a5678e612095",
+      "executed_sha256": "ef2e48ae57da842109bb15f1016bb00fb79c180340c6b08b8e06c0e6101eb585"
+    },
+    {
+      "step_id": "aggregate-832",
+      "operation": "summarize_ann",
+      "rc": 0,
+      "attempt_id": "attempt_55bbef91be17ca0f2b5e",
+      "approved_sha256": "55c9cd895e429c3e015f0d158c50004321dcdd28b2b8038f8ee1ba04eac828f0",
+      "executed_sha256": "ee519954471874cef5a7787ee7ae7ee4d3c44ad310e76de6b6da28775d373494"
+    },
+    {
+      "step_id": "deliver-604",
+      "operation": "finalize_outputs",
+      "rc": 0,
+      "attempt_id": "attempt_944ace4e03e02d6611de",
+      "approved_sha256": "1d0df4c18dfb29bc5bb05734f279843e50a6a178e868c4a1418035f714c667ac",
+      "executed_sha256": "51201fb45ee740e49eedf8e3afc66b0b5a68e9f3f1d0c7a08371648e932630d1"
+    }
+  ],
+  "commits": 7,
+  "final_outcome": "task_verified",
+  "generate_outcome_type": "action_ready",
+  "durable_status": "completed",
+  "gate_counterfactuals": [],
+  "provider_modes": [
+    "native_action_json"
+  ],
+  "internal_temp_paths": {},
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

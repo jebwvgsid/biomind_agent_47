@@ -1,0 +1,30 @@
+{
+  "classification": "EXACT_ACTUAL_REQUEST_EXAMPLE_EMPTY_SKILLS_TWO_REAL_PYTHON_EXECUTIONS_COMMITS_FINALAUDIT_PASS",
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "returncode": 0,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits",
+      "outcome": "passed",
+      "duration": 27.918016646057367
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 136,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "pytest-results.json": "d78d5424803dc2dc21216f65ad6697dab766e0ef6c765554d9dcd37b8521d380",
+    "v2_empty_skill_execute-driver.json.gz": "de23cb166204dda3c3db0d8abc37029944452931c086560147327d5c276c6c8c",
+    "empty-skill-attempt_e89014154aa39b7ff4b7-approved.py": "2797ed94cf13dfa888c1cb3802f1b3930a11df05aac1cd2577093b8416bf6f95",
+    "invocation.json": "147b542dbbbd4d7f5a90d75896826654d6cb570b35b7c680b50edbf05d014728",
+    "f6-v2_empty_skill_execute-summary.json": "c7c4ed62b38a0b2ffa2875ccc20acbb66501eda40c61fcfaeaee9cbea9d0005c",
+    "empty-skill-attempt_5c946c1c8796bd7aa1a0-approved.py": "dc7d1675bc0c1014f50d58d6a6ea0f0da4530328b6787a3ac82fbf01993d6b70",
+    "stdout.txt": "9b1c1b675f81120d4f72755972eb84a7c3d3fa6e4c92fe68fdc78b66e9400bb0",
+    "run_exit.json": "fba50b2502e5d9298bdaaf035be445f12c73f4ac74a6c9e5973513bd8b17c971",
+    "f6-v2_empty_skill_execute-full.json.gz": "a765421104caeefd84d2067c0eba2069891dccb271f7d15e558d1921b16fc31c",
+    "v2-public-empty-skills-complete.json.gz": "8d56f80fccb51e7172c6ac898e6f8752661a0d634fa20c7306bce7c2f5d01929"
+  },
+  "copied_scope": "top-level results only; no scratch or nested preserved runtime trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

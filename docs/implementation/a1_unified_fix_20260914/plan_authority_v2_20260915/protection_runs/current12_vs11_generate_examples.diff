@@ -1,0 +1,35 @@
+--- current11/agent_core/step_effects.py
++++ current12/agent_core/step_effects.py
+@@ -3271,7 +3271,8 @@
+         for key in dict.fromkeys([*(row.get("required_fields") or []),
+             *( ["path"] if field == "produces_artifacts" else ["value"] if field == "produces_observations" else [])])}
+         for row in rows} for field, rows in declarations.items() if rows}
+-    blocked = {"action_type": "blocked", "reason":
++    stop_type_field = "type" if script_protocol else "action_type"
++    blocked = {stop_type_field: "blocked", "reason":
+         "The current rejection remains unresolved after the attempted correction. No new evidence supports another candidate; the unresolved requirement must be checked before continuing. This does not complete the scientific step."}
+     requirements = binding_requirements or {}
+     context = runtime_context or {}
+@@ -3338,11 +3339,20 @@
+         "actual_facts = perform_approved_operation(" + repr(operation) + ", " + repr(execution_resources) + ")\n"
+         "print(emit_effect_evidence(actual_facts))\n")
+     action["code"] = body
++    script_payload = "<python>\n" + body + "</python>"
++    if (script_protocol and str(step.get("execution_capability_id") or "") == "framework.generic.execute"
++            and str(step.get("tool") or "") == "bash"):
++        # A Bash representation example must not assume an unpublished Python
++        # interpreter. Like the Python scaffold it deliberately fails before
++        # claiming any scientific result; actual evidence remains the model's work.
++        script_payload = ("<shell>\nset -eu\n"
++            "printf '%s\\n' 'Admission example only: implement the approved operation and actual evidence before execution.' >&2\n"
++            "exit 1\n</shell>")
+     example = ({"response_type": "biomind_generate_display_v1",
+-        "public_message": "候选已形成，等待检查与审批。", "payload": "<python>\n" + body + "</python>"}
++        "public_message": "候选已形成，等待检查与审批。", "payload": script_payload}
+         if script_protocol else action)
+     if missing:
+-        example = {"action_type": "blocked", "reason":
++        example = {stop_type_field: "blocked", "reason":
+             "A complete current-step executable example cannot determine these required values from the published frozen context: "
+             + ", ".join(sorted(set(missing))) + ". No values, handles, paths or scientific facts have been guessed. Resolve these facts before proposing execution."}
+     demo = {"scope": "Standalone synthetic protocol demonstration only. This is NOT an action for the current step; never publish this identity under the current declarations.",

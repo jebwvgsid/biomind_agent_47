@@ -1,0 +1,19 @@
+{
+  "baseline": "../../baseline/source_manifest.json",
+  "files": {
+    "agent_core/action_runtime.py": "fbbe863855481a2dfe97d30ebc672073335d1fa841f3510266a4e40de8750f0c",
+    "agent_core/node_context.py": "a2a2dd882585596dddb2cc617d7de11af0d392308fa007b82787b65406a116c9",
+    "agent_core/plan_bindings.py": "b75d8d53ae873d95aadff7fc5c05b9ef88b4b3076aa4a4a732c4152928b4ac09",
+    "agent_core/plan_contract.py": "e65bcddad5a4260ad46d4011aa4f9fd855544b6379479e13fcbfecfe4a9883b9",
+    "agent_core/plan_tracker.py": "b10aa92c4d0616b86375efd31276ea917064b7a6e2ec8396555918540c6085eb",
+    "agent_core/planner_context.py": "022741b7cb49737ee640d7fd6fb19383d917b22fd9dd4abb54e1f434645443c0",
+    "agent_core/skill_manager.py": "b4f0133acf5eddb2ac0dd0199a6d23bfaff9c996ba62a03760a20b9af2e89b22",
+    "agent_core/step_effects.py": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+    "bio_agents.py": "118dfde1dc0e224a35371041059e962b45401f1e0efde5aad164887f3b277d43",
+    "prompts/manager.py": "f88cd2a64de91c21674fff02d5c30d232a636467609490745be56a1781e58e96",
+    "tests/plan_authority_v2_20260915/export_review.py": "90d119146e120129d9a4dfe10809af6eb352b31f023ae9e55cc4f81a1ce29a60",
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py": "0cd4888940e9c396308b43c55e11991fb3b89da48f25775494c7257962319fa3",
+    "tests/plan_authority_v2_20260915/test_graph.py": "71c3c0d2fa957bc2c9e1bf7ce4ef294d43101dc1989b16d1fd8a23b8bdf3ebcf",
+    "tests/plan_authority_v2_20260915/test_resource_contract.py": "8cec67ebe55eabf10d02fd113db02eb8d162043995a8b009ab0e0b93dcc74d6d"
+  }
+}

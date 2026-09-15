@@ -1,0 +1,49 @@
+[
+  {
+    "original": "f6-missing_build_dependency-full.json.gz",
+    "sha256": "75f5275149e7985eca621503edee51bb18a7c37e639936b82d012859b19f0f57",
+    "archive": "f6-missing_build_dependency-full.json.gz",
+    "archive_sha256": "75f5275149e7985eca621503edee51bb18a7c37e639936b82d012859b19f0f57"
+  },
+  {
+    "original": "f6-missing_build_dependency-heartbeat.jsonl",
+    "sha256": "f219a150b960f3551307dc6db7152b4714004d5a9572131faf8b31709ef2b7db",
+    "archive": "f6-missing_build_dependency-heartbeat.jsonl.gz",
+    "archive_sha256": "04c68897a9a4e28ca6de1154da6a666a1355a9196fedcddfb038e68a819beb98"
+  },
+  {
+    "original": "f6-missing_build_dependency-summary.json",
+    "sha256": "62971dff09ea7e0d00c53004d5438583459eecb0c53e2ae9a54222636df532d7",
+    "archive": "f6-missing_build_dependency-summary.json",
+    "archive_sha256": "62971dff09ea7e0d00c53004d5438583459eecb0c53e2ae9a54222636df532d7"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "1475dcc5edc309c6fae2f37cbd6872733d6815db2b4f5e3b0b7ab823030b1b89",
+    "archive": "invocation.json",
+    "archive_sha256": "1475dcc5edc309c6fae2f37cbd6872733d6815db2b4f5e3b0b7ab823030b1b89"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "a5927fd9ae66e0203f9092684a72e81eda9b13bdd8ef18549b382a7c0f9e2635",
+    "archive": "pytest-results.json",
+    "archive_sha256": "a5927fd9ae66e0203f9092684a72e81eda9b13bdd8ef18549b382a7c0f9e2635"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "f2952a475787d50bb57cc40fd80376208d724019eecc4094585d28acf530ad24",
+    "archive": "run_exit.json",
+    "archive_sha256": "f2952a475787d50bb57cc40fd80376208d724019eecc4094585d28acf530ad24"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "98eaa10a2465dd63b1e912f1f54eeaa45e69035c2d3ede5fcc7752d8cece5daa",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "2e9199fc610604b3a849b9b0d6d025a33a722a5f97335f66a58efb2e4b35e184"
+  },
+  {
+    "original": "f6-preserved-missing_build_dependency",
+    "archive": "f6-preserved-missing_build_dependency.tar.gz",
+    "archive_sha256": "1fb6d1259fc1e22e9123b5cfc8416e2aac61fd2977550a255bbd1e3b062e9843"
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "classification": "PRODUCTION_MACHINE_ABI_DROPS_CAPABILITY_VALUES_THIRD_LEAF_ASSERTS_TARGET_NOT_REACHED",
+  "source_signature": "86bd08c596e2c4ef34f9357abb8dfc484216d52f584e1e117813b630ffc41b24",
+  "returncode": 1,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_valid_complete_candidate_is_admitted_without_fifth_request",
+      "outcome": "failed",
+      "duration": 7.461338962428272
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 131,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "f6-v2_fourth_valid-summary.json": "b25c639b70209452cd2a87871bc14971015f69182f2150e5cc1f0cf5cc47ec45",
+    "pytest-results.json": "30c906073d67c8d46df4ce5a087734b265265737aaf853f0714a1fb5953900d8",
+    "invocation.json": "534e2243fd357a2e186aaf688866274c65c12b352ffc6089d9303ab8e7ff0aff",
+    "v2_fourth_valid-driver.json.gz": "373f47f24aa37fc2fb7fd86a2f9112b63a8f5c60f5f37ddb5fb38d7aebbe8811",
+    "stdout.txt": "599d9d946df27f3bd5c66a093c5926ad54095c1ad2dc4c3e4d095eb71f210bc6",
+    "f6-v2_fourth_valid-full.json.gz": "5d2af5518f9918d2f95be2549dd34ede8171586b839cadfd4fb37e5f98c9b665",
+    "pytest-results-test_fourth_valid_complete_candidate_is_admitted_without_fifth_request-facts.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "run_exit.json": "362d02b840b7dc1b3f3ecadf80e12d1f77396f04cc197dfeca90093b3764d22d"
+  },
+  "copied_scope": "top-level results only; no scratch or nested preserved runtime trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

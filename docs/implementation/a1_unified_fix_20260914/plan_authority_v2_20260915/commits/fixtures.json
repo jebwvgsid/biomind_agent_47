@@ -1,0 +1,20 @@
+{
+  "commit": "4d0d9c546a401819dc9af1cb93f355600e3bc256",
+  "parent": "1ace58d1fe3a04d4c0e40648a0349aa8a6126a5a",
+  "tree": "da3792f8050e4c7478a07d2531f4a88d3386a6f3",
+  "files": [
+    "tests/plan_authority_v2_20260915/export_review.py",
+    "tests/plan_authority_v2_20260915/resource_artifact_plugin.py",
+    "tests/plan_authority_v2_20260915/test_graph.py"
+  ],
+  "patch_sha256": "3ad94df17c2240d51d940dff3a342facae5383a91232703ccb15a1cc635d3e57",
+  "other_index_entries_preserved": true,
+  "validation": {
+    "source_signature": "0ed5f31bfe4d996a4799559701d63b551ea814bcf005d9e5e6d1e217f5e5ea09",
+    "cancellation": "9 PASS unchanged original test assertions on current09; production literal change cannot enter Generate in these cancellation-before-execution cases",
+    "blocked_graph": "current11 PASS actual5executions/4Commit/Recoveryblocked, three reports, no ANN/summary",
+    "external_boundaries": "fixed provider/synthetic process only",
+    "production_changes": "NONE in this test commit"
+  },
+  "push": false
+}

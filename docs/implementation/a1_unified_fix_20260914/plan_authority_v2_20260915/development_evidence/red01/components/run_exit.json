@@ -1,0 +1,14 @@
+{
+  "source_signature": "51cc1bcd1c29477770aea67710a2c4ba3ea732eead59efb488b24013e9e87198",
+  "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-red01/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py",
+    "tests/plan_authority_v2_20260915/test_resource_contract.py"
+  ],
+  "timeout_seconds": 180,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 1,
+  "source_changes_after_run": []
+}

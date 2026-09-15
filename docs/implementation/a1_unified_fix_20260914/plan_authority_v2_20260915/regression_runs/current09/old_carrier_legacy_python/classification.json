@@ -1,0 +1,19 @@
+{
+  "source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+  "completed": true,
+  "returncode": 0,
+  "source_changes_after_run": [],
+  "tests": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_python]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 9.071513582020998,
+      "failure": ""
+    }
+  ],
+  "loaded_modules_count": 135,
+  "loaded_final_equivalence": true,
+  "loaded_proof": "ACTUAL_MODULE_LIST_PLUS_EXPORTED_BYTE_HASH",
+  "mechanism_pass": true
+}

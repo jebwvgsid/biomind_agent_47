@@ -1,0 +1,31 @@
+{
+  "old_export": "current09",
+  "new_export": "current10",
+  "bio_agents_sha256": {
+    "current09": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+    "current10": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+  },
+  "module_bytes_equal": false,
+  "text_change": {
+    "line": 45050,
+    "old_exit_reason": "generic_executor_scope_rejected",
+    "new_exit_reason": "binding_operation_contract_mismatch",
+    "exact_single_literal_replacement_matches_entire_file": true
+  },
+  "ast_proof": {
+    "changed_constant_count": 1,
+    "after_replacing_only_old_constant_all_ast_fields_equal": true,
+    "no_other_function_or_control_structure_change": true
+  },
+  "trigger": "Generate binding catches ActionRuntimeContractError with code GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH. Its producer in _bind_pending_action requires explicitly selected framework.generic.execute and approved bash/python tool unequal to action language. Catch raises other ActionRuntimeContractError codes unchanged.",
+  "unchanged_diagnostics": "Same GENERIC error, language field_path, expected/actual tool, receipt source, repair domain/stage, policy budget and candidate checkpoints; only the returned repair exit reason aligns with an existing registered consumer.",
+  "consumer": {
+    "path": "agent_core/workflow/execution.py",
+    "sha256": "44a73f514aca43fa068e55d43f25e5f4026dc054a0ceb9ef66fda027983ff65c",
+    "bytes_equal09_10": true,
+    "new_literal_already_registered": true,
+    "old_literal_unregistered": true
+  },
+  "reuse_boundary": "Domain-only graphs whose actual selected capability IDs never equal framework.generic.execute cannot enter this specific changed catch through its current producer. This proves narrow branch non-reachability, not whole bio_agents module byte equality. Generic wrong-language newcatch and normal generic success/recovery are rerun by root/incident; F1/F2 and ordinary correction representatives rerun in current10 by this agent.",
+  "same_actual_runtime_bytes_not_assumed": true
+}

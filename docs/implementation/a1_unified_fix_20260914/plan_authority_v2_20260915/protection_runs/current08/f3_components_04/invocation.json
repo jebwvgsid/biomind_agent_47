@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-plan-authority-v2-current08/export/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-plan-authority-v2-current08/export",
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+    "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+    "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_04/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_04/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_04",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_04",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-plan-authority-v2-current08/protection/f3_components_04/scratch/executor-logs"
+  },
+  "external_test_watchdog_seconds": 360
+}

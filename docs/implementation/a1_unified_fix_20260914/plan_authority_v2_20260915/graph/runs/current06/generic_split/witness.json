@@ -1,0 +1,157 @@
+{
+  "status": "PASS",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 8,
+    "reviewer": 8,
+    "recovery": 0
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 8,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_403826a8d7813e1cde81",
+      "approved_sha256": "e58256558b7d3ef37727f38841e1853268a6eb7c0f5139b9b70ce338f8ed893f",
+      "executed_sha256": "bb6656d028794ed5d5116e1b5f358461c7bf6cb952ba68c437fa785bd9054300"
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_a54fc4b7662f3cd0334c",
+      "approved_sha256": "1594e9aa65fcd7307b4d6c0abd3282f6a00a45f25c41dadcc2cb7f51e1316092",
+      "executed_sha256": "7dde7e58003c0c64dd4166c9b2fe9db1fdffc8a99a50e5db9cac41440f548e88"
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_f1a84a89925af08a0684",
+      "approved_sha256": "1b4cddf2600ca7927212a669c84c51d0c291f7da490847cef9397c81b1329ba2",
+      "executed_sha256": "dc2426f2835000f9dbd66fdcbf6ea996de8beff4bccbd1dd84cf5193d55c91a7"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "rc": 0,
+      "attempt_id": "attempt_a034609df833eb886c26",
+      "approved_sha256": "e48e3526730538d184ee612b58fbbd3ab528126d3ad021ca2046af02c26dc550",
+      "executed_sha256": "ff10692021410f1d449beea6c9de7b2622afaad88c56fc92c53abac739352ecd"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "rc": 0,
+      "attempt_id": "attempt_aa0acbddde4c5c21d15c",
+      "approved_sha256": "8a5ee012d258f78927d1a5468e57ce93e44c184cbce9b6401e0c6ea20448c35b",
+      "executed_sha256": "5d38f49f3adff51756b8e251985c3717545677171294a34abf3f99a0682a807c"
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "rc": 0,
+      "attempt_id": "attempt_710fb549d882d4173882",
+      "approved_sha256": "157c25e475dc8584d7cc2f4a22609ecd797fc828617a6adca3569affdc5133eb",
+      "executed_sha256": "135a434272c6ae6c9c87bab91311eca9e639c219c0a4644024ef0cfdd2e279c9"
+    },
+    {
+      "step_id": "aggregate-832",
+      "operation": "summarize_ann",
+      "rc": 0,
+      "attempt_id": "attempt_92ebf145d1ee584269ce",
+      "approved_sha256": "1ba535cbc6df9ae8483671f9d12798ffae55f2694eb3da05eb618291d86fb8f0",
+      "executed_sha256": "04efd8a40cce7f8dcf9c24b5a53fbc8dd6509813c7b2cfb07fe6131f36115ed3"
+    },
+    {
+      "step_id": "deliver-604",
+      "operation": "finalize_outputs",
+      "rc": 0,
+      "attempt_id": "attempt_a9eec627c7b3c576a3e0",
+      "approved_sha256": "e219c0308957ffdbb34468fdc2485b8fe0f0b41ab3c4adbf51f728a380cb6090",
+      "executed_sha256": "8c71d12b7096b68cec60b21ff3526f3e951754a05580c6b5441c73835b11b56a"
+    }
+  ],
+  "commits": 8,
+  "final_outcome": "task_verified",
+  "durable_status": "completed",
+  "gate_counterfactuals": [
+    {
+      "removed_paths": [
+        "/plan_dataflow_receipt"
+      ],
+      "result": {
+        "passed": false,
+        "verdict": "FAIL",
+        "message": "Required workspaces lack an evidenced state chain or their exact bound directory.",
+        "feedback": "Inspect the approved state transitions and workspace evidence for: plan-artifact-1db363c2fddafbba44d8461e",
+        "missing_artifacts": [
+          "plan-artifact-1db363c2fddafbba44d8461e"
+        ],
+        "checked_artifacts": [],
+        "classification": "plan_workspace_state_incomplete",
+        "reconciliation": {},
+        "stale_artifacts": [],
+        "invalid_artifacts": [],
+        "attempt_ids": [],
+        "artifact_version_ids": [],
+        "validation_ids": [],
+        "evidence_refs": [],
+        "declared_effects": {},
+        "satisfied_effects": {},
+        "missing_effects": {},
+        "unexpected_effects": {},
+        "invalid_effects": {},
+        "plan_version": ""
+      }
+    },
+    {
+      "removed_paths": [
+        "/provenance_state/attempts/attempt_a034609df833eb886c26/effect_evidence/workspace_mutations",
+        "/provenance_state/attempts/attempt_aa0acbddde4c5c21d15c/effect_evidence/workspace_mutations",
+        "/provenance_state/validations/validation-68e4f6e2c9a65a439911/effect_results/workspace_mutations",
+        "/provenance_state/validations/validation-775ee66c77a428fc7275/effect_results/workspace_mutations"
+      ],
+      "result": {
+        "passed": false,
+        "verdict": "FAIL",
+        "message": "The approved Plan still has incomplete results or steps.",
+        "feedback": "Complete or resolve the recorded step evidence: layout-563, compile-927",
+        "missing_artifacts": [],
+        "checked_artifacts": [],
+        "classification": "plan_result_incomplete",
+        "reconciliation": {},
+        "stale_artifacts": [],
+        "invalid_artifacts": [],
+        "attempt_ids": [],
+        "artifact_version_ids": [],
+        "validation_ids": [],
+        "evidence_refs": [],
+        "declared_effects": {},
+        "satisfied_effects": {},
+        "missing_effects": {},
+        "unexpected_effects": {},
+        "invalid_effects": {},
+        "plan_version": ""
+      }
+    }
+  ],
+  "provider_modes": [
+    "native_action_json",
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {
+    "ledger-205": "/tmp/biomind-plan-authority-v2-current06/graph_generic_split/scratch/biomind-plan-local-graph-z72cr1c3/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+  },
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

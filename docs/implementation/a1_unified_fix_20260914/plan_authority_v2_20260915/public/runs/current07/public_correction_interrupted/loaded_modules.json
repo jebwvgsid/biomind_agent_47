@@ -1,0 +1,4 @@
+{
+  "status": "UNKNOWN_FINAL_RECEIPT_NOT_EMITTED",
+  "note": "Export manifest identifies available source bytes; it does not replace absent final IMPORTED_SOURCES receipt."
+}

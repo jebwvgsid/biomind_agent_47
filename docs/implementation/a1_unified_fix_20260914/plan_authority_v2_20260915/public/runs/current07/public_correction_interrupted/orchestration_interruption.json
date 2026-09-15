@@ -1,0 +1,10 @@
+{
+  "classification": "TOOL_HOST_INTERRUPTED_FINAL_TEST_OUTCOME_UNKNOWN",
+  "observed_at_utc": "2026-09-15T06:08:38.401379+00:00",
+  "tool_error": "code-mode host closed its stdout; write_stdin Unknown process id 88969",
+  "run_exit_present": false,
+  "pytest_call_receipt_present": false,
+  "matching_known_parent_and_guarded_child_process_ids": [],
+  "returncode": null,
+  "note": "No production failure, watchdog timeout, final module load receipt, or PASS inferred. Partial raw results retained."
+}

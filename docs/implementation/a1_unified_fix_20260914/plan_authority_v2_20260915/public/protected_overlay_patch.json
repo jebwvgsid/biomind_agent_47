@@ -1,0 +1,10 @@
+{
+  "scope": "Exact V2 change relative to protected worktree baseline, not Git HEAD; root owns commit selection.",
+  "baseline_source": "/tmp/biomind-plan-authority-v2-base/export/agent_core/planner_context.py",
+  "baseline_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+  "candidate_sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a",
+  "patch_sha256": "bbeb2357f8720381e91de8fd5e08b19a816527f0be99881eb94529b937b04fb9",
+  "previous_patch": "planner_context.pre07_protected_overlay.patch",
+  "previous_patch_sha256": "6e9dd084664f28c5aab0c1618376930f4cf4f5750c3010d08977553384584870",
+  "candidate_status": "07 source frozen; dynamic verification pending"
+}

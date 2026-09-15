@@ -1,0 +1,51 @@
+{
+  "checked_head": "5673b236c80a694e27e72e7b0f90f0a9946bf4b9",
+  "source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+  "safe_final_files": 468,
+  "all_safe_final_worktree_bytes_match": true,
+  "other_index_entries_identical_to_start": true,
+  "protected_original_status_entries_preserved": true,
+  "original_status_entries": 439,
+  "safe_base_unchanged_files": 439,
+  "safe_base_changed_files": [
+    "agent_core/action_runtime.py",
+    "agent_core/completion_gate.py",
+    "agent_core/node_context.py",
+    "agent_core/plan_bindings.py",
+    "agent_core/plan_contract.py",
+    "agent_core/plan_tracker.py",
+    "agent_core/planner_context.py",
+    "agent_core/skill_manager.py",
+    "agent_core/step_effects.py",
+    "bio_agents.py",
+    "prompts/manager.py",
+    "tests/a1_unified_fix/run_final.py",
+    "tests/a1_unified_fix/test_f1_f2.py",
+    "tests/a1_unified_fix/test_f3_env_progress.py",
+    "tests/a1_unified_fix/test_f3_late_result.py",
+    "tests/a1_unified_fix/test_f3_progress.py",
+    "tests/a1_unified_fix/test_f6_graph.py",
+    "tests/cli_model_progress_support.py",
+    "tests/ger_fixture_support.py",
+    "tests/test_plan_local_preaction_convergence_v2.py"
+  ],
+  "changed_safe_files_outside_owned_and_documented_projector": [],
+  "masters_append_only": {
+    "docs/implementation/a1_unified_fix_20260914/README.md": {
+      "original_prefix_bytes": 10855,
+      "original_prefix_sha256": "b5ab43a0d7108929bb5f04f6bcae20a53fcb516264c131e3d2f42031a729048f",
+      "original_prefix_preserved": true,
+      "added_bytes": 1845
+    },
+    "docs/implementation/a1_unified_fix_20260914/changes_and_acceptance.tsv": {
+      "original_prefix_bytes": 10116,
+      "original_prefix_sha256": "c83708dd701ddf488b5794c6e2475d0796d411b241442aa0802d56351b6848b6",
+      "original_prefix_preserved": true,
+      "added_bytes": 2965
+    }
+  },
+  "sensitive_content": "Never read or hashed; Git status/index metadata only",
+  "reset_clean_stash": false,
+  "push": false,
+  "boundary": "Before artifact commit; the artifact helper separately checks all other normal-index rows and all owned file bytes at CAS commit time."
+}

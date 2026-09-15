@@ -1,0 +1,25 @@
+等待输入
+🏭 Software Repository: /tmp/biomind-plan-authority-v2-current07/pty/tty-reject/scratch/
+biomind-plan-local-graph-id5ph8ui · Ctrl+O 历史 · Ctrl+C 取消
+📂 Source Install Path (Default): /tmp/biomind-plan-authority-v2-current07/pty/tty-rejec
+计划审批
+计划 plan_e33c5694231df57920a4 · 步骤数 12
+审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816
+下方为当前冻结计划的完整正文；可滚动查看后明确确认。
+/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。
+› n
+› 请按当前材料重新咨询，保留未决条件。
+📡 Feedback captured: 请按当前材料重新咨询，保留未决条件。
+等待用户决定 · F2 查看完整对象
+运行中可编辑本地草稿；尚未提交
+
+
+
+
+
+
+
+
+Enter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消
+
+

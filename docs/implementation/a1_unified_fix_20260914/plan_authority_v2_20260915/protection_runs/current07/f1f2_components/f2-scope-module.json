@@ -1,0 +1,9 @@
+{
+  "fixed_materializer": "EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC",
+  "old_literal_substitution_witness": {
+    "rc": 1,
+    "stdout": "",
+    "stderr": "Expecting value: line 1 column 1 (char 0)\n"
+  },
+  "scope": "component rejection plus deliberately nonadmitted old-substitution process; no approval/graph/scientific success"
+}

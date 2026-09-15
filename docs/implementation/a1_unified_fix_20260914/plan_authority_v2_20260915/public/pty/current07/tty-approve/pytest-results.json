@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011328421533107758,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 9.519267497584224,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00038606300950050354,
+    "failure": ""
+  }
+]

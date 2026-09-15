@@ -1,0 +1,49 @@
+{
+  "scope": "Limited resource single-source and its direct final result consumers; not a second full-architecture audit or an independent-author code review",
+  "source_signature": "86bd08c596e2c4ef34f9357abb8dfc484216d52f584e1e117813b630ffc41b24",
+  "files": {
+    "agent_core/plan_bindings.py": {
+      "base_sha256": "723a3a5a18e64da46a65aab9a511f548aeec04d8dab2541055e3b1693b53d260",
+      "current06_sha256": "b75d8d53ae873d95aadff7fc5c05b9ef88b4b3076aa4a4a732c4152928b4ac09"
+    },
+    "agent_core/plan_contract.py": {
+      "base_sha256": "9ac59b1a0f5f0b28a90547ac938d5f3e601c64533dd82739bfa0204519bd9d4f",
+      "current06_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde"
+    },
+    "agent_core/plan_tracker.py": {
+      "base_sha256": "b5b67a0b1fbca7be999bfa2f552e4a9bc1146b3c9018f239134b8c7e403ea9df",
+      "current06_sha256": "87dd286d5717f9da8b4fb7c5dea1525f39bf619b4efcdd4a35f37616ebeb2616"
+    },
+    "agent_core/step_effects.py": {
+      "base_sha256": "2b6b56bc8e49a2addc32b3f2f776d45d0fccccf369546b04605b269849a99c3e",
+      "current06_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179"
+    },
+    "agent_core/completion_gate.py": {
+      "base_sha256": "9612cda9a880357e9a584301abc2c29f30a554d30f8496209f1c75ba907cc15d",
+      "current06_sha256": "a411bb61208f0534e9a70baa02cc8f86ab8dd2d78abb8d0444ab64367c630466"
+    },
+    "agent_core/node_context.py": {
+      "base_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "current06_sha256": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff"
+    }
+  },
+  "confirmed": [
+    "V3 public resource_uses is sole editable read/mutate source; legacy inputs and resource-side associations are explicitly rejected only in v3. Existing consumers derive their input view.",
+    "Exact ref allocation rewrites source uses and helper roles; resource kind, selected helper identity/access, dependency producer checks remain. No operation-name or filename inference added.",
+    "Step semantic hash and dataflow signature include resource_uses; frozen snapshot carries the same Plan and TaskSpec outputs. V3 requires reader1.2.3; legacy role snapshots retain1.2.2.",
+    "TaskSpec fields override readonly result view. A v3 filename choice cannot downgrade required/path_policy, and missing required planner_materialized/model_selectable filenames reject. Exact-path outputs need no duplicate choice.",
+    "FinalGate first applies existing approval applicability and task/step evidence. A required mutable workspace additionally needs sealed state chain and an accepted attested path matching the exact required existing directory before it skips the immutable-version check. No directory path or resource_kind alone grants success.",
+    "Task/step evidence rematches current persisted accepted effects; this final branch does not rerun the physical attester or manufacture a new receipt. Runtime attestation registration and source selection stay in their existing owners.",
+    "Consumption advice and optional legacy workflow fields do not create approval/retry obligations; actual reference/type/dependency protections remain."
+  ],
+  "additional_blocking_findings": [],
+  "dynamic_evidence": {
+    "current06_components": "resource_runs/current06: resource31 + generic5, rc0, no source changes",
+    "current05_graph": "Parent/incident graph_generic_split: real eight executions/Commits/final success; copied real state missing seal rejects plan_workspace_state_incomplete; missing mutation evidence rejects plan_result_incomplete. Current06 full graph separately rerun by root/incident."
+  },
+  "not_claimed": [
+    "No real provider or scientific E2E verification",
+    "No new dynamic test of every possible post-execution physical directory mutation",
+    "No revision of old approved sessions"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "result": "28_PASS_3_FAIL",
+  "production_changes_after_run": [],
+  "classification": "NEW_COMPONENT_FIXTURE_ERRORS",
+  "fixture_failures": [
+    {
+      "test": "identity_and_dependency_guards_remain[missing_dependency;cycle]",
+      "cause": "Empty role binding precondition passed to dataflow consumer; real exact lookup rejects missing declared resource",
+      "planned_driver_fix": "Use compile_resources(value) and pass returned resource_bindings; dependency assertions unchanged"
+    },
+    {
+      "test": "changed_consumption_is_advice_without_confirmation",
+      "cause": "Test reads nonexistent plan_validation_state; actual reader returns repair_convergence and approval_gate",
+      "planned_driver_fix": "Assert real repair_convergence status, approval availability, fingerprint and history"
+    }
+  ],
+  "source_results": "/tmp/biomind-plan-authority-v2-current04/resource_components",
+  "stdout_uncompressed_sha256": "b69a650ac11f2d83eb08f03a93b0480898e998dc062e91d0c77893d4e46bcd31"
+}

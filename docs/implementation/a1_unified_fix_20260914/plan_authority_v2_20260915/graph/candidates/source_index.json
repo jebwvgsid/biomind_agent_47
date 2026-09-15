@@ -1,0 +1,59 @@
+{
+  "before": {
+    "actual_source_container": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/regression_runs/current07/old_f6_normal/f6-normal-full.json.gz",
+    "container_sha256": "64c76fa33b4a47403e4cc0cdca0518de0f66e5f62394533e2b8956c7f898a053",
+    "task_spec_pointer": "/durable/current_task/task_spec",
+    "admitted_plan_pointers": [
+      "/durable/steps",
+      "/durable/plan_artifacts",
+      "/durable/plan_resource_bindings",
+      "/durable/compiled_dataflow",
+      "/durable/plan_dataflow_receipt",
+      "/durable/plan_compilation_receipt",
+      "/durable/task_output_materializations"
+    ],
+    "raw_response_digest": "dc029d40dd47fef04b5066bb4d1bca1a890cf144b0899d5f7f789b1b663a9306",
+    "raw_response_digest_pointer": "/durable/task_state/planning_epoch/call_claim/raw_digest",
+    "raw_extraction_status": "NOT_AVAILABLE_IN_OLD_F6_ARCHIVE; original new synthetic scratch removed at teardown; no reconstruction mislabeled as raw",
+    "readable_file": "before_plan.json",
+    "readable_file_sha256": "f86fd672fa377eb1cfd0188a9c625dbf7c7853a4ddb890c5a9a45ddf70524a4f"
+  },
+  "after": {
+    "actual_source_container": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current07/renamed_repeated/f6-v2_renamed_repeated-full.json.gz",
+    "container_sha256": "030925df2337e4d9379da0223d693c6521163bbca613e33867d27edf7e2e1fbb",
+    "task_spec_pointer": "/durable/current_task/task_spec",
+    "admitted_plan_pointers": [
+      "/durable/steps",
+      "/durable/plan_artifacts",
+      "/durable/plan_resource_bindings",
+      "/durable/compiled_dataflow",
+      "/durable/plan_dataflow_receipt",
+      "/durable/plan_compilation_receipt",
+      "/durable/task_output_materializations"
+    ],
+    "raw_response_digest": "6c7c09200a4c3c17a7cf7e54ee4c9cd2e85ffa9480767d83200d9c6f3f473354",
+    "raw_response_digest_pointer": "/durable/task_state/planning_epoch/call_claim/raw_digest",
+    "raw_source_container": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current07/renamed_repeated/v2_renamed_repeated-driver.json.gz",
+    "raw_source_container_sha256": "86581d874ed4a151b00fc807196aac699ccd560adc18ca7ca42db137d74824f7",
+    "raw_pointer": "/raw_plans/0",
+    "raw_utf8_sha256": "6c7c09200a4c3c17a7cf7e54ee4c9cd2e85ffa9480767d83200d9c6f3f473354",
+    "raw_readable_file": "after_plan.json"
+  },
+  "generic_split_additional_obligations": {
+    "raw_source_container": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current11/generic_split/v2_generic_split-driver.json.gz",
+    "container_sha256": "20e92e8e6b1e6eb1251d966a8a3a85a268a8cc6772e0d82c6d23cbd02a359f4f",
+    "raw_pointer": "/raw_plans/0",
+    "raw_utf8_sha256": "faa5dc25899211171e58af2f2fc6de0274b37eb02dda46ebbb2d3e0f9e3ec81e",
+    "note": "Adds two explicitly authorized steps and preflight_log required task output; not same-task comparison."
+  },
+  "readable_file_hashes": {
+    "before_task_spec.json": "1608b2c0d9b8864da07d447638b0578d19bf008504c2f8bf5e19adb9cf93b8e5",
+    "after_admitted_plan.json": "593a4ecdda4f26b15d078dc82c4f4717eee63ca572fd25c6ffc9b94c6c3df079",
+    "after_plan.json": "6c7c09200a4c3c17a7cf7e54ee4c9cd2e85ffa9480767d83200d9c6f3f473354",
+    "generic_split_actual_plan.json": "faa5dc25899211171e58af2f2fc6de0274b37eb02dda46ebbb2d3e0f9e3ec81e",
+    "before_plan.json": "f86fd672fa377eb1cfd0188a9c625dbf7c7853a4ddb890c5a9a45ddf70524a4f",
+    "before_admitted_plan.json": "4a356a5f4a31670c38cc97c9c0a86f89458cc3025059c47165221cfbdba5447f",
+    "after_task_spec.json": "afde9b35b512e97c08455058ccc642ce784854010548ae1cb0bc884aad85a7d7",
+    "README.md": "9e57022d4f11357271dd8fb468a65a1b8cb78fa23d46c30773640aa2feccc194"
+  }
+}

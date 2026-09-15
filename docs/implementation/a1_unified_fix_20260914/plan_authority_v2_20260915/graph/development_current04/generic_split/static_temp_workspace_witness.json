@@ -1,0 +1,410 @@
+{
+  "classification": "STATIC_EXTRACTION_FROM_FAILED_FULL_GRAPH_NOT_FINAL_TEST_PASS",
+  "source": {
+    "full_sha256": "b58757c174bc7886fa3439f8f11d1561e1bd9c69b426680169be335974cf7f27",
+    "driver_sha256": "3d58e5f0d310da66e50f4e647901f902c187371daded2d35e659eb9774bf37ac"
+  },
+  "temporary_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial",
+  "absent_from_raw_plan": true,
+  "visible_in_actual_approved_body": true,
+  "execution_receipt": {
+    "step_id": "ledger-205",
+    "attempt_id": "attempt_e3fd75c9dee5d9bcaa85",
+    "rc": 0,
+    "approved_sha256": "b248c046de091b83688bbb7388a6c67a69e3e7dbdbb475797120ea2ae0f99b91",
+    "executed_sha256": "585cfe34fb4948626493268f68af7505bd69f952395327e1655baedb30a4d3e6"
+  },
+  "actual_stdout_observation": {
+    "identity": "preflight_log_written",
+    "value": true,
+    "details": {
+      "input_names": [
+        "两样本.vcf",
+        "新参考.fa",
+        "新注释.gtf"
+      ],
+      "byte_counts": [
+        149,
+        38,
+        53
+      ],
+      "temporary_bytes_before_rename": 61,
+      "temporary_present_after_rename": false,
+      "written_bytes": 61
+    }
+  },
+  "workspace_mutations": [
+    {
+      "action_digest": "b71b3068c453cd34c7e3c76b8ef71c220d1780442a05c06d51615a82701d1404",
+      "action_id": "action_9b316dd7a0a2f015",
+      "after_evidence": {
+        "entries": [
+          {
+            "exists": true,
+            "inode": 8411358,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "exists": true,
+            "inode": 8411363,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/genomes",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "exists": true,
+            "inode": 8411370,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/new_fixture_v2",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "content_hash": "sha256:544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a",
+            "exists": true,
+            "inode": 8411371,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/genomes/new_fixture_v2.fa",
+            "size": 38,
+            "symlink": false
+          },
+          {
+            "content_hash": "sha256:140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+            "exists": true,
+            "inode": 8411372,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/new_fixture_v2/genes.gtf",
+            "size": 53,
+            "symlink": false
+          }
+        ],
+        "limits": {
+          "hash_file_limit": 1048576,
+          "max_depth": 8,
+          "max_entries": 512
+        },
+        "reliable": true,
+        "root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+        "root_state": {
+          "exists": true,
+          "inode": 8411357,
+          "kind": "directory",
+          "mtime_ns": 1789450425373763185,
+          "size": 4096,
+          "symlink": false
+        },
+        "snapshot_digest": "sha256:e9709e0e8ddb4a4f1a6261170afb88655bd755c6f0a0c0a3cd9288dd2fd8631a",
+        "truncated": false
+      },
+      "attempt_id": "attempt_11c9c1279ec589e0d364",
+      "attestation_status": "mutated_and_validated",
+      "attested": true,
+      "before_evidence": {
+        "entries": [],
+        "limits": {
+          "hash_file_limit": 1048576,
+          "max_depth": 8,
+          "max_entries": 512
+        },
+        "reliable": true,
+        "root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+        "root_state": {
+          "exists": false,
+          "kind": "missing",
+          "symlink": false
+        },
+        "snapshot_digest": "sha256:eac5af81e4328bd10b20ed8d06e043226483af986678ed615530da485b2df136",
+        "truncated": false
+      },
+      "binding_revision": 1,
+      "canonical_resource_id": "plan-artifact-ddc70a30df539b24feb6d583",
+      "changed_during_attempt": true,
+      "effect": "mutation",
+      "effect_contract_hash": "sha256:906ff68357a80c5db759ddbfbcf7631269d736b9504af4ae0b47850806393784",
+      "finished_at": "2026-09-15T05:33:46.067+00:00",
+      "formal_concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+      "immutable_hash": "sha256:ae549f781d85758529a999e995f1fd01cd774ba97501ed0603d73c3df0c3348e",
+      "intent_id": "mutation-intent-5ca4a87db59d988fc0d33a6f",
+      "mutation": "prepare_database",
+      "operation": "prepare_database",
+      "plan_handle": "plan-artifact-ddc70a30df539b24feb6d583",
+      "plan_id": "plan_d7829893e5b84aa0ff21",
+      "plan_revision": 1,
+      "postcondition_results": [
+        {
+          "formal_target_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583/data",
+          "formal_workspace_root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+          "kind": "directory_exists",
+          "observed_state": {
+            "exists": true,
+            "inode": 8411358,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "size": 4096,
+            "symlink": false
+          },
+          "postcondition_index": 0,
+          "relative_path": "data",
+          "status": "satisfied"
+        },
+        {
+          "formal_target_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583/data/genomes/new_fixture_v2.fa",
+          "formal_workspace_root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+          "kind": "file_nonempty",
+          "observed_state": {
+            "exists": true,
+            "inode": 8411371,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "size": 38,
+            "symlink": false
+          },
+          "postcondition_index": 1,
+          "relative_path": "data/genomes/new_fixture_v2.fa",
+          "status": "satisfied"
+        },
+        {
+          "formal_target_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583/data/new_fixture_v2/genes.gtf",
+          "formal_workspace_root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+          "kind": "file_nonempty",
+          "observed_state": {
+            "exists": true,
+            "inode": 8411372,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "size": 53,
+            "symlink": false
+          },
+          "postcondition_index": 2,
+          "relative_path": "data/new_fixture_v2/genes.gtf",
+          "status": "satisfied"
+        }
+      ],
+      "postcondition_satisfied": true,
+      "process_exit_code": 0,
+      "producer": "biomind.runtime_attester.v1",
+      "receipt_id": "workspace-receipt-e3b046eea1c287c69c074d63",
+      "resource_kind": "mutable_workspace",
+      "runtime_access_evidence": {},
+      "runtime_access_evidence_validation": {
+        "code": "RUNTIME_ACCESS_EVIDENCE_MISSING",
+        "valid": false
+      },
+      "schema_version": 1,
+      "step_id": "layout-563",
+      "task_id": "fix-f6-v2_generic_split",
+      "unknown_reason": "",
+      "workspace_ref": "plan-artifact-ddc70a30df539b24feb6d583"
+    },
+    {
+      "action_digest": "2dd9ce9b64108fb753353d77140b8642fc27e8aa981e7c9879c2c161588c4d5a",
+      "action_id": "action_c5a59d543b63971b",
+      "after_evidence": {
+        "entries": [
+          {
+            "exists": true,
+            "inode": 8411358,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "exists": true,
+            "inode": 8411363,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/genomes",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "exists": true,
+            "inode": 8411370,
+            "kind": "directory",
+            "mtime_ns": 1789450440770782319,
+            "relative_path": "data/new_fixture_v2",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "content_hash": "sha256:544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a",
+            "exists": true,
+            "inode": 8411371,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/genomes/new_fixture_v2.fa",
+            "size": 38,
+            "symlink": false
+          },
+          {
+            "content_hash": "sha256:140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+            "exists": true,
+            "inode": 8411372,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/new_fixture_v2/genes.gtf",
+            "size": 53,
+            "symlink": false
+          },
+          {
+            "content_hash": "sha256:c03ae8758a054a069e9baab56929965dcb3da34d9420d7b3d62ff0983bb9911f",
+            "exists": true,
+            "inode": 8411591,
+            "kind": "file",
+            "mtime_ns": 1789450440770782319,
+            "relative_path": "data/new_fixture_v2/snpEffectPredictor.bin",
+            "size": 43,
+            "symlink": false
+          }
+        ],
+        "limits": {
+          "hash_file_limit": 1048576,
+          "max_depth": 8,
+          "max_entries": 512
+        },
+        "reliable": true,
+        "root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+        "root_state": {
+          "exists": true,
+          "inode": 8411357,
+          "kind": "directory",
+          "mtime_ns": 1789450425373763185,
+          "size": 4096,
+          "symlink": false
+        },
+        "snapshot_digest": "sha256:d6eb265a2b26593efe7dea2f7840466dfc61a3625dc18b78eaf15a1d466f72be",
+        "truncated": false
+      },
+      "attempt_id": "attempt_ff838f2569564755b149",
+      "attestation_status": "mutated_and_validated",
+      "attested": true,
+      "before_evidence": {
+        "entries": [
+          {
+            "exists": true,
+            "inode": 8411358,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "exists": true,
+            "inode": 8411363,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/genomes",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "exists": true,
+            "inode": 8411370,
+            "kind": "directory",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/new_fixture_v2",
+            "size": 4096,
+            "symlink": false
+          },
+          {
+            "content_hash": "sha256:544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a",
+            "exists": true,
+            "inode": 8411371,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/genomes/new_fixture_v2.fa",
+            "size": 38,
+            "symlink": false
+          },
+          {
+            "content_hash": "sha256:140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+            "exists": true,
+            "inode": 8411372,
+            "kind": "file",
+            "mtime_ns": 1789450425373763185,
+            "relative_path": "data/new_fixture_v2/genes.gtf",
+            "size": 53,
+            "symlink": false
+          }
+        ],
+        "limits": {
+          "hash_file_limit": 1048576,
+          "max_depth": 8,
+          "max_entries": 512
+        },
+        "reliable": true,
+        "root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+        "root_state": {
+          "exists": true,
+          "inode": 8411357,
+          "kind": "directory",
+          "mtime_ns": 1789450425373763185,
+          "size": 4096,
+          "symlink": false
+        },
+        "snapshot_digest": "sha256:e9709e0e8ddb4a4f1a6261170afb88655bd755c6f0a0c0a3cd9288dd2fd8631a",
+        "truncated": false
+      },
+      "binding_revision": 1,
+      "canonical_resource_id": "plan-artifact-ddc70a30df539b24feb6d583",
+      "changed_during_attempt": true,
+      "effect": "mutation",
+      "effect_contract_hash": "sha256:0485405ba6aa9d646ae43a906cb3cf6dc2a66fec57eee5bd2528ce233f6e3d1d",
+      "finished_at": "2026-09-15T05:34:01.595+00:00",
+      "formal_concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+      "immutable_hash": "sha256:19083453f0567845aff56058fc4727f5671b7e5e3ea51936be02b65e9b63b8ef",
+      "intent_id": "mutation-intent-f194270305aa90a09bdce5b2",
+      "mutation": "build_database",
+      "operation": "build_database",
+      "plan_handle": "plan-artifact-ddc70a30df539b24feb6d583",
+      "plan_id": "plan_d7829893e5b84aa0ff21",
+      "plan_revision": 1,
+      "postcondition_results": [
+        {
+          "formal_target_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583/data/new_fixture_v2/snpEffectPredictor.bin",
+          "formal_workspace_root": "/tmp/biomind-plan-authority-v2-current04/graph_generic_split/scratch/biomind-plan-local-graph-4u3mdn01/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-ddc70a30df539b24feb6d583",
+          "kind": "file_nonempty",
+          "observed_state": {
+            "exists": true,
+            "inode": 8411591,
+            "kind": "file",
+            "mtime_ns": 1789450440770782319,
+            "size": 43,
+            "symlink": false
+          },
+          "postcondition_index": 0,
+          "relative_path": "data/new_fixture_v2/snpEffectPredictor.bin",
+          "status": "satisfied"
+        }
+      ],
+      "postcondition_satisfied": true,
+      "process_exit_code": 0,
+      "producer": "biomind.runtime_attester.v1",
+      "receipt_id": "workspace-receipt-3327ed04df6eaf99991cedba",
+      "resource_kind": "mutable_workspace",
+      "runtime_access_evidence": {},
+      "runtime_access_evidence_validation": {
+        "code": "RUNTIME_ACCESS_EVIDENCE_MISSING",
+        "valid": false
+      },
+      "schema_version": 1,
+      "step_id": "compile-927",
+      "task_id": "fix-f6-v2_generic_split",
+      "unknown_reason": "",
+      "workspace_ref": "plan-artifact-ddc70a30df539b24feb6d583"
+    }
+  ],
+  "limitation": "Post-success pytest assertions and Commit reload replay were not reached because production FinalAudit rejected required mutable workspace as missing immutable artifact version."
+}

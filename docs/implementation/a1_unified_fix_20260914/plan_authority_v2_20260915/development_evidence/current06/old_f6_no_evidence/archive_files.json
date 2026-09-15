@@ -1,0 +1,49 @@
+[
+  {
+    "original": "f6-no_evidence-full.json.gz",
+    "sha256": "866121138d8420f712e01733c82c8d39947941592043074202705fc1abf2d07d",
+    "archive": "f6-no_evidence-full.json.gz",
+    "archive_sha256": "866121138d8420f712e01733c82c8d39947941592043074202705fc1abf2d07d"
+  },
+  {
+    "original": "f6-no_evidence-heartbeat.jsonl",
+    "sha256": "94f93bc14667b44b91bdf99f7f20f1d1b7e00d48d8625820ff08ecb776766386",
+    "archive": "f6-no_evidence-heartbeat.jsonl.gz",
+    "archive_sha256": "1425e5ddedf32fded5bb169a70e04c9be09df641f2d7360085e1bf2f63fd79d8"
+  },
+  {
+    "original": "f6-no_evidence-summary.json",
+    "sha256": "7a7d88bed84aa34c806cfd63bbdc6f22085ad67862ac61c94e88960903df3f33",
+    "archive": "f6-no_evidence-summary.json",
+    "archive_sha256": "7a7d88bed84aa34c806cfd63bbdc6f22085ad67862ac61c94e88960903df3f33"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "25d06a72e69acda1184ef9850eda71a29342f422050ec777004fd7935a48ff90",
+    "archive": "invocation.json",
+    "archive_sha256": "25d06a72e69acda1184ef9850eda71a29342f422050ec777004fd7935a48ff90"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "57627ffce18ad0f2f4108390872f42559298dbefa22c1f6c9c2e8b562ba7851b",
+    "archive": "pytest-results.json",
+    "archive_sha256": "57627ffce18ad0f2f4108390872f42559298dbefa22c1f6c9c2e8b562ba7851b"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "81b0703b9e3092bb72d61dc553e2b0eee6a731bff890a2e8e59026971708d8c6",
+    "archive": "run_exit.json",
+    "archive_sha256": "81b0703b9e3092bb72d61dc553e2b0eee6a731bff890a2e8e59026971708d8c6"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "f938986701bc297a3bc49e7d94f8a2e70583ec8a5d7c0199d52c7c08bfab5e18",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "27a9e4eca6be452e8c810a613343e8b7aa21b040023372ba2e0c29d65ba4f204"
+  },
+  {
+    "original": "f6-preserved-no_evidence",
+    "archive": "f6-preserved-no_evidence.tar.gz",
+    "archive_sha256": "eca913a2c7a98cac031689af8f8d959e75683f12e1bac66c650b9a502ba30ff6"
+  }
+]

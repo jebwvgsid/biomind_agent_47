@@ -1,0 +1,63 @@
+{
+  "comparison_type": "STATIC_BASE_DRIVER_DECLARATIONS_VS_ACTUAL_CURRENT06_PROVIDER_CANDIDATE; final07 snapshot will replace after pass",
+  "base_source": "/tmp/biomind-plan-authority-v2-base/export/tests/a1_unified_fix/test_f6_graph.py",
+  "base_source_sha256": "49c655b65550e1dbbb22de9c074ac7b459ea1e1e9ed7c303465954c1938c1e94",
+  "base_plan_function_line": 240,
+  "actual_candidate_container": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/graph/runs/current06/generic_split/v2_generic_split-driver.json.gz",
+  "actual_candidate_container_sha256": "990947233eab60bcd950a74fd6dcce8ceaf986287a5df5064eb67f6c337f0f14",
+  "baseline_core_step_count": 6,
+  "candidate_core_step_count": 6,
+  "baseline_input_reference_count": 14,
+  "candidate_core_resource_use_count": 16,
+  "candidate_read_count": 14,
+  "candidate_mutate_count": 2,
+  "baseline_associations": 3,
+  "baseline_association_members": 9,
+  "candidate_resource_side_associations": 0,
+  "retained_domain_roles": 3,
+  "removed_repeated_step_ids": 3,
+  "removed_repeated_capability_ids": 3,
+  "removed_role_obligations": 0,
+  "baseline_core_outputs": [
+    [],
+    [
+      "plan.config"
+    ],
+    [],
+    [
+      "output.annotated_vcf"
+    ],
+    [
+      "output.ann_summary"
+    ],
+    [
+      "output.report",
+      "output.reproduce_script",
+      "output.stage_status"
+    ]
+  ],
+  "candidate_core_outputs": [
+    [],
+    [
+      "plan.config"
+    ],
+    [],
+    [
+      "output.annotated_vcf"
+    ],
+    [
+      "output.ann_summary"
+    ],
+    [
+      "output.report",
+      "output.reproduce_script",
+      "output.stage_status"
+    ]
+  ],
+  "extra_authorized_step_ids": [
+    "probe-731",
+    "ledger-205"
+  ],
+  "extra_required_task_output": "preflight_log",
+  "not_claimed": "No claim that total JSON field count or byte size decreased: explicit access adds structural fields. Required TaskSpec outputs were never removed to obtain acceptance."
+}

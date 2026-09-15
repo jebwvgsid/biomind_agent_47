@@ -1,0 +1,16 @@
+{
+  "old": "/tmp/biomind-plan-authority-v2-current11/export/tests/plan_authority_v2_20260915/test_graph.py",
+  "old_sha256": "577ffb198c3f883a7721a8b274e6bae0f2395f2c85123bf55c3b7861b0f7ec1a",
+  "candidate": "tests/plan_authority_v2_20260915/test_graph.py",
+  "candidate_sha256": "820c5b2b010aff0d7d429d3e517abddb0e8bb4306ac72dfbaf42084923177240",
+  "changed_existing_methods": [
+    "provider",
+    "run"
+  ],
+  "new_test_functions": [
+    "test_public_blocked_examples_parse_in_their_actual_mode",
+    "test_actual_request_generic_example_reaches_real_generate_admission"
+  ],
+  "proof": "Replacing only provider generic_language_mismatch reply body and run generic_language_mismatch postcondition else-body with old AST, removing exactly two new test functions, makes entire module AST identical. Other scenario branches and implementations unchanged.",
+  "scoped_reuse": "Seven graph scenarios never execute either changed language-mismatch branch; four new component/admission parameterizations and corrected language graph are final reruns."
+}

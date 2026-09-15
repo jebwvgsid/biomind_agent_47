@@ -1,0 +1,177 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.14571275003254414,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2875808086246252,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00033792760223150253,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00015061069279909134,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004920652136206627,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.82735475897789e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.045043796300888e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002760551869869232,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010933633893728256,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.463580161333084e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008093332871794701,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.417479693889618e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.127931505441666e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019174786284565926,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.831359446048737e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.891003042459488e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0012543965131044388,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.371619671583176e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.204819798469543e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 7.473158208653331,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020656175911426544,
+    "failure": ""
+  }
+]

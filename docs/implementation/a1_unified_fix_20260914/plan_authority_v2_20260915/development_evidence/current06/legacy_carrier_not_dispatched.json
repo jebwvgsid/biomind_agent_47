@@ -1,0 +1,14 @@
+{
+  "cases": [
+    "old_carrier_legacy_python",
+    "old_carrier_legacy_bash"
+  ],
+  "status": "NOT_RUN_PARENT_EXPORT_API_MISMATCH",
+  "exception": "TypeError: launch() got an unexpected keyword argument 'watchdog_seconds'",
+  "cause": "The queued host parent read the newly edited run_final while its old export still had the old launcher signature; no guarded child was dispatched for these cases. Later runs launch the immutable exported parent.",
+  "production_failure": false,
+  "successful_replacements": [
+    "regression_runs/current09/old_carrier_legacy_python",
+    "regression_runs/current10/old_carrier_legacy_bash"
+  ]
+}

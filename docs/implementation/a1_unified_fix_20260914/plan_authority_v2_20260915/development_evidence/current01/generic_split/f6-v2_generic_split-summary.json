@@ -1,0 +1,326 @@
+{
+  "mode": "v2_generic_split",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "generate"
+  ],
+  "executions": [],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current01/generic_split/f6-v2_generic_split-full.json.gz",
+    "sha256": "e5cb6939dda5e5709cf5c6c333ba755a582c2d95365e470c465aa4757f608ec5",
+    "raw_sha256": "f70cb9a23bdf828ad41ccd38da605cbca1dc68a703787a35c0f72ad5b0c66949"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 5,
+    "finalize": 0,
+    "prepare": 3,
+    "summary": 0,
+    "terminal_summary_provider": 1
+  },
+  "terminal": {
+    "status": "failed",
+    "terminal_diagnostic": {
+      "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+      "stage": "generate",
+      "error_owner": "generate",
+      "reason": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv Planner may organize these same synthetic obligations into independent or combined steps. Input presence/readability and contig compatibility must actually be checked; the newly created synthetic runtime must be chec。\n\n当前步骤：probe-731；执行 attempt：。\n\n没有可确认的命令执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：probe-731=failed；ledger-205=pending；gate-418=pending；layout-563=pending；compile-927=pending；effects-146=pending；aggregate-832=pending；deliver-604=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：generate；原始错误：GENERATE_SCRIPT_BLOCK_INVALID；停止阶段：generate。\n\n末次候选：{\"attempt_id\": \"\", \"execution_started\": false, \"approved\": false, \"candidate_fingerprint\": \"f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6\", \"candidate_event_id\": \"candidate-call:5e44f324c6436cacc79e5d0008611928a4bec346fe028b8c0853ac8af2963d6f\", \"cause_code\": \"GENERATE_SCRIPT_BLOCK_INVALID\", \"correction_category\": \"representation\"}\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\n末次候选错误：GENERATE_SCRIPT_BLOCK_INVALID；GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required\n\n停止策略：repair_no_progress；修正记录：{\"version\": \"candidate-corrections-v2\", \"scope\": {\"task_id\": \"fix-f6-v2_generic_split\", \"task_revision\": 1, \"plan_id\": \"plan_d7829893e5b84aa0ff21\", \"plan_version\": \"plan_v1\", \"plan_revision\": 1, \"step_id\": \"probe-731\"}, \"limit\": 4, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"categories_share_total\": true, \"rejection_ordinal\": 2, \"corrections_authorized_before\": 1, \"corrections_observed_before_rejection\": 1, \"remaining_before_authorization\": 3, \"category\": \"representation\", \"progress_assessment\": {\"schema_version\": 1, \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"basis\": \"recurrent_rejected_candidate\", \"comparison_fingerprint\": \"99de2e15c82061283c1c2b7d7bde6951f104ac123a20997c980fa5d2902dfeea\", \"validation_signature\": \"bd88c0eb18f4054da99aabcf2a690b07a94183ed169b046bbffc17077942fbda\", \"comparison_context_fingerprint\": \"a043cc5daef75b0f688521e60b7b4512ac974d33b4b052845cca563a5aee2543\", \"representation_targets\": [], \"binding_facts\": null, \"binding_axis\": \"not_evaluated\", \"newly_satisfied_targets\": [], \"resolved_targets\": [], \"pending_targets\": [\"response\"], \"scientific_success\": \"not_assessed\"}, \"correction_authorized\": false, \"corrections_authorized\": 1, \"remaining\": 3, \"repair_ordinal\": 2, \"repair_limit\": 4, \"event_id\": \"candidate-rejection:dc0354b920c91cc540049d46\", \"correction_category\": \"representation\"}\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"\", \"concerns\": [], \"error_code\": \"GENERATE_SCRIPT_BLOCK_INVALID\", \"evidence_refs\": [], \"failure_id\": \"\", \"failure_type\": \"generated_action_contract_error\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": null, \"source_owner\": \"GENERATED_ACTION\", \"source_stage\": \"generate\", \"summary\": \"GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required\"}\n已记录 stop_reason：{\"budget_receipt\": {\"categories_share_total\": true, \"category\": \"representation\", \"correction_authorized\": false, \"correction_category\": \"representation\", \"corrections_authorized\": 1, \"corrections_authorized_before\": 1, \"corrections_observed_before_rejection\": 1, \"event_id\": \"candidate-rejection:dc0354b920c91cc540049d46\", \"limit\": 4, \"progress_assessment\": {\"basis\": \"recurrent_rejected_candidate\", \"binding_axis\": \"not_evaluated\", \"binding_facts\": null, \"comparison_context_fingerprint\": \"a043cc5daef75b0f688521e60b7b4512ac974d33b4b052845cca563a5aee2543\", \"comparison_fingerprint\": \"99de2e15c82061283c1c2b7d7bde6951f104ac123a20997c980fa5d2902dfeea\", \"newly_satisfied_targets\": [], \"pending_targets\": [\"response\"], \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"representation_targets\": [], \"resolved_targets\": [], \"schema_version\": 1, \"scientific_success\": \"not_assessed\", \"validation_signature\": \"bd88c0eb18f4054da99aabcf2a690b07a94183ed169b046bbffc17077942fbda\"}, \"rejection_ordinal\": 2, \"remaining\": 3, \"remaining_before_authorization\": 3, \"repair_limit\": 4, \"repair_ordinal\": 2, \"scope\": {\"plan_id\": \"plan_d7829893e5b84aa0ff21\", \"plan_revision\": 1, \"plan_version\": \"plan_v1\", \"step_id\": \"probe-731\", \"task_id\": \"fix-f6-v2_generic_split\", \"task_revision\": 1}, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"version\": \"candidate-corrections-v2\"}, \"detail\": \"Generate encountered an internal protocol violation and failed closed.\", \"error_code\": \"GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED\", \"failure_stage\": \"\", \"model_turns\": 0, \"no_progress_rounds\": 0, \"termination_reason\": \"repair_no_progress\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "detail": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv Planner may organize these same synthetic obligations into independent or combined steps. Input presence/readability and contig compatibility must actually be checked; the newly created synthetic runtime must be chec。\n\n当前步骤：probe-731；执行 attempt：。\n\n没有可确认的命令执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：probe-731=failed；ledger-205=pending；gate-418=pending；layout-563=pending；compile-927=pending；effects-146=pending；aggregate-832=pending；deliver-604=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：generate；原始错误：GENERATE_SCRIPT_BLOCK_INVALID；停止阶段：generate。\n\n末次候选：{\"attempt_id\": \"\", \"execution_started\": false, \"approved\": false, \"candidate_fingerprint\": \"f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6\", \"candidate_event_id\": \"candidate-call:5e44f324c6436cacc79e5d0008611928a4bec346fe028b8c0853ac8af2963d6f\", \"cause_code\": \"GENERATE_SCRIPT_BLOCK_INVALID\", \"correction_category\": \"representation\"}\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\n末次候选错误：GENERATE_SCRIPT_BLOCK_INVALID；GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required\n\n停止策略：repair_no_progress；修正记录：{\"version\": \"candidate-corrections-v2\", \"scope\": {\"task_id\": \"fix-f6-v2_generic_split\", \"task_revision\": 1, \"plan_id\": \"plan_d7829893e5b84aa0ff21\", \"plan_version\": \"plan_v1\", \"plan_revision\": 1, \"step_id\": \"probe-731\"}, \"limit\": 4, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"categories_share_total\": true, \"rejection_ordinal\": 2, \"corrections_authorized_before\": 1, \"corrections_observed_before_rejection\": 1, \"remaining_before_authorization\": 3, \"category\": \"representation\", \"progress_assessment\": {\"schema_version\": 1, \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"basis\": \"recurrent_rejected_candidate\", \"comparison_fingerprint\": \"99de2e15c82061283c1c2b7d7bde6951f104ac123a20997c980fa5d2902dfeea\", \"validation_signature\": \"bd88c0eb18f4054da99aabcf2a690b07a94183ed169b046bbffc17077942fbda\", \"comparison_context_fingerprint\": \"a043cc5daef75b0f688521e60b7b4512ac974d33b4b052845cca563a5aee2543\", \"representation_targets\": [], \"binding_facts\": null, \"binding_axis\": \"not_evaluated\", \"newly_satisfied_targets\": [], \"resolved_targets\": [], \"pending_targets\": [\"response\"], \"scientific_success\": \"not_assessed\"}, \"correction_authorized\": false, \"corrections_authorized\": 1, \"remaining\": 3, \"repair_ordinal\": 2, \"repair_limit\": 4, \"event_id\": \"candidate-rejection:dc0354b920c91cc540049d46\", \"correction_category\": \"representation\"}\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"\", \"concerns\": [], \"error_code\": \"GENERATE_SCRIPT_BLOCK_INVALID\", \"evidence_refs\": [], \"failure_id\": \"\", \"failure_type\": \"generated_action_contract_error\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": null, \"source_owner\": \"GENERATED_ACTION\", \"source_stage\": \"generate\", \"summary\": \"GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required\"}\n已记录 stop_reason：{\"budget_receipt\": {\"categories_share_total\": true, \"category\": \"representation\", \"correction_authorized\": false, \"correction_category\": \"representation\", \"corrections_authorized\": 1, \"corrections_authorized_before\": 1, \"corrections_observed_before_rejection\": 1, \"event_id\": \"candidate-rejection:dc0354b920c91cc540049d46\", \"limit\": 4, \"progress_assessment\": {\"basis\": \"recurrent_rejected_candidate\", \"binding_axis\": \"not_evaluated\", \"binding_facts\": null, \"comparison_context_fingerprint\": \"a043cc5daef75b0f688521e60b7b4512ac974d33b4b052845cca563a5aee2543\", \"comparison_fingerprint\": \"99de2e15c82061283c1c2b7d7bde6951f104ac123a20997c980fa5d2902dfeea\", \"newly_satisfied_targets\": [], \"pending_targets\": [\"response\"], \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"representation_targets\": [], \"resolved_targets\": [], \"schema_version\": 1, \"scientific_success\": \"not_assessed\", \"validation_signature\": \"bd88c0eb18f4054da99aabcf2a690b07a94183ed169b046bbffc17077942fbda\"}, \"rejection_ordinal\": 2, \"remaining\": 3, \"remaining_before_authorization\": 3, \"repair_limit\": 4, \"repair_ordinal\": 2, \"scope\": {\"plan_id\": \"plan_d7829893e5b84aa0ff21\", \"plan_revision\": 1, \"plan_version\": \"plan_v1\", \"step_id\": \"probe-731\", \"task_id\": \"fix-f6-v2_generic_split\", \"task_revision\": 1}, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"version\": \"candidate-corrections-v2\"}, \"detail\": \"Generate encountered an internal protocol violation and failed closed.\", \"error_code\": \"GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED\", \"failure_stage\": \"\", \"model_turns\": 0, \"no_progress_rounds\": 0, \"termination_reason\": \"repair_no_progress\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "stop_id": "managed-stop:67240b44156d3730efa3ad3cb47f5e9b9123d2c6c5387af19c8b216f356c69e7",
+      "origin": {
+        "source_stage": "generate",
+        "source_owner": "GENERATED_ACTION",
+        "failure_id": "",
+        "failure_type": "generated_action_contract_error",
+        "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "summary": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "primary_cause": {
+        "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+        "reason": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+        "current_step": "probe-731",
+        "fingerprint": "0d8d1dabc0e484116c54cd1f47511df90c8f3f7b0d4479b4424323461ca5fac8",
+        "candidate_fingerprint": "f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6",
+        "execution_started": false,
+        "repair_attempted": true,
+        "repair_exhausted": true,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+        "summary": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+        "recorded_at": "2026-09-15T13:11:21",
+        "expected_realization": "one current-step action matching the active Generate protocol",
+        "latest_failure": {
+          "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+          "fingerprint": "0d8d1dabc0e484116c54cd1f47511df90c8f3f7b0d4479b4424323461ca5fac8",
+          "candidate_fingerprint": "f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "fix-f6-v2_generic_split",
+            "plan_id": "plan_d7829893e5b84aa0ff21",
+            "plan_version": "plan_v1",
+            "step_id": "probe-731"
+          },
+          "repair_attempt_count": 2,
+          "recorded_at": "2026-09-15T13:11:24",
+          "field_path": "response",
+          "expected": "one current-step action matching the active Generate protocol"
+        },
+        "last_seen_at": "2026-09-15T13:11:24",
+        "repair_attempt_count": 2,
+        "last_candidate_fingerprint": "f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6",
+        "last_error_fingerprint": "0d8d1dabc0e484116c54cd1f47511df90c8f3f7b0d4479b4424323461ca5fac8",
+        "termination_reason": "repair_no_progress",
+        "terminal_failure": {
+          "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+          "fingerprint": "0d8d1dabc0e484116c54cd1f47511df90c8f3f7b0d4479b4424323461ca5fac8",
+          "candidate_fingerprint": "f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "fix-f6-v2_generic_split",
+            "plan_id": "plan_d7829893e5b84aa0ff21",
+            "plan_version": "plan_v1",
+            "step_id": "probe-731"
+          },
+          "repair_attempt_count": 2,
+          "recorded_at": "2026-09-15T13:11:24",
+          "field_path": "response",
+          "expected": "one current-step action matching the active Generate protocol",
+          "termination_reason": "repair_no_progress"
+        }
+      },
+      "latest_failure": {
+        "error_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "GENERATE_SCRIPT_BLOCK_INVALID: one <shell>, <python>, or <r> block is required",
+        "fingerprint": "0d8d1dabc0e484116c54cd1f47511df90c8f3f7b0d4479b4424323461ca5fac8",
+        "candidate_fingerprint": "f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6",
+        "execution_started": false,
+        "attempt_id": "",
+        "scope": {
+          "task_id": "fix-f6-v2_generic_split",
+          "plan_id": "plan_d7829893e5b84aa0ff21",
+          "plan_version": "plan_v1",
+          "step_id": "probe-731"
+        },
+        "repair_attempt_count": 2,
+        "recorded_at": "2026-09-15T13:11:24",
+        "field_path": "response",
+        "expected": "one current-step action matching the active Generate protocol"
+      },
+      "prior_completed_work": [],
+      "execution": {
+        "attempt_id": "",
+        "step_id": "probe-731",
+        "executed": false,
+        "purpose": "UNKNOWN",
+        "returncode": null,
+        "deterministic_passed": false,
+        "validation_status": "not_performed",
+        "reviewer_disposition": "not_performed",
+        "step_status": "failed",
+        "committed": false,
+        "executed_script_ref": "",
+        "command_body_available": false
+      },
+      "causal_execution": {
+        "status": "UNKNOWN"
+      },
+      "current_candidate": {
+        "attempt_id": "",
+        "execution_started": false,
+        "approved": false,
+        "candidate_fingerprint": "f645023c893e032d7ccc2831ace0708988a1a14cecd0498826fb4d82c074c3b6",
+        "candidate_event_id": "candidate-call:5e44f324c6436cacc79e5d0008611928a4bec346fe028b8c0853ac8af2963d6f",
+        "cause_code": "GENERATE_SCRIPT_BLOCK_INVALID",
+        "correction_category": "representation"
+      },
+      "inspection_count_scope": {
+        "local_tool_calls": 0,
+        "known_causal_errors": 0,
+        "history_coverage": "bounded_admitted_causal_chain"
+      },
+      "inspection_failures": [],
+      "stop_reason": {
+        "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+        "detail": "Generate encountered an internal protocol violation and failed closed.",
+        "transport_receipt": {},
+        "failure_stage": "",
+        "no_progress_rounds": 0,
+        "model_turns": 0,
+        "tool_calls": 0,
+        "termination_reason": "repair_no_progress",
+        "budget_receipt": {
+          "version": "candidate-corrections-v2",
+          "scope": {
+            "task_id": "fix-f6-v2_generic_split",
+            "task_revision": 1,
+            "plan_id": "plan_d7829893e5b84aa0ff21",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "probe-731"
+          },
+          "limit": 4,
+          "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+          "unit": "additional_candidate_calls",
+          "categories_share_total": true,
+          "rejection_ordinal": 2,
+          "corrections_authorized_before": 1,
+          "corrections_observed_before_rejection": 1,
+          "remaining_before_authorization": 3,
+          "category": "representation",
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": false,
+            "basis": "recurrent_rejected_candidate",
+            "comparison_fingerprint": "99de2e15c82061283c1c2b7d7bde6951f104ac123a20997c980fa5d2902dfeea",
+            "validation_signature": "bd88c0eb18f4054da99aabcf2a690b07a94183ed169b046bbffc17077942fbda",
+            "comparison_context_fingerprint": "a043cc5daef75b0f688521e60b7b4512ac974d33b4b052845cca563a5aee2543",
+            "representation_targets": [],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "response"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "correction_authorized": false,
+          "corrections_authorized": 1,
+          "remaining": 3,
+          "repair_ordinal": 2,
+          "repair_limit": 4,
+          "event_id": "candidate-rejection:dc0354b920c91cc540049d46",
+          "correction_category": "representation"
+        }
+      },
+      "internal_diagnostic_delivery": {
+        "status": "not_needed",
+        "paths": {},
+        "receipts": {}
+      },
+      "delivery_status": "complete",
+      "report_paths": {
+        "stage_status.tsv": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "reproduce.sh": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "report.md": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+      },
+      "report_receipts": {
+        "stage_status.tsv": {
+          "path": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "sha256": "3501b6f5d4f6bc111af315b5f9095caada2e12cac83d84247050c3ac2b6a023d",
+          "operation_id": "099d5c8eeaeb424985e9b52fa8650461e8362e7f4faddb149fd6a5e97a8f1294",
+          "ownership": {
+            "operation_id": "099d5c8eeaeb424985e9b52fa8650461e8362e7f4faddb149fd6a5e97a8f1294",
+            "path": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+            "sha256": "3501b6f5d4f6bc111af315b5f9095caada2e12cac83d84247050c3ac2b6a023d",
+            "proof_name": ".runtime-report-proof-099d5c8eeaeb424985e9b52fa8650461e8362e7f4faddb149fd6a5e97a8f1294",
+            "device": 2051,
+            "inode": 8409314
+          },
+          "status": "created",
+          "stop_id": "managed-stop:67240b44156d3730efa3ad3cb47f5e9b9123d2c6c5387af19c8b216f356c69e7",
+          "task_id": "fix-f6-v2_generic_split"
+        },
+        "reproduce.sh": {
+          "path": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "sha256": "870ff27e1fe559f50a561a85b9e3753d32a0ef522ea1ad32a3e6ee027fbb4666",
+          "operation_id": "4a706fd74beca6a2cd457f297c7ca22e9cfb7cef6df254f72615bcd3f403e787",
+          "ownership": {
+            "operation_id": "4a706fd74beca6a2cd457f297c7ca22e9cfb7cef6df254f72615bcd3f403e787",
+            "path": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+            "sha256": "870ff27e1fe559f50a561a85b9e3753d32a0ef522ea1ad32a3e6ee027fbb4666",
+            "proof_name": ".runtime-report-proof-4a706fd74beca6a2cd457f297c7ca22e9cfb7cef6df254f72615bcd3f403e787",
+            "device": 2051,
+            "inode": 8409322
+          },
+          "status": "created",
+          "stop_id": "managed-stop:67240b44156d3730efa3ad3cb47f5e9b9123d2c6c5387af19c8b216f356c69e7",
+          "task_id": "fix-f6-v2_generic_split"
+        },
+        "report.md": {
+          "path": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+          "sha256": "c055d8d6faeaf13e88f3e2321cb8a166ef52ed23e807a5622886477946c4e86d",
+          "operation_id": "d8acac1233dbf0215011d82f1941d868d5b49196b92fb505b041c5775ef59f5c",
+          "ownership": {
+            "operation_id": "d8acac1233dbf0215011d82f1941d868d5b49196b92fb505b041c5775ef59f5c",
+            "path": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+            "sha256": "c055d8d6faeaf13e88f3e2321cb8a166ef52ed23e807a5622886477946c4e86d",
+            "proof_name": ".runtime-report-proof-d8acac1233dbf0215011d82f1941d868d5b49196b92fb505b041c5775ef59f5c",
+            "device": 2051,
+            "inode": 8409329
+          },
+          "status": "created",
+          "stop_id": "managed-stop:67240b44156d3730efa3ad3cb47f5e9b9123d2c6c5387af19c8b216f356c69e7",
+          "task_id": "fix-f6-v2_generic_split"
+        }
+      },
+      "persistence_status": "committed",
+      "summary_status": "COMPLETED",
+      "summary_llm_calls": 1,
+      "secondary_causes": [],
+      "report_path": "/tmp/biomind-plan-authority-v2-current01/generic_split/scratch/biomind-plan-local-graph-b0efpn0w/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+    }
+  },
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

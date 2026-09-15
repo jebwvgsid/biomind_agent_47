@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-plan-authority-v2-current07/export/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-plan-authority-v2-current07/export",
+    "-q",
+    "-s",
+    "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "",
+    "TERM": "xterm-256color",
+    "COLUMNS": "88",
+    "LINES": "26",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-plan-authority-v2-current07/pty/plain-approve/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-plan-authority-v2-current07/pty/plain-approve/pytest-results.json",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-plan-authority-v2-current07/pty/plain-approve",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-plan-authority-v2-current07/pty/plain-approve",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-plan-authority-v2-current07/pty/plain-approve/scratch/executor-logs",
+    "BIOMIND_F5_PTY": "1",
+    "BIOMIND_UI": "plain",
+    "BIOMIND_F5_SCENARIO": "approve"
+  }
+}

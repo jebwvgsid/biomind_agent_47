@@ -1,0 +1,977 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00282189529389143,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11427476443350315,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001447238028049469,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006196266040205956,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.09988757502287626,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014535058289766312,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006261058151721954,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0330354617908597,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014070048928260803,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005900915712118149,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04420561343431473,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016801431775093079,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000899982638657093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0832186471670866,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019390229135751724,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006704861298203468,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.08329305052757263,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001861853525042534,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007005669176578522,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009457329288125038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010790582746267319,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005926014855504036,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009495718404650688,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013589300215244293,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005351239815354347,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008400585502386093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001114262267947197,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005373051390051842,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00081589724868536,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010502710938453674,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005437890067696571,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008136145770549774,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010701268911361694,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005392339080572128,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.08462145179510117,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016183499246835709,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006008027121424675,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03225231263786554,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.04966331925243139,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010440964251756668,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0020028529688715935,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.186845272779465e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.483137935400009e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.894300552085042,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017020944505929947,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026104506105184555,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.448131764307618,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001934180036187172,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002554282546043396,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 10.046106833964586,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001942720264196396,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002682441845536232,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 16.842454178258777,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001841820776462555,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025291740894317627,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 18.030581750907004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001898081973195076,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010327156633138657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 1.0828662868589163,
+    "failure": "def test_legacy_script_selected_mode_example_from_actual_request_is_admitted():\n        async def run():\n            from tests.test_plan_local_preaction_convergence_v2 import PlanLocalRealGraphTests\n            from tests.ger_fixture_support import configure_protocol,generate_until_ready_or_stopped\n            from agent_core.public_response import project_generate_response\n            from agent_core.controller_audit import parse_executable_script_block\n            case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')\n            await case.asyncSetUp();configure_protocol(case);case._configure_one_step_no_output_plan()\n            async def pulse():\n                while True:await asyncio.sleep(.001)\n            timer=asyncio.create_task(pulse());chosen=[]\n            def candidate(payload,ordinal):\n                assert ordinal==1\n                wire=payload['_provider_request']\n                protocol=json.loads(re.findall(r'<current_generate_output_protocol>\\s*(.*?)\\s*</current_generate_output_protocol>',wire,re.S)[0])\n                assert protocol['mode']=='script_block_v1'\n                raw=json.dumps(protocol['action_example'],ensure_ascii=False);chosen.append({'raw':raw,'protocol':protocol})\n                projected=project_generate_response(raw,script_protocol=True)\n                block=parse_executable_script_block(projected.payload);assert block.language=='python'\n                return raw\n            try:\n                events,requests,state=await generate_until_ready_or_stopped(case,'f1-legacy-protocol',candidate)\n                assert state['generate_outcome']['type']=='action_ready',state.get('generate_outcome')\n                save('legacy',{'status':'SCRIPT_MODE_CURRENT_STEP_ADMISSION_PASS','chosen':chosen,'requests':requests,'events':events,\n                    'scientific_example_status':'NOT_IMPLEMENTED; example deliberately fails before publishing any fact; no execution dispatched'})\n            finally:\n                timer.cancel();await case.asyncTearDown()\n>       asyncio.run(run())\n\ntests/a1_unified_fix/test_f1_protocol.py:186: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def run():\n        from tests.test_plan_local_preaction_convergence_v2 import PlanLocalRealGraphTests\n        from tests.ger_fixture_support import configure_protocol,generate_until_ready_or_stopped\n        from agent_core.public_response import project_generate_response\n        from agent_core.controller_audit import parse_executable_script_block\n        case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')\n        await case.asyncSetUp();configure_protocol(case);case._configure_one_step_no_output_plan()\n        async def pulse():\n            while True:await asyncio.sleep(.001)\n        timer=asyncio.create_task(pulse());chosen=[]\n        def candidate(payload,ordinal):\n            assert ordinal==1\n            wire=payload['_provider_request']\n            protocol=json.loads(re.findall(r'<current_generate_output_protocol>\\s*(.*?)\\s*</current_generate_output_protocol>',wire,re.S)[0])\n            assert protocol['mode']=='script_block_v1'\n            raw=json.dumps(protocol['action_example'],ensure_ascii=False);chosen.append({'raw':raw,'protocol':protocol})\n            projected=project_generate_response(raw,script_protocol=True)\n            block=parse_executable_script_block(projected.payload);assert block.language=='python'\n            return raw\n        try:\n            events,requests,state=await generate_until_ready_or_stopped(case,'f1-legacy-protocol',candidate)\n>           assert state['generate_outcome']['type']=='action_ready',state.get('generate_outcome')\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^\nE           KeyError: 'generate_outcome'\n\ntests/a1_unified_fix/test_f1_protocol.py:181: KeyError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017696339637041092,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005933558568358421,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.055306619964540005,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014862790703773499,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006057629361748695,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01818868611007929,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012628454715013504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005702292546629906,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.019277255982160568,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011736061424016953,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005442174151539803,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.018082043156027794,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012172199785709381,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005377484485507011,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0691677937284112,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001352345570921898,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005824929103255272,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.019724437966942787,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000119771808385849,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005344850942492485,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03223525173962116,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012547243386507034,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00054879579693079,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.09233061037957668,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013463199138641357,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005650864914059639,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.06050701439380646,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012171734124422073,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005614440888166428,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0324506526812911,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011906493455171585,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019144266843795776,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008647562935948372,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.649060666561127e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017622392624616623,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008323807269334793,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.813904762268066e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017876829952001572,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008347081020474434,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.682122617959976e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018057506531476974,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008229920640587807,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.676441550254822e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017458293586969376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009684450924396515,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001041041687130928,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018218904733657837,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008345041424036026,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010014977306127548,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017625931650400162,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008149752393364906,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.655114263296127e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017555803060531616,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008123656734824181,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.6835196018219e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018008053302764893,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007836809381842613,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001543983817100525,
+    "failure": ""
+  }
+]

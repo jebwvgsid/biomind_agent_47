@@ -1,0 +1,55 @@
+[
+  {
+    "original": "f6-carrier-legacy_python.json",
+    "sha256": "76531e0adbcb9e14c0535aaf5df4c3de8014ace289e8649ecebfceaa833db71d",
+    "archive": "f6-carrier-legacy_python.json",
+    "archive_sha256": "76531e0adbcb9e14c0535aaf5df4c3de8014ace289e8649ecebfceaa833db71d"
+  },
+  {
+    "original": "f6-false_diagnostic-full.json.gz",
+    "sha256": "41c9e61cc8fe27f41aa0f34cd223d8c7c8720875eea34b7eea693b18956dd359",
+    "archive": "f6-false_diagnostic-full.json.gz",
+    "archive_sha256": "41c9e61cc8fe27f41aa0f34cd223d8c7c8720875eea34b7eea693b18956dd359"
+  },
+  {
+    "original": "f6-false_diagnostic-heartbeat.jsonl",
+    "sha256": "5cbba667b474936c2864b8a4db0b0b7f17f3ed9de3d47b37e5a79b3564d92e35",
+    "archive": "f6-false_diagnostic-heartbeat.jsonl.gz",
+    "archive_sha256": "2904ed3a7f93391a539897e2a745d9f9f721d5d4daa40449ee0ba4f306f77d66"
+  },
+  {
+    "original": "f6-false_diagnostic-summary.json",
+    "sha256": "07dcbfdadc1cf6172c436b99bc0d1d82d77319eadfd45533fb53741f86c950b3",
+    "archive": "f6-false_diagnostic-summary.json",
+    "archive_sha256": "07dcbfdadc1cf6172c436b99bc0d1d82d77319eadfd45533fb53741f86c950b3"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "3ee71adc0ea249f6f70393540793c80ef8349be2d372ab660511a920dac728a9",
+    "archive": "invocation.json",
+    "archive_sha256": "3ee71adc0ea249f6f70393540793c80ef8349be2d372ab660511a920dac728a9"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "8a5eada52b663762169a50f696326f0594ed9ff2ee5a96a287f7c5a5cf63ad42",
+    "archive": "pytest-results.json",
+    "archive_sha256": "8a5eada52b663762169a50f696326f0594ed9ff2ee5a96a287f7c5a5cf63ad42"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "d1b405a2018aa1a7f7e0462d3eec0dbd28e4bc246b997fb898ea48eccd371b31",
+    "archive": "run_exit.json",
+    "archive_sha256": "d1b405a2018aa1a7f7e0462d3eec0dbd28e4bc246b997fb898ea48eccd371b31"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "4fe6056f0665f434f745625275b9455fbe9766321974fb1959595af4c874c9f9",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "19c5ca6896373b9196b24cc207b3efe400529aa745cee32e8b825552f974ab6a"
+  },
+  {
+    "original": "f6-preserved-false_diagnostic",
+    "archive": "f6-preserved-false_diagnostic.tar.gz",
+    "archive_sha256": "b863cae3c9d04c1acc47a2273355ff1f08caab27b0467e05abb7ebbe6c07e8e8"
+  }
+]

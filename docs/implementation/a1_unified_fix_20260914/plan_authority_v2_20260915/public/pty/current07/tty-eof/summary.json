@@ -1,0 +1,177 @@
+{
+  "classification": "REAL_KERNEL_PTY_EXISTING_UI_PROTECTION_PASS",
+  "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+  "mode": "tty",
+  "scenario": "eof",
+  "returncode": 0,
+  "actual_kernel_pty": true,
+  "checks": {
+    "passed": true,
+    "checks": {
+      "child_rc0": true,
+      "business_done": true,
+      "source_unchanged": true,
+      "one_frozen_plan": true,
+      "no_execution_or_code_approval": true,
+      "fixed_provider_only": true,
+      "full_body_bound_before_confirmation": true,
+      "entire_frozen_body_in_current_view": true,
+      "default_body_visible": true,
+      "correct_acceptance": true,
+      "eof_preserves_waiting_without_decision": true
+    }
+  },
+  "parent_and_child_harness_sha256": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538",
+  "source_unchanged": true,
+  "loaded_count": 117,
+  "raw_files": {
+    "before-decision.screen.txt": {
+      "original_sha256": "b681a3735a40bf361548a5283b3ba0ce3039cc397c3915d2d4ea62b331a49736",
+      "bytes": 1313,
+      "archive_path": "before-decision.screen.txt",
+      "archive_sha256": "b681a3735a40bf361548a5283b3ba0ce3039cc397c3915d2d4ea62b331a49736"
+    },
+    "business.json": {
+      "original_sha256": "41704d451dc005719cd697682e04fed06d5f249262ab508e1a87e9f7324142b5",
+      "bytes": 119364,
+      "archive_path": "business.json",
+      "archive_sha256": "41704d451dc005719cd697682e04fed06d5f249262ab508e1a87e9f7324142b5"
+    },
+    "checks.json": {
+      "original_sha256": "7c6e98cc3fda5a0edc21e464c948a6cc467b2ef5b6dcc2e2deddd9f8da0c2dfa",
+      "bytes": 438,
+      "archive_path": "checks.json",
+      "archive_sha256": "7c6e98cc3fda5a0edc21e464c948a6cc467b2ef5b6dcc2e2deddd9f8da0c2dfa"
+    },
+    "default.screen.txt": {
+      "original_sha256": "b681a3735a40bf361548a5283b3ba0ce3039cc397c3915d2d4ea62b331a49736",
+      "bytes": 1313,
+      "archive_path": "default.screen.txt",
+      "archive_sha256": "b681a3735a40bf361548a5283b3ba0ce3039cc397c3915d2d4ea62b331a49736"
+    },
+    "done.screen.txt": {
+      "original_sha256": "6f54747ae474752849a620b557a2698d1af875e22c95196f7cfa6566f53f6334",
+      "bytes": 945,
+      "archive_path": "done.screen.txt",
+      "archive_sha256": "6f54747ae474752849a620b557a2698d1af875e22c95196f7cfa6566f53f6334"
+    },
+    "durable.json": {
+      "original_sha256": "866a50678e22fa40d757439feb86f766312c4c276140c9837b6aa93e98dc7462",
+      "bytes": 167557,
+      "archive_path": "durable.json",
+      "archive_sha256": "866a50678e22fa40d757439feb86f766312c4c276140c9837b6aa93e98dc7462"
+    },
+    "finish": {
+      "original_sha256": "b737815f5ca9697f685dfe2b5fe1f7b12a180562f97da5a72e90eaedd9890876",
+      "bytes": 8,
+      "archive_path": "finish",
+      "archive_sha256": "b737815f5ca9697f685dfe2b5fe1f7b12a180562f97da5a72e90eaedd9890876"
+    },
+    "frame.json": {
+      "original_sha256": "4267bb6054f91fb47715aa09762b4a21e4eebe5c007756aff3ff9c6ce8a5f6aa",
+      "bytes": 19659,
+      "archive_path": "frame.json",
+      "archive_sha256": "4267bb6054f91fb47715aa09762b4a21e4eebe5c007756aff3ff9c6ce8a5f6aa"
+    },
+    "invocation.json": {
+      "original_sha256": "71b2383e5a1bd40f5ebb13b6b9f32b0f75873d9b255b41b77280055b6bcf3023",
+      "bytes": 1208,
+      "archive_path": "invocation.json",
+      "archive_sha256": "71b2383e5a1bd40f5ebb13b6b9f32b0f75873d9b255b41b77280055b6bcf3023"
+    },
+    "loaded.json": {
+      "original_sha256": "6ed745899e9c8e1ce1184a88692fb9e27296c0ec3984e171c57346cbfa82fd75",
+      "bytes": 25208,
+      "archive_path": "loaded.json",
+      "archive_sha256": "6ed745899e9c8e1ce1184a88692fb9e27296c0ec3984e171c57346cbfa82fd75"
+    },
+    "phase.json": {
+      "original_sha256": "74532556b7685c0f79076bbb8f5cb1d73620c60646f7ce093e8932e07a340ef2",
+      "bytes": 30,
+      "archive_path": "phase.json",
+      "archive_sha256": "74532556b7685c0f79076bbb8f5cb1d73620c60646f7ce093e8932e07a340ef2"
+    },
+    "pytest-results.json": {
+      "original_sha256": "1ed6f627eea33f457f02256efbec8459998d9925a6a46b2ce4ffbf80fbea72ca",
+      "bytes": 690,
+      "archive_path": "pytest-results.json",
+      "archive_sha256": "1ed6f627eea33f457f02256efbec8459998d9925a6a46b2ce4ffbf80fbea72ca"
+    },
+    "result.json": {
+      "original_sha256": "f5809b3ab395aecaa09a64adfe64615697133431e5ff3d7baf0275940345e530",
+      "bytes": 548111,
+      "archive_path": "result.json.gz",
+      "archive_sha256": "fc09460398577def234cbba9131ece5ebab802c178e3e8e8a08eaac82e6d4c01"
+    },
+    "terminal.raw": {
+      "original_sha256": "07504f817b020980bf61ef143517ce216746d1824371a220ed4c8976b0abcb96",
+      "bytes": 23812,
+      "archive_path": "terminal.raw",
+      "archive_sha256": "07504f817b020980bf61ef143517ce216746d1824371a220ed4c8976b0abcb96"
+    }
+  },
+  "provider_boundary": "fixed whole invocation methods in existing F5 harness; UI/PlanReview/CAS regression, not leaf transport validation",
+  "real_provider_calls": 0,
+  "real_scientific_calls": 0,
+  "execution_calls": 0,
+  "code_approval_calls": 0,
+  "review_binding": {
+    "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+    "plan_id": "plan_e33c5694231df57920a4",
+    "plan_version": "plan_v1",
+    "submission": {
+      "ready": true,
+      "identity_matches": true,
+      "reason_code": "PLAN_REVIEW_SUBMISSION_COMMITTED",
+      "submission_id": "plan-submission-1eeef8f4bd254dc7a4bd",
+      "receipt": {
+        "schema_version": 1,
+        "protocol_version": 1,
+        "submission_id": "plan-submission-1eeef8f4bd254dc7a4bd",
+        "action_type": "submit_plan_for_review",
+        "agent_initiated": true,
+        "status": "pending_review",
+        "task_id": "f5-plan-current",
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+        "plan_snapshot_ref": "object:sha256:c235227f0211e8b9a7ac18266f37b58fd4c5fec8c7d6dc7b31b753130a1a0f12",
+        "task_revision": 1,
+        "generated_from_task_revision": 1,
+        "authoritative_user_turn_revision": 1,
+        "planner_claim_id": "planner-call:1ff21613185d6035d83cb509183d5f850509c1cd9b9b6cf4258cdadf556abc7d",
+        "planning_epoch_id": "planning-epoch-755ccfad-f942-4d7b-bd6e-5ddcdf9c94f3",
+        "candidate_scope_id": "candidate-scope-3254afa9-1013-4f97-a592-15bf34a11ad4",
+        "submitted_at": "2026-09-15T06:15:43.103512+00:00"
+      }
+    }
+  },
+  "actual_body_saved_in": "result.json.gz",
+  "acceptance": {
+    "ready": false,
+    "reason_code": "PLAN_REVIEW_ACCEPTANCE_MISSING_OR_STALE",
+    "review_receipt_id": "",
+    "submission_id": "plan-submission-1eeef8f4bd254dc7a4bd",
+    "receipt": {}
+  },
+  "outcome": {
+    "schema_version": 1,
+    "type": "approval_pending",
+    "summary": "Plan review is durably waiting for human approval.",
+    "scope": {
+      "task_id": "f5-plan-current",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "step_id": "plan-inspect-0"
+    },
+    "payload": {
+      "approval_scope": {
+        "content": "## Plan Identity\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none\n\n## Effective Plan\n\n### [plan-inspect-0] 合成步骤 00 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `none`\n- Success criteria: `冻结要求 00-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-1] 合成步骤 01 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-bl"
+      },
+      "reason_code": "human_plan_review_pending"
+    },
+    "evidence_refs": []
+  },
+  "copied_scope": "top-level actual artifacts only; no scratch or nested runtime state"
+}

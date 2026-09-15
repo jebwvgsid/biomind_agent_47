@@ -1,0 +1,1834 @@
+--- a/agent_core/action_runtime.py
++++ b/agent_core/action_runtime.py
+@@ -21,6 +21,35 @@
+ ARTIFACT_MANIFEST_SCHEMA_VERSION = 1
+ EXECUTION_POLICY_MANIFEST_SCHEMA_VERSION = 1
+ ACTION_APPROVAL_IDENTITY_SCHEMA_VERSION = 1
++GENERIC_EXECUTION_CAPABILITY_ID = "framework.generic.execute"
++GENERIC_EXECUTION_TOOLS = frozenset({"bash", "python"})
++
++
++def generic_execution_capability() -> Dict[str, Any]:
++    """The existing controlled executor, explicitly selected without a Skill.
++
++    This contract grants no ambient resources or runtime bindings. The approved
++    step owns resource use and observable effects; action approval and the
++    existing execution/evidence boundaries still apply. Unknown IDs never use
++    this route implicitly.
++    """
++    return normalize_capability_contract({
++        "capability_id": GENERIC_EXECUTION_CAPABILITY_ID,
++        "selected_skill_id": "",
++        "operation": "execute",
++        "contract_source": "framework.controlled_executor",
++        "contract_revision": "generic-execution-v1",
++        "supported_tools": sorted(GENERIC_EXECUTION_TOOLS),
++        "required_runtime_binding_ids": [],
++        "optional_runtime_binding_ids": [],
++        "required_artifact_binding_ids": [],
++        "execution_guidance": [
++            "Explicit generic execution through the existing code approval and executor; select tool bash or python.",
++            "Declare exact resource uses and actual observable results in the Plan. A read-only check may have outputs=[] and typed observations.",
++            "No domain helper or runtime availability is implied. Use approved resources only; missing dependencies require evidence, correction or formal blocked/stop.",
++            "This route does not provide an arbitrary-system-call OS sandbox.",
++        ],
++    })
+ 
+ _ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
+ _BINDING_ID_RE = re.compile(r"^(?:runtime|artifact)\.[a-z0-9][a-z0-9_.-]{0,126}$")
+@@ -46,6 +75,7 @@
+     "workspace_mutations",
+     "explicit_side_effects",
+     "execution_guidance",
++    "supported_tools",
+ )
+ 
+ _OPTIONAL_CAPABILITY_EFFECT_LIST_FIELDS = (
+@@ -198,6 +228,8 @@
+         "required_artifact_binding_ids": required_artifacts,
+         "execution_guidance": guidance,
+     }
++    if "supported_tools" in value:
++        normalized["supported_tools"] = _string_ids(value["supported_tools"])
+     # Effect semantics are an additive contract extension.  Preserve the exact
+     # normalized shape (and therefore the contract hash) of every legacy
+     # capability that did not declare them.  An explicitly declared empty list
+--- a/agent_core/completion_gate.py
++++ b/agent_core/completion_gate.py
+@@ -3302,9 +3302,58 @@
+                 for version in dict(provenance.get("artifact_heads") or {}).values()
+                 for row in [dict((provenance.get("artifacts") or {}).get(str(version)) or {})]
+             }
++            result_contracts = plan_result_contracts(plan_state)
++            required_workspaces = {
++                ref: contract for ref, contract in result_contracts.items()
++                if contract.get("required") and contract.get("resource_kind") == "mutable_workspace"
++            }
++            if required_workspaces:
++                # A sealed state chain is a planning prerequisite, not execution
++                # evidence. validate_task_evidence above has already rechecked
++                # every completed step's current attempt and attested effects.
++                from .plan_tracker import validate_required_workspace_coverage
++                workspace_issues = validate_required_workspace_coverage(plan_state)
++                missing_workspaces = {
++                    str(ref) for issue in workspace_issues
++                    for ref in issue.get("affected_output_ids", [])
++                }
++                attested_paths: Dict[str, set[str]] = {}
++                for step in _steps(plan_state):
++                    sources, _ = _current_effect_sources(plan_state, str(step.get("step_id") or ""))
++                    for payload, accepted in sources:
++                        if not accepted:
++                            continue
++                        for row in _effect_items(payload.get("workspace_mutations")):
++                            if not isinstance(row, Mapping) or row.get("attested") is not True:
++                                continue
++                            identity = _effect_identity("workspace_mutations", row).partition("::")[0]
++                            path = str(row.get("formal_concrete_path") or "")
++                            if identity and path:
++                                attested_paths.setdefault(identity, set()).add(path)
++                for ref, contract in required_workspaces.items():
++                    required_path = str(contract.get("canonical_path") or "")
++                    try:
++                        path_valid = bool(required_path) and (
++                            Path(required_path).is_absolute()
++                            and Path(required_path).is_dir()
++                            and any(Path(path).resolve() == Path(required_path).resolve()
++                                    for path in attested_paths.get(ref, ()))
++                        )
++                    except OSError:
++                        path_valid = False
++                    if not path_valid:
++                        missing_workspaces.add(ref)
++                if missing_workspaces:
++                    return GateResult(
++                        False,
++                        message="Required workspaces lack an evidenced state chain or their exact bound directory.",
++                        feedback="Inspect the approved state transitions and workspace evidence for: " + ", ".join(sorted(missing_workspaces)),
++                        classification="plan_workspace_state_incomplete",
++                        missing_artifacts=sorted(missing_workspaces),
++                    )
+             missing_results = [
+-                ref for ref, contract in plan_result_contracts(plan_state).items()
+-                if contract.get("required")
++                ref for ref, contract in result_contracts.items()
++                if contract.get("required") and ref not in required_workspaces
+                 and str(versions_by_logical.get(ref, {}).get("status") or "") != "valid"
+             ]
+             if missing_results:
+--- a/agent_core/node_context.py
++++ b/agent_core/node_context.py
+@@ -231,6 +231,38 @@
+ 
+ def control_metadata_leaks(value: Any, path: str = "$LLMPayload") -> List[str]:
+     """Return precise paths at which control-plane metadata entered a payload."""
++    public_step_paths: set[str] = set()
++    if path == "$LLMPayload" and isinstance(value, Mapping):
++        # The correction producer already distinguishes public candidate step
++        # references from Controller identities by validator and exact field.
++        # Reuse that decision only at the two formal Planner focus locations;
++        # neither arbitrary nested step_id nor a caller-supplied path is exempt.
++        from agent_core.planner_context import provider_correction_feedback
++        current_focus = value.get("current_focus")
++        locations = [(value.get("planning"), "$LLMPayload.planning")]
++        if isinstance(current_focus, Mapping):
++            locations.append((current_focus.get("planning"), "$LLMPayload.current_focus.planning"))
++        for planning, prefix in locations:
++            if not isinstance(planning, Mapping):
++                continue
++            issues = planning.get("violations")
++            if not isinstance(issues, list):
++                continue
++            for index, issue in enumerate(issues):
++                if not isinstance(issue, Mapping):
++                    continue
++                projected = provider_correction_feedback({"validation_issues": [issue]})["validation_issues"][0]
++                def collect(item: Any, current: str) -> None:
++                    if isinstance(item, Mapping):
++                        for key, child in item.items():
++                            child_path = f"{current}.{key}"
++                            if key == "step_id":
++                                public_step_paths.add(child_path)
++                            collect(child, child_path)
++                    elif isinstance(item, (list, tuple)):
++                        for offset, child in enumerate(item):
++                            collect(child, f"{current}[{offset}]")
++                collect(projected, f"{prefix}.violations[{index}]")
+     leaks: List[str] = []
+     if isinstance(value, Mapping):
+         for raw_key, item in value.items():
+@@ -259,7 +291,7 @@
+             pattern.match(stripped) for pattern in _CONTROL_VALUE_PATTERNS
+         ):
+             leaks.append(path)
+-    return sorted(set(leaks))
++    return sorted(set(leaks) - public_step_paths)
+ 
+ 
+ def assert_llm_payload_clean(value: Any) -> None:
+@@ -959,7 +991,7 @@
+ 
+ 
+ _LLM_SAFE_STEP_FIELDS = frozenset({
+-    "title", "action", "purpose", "tool", "inputs", "input_ids",
++    "title", "action", "purpose", "tool", "inputs", "input_ids", "resource_uses",
+     "input_artifacts", "input_refs", "input_contracts", "outputs",
+     "output_ids", "output_artifacts", "output_refs", "output_contracts",
+     "constraints", "constraint_ids", "semantic_constraint_ids",
+@@ -985,6 +1017,10 @@
+         and value not in (None, "", [], {})
+     })
+     row = dict(projected) if isinstance(projected, Mapping) else {}
++    if isinstance(raw.get("resource_uses"), list) and not raw["resource_uses"]:
++        # An explicit empty v3 use list is a resource boundary, not a legacy
++        # step lacking declarations. Keep it visible to closure selection.
++        row["resource_uses"] = []
+     if isinstance(row.get("artifacts"), list):
+         row["artifacts"] = [
+             dict(_without_control_metadata({
+@@ -1090,6 +1126,7 @@
+         "consumer_step_id": "plan_step",
+         "input_ref": "artifact",
+         "output_ref": "artifact",
++        "resource_ref": "artifact",
+         "artifact_id": "artifact",
+         "constraint_id": "constraint",
+         "requirement_id": "constraint",
+@@ -1205,9 +1242,11 @@
+     # Snapshot steps carry the same typed refs.  This is a compatibility
+     # projection for early v1.2.1 snapshots whose resolved usage list was
+     # absent, not a semantic inference from prose.
+-    for field, relation in (("inputs", "consume"), ("outputs", "produce")):
+-        for value in current.get(field, []) or []:
+-            add(value, relation, field=field)
++    from agent_core.plan_bindings import step_resource_inputs
++    for value in step_resource_inputs(current):
++        add(value, "consume", field="resource_uses" if "resource_uses" in current else "inputs")
++    for value in current.get("outputs", []) or []:
++        add(value, "produce", field="outputs")
+ 
+     plan_local = dict(
+         snapshot.get("plan_local_artifacts")
+@@ -1402,7 +1441,7 @@
+ 
+     has_explicit_edges = bool(referenced_constraints or referenced_artifacts)
+     policy = "current-step-closure-v2"
+-    if current and not has_explicit_edges:
++    if current and not has_explicit_edges and "resource_uses" not in current:
+         # Read-only compatibility for plans created before semantic references
+         # were mandatory.  New PlanSpec validation rejects this shape.
+         referenced_constraints = set(known_constraint_handles)
+@@ -1616,26 +1655,14 @@
+             return [project_artifact_identities(item) for item in value]
+         return deepcopy(value)
+ 
+-    violations = []
+-    for raw in failure.get("validation_issues", []) or []:
+-        if not isinstance(raw, Mapping):
+-            continue
+-        visible_fields = {
+-            "code", "message", "severity", "disposition", "field_path",
+-            "affected_step_ids", "affected_artifact",
+-            "affected_output", "expected_identity", "observed_identity",
+-            "violated_invariant", "required_postcondition", "affected_fields",
+-            "machine_evidence", "expected_type", "received_type",
+-            "received_excerpt", "parser_message", "line", "column", "offset",
+-            "response_excerpt",
+-            "possible_effect_kinds", "normalization_source", "expected_contract",
+-        }
+-        row = _without_control_metadata({
+-            key: deepcopy(value)
+-            for key, value in raw.items()
+-            if str(key) in visible_fields
+-        })
+-        violations.append(project_artifact_identities(row))
++    # Use the same trusted-source/path projection as the appended correction
++    # event. A second generic sanitizer here used to erase its repair target.
++    from agent_core.planner_context import provider_correction_feedback
++    public_feedback = provider_correction_feedback({
++        "validation_issues": failure.get("validation_issues", []) or [],
++    })
++    violations = [project_artifact_identities(row)
++                  for row in public_feedback["validation_issues"]]
+     affected_step_keys: set[str] = set()
+     affected_fields: set[str] = set()
+     for violation in violations:
+@@ -1658,7 +1685,7 @@
+             key: deepcopy(value)
+             for key, value in step.items()
+             if key in {
+-                "step_key", "action", "purpose", "tool", "inputs", "outputs",
++                "step_key", "action", "purpose", "tool", "inputs", "outputs", "resource_uses",
+                 "dependencies", "skill_ids", "workflow_stage_ids", "batch_id",
+                 "risk_level", "execution_capability_id", "operation",
+                 "produces_bindings", "produces_observations",
+@@ -3106,6 +3133,12 @@
+                 step[field] = resolve_list(
+                     step.get(field), object_type="artifact",
+                 )
++        if isinstance(step.get("resource_uses"), list):
++            for use in step["resource_uses"]:
++                if isinstance(use, MutableMapping) and "resource_ref" in use:
++                    use["resource_ref"] = resolve_scalar(
++                        use["resource_ref"], object_type="artifact",
++                    )
+         for field in ("outputs", "output_ids", "output_artifacts", "output_refs"):
+             if field in step:
+                 step[field] = resolve_list(
+--- a/agent_core/plan_bindings.py
++++ b/agent_core/plan_bindings.py
+@@ -21,6 +21,7 @@
+ _RESOURCE_KINDS = {"immutable_artifact", "mutable_workspace"}
+ PLAN_RESOURCE_PROTOCOL_VERSION = 2
+ PLAN_RESOURCE_ROLE_VERSION = 1
++PLAN_RESOURCE_USES_VERSION = 3
+ _INITIALLY_AVAILABLE_ORIGINS = {
+     "external",
+     "verified_task_input",
+@@ -140,7 +141,16 @@
+ def planner_resource_requirements(authoritative_bindings: Mapping[str, Any], capability_registry: Mapping[str, Any]) -> Dict[str, Any]:
+     """Public repair requirements from the same declarations admission uses."""
+     return {
+-        "protocol": "plan_resource_protocol_v2",
++        "protocol": "plan_resource_protocol_v3",
++        "resource_contract_version": PLAN_RESOURCE_USES_VERSION,
++        "step_resource_uses": {
++            "item": {"resource_ref": "exact current input/output/plan handle", "access": "read|mutate", "role": "optional exact selected helper role"},
++            "meaning": "Declare each actual resource use once on its step. inputs and resource-side role_associations are retired in v3. Mutation state/evidence and immutable outputs remain distinct facts.",
++        },
++        "legacy_resource_contract_v2": {
++            "role_association_item": {"step_id": "one declared step", "capability_id": "that step's selected capability", "role": "one declared workspace role"},
++            "meaning": "Explicit v2/legacy candidates retain their original strict reference and duplicate-declaration checks; do not mix v2 fields into v3.",
++        },
+         "new_resource": {
+             "local_ref": "plan.<candidate-local-name>",
+             "artifact_contract": {
+@@ -149,11 +159,6 @@
+                 "materialization_policy_id": "managed_intermediate_v1",
+             },
+             "resource_binding": "omit for a new resource; the binder creates identity",
+-            "role_associations": {
+-                "optional": True, "schema_version": PLAN_RESOURCE_ROLE_VERSION,
+-                "item": {"step_id": "one declared step", "capability_id": "that step's selected capability", "role": "one role enumerated below"},
+-                "meaning": "This resource implements the exact role only for that step/capability. Repeat explicitly for each sharing step. This is not an existing resource_binding or a global alias.",
+-            },
+         },
+         "existing_resource_reference": {"resource_ref": "exact current resource handle"},
+         "resources": [{
+@@ -174,6 +179,29 @@
+     }
+ 
+ 
++def plan_uses_resource_uses(candidate: Mapping[str, Any]) -> bool:
++    metadata = candidate.get("metadata") or (candidate.get("plan_document") or {}).get("metadata") or {}
++    return isinstance(metadata, Mapping) and metadata.get("resource_contract_version") == PLAN_RESOURCE_USES_VERSION
++
++
++def step_resource_inputs(step: Mapping[str, Any]) -> list[str]:
++    """Read-only input index; v3 declarations, never a second writable source."""
++    if "resource_uses" not in step:
++        return list(step.get("inputs") or [])
++    uses = step["resource_uses"]
++    if not isinstance(uses, list):
++        raise PlanBindingError("PLAN_RESOURCE_USES_INVALID", field_path="$.resource_uses", expected="array", actual=uses)
++    return [str(row["resource_ref"]) for row in uses
++            if isinstance(row, Mapping) and row.get("access") == "read" and isinstance(row.get("resource_ref"), str)]
++
++
++def project_step_resource_usage(step: Mapping[str, Any]) -> Dict[str, Any]:
++    result = deepcopy(dict(step))
++    if "resource_uses" in result:
++        result["inputs"] = step_resource_inputs(result)
++    return result
++
++
+ def capability_workspace_roles(capability: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
+     """Exact roles from the one frozen capability and binding sub-contract."""
+     roles: Dict[str, Dict[str, Any]] = {}
+@@ -198,6 +226,20 @@
+     """Ephemeral exact role lookup. Never add role aliases to the Plan registry."""
+     result = dict(bindings)
+     matches: Dict[str, Mapping[str, Any]] = {}
++    if "resource_uses" in step:
++        for use in step.get("resource_uses") or []:
++            if not isinstance(use, Mapping) or not use.get("role"):
++                continue
++            role = str(use["role"])
++            row = bindings.get(str(use.get("resource_ref") or ""))
++            if not isinstance(row, Mapping):
++                raise PlanBindingError("PLAN_RESOURCE_REFERENCE_NOT_DECLARED", field_path="$.resource_uses", actual=dict(use))
++            prior = matches.get(role) or result.get(role)
++            if prior and prior.get("canonical_resource_id") != row.get("canonical_resource_id"):
++                raise PlanBindingError("PLAN_RESOURCE_ROLE_AMBIGUOUS", step_id=step.get("step_id"), role=role)
++            matches[role] = row
++        result.update(matches)
++        return result
+     for row in bindings.values():
+         if not isinstance(row, Mapping):
+             continue
+@@ -225,8 +267,9 @@
+             continue
+         role = str(requirement.get("canonical_resource_id") or "")
+         row = scoped.get(role) or {}
+-        if any(a.get("role") == role and a.get("step_id") == step.get("step_id")
+-               and a.get("capability_id") == step.get("execution_capability_id") for a in row.get("role_associations", [])):
++        if (any(use.get("role") == role for use in step.get("resource_uses", []) if isinstance(use, Mapping))
++                or any(a.get("role") == role and a.get("step_id") == step.get("step_id")
++                       and a.get("capability_id") == step.get("execution_capability_id") for a in row.get("role_associations", []))):
+             requirement["canonical_resource_id"] = row["canonical_resource_id"]
+     if operation in result.get("operations", {}):
+         result["operations"][operation] = rule
+@@ -266,7 +309,8 @@
+         if isinstance(value, Mapping)
+     }
+     metadata = dict(candidate.get("metadata") or (candidate.get("plan_document") or {}).get("metadata") or {})
+-    strict_references = require_declared_references or metadata.get("resource_contract_version") == PLAN_RESOURCE_PROTOCOL_VERSION
++    uses_v3 = plan_uses_resource_uses(candidate)
++    strict_references = require_declared_references or metadata.get("resource_contract_version") in (PLAN_RESOURCE_PROTOCOL_VERSION, PLAN_RESOURCE_USES_VERSION)
+     records: list[Dict[str, Any]] = []
+     scoped_roles: Dict[Tuple[str, str, str], str] = {}
+     steps = {str(step.get("step_id") or ""): step for step in candidate.get("steps", []) or [] if isinstance(step, Mapping)}
+@@ -461,6 +505,9 @@
+         }
+         associations = raw.get("role_associations", [])
+         role_path = f"$.proposed_artifacts[{index}].role_associations"
++        if uses_v3 and "role_associations" in raw:
++            raise PlanBindingError("PLAN_RESOURCE_FIELD_RETIRED", field_path=role_path,
++                expected="Declare actual use only in steps[].resource_uses for resource_contract_version=3", actual=associations)
+         if not isinstance(associations, list):
+             raise PlanBindingError("PLAN_RESOURCE_ROLE_INVALID", field_path=role_path, actual=associations, expected="array")
+         for offset, association in enumerate(associations):
+@@ -478,6 +525,15 @@
+                     or association["role"] not in roles or roles[association["role"]]["resource_kind"] != kind):
+                 raise PlanBindingError("PLAN_RESOURCE_ROLE_SCOPE_INVALID", field_path=path, actual=dict(association),
+                     expected={"capability_id": step.get("execution_capability_id"), "roles": roles, "resource_kind": kind},
++                    machine_evidence={"parent_local_ref": local_ref, "parent_resource_kind": kind,
++                        "referenced_step_id": association["step_id"], "step_lookup_found": bool(step),
++                        "declared_step_ids": sorted(steps), "selected_skill_id": capability.get("selected_skill_id"),
++                        "failed_conditions": {
++                            "step_not_declared": not bool(step),
++                            "capability_mismatch": step.get("execution_capability_id") != association["capability_id"],
++                            "selected_skill_mismatch": capability.get("selected_skill_id") not in (step.get("skill_ids") or []),
++                            "role_not_declared": association["role"] not in roles,
++                            "parent_resource_kind_mismatch": association["role"] in roles and roles[association["role"]]["resource_kind"] != kind}},
+                     not_evaluated=["step_effects", "dataflow", "required_workspace_coverage"])
+             key = (association["step_id"], association["capability_id"], association["role"])
+             if key in scoped_roles:
+@@ -544,6 +600,63 @@
+             by_alias[str(alias)] = row
+         # The canonical ID is always an exact alias, never a guessed one.
+         by_alias[identity] = row
++    if uses_v3:
++        for step_index, step in enumerate(candidate.get("steps", []) or []):
++            if not isinstance(step, Mapping):
++                continue
++            uses = step.get("resource_uses")
++            root = f"$.steps[{step_index}].resource_uses"
++            if not isinstance(uses, list):
++                raise PlanBindingError("PLAN_RESOURCE_USES_INVALID", field_path=root, expected="array", actual=uses)
++            cap_id = str(step.get("execution_capability_id") or "")
++            cap = dict((capability_registry or {}).get(cap_id) or {})
++            roles = capability_workspace_roles(cap)
++            for role in cap.get("required_artifact_binding_ids", []) or []:
++                roles.setdefault(str(role), {"resource_kind": "immutable_artifact", "access": "read"})
++            seen = set()
++            for use_index, use in enumerate(uses):
++                path = f"{root}[{use_index}]"
++                if (not isinstance(use, Mapping) or set(use) - {"resource_ref", "access", "role"}
++                        or not isinstance(use.get("resource_ref"), str) or not use["resource_ref"]
++                        or use.get("access") not in ("read", "mutate")
++                        or ("role" in use and (not isinstance(use["role"], str) or not use["role"]))):
++                    raise PlanBindingError("PLAN_RESOURCE_USE_INVALID", field_path=path, actual=use,
++                        expected={"resource_ref": "exact declared resource", "access": "read|mutate", "role": "optional selected helper role"})
++                ref, access, role = use["resource_ref"], use["access"], str(use.get("role") or "")
++                row = by_alias.get(ref)
++                if not row:
++                    raise PlanBindingError("PLAN_RESOURCE_REFERENCE_NOT_DECLARED", field_path=path + ".resource_ref", actual=ref,
++                        expected={"declared_handles": sorted(by_alias)})
++                marker = (ref, role)
++                if marker in seen:
++                    raise PlanBindingError("PLAN_RESOURCE_USE_CONFLICT", field_path=path, actual=use, expected="one declaration per resource/role")
++                seen.add(marker)
++                if role:
++                    required = roles.get(role)
++                    if not required or (cap.get("selected_skill_id") and cap["selected_skill_id"] not in (step.get("skill_ids") or [])):
++                        raise PlanBindingError("PLAN_RESOURCE_USE_ROLE_INVALID", field_path=path + ".role", actual=use,
++                            expected={"capability_id": cap_id, "selected_skill_id": cap.get("selected_skill_id"), "roles": roles})
++                    if access != required["access"]:
++                        raise PlanBindingError("PLAN_RESOURCE_USE_ACCESS_MISMATCH", field_path=path + ".access", actual=access, expected=required["access"])
++                    if row["resource_kind"] != required["resource_kind"]:
++                        raise PlanBindingError("PLAN_RESOURCE_KIND_INVALID", field_path=path, actual=row["resource_kind"], expected=required["resource_kind"])
++                    row.setdefault("role_associations", []).append({"step_id": step.get("step_id"), "capability_id": cap_id, "role": role})
++                    row["role_association_version"] = PLAN_RESOURCE_ROLE_VERSION
++                row["resource_use_projection_version"] = PLAN_RESOURCE_USES_VERSION
++                if access == "mutate":
++                    if row["resource_kind"] != "mutable_workspace":
++                        raise PlanBindingError("PLAN_RESOURCE_KIND_INVALID", field_path=path, actual=row["resource_kind"], expected="mutable_workspace")
++                    if not any(isinstance(m, Mapping) and str(m.get("workspace_ref") or m.get("identity") or "") in {ref, role} - {""}
++                               for m in step.get("workspace_mutations", []) or []):
++                        raise PlanBindingError("PLAN_RESOURCE_MUTATION_DECLARATION_MISSING", field_path=path,
++                            actual=use, expected="explicit workspace_mutations state/evidence declaration for this resource or exact role")
++                row["binding_id"] = _resource_binding_id(row)
++            for mutation_index, mutation in enumerate(step.get("workspace_mutations", []) or []):
++                if isinstance(mutation, Mapping):
++                    ref = str(mutation.get("workspace_ref") or mutation.get("identity") or "")
++                    if not any(use.get("access") == "mutate" and ref in {use.get("resource_ref"), use.get("role")} for use in uses):
++                        raise PlanBindingError("PLAN_RESOURCE_MUTATION_USE_MISSING", field_path=f"$.steps[{step_index}].workspace_mutations[{mutation_index}]",
++                            actual=ref, expected="an explicit mutate resource_uses declaration on this step")
+     role_issues = []
+     if capability_registry is not None:
+         for step_index, step in enumerate(candidate.get("steps", []) or []):
+@@ -556,18 +669,21 @@
+                 code = ""
+                 if not target:
+                     code = "PLAN_RESOURCE_ROLE_ASSOCIATION_MISSING"
+-                elif requirement["access"] == "read" and not any(ref in target.get("aliases", []) for ref in step.get("inputs", [])):
++                elif requirement["access"] == "read" and not any(ref in target.get("aliases", []) for ref in step_resource_inputs(step)):
+                     code = "PLAN_RESOURCE_ROLE_READ_MISSING"
+                 if code:
+-                    role_issues.append({"code": code, "owner": "planner", "disposition": "PROTOCOL_INVALID",
++                    expected = {"resource_use": {"resource_ref": "exact declared resource handle", "access": requirement["access"], "role": role}} if uses_v3 else {
++                        "role_association": {"step_id": step.get("step_id"), "capability_id": capability_id, "role": role},
++                        "resource_local_refs": sorted({str(raw.get("local_ref")) for raw in candidate.get("proposed_artifacts", [])
++                            if isinstance(raw, Mapping) and (raw.get("artifact_contract") or {}).get("resource_kind") == requirement["resource_kind"]}),
++                        "resource_binding": "omit for NEW; use role_associations on the chosen declaration", "access": requirement["access"]}
++                    role_issues.append({"code": "PLAN_RESOURCE_USE_ROLE_MISSING" if uses_v3 else code, "owner": "planner", "disposition": "PROTOCOL_INVALID",
+                         "step_id": str(step.get("step_id") or ""),
+-                        "message": "Use this issue's step_key as role_associations[].step_id, with the exact expected capability_id and role on the chosen resource declaration.",
+-                        "field_path": f"$.steps[{step_index}]", "actual": {"step_id": step.get("step_id"), "role": role, "inputs": step.get("inputs", [])},
+-                        "expected": {"role_association": {"step_id": step.get("step_id"), "capability_id": capability_id, "role": role},
+-                            "resource_local_refs": sorted({str(raw.get("local_ref")) for raw in candidate.get("proposed_artifacts", [])
+-                                if isinstance(raw, Mapping) and (raw.get("artifact_contract") or {}).get("resource_kind") == requirement["resource_kind"]}),
+-                            "resource_binding": "omit for NEW; use role_associations on the chosen declaration", "access": requirement["access"]},
+-                        "validator_id": "compile_plan_resource_bindings", "constraint_source": "plan_resource_roles_v1",
++                        "message": "Declare the selected helper's exact required role/access once in this step's resource_uses." if uses_v3 else "Use this issue's step_key as role_associations[].step_id, with the exact expected capability_id and role on the chosen resource declaration.",
++                        "field_path": f"$.steps[{step_index}].resource_uses" if uses_v3 else f"$.steps[{step_index}]",
++                        "actual": {"step_id": step.get("step_id"), "role": role, **({"resource_uses": deepcopy(step.get("resource_uses"))} if uses_v3 else {"inputs": step.get("inputs", [])})},
++                        "expected": expected,
++                        "validator_id": "compile_plan_resource_bindings", "constraint_source": "plan_resource_protocol_v3" if uses_v3 else "plan_resource_roles_v1",
+                         "not_evaluated": ["step_effects", "dataflow", "required_workspace_coverage"]})
+     if role_issues:
+         raise PlanBindingError(role_issues[0]["code"], validation_issues=role_issues)
+--- a/agent_core/plan_contract.py
++++ b/agent_core/plan_contract.py
+@@ -20,7 +20,7 @@
+ 
+ PLAN_CONTRACT_VERSION = "1.2.1"
+ MINIMUM_PLAN_READER_VERSION = "1.2.1"
+-PLAN_READER_VERSION = "1.2.2"
++PLAN_READER_VERSION = "1.2.3"
+ RECONCILIATION_FINGERPRINT_SCHEMA_VERSION = 1
+ PLANNING_EPOCH_SCHEMA_VERSION = 1
+ MAX_RECONCILIATION_NONPROGRESS = 2
+@@ -113,6 +113,9 @@
+     Existing approved schema-2 Plans keep their original defaults and hashes.
+     The marker is part of the existing Plan document, not another task contract.
+     """
++    from agent_core.plan_bindings import plan_uses_resource_uses
++    if plan_uses_resource_uses(value):
++        return True
+     document = value.get("plan_document")
+     document = document if isinstance(document, Mapping) else value
+     metadata = document.get("metadata")
+@@ -130,6 +133,8 @@
+     physical filenames create a result or upgrade its necessity.
+     """
+     explicit = plan_uses_explicit_results(value)
++    from agent_core.plan_bindings import plan_uses_resource_uses
++    uses_v3 = plan_uses_resource_uses(value)
+     rows: Dict[str, Dict[str, Any]] = {}
+     allocation = dict(value.get("artifact_allocation_mapping") or {})
+     allocated = dict(allocation.get("local_to_authoritative") or {})
+@@ -140,15 +145,15 @@
+         ref = str(allocated.get(str(raw["local_ref"])) or raw["local_ref"])
+         rows[ref] = {
+             **contract,
+-            "required": bool(contract.get("required", not explicit)),
++            "required": bool(contract.get("required", uses_v3 or not explicit)),
+             "description": str((raw.get("semantic_view") or {}).get("description") or ""),
+         }
+-    for ref, raw in dict(value.get("plan_artifacts") or {}).items():
++    for ref, raw in dict(value.get("plan_artifacts") or (value.get("plan_local_artifacts") if uses_v3 else {}) or {}).items():
+         if not isinstance(raw, Mapping):
+             continue
+         rows[str(ref)] = {
+             **dict(raw),
+-            "required": bool(raw.get("required", not explicit)),
++            "required": bool(raw.get("required", uses_v3 or not explicit)),
+         }
+     for raw in value.get("task_output_materializations", []) or []:
+         if not isinstance(raw, Mapping):
+@@ -156,6 +161,26 @@
+         ref = str(raw.get("output_ref") or raw.get("output_id") or "")
+         if ref:
+             rows[ref] = {**dict(raw), "required": bool(raw.get("required", not explicit))}
++    if uses_v3:
++        # The live TaskSpec, or its exact immutable snapshot projection, owns
++        # delivery necessity and path policy. A filename choice cannot change it.
++        current = value.get("current_task")
++        task = current.get("task_spec") if isinstance(current, Mapping) else value.get("task_spec")
++        outputs = task.get("output_contracts", []) if isinstance(task, Mapping) else value.get("task_output_contracts", [])
++        materialized = {str(key): row for row in value.get("task_output_materializations", []) or [] if isinstance(row, Mapping)
++                        for key in (row.get("output_ref"), row.get("output_id")) if key}
++        for output in outputs:
++            if not isinstance(output, Mapping):
++                continue
++            ref = str(output.get("artifact_id") or output.get("output_id") or output.get("semantic_handle") or "")
++            if not ref:
++                continue
++            chosen = next((materialized[str(key)] for key in (output.get("artifact_id"), output.get("output_id"), output.get("semantic_handle"))
++                           if key and str(key) in materialized), {})
++            rows[ref] = {**dict(chosen), **deepcopy(dict(output)),
++                "required": bool(output.get("required", True)),
++                "canonical_path": str(output.get("canonical_path") or chosen.get("canonical_path") or ""),
++                "path_policy": str(output.get("path_policy") or ""), "necessity_source": "task_spec"}
+     return rows
+ 
+ 
+@@ -307,9 +332,12 @@
+ 
+ 
+ def minimum_reader_for_plan(value: Mapping[str, Any]) -> str:
+-    """Only the additive scoped-role surface requires the new reader."""
++    """Require new semantics only for definitions using that version's fields."""
++    from agent_core.plan_bindings import plan_uses_resource_uses
++    if plan_uses_resource_uses(value) or any("resource_uses" in step for step in value.get("steps", []) or [] if isinstance(step, Mapping)):
++        return "1.2.3"
+     if any(row.get("role_associations") for row in dict(value.get("plan_resource_bindings") or {}).values() if isinstance(row, Mapping)):
+-        return PLAN_READER_VERSION
++        return "1.2.2"
+     return str(value.get("minimum_reader_version") or MINIMUM_PLAN_READER_VERSION)
+ 
+ 
+@@ -408,6 +436,8 @@
+ ) -> List[Dict[str, Any]]:
+     """Validate the shared structured Plan body without semantic inference."""
+     diagnostics: List[Dict[str, Any]] = []
++    from agent_core.plan_bindings import plan_uses_resource_uses
++    uses_v3 = plan_uses_resource_uses(payload)
+     metadata_value = payload.get("metadata")
+     schema_version = (
+         metadata_value.get("schema_version")
+@@ -430,6 +460,8 @@
+         if legacy_schema
+         else STRUCTURED_PLAN_STEP_LIST_FIELDS
+     )
++    if uses_v3:
++        step_list_fields = frozenset((step_list_fields - {"inputs"}) | {"resource_uses"})
+     for key in required_top_level_fields:
+         if key not in payload:
+             diagnostics.append({
+@@ -456,9 +488,29 @@
+                 "message": "must be an object",
+             })
+             continue
+-        for field in sorted(
+-            STRUCTURED_PLAN_STEP_SCALAR_FIELDS | step_list_fields
+-        ):
++        if uses_v3 and "inputs" in step:
++            diagnostics.append({"field_path": f"$.steps[{index}].inputs",
++                "message": "inputs is retired in resource_contract_version=3; declare reads once in resource_uses"})
++        if uses_v3 and isinstance(step.get("resource_uses"), list):
++            for use_index, use in enumerate(step["resource_uses"]):
++                root = f"$.steps[{index}].resource_uses[{use_index}]"
++                if not isinstance(use, Mapping):
++                    diagnostics.append({"field_path": root, "message": "must be an object"})
++                    continue
++                for key in sorted(set(use) - {"resource_ref", "access", "role"}):
++                    diagnostics.append({"field_path": root + "." + key, "message": "unexpected resource use field"})
++                if not isinstance(use.get("resource_ref"), str) or not use.get("resource_ref"):
++                    diagnostics.append({"field_path": root + ".resource_ref", "message": "must be an explicit non-empty resource handle"})
++                if use.get("access") not in ("read", "mutate"):
++                    diagnostics.append({"field_path": root + ".access", "message": "must equal read or mutate"})
++                if "role" in use and (not isinstance(use["role"], str) or not use["role"]):
++                    diagnostics.append({"field_path": root + ".role", "message": "must be a non-empty exact selected helper role"})
++        required_step_fields = STRUCTURED_PLAN_STEP_SCALAR_FIELDS | step_list_fields
++        if uses_v3:
++            # A single Plan need not opt into historical workflow/batch fields.
++            # Explicit values still use the same type and reference validators.
++            required_step_fields -= {"batch_id", "workflow_stage_ids"}
++        for field in sorted(required_step_fields):
+             if field not in step:
+                 diagnostics.append({
+                     "field_path": f"$.steps[{index}].{field}",
+@@ -476,11 +528,6 @@
+                     "field_path": f"$.steps[{index}].{field}",
+                     "message": "must be an array",
+                 })
+-        if isinstance(step.get("skill_ids"), list) and len(step["skill_ids"]) > 3:
+-            diagnostics.append({
+-                "field_path": f"$.steps[{index}].skill_ids",
+-                "message": "must contain at most three selected skill IDs",
+-            })
+         for field in sorted(STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS):
+             if field in step and not isinstance(step.get(field), str):
+                 diagnostics.append({
+@@ -576,7 +623,7 @@
+                 "message": f"must equal {expected_contract}",
+             })
+         if "result_contract_version" in metadata and (
+-            legacy_schema or not plan_uses_explicit_results(payload)
++            legacy_schema or type(metadata.get("result_contract_version")) is not int or metadata["result_contract_version"] != PLAN_RESULT_CONTRACT_VERSION
+         ):
+             diagnostics.append({
+                 "field_path": "$.metadata.result_contract_version",
+@@ -590,6 +637,11 @@
+             "field_path": "$.proposed_artifacts",
+             "message": "must be an array",
+         })
++    if uses_v3:
++        for index, artifact in enumerate(payload.get("proposed_artifacts") if isinstance(payload.get("proposed_artifacts"), list) else []):
++            if isinstance(artifact, Mapping) and "role_associations" in artifact:
++                diagnostics.append({"field_path": f"$.proposed_artifacts[{index}].role_associations",
++                    "message": "role_associations is retired in resource_contract_version=3; declare the exact role on the using step's resource_uses"})
+     materializations = payload.get("task_output_materializations")
+     if materializations is not None:
+         if not isinstance(materializations, list):
+@@ -605,7 +657,7 @@
+                         "message": "must be an object",
+                     })
+                     continue
+-                result_fields = {"required", "path_policy", "validator", "description", "source_refs"}
++                result_fields = {"validator", "description", "source_refs"} if uses_v3 else {"required", "path_policy", "validator", "description", "source_refs"}
+                 unexpected = set(row) - (
+                     {"output_ref", "path"}
+                     | (result_fields if plan_uses_explicit_results(payload) else set())
+@@ -613,7 +665,7 @@
+                 if unexpected:
+                     diagnostics.append({
+                         "field_path": f"$.task_output_materializations[{index}]",
+-                        "message": "contains unexpected fields: " + ", ".join(sorted(unexpected)),
++                        "message": ("required/path_policy are TaskSpec-owned and retired from v3 filename choices; " if uses_v3 and unexpected & {"required", "path_policy"} else "") + "contains unexpected fields: " + ", ".join(sorted(unexpected)),
+                     })
+                 for field in ("output_ref", "path"):
+                     if not isinstance(row.get(field), str) or not str(row.get(field) or "").strip():
+@@ -805,10 +857,10 @@
+ def planner_stop_wire_example() -> Dict[str, Any]:
+     """The normal Planner's mutually exclusive, non-success response branch."""
+     return {"outcome_type": STOP_PLANNING, "diagnostic": {
+-        "stage": "plan_admission", "error_codes": ["PLAN_RESOURCE_ROLE_ASSOCIATION_MISSING"],
+-        "attempted_changes": ["Removed resource_binding from the new workspace declaration; an explicit step/capability role association is still missing."],
++        "stage": "plan_admission", "error_codes": ["PLAN_RESOURCE_REFERENCE_NOT_DECLARED"],
++        "attempted_changes": ["Reviewed the step resource_uses declaration; its exact resource_ref is absent from the current declared handles."],
+         "stop_reason": "I cannot determine a supported untried correction from the available declarations and feedback.",
+-        "uncertainties": ["The missing role association has not been resolved; this does not establish a scientific or data failure."],
++        "uncertainties": ["The missing resource reference has not been resolved; this does not establish a scientific or data failure."],
+         "unperformed_work": ["prepare_database", "build_database", "annotate_variants", "ANN summary and formal report"]}}
+ 
+ 
+@@ -1043,35 +1095,42 @@
+         if not isinstance(step, Mapping):
+             continue
+         step_id = str(step.get("step_id") or f"step-{step_index + 1}")
+-        for field, relation in (("inputs", "consume"), ("outputs", "produce")):
+-            for ref_index, raw_ref in enumerate(step.get(field, []) or []):
+-                ref = str(raw_ref or "")
+-                key = keys.get(ref)
+-                if key is None:
+-                    raise PlannerCandidateError(
+-                        "ARTIFACT_REFERENCE_UNKNOWN",
+-                        f"$.steps[{step_index}].{field}[{ref_index}]",
+-                        ref,
+-                        diagnostic={
+-                            "affected_step_ids": [step_id],
+-                            "affected_artifact": {"handle": ref},
+-                            "expected_identity": {
+-                                "kind": "registered_artifact_handle",
+-                                "allowed_namespaces": ["input.*", "output.*", "plan.*"],
+-                            },
+-                            "observed_identity": {"handle": ref},
+-                            "machine_evidence": {
+-                                "relation": relation,
+-                                "known_handles": sorted(keys),
+-                            },
++        references = [(f"outputs[{i}]", "outputs", "produce", ref) for i, ref in enumerate(step.get("outputs", []) or [])]
++        if "resource_uses" in step:
++            references.extend((f"resource_uses[{i}].resource_ref", "resource_uses", "consume" if use.get("access") == "read" else "mutate", use.get("resource_ref"))
++                              for i, use in enumerate(step.get("resource_uses") or []) if isinstance(use, Mapping))
++        else:
++            references.extend((f"inputs[{i}]", "inputs", "consume", ref) for i, ref in enumerate(step.get("inputs", []) or []))
++        for path, field, relation, raw_ref in references:
++            ref = str(raw_ref or "")
++            key = keys.get(ref)
++            if key is None:
++                raise PlannerCandidateError(
++                    "ARTIFACT_REFERENCE_UNKNOWN",
++                    f"$.steps[{step_index}].{path}",
++                    ref,
++                    diagnostic={
++                        "affected_step_ids": [step_id],
++                        "affected_artifact": {"handle": ref},
++                        "expected_identity": {
++                            "kind": "registered_artifact_handle",
++                            "allowed_namespaces": ["input.*", "output.*", "plan.*"],
+                         },
+-                    )
+-                usage.append({
+-                    "step_id": step_id,
+-                    "relation": relation,
+-                    "field": field,
+-                    "artifact_ref": key.to_dict(),
+-                })
++                        "observed_identity": {"handle": ref},
++                        "machine_evidence": {
++                            "relation": relation,
++                            "known_handles": sorted(keys),
++                        },
++                    },
++                )
++            if relation == "mutate":
++                continue  # State/availability semantics come from the explicit mutation.
++            usage.append({
++                "step_id": step_id,
++                "relation": relation,
++                "field": field,
++                "artifact_ref": key.to_dict(),
++            })
+     for index, row in enumerate(candidate.get("task_output_materializations", []) or []):
+         if not isinstance(row, Mapping):
+             continue
+@@ -1253,6 +1312,10 @@
+         | STRUCTURED_PLAN_STEP_LIST_FIELDS
+         | STRUCTURED_PLAN_STEP_OPTIONAL_LIST_FIELDS
+     )
++    from agent_core.plan_bindings import plan_uses_resource_uses
++    if plan_uses_resource_uses(state):
++        step_fields.discard("inputs")
++        step_fields.add("resource_uses")
+     if legacy_schema:
+         step_fields.add("semantic_constraint_ids")
+     steps: List[Dict[str, Any]] = []
+@@ -1305,7 +1368,7 @@
+                 **({
+                     key: deepcopy(item[key])
+                     for key in ("required", "path_policy", "validator", "description", "source_refs")
+-                    if key in item
++                    if key in item and not (plan_uses_resource_uses(state) and key in {"required", "path_policy"})
+                 } if plan_uses_explicit_results(state) else {}),
+                 "output_ref": str(
+                     item.get("output_ref") or item.get("output_id") or ""
+@@ -1545,22 +1608,16 @@
+     previous_candidate: Mapping[str, Any], candidate: Mapping[str, Any],
+     previous_issues: Sequence[Mapping[str, Any]],
+ ) -> List[Dict[str, Any]]:
+-    """Require reviewable semantics when removing a specifically rejected READ.
+-
+-    This validates an explicit change explanation, not its scientific truth.
+-    Original Plan Review, producer/DAG checks and final delivery verification
+-    retain their authority. Callers must establish the same planning epoch.
++    """Offer nonblocking context when a rejected READ is removed.
++
++    Actual resource/dataflow and TaskSpec delivery checks decide admissibility;
++    prose explaining a scientific choice never substitutes for those checks.
+     """
+     from agent_core.plan_tracker import validation_issue
++    from agent_core.plan_bindings import step_resource_inputs
+     def references(step):
+         return {str(row if isinstance(row, str) else row.get("resource_ref") or row.get("artifact_ref") or row.get("ref") or "")
+-                for row in step.get("inputs") or [] if isinstance(row, (str, Mapping))}
+-    def statements(plan, step):
+-        local = {str(value) for value in step.get("success_criteria") or [] if isinstance(value, str)}
+-        owner = str(step.get("step_id") or "")
+-        global_rows = {str(row.get("description") or "") for row in plan.get("validation_checklist") or []
+-                       if isinstance(row, Mapping) and owner and owner in str(row.get("description") or "")}
+-        return local | global_rows
++                for row in step_resource_inputs(step) if isinstance(row, (str, Mapping))}
+     previous_steps = {str(row.get("step_id") or ""): row for row in previous_candidate.get("steps") or [] if isinstance(row, Mapping)}
+     steps = {str(row.get("step_id") or ""): (i, row) for i, row in enumerate(candidate.get("steps") or []) if isinstance(row, Mapping)}
+     issues, seen = [], set()
+@@ -1577,16 +1634,13 @@
+         index, current = steps.get(owner, (-1, {}))
+         if resource in references(current):
+             continue
+-        added = statements(candidate, current) - statements(previous_candidate, prior)
+-        if current and any(resource in value for value in added):
+-            continue
+-        field = f"$.steps[{index}].inputs" if index >= 0 else "$.steps"
++        field = f"$.steps[{index}].resource_uses" if index >= 0 and "resource_uses" in current else f"$.steps[{index}].inputs" if index >= 0 else "$.steps"
+         issues.append(validation_issue(
+-            "PLAN_CONSUMPTION_CHANGE_REVIEW_REQUIRED", owner="planner", field_path=field, repair_target=field,
++            "PLAN_CONSUMPTION_CHANGE_ADVISORY", severity="warning", owner="planner", field_path=field, repair_target=field,
+             validator_id="planner_consumption_change_review", consumer_step_id=owner, resource_id=resource,
+-            actual="previously declared READ removed without a new targeted review basis",
+-            expected="Retain the required READ with a reachable producer, or explain in this step's success_criteria / targeted validation_checklist why content is not read and which approved source preserves the promised delivery.",
+-            message=f"{owner} removed READ {resource}. A DAG pass alone does not validate this consumption change. State its source and semantic basis for original Plan Review; do not invent an execution receipt.",
++            actual="previously declared READ removed",
++            expected="The current declared resources, actual dependencies and TaskSpec delivery obligations remain subject to their existing checks.",
++            message=f"{owner} no longer declares READ {resource}. This advisory requires no explanation, acknowledgement or extra model call; actual interface and dependency checks still apply.",
+         ))
+     return issues
+ 
+@@ -1825,6 +1879,7 @@
+         "planning_epoch_id": str(planning_epoch_id),
+         "declarations": declarations,
+         "status": "prepared",
++        **({"resource_contract_version": 3} if (candidate.get("metadata") or {}).get("resource_contract_version") == 3 else {}),
+         **({"result_contract_version": PLAN_RESULT_CONTRACT_VERSION}
+            if plan_uses_explicit_results(candidate) else {}),
+     }
+@@ -1886,7 +1941,7 @@
+         }
+         if intent.get("result_contract_version") == PLAN_RESULT_CONTRACT_VERSION:
+             bindings[logical_id].update({
+-                "required": bool(contract.get("required", False)),
++                "required": bool(contract.get("required", intent.get("resource_contract_version") == 3)),
+                 "path_policy": str(contract.get("path_policy") or "model_selectable"),
+                 **{key: deepcopy(contract[key]) for key in (
+                     "validation_contract_id", "source_refs",
+@@ -1932,6 +1987,10 @@
+     for step in result.get("steps", []) or []:
+         if not isinstance(step, dict):
+             continue
++        if "resource_uses" in step:
++            for use in step["resource_uses"]:
++                if isinstance(use, dict):
++                    use["resource_ref"] = str(mapping.get(str(use.get("resource_ref") or ""), str(use.get("resource_ref") or "")))
+         for field in ("inputs", "outputs"):
+             step[field] = [
+                 str(mapping.get(str(value), str(value)))
+--- a/agent_core/plan_tracker.py
++++ b/agent_core/plan_tracker.py
+@@ -752,7 +752,7 @@
+     "required_condition", "accepted_sources", "rejected_sources",
+     "recognized_candidate_sources", "dependency_ancestors",
+     "producer_step_ids", "source_effect_kinds", "unsupported_effect_ids",
+-    "actual_issues", "requirements",
++    "actual_issues", "requirements", "received_id", "available_capability_ids",
+ }
+ 
+ 
+@@ -857,7 +857,7 @@
+         return {}
+     steps: List[Dict[str, Any]] = []
+     allowed_step_fields = (
+-        "step_id", "title", "action", "purpose", "tool", "inputs", "outputs",
++        "step_id", "title", "action", "purpose", "tool", "inputs", "outputs", "resource_uses",
+         "dependencies", "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
+         "execution_capability_id", "operation", "produces_bindings",
+         "produces_observations", "workspace_mutations", "explicit_side_effects",
+@@ -938,7 +938,8 @@
+         "response_excerpt", "constraint_source", "source_ref", "validator_id",
+         "consumer_step_id", "producer_step_ids", "actual_value",
+         "expected_contract", "possible_effect_kinds", "candidate_sources",
+-        "expected", "actual", "source", "capability_id",
++        "expected", "actual", "source", "capability_id", "owner",
++        "received_id", "available_capability_ids", "selected_skill_id",
+         "capability_artifact_effects", "unsupported_effects", "unsupported_effect_ids",
+         "contract_source", "contract_version", "schema_ref", "requirements",
+         "actual_issues",
+@@ -1021,7 +1022,7 @@
+ 
+ 
+ _PLANNER_CORRECTION_STRUCTURE_FIELDS = (
+-    "action", "purpose", "tool", "inputs", "outputs", "dependencies",
++    "action", "purpose", "tool", "inputs", "outputs", "resource_uses", "dependencies",
+     "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
+     "execution_capability_id", "operation", "produces_bindings",
+     "produces_observations", "workspace_mutations", "explicit_side_effects",
+@@ -5805,10 +5806,15 @@
+         title=title,
+         workflow_stage_ids=step["workflow_stage_ids"],
+     )
+-    step["inputs"] = _string_list(
+-        step.get("inputs") if step.get("inputs") not in (None, "", []) else (step.get("input_contracts") or parsed.get("inputs")),
+-        dict_keys=("path", "description", "role"),
+-    )
++    if "resource_uses" in step:
++        from agent_core.plan_bindings import step_resource_inputs
++        step["resource_uses"] = deepcopy(step["resource_uses"])
++        step["inputs"] = step_resource_inputs(step)
++    else:
++        step["inputs"] = _string_list(
++            step.get("inputs") if step.get("inputs") not in (None, "", []) else (step.get("input_contracts") or parsed.get("inputs")),
++            dict_keys=("path", "description", "role"),
++        )
+     step["outputs"] = _string_list(
+         step.get("outputs") if isinstance(step.get("outputs"), list) else (step.get("output_contracts") or parsed.get("outputs")),
+         dict_keys=("path", "description", "role"),
+@@ -6422,6 +6428,8 @@
+         if part.strip() and not ignored_inline_labels.match(part)
+     )
+     payload = {field: normalized.get(field) for field in PLAN_STEP_FIELDS if field != "status"}
++    if "resource_uses" in normalized:
++        payload["resource_uses"] = deepcopy(normalized["resource_uses"])
+     if normalized.get("generate_binding_input_contract"):
+         payload["generate_binding_input_contract"] = deepcopy(normalized["generate_binding_input_contract"])
+     payload["title"] = semantic_title
+@@ -9392,7 +9400,9 @@
+     """Validate Planner-owned filenames without creating another output identity."""
+     candidate = deepcopy(state)
+     from .plan_contract import plan_uses_explicit_results
++    from .plan_bindings import plan_uses_resource_uses
+     explicit_results = plan_uses_explicit_results(candidate)
++    single_task_outputs = plan_uses_resource_uses(candidate)
+     spec = dict(task_spec or _current_task_spec(candidate))
+     contracts = [
+         dict(row) for row in spec.get("output_contracts", []) or []
+@@ -9471,6 +9481,15 @@
+             ))
+             continue
+         output_id = str(contract.get("output_id") or contract.get("artifact_id") or output_ref)
++        if single_task_outputs:
++            conflicts = [key for key in ("required", "path_policy") if key in raw and raw[key] != contract.get(key, True if key == "required" else "")]
++            if conflicts:
++                issues.append(validation_issue("TASK_OUTPUT_AUTHORITY_CONFLICT", owner="planner",
++                    field_path=f"$.task_output_materializations[{index}].{conflicts[0]}",
++                    repair_target="$.task_output_materializations", actual={key: raw[key] for key in conflicts},
++                    expected={key: contract.get(key, True if key == "required" else "") for key in conflicts},
++                    message="TaskSpec owns delivery necessity and path policy; filename choices cannot override them."))
++                continue
+         if output_id in seen:
+             issues.append(validation_issue(
+                 "TASK_OUTPUT_MATERIALIZATION_DUPLICATE",
+@@ -9567,10 +9586,10 @@
+             "output_id": output_id,
+             "path": path_text,
+             "canonical_path": canonical_path,
+-            "origin": "planner",
++            "origin": "task_spec_filename_choice" if single_task_outputs else "planner",
+             **({
+-                "required": bool(raw.get("required", False)),
+-                "path_policy": str(raw.get("path_policy") or "model_selectable"),
++                "required": bool(contract.get("required", True)) if single_task_outputs else bool(raw.get("required", False)),
++                "path_policy": str(contract.get("path_policy") or "") if single_task_outputs else str(raw.get("path_policy") or "model_selectable"),
+                 **{key: deepcopy(raw[key]) for key in ("validator", "description", "source_refs") if key in raw},
+             } if explicit_results else {}),
+         })
+@@ -9578,11 +9597,12 @@
+     for contract in contracts:
+         output_id = str(contract.get("output_id") or contract.get("artifact_id") or "")
+         if (
+-            not explicit_results
++            (single_task_outputs or not explicit_results)
+             and bool(contract.get("required", True))
+             and str(contract.get("artifact_kind") or "file").lower() == "file"
+             and not str(contract.get("canonical_path") or "").strip()
+-            and str(contract.get("path_policy") or "") == "planner_materialized"
++            and (str(contract.get("path_policy") or "") == "planner_materialized"
++                 or single_task_outputs and str(contract.get("path_policy") or "") == "model_selectable")
+             and output_id not in seen
+         ):
+             issues.append(validation_issue(
+@@ -9601,7 +9621,7 @@
+                     },
+                     observed_identity={"materialization": "missing"},
+                     machine_evidence={
+-                        "path_policy": "planner_materialized",
++                        "path_policy": str(contract.get("path_policy") or ""),
+                         "required": True,
+                     },
+                 ),
+@@ -10113,7 +10133,7 @@
+         item for item in normalized
+         if str(item.get("severity") or "").lower() in BLOCKING_VALIDATION_SEVERITIES
+     ]
+-    fingerprint = _validation_convergence_fingerprint(candidate, normalized)
++    fingerprint = _validation_convergence_fingerprint(candidate, blocking)
+     history = [
+         dict(item) for item in candidate.get("validation_convergence_history", []) or []
+         if isinstance(item, Mapping)
+@@ -11494,7 +11514,7 @@
+             if str(value)
+         }
+         aliases.update({alias, identity})
+-        if row.get("role_associations") and row.get("binding_source") == "candidate_local_artifact":
++        if (row.get("role_associations") or row.get("resource_use_projection_version") == 3) and row.get("binding_source") == "candidate_local_artifact":
+             allocated = {str(value) for local, value in allocation_mapping.items() if str(local) in aliases}
+             if len(allocated) != 1:
+                 raise ValueError("PLAN_RESOURCE_ROLE_ALLOCATION_AMBIGUOUS")
+@@ -11577,7 +11597,7 @@
+         effect_mapping = dict(allocation_mapping)
+         for local, allocated in allocation_mapping.items():
+             resource = dict((state.get("plan_resource_bindings") or {}).get(local) or {})
+-            if resource.get("role_associations") and resource.get("binding_source") == "candidate_local_artifact":
++            if (resource.get("role_associations") or resource.get("resource_use_projection_version") == 3) and resource.get("binding_source") == "candidate_local_artifact":
+                 effect_mapping[str(resource["canonical_resource_id"])] = allocated
+         rewritten = rewrite_candidate_local_refs(
+             {"steps": state.get("steps", []) or []},
+@@ -11731,6 +11751,14 @@
+             "created_generation": int(state.get("state_generation") or current_generation),
+             "created_at": _now(),
+         }
++        from .plan_bindings import plan_uses_resource_uses
++        if plan_uses_resource_uses(state):
++            snapshot.update({
++                "plan_document": deepcopy(dict(state.get("plan_document") or {})),
++                "task_output_contracts": deepcopy(list((task_record.get("task_spec") or {}).get("output_contracts") or [])),
++                "task_output_materializations": deepcopy(list(state.get("task_output_materializations") or [])),
++                "plan_resource_bindings": deepcopy(dict(state.get("plan_resource_bindings") or {})),
++            })
+         snapshot_ref = store.put_object("plan_snapshot_v121", snapshot)
+         pending_id = "approval-" + _stable_payload_hash({
+             "plan_snapshot_ref": snapshot_ref,
+--- a/agent_core/skill_manager.py
++++ b/agent_core/skill_manager.py
+@@ -2060,8 +2060,10 @@
+         self,
+         skill_ids: Sequence[str],
+     ) -> Dict[str, Dict[str, Any]]:
+-        """Return stable Skill-owned execution contracts keyed by capability ID."""
+-        registry: Dict[str, Dict[str, Any]] = {}
++        """Return explicit executor and selected Skill contracts by exact ID."""
++        from agent_core.action_runtime import generic_execution_capability
++        generic = generic_execution_capability()
++        registry: Dict[str, Dict[str, Any]] = {generic["capability_id"]: generic}
+         for sid in self.normalize_selected_skills(
+             list(skill_ids or []), max_results=self.MAX_SELECTED_SKILLS
+         ):
+@@ -2168,7 +2170,8 @@
+         plan_state: Mapping[str, Any],
+         selected_skill_ids: Sequence[str],
+     ) -> List[Dict[str, Any]]:
+-        """Reject missing, unknown, or cross-Skill capability scope pre-approval."""
++        """Validate the explicitly selected executor or domain interface."""
++        from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID, GENERIC_EXECUTION_TOOLS
+         registry = self.get_execution_capability_registry(selected_skill_ids)
+         issues: List[Dict[str, Any]] = []
+         for index, raw in enumerate(plan_state.get("steps", []) or []):
+@@ -2182,20 +2185,32 @@
+             capability_id = str(raw.get("execution_capability_id") or "").strip()
+             available = [
+                 key for key, contract in registry.items()
+-                if str(contract.get("selected_skill_id") or "") in set(step_skills)
++                if key == GENERIC_EXECUTION_CAPABILITY_ID or str(contract.get("selected_skill_id") or "") in set(step_skills)
+             ]
+             if not capability_id:
+                 issues.append({
+                     "code": "ACTION_CAPABILITY_SCOPE_MISSING",
+                     "owner": "planner",
++                    "validator_id": "plan_execution_capabilities",
+                     "severity": "error",
+                     "field_path": f"$.steps[{index}].execution_capability_id",
+                     "json_pointer": f"$.steps[{index}].execution_capability_id",
+                     "plan_step_id": str(raw.get("step_id") or ""),
+                     "selected_skill_id": step_skills[0] if len(step_skills) == 1 else "",
+                     "available_capability_ids": available,
+-                    "message": "Executable step must select one enumerated Skill capability.",
++                    "message": "Select framework.generic.execute with tool bash/python, or an enumerated capability of a selected Skill. No route is inferred from a missing or unknown ID.",
+                 })
++                continue
++            if capability_id == GENERIC_EXECUTION_CAPABILITY_ID:
++                if str(raw.get("tool") or "") not in GENERIC_EXECUTION_TOOLS:
++                    issues.append({
++                        "code": "GENERIC_EXECUTION_TOOL_UNSUPPORTED", "owner": "planner", "severity": "error",
++                        "validator_id": "plan_execution_capabilities",
++                        "field_path": f"$.steps[{index}].tool", "json_pointer": f"$.steps[{index}].tool",
++                        "plan_step_id": str(raw.get("step_id") or ""),
++                        "actual": raw.get("tool"), "expected": sorted(GENERIC_EXECUTION_TOOLS),
++                        "message": "The generic route supports the existing bash/python executor only. Explicitly choose a supported tool; unknown tools never fall back.",
++                    })
+                 continue
+             contract = registry.get(capability_id)
+             contract_skill = str((contract or {}).get("selected_skill_id") or "")
+@@ -2203,6 +2218,7 @@
+                 issues.append({
+                     "code": "UNKNOWN_EXECUTION_CAPABILITY",
+                     "owner": "planner",
++                    "validator_id": "plan_execution_capabilities",
+                     "severity": "error",
+                     "field_path": f"$.steps[{index}].execution_capability_id",
+                     "json_pointer": f"$.steps[{index}].execution_capability_id",
+@@ -2221,6 +2237,7 @@
+     ) -> Dict[str, Any]:
+         """Bind Controller-computed contract hashes into Plan semantic identity."""
+         candidate = deepcopy(dict(plan_state or {}))
++        from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID
+         registry = self.get_execution_capability_registry(selected_skill_ids)
+         for raw in candidate.get("steps", []) or []:
+             if not isinstance(raw, dict):
+@@ -2230,12 +2247,13 @@
+             step_skills = {str(item) for item in raw.get("skill_ids", []) or []}
+             if (
+                 isinstance(contract, Mapping)
+-                and str(contract.get("selected_skill_id") or "") in step_skills
++                and (capability_id == GENERIC_EXECUTION_CAPABILITY_ID
++                     or str(contract.get("selected_skill_id") or "") in step_skills)
+             ):
+                 raw["capability_contract_hash"] = capability_contract_hash(contract)
+                 # Freeze only while authoring a new approval, never during
+                 # Generate or reload of a previously approved invocation.
+-                meta = self.get_skill_meta(str(contract.get("selected_skill_id") or ""))
++                meta = self.get_skill_meta(str(contract.get("selected_skill_id") or "")) if contract.get("selected_skill_id") else {}
+                 binding = dict((meta.get("generate") or {}).get("binding_contract") or {})
+                 if binding.get("public_input_protocol"):
+                     from agent_core.plan_bindings import instantiate_step_binding_contract
+--- a/agent_core/step_effects.py
++++ b/agent_core/step_effects.py
+@@ -1204,8 +1204,8 @@
+             "complete": False,
+         }
+ 
+-    source_step = deepcopy(dict(step))
+-    from agent_core.plan_bindings import resource_bindings_for_step
++    from agent_core.plan_bindings import resource_bindings_for_step, project_step_resource_usage
++    source_step = project_step_resource_usage(step)
+     resource_bindings = resource_bindings_for_step(resource_bindings or {}, source_step)
+     compiled_step = deepcopy(source_step)
+     step_id = str(source_step.get("step_id") or source_step.get("id") or "")
+@@ -1712,6 +1712,7 @@
+                     "step_id",
+                     "inputs",
+                     "outputs",
++                    "resource_uses",
+                     "dependencies",
+                     "execution_capability_id",
+                     "operation",
+@@ -2123,8 +2124,10 @@
+         )
+         return {}, {}, [issue]
+ 
+-    from agent_core.plan_bindings import capability_workspace_roles, resource_bindings_for_step
++    from agent_core.plan_bindings import capability_workspace_roles, resource_bindings_for_step, project_step_resource_usage
+     source_plan = deepcopy(dict(plan_state))
++    source_plan["steps"] = [project_step_resource_usage(step) if isinstance(step, Mapping) else deepcopy(step)
++                            for step in source_plan.get("steps", []) or []]
+     binding_issues: list[Dict[str, Any]] = []
+     compiled_bindings: Dict[str, Dict[str, Any]]
+     if resource_bindings is None:
+@@ -2234,6 +2237,10 @@
+         for field, effect_kind in (("inputs", "READ"), ("outputs", "PRODUCE")):
+             for ref_index, raw_ref in enumerate(step.get(field, []) or []):
+                 resource_ref = str(raw_ref or "")
++                field_path = f"$.steps[{step_index}].{field}[{ref_index}]"
++                if field == "inputs" and "resource_uses" in step:
++                    read_indexes = [i for i, use in enumerate(step["resource_uses"]) if use.get("access") == "read"]
++                    field_path = f"$.steps[{step_index}].resource_uses[{read_indexes[ref_index]}].resource_ref"
+                 declared_result = result_contracts.get(resource_ref)
+                 if effect_kind == "READ" and declared_result is not None and not declared_result["required"]:
+                     dataflow_issues.append(_dataflow_issue(
+@@ -2241,15 +2248,14 @@
+                         plan_state=compiled_plan,
+                         resource_ref=resource_ref,
+                         consumer_step=step_id,
+-                        field_path=f"$.steps[{step_index}].inputs[{ref_index}]",
+-                        affected_fields=["inputs", "proposed_artifacts", "task_output_materializations"],
++                        field_path=field_path,
++                        affected_fields=["resource_uses" if "resource_uses" in step else "inputs", "proposed_artifacts", "task_output_materializations"],
+                         actual_facts={"required": False, "consumer_step_id": step_id},
+                         required_condition="A hard input requires a necessary producer result or a different explicit dependency.",
+                         message="Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+                         affected_step_ids=[step_id],
+                     ))
+                 binding = _binding_for_ref(resource_ref, compiled_bindings)
+-                field_path = f"$.steps[{step_index}].{field}[{ref_index}]"
+                 if not binding:
+                     dataflow_issues.append(_dataflow_issue(
+                         "PLAN_RESOURCE_BINDING_MISSING",
+--- a/bio_agents.py
++++ b/bio_agents.py
+@@ -12880,6 +12880,16 @@
+                 declared_language,
+                 detect_script_language(str(bound.get("code") or "")),
+             )
++            from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID
++            if execution_capability_id == GENERIC_EXECUTION_CAPABILITY_ID:
++                approved_tool = str(step.get("tool") or "")
++                if {"bash": "Bash", "python": "Python"}.get(approved_tool) != action_language:
++                    raise ActionRuntimeContractError(
++                        "GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH",
++                        approved_tool=approved_tool,
++                        actual_language=action_language,
++                        step_id=step_id,
++                    )
+             action_identity = {
+                 "action_id": action_id,
+                 "plan_id": plan_id,
+@@ -15117,17 +15127,19 @@
+             if len(normalized) > SkillManager.MAX_ACTIVE_SKILLS:
+                 violations.append(validation_issue(
+                     "PLAN_STEP_SKILL_LIMIT_EXCEEDED",
++                    severity="warning",
++                    disposition="NORMALIZED",
+                     owner="planner",
+-                    repair_target=skill_path,
+                     field_path=skill_path,
+                     message=(
+-                        f"Plan step declares {len(normalized)} skills; at most "
+-                        f"{SkillManager.MAX_ACTIVE_SKILLS} are allowed."
++                        f"Plan step declares {len(normalized)} Skills. Consider "
++                        "using only the context needed by this step; retaining "
++                        "the declared selection requires no confirmation or retry."
+                     ),
+                     validator_id="plan_skill_bindings",
+                     step_id=step_id,
+                     actual_value=len(normalized),
+-                    expected_contract={"max_active_skills": SkillManager.MAX_ACTIVE_SKILLS},
++                    advisory_only=True,
+                 ))
+             outside = [skill_id for skill_id in normalized if skill_id not in selected]
+             for skill_id in outside:
+@@ -15145,7 +15157,7 @@
+                     step_id=step_id,
+                     actual_value=skill_id,
+                 ))
+-            if not unknown and not outside and len(normalized) <= SkillManager.MAX_ACTIVE_SKILLS:
++            if not unknown and not outside:
+                 step["skill_ids"] = normalized
+         return violations
+ 
+@@ -15164,7 +15176,7 @@
+             }
+         outside = [skill_id for skill_id in active if skill_id not in selected_pool]
+         unresolved = list(step.get("unresolved_skill_ids") or [])
+-        if unresolved or outside or len(active) > SkillManager.MAX_ACTIVE_SKILLS:
++        if unresolved or outside:
+             return {
+                 "active_skills": [],
+                 "future_skills": [],
+@@ -15202,7 +15214,7 @@
+         if not declared:
+             return []
+         allowed = set(self._selected_skill_ids(skill_ids or []))
+-        return [skill_id for skill_id in active if skill_id in allowed][: SkillManager.MAX_ACTIVE_SKILLS]
++        return [skill_id for skill_id in active if skill_id in allowed]
+ 
+     @staticmethod
+     def _workflow_batch_sort_key(batch_id: str) -> Tuple[int, str]:
+@@ -38398,7 +38410,10 @@
+                 if planner_skill_pool:
+                     selected_skills = planner_skill_pool
+                     skill_selection_source = "legacy_workflow_stage_migration"
+-            if self.skill_manager and not planner_skill_pool:
++            # A formal schema-2 handoff may intentionally select no domain
++            # Skill. Its Planner can explicitly choose the built-in generic
++            # executor; domain capabilities still require their selected Skill.
++            if self.skill_manager and not planner_skill_pool and not schema2_handoff_ready:
+                 return {
+                     "messages": [
+                         SystemMessage(
+@@ -39714,6 +39729,7 @@
+             candidate_usage: List[Dict[str, Any]] = []
+             allocation_intent: Dict[str, Any] = {}
+             candidate_resource_bindings: Dict[str, Dict[str, Any]] = {}
++            candidate_advisories: List[Dict[str, Any]] = []
+             plan_proposal: Any = {}
+             try:
+                 plan_proposal = json.loads(plan_content)
+@@ -39773,10 +39789,16 @@
+                                     continue
+                                 previous = parse_planner_outcome_envelope(baseline["raw_candidate"], allow_legacy_plan=False).plan_candidate_body()
+                                 deterministic_issues.extend(validate_planner_consumption_correction(previous, plan_proposal, baseline["validation_issues"]))
+-                        if deterministic_issues:
++                        from agent_core.plan_tracker import BLOCKING_VALIDATION_SEVERITIES
++                        normalized_deterministic = [normalize_validation_issue(issue) for issue in deterministic_issues]
++                        candidate_advisories.extend(issue for issue in normalized_deterministic
++                            if str(issue.get("severity") or "").lower() not in BLOCKING_VALIDATION_SEVERITIES)
++                        blocking_deterministic = [issue for issue in normalized_deterministic
++                            if str(issue.get("severity") or "").lower() in BLOCKING_VALIDATION_SEVERITIES]
++                        if blocking_deterministic:
+                             structure_errors = [
+                                 normalize_validation_issue(issue)
+-                                for issue in deterministic_issues
++                                for issue in blocking_deterministic
+                             ]
+                         else:
+                             candidate_resource_bindings = (
+@@ -39936,6 +39958,7 @@
+                 task_spec=task_spec,
+                 defer_workspace_coverage=True,
+             )
++            violations.extend(candidate_advisories)
+             effect_capability_registry = (
+                 self.skill_manager.get_execution_capability_registry(selected_skills)
+                 if self.skill_manager else {}
+@@ -40002,7 +40025,12 @@
+                 candidate_for_repair,
+                 violations,
+             )
+-            violations = list(candidate_for_repair.get("validation_issues") or [])
++            # The existing validation owner preserves all diagnostics and
++            # determines blocking severities. Advice is not another request,
++            # confirmation, or rejection gate.
++            from agent_core.plan_tracker import BLOCKING_VALIDATION_SEVERITIES
++            violations = [issue for issue in candidate_for_repair.get("validation_issues", [])
++                          if str(issue.get("severity") or "").lower() in BLOCKING_VALIDATION_SEVERITIES]
+             initial_contract_violations = deepcopy(violations)
+             validation_reason_codes = sorted({
+                 str(item.get("code") or item.get("violation_code") or item.get("field") or "semantic_plan_violation")
+@@ -44990,13 +45018,37 @@
+             if structured_action and str(structured_action.get("type") or "") not in {
+                 "step_completion_candidate", "plan_patch", "blocked"
+             }:
+-                structured_action = self._bind_pending_action(
+-                    structured_action,
+-                    state,
+-                    task_id,
+-                    plan_state=deepcopy(active_plan_state),
+-                    persist=False,
+-                )
++                try:
++                    structured_action = self._bind_pending_action(
++                        structured_action,
++                        state,
++                        task_id,
++                        plan_state=deepcopy(active_plan_state),
++                        persist=False,
++                    )
++                except ActionRuntimeContractError as exc:
++                    if exc.code != "GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH":
++                        raise
++                    # This is a correctable candidate/tool disagreement, before
++                    # approval or execution. Preserve the same repair ledger
++                    # and parser/helper checkpoints used by other candidates.
++                    violation = {**exc.to_diagnostic(), "field_path": "$.language",
++                        "expected": str(generate_step.get("tool") or ""),
++                        "actual": str(structured_action.get("language") or ""),
++                        "message": "The action language must match the explicitly approved generic tool."}
++                    return {"messages": [response], **self._candidate_admission_rejection_update(
++                        validated_representation_targets=candidate_validated_representation_targets,
++                        task_id=task_id, plan_state=generate_invocation_plan_state,
++                        approved_plan_snapshot=generate_approved_snapshot, step_id=current_step_id,
++                        candidate=candidate_for_repair, candidate_fingerprint="",
++                        previous_candidate_fingerprint="", violations=[violation],
++                        visible_artifacts=generate_visible_artifacts,
++                        repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value,
++                        repair_stage="generic_executor_scope",
++                        validation_source="BioAnalystAgent._bind_pending_action",
++                        contract_ref={"capability_id": str(generate_step.get("execution_capability_id") or "")},
++                        exit_reason="generic_executor_scope_rejected",
++                        candidate_event_id=candidate_event_id, recovery_generated=recovery_generated)}
+             if (
+                 structured_action
+                 and str(structured_action.get("result_contract") or "")
+--- a/prompts/manager.py
++++ b/prompts/manager.py
+@@ -1826,15 +1826,19 @@
+ required by its decision schema.
+ 
+ During a full replan, preserve every completed step's step identity, typed
+-inputs, typed outputs, artifact identities, and dependency identities. You may
++resource use, typed outputs, artifact identities, and dependency identities. You may
+ rewrite prose and may restructure failed steps and the pending suffix.
+ 
+-The approved Plan is the single execution definition of required results. Decide
+-necessity from the original user request, accepted clarifications, selected Skill
+-and actual downstream needs. Preserve explicit user deliverables and names.
+-Declare metadata.result_contract_version=1. In each Plan artifact_contract or
+-task_output_materializations row, set required=true only for a necessary result;
+-new omitted required defaults to false. Omit unnecessary auxiliary files. An input,
++The approved Plan freezes the execution definition of required results. Existing
++output.* necessity, path policy and exact canonical path come from the formal
++TaskSpec output with that exact identity and are frozen with the Plan. Version 3
++does not ask you to repeat or override those facts in task_output_materializations.
++For new plan.* artifacts, decide necessity from the original request, accepted
++clarifications, selected Skill and actual downstream needs. In version 3 a declared
++plan-local artifact defaults to required; write required=false only when it is
++optional. Preserve explicit user deliverables and names; omit unnecessary auxiliary
++files. metadata.result_contract_version may be omitted in version 3, or set to 1.
++An input,
+ EXECUTE action, title, success_criteria path or template does not create a file duty.
+ A mandatory consumer of an optional artifact is a candidate contradiction: decide
+ whether to make that result necessary or change the dependency/effect; do not
+@@ -1851,11 +1855,26 @@
+ proposed_artifacts declares new Plan-owned results, and each declaration
+ has local_ref=plan.<task-specific-local-handle>, an object semantic_view, and an
+ artifact_contract with object_kind=file|directory, lifecycle=plan_local, and
+-materialization_policy_id=managed_intermediate_v1. Inputs consume; outputs produce;
++materialization_policy_id=managed_intermediate_v1. Resource reads consume; outputs produce;
+ dependencies only order steps. A consumed intermediate must be produced by one
+ reachable dependency.
+ 
+-Plan resource protocol version 2: a capability ID names executable ability,
++New Plans use metadata.resource_contract_version=3 (the Planner response schema
++remains version 2). Each step declares resource_uses exactly once:
++[{"resource_ref":"<exact input.*, output.* or declared plan.* handle>",
++  "access":"read|mutate","role":"<selected-domain-helper-role, only when needed>"}].
++resource_ref identifies the resource; access declares this step's use. Omit role
++when no selected domain helper requires it. A read must have a real initial or
++reachable producer/state source. A mutate use needs a declared mutable workspace
++and its separate workspace_mutations transition/evidence facts. outputs remains
++the sole immutable-artifact producer declaration. Dependencies order steps;
++they do not supply missing resources, access, or runtime evidence.
++Do not also write steps[].inputs, its legacy aliases, or resource-side
++role_associations in version 3. These are not independently editable copies.
++The runtime may derive read-only compatibility views from resource_uses; those
++views do not authorize new resources and are not fields to return in a Plan.
++
++A capability ID names executable ability,
+ never a file or workspace. For a NEW resource, OMIT resource_binding. Declare
+ local_ref, semantic_view and artifact_contract; the system creates its scoped
+ identity and revision. Set artifact_contract.resource_kind=mutable_workspace
+@@ -1867,34 +1886,34 @@
+ Do not manufacture canonical_resource_id, availability_origin or revision.
+ Wrong-domain, stale or unregistered references are rejected, never silently renamed.
+ Never infer aliases from basename, suffix, path, role prose or similar spelling.
+-Old approved snapshots retain their original reader semantics; new candidates
+-must satisfy this current admission contract.
+-
+-For a new workspace implementing a frozen capability role, add role_associations
+-to that same proposed_artifacts declaration. Each item has exactly step_id,
+-capability_id and role; use only the workspace roles enumerated in the resource
+-requirements for that step's selected capability. This explicit association is
+-local to that step/capability and grants only its declared access. In correction
+-feedback, step_key names the value to put in the association's step_id; combine
+-it with the exact expected capability_id and role. Repeat it for
+-each sharing step, including artifact-backed read consumers; no global alias is
+-created. Keep workspace_mutations and inputs referring to the chosen plan.*
+-resource. For snpEff, a plan.snpeff_data_dir declaration can carry:
+-"role_associations": [
+-  {"step_id":"prepare_database","capability_id":"genomics.snpeff_annotation.prepare_database","role":"artifact.snpeff_data_dir"},
+-  {"step_id":"build_database","capability_id":"genomics.snpeff_annotation.build_database","role":"artifact.snpeff_data_dir"},
+-  {"step_id":"annotate_variants","capability_id":"genomics.snpeff_annotation.annotate_variants","role":"artifact.snpeff_data_dir"}
+-]
+-Use your actual declared step IDs. Preserve prepare -> build -> annotation and
+-their required states/evidence; annotation receives read permission only. Planned
+-state availability is not evidence of an existing directory or successful build.
+-
+-Use path_policy=managed_exact for a user-specified delivery name; use
+-model_selectable when the logical result is required but its final filename may
+-be selected from actual authorized outputs. On a new plan.* artifact_contract,
++Old approved snapshots retain their original reader semantics. Legacy version 2
++candidate expressions remain a compatibility input: inputs and resource-side
++role_associations keep their original meaning. A legacy association has exactly
++step_id, capability_id and role; its step_id must reference an actually declared
++step with that selected capability. In legacy correction feedback, step_key
++identifies the value for association.step_id. An existing read association does
++not replace the legacy step.inputs read reference. Contradictory, stale or
++mixed-version declarations are errors; do not silently discard one side or add
++an access field to a legacy association. Use version 3 for new candidate output.
++
++With a selected snpEff helper, a version-3 preparation step can use
++{"resource_ref":"plan.snpeff_data_dir","access":"mutate","role":"artifact.snpeff_data_dir"}
++and an annotation step can use the same resource with access="read" and the same
++role. Declare each use only on its step, alongside the required mutation/state
++facts where applicable. Preserve the helper's actual prepare/build/annotation
++state dependencies without fixing step names or forcing unrelated checks into
++that template. Planned state availability is not an existing directory or a
++successful build. Step identity is independent of operation: use your actual
++declared step IDs in dependencies and other surviving step references.
++
++For a new plan.* artifact_contract, use path_policy=managed_exact for an exact
++delivery name and model_selectable only when the final filename may be selected
++from actual authorized outputs. Existing output.* policies come from TaskSpec;
++do not repeat or replace them. On a new plan.* artifact_contract,
+ path is an optional safe relative path under the existing managed allocation root;
+ it does not authorize another directory. For a user-specified output directory,
+-reuse its approved output handle and task_output_materializations. Do not change
++reuse its approved output handle. Only when its file path remains unresolved,
++declare a safe relative path in task_output_materializations. Do not change
+ an exact user name merely to make a candidate pass. Description belongs in the
+ existing semantic_view; source_refs may identify relevant user/Skill evidence.
+ Purpose is descriptive. A formally approved probe, validation or record_failure
+@@ -1906,7 +1925,11 @@
+ plus one or more of `produces_bindings`, `produces_observations`,
+ `workspace_mutations`, or `explicit_side_effects` for legitimate non-artifact
+ effects. An empty `outputs` array is valid when another effect is declared.
+-Use exact operation/effect identities from the selected Skill capability. If a
++When selecting a domain capability, use its exact operation/effect interfaces.
++For explicit framework.generic.execute, operation is execute and tool is python
++or bash; declare the actual observable effects needed by this approved step.
++Generic checks need no invented domain capability, helper role or output file.
++If a
+ validator reports PLAN_STEP_EFFECT_UNSPECIFIED, revise the complete candidate
+ from that structured evidence; never invent a file merely to satisfy review.
+ Use the actual declared capability/evidence schema, not invented state names or
+@@ -1921,6 +1944,41 @@
+ same step. Multiple mutations of one canonical workspace must be explicitly
+ ordered through dependencies; list order is not a dependency.
+ Mutable workspaces belong in workspace_mutations, never in outputs.
++
++A complete version-3 example follows for the limited task "create one synthetic
++record and inspect whether it can be read". Its resource is declared inside this
++Plan; its two step IDs differ from operation and remain separate instances.
++This example does not replace the current user's obligations, assert execution,
++or require ordinary read-only checks to create a file. Do not copy its wrapper
++into your JSON response. Observation declarations specify evidence shape, never
++an already-successful value.
++<generic_plan_example schema_version="1">
++{
++  "outcome_type": "SUBMIT_PLAN_FOR_REVIEW",
++  "proposed_artifacts": [{
++    "local_ref": "plan.synthetic_record",
++    "semantic_view": {"role": "synthetic_record", "format": "text", "description": "The explicitly requested task-local synthetic record"},
++    "artifact_contract": {"object_kind": "file", "lifecycle": "plan_local", "resource_kind": "immutable_artifact", "materialization_policy_id": "managed_intermediate_v1", "required": true, "path_policy": "managed_exact", "path": "synthetic_record.txt"}
++  }],
++  "steps": [{
++    "step_id": "create_record", "title": "Create the requested synthetic record",
++    "action": "execute", "purpose": "validation", "tool": "python",
++    "execution_capability_id": "framework.generic.execute", "operation": "execute",
++    "resource_uses": [], "outputs": ["plan.synthetic_record"], "dependencies": [],
++    "skill_ids": [], "success_criteria": ["Write the requested synthetic content to the allocated record and return evidence of the actual file"], "risk_level": "low"
++  }, {
++    "step_id": "inspect_record", "title": "Inspect the produced record",
++    "action": "execute", "purpose": "validation", "tool": "python",
++    "execution_capability_id": "framework.generic.execute", "operation": "execute",
++    "resource_uses": [{"resource_ref": "plan.synthetic_record", "access": "read"}],
++    "outputs": [], "dependencies": ["create_record"], "skill_ids": [],
++    "produces_observations": [{"observation_id": "record_readable", "value_type": "boolean", "evidence_contract": {"required_fields": ["value"]}}],
++    "success_criteria": ["Attempt to read the actual record and report the observed boolean honestly, including a negative result"], "risk_level": "low"
++  }],
++  "validation_checklist": [{"check_id": "exact_record_use", "description": "The inspection reads the exact artifact produced by its declared predecessor"}],
++  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 3, "result_contract_version": 1}
++}
++</generic_plan_example>
+ 
+ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
+ {
+@@ -1937,9 +1995,9 @@
+     "action": "search|execute|install|ask_user|finish",
+     "purpose": "analysis|validation|probe|record_failure|install|user_input",
+     "tool": "<selected-capability-or-runner>",
+-    "execution_capability_id": "<enumerated-current-skill-capability-id-or-empty>",
+-    "operation": "<enumerated-current-skill-operation-or-empty>",
+-    "inputs": ["<existing-input-or-plan-handle>"],
++    "execution_capability_id": "<selected-domain-capability-id-or-framework.generic.execute>",
++    "operation": "<selected-domain-operation-or-execute-for-generic>",
++    "resource_uses": [{"resource_ref":"<exact-resource-handle>","access":"read|mutate"}],
+     "outputs": ["<existing-output-or-plan-handle>"],
+     "produces_bindings": ["<declared-semantic-binding-id>"],
+     "produces_observations": ["<declared-observation-id>"],
+@@ -1947,29 +2005,36 @@
+     "explicit_side_effects": ["<declared-supported-side-effect-id>"],
+     "dependencies": ["<task-specific-step-id>"],
+     "success_criteria": ["<task-specific-criterion>"],
+-    "skill_ids": ["<selected-capability-id>"],
++    "skill_ids": ["<canonical-selected-skill-id; may be empty for explicit generic execution>"],
+     "workflow_stage_ids": [],
+     "batch_id": "",
+     "risk_level": "low|medium|high"
+   }],
+   "validation_checklist": [{"check_id": "<task-specific-check-id>", "description": "<semantic-self-check>"}],
+-  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 2, "result_contract_version": 1},
+-  "task_output_materializations": [{"output_ref": "<existing-output-handle>", "path": "<safe-relative-filename>", "required": true, "path_policy": "managed_exact|model_selectable", "description": "<result-necessity>"}]
++  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 3, "result_contract_version": 1},
++  "task_output_materializations": [{"output_ref": "<existing-output-handle-with-unresolved-path>", "path": "<safe-relative-filename>", "description": "<path-selection-explanation>"}]
+ }
+ 
+ Omit proposed_artifacts and task_output_materializations when they are not needed.
+-Current Plan result path_policy values are: __PLAN_RESULT_PATH_POLICIES__.
+-For managed_exact, preserve the declared safe relative path under the managed root.
+-For model_selectable, the generated action may select the actual result filename;
++In version 3, workflow_stage_ids and batch_id are optional: omit them when this
++Plan does not use a workflow batch. If supplied, they retain their declared types
++and must reference valid authorized workflow entries; they do not dictate a step topology.
++New plan.* result path_policy values are: __PLAN_RESULT_PATH_POLICIES__.
++For managed_exact plan-local results, preserve the declared safe relative path under the managed root.
++For model_selectable plan-local results, the generated action may select the actual result filename;
+ retain the semantic output handle and validate the accepted result evidence.
+ A legacy TaskSpec may say planner_materialized: that describes TaskSpec ownership,
+-not a valid Plan result policy. Select the Plan policy from the actual path
+-obligation; never translate that legacy value by an unconditional alias.
+-Keep existing TaskSpec output handles in step.outputs and declare the Plan result
+-in task_output_materializations.
+-For existing output handles, declare necessity and path policy in the Plan
+-materialization row, including when reusing an existing exact path. This is a Plan
+-declaration, not a TaskSpec rewrite. A readonly check may use outputs=[] with its
++not permission to override its frozen required or path policy. The compiler reads
++the existing output contract by exact identity; do not guess by role or name.
++Keep existing TaskSpec output handles in step.outputs. In version 3, omit the
++task_output_materializations row when an exact canonical path already exists;
++for an unresolved required TaskSpec file (including planner_materialized or
++model_selectable ownership), supply only its output_ref and safe relative path
++(description/source_refs/validator may accompany it). required and path_policy in
++that row are retired and rejected. New plan.* artifact_contract declarations still
++own their distinct necessity and path facts. Strict legacy version-2 Plans retain
++their original explicit materialization contract; do not mix the two versions.
++A readonly check may use outputs=[] with its
+ actual observation effect; negative findings may complete an inspection request
+ without authorizing subsequent analysis. A later reporting step must consume the
+ same accepted, scoped observation through the execution history and explicit
+@@ -1978,9 +2043,21 @@
+ blocks computation, use the existing authorized stop/report path to state what
+ was and was not executed; do not invent scientific results or call it scientific
+ success merely because failure reporting completed.
+-For every execute step, select exactly one execution_capability_id enumerated
+-by that step's selected Skill and use its canonical operation/effect contract.
+-Never invent capability, effect, or runtime binding IDs. Omit optional effect
++For every execute step, explicitly choose one supported execution path:
++(1) a domain execution_capability_id enumerated by the step's selected Skill,
++with that capability's canonical operation and actual helper interfaces; or
++(2) execution_capability_id="framework.generic.execute", operation="execute",
++tool="python" or "bash", with skill_ids allowed to be []. Generic execution uses
++the existing Plan review, action generation, code approval, executor, evidence
++and Commit boundaries. It grants no ambient resource access or runtime readiness,
++and provides no claim of an arbitrary-system-call OS sandbox. Unknown capability
++or tool IDs are errors, never an implicit fallback to generic execution.
++Skill IDs (for example genomics/snpeff-annotation), domain capability IDs (for
++example genomics.snpeff_annotation.prepare_database), the generic execution path,
++step instance IDs and operations are different fields and cannot substitute
++for each other. A step ID need not equal its operation; separate uses of the
++same operation remain separate steps and approvals.
++Never invent domain capability, helper effect, or runtime binding IDs. Omit optional effect
+ arrays that do not apply; do not fabricate an artifact for an observation-only,
+ binding-only, or workspace-mutating operation.
+ Read every highlighted constraint and put task-specific semantic checks in
+@@ -1988,6 +2065,14 @@
+ reachability, exact output identities, JSONPath-addressable constraints, and
+ all review evidence from the previous attempt. Protocol validators check only
+ machine contracts and return observations; they do not choose the next node.
++
++Steps may be split or combined when the user's obligations, real resource
++dependencies and selected tool interfaces permit it. Internal implementation
++files need not become global Plan artifacts unless another step consumes them
++or the user requires their delivery. Planning suggestions and warning-severity
++issues are non-blocking: you may retain your proposal without an extra
++confirmation field or a mandatory explanation. Real identity, dependency,
++authorization and interface violations must still be corrected.
+ 
+ If a required user-owned semantic fact is genuinely absent, return:
+ {"outcome_type":"TASKSPEC_RECONCILIATION_REQUIRED","missing_semantic_facts":[{"fact_key":"<missing-fact>","reason":"<why-required>","affected_operation_id":"<operation>","relevant_confirmed_decision_ids":[],"durable_evidence_may_resolve":true}]}"""
+--- a/tests/a1_unified_fix/run_final.py
++++ b/tests/a1_unified_fix/run_final.py
+@@ -1,7 +1,7 @@
+ """Run one bounded final-candidate group with the existing offline guard.
+ 
+ The parent imports only safe test support. Each child gets the existing explicit
+-environment, a new scratch tree and an external 180-second watchdog. This file
++environment, a new scratch tree and an external watchdog (default 180 seconds). This file
+ adds receipts, not production outcomes or synthetic success state.
+ """
+ from pathlib import Path
+@@ -16,6 +16,7 @@
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument('--export', dest='source', type=Path, required=True)
+     parser.add_argument('--results', type=Path, required=True)
++    parser.add_argument('--watchdog-seconds', type=int, choices=range(180, 361), default=180)
+     args, targets = parser.parse_known_args()
+     source, results = args.source.resolve(), args.results.resolve()
+     assert source.is_relative_to(Path('/tmp')) and results.is_relative_to(Path('/tmp'))
+@@ -29,10 +30,11 @@
+     from cli_model_progress_support import launch
+     receipt = {'source_signature': manifest['source_signature'],
+                'loaded_source_manifest': str(source / 'export_manifest.json'),
+-               'test_targets': targets, 'timeout_seconds': 180,
++               'test_targets': targets, 'timeout_seconds': args.watchdog_seconds,
+                'watchdog_is_not_production_termination': True}
+     try:
+-        receipt['returncode'] = launch(source, results, targets, installed_cli=True)
++        receipt['returncode'] = launch(source, results, targets, installed_cli=True,
++                                     watchdog_seconds=args.watchdog_seconds)
+     except subprocess.TimeoutExpired:
+         receipt.update(returncode=124, timeout=True, classification='TEST_WATCHDOG_NOT_PASS')
+     receipt['source_changes_after_run'] = verify()
+--- a/tests/a1_unified_fix/test_f1_f2.py
++++ b/tests/a1_unified_fix/test_f1_f2.py
+@@ -110,7 +110,9 @@
+         case.SKILL_ID='genomics/snpeff-annotation'
+         await case.asyncSetUp()
+         try:
+-            configure_protocol(case);case._configure_one_step_no_output_plan();original=case._planner_payload
++            capability_id='genomics.snpeff_annotation.check_contig_compatibility'
++            configure_protocol(case,execution_capability_id=capability_id)
++            case._configure_one_step_no_output_plan(execution_capability_id=capability_id);original=case._planner_payload
+             def plan():
+                 result=original();result['steps'][0].update(execution_capability_id='genomics.snpeff_annotation.check_contig_compatibility',operation='check_contig_compatibility',produces_observations=[{'identity':'contigs_compatible','evidence_contract':{'required_fields':['value']}}]);return result
+             case._planner_payload=plan
+--- a/tests/a1_unified_fix/test_f6_graph.py
++++ b/tests/a1_unified_fix/test_f6_graph.py
+@@ -235,7 +235,9 @@
+ 
+     def current_operation(self):
+         from agent_core.plan_tracker import load_plan_state
+-        return str(load_plan_state(self.root,self.task).get('current_step_id') or '')
++        durable = load_plan_state(self.root, self.task)
++        current_id = durable.get('current_step_id')
++        return str(next(step for step in durable['steps'] if step['step_id'] == current_id)['operation'])
+ 
+     def plan(self):
+         registry = self.agent.skill_manager.get_execution_capability_registry([SID])
+@@ -305,21 +307,24 @@
+         from agent_core.workspace_attestation import project_current_action_workspace_bindings
+         durable=load_plan_state(self.root,self.task)
+         snapshot=load_approved_plan_snapshot(self.root,self.task,state=durable)
+-        step=next(x for x in snapshot['steps'] if x['step_id']==operation)
++        step=next(x for x in snapshot['steps'] if x['step_id']==durable['current_step_id'])
+         registry=self.agent.skill_manager.get_execution_capability_registry([SID]);cap=registry[step['execution_capability_id']]
+         template=json.loads(next(m.content for m in messages if getattr(m,'name','')=='approved_effect_emission_template'))
+         wire=str(messages)
+         paths={}
+-        for identity in durable['steps'][OPS.index(operation)].get('outputs',[]):
++        current_step=next(x for x in durable['steps'] if x['step_id']==durable['current_step_id'])
++        for identity in current_step.get('outputs',[]):
+             path=(durable.get('plan_artifacts',{}).get(identity) or durable.get('artifact_ledger',{}).get(identity) or {}).get('canonical_path')
++            if not path:
++                outputs=((durable.get('current_task') or {}).get('task_spec') or {}).get('output_contracts') or []
++                matches=[row for row in outputs if identity in (row.get('artifact_id'),row.get('output_id'),row.get('semantic_handle'))]
++                assert len(matches)<=1,(identity,matches)
++                path=matches[0].get('canonical_path') if matches else None
+             if path:paths[identity]=path
+         # Use the actually published declaration identities and public paths.
+         outdecl=template['declarations']['produces_artifacts']
+         for row in outdecl:
+             identity=row['identity']
+-            if identity not in paths:
+-                matched=next((str(p) for role,p in self.outputs.items() if role in identity),None)
+-                if matched:paths[identity]=matched
+             assert identity in wire and paths.get(identity) in wire,(operation,identity,paths)
+         binding={}
+         if operation in OPS[1:4]:
+--- a/tests/cli_model_progress_support.py
++++ b/tests/cli_model_progress_support.py
+@@ -38,7 +38,11 @@
+ 
+ def launch(export_root: Path, results: Path, tests: list[str], *,
+            fatal_diagnostics: bool = False, fatal_selftest: bool = False,
+-           installed_cli: bool = False) -> int:
++           installed_cli: bool = False, watchdog_seconds: int = 180) -> int:
++    # A longer multi-step mechanism test may need a longer external watchdog.
++    # This never changes any production call budget or successful-test oracle.
++    if type(watchdog_seconds) is not int or not 180 <= watchdog_seconds <= 360:
++        raise ValueError("Test watchdog must be an integer between 180 and 360 seconds")
+     export_root = export_root.resolve()
+     results = results.resolve()
+     if not export_root.is_relative_to(Path("/tmp")) or not results.is_relative_to(Path("/tmp")):
+@@ -70,10 +74,11 @@
+         environment["BIOMIND_OFFLINE_FATAL_SELFTEST"] = "1"
+     command = [PYTHON, str(export_root / "tests" / "cli_model_progress_support.py"),
+                "--guarded-child", str(export_root), *tests]
+-    (results / "invocation.json").write_text(json.dumps({"command": command, "environment": environment}, indent=2))
++    (results / "invocation.json").write_text(json.dumps({"command": command, "environment": environment,
++                                                       "external_test_watchdog_seconds": watchdog_seconds}, indent=2))
+     with (results / "stdout.txt").open("w", encoding="utf-8") as log:
+         process = subprocess.run(command, env=environment, cwd=export_root, stdout=log,
+-                                 stderr=subprocess.STDOUT, timeout=180)
++                                 stderr=subprocess.STDOUT, timeout=watchdog_seconds)
+     print(json.dumps({"returncode": process.returncode, "results": str(results)}))
+     return process.returncode
+ 
+--- a/tests/ger_fixture_support.py
++++ b/tests/ger_fixture_support.py
+@@ -3,13 +3,18 @@
+ from langchain_core.messages import AIMessage
+ 
+ 
+-def configure_protocol(case):
++def configure_protocol(case, *, execution_capability_id=None):
+     planner,consultant=case._planner_payload,case._consultant_payload
+     def planning():
+         result=planner()
+         result['outcome_type']='SUBMIT_PLAN_FOR_REVIEW'
+         registry=case.agent.skill_manager.get_execution_capability_registry([case.SKILL_ID])
+-        for step in result['steps']:step['execution_capability_id']=next(iter(registry))
++        matches=[key for key,contract in registry.items() if contract.get('selected_skill_id')==case.SKILL_ID]
++        if execution_capability_id is not None:
++            assert execution_capability_id in matches
++            matches=[execution_capability_id]
++        assert len(matches)==1, 'A fixture with multiple interfaces must choose an exact capability ID.'
++        for step in result['steps']:step['execution_capability_id']=matches[0]
+         return result
+     def handoff(path):
+         result=consultant(path)
+--- a/tests/test_plan_local_preaction_convergence_v2.py
++++ b/tests/test_plan_local_preaction_convergence_v2.py
+@@ -868,13 +868,19 @@
+                 item.stop()
+         return events, captures, report_path
+ 
+-    def _configure_one_step_no_output_plan(self) -> None:
++    def _configure_one_step_no_output_plan(self, *, execution_capability_id: str | None = None) -> None:
+         original_planner = self._planner_payload
+         original_consultant = self._consultant_payload
+         capability_registry = self.agent.skill_manager.get_execution_capability_registry(
+             [self.SKILL_ID]
+         )
+-        capability_id = next(iter(capability_registry))
++        fixture_capabilities = [key for key, contract in capability_registry.items()
++                                if contract.get("selected_skill_id") == self.SKILL_ID]
++        if execution_capability_id is not None:
++            self.assertIn(execution_capability_id, fixture_capabilities)
++            fixture_capabilities = [execution_capability_id]
++        self.assertEqual(len(fixture_capabilities), 1)
++        capability_id = fixture_capabilities[0]
+ 
+         def one_step_plan() -> dict[str, Any]:
+             payload = original_planner()

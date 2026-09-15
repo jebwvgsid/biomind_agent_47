@@ -1,0 +1,52 @@
+{
+  "classification": "BASE_PRESENT_ASSERTION_MISMATCH_NOT_NEW_PRODUCTION_FAILURE",
+  "skills": {
+    "genomics/wgs-short-read-mapping": {
+      "base": {
+        "source_path": "/tmp/biomind-plan-authority-v2-base/export/skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "sha256": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+        "actual_version": "1.1.3"
+      },
+      "current09": {
+        "source_path": "/tmp/biomind-plan-authority-v2-current09/export/skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "sha256": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+        "actual_version": "1.1.3"
+      }
+    },
+    "genomics/wgs-gatk-snp-indel": {
+      "base": {
+        "source_path": "/tmp/biomind-plan-authority-v2-base/export/skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+        "sha256": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+        "actual_version": "1.1.1"
+      },
+      "current09": {
+        "source_path": "/tmp/biomind-plan-authority-v2-current09/export/skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+        "sha256": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+        "actual_version": "1.1.1"
+      }
+    }
+  },
+  "assertion": {
+    "base": {
+      "source_sha256": "f2e00aea3aa01cf07d3cc10bc9c6adc4da8450e9b47f33ec9ce5daf62fd979f4",
+      "matching_lines": [
+        {
+          "line": 75,
+          "source": "            self.assertEqual(self.manager.get_skill_meta(skill)[\"version\"], \"1.1.0\")"
+        }
+      ]
+    },
+    "current09": {
+      "source_sha256": "16d7ea4a65bcbabb3f42ebcc56b3f55ddc2f86df2cad291b11e5906f1dce37d3",
+      "matching_lines": [
+        {
+          "line": 80,
+          "source": "            self.assertEqual(self.manager.get_skill_meta(skill)[\"version\"], \"1.1.0\")"
+        }
+      ]
+    }
+  },
+  "actual_failed_test": "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+  "failure_evidence": "current08/resource_scope_cancellation/stdout.txt.gz",
+  "base_test_source_boundary": "BASE export omitted this old test; assertion source comes from explicit BASE git object81d10c, not a claim that that test was loaded in BASE export."
+}

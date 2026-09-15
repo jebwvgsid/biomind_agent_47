@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023499038070440292,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 11.122522138990462,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003958502784371376,
+    "failure": ""
+  }
+]

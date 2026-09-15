@@ -1,0 +1,12 @@
+[
+  {
+    "file": "agent_core/step_effects.py",
+    "old_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+    "sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4"
+  },
+  {
+    "file": "tests/plan_authority_v2_20260915/test_graph.py",
+    "old_sha256": "577ffb198c3f883a7721a8b274e6bae0f2395f2c85123bf55c3b7861b0f7ec1a",
+    "sha256": "ff13d935f0cde3422fe633c14edba2b4105171b7e3a2771e0e8ca01c7ca94466"
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "baseline_path": "/tmp/biomind-plan-authority-v2-current07/export/tests/plan_authority_v2_20260915/test_graph.py",
+  "baseline_sha256": "da7999452c8b9b0997e5436f78205fa70d77c330acfcbc251047ba00e3a8005b",
+  "final_path": "/tmp/biomind-plan-authority-v2-current11/export/tests/plan_authority_v2_20260915/test_graph.py",
+  "final_sha256": "577ffb198c3f883a7721a8b274e6bae0f2395f2c85123bf55c3b7861b0f7ec1a",
+  "changed_methods": [
+    "__init__",
+    "run",
+    "close"
+  ],
+  "exact_allowed_differences": [
+    "__init__: new empty blocked_packet_chain evidence capture only",
+    "run: only scenario == generic_blocked post-execution assertions and evidence capture changed",
+    "close: serialize blocked_packet_chain in evidence artifact only"
+  ],
+  "all_remaining_module_AST_identical_after_only_these_removals": true,
+  "production_methods_replaced": false,
+  "reuse_scope": [
+    "renamed_repeated",
+    "generic_merged",
+    "advisory_context",
+    "generic_no_observation",
+    "generic_language_mismatch"
+  ],
+  "not_reused_as_test_pass": "generic_blocked previous assertion FAIL retained, must rerun corrected oracle; fullsplit/recovery are being rerun as shared caller checks."
+}

@@ -1,0 +1,55 @@
+[
+  {
+    "original": "f6-it03-repeat.json",
+    "sha256": "7cdc990aac47bfab0e5d5399a6380c185eb3e35082af5dbcb5376e202b064190",
+    "archive": "f6-it03-repeat.json",
+    "archive_sha256": "7cdc990aac47bfab0e5d5399a6380c185eb3e35082af5dbcb5376e202b064190"
+  },
+  {
+    "original": "f6-repeat-full.json.gz",
+    "sha256": "782dfec0628ba0c253de34f8d05c4d8f4b881b8f7349087174ea61be411f5b02",
+    "archive": "f6-repeat-full.json.gz",
+    "archive_sha256": "782dfec0628ba0c253de34f8d05c4d8f4b881b8f7349087174ea61be411f5b02"
+  },
+  {
+    "original": "f6-repeat-heartbeat.jsonl",
+    "sha256": "294a3e4c377b70963a07bc79c719237f7ead8411af84702524512be171c35a50",
+    "archive": "f6-repeat-heartbeat.jsonl.gz",
+    "archive_sha256": "4df608f4646d65a6f2dfbe178b83cc2c705242d8270bce9a1a1da9b6e1464c3a"
+  },
+  {
+    "original": "f6-repeat-summary.json",
+    "sha256": "63b6b134f1d4635abf4fea6717e75c93185972b5b37e2635ae78fe22f277e6d4",
+    "archive": "f6-repeat-summary.json",
+    "archive_sha256": "63b6b134f1d4635abf4fea6717e75c93185972b5b37e2635ae78fe22f277e6d4"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "6cb18122968d9be80cc548e61568b62f04cbd3970dd46bf64764904e949250ed",
+    "archive": "invocation.json",
+    "archive_sha256": "6cb18122968d9be80cc548e61568b62f04cbd3970dd46bf64764904e949250ed"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "ee8a85f6c58878b124963701ad98dd62dee3ce338b1ed71ca04010a6292b7383",
+    "archive": "pytest-results.json",
+    "archive_sha256": "ee8a85f6c58878b124963701ad98dd62dee3ce338b1ed71ca04010a6292b7383"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "a0f329a153b89f3357bb33f047cfe7dde206df147c8331c3bf0a44f25e34b927",
+    "archive": "run_exit.json",
+    "archive_sha256": "a0f329a153b89f3357bb33f047cfe7dde206df147c8331c3bf0a44f25e34b927"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "d9b0ecddfbafaf20f7daaecc5a8ca5b7d20815c749be03490fd42206f8c5f6dd",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "b7754dbef92c90f8c8739bb1725d873d311b09366c2e04cbecb5a9a54cb2d521"
+  },
+  {
+    "original": "f6-preserved-repeat",
+    "archive": "f6-preserved-repeat.tar.gz",
+    "archive_sha256": "9a5cbc668035f713ce0326c4f072f83ad1909ce1f2fa0d25fb2fb903c62c3d3d"
+  }
+]

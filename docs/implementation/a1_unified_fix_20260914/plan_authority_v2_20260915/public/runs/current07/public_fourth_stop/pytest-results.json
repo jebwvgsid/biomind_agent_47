@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013491883873939514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 15.747778534889221,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00028535351157188416,
+    "failure": ""
+  }
+]

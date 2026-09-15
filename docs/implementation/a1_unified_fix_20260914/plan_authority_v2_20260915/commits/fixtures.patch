@@ -1,0 +1,110 @@
+diff --git a/tests/plan_authority_v2_20260915/export_review.py b/tests/plan_authority_v2_20260915/export_review.py
+index ebcf8d5..1e1ae2d 100644
+--- a/tests/plan_authority_v2_20260915/export_review.py
++++ b/tests/plan_authority_v2_20260915/export_review.py
+@@ -53,14 +53,15 @@ def main():
+         manifest['files'][relative] = hashlib.sha256(body).hexdigest()
+     # Existing cancellation regression reads this already published candidate
+     # JSON only. It never loads its original session or referenced science data.
+-    relative = 'docs/audits/session_1789369423_plan_resource_cycle/candidate_C_rejected.json'
+-    source = REPO / relative
+-    assert source.is_file() and not source.is_symlink()
+-    body = source.read_bytes()
+-    dest = target / relative
+-    dest.parent.mkdir(parents=True, exist_ok=True)
+-    dest.write_bytes(body)
+-    manifest['files'][relative] = hashlib.sha256(body).hexdigest()
++    for name in ('candidate_C_rejected.json', 'task_declarations.json'):
++        relative = 'docs/audits/session_1789369423_plan_resource_cycle/' + name
++        source = REPO / relative
++        assert source.is_file() and not source.is_symlink()
++        body = source.read_bytes()
++        dest = target / relative
++        dest.parent.mkdir(parents=True, exist_ok=True)
++        dest.write_bytes(body)
++        manifest['files'][relative] = hashlib.sha256(body).hexdigest()
+     manifest['source_signature'] = hashlib.sha256(json.dumps(manifest['files'], sort_keys=True).encode()).hexdigest()
+     (target / 'export_manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n')
+     print(json.dumps({'signature': manifest['source_signature'], 'files': len(manifest['files']), 'export': str(target),
+diff --git a/tests/plan_authority_v2_20260915/resource_artifact_plugin.py b/tests/plan_authority_v2_20260915/resource_artifact_plugin.py
+new file mode 100644
+index 0000000..4d1e5a5
+--- /dev/null
++++ b/tests/plan_authority_v2_20260915/resource_artifact_plugin.py
+@@ -0,0 +1,14 @@
++"""Explicit pytest adapter for the old resource suite's synthetic report sink.
++
++Activate only with -p tests.plan_authority_v2_20260915.resource_artifact_plugin.
++No production behavior or assertion is replaced; the existing guard confines IO
++to the same newly created result directory used by the current test launcher.
++"""
++import os
++from pathlib import Path
++
++
++def pytest_configure(config):
++    destination = Path(os.environ["BIOMIND_GER_ARTIFACTS"]).resolve()
++    assert destination.is_relative_to(Path("/tmp")) and destination.is_dir()
++    os.environ["BIOMIND_RESOURCE_AUDIT_RESULTS"] = str(destination)
+diff --git a/tests/plan_authority_v2_20260915/test_graph.py b/tests/plan_authority_v2_20260915/test_graph.py
+index 193dcf9..aa00b34 100644
+--- a/tests/plan_authority_v2_20260915/test_graph.py
++++ b/tests/plan_authority_v2_20260915/test_graph.py
+@@ -45,6 +45,7 @@ class AuthorityGraph(F6Graph):
+         self.path_resolution_receipts = []
+         self.internal_temp_paths = {}
+         self.final_gate_counterfactuals = []
++        self.blocked_packet_chain = {}
+ 
+     async def setup(self):
+         await super().setup()
+@@ -583,7 +584,40 @@ class AuthorityGraph(F6Graph):
+             diagnostic = self.terminal['terminal_diagnostic']
+             assert diagnostic['origin']['attempt_id'] == self.executions[-1]['attempt_id']
+             assert diagnostic['origin']['returncode'] == 23
+-            assert diagnostic['causal_execution']['attempt_id'] == self.executions[-1]['attempt_id']
++            execution = diagnostic['execution']
++            assert execution['attempt_id'] == self.executions[-1]['attempt_id']
++            assert execution['step_id'] == declared[failed_index]['step_id']
++            assert execution['returncode'] == 23 and execution['executed'] is True
++            assert execution['committed'] is False
++            # A legitimate blocked directive consumes its active packet. The
++            # terminal owner keeps the actual attempt in execution/origin;
++            # causal_execution is conditional on an active parent packet.
++            task_state = self.durable['task_state']
++            assert not task_state['active_failure_packet_ref']
++            assert diagnostic['causal_execution'] == {'status': 'UNKNOWN'}
++            matches = [(identity, receipt) for identity, receipt in task_state['typed_recovery_receipts'].items()
++                if receipt['outcome']['type'] == 'blocked'
++                and receipt['outcome']['scope']['attempt_id'] == execution['attempt_id']]
++            assert len(matches) == 1
++            decision_id, receipt = matches[0]
++            packet_ref = receipt['failure_packet_ref']
++            consumed = task_state['consumed_failure_packet_refs'][packet_ref]
++            assert consumed['decision_id'] == decision_id
++            record = task_state['causal_failure_packets'][packet_ref]
++            packet = record['failure_packet']
++            assert packet['attempt_ref'] == execution['attempt_id']
++            assert packet['step_id'] == execution['step_id']
++            assert record['source_fingerprint'] == receipt['source_fingerprint'] == consumed['source_fingerprint']
++            held_scope = self.values['recovery_outcome']['payload']['inspection_stop']['scope']
++            for key, expected in {'task_id': self.task, 'plan_id': self.durable['plan_id'],
++                    'plan_version': self.durable['plan_version'], 'step_id': execution['step_id'],
++                    'attempt_id': execution['attempt_id']}.items():
++                assert receipt['outcome']['scope'][key] == held_scope[key] == expected
++            assert held_scope['episode_id'] == 'recovery-seed-' + receipt['source_fingerprint']
++            self.blocked_packet_chain = {'decision_id': decision_id, 'failure_packet_ref': packet_ref,
++                'source_fingerprint': receipt['source_fingerprint'], 'held_scope': held_scope,
++                'primary_execution': {key: execution[key] for key in ('attempt_id', 'step_id', 'returncode', 'executed', 'committed')},
++                'active_packet_consumed': True, 'causal_execution': diagnostic['causal_execution']}
+             return self.values, self.durable
+         assert self.values.get('final_audit_outcome', {}).get('type') == 'task_verified', {
+             'planner_outcome': self.values.get('planner_outcome'), 'boundary': self.values.get('managed_run_boundary'),
+@@ -710,6 +744,7 @@ class AuthorityGraph(F6Graph):
+             'path_resolution_receipts': self.path_resolution_receipts,
+             'internal_temp_paths': self.internal_temp_paths,
+             'final_gate_counterfactuals': self.final_gate_counterfactuals,
++            'blocked_packet_chain': self.blocked_packet_chain,
+             'declared_implementations': self.declared_implementations,
+             'limits': ['fixed model leaf; no real model reliability claim', 'synthetic algorithm; no scientific E2E',
+                 'inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes',

@@ -1,0 +1,16 @@
+{
+  "source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+  "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current08/export/export_manifest.json",
+  "test_targets": [
+    "-s",
+    "-q",
+    "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+    "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+    "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+    "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]"
+  ],
+  "timeout_seconds": 360,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}

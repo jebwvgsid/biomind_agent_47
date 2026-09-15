@@ -1,0 +1,102 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00035421643406152725,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 5.605817445553839,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00038166996091604233,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003010788932442665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.7465353971347213,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014620181173086166,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002870643511414528,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.002426393330097,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013849418610334396,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027822982519865036,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.1117488453164697,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014284998178482056,
+    "failure": ""
+  }
+]

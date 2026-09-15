@@ -1,0 +1,159 @@
+{
+  "status": "PASS",
+  "test_duration_seconds": 145.18939885869622,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 8,
+    "reviewer": 8,
+    "recovery": 0
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 8,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_07f486187a4c7eed1741",
+      "approved_sha256": "caafd21109bd5cd2dbfdcec09c9813ba4c2b49c5893869964f4f068bdf827e9e",
+      "executed_sha256": "1fb71ef90b6040cd1f8627b8a4c1d845026f61866c35c9b1a8d7c7627115788e"
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_b3c0263ef08328b5684e",
+      "approved_sha256": "38179ea87b3744311ff82ce14963677c80bf1b3c8304d382d3057ecc31b362ca",
+      "executed_sha256": "379598d166371aaabfb21a2c4082fd3e9cabb6ff4c37d3574fff4dfc9056e068"
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_0ba8160b1f0daf008ecb",
+      "approved_sha256": "176213bd8c3b5f928afc878ec2be20c8fca2bdc3936d9a8524e19db4f7e9ebba",
+      "executed_sha256": "7769b0f950e3741567c66faab5806c432c776b1f3816c43dbd310fb72f0300d6"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "rc": 0,
+      "attempt_id": "attempt_497b8bc6d0eb2e3a6b4c",
+      "approved_sha256": "1c5032e0a042e95a38f897716b0f15c895f2cdaf00b193ee724b1a0084afaa7e",
+      "executed_sha256": "7f628bee363d587edfd101ffb5fb8265730beb46694e9aa697776768c4e9f482"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "rc": 0,
+      "attempt_id": "attempt_922a7ed7f5cb5e56b3f5",
+      "approved_sha256": "b2f9af9e45106795e1783dab3cc9ed3f822d0280526f7010b5a80f8cb20fba7f",
+      "executed_sha256": "e043be63adab0c392f49a023a9fbc9b569ed6a41d6e3ec5ed1de2bd5a781ca4d"
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "rc": 0,
+      "attempt_id": "attempt_ff38ee33411f5b83f5be",
+      "approved_sha256": "11364bf50e3796d3bb8f735da870b96f8ea7d5a3bb8cbafe356da5eee66513b1",
+      "executed_sha256": "05b9047f99ea3bb37f3b104fc0adb62803dc3316eea93608acfe628be37c4d10"
+    },
+    {
+      "step_id": "aggregate-832",
+      "operation": "summarize_ann",
+      "rc": 0,
+      "attempt_id": "attempt_c5d56b458170a469fa59",
+      "approved_sha256": "615ef378222f0785fee40107ace93b62e0c5721057808d5887a025d791d2e66d",
+      "executed_sha256": "01a6a6b6227c4d44ded412df3a44675f06ac1bdab6c847714c4a4550c936a392"
+    },
+    {
+      "step_id": "deliver-604",
+      "operation": "finalize_outputs",
+      "rc": 0,
+      "attempt_id": "attempt_07a9031a7abd53287f4b",
+      "approved_sha256": "48a6a8f052affd45ab027e0bf82acb96da8678c24262745d32f9027371629a0f",
+      "executed_sha256": "9710f0fc7dc666a10e75a9d1a1c6435956edf6de3cdb6802851ff68cc0edd1c8"
+    }
+  ],
+  "commits": 8,
+  "final_outcome": "task_verified",
+  "generate_outcome_type": "action_ready",
+  "durable_status": "completed",
+  "gate_counterfactuals": [
+    {
+      "removed_paths": [
+        "/plan_dataflow_receipt"
+      ],
+      "result": {
+        "passed": false,
+        "verdict": "FAIL",
+        "message": "Required workspaces lack an evidenced state chain or their exact bound directory.",
+        "feedback": "Inspect the approved state transitions and workspace evidence for: plan-artifact-f4c0ef6e3c70e0d40ca6da15",
+        "missing_artifacts": [
+          "plan-artifact-f4c0ef6e3c70e0d40ca6da15"
+        ],
+        "checked_artifacts": [],
+        "classification": "plan_workspace_state_incomplete",
+        "reconciliation": {},
+        "stale_artifacts": [],
+        "invalid_artifacts": [],
+        "attempt_ids": [],
+        "artifact_version_ids": [],
+        "validation_ids": [],
+        "evidence_refs": [],
+        "declared_effects": {},
+        "satisfied_effects": {},
+        "missing_effects": {},
+        "unexpected_effects": {},
+        "invalid_effects": {},
+        "plan_version": ""
+      }
+    },
+    {
+      "removed_paths": [
+        "/provenance_state/attempts/attempt_497b8bc6d0eb2e3a6b4c/effect_evidence/workspace_mutations",
+        "/provenance_state/attempts/attempt_922a7ed7f5cb5e56b3f5/effect_evidence/workspace_mutations",
+        "/provenance_state/validations/validation-49cbcaea7bc19604545a/effect_results/workspace_mutations",
+        "/provenance_state/validations/validation-658e060d39c7ef3dc360/effect_results/workspace_mutations"
+      ],
+      "result": {
+        "passed": false,
+        "verdict": "FAIL",
+        "message": "The approved Plan still has incomplete results or steps.",
+        "feedback": "Complete or resolve the recorded step evidence: layout-563, compile-927",
+        "missing_artifacts": [],
+        "checked_artifacts": [],
+        "classification": "plan_result_incomplete",
+        "reconciliation": {},
+        "stale_artifacts": [],
+        "invalid_artifacts": [],
+        "attempt_ids": [],
+        "artifact_version_ids": [],
+        "validation_ids": [],
+        "evidence_refs": [],
+        "declared_effects": {},
+        "satisfied_effects": {},
+        "missing_effects": {},
+        "unexpected_effects": {},
+        "invalid_effects": {},
+        "plan_version": ""
+      }
+    }
+  ],
+  "provider_modes": [
+    "native_action_json",
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {
+    "ledger-205": "/tmp/biomind-plan-authority-v2-current07/graph_generic_split/scratch/biomind-plan-local-graph-a5eeq91j/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+  },
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

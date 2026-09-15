@@ -1,0 +1,308 @@
+{
+  "mode": "false_diagnostic",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 1,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "final_audit"
+  ],
+  "executions": [
+    {
+      "operation": "inspect",
+      "attempt_id": "attempt_2b2352881d74d311b5f9",
+      "rc": 0,
+      "stdout": "ACTUAL_INTERPRETER=/public/home/liusiqi/anaconda3/envs/biomind/bin/python\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":false}]}\n",
+      "stderr": "",
+      "approved_sha256": "e1ceae1693afb0e71249c29e94acceeb2156ec2ac7d9fd2a0ef6ab91eceb2fd9",
+      "executed_sha256": "e820666f9e2cb0aef8d7f1a9be834a89a39e355403270e530362200bcdfdf9a3",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {},
+      "approved_path": "/tmp/biomind-plan-authority-v2-current09/old_carrier_legacy_python/scratch/biomind-plan-local-graph-w5g5pset/task_outputs/fix-f6-false_diagnostic/attempts/attempt_2b2352881d74d311b5f9/approved.py",
+      "declared_environment": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/biomind/bin:/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONNOUSERSITE": "1"
+      }
+    }
+  ],
+  "commit_outcomes": [
+    {
+      "schema_version": 1,
+      "type": "plan_complete",
+      "summary": "Verified final step committed; final audit is required.",
+      "scope": {
+        "task_id": "fix-f6-false_diagnostic"
+      },
+      "payload": {
+        "commit_id": "commit-step-9a0ea6f73df6d6698f1c65e3",
+        "receipt": "typed-step-commit:commit-step-9a0ea6f73df6d6698f1c65e3",
+        "before_state_generation": 33,
+        "after_state_generation": 34,
+        "completed_step_id": "check_contig_compatibility",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [],
+        "accepted_effect_refs": [
+          "validation_observation",
+          "attempt_2b2352881d74d311b5f9",
+          "validation-29a40899739f8934f30f"
+        ],
+        "completion_report_ref": "completion-report-9ddbbc11f3484256c9d6cb418d267d40d04c2a0fdf758ccbcbe9e94bd2c5bb00",
+        "semantic_decision_ref": "semantic-decision-b11e355e9d87853dc70f99d4085ff34acbe76b200fb90513a94b20cb3ac8e7ac",
+        "semantic_consumption_ref": "completion-consumption-28d0ac97a0f6b2978fc42891a72872373f55a71f5c508fbc47702998f90d7820"
+      },
+      "evidence_refs": [
+        "validation-29a40899739f8934f30f",
+        "completion-report-9ddbbc11f3484256c9d6cb418d267d40d04c2a0fdf758ccbcbe9e94bd2c5bb00",
+        "semantic-decision-b11e355e9d87853dc70f99d4085ff34acbe76b200fb90513a94b20cb3ac8e7ac",
+        "completion-consumption-28d0ac97a0f6b2978fc42891a72872373f55a71f5c508fbc47702998f90d7820"
+      ]
+    }
+  ],
+  "final_outcome": {
+    "schema_version": 1,
+    "type": "task_verified",
+    "summary": "Current execution, verification, and final CompletionGate evidence were atomically accepted.",
+    "scope": {
+      "task_id": "fix-f6-false_diagnostic"
+    },
+    "payload": {
+      "validation_evidence": {
+        "schema_version": 1,
+        "validation_id": "validation-29a40899739f8934f30f",
+        "task_id": "fix-f6-false_diagnostic",
+        "step_id": "check_contig_compatibility",
+        "action_id": "action_f999e2c8949744d7",
+        "attempt_id": "attempt_2b2352881d74d311b5f9",
+        "status": "VALID",
+        "errors": [],
+        "warnings": [],
+        "info": [
+          "Exit code 0 ✓"
+        ],
+        "returncode_check": {
+          "returncode": 0,
+          "passed": true,
+          "source": "execution_evidence",
+          "process_signal": null,
+          "timeout": false,
+          "oom": false,
+          "executor_exception": ""
+        },
+        "manifest_results": [],
+        "artifact_results": [],
+        "success_criteria_results": [],
+        "effect_results": {
+          "schema_version": 1,
+          "step_id": "check_contig_compatibility",
+          "action_id": "action_f999e2c8949744d7",
+          "attempt_id": "attempt_2b2352881d74d311b5f9",
+          "declared_step_effect": {
+            "schema_version": 1,
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "identity": "validation_observation",
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                }
+              }
+            ],
+            "workspace_mutations": [],
+            "explicit_side_effects": []
+          },
+          "parser_receipt": {
+            "schema_version": 1,
+            "parser_id": "biomind.structured_effect_emission.v1",
+            "raw_stdout_sha256": "c29495fdbfce899d47b6b941fc974fc4d35c76e3a52c44802c5480f0aa1b0a84",
+            "emission_count": 1,
+            "status": "parsed",
+            "issues": [],
+            "emission_contract": {
+              "schema_version": 1,
+              "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+              "approved_observation_ids": [
+                "validation_observation"
+              ],
+              "examples": [
+                "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+              ],
+              "rules": [
+                "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+                "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+                "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+                "Reader errors and sampling limits do not establish absence or full scientific validity."
+              ]
+            },
+            "scope": {
+              "task_id": "fix-f6-false_diagnostic",
+              "plan_id": "plan_1943dc53ce2fb8045243",
+              "plan_version": "plan_v1",
+              "step_id": "check_contig_compatibility",
+              "action_id": "action_f999e2c8949744d7",
+              "attempt_id": "attempt_2b2352881d74d311b5f9"
+            }
+          },
+          "produces_artifacts": [],
+          "produces_bindings": [],
+          "produces_observations": [
+            {
+              "identity": "validation_observation",
+              "value": false
+            }
+          ],
+          "workspace_mutations": [],
+          "workspace_mutation_claims": [],
+          "workspace_mutation_receipt_validations": [],
+          "explicit_side_effects": [],
+          "status": "validated"
+        },
+        "scientific_checks": [
+          {
+            "source": "llm_advisory",
+            "assessment": "ACCEPTABLE",
+            "deterministic_status_unchanged": true
+          },
+          {
+            "source": "final_audit",
+            "assessment": "VALID",
+            "deterministic_status_unchanged": true
+          }
+        ],
+        "recoverability_hints": [],
+        "llm_advisory": {
+          "assessment": "ACCEPTABLE",
+          "concerns": [],
+          "confidence": 0.9,
+          "disposition": "completion_accepted",
+          "issue_dispositions": [
+            {
+              "disposition": "completion_accepted",
+              "explanation": "Only actual synthetic protocol facts are accepted.",
+              "issue_id": "validation-29a40899739f8934f30f"
+            },
+            {
+              "disposition": "completion_accepted",
+              "explanation": "Only actual synthetic protocol facts are accepted.",
+              "issue_id": "predicate-result-a5b445ec5b0c9189bde8be4413f019713a6145ad0b8dd4c45f2a2c3e7daa9a27"
+            }
+          ],
+          "parse_status": "valid",
+          "report_id": "completion-report-76a8cfc7b57bc9c7ba4286943f070331db4e36b3fb00cacdaccebe6938cabc0c",
+          "review_policy_receipt": {
+            "assessment_id": "assessment:sha256:a8d3307cba86a00d3921c8742d0df8c31e343de25a845471d00354f87d3322f8",
+            "corrections_authorized": 0,
+            "policy": {
+              "max_protocol_corrections": 2,
+              "max_requests": 3,
+              "source": "semantic_completion.REVIEWER_PROTOCOL_CORRECTIONS",
+              "version": "semantic-review-correction-v1"
+            },
+            "producer": "semantic-review-correction-v1",
+            "remaining_requests": 2,
+            "requests_reserved": 1,
+            "responses_received": 1,
+            "scope": {
+              "action_id": "action_f999e2c8949744d7",
+              "attempt_id": "attempt_2b2352881d74d311b5f9",
+              "plan_id": "plan_1943dc53ce2fb8045243",
+              "plan_version": "plan_v1",
+              "step_id": "check_contig_compatibility",
+              "task_id": "fix-f6-false_diagnostic"
+            }
+          },
+          "suggestions": []
+        },
+        "llm_advisory_conflict": false,
+        "evidence_complete": true,
+        "evidence_source": "execution_evidence",
+        "migration_source": "",
+        "migration_warnings": [],
+        "command_role": "required_validation",
+        "validator_version": "supervisor-validator-v1",
+        "validation_duration": 0.266267,
+        "created_at": "2026-09-15T06:23:33+00:00"
+      },
+      "completion_gate": {
+        "passed": true,
+        "verdict": "PASS",
+        "message": "",
+        "feedback": "",
+        "missing_artifacts": [],
+        "checked_artifacts": [],
+        "classification": "passed",
+        "reconciliation": {},
+        "stale_artifacts": [],
+        "invalid_artifacts": [],
+        "attempt_ids": [],
+        "artifact_version_ids": [],
+        "validation_ids": [],
+        "evidence_refs": [],
+        "declared_effects": {},
+        "satisfied_effects": {},
+        "missing_effects": {},
+        "unexpected_effects": {},
+        "invalid_effects": {},
+        "plan_version": ""
+      },
+      "terminal_receipt": "typed-task-completion:final-audit-6c725a5236b7706bc8ca79c2"
+    },
+    "evidence_refs": [
+      "validation-29a40899739f8934f30f",
+      "validation-29a40899739f8934f30f",
+      "commit-step-9a0ea6f73df6d6698f1c65e3"
+    ]
+  },
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current09/old_carrier_legacy_python/f6-false_diagnostic-full.json.gz",
+    "sha256": "41c9e61cc8fe27f41aa0f34cd223d8c7c8720875eea34b7eea693b18956dd359",
+    "raw_sha256": "556fc375a5542fe805cfaf582b13cee6101c4dae70af9a19ef1b51638d7559b4"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 5,
+    "finalize": 0,
+    "prepare": 2,
+    "summary": 0
+  },
+  "terminal": {},
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

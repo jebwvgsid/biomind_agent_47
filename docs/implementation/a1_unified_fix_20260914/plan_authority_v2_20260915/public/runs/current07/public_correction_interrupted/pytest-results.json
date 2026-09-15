@@ -1,0 +1,13 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001386348158121109,
+    "failure": ""
+  }
+]

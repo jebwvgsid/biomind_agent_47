@@ -1,0 +1,302 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001303441822528839,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0002861572429537773,
+    "failure": "def test_generic_explicit_registry_and_runtime_without_domain_skill():\n        obj = manager()\n        registry = obj.get_execution_capability_registry([])\n>       assert GENERIC in registry\nE       AssertionError: assert 'framework.generic.execute' in {}\n\ntests/plan_authority_v2_20260915/test_generic_runtime.py:34: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017216429114341736,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003960439935326576,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001444052904844284,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.54754650592804e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024175457656383514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00010482128709554672,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.98320397734642e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002435324713587761,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.00031099189072847366,
+    "failure": "field = 'tool', value = 'imaginary_runner'\ncode = 'GENERIC_EXECUTION_TOOL_UNSUPPORTED'\n\n    @pytest.mark.parametrize('field,value,code', [\n        ('execution_capability_id', 'nonexistent.domain.execute', 'UNKNOWN_EXECUTION_CAPABILITY'),\n        ('execution_capability_id', '', 'ACTION_CAPABILITY_SCOPE_MISSING'),\n        ('tool', 'imaginary_runner', 'GENERIC_EXECUTION_TOOL_UNSUPPORTED'),\n    ])\n    def test_no_missing_unknown_or_unsupported_route_fallback(field, value, code):\n        step = generic_step()\n        step[field] = value\n        issues = manager().validate_plan_execution_capabilities({'steps': [step]}, [])\n>       assert [issue['code'] for issue in issues] == [code]\nE       AssertionError: assert ['UNKNOWN_EXE...N_CAPABILITY'] == ['GENERIC_EXE..._UNSUPPORTED']\nE         \nE         At index 0 diff: 'UNKNOWN_EXECUTION_CAPABILITY' != 'GENERIC_EXECUTION_TOOL_UNSUPPORTED'\nE         Use -v to get more diff\n\ntests/plan_authority_v2_20260915/test_generic_runtime.py:57: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010494887828826904,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.932765245437622e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 9.73772257566452e-05,
+    "failure": "def test_generic_contract_drift_still_rejects():\n        registry = manager().get_execution_capability_registry([])\n>       approved = capability_contract_hash(registry[GENERIC])\n                                            ^^^^^^^^^^^^^^^^^\nE       KeyError: 'framework.generic.execute'\n\ntests/plan_authority_v2_20260915/test_generic_runtime.py:62: KeyError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.100084960460663e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.521003812551498e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.000803791917860508,
+    "failure": "def test_v3_wire_has_one_read_declaration():\n        value = candidate()\n>       assert structured_plan_candidate_diagnostics(value) == []\nE       AssertionError: assert [{'field_path...'value', ...}] == []\nE         \nE         Left contains 4 more items, first extra item: {'field_path': '$.steps[0].inputs', 'message': 'required field is missing', 'code': 'PLAN_STRUCTURE_INVALID', 'expected_type': 'present', ...}\nE         Use -v to get more diff\n\ntests/plan_authority_v2_20260915/test_resource_contract.py:48: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.942970842123032e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001776367425918579,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.00030372850596904755,
+    "failure": "field = 'inputs'\n\n    @pytest.mark.parametrize('field', ['inputs', 'role_associations'])\n    def test_v3_explicit_retired_fields_rejected(field):\n        value = candidate()\n        target = value['steps'][1] if field == 'inputs' else value['proposed_artifacts'][0]\n        target[field] = []\n        diagnostics = structured_plan_candidate_diagnostics(value)\n>       assert any(field in row['field_path'] and 'retired' in row['message'].lower() for row in diagnostics), diagnostics\nE       AssertionError: [{'field_path': '$.steps[0].inputs', 'message': 'required field is missing', 'code': 'PLAN_STRUCTURE_INVALID', 'expect...].resource_uses', 'message': 'unexpected step field', 'code': 'PLAN_STRUCTURE_INVALID', 'expected_type': 'value', ...}]\nE       assert False\nE        +  where False = any(<generator object test_v3_explicit_retired_fields_rejected.<locals>.<genexpr> at 0x14ef945bc900>)\n\ntests/plan_authority_v2_20260915/test_resource_contract.py:63: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.235553443431854e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000167015939950943,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0003060977905988693,
+    "failure": "field = 'role_associations'\n\n    @pytest.mark.parametrize('field', ['inputs', 'role_associations'])\n    def test_v3_explicit_retired_fields_rejected(field):\n        value = candidate()\n        target = value['steps'][1] if field == 'inputs' else value['proposed_artifacts'][0]\n        target[field] = []\n        diagnostics = structured_plan_candidate_diagnostics(value)\n>       assert any(field in row['field_path'] and 'retired' in row['message'].lower() for row in diagnostics), diagnostics\nE       AssertionError: [{'field_path': '$.steps[0].inputs', 'message': 'required field is missing', 'code': 'PLAN_STRUCTURE_INVALID', 'expect...].resource_uses', 'message': 'unexpected step field', 'code': 'PLAN_STRUCTURE_INVALID', 'expected_type': 'value', ...}]\nE       assert False\nE        +  where False = any(<generator object test_v3_explicit_retired_fields_rejected.<locals>.<genexpr> at 0x14ef945bd000>)\n\ntests/plan_authority_v2_20260915/test_resource_contract.py:63: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.39173623919487e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.489882409572601e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0004098862409591675,
+    "failure": "def test_v3_reference_is_checked_at_real_source_field():\n        value = candidate()\n        value['steps'][1]['resource_uses'][0]['resource_ref'] = 'plan.absent'\n>       with pytest.raises(Exception) as caught:\n             ^^^^^^^^^^^^^^^^^^^^^^^^\nE       Failed: DID NOT RAISE Exception\n\ntests/plan_authority_v2_20260915/test_resource_contract.py:69: Failed"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.030980825424194e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 6.950646638870239e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.015714038163423538,
+    "failure": "def test_v3_access_cannot_drop_selected_helper_requirement():\n        value = candidate()\n        value['steps'][1]['resource_uses'][0]['access'] = 'mutate'\n        with pytest.raises(PlanBindingError) as caught:\n            compile_resources(value)\n>       assert caught.value.code == 'PLAN_RESOURCE_USE_ACCESS_MISMATCH'\nE       AssertionError: assert 'PLAN_RESOURC...ATION_MISSING' == 'PLAN_RESOURC...CESS_MISMATCH'\nE         \nE         - PLAN_RESOURCE_USE_ACCESS_MISMATCH\nE         + PLAN_RESOURCE_ROLE_ASSOCIATION_MISSING\n\ntests/plan_authority_v2_20260915/test_resource_contract.py:79: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.164439350366592e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.486250251531601e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.21260085329413414,
+    "failure": "def test_v3_source_changes_approval_semantics_and_rebuilds_index():\n        from agent_core.plan_tracker import normalize_plan_step, _semantic_step\n        step = candidate()['steps'][1]\n        normalized = normalize_plan_step(deepcopy(step))\n>       assert normalized['inputs'] == ['plan.workspace']\nE       AssertionError: assert [] == ['plan.workspace']\nE         \nE         Right contains one more item: 'plan.workspace'\nE         Use -v to get more diff\n\ntests/plan_authority_v2_20260915/test_resource_contract.py:86: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000131276436150074,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.50185751914978e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002902485430240631,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.798988372087479e-05,
+    "failure": ""
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "result": "9_PASS",
+  "scope": "Original cancellation suite; actual preclaim/pre-dispatch/atomic/late-result barriers and admitted-history preservation",
+  "source_changes": [],
+  "test_only_adapter": "Explicit resource_artifact_plugin assigns the old test report sink to the existing guarded newly created result directory; no production state, router or assertion is replaced."
+}

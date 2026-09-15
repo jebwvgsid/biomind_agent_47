@@ -1,0 +1,19 @@
+{
+  "classification": "ACTUAL_MODULE_LIST_PLUS_EXPORTED_BYTE_HASH",
+  "actual_module_count": 135,
+  "source_stdout_archive": "stdout.txt.gz",
+  "source_stdout_archive_sha256": "854095713686e697ea92d2fd323ff379339f9a6792395b80204030d067625fe8",
+  "uncompressed_stdout_sha256": "772bf798b2cf58929e6c3485e08e06d88d619c6aa94e519bb52d0a120c7e3a46",
+  "original_new_run_stdout": "/tmp/biomind-plan-authority-v2-current14/graph_public_protocol/stdout.txt",
+  "original_matches_archive": true,
+  "source_line_1based": 92,
+  "prefix": "IMPORTED_SOURCES ",
+  "producer": "tests/offline_managed_bootstrap.py:120",
+  "producer_semantics": "After pytest.main, record actual sys.modules entries with __file__ under this export root. Hash each recorded module file against the frozen manifest, as in existing collector; also require SOURCE_UNCHANGED True and run_exit source_changes_after_run=[].",
+  "producer_sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0",
+  "collector_reference": "/tmp/biomind-plan-v2-archive.py:23-34",
+  "final_source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+  "module_metadata_file": "loaded_modules.json",
+  "module_metadata_sha256": "3e282008e1fb01931ae72f5c1ad2c31abfa466851c260ae4714bec016e90fbe8",
+  "explicit_nonclaim": "The export manifest alone is not evidence of import. The actual module footer identifies loaded paths; hashes and zero drift constrain their bytes. This is not a receipt for unimported files or historical production sessions."
+}

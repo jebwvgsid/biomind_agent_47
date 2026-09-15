@@ -1,0 +1,75 @@
+{
+  "classification": "NEW_TEST_UNCONDITIONAL_CAUSAL_FIELD_ASSUMPTION_ERROR",
+  "raw_pytest_status": "FAIL_RETAINED",
+  "production_report_modified": false,
+  "actual_execution": {
+    "attempt_id": "attempt_75ded562715cd3908857",
+    "step_id": "compile-927",
+    "executed": true,
+    "returncode": 23,
+    "committed": false
+  },
+  "origin": {
+    "attempt_id": "attempt_75ded562715cd3908857",
+    "returncode": 23,
+    "source_stage": "execute"
+  },
+  "conditional_causal_execution": {
+    "status": "UNKNOWN"
+  },
+  "active_failure_packet_ref": "",
+  "held_scope": {
+    "task_id": "fix-f6-v2_generic_blocked",
+    "plan_id": "plan_305e1b8aab8b869610cb",
+    "plan_version": "plan_v1",
+    "step_id": "compile-927",
+    "attempt_id": "attempt_75ded562715cd3908857",
+    "episode_id": "recovery-seed-44a13c4ec8c8e6120f5ed5e2"
+  },
+  "typed_recovery_receipts": {
+    "v2-causal-1": {
+      "source_fingerprint": "44a13c4ec8c8e6120f5ed5e2",
+      "failure_packet_ref": "failure-packet:sha256:e1c353407d1f52c41beda333d21d96bec56d89ff0302b83a575c95a8c72b7e01",
+      "outcome_type": "blocked",
+      "outcome_scope": {
+        "task_id": "fix-f6-v2_generic_blocked",
+        "plan_id": "plan_305e1b8aab8b869610cb",
+        "plan_version": "plan_v1",
+        "step_id": "compile-927",
+        "state_generation": 109,
+        "action_id": "action_2de804e964924772",
+        "attempt_id": "attempt_75ded562715cd3908857",
+        "incident_id": "incident-13fc3a33d3d4591958dc9295",
+        "failure_packet_version": 1
+      }
+    }
+  },
+  "consumed_packet_receipts": {
+    "failure-packet:sha256:e1c353407d1f52c41beda333d21d96bec56d89ff0302b83a575c95a8c72b7e01": {
+      "decision_id": "v2-causal-1",
+      "source_fingerprint": "44a13c4ec8c8e6120f5ed5e2",
+      "directive_digest": "sha256:98031758cfc5c05ebcf0bca20acd29d89bb2769a66e049e7b4f14de444c74ff4",
+      "incident_id": "incident-13fc3a33d3d4591958dc9295",
+      "failure_packet_version": 1,
+      "supersedes_packet_ref": ""
+    }
+  },
+  "contract_evidence": [
+    {
+      "file": "agent_core/workflow/inspection_stop.py",
+      "line": 73,
+      "contract": "A legitimate blocked directive can consume the active packet first."
+    },
+    {
+      "file": "agent_core/workflow/managed_stop.py",
+      "line": 204,
+      "contract": "Scope may resolve consumed terminal packet through prior held scope."
+    },
+    {
+      "file": "agent_core/workflow/managed_stop.py",
+      "line": 372,
+      "contract": "causal_execution copied only if active packet remains; otherwise UNKNOWN. execution is the current actual attempt owner."
+    }
+  ],
+  "corrected_test": "Preserve original business/report/origin assertions; assert primary execution and exact consumed blocked receipt decision/scope/attempt link; no packet fabricated."
+}

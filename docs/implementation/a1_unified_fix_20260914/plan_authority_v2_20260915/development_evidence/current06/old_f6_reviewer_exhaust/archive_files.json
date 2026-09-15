@@ -1,0 +1,49 @@
+[
+  {
+    "original": "f6-reviewer_exhaust-full.json.gz",
+    "sha256": "ab75bf2e94f7822b8f0048087ab7e6ba9f72fbe593e1752b1cc28f94bdadf6c9",
+    "archive": "f6-reviewer_exhaust-full.json.gz",
+    "archive_sha256": "ab75bf2e94f7822b8f0048087ab7e6ba9f72fbe593e1752b1cc28f94bdadf6c9"
+  },
+  {
+    "original": "f6-reviewer_exhaust-heartbeat.jsonl",
+    "sha256": "d0b6928c77800d948e6f300346edf657e464d8c9a5c80ab66ff2ee5c250f85b8",
+    "archive": "f6-reviewer_exhaust-heartbeat.jsonl.gz",
+    "archive_sha256": "bc7abd614a8c471614cae2b15503c9b52f283817386d5a77a479bcf6483dd100"
+  },
+  {
+    "original": "f6-reviewer_exhaust-summary.json",
+    "sha256": "12e088ae274568c388499ff852c1b8c2098eb895d7dee5a97b5a5842f5330aff",
+    "archive": "f6-reviewer_exhaust-summary.json",
+    "archive_sha256": "12e088ae274568c388499ff852c1b8c2098eb895d7dee5a97b5a5842f5330aff"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "909bd6672b35211fb32a1fce8200b17ec0c6fa9eb9b5cb1edc5a7fb0161c56ae",
+    "archive": "invocation.json",
+    "archive_sha256": "909bd6672b35211fb32a1fce8200b17ec0c6fa9eb9b5cb1edc5a7fb0161c56ae"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "5bf26fd2bc3768f03a22cc35f2f0ad17a525ff95fff5655eea3bb1fe2fb3ccbd",
+    "archive": "pytest-results.json",
+    "archive_sha256": "5bf26fd2bc3768f03a22cc35f2f0ad17a525ff95fff5655eea3bb1fe2fb3ccbd"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "7232cdd08f8d2e47720c1af2dc8e0f0139cfbcd0636a7cf0e113b8216b03c929",
+    "archive": "run_exit.json",
+    "archive_sha256": "7232cdd08f8d2e47720c1af2dc8e0f0139cfbcd0636a7cf0e113b8216b03c929"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "85175fcab35976d69a9a167066e59bb60657c93636a2fc4c036b8f77a9f6aa2b",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "c2ebbd96d0e6e51c1f6da9249c4d1373e540727b2b376d9f08b4927f68b71e82"
+  },
+  {
+    "original": "f6-preserved-reviewer_exhaust",
+    "archive": "f6-preserved-reviewer_exhaust.tar.gz",
+    "archive_sha256": "dbc354cdfbcf06485902f03f7e3f97be7103bd82073a2d8d9e2002d92734f0d7"
+  }
+]

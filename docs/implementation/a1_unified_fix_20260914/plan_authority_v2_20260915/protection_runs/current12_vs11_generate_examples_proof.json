@@ -1,0 +1,193 @@
+{
+  "old_export": "current11",
+  "new_export": "current12",
+  "new_source_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+  "all_manifest_changes": [
+    {
+      "path": "agent_core/step_effects.py",
+      "old_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+      "new_sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4"
+    },
+    {
+      "path": "tests/plan_authority_v2_20260915/test_graph.py",
+      "old_sha256": "577ffb198c3f883a7721a8b274e6bae0f2395f2c85123bf55c3b7861b0f7ec1a",
+      "new_sha256": "ff13d935f0cde3422fe633c14edba2b4105171b7e3a2771e0e8ca01c7ca94466"
+    }
+  ],
+  "production_changes": [
+    {
+      "path": "agent_core/step_effects.py",
+      "old_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+      "new_sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4"
+    }
+  ],
+  "module_bytes_equal": false,
+  "ast_and_text_proof": {
+    "top_level_statement_count": 117,
+    "only_changed_top_level_node": "generate_output_examples",
+    "all_other_top_level_ast_equal": true,
+    "all_text_outside_changed_function_equal": true,
+    "old_function_lines": [
+      3258,
+      3363
+    ],
+    "new_function_lines": [
+      3258,
+      3373
+    ],
+    "exact_diff": "current12_vs11_generate_examples.diff"
+  },
+  "semantic_delta": [
+    {
+      "condition": "script_protocol == True",
+      "change": "Both blocked_example and missing-context action_example use top-level type=blocked; reason unchanged. This matches the existing script STOP parser."
+    },
+    {
+      "condition": "script_protocol == True AND step.execution_capability_id == 'framework.generic.execute' AND step.tool == 'bash' AND no missing published obligation",
+      "change": "Executable display envelope uses a Bash scaffold containing printf to stderr and exit 1. It assumes no Python interpreter and emits no observation, result or workspace success."
+    },
+    {
+      "condition": "script_protocol == False",
+      "change": "Native returned objects retain action_type. Added script_payload is unused; Bash-specific branch is false. This is static return-value equivalence, not a claim of whole-module byte equality."
+    },
+    {
+      "condition": "script_protocol == True AND not generic Bash AND no missing published obligation",
+      "change": "Executable Python display payload remains byte-identical. Script blocked examples still receive the necessary type fix."
+    }
+  ],
+  "unchanged_consumers": [
+    {
+      "path": "bio_agents.py",
+      "sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d",
+      "bytes_equal": true
+    },
+    {
+      "path": "prompts/manager.py",
+      "sha256": "fe29c14293813db6e7a3bc05721ebf72367a6d3a3b2ae4c11c40d8bfe68fbc68",
+      "bytes_equal": true
+    },
+    {
+      "path": "agent_core/public_response.py",
+      "sha256": "260f6c77c1271c52e4f014a8eef07dd9bbbb219522dcadfd5f970de36dacd692",
+      "bytes_equal": true
+    },
+    {
+      "path": "agent_core/controller_audit.py",
+      "sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3",
+      "bytes_equal": true
+    },
+    {
+      "path": "agent_core/workflow/execution.py",
+      "sha256": "44a73f514aca43fa068e55d43f25e5f4026dc054a0ceb9ef66fda027983ff65c",
+      "bytes_equal": true
+    }
+  ],
+  "producer_wiring": [
+    {
+      "path": "prompts/manager.py",
+      "line": 2667,
+      "use": "Current-mode provider prompt protocol."
+    },
+    {
+      "path": "prompts/manager.py",
+      "line": 2892,
+      "use": "Native-mode canonical execution examples."
+    },
+    {
+      "path": "bio_agents.py",
+      "line": 42387,
+      "use": "Formal approved emission/template context projected as current_generate_output_protocol; actual material is shared by ordinary, local correction and Recovery Generate paths."
+    }
+  ],
+  "actual_current12_rerun": {
+    "group": "current12/f1f2_components",
+    "unique_cases": 39,
+    "passed": 39,
+    "failed": 0,
+    "returncode": 0,
+    "source_changes_after_run": [],
+    "loaded_modules": 142,
+    "all_loaded_hashes_match_manifest": true,
+    "loaded_step_effects": {
+      "path": "agent_core/step_effects.py",
+      "sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4",
+      "manifest_sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4"
+    },
+    "shared_entry_protocol_receipts": [
+      {
+        "case": "normal",
+        "receipt": "current12/f1f2_components/f1-protocol-normal.json.gz",
+        "status": "CURRENT_STEP_ADMISSION_PASS",
+        "outcome_type": "action_ready",
+        "request_count": 1,
+        "prior_real_executions": 0,
+        "requests": [
+          {
+            "mode": "native_action_json",
+            "selected_response_sha256": "48759d05cc0fe04cdc69f2f419f70e5e9154f25c9fd7dacf788ea42a444d4a3e",
+            "response_is_published_action_example": true
+          }
+        ]
+      },
+      {
+        "case": "local",
+        "receipt": "current12/f1f2_components/f1-protocol-local.json.gz",
+        "status": "CURRENT_STEP_ADMISSION_PASS",
+        "outcome_type": "action_ready",
+        "request_count": 2,
+        "prior_real_executions": 0,
+        "requests": [
+          {
+            "mode": "native_action_json",
+            "selected_response_sha256": "1360b0995545f748060df9774ae4bd882b667b99bc1517444d447dd1bcf35c2e",
+            "response_is_published_action_example": false
+          },
+          {
+            "mode": "native_action_json",
+            "selected_response_sha256": "47ce7ef151cffe4b8d4b114d61ab9df805622e881eb68c6266e5c0f021cc9289",
+            "response_is_published_action_example": true
+          }
+        ]
+      },
+      {
+        "case": "recovery",
+        "receipt": "current12/f1f2_components/f1-protocol-recovery.json.gz",
+        "status": "CURRENT_STEP_ADMISSION_PASS",
+        "outcome_type": "action_ready",
+        "request_count": 1,
+        "prior_real_executions": 1,
+        "requests": [
+          {
+            "mode": "native_action_json",
+            "selected_response_sha256": "1691bce150c2f28a9768a0c0a2deb7d4da96cb67f0d3d5f5b040985e2a556141",
+            "response_is_published_action_example": true
+          }
+        ]
+      },
+      {
+        "case": "blocked",
+        "receipt": "current12/f1f2_components/f1-protocol-blocked.json.gz",
+        "status": "FORMAL_STOP_PASS",
+        "outcome_type": "blocked",
+        "request_count": 1,
+        "prior_real_executions": 1,
+        "requests": [
+          {
+            "mode": "native_action_json",
+            "selected_response_sha256": "f241e0b1afc2f86e09215e284656ec3692a50e187610e609dc93c74bd9c1f05f",
+            "response_is_published_action_example": true
+          }
+        ]
+      }
+    ],
+    "legacy_script_receipt": "current12/f1f2_components/f1-protocol-legacy.json.gz",
+    "demo_boundary": "The demo executes only its own synthetic declaration; no current-step scientific completion is claimed."
+  },
+  "prior_protection_reuse": {
+    "already_replaced": "The same39 old F1/F2 nodeids now select current12 actual results; they are not additional unique tests.",
+    "native_boundary": "For prior native-mode cases, this function returns the same public examples by the exact conditions above. Unchanged parser/ledger/approval/runner functions are not relabeled as newly run.",
+    "noncalling_boundary": "Plan/input/cancellation/hook-only components can reuse their prior exact evidence where this changed example producer is not called; exact selected source versions remain in the case ledger.",
+    "script_boundary": "Script-mode example changes are explicitly exercised by the current12 legacy/shared39 plus the root/incident new generic example and STOP tests; earlier script producer output is not asserted byte-identical.",
+    "scope_limit": "This is one direct producer change and shared-entry regression, not a new full155 run, real provider validation, or real scientific E2E."
+  }
+}

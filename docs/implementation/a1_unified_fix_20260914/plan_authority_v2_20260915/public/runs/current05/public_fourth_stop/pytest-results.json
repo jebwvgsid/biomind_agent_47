@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001245066523551941,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 14.82477224804461,
+    "failure": "def test_fourth_formal_stop_is_non_success_without_fifth_request():\n>       _fourth_reply(True)\n\ntests/plan_authority_v2_20260915/test_public_graph.py:264: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntests/plan_authority_v2_20260915/test_public_graph.py:256: in _fourth_reply\n    asyncio.run(scenario())\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        case = FourthReplyGraph(stop)\n        await case.setup()\n        try:\n            await run_admission(case)\n>           assert case.counts['planner'] == 4\nE           assert 3 == 4\n\ntests/plan_authority_v2_20260915/test_public_graph.py:235: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003162287175655365,
+    "failure": ""
+  }
+]

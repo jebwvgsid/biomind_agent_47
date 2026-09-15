@@ -1,0 +1,75 @@
+{
+  "status": "FAIL",
+  "test_duration_seconds": 85.0901194717735,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 5,
+    "reviewer": 4,
+    "recovery": 1
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 5,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_708354acf0da7127094b",
+      "approved_sha256": "e1f203afce9954c9f8d51c37d37e0d514f8d1b1832497f8d43f8403b4152937e",
+      "executed_sha256": "30c4522f264cf1e7866c036c17dc913a7ca3331ef4e4090b3a92451adcab06fc"
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_c00ea4f185c81602fee3",
+      "approved_sha256": "bca3d6a55f7599ee8c94430ddc30b1318afff915b78cbcf8f79aaad970ccd80b",
+      "executed_sha256": "5186ad65857fd611bbd48b4d52f460fdc38eb3d9f31bf1ed2a297c62596a21d2"
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_e29a87d42cfa17123fda",
+      "approved_sha256": "df92c1e5184d9c3fbddae85c9b45a9238b38ac29961de3f8c5c049569eb2fa37",
+      "executed_sha256": "afd21f1df9c70d818c66a4fb86ad8c3825786eff8ec926245c80bba79904489e"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "rc": 0,
+      "attempt_id": "attempt_a5029fd0e736ace32717",
+      "approved_sha256": "f40d79f8b01cf73f05225d0a7019fb3f40c9992b8839fd7940f55a6c043069dc",
+      "executed_sha256": "f9871671d4a12bd8075b0930270f0ab01bc2d56d43e217973e4a238a85e505d8"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "rc": 23,
+      "attempt_id": "attempt_75ded562715cd3908857",
+      "approved_sha256": "0aadd27950f0603e1b1db3090ab9103c92f64305477649686e63c464690b28e5",
+      "executed_sha256": "3863c3d2a1e44cd9747b4d0fe0dacca85f96f4d53821a5a75da8a38bccda3d6f"
+    }
+  ],
+  "commits": 4,
+  "final_outcome": null,
+  "generate_outcome_type": "action_ready",
+  "durable_status": "blocked",
+  "gate_counterfactuals": [],
+  "provider_modes": [
+    "native_action_json",
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {
+    "ledger-205": "/tmp/biomind-plan-authority-v2-current07/graph_generic_blocked/scratch/biomind-plan-local-graph-43n2uy2w/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+  },
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

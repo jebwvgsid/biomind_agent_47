@@ -1,0 +1,2544 @@
+{
+  "representation": "ACTUAL_ADMITTED_PERSISTED_SNAPSHOT_NOT_PROVIDER_RAW",
+  "raw_response_status": "NOT_RETAINED",
+  "original_raw_response_sha256": "dc029d40dd47fef04b5066bb4d1bca1a890cf144b0899d5f7f789b1b663a9306",
+  "source": "docs/implementation/a1_unified_fix_20260914/plan_authority_v2_20260915/regression_runs/current07/old_f6_normal/f6-normal-full.json.gz",
+  "source_pointers": [
+    "/durable/steps",
+    "/durable/plan_artifacts",
+    "/durable/plan_resource_bindings",
+    "/durable/compiled_dataflow",
+    "/durable/plan_dataflow_receipt",
+    "/durable/plan_compilation_receipt",
+    "/durable/task_output_materializations"
+  ],
+  "admitted": {
+    "steps": [
+      {
+        "action": "execute",
+        "batch_id": "",
+        "dependencies": [],
+        "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+        "inputs": [
+          "artifact-04902687db1c7a847103",
+          "artifact-01ba53e3c5179ff38b4d",
+          "artifact-931b950fce31067570f5"
+        ],
+        "operation": "check_contig_compatibility",
+        "outputs": [],
+        "produces_observations": [
+          {
+            "identity": "contigs_compatible",
+            "evidence_contract": {
+              "required_fields": [
+                "value"
+              ]
+            },
+            "predicate": {
+              "applicability": {
+                "execution_capability_ids": [
+                  "genomics.snpeff_annotation.prepare_database",
+                  "genomics.snpeff_annotation.build_database",
+                  "genomics.snpeff_annotation.annotate_variants",
+                  "genomics.snpeff_annotation.summarize_ann",
+                  "genomics.snpeff_annotation.finalize_outputs"
+                ],
+                "kind": "plan_contains_any_execution_capability",
+                "schema_version": 1
+              },
+              "expected": true,
+              "failure_disposition": "correction_required",
+              "missing_disposition": "inspection_required",
+              "operator": "boolean_equals",
+              "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+              "parser_id": "biomind.genomics.contig_compatibility.v1",
+              "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+            }
+          }
+        ],
+        "purpose": "validation",
+        "risk_level": "low",
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "step_id": "check_contig_compatibility",
+        "success_criteria": [
+          "Establish only actual newly produced synthetic protocol facts for check_contig_compatibility."
+        ],
+        "title": "check_contig_compatibility — explicit synthetic mechanism",
+        "tool": "genomics/snpeff-annotation",
+        "workflow_stage_ids": [],
+        "skills_declared": true,
+        "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+        "produces_bindings": [],
+        "explicit_side_effects": [],
+        "workspace_mutations": [],
+        "depends_on": [],
+        "step_type": "atomic",
+        "renderer_id": "",
+        "input_artifact_ids": [],
+        "output_artifact_ids": [],
+        "dependency_sources": {},
+        "status": "passed",
+        "artifacts": [],
+        "artifact_contract_revision": 0,
+        "artifact_reconciliation_history": [],
+        "renderer_execution": {},
+        "input_contracts": [
+          "artifact-04902687db1c7a847103",
+          "artifact-01ba53e3c5179ff38b4d",
+          "artifact-931b950fce31067570f5"
+        ],
+        "output_contracts": [],
+        "evidence": [
+          {
+            "event": "started",
+            "detail": "entered generate after compression check",
+            "at": "2026-09-15T13:59:51"
+          },
+          {
+            "event": "active_skills_derived_from_plan_step",
+            "detail": "genomics/snpeff-annotation",
+            "at": "2026-09-15T13:59:51"
+          },
+          {
+            "event": "execute_success",
+            "detail": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/attempts/attempt_54abcbcba1c707602b33/executed.sh\nSTDOUT:\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":true}]}\n\nSTDERR:\n",
+            "at": "2026-09-15T14:00:00"
+          },
+          {
+            "event": "verification_pending",
+            "detail": "execution evidence committed; Supervisor validation pending",
+            "at": "2026-09-15T14:00:00"
+          },
+          {
+            "event": "passed",
+            "detail": "CommitStep commit-step-27f8fe40e7b89a6cca4f57ca accepted validation-d19019ab95a2718844fe",
+            "at": "2026-09-15T14:00:02"
+          }
+        ],
+        "updated_at": "2026-09-15T14:00:02",
+        "step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [],
+          "produces_bindings": [],
+          "produces_observations": [
+            {
+              "identity": "contigs_compatible",
+              "evidence_contract": {
+                "required_fields": [
+                  "value"
+                ]
+              },
+              "predicate": {
+                "applicability": {
+                  "execution_capability_ids": [
+                    "genomics.snpeff_annotation.prepare_database",
+                    "genomics.snpeff_annotation.build_database",
+                    "genomics.snpeff_annotation.annotate_variants",
+                    "genomics.snpeff_annotation.summarize_ann",
+                    "genomics.snpeff_annotation.finalize_outputs"
+                  ],
+                  "kind": "plan_contains_any_execution_capability",
+                  "schema_version": 1
+                },
+                "expected": true,
+                "failure_disposition": "correction_required",
+                "missing_disposition": "inspection_required",
+                "operator": "boolean_equals",
+                "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                "parser_id": "biomind.genomics.contig_compatibility.v1",
+                "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+              }
+            }
+          ],
+          "workspace_mutations": [],
+          "explicit_side_effects": []
+        },
+        "generate_binding_input_contract": {
+          "protocol": "public_handle_v2",
+          "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "binding_contract": {
+            "schema_version": 1,
+            "public_input_protocol": "public_handle_v2",
+            "operations": {
+              "prepare_database": {
+                "produces_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "consumes_bindings": [],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "produced_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "produced_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "build_database": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "annotate_variants": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace",
+                    "required_state": "snpeff_database_ready"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              }
+            },
+            "derived_artifact_layout": {
+              "data_root": "<snpeff_db artifact>/data",
+              "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+              "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+              "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        },
+        "generated_from_task_revision": 1,
+        "verification_attempt_id": "attempt_54abcbcba1c707602b33"
+      },
+      {
+        "action": "execute",
+        "batch_id": "",
+        "dependencies": [
+          "check_contig_compatibility"
+        ],
+        "execution_capability_id": "genomics.snpeff_annotation.prepare_database",
+        "inputs": [
+          "artifact-01ba53e3c5179ff38b4d",
+          "artifact-931b950fce31067570f5"
+        ],
+        "operation": "prepare_database",
+        "outputs": [
+          "plan-artifact-cb8c366edc70070080623eb0"
+        ],
+        "produces_bindings": [
+          "genome_version",
+          "snpeff_db"
+        ],
+        "produces_observations": [
+          "database_layout_prepared"
+        ],
+        "purpose": "analysis",
+        "risk_level": "low",
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "step_id": "prepare_database",
+        "success_criteria": [
+          "Establish only actual newly produced synthetic protocol facts for prepare_database."
+        ],
+        "title": "prepare_database — explicit synthetic mechanism",
+        "tool": "genomics/snpeff-annotation",
+        "workflow_stage_ids": [],
+        "workspace_mutations": [
+          {
+            "identity": "plan-artifact-93e2debcdf4089c992200c1b",
+            "available_after_success": true,
+            "contract_revision": "snpeff-workspace-transition-v1",
+            "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+            "declared_resource_ref": "plan-artifact-93e2debcdf4089c992200c1b",
+            "establishes_state": "database_layout_prepared",
+            "evidence_contract": {
+              "allow_idempotent_revalidation": true,
+              "collector": "bounded_filesystem_snapshot_v1",
+              "postconditions": [
+                {
+                  "kind": "directory_exists",
+                  "relative_path": "data"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/genomes/{binding:genome_version}.fa"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/{binding:genome_version}/genes.gtf"
+                }
+              ],
+              "schema_version": 1
+            },
+            "mutation": "prepare_database",
+            "requires_available": false
+          }
+        ],
+        "skills_declared": true,
+        "capability_contract_hash": "sha256:46537873d2135f8b0572c48a5a2125911a04adbd60e5affdb40c2e4f621ce6c9",
+        "explicit_side_effects": [],
+        "depends_on": [
+          "check_contig_compatibility"
+        ],
+        "step_type": "atomic",
+        "renderer_id": "",
+        "input_artifact_ids": [],
+        "output_artifact_ids": [
+          "artifact_9577d88182d386de616d"
+        ],
+        "dependency_sources": {
+          "check_contig_compatibility": "planner_declared"
+        },
+        "status": "passed",
+        "artifacts": [
+          {
+            "path": "plan.config",
+            "artifact_id": "plan_file",
+            "role": "",
+            "artifact_type": "file",
+            "required": true,
+            "producer_step_id": "prepare_database",
+            "producer": "",
+            "validator": "nonempty_file",
+            "source": "structured_plan"
+          }
+        ],
+        "artifact_contract_revision": 0,
+        "artifact_reconciliation_history": [],
+        "renderer_execution": {},
+        "input_contracts": [
+          "artifact-01ba53e3c5179ff38b4d",
+          "artifact-931b950fce31067570f5"
+        ],
+        "output_contracts": [
+          "plan-artifact-cb8c366edc70070080623eb0"
+        ],
+        "evidence": [
+          {
+            "event": "started",
+            "detail": "advanced after check_contig_compatibility",
+            "at": "2026-09-15T14:00:02"
+          },
+          {
+            "event": "active_skills_derived_from_plan_step",
+            "detail": "genomics/snpeff-annotation",
+            "at": "2026-09-15T14:00:03"
+          },
+          {
+            "event": "execute_success",
+            "detail": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/attempts/attempt_e2e7fd60e62d4cc87ea9/executed.sh\nSTDOUT:\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"plan-artifact-cb8c366edc70070080623eb0\",\"path\":\"/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/plan_artifacts/plan-artifact-cb8c366edc70070080623eb0\"}],\"produces_observations\":[{\"identity\":\"database_layout_prepared\",\"value\":true}]}\n\nSTDERR:\n",
+            "at": "2026-09-15T14:00:15"
+          },
+          {
+            "event": "verification_pending",
+            "detail": "execution evidence committed; Supervisor validation pending",
+            "at": "2026-09-15T14:00:15"
+          },
+          {
+            "event": "passed",
+            "detail": "CommitStep commit-step-7a5f58045c8770d48223e12f accepted validation-4d40831dc12268039663",
+            "at": "2026-09-15T14:00:17"
+          }
+        ],
+        "updated_at": "2026-09-15T14:00:17",
+        "step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [
+            "plan-artifact-cb8c366edc70070080623eb0"
+          ],
+          "produces_bindings": [
+            "genome_version",
+            "snpeff_db"
+          ],
+          "produces_observations": [
+            "database_layout_prepared"
+          ],
+          "workspace_mutations": [
+            {
+              "identity": "plan-artifact-93e2debcdf4089c992200c1b",
+              "available_after_success": true,
+              "contract_revision": "snpeff-workspace-transition-v1",
+              "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+              "declared_resource_ref": "plan-artifact-93e2debcdf4089c992200c1b",
+              "establishes_state": "database_layout_prepared",
+              "evidence_contract": {
+                "allow_idempotent_revalidation": true,
+                "collector": "bounded_filesystem_snapshot_v1",
+                "postconditions": [
+                  {
+                    "kind": "directory_exists",
+                    "relative_path": "data"
+                  },
+                  {
+                    "kind": "file_nonempty",
+                    "relative_path": "data/genomes/{binding:genome_version}.fa"
+                  },
+                  {
+                    "kind": "file_nonempty",
+                    "relative_path": "data/{binding:genome_version}/genes.gtf"
+                  }
+                ],
+                "schema_version": 1
+              },
+              "mutation": "prepare_database",
+              "requires_available": false
+            }
+          ],
+          "explicit_side_effects": []
+        },
+        "generate_binding_input_contract": {
+          "protocol": "public_handle_v2",
+          "capability_id": "genomics.snpeff_annotation.prepare_database",
+          "binding_contract": {
+            "schema_version": 1,
+            "public_input_protocol": "public_handle_v2",
+            "operations": {
+              "prepare_database": {
+                "produces_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "consumes_bindings": [],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "produced_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "produced_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "build_database": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "annotate_variants": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace",
+                    "required_state": "snpeff_database_ready"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              }
+            },
+            "derived_artifact_layout": {
+              "data_root": "<snpeff_db artifact>/data",
+              "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+              "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+              "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        },
+        "generated_from_task_revision": 1,
+        "verification_attempt_id": "attempt_e2e7fd60e62d4cc87ea9"
+      },
+      {
+        "action": "execute",
+        "batch_id": "",
+        "dependencies": [
+          "prepare_database"
+        ],
+        "execution_capability_id": "genomics.snpeff_annotation.build_database",
+        "inputs": [
+          "artifact-01ba53e3c5179ff38b4d",
+          "artifact-931b950fce31067570f5",
+          "plan-artifact-cb8c366edc70070080623eb0"
+        ],
+        "operation": "build_database",
+        "outputs": [],
+        "produces_observations": [
+          "snpeff_database_ready"
+        ],
+        "purpose": "analysis",
+        "risk_level": "low",
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "step_id": "build_database",
+        "success_criteria": [
+          "Establish only actual newly produced synthetic protocol facts for build_database."
+        ],
+        "title": "build_database — explicit synthetic mechanism",
+        "tool": "genomics/snpeff-annotation",
+        "workflow_stage_ids": [],
+        "workspace_mutations": [
+          {
+            "identity": "plan-artifact-93e2debcdf4089c992200c1b",
+            "available_after_success": true,
+            "contract_revision": "snpeff-workspace-transition-v1",
+            "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+            "declared_resource_ref": "plan-artifact-93e2debcdf4089c992200c1b",
+            "establishes_state": "snpeff_database_ready",
+            "evidence_contract": {
+              "allow_idempotent_revalidation": true,
+              "collector": "bounded_filesystem_snapshot_v1",
+              "postconditions": [
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+                }
+              ],
+              "schema_version": 1
+            },
+            "mutation": "build_database",
+            "requires_available": true,
+            "requires_state": "database_layout_prepared"
+          }
+        ],
+        "skills_declared": true,
+        "capability_contract_hash": "sha256:6193dcdd461a41ef6e0809e13be48618804e5690ef8878f1d549c171a5b48a2e",
+        "produces_bindings": [],
+        "explicit_side_effects": [],
+        "depends_on": [
+          "prepare_database"
+        ],
+        "step_type": "atomic",
+        "renderer_id": "",
+        "input_artifact_ids": [
+          "artifact_9577d88182d386de616d"
+        ],
+        "output_artifact_ids": [],
+        "dependency_sources": {
+          "prepare_database": "planner_declared"
+        },
+        "status": "passed",
+        "artifacts": [],
+        "artifact_contract_revision": 0,
+        "artifact_reconciliation_history": [],
+        "renderer_execution": {},
+        "input_contracts": [
+          "artifact-01ba53e3c5179ff38b4d",
+          "artifact-931b950fce31067570f5",
+          "plan-artifact-cb8c366edc70070080623eb0"
+        ],
+        "output_contracts": [],
+        "evidence": [
+          {
+            "event": "started",
+            "detail": "advanced after prepare_database",
+            "at": "2026-09-15T14:00:17"
+          },
+          {
+            "event": "active_skills_derived_from_plan_step",
+            "detail": "genomics/snpeff-annotation",
+            "at": "2026-09-15T14:00:18"
+          },
+          {
+            "event": "execute_success",
+            "detail": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/attempts/attempt_d006b8070498ac3e6281/executed.sh\nSTDOUT:\nSYNTHETIC_ALGORITHM_COMPLETED:build\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"snpeff_database_ready\",\"value\":true}]}\n\nSTDERR:\n",
+            "at": "2026-09-15T14:00:28"
+          },
+          {
+            "event": "verification_pending",
+            "detail": "execution evidence committed; Supervisor validation pending",
+            "at": "2026-09-15T14:00:28"
+          },
+          {
+            "event": "passed",
+            "detail": "CommitStep commit-step-308ab0df3e4258b5dfb20ef1 accepted validation-d413b884c21cf1230c0f",
+            "at": "2026-09-15T14:00:30"
+          }
+        ],
+        "updated_at": "2026-09-15T14:00:30",
+        "step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [],
+          "produces_bindings": [],
+          "produces_observations": [
+            "snpeff_database_ready"
+          ],
+          "workspace_mutations": [
+            {
+              "identity": "plan-artifact-93e2debcdf4089c992200c1b",
+              "available_after_success": true,
+              "contract_revision": "snpeff-workspace-transition-v1",
+              "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+              "declared_resource_ref": "plan-artifact-93e2debcdf4089c992200c1b",
+              "establishes_state": "snpeff_database_ready",
+              "evidence_contract": {
+                "allow_idempotent_revalidation": true,
+                "collector": "bounded_filesystem_snapshot_v1",
+                "postconditions": [
+                  {
+                    "kind": "file_nonempty",
+                    "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+                  }
+                ],
+                "schema_version": 1
+              },
+              "mutation": "build_database",
+              "requires_available": true,
+              "requires_state": "database_layout_prepared"
+            }
+          ],
+          "explicit_side_effects": []
+        },
+        "generate_binding_input_contract": {
+          "protocol": "public_handle_v2",
+          "capability_id": "genomics.snpeff_annotation.build_database",
+          "binding_contract": {
+            "schema_version": 1,
+            "public_input_protocol": "public_handle_v2",
+            "operations": {
+              "prepare_database": {
+                "produces_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "consumes_bindings": [],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "produced_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "produced_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "build_database": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "annotate_variants": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace",
+                    "required_state": "snpeff_database_ready"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              }
+            },
+            "derived_artifact_layout": {
+              "data_root": "<snpeff_db artifact>/data",
+              "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+              "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+              "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        },
+        "generated_from_task_revision": 1,
+        "verification_attempt_id": "attempt_d006b8070498ac3e6281"
+      },
+      {
+        "action": "execute",
+        "batch_id": "",
+        "dependencies": [
+          "build_database",
+          "prepare_database"
+        ],
+        "execution_capability_id": "genomics.snpeff_annotation.annotate_variants",
+        "inputs": [
+          "artifact-04902687db1c7a847103",
+          "plan-artifact-cb8c366edc70070080623eb0",
+          "plan-artifact-93e2debcdf4089c992200c1b"
+        ],
+        "operation": "annotate_variants",
+        "outputs": [
+          "annotated_vcf"
+        ],
+        "purpose": "analysis",
+        "risk_level": "low",
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "step_id": "annotate_variants",
+        "success_criteria": [
+          "Establish only actual newly produced synthetic protocol facts for annotate_variants."
+        ],
+        "title": "annotate_variants — explicit synthetic mechanism",
+        "tool": "genomics/snpeff-annotation",
+        "workflow_stage_ids": [],
+        "skills_declared": true,
+        "capability_contract_hash": "sha256:5ba8ea7a9dcdb7e2076eb02987b4bac0a8f909bb1c3221f31244eda736ba35c2",
+        "produces_bindings": [],
+        "produces_observations": [],
+        "explicit_side_effects": [],
+        "workspace_mutations": [],
+        "depends_on": [
+          "build_database",
+          "prepare_database"
+        ],
+        "step_type": "atomic",
+        "renderer_id": "",
+        "input_artifact_ids": [
+          "artifact_9577d88182d386de616d"
+        ],
+        "output_artifact_ids": [
+          "artifact_29518cd1ab6bcbab98d9"
+        ],
+        "dependency_sources": {
+          "build_database": "planner_declared"
+        },
+        "status": "passed",
+        "artifacts": [
+          {
+            "path": "annotated_vcf",
+            "artifact_id": "annotated_vcf_file",
+            "role": "",
+            "artifact_type": "file",
+            "required": true,
+            "producer_step_id": "annotate_variants",
+            "producer": "",
+            "validator": "nonempty_file",
+            "source": "structured_plan"
+          }
+        ],
+        "artifact_contract_revision": 0,
+        "artifact_reconciliation_history": [],
+        "renderer_execution": {},
+        "input_contracts": [
+          "artifact-04902687db1c7a847103",
+          "plan-artifact-cb8c366edc70070080623eb0",
+          "plan-artifact-93e2debcdf4089c992200c1b"
+        ],
+        "output_contracts": [
+          "annotated_vcf"
+        ],
+        "evidence": [
+          {
+            "event": "started",
+            "detail": "advanced after build_database",
+            "at": "2026-09-15T14:00:30"
+          },
+          {
+            "event": "active_skills_derived_from_plan_step",
+            "detail": "genomics/snpeff-annotation",
+            "at": "2026-09-15T14:00:31"
+          },
+          {
+            "event": "execute_success",
+            "detail": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/attempts/attempt_8e4aed7e54454211187f/executed.sh\nSTDOUT:\nSYNTHETIC_ALGORITHM_COMPLETED:annotate\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"annotated_vcf\",\"path\":\"/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf\"}]}\n\nSTDERR:\n",
+            "at": "2026-09-15T14:00:42"
+          },
+          {
+            "event": "verification_pending",
+            "detail": "execution evidence committed; Supervisor validation pending",
+            "at": "2026-09-15T14:00:43"
+          },
+          {
+            "event": "passed",
+            "detail": "CommitStep commit-step-08ad9c5f37290ee6c22c8d2f accepted validation-b6a10642d3c333011906",
+            "at": "2026-09-15T14:00:45"
+          }
+        ],
+        "updated_at": "2026-09-15T14:00:45",
+        "step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [
+            "annotated_vcf"
+          ],
+          "produces_bindings": [],
+          "produces_observations": [],
+          "workspace_mutations": [],
+          "explicit_side_effects": []
+        },
+        "generate_binding_input_contract": {
+          "protocol": "public_handle_v2",
+          "capability_id": "genomics.snpeff_annotation.annotate_variants",
+          "binding_contract": {
+            "schema_version": 1,
+            "public_input_protocol": "public_handle_v2",
+            "operations": {
+              "prepare_database": {
+                "produces_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "consumes_bindings": [],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "produced_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "produced_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "build_database": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "annotate_variants": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+                    "resource_kind": "mutable_workspace",
+                    "required_state": "snpeff_database_ready"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              }
+            },
+            "derived_artifact_layout": {
+              "data_root": "<snpeff_db artifact>/data",
+              "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+              "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+              "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        },
+        "generated_from_task_revision": 1,
+        "verification_attempt_id": "attempt_8e4aed7e54454211187f"
+      },
+      {
+        "action": "execute",
+        "batch_id": "",
+        "dependencies": [
+          "annotate_variants"
+        ],
+        "execution_capability_id": "genomics.snpeff_annotation.summarize_ann",
+        "inputs": [
+          "annotated_vcf"
+        ],
+        "operation": "summarize_ann",
+        "outputs": [
+          "ann_summary"
+        ],
+        "produces_observations": [
+          "ann_summary_completed"
+        ],
+        "purpose": "analysis",
+        "risk_level": "low",
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "step_id": "summarize_ann",
+        "success_criteria": [
+          "Establish only actual newly produced synthetic protocol facts for summarize_ann."
+        ],
+        "title": "summarize_ann — explicit synthetic mechanism",
+        "tool": "genomics/snpeff-annotation",
+        "workflow_stage_ids": [],
+        "skills_declared": true,
+        "capability_contract_hash": "sha256:39dbbfa28325bfda2b7d4141bb00f403a1c45ea7359c3c19cffe267825e024ce",
+        "produces_bindings": [],
+        "explicit_side_effects": [],
+        "workspace_mutations": [],
+        "depends_on": [
+          "annotate_variants"
+        ],
+        "step_type": "atomic",
+        "renderer_id": "",
+        "input_artifact_ids": [
+          "artifact_29518cd1ab6bcbab98d9"
+        ],
+        "output_artifact_ids": [
+          "artifact_bfb2335144b74d981094"
+        ],
+        "dependency_sources": {
+          "annotate_variants": "planner_declared"
+        },
+        "status": "passed",
+        "artifacts": [
+          {
+            "path": "ann_summary",
+            "artifact_id": "annotation_summary_file",
+            "role": "",
+            "artifact_type": "file",
+            "required": true,
+            "producer_step_id": "summarize_ann",
+            "producer": "",
+            "validator": "nonempty_file",
+            "source": "structured_plan"
+          }
+        ],
+        "artifact_contract_revision": 0,
+        "artifact_reconciliation_history": [],
+        "renderer_execution": {},
+        "input_contracts": [
+          "annotated_vcf"
+        ],
+        "output_contracts": [
+          "ann_summary"
+        ],
+        "evidence": [
+          {
+            "event": "started",
+            "detail": "advanced after annotate_variants",
+            "at": "2026-09-15T14:00:45"
+          },
+          {
+            "event": "active_skills_derived_from_plan_step",
+            "detail": "genomics/snpeff-annotation",
+            "at": "2026-09-15T14:00:46"
+          },
+          {
+            "event": "execute_success",
+            "detail": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/attempts/attempt_a626ca2111abf5bc9748/executed.sh\nSTDOUT:\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"ann_summary\",\"path\":\"/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv\"}],\"produces_observations\":[{\"identity\":\"ann_summary_completed\",\"value\":{\"synthetic\":true,\"annotated_records\":1}}]}\n\nSTDERR:\n",
+            "at": "2026-09-15T14:00:58"
+          },
+          {
+            "event": "verification_pending",
+            "detail": "execution evidence committed; Supervisor validation pending",
+            "at": "2026-09-15T14:00:59"
+          },
+          {
+            "event": "passed",
+            "detail": "CommitStep commit-step-81693accc4732f386726f4f1 accepted validation-e79fc1952078a169e0e2",
+            "at": "2026-09-15T14:01:01"
+          }
+        ],
+        "updated_at": "2026-09-15T14:01:01",
+        "step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [
+            "ann_summary"
+          ],
+          "produces_bindings": [],
+          "produces_observations": [
+            "ann_summary_completed"
+          ],
+          "workspace_mutations": [],
+          "explicit_side_effects": []
+        },
+        "generate_binding_input_contract": {
+          "protocol": "public_handle_v2",
+          "capability_id": "genomics.snpeff_annotation.summarize_ann",
+          "binding_contract": {
+            "schema_version": 1,
+            "public_input_protocol": "public_handle_v2",
+            "operations": {
+              "prepare_database": {
+                "produces_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "consumes_bindings": [],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "produced_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "produced_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "build_database": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "annotate_variants": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace",
+                    "required_state": "snpeff_database_ready"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              }
+            },
+            "derived_artifact_layout": {
+              "data_root": "<snpeff_db artifact>/data",
+              "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+              "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+              "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        },
+        "generated_from_task_revision": 1,
+        "verification_attempt_id": "attempt_a626ca2111abf5bc9748"
+      },
+      {
+        "action": "execute",
+        "batch_id": "",
+        "dependencies": [
+          "summarize_ann",
+          "annotate_variants"
+        ],
+        "execution_capability_id": "genomics.snpeff_annotation.finalize_outputs",
+        "inputs": [
+          "annotated_vcf",
+          "ann_summary"
+        ],
+        "operation": "finalize_outputs",
+        "outputs": [
+          "report",
+          "reproduce_script",
+          "stage_status"
+        ],
+        "produces_observations": [
+          "final_outputs_recorded"
+        ],
+        "purpose": "analysis",
+        "risk_level": "low",
+        "skill_ids": [
+          "genomics/snpeff-annotation"
+        ],
+        "step_id": "finalize_outputs",
+        "success_criteria": [
+          "Establish only actual newly produced synthetic protocol facts for finalize_outputs."
+        ],
+        "title": "finalize_outputs — explicit synthetic mechanism",
+        "tool": "genomics/snpeff-annotation",
+        "workflow_stage_ids": [],
+        "skills_declared": true,
+        "capability_contract_hash": "sha256:776c7f27035903c9defa4b37953ee69770372c18466e3c3514cfcb169b216ec7",
+        "produces_bindings": [],
+        "explicit_side_effects": [],
+        "workspace_mutations": [],
+        "depends_on": [
+          "summarize_ann",
+          "annotate_variants"
+        ],
+        "step_type": "atomic",
+        "renderer_id": "",
+        "input_artifact_ids": [
+          "artifact_29518cd1ab6bcbab98d9",
+          "artifact_bfb2335144b74d981094"
+        ],
+        "output_artifact_ids": [
+          "artifact_fa885a5250c1739f8aab",
+          "artifact_1919bbe8fc4691c181f2",
+          "artifact_c22cc1dec3aa5ebe3a41"
+        ],
+        "dependency_sources": {
+          "summarize_ann": "planner_declared"
+        },
+        "status": "passed",
+        "artifacts": [
+          {
+            "path": "report",
+            "artifact_id": "report_file",
+            "role": "",
+            "artifact_type": "file",
+            "required": true,
+            "producer_step_id": "finalize_outputs",
+            "producer": "",
+            "validator": "nonempty_file",
+            "source": "structured_plan"
+          },
+          {
+            "path": "reproduce_script",
+            "artifact_id": "reproduce_file",
+            "role": "",
+            "artifact_type": "file",
+            "required": true,
+            "producer_step_id": "finalize_outputs",
+            "producer": "",
+            "validator": "nonempty_file",
+            "source": "structured_plan"
+          },
+          {
+            "path": "stage_status",
+            "artifact_id": "stage_status_file",
+            "role": "",
+            "artifact_type": "file",
+            "required": true,
+            "producer_step_id": "finalize_outputs",
+            "producer": "",
+            "validator": "nonempty_file",
+            "source": "structured_plan"
+          }
+        ],
+        "artifact_contract_revision": 0,
+        "artifact_reconciliation_history": [],
+        "renderer_execution": {},
+        "input_contracts": [
+          "annotated_vcf",
+          "ann_summary"
+        ],
+        "output_contracts": [
+          "report",
+          "reproduce_script",
+          "stage_status"
+        ],
+        "evidence": [
+          {
+            "event": "started",
+            "detail": "advanced after summarize_ann",
+            "at": "2026-09-15T14:01:01"
+          },
+          {
+            "event": "active_skills_derived_from_plan_step",
+            "detail": "genomics/snpeff-annotation",
+            "at": "2026-09-15T14:01:02"
+          },
+          {
+            "event": "execute_success",
+            "detail": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/attempts/attempt_fe20416bad02e4b20e9f/executed.sh\nSTDOUT:\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"report\",\"path\":\"/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/report.md\"},{\"identity\":\"reproduce_script\",\"path\":\"/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh\"},{\"identity\":\"stage_status\",\"path\":\"/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv\"}],\"produces_observations\":[{\"identity\":\"final_outputs_recorded\",\"value\":{\"synthetic\":true,\"physical_reports\":3}}]}\n\nSTDERR:\n",
+            "at": "2026-09-15T14:01:15"
+          },
+          {
+            "event": "verification_pending",
+            "detail": "execution evidence committed; Supervisor validation pending",
+            "at": "2026-09-15T14:01:16"
+          },
+          {
+            "event": "passed",
+            "detail": "CommitStep commit-step-c234241323cf6fe15776f7a3 accepted validation-0068b1d4c4860446ec63",
+            "at": "2026-09-15T14:01:18"
+          }
+        ],
+        "updated_at": "2026-09-15T14:01:18",
+        "step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [
+            "report",
+            "reproduce_script",
+            "stage_status"
+          ],
+          "produces_bindings": [],
+          "produces_observations": [
+            "final_outputs_recorded"
+          ],
+          "workspace_mutations": [],
+          "explicit_side_effects": []
+        },
+        "generate_binding_input_contract": {
+          "protocol": "public_handle_v2",
+          "capability_id": "genomics.snpeff_annotation.finalize_outputs",
+          "binding_contract": {
+            "schema_version": 1,
+            "public_input_protocol": "public_handle_v2",
+            "operations": {
+              "prepare_database": {
+                "produces_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "consumes_bindings": [],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "produced_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "produced_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "build_database": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              },
+              "annotate_variants": {
+                "produces_bindings": [],
+                "consumes_bindings": [
+                  "genome_version",
+                  "snpeff_db"
+                ],
+                "binding_types": {
+                  "genome_version": "string",
+                  "snpeff_db": "artifact_ref"
+                },
+                "artifact_binding_requirements": {
+                  "snpeff_db": {
+                    "canonical_resource_id": "artifact.snpeff_data_dir",
+                    "resource_kind": "mutable_workspace",
+                    "required_state": "snpeff_database_ready"
+                  }
+                },
+                "required_binding_env": {
+                  "GENOME_VERSION": {
+                    "source": "accepted_binding",
+                    "name": "genome_version"
+                  },
+                  "SNPEFF_DB": {
+                    "source": "accepted_binding",
+                    "name": "snpeff_db"
+                  }
+                }
+              }
+            },
+            "derived_artifact_layout": {
+              "data_root": "<snpeff_db artifact>/data",
+              "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+              "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+              "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        },
+        "generated_from_task_revision": 1,
+        "verification_attempt_id": "attempt_fe20416bad02e4b20e9f"
+      }
+    ],
+    "plan_artifacts": {
+      "plan-artifact-93e2debcdf4089c992200c1b": {
+        "logical_artifact_id": "plan-artifact-93e2debcdf4089c992200c1b",
+        "artifact_binding_revision": 1,
+        "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/plan_artifacts/plan-artifact-93e2debcdf4089c992200c1b",
+        "object_kind": "directory",
+        "materialization_policy_id": "managed_intermediate_v1",
+        "lifecycle": "plan_local",
+        "availability_origin": "not_yet_available",
+        "resource_kind": "mutable_workspace",
+        "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+        "resource_binding": {},
+        "role_associations": [
+          {
+            "capability_id": "genomics.snpeff_annotation.prepare_database",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "prepare_database"
+          },
+          {
+            "capability_id": "genomics.snpeff_annotation.build_database",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "build_database"
+          },
+          {
+            "capability_id": "genomics.snpeff_annotation.annotate_variants",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "annotate_variants"
+          }
+        ],
+        "role_association_version": 1,
+        "semantic_view": {
+          "description": "New isolated mutable workspace",
+          "format": "directory",
+          "role": "snpeff_data_dir"
+        },
+        "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+        "local_ref": "plan.db"
+      },
+      "plan-artifact-cb8c366edc70070080623eb0": {
+        "logical_artifact_id": "plan-artifact-cb8c366edc70070080623eb0",
+        "artifact_binding_revision": 1,
+        "canonical_path": "/tmp/biomind-plan-authority-v2-current07/old_f6_normal/scratch/biomind-plan-local-graph-u_l35o08/task_outputs/fix-f6-normal/plan_artifacts/plan-artifact-cb8c366edc70070080623eb0",
+        "object_kind": "file",
+        "materialization_policy_id": "managed_intermediate_v1",
+        "lifecycle": "plan_local",
+        "availability_origin": "not_yet_available",
+        "resource_kind": "immutable_artifact",
+        "canonical_resource_id": "plan-artifact-cb8c366edc70070080623eb0",
+        "resource_binding": {},
+        "semantic_view": {
+          "description": "New isolated config",
+          "format": "text",
+          "role": "snpeff_config"
+        },
+        "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+        "local_ref": "plan.config"
+      }
+    },
+    "plan_resource_bindings": {
+      "ann_summary": {
+        "canonical_resource_id": "ann_summary",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "ann_summary",
+          "output.ann_summary"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-0f4ad620426f64af3312"
+      },
+      "annotated_vcf": {
+        "canonical_resource_id": "annotated_vcf",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "annotated_vcf",
+          "output.annotated_vcf"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-e272b449c71632c51468"
+      },
+      "artifact-01ba53e3c5179ff38b4d": {
+        "canonical_resource_id": "artifact-01ba53e3c5179ff38b4d",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "verified_task_input",
+        "initially_available": true,
+        "aliases": [
+          "artifact-01ba53e3c5179ff38b4d",
+          "input.reference_fasta"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-e6344dcdc0d49dedc97c"
+      },
+      "artifact-04902687db1c7a847103": {
+        "canonical_resource_id": "artifact-04902687db1c7a847103",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "verified_task_input",
+        "initially_available": true,
+        "aliases": [
+          "artifact-04902687db1c7a847103",
+          "input.variant_vcf"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-bb5fb89e3dcd0113ce5c"
+      },
+      "artifact-931b950fce31067570f5": {
+        "canonical_resource_id": "artifact-931b950fce31067570f5",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "verified_task_input",
+        "initially_available": true,
+        "aliases": [
+          "artifact-931b950fce31067570f5",
+          "input.annotation_gtf"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-d5c3f58153e65705cc2c"
+      },
+      "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config": {
+        "canonical_resource_id": "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "plan_local",
+        "initially_available": false,
+        "aliases": [
+          "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+          "plan-artifact-cb8c366edc70070080623eb0",
+          "plan.config"
+        ],
+        "binding_source": "candidate_local_artifact",
+        "contract_revision": "plan-resource-v2",
+        "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-e070a0776e8dc1932e0d"
+      },
+      "input.annotation_gtf": {
+        "canonical_resource_id": "artifact-931b950fce31067570f5",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "verified_task_input",
+        "initially_available": true,
+        "aliases": [
+          "artifact-931b950fce31067570f5",
+          "input.annotation_gtf"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-d5c3f58153e65705cc2c"
+      },
+      "input.reference_fasta": {
+        "canonical_resource_id": "artifact-01ba53e3c5179ff38b4d",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "verified_task_input",
+        "initially_available": true,
+        "aliases": [
+          "artifact-01ba53e3c5179ff38b4d",
+          "input.reference_fasta"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-e6344dcdc0d49dedc97c"
+      },
+      "input.variant_vcf": {
+        "canonical_resource_id": "artifact-04902687db1c7a847103",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "verified_task_input",
+        "initially_available": true,
+        "aliases": [
+          "artifact-04902687db1c7a847103",
+          "input.variant_vcf"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-bb5fb89e3dcd0113ce5c"
+      },
+      "output.ann_summary": {
+        "canonical_resource_id": "ann_summary",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "ann_summary",
+          "output.ann_summary"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-0f4ad620426f64af3312"
+      },
+      "output.annotated_vcf": {
+        "canonical_resource_id": "annotated_vcf",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "annotated_vcf",
+          "output.annotated_vcf"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-e272b449c71632c51468"
+      },
+      "output.report": {
+        "canonical_resource_id": "report",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "output.report",
+          "report"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-ec88f926102d5fec4ccb"
+      },
+      "output.reproduce_script": {
+        "canonical_resource_id": "reproduce_script",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "output.reproduce_script",
+          "reproduce_script"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-d34ba0883a635e3cf01c"
+      },
+      "output.stage_status": {
+        "canonical_resource_id": "stage_status",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "output.stage_status",
+          "stage_status"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-06786d247899b304fe0f"
+      },
+      "plan-artifact-93e2debcdf4089c992200c1b": {
+        "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+        "resource_kind": "mutable_workspace",
+        "availability_origin": "plan_local",
+        "initially_available": false,
+        "aliases": [
+          "plan-artifact-93e2debcdf4089c992200c1b",
+          "plan.db"
+        ],
+        "binding_source": "candidate_local_artifact",
+        "contract_revision": "plan-resource-v2",
+        "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+        "initial_state": "",
+        "role_associations": [
+          {
+            "capability_id": "genomics.snpeff_annotation.prepare_database",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "prepare_database"
+          },
+          {
+            "capability_id": "genomics.snpeff_annotation.build_database",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "build_database"
+          },
+          {
+            "capability_id": "genomics.snpeff_annotation.annotate_variants",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "annotate_variants"
+          }
+        ],
+        "role_association_version": 1,
+        "binding_id": "plan-resource-binding-088f1cb28eba9c176888"
+      },
+      "plan-artifact-cb8c366edc70070080623eb0": {
+        "canonical_resource_id": "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "plan_local",
+        "initially_available": false,
+        "aliases": [
+          "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+          "plan-artifact-cb8c366edc70070080623eb0",
+          "plan.config"
+        ],
+        "binding_source": "candidate_local_artifact",
+        "contract_revision": "plan-resource-v2",
+        "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-e070a0776e8dc1932e0d"
+      },
+      "plan.config": {
+        "canonical_resource_id": "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "plan_local",
+        "initially_available": false,
+        "aliases": [
+          "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+          "plan-artifact-cb8c366edc70070080623eb0",
+          "plan.config"
+        ],
+        "binding_source": "candidate_local_artifact",
+        "contract_revision": "plan-resource-v2",
+        "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-e070a0776e8dc1932e0d"
+      },
+      "plan.db": {
+        "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+        "resource_kind": "mutable_workspace",
+        "availability_origin": "plan_local",
+        "initially_available": false,
+        "aliases": [
+          "plan-artifact-93e2debcdf4089c992200c1b",
+          "plan.db"
+        ],
+        "binding_source": "candidate_local_artifact",
+        "contract_revision": "plan-resource-v2",
+        "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+        "initial_state": "",
+        "role_associations": [
+          {
+            "capability_id": "genomics.snpeff_annotation.prepare_database",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "prepare_database"
+          },
+          {
+            "capability_id": "genomics.snpeff_annotation.build_database",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "build_database"
+          },
+          {
+            "capability_id": "genomics.snpeff_annotation.annotate_variants",
+            "role": "artifact.snpeff_data_dir",
+            "step_id": "annotate_variants"
+          }
+        ],
+        "role_association_version": 1,
+        "binding_id": "plan-resource-binding-088f1cb28eba9c176888"
+      },
+      "report": {
+        "canonical_resource_id": "report",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "output.report",
+          "report"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-ec88f926102d5fec4ccb"
+      },
+      "reproduce_script": {
+        "canonical_resource_id": "reproduce_script",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "output.reproduce_script",
+          "reproduce_script"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-d34ba0883a635e3cf01c"
+      },
+      "stage_status": {
+        "canonical_resource_id": "stage_status",
+        "resource_kind": "immutable_artifact",
+        "availability_origin": "not_yet_available",
+        "initially_available": false,
+        "aliases": [
+          "output.stage_status",
+          "stage_status"
+        ],
+        "binding_source": "authoritative_handle",
+        "contract_revision": "",
+        "candidate_scope_id": "",
+        "initial_state": "",
+        "binding_id": "plan-resource-binding-06786d247899b304fe0f"
+      }
+    },
+    "compiled_dataflow": {
+      "schema_version": 1,
+      "compiler_id": "biomind.plan_dataflow_compiler.v1",
+      "resources": [
+        {
+          "canonical_resource_id": "ann_summary",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "not_yet_available",
+          "initially_available": false,
+          "aliases": [
+            "ann_summary",
+            "output.ann_summary"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-0f4ad620426f64af3312"
+        },
+        {
+          "canonical_resource_id": "annotated_vcf",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "not_yet_available",
+          "initially_available": false,
+          "aliases": [
+            "annotated_vcf",
+            "output.annotated_vcf"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-e272b449c71632c51468"
+        },
+        {
+          "canonical_resource_id": "artifact-01ba53e3c5179ff38b4d",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "verified_task_input",
+          "initially_available": true,
+          "aliases": [
+            "artifact-01ba53e3c5179ff38b4d",
+            "input.reference_fasta"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-e6344dcdc0d49dedc97c"
+        },
+        {
+          "canonical_resource_id": "artifact-04902687db1c7a847103",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "verified_task_input",
+          "initially_available": true,
+          "aliases": [
+            "artifact-04902687db1c7a847103",
+            "input.variant_vcf"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-bb5fb89e3dcd0113ce5c"
+        },
+        {
+          "canonical_resource_id": "artifact-931b950fce31067570f5",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "verified_task_input",
+          "initially_available": true,
+          "aliases": [
+            "artifact-931b950fce31067570f5",
+            "input.annotation_gtf"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-d5c3f58153e65705cc2c"
+        },
+        {
+          "canonical_resource_id": "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "plan_local",
+          "initially_available": false,
+          "aliases": [
+            "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+            "plan-artifact-cb8c366edc70070080623eb0",
+            "plan.config"
+          ],
+          "binding_source": "candidate_local_artifact",
+          "contract_revision": "plan-resource-v2",
+          "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-e070a0776e8dc1932e0d"
+        },
+        {
+          "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+          "resource_kind": "mutable_workspace",
+          "availability_origin": "plan_local",
+          "initially_available": false,
+          "aliases": [
+            "plan-artifact-93e2debcdf4089c992200c1b",
+            "plan.db"
+          ],
+          "binding_source": "candidate_local_artifact",
+          "contract_revision": "plan-resource-v2",
+          "candidate_scope_id": "candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6",
+          "initial_state": "",
+          "role_associations": [
+            {
+              "capability_id": "genomics.snpeff_annotation.prepare_database",
+              "role": "artifact.snpeff_data_dir",
+              "step_id": "prepare_database"
+            },
+            {
+              "capability_id": "genomics.snpeff_annotation.build_database",
+              "role": "artifact.snpeff_data_dir",
+              "step_id": "build_database"
+            },
+            {
+              "capability_id": "genomics.snpeff_annotation.annotate_variants",
+              "role": "artifact.snpeff_data_dir",
+              "step_id": "annotate_variants"
+            }
+          ],
+          "role_association_version": 1,
+          "binding_id": "plan-resource-binding-088f1cb28eba9c176888"
+        },
+        {
+          "canonical_resource_id": "report",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "not_yet_available",
+          "initially_available": false,
+          "aliases": [
+            "output.report",
+            "report"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-ec88f926102d5fec4ccb"
+        },
+        {
+          "canonical_resource_id": "reproduce_script",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "not_yet_available",
+          "initially_available": false,
+          "aliases": [
+            "output.reproduce_script",
+            "reproduce_script"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-d34ba0883a635e3cf01c"
+        },
+        {
+          "canonical_resource_id": "stage_status",
+          "resource_kind": "immutable_artifact",
+          "availability_origin": "not_yet_available",
+          "initially_available": false,
+          "aliases": [
+            "output.stage_status",
+            "stage_status"
+          ],
+          "binding_source": "authoritative_handle",
+          "contract_revision": "",
+          "candidate_scope_id": "",
+          "initial_state": "",
+          "binding_id": "plan-resource-binding-06786d247899b304fe0f"
+        }
+      ],
+      "edges": [
+        {
+          "step_id": "check_contig_compatibility",
+          "step_index": 0,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-01ba53e3c5179ff38b4d",
+          "canonical_resource_id": "artifact-01ba53e3c5179ff38b4d",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e6344dcdc0d49dedc97c",
+          "field_path": "$.steps[0].inputs[1]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "check_contig_compatibility",
+          "step_index": 0,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-04902687db1c7a847103",
+          "canonical_resource_id": "artifact-04902687db1c7a847103",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-bb5fb89e3dcd0113ce5c",
+          "field_path": "$.steps[0].inputs[0]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "check_contig_compatibility",
+          "step_index": 0,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-931b950fce31067570f5",
+          "canonical_resource_id": "artifact-931b950fce31067570f5",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-d5c3f58153e65705cc2c",
+          "field_path": "$.steps[0].inputs[2]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "prepare_database",
+          "step_index": 1,
+          "effect_kind": "MUTATE",
+          "declared_resource_ref": "plan-artifact-93e2debcdf4089c992200c1b",
+          "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+          "resource_kind": "mutable_workspace",
+          "binding_id": "plan-resource-binding-088f1cb28eba9c176888",
+          "field_path": "$.steps[1].step_effect.workspace_mutations[0]",
+          "requires_available": false,
+          "requires_state": "",
+          "available_after_success": true,
+          "establishes_state": "database_layout_prepared",
+          "transition_explicit": true,
+          "mutation": "prepare_database",
+          "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+          "contract_revision": "snpeff-workspace-transition-v1"
+        },
+        {
+          "step_id": "prepare_database",
+          "step_index": 1,
+          "effect_kind": "PRODUCE",
+          "declared_resource_ref": "plan-artifact-cb8c366edc70070080623eb0",
+          "canonical_resource_id": "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e070a0776e8dc1932e0d",
+          "field_path": "$.steps[1].outputs[0]",
+          "establishes_state": "available"
+        },
+        {
+          "step_id": "prepare_database",
+          "step_index": 1,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-01ba53e3c5179ff38b4d",
+          "canonical_resource_id": "artifact-01ba53e3c5179ff38b4d",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e6344dcdc0d49dedc97c",
+          "field_path": "$.steps[1].inputs[0]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "prepare_database",
+          "step_index": 1,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-931b950fce31067570f5",
+          "canonical_resource_id": "artifact-931b950fce31067570f5",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-d5c3f58153e65705cc2c",
+          "field_path": "$.steps[1].inputs[1]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "build_database",
+          "step_index": 2,
+          "effect_kind": "MUTATE",
+          "declared_resource_ref": "plan-artifact-93e2debcdf4089c992200c1b",
+          "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+          "resource_kind": "mutable_workspace",
+          "binding_id": "plan-resource-binding-088f1cb28eba9c176888",
+          "field_path": "$.steps[2].step_effect.workspace_mutations[0]",
+          "requires_available": true,
+          "requires_state": "database_layout_prepared",
+          "available_after_success": true,
+          "establishes_state": "snpeff_database_ready",
+          "transition_explicit": true,
+          "mutation": "build_database",
+          "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+          "contract_revision": "snpeff-workspace-transition-v1"
+        },
+        {
+          "step_id": "build_database",
+          "step_index": 2,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-01ba53e3c5179ff38b4d",
+          "canonical_resource_id": "artifact-01ba53e3c5179ff38b4d",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e6344dcdc0d49dedc97c",
+          "field_path": "$.steps[2].inputs[0]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "build_database",
+          "step_index": 2,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-931b950fce31067570f5",
+          "canonical_resource_id": "artifact-931b950fce31067570f5",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-d5c3f58153e65705cc2c",
+          "field_path": "$.steps[2].inputs[1]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "build_database",
+          "step_index": 2,
+          "effect_kind": "READ",
+          "declared_resource_ref": "plan-artifact-cb8c366edc70070080623eb0",
+          "canonical_resource_id": "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e070a0776e8dc1932e0d",
+          "field_path": "$.steps[2].inputs[2]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "annotate_variants",
+          "step_index": 3,
+          "effect_kind": "PRODUCE",
+          "declared_resource_ref": "annotated_vcf",
+          "canonical_resource_id": "annotated_vcf",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e272b449c71632c51468",
+          "field_path": "$.steps[3].outputs[0]",
+          "establishes_state": "available"
+        },
+        {
+          "step_id": "annotate_variants",
+          "step_index": 3,
+          "effect_kind": "READ",
+          "declared_resource_ref": "artifact-04902687db1c7a847103",
+          "canonical_resource_id": "artifact-04902687db1c7a847103",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-bb5fb89e3dcd0113ce5c",
+          "field_path": "$.steps[3].inputs[0]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "annotate_variants",
+          "step_index": 3,
+          "effect_kind": "READ",
+          "declared_resource_ref": "plan-artifact-cb8c366edc70070080623eb0",
+          "canonical_resource_id": "candidate:candidate-scope-6bf45526-c46d-40d4-b3d7-1bb19a3548c6:plan.config",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e070a0776e8dc1932e0d",
+          "field_path": "$.steps[3].inputs[1]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "annotate_variants",
+          "step_index": 3,
+          "effect_kind": "READ",
+          "declared_resource_ref": "plan-artifact-93e2debcdf4089c992200c1b",
+          "canonical_resource_id": "plan-artifact-93e2debcdf4089c992200c1b",
+          "resource_kind": "mutable_workspace",
+          "binding_id": "plan-resource-binding-088f1cb28eba9c176888",
+          "field_path": "$.steps[3].inputs[2]",
+          "establishes_state": "",
+          "requires_state": "snpeff_database_ready"
+        },
+        {
+          "step_id": "summarize_ann",
+          "step_index": 4,
+          "effect_kind": "PRODUCE",
+          "declared_resource_ref": "ann_summary",
+          "canonical_resource_id": "ann_summary",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-0f4ad620426f64af3312",
+          "field_path": "$.steps[4].outputs[0]",
+          "establishes_state": "available"
+        },
+        {
+          "step_id": "summarize_ann",
+          "step_index": 4,
+          "effect_kind": "READ",
+          "declared_resource_ref": "annotated_vcf",
+          "canonical_resource_id": "annotated_vcf",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e272b449c71632c51468",
+          "field_path": "$.steps[4].inputs[0]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "finalize_outputs",
+          "step_index": 5,
+          "effect_kind": "PRODUCE",
+          "declared_resource_ref": "report",
+          "canonical_resource_id": "report",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-ec88f926102d5fec4ccb",
+          "field_path": "$.steps[5].outputs[0]",
+          "establishes_state": "available"
+        },
+        {
+          "step_id": "finalize_outputs",
+          "step_index": 5,
+          "effect_kind": "PRODUCE",
+          "declared_resource_ref": "reproduce_script",
+          "canonical_resource_id": "reproduce_script",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-d34ba0883a635e3cf01c",
+          "field_path": "$.steps[5].outputs[1]",
+          "establishes_state": "available"
+        },
+        {
+          "step_id": "finalize_outputs",
+          "step_index": 5,
+          "effect_kind": "PRODUCE",
+          "declared_resource_ref": "stage_status",
+          "canonical_resource_id": "stage_status",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-06786d247899b304fe0f",
+          "field_path": "$.steps[5].outputs[2]",
+          "establishes_state": "available"
+        },
+        {
+          "step_id": "finalize_outputs",
+          "step_index": 5,
+          "effect_kind": "READ",
+          "declared_resource_ref": "ann_summary",
+          "canonical_resource_id": "ann_summary",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-0f4ad620426f64af3312",
+          "field_path": "$.steps[5].inputs[1]",
+          "establishes_state": ""
+        },
+        {
+          "step_id": "finalize_outputs",
+          "step_index": 5,
+          "effect_kind": "READ",
+          "declared_resource_ref": "annotated_vcf",
+          "canonical_resource_id": "annotated_vcf",
+          "resource_kind": "immutable_artifact",
+          "binding_id": "plan-resource-binding-e272b449c71632c51468",
+          "field_path": "$.steps[5].inputs[0]",
+          "establishes_state": ""
+        }
+      ],
+      "dependency_ancestors": {
+        "annotate_variants": [
+          "build_database",
+          "check_contig_compatibility",
+          "prepare_database"
+        ],
+        "build_database": [
+          "check_contig_compatibility",
+          "prepare_database"
+        ],
+        "check_contig_compatibility": [],
+        "finalize_outputs": [
+          "annotate_variants",
+          "build_database",
+          "check_contig_compatibility",
+          "prepare_database",
+          "summarize_ann"
+        ],
+        "prepare_database": [
+          "check_contig_compatibility"
+        ],
+        "summarize_ann": [
+          "annotate_variants",
+          "build_database",
+          "check_contig_compatibility",
+          "prepare_database"
+        ]
+      }
+    },
+    "plan_dataflow_receipt": {
+      "schema_version": 1,
+      "compiler_id": "biomind.plan_dataflow_compiler.v1",
+      "compiler_version": 1,
+      "scope": "plan_dataflow",
+      "status": "compiled",
+      "review_compatible": true,
+      "semantic_source_digest": "sha256:738842c9768a0d45cd887b02d2ce9722bad5991d0c53a1678be04a27091fdef0",
+      "resource_binding_digest": "sha256:7664578d666671e340100ec66180cca0c072acf0a563ca4f9497b22f5fade67a",
+      "compiled_dataflow_digest": "sha256:0e11faae0f71cc37c9b9f03f831af4fac364aa42cc2d09a54152a8d2121aafeb",
+      "effect_receipt_id": "",
+      "issue_count": 0,
+      "issues_digest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "receipt_digest": "sha256:1f699f0719f53a3c9ea7ccc6c32437642156458c3c7a059a461ac31dfbb98454",
+      "receipt_id": "plan-dataflow:1f699f0719f53a3c9ea7ccc6"
+    },
+    "plan_compilation_receipt": {
+      "schema_version": 1,
+      "compiler_id": "biomind.step_effect_compiler.v1",
+      "compiler_version": 1,
+      "scope": "plan",
+      "status": "compiled",
+      "identity": {
+        "task_id": "fix-f6-normal",
+        "plan_id": "plan_780c985c03a482a9ea6c",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "declared_plan_semantic_hash": "6d201fd36cd9890cb7ff059e5a504f14b97a08ab031f2f8fd1a36b6698de5542"
+      },
+      "source_plan_digest": "sha256:3b59083fcc782fc9feda48dfbf9abf0f09ba82c945145d1ed83272c1c0f5754e",
+      "compiled_plan_digest": "sha256:e9b04322cc6d09f816e324086b1389da6910747e1a1a19cff54008b2002a0734",
+      "capability_registry_digest": "sha256:4fde75376367c4913803b19a71ed1d07451e2770a5b46c918f576231781421c6",
+      "resource_binding_digest": "sha256:7664578d666671e340100ec66180cca0c072acf0a563ca4f9497b22f5fade67a",
+      "effect_complete": true,
+      "review_compatible": true,
+      "legacy_compatible": false,
+      "step_receipts": [
+        {
+          "schema_version": 1,
+          "compiler_id": "biomind.step_effect_compiler.v1",
+          "compiler_version": 1,
+          "scope": "step",
+          "status": "compiled",
+          "identity": {
+            "task_id": "fix-f6-normal",
+            "plan_id": "plan_780c985c03a482a9ea6c",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "declared_plan_semantic_hash": "6d201fd36cd9890cb7ff059e5a504f14b97a08ab031f2f8fd1a36b6698de5542",
+            "step_id": "check_contig_compatibility",
+            "step_index": 0,
+            "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "operation": "check_contig_compatibility"
+          },
+          "source_step_digest": "sha256:f0f0f56f6f7d61f104e848436fa856805d906097332df93a48329755f3f999ae",
+          "compiled_step_digest": "sha256:f0f0f56f6f7d61f104e848436fa856805d906097332df93a48329755f3f999ae",
+          "step_effect_digest": "sha256:1a4240bc0c130b3fb63f800e931bbc248303c7c6355d4d7d487623411dd91bbd",
+          "capability_contract_digest": "sha256:56395aaa8d51ec79cdaefeb3b9dd37f55989df4b563be0ee605fed25a7e32055",
+          "effect_complete": true,
+          "legacy_compatible": false,
+          "normalizations": [],
+          "issue_dispositions": [],
+          "receipt_digest": "sha256:d2f8c2a64a762c95083d3943da4a353853ff25c9f2e8b0be6822ffcda21b1c6e",
+          "receipt_id": "step-effect:d2f8c2a64a762c95083d3943"
+        },
+        {
+          "schema_version": 1,
+          "compiler_id": "biomind.step_effect_compiler.v1",
+          "compiler_version": 1,
+          "scope": "step",
+          "status": "compiled",
+          "identity": {
+            "task_id": "fix-f6-normal",
+            "plan_id": "plan_780c985c03a482a9ea6c",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "declared_plan_semantic_hash": "6d201fd36cd9890cb7ff059e5a504f14b97a08ab031f2f8fd1a36b6698de5542",
+            "step_id": "prepare_database",
+            "step_index": 1,
+            "execution_capability_id": "genomics.snpeff_annotation.prepare_database",
+            "operation": "prepare_database"
+          },
+          "source_step_digest": "sha256:ddbfe9a8724cec43e977d4653048c1cc05845bd34d549e723321caab17d9723c",
+          "compiled_step_digest": "sha256:7768c6a7d8ae62f28afff301e467a2d6fb1d44ced0d6ba72d48ea14d71983786",
+          "step_effect_digest": "sha256:ae2b45c6c88c65b607ab04da5c91fe32544270bf627e89a1789f237a8246a478",
+          "capability_contract_digest": "sha256:6eb6cb57add2563799f49fa8c7087287f81b6303a8e90b1ba5079820500230ce",
+          "effect_complete": true,
+          "legacy_compatible": false,
+          "normalizations": [],
+          "issue_dispositions": [],
+          "receipt_digest": "sha256:5c2ea9ce382b25272eb009804b18d83c446078395f8c16c619d674c2ebc1afd1",
+          "receipt_id": "step-effect:5c2ea9ce382b25272eb00980"
+        },
+        {
+          "schema_version": 1,
+          "compiler_id": "biomind.step_effect_compiler.v1",
+          "compiler_version": 1,
+          "scope": "step",
+          "status": "compiled",
+          "identity": {
+            "task_id": "fix-f6-normal",
+            "plan_id": "plan_780c985c03a482a9ea6c",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "declared_plan_semantic_hash": "6d201fd36cd9890cb7ff059e5a504f14b97a08ab031f2f8fd1a36b6698de5542",
+            "step_id": "build_database",
+            "step_index": 2,
+            "execution_capability_id": "genomics.snpeff_annotation.build_database",
+            "operation": "build_database"
+          },
+          "source_step_digest": "sha256:11843f0ecb96b5eeecc38be337357f148ddf151f07117d1bc88708645590ddf7",
+          "compiled_step_digest": "sha256:e9de8c0e5f462f8b15af4dfe3049602fee9f96696c08ae9505ac092eb2fbd686",
+          "step_effect_digest": "sha256:d02945073c654e97d0574a1e9ef96072fd8eda35451bcbfad9b4c46bc99360f7",
+          "capability_contract_digest": "sha256:f6c2a64c610c4d19ac004b33714e3aacd23e0b4b92b593eefc5e079496bb94b5",
+          "effect_complete": true,
+          "legacy_compatible": false,
+          "normalizations": [],
+          "issue_dispositions": [],
+          "receipt_digest": "sha256:b5180374fc856b3173c3a492be7701d8999a6308c645e3a6b1d99ab950e93554",
+          "receipt_id": "step-effect:b5180374fc856b3173c3a492"
+        },
+        {
+          "schema_version": 1,
+          "compiler_id": "biomind.step_effect_compiler.v1",
+          "compiler_version": 1,
+          "scope": "step",
+          "status": "compiled",
+          "identity": {
+            "task_id": "fix-f6-normal",
+            "plan_id": "plan_780c985c03a482a9ea6c",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "declared_plan_semantic_hash": "6d201fd36cd9890cb7ff059e5a504f14b97a08ab031f2f8fd1a36b6698de5542",
+            "step_id": "annotate_variants",
+            "step_index": 3,
+            "execution_capability_id": "genomics.snpeff_annotation.annotate_variants",
+            "operation": "annotate_variants"
+          },
+          "source_step_digest": "sha256:fb1874cf249f4c14682324dcfcff6a3787ac5d594911fa05ca2c3af63aba22aa",
+          "compiled_step_digest": "sha256:fb1874cf249f4c14682324dcfcff6a3787ac5d594911fa05ca2c3af63aba22aa",
+          "step_effect_digest": "sha256:bf4f11c902f83e6ae1dfa571e25904cc543991fc940219c91429abb3b1a9b8c4",
+          "capability_contract_digest": "sha256:ec661f7812b3958cdfb2dbc49a8021db22eda77eef6ab3b49c4db8eee9135a78",
+          "effect_complete": true,
+          "legacy_compatible": false,
+          "normalizations": [],
+          "issue_dispositions": [],
+          "receipt_digest": "sha256:b2bd798a3ff551fe1644716a5cde98e384e440e317922e27f2613c334773eb2f",
+          "receipt_id": "step-effect:b2bd798a3ff551fe1644716a"
+        },
+        {
+          "schema_version": 1,
+          "compiler_id": "biomind.step_effect_compiler.v1",
+          "compiler_version": 1,
+          "scope": "step",
+          "status": "compiled",
+          "identity": {
+            "task_id": "fix-f6-normal",
+            "plan_id": "plan_780c985c03a482a9ea6c",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "declared_plan_semantic_hash": "6d201fd36cd9890cb7ff059e5a504f14b97a08ab031f2f8fd1a36b6698de5542",
+            "step_id": "summarize_ann",
+            "step_index": 4,
+            "execution_capability_id": "genomics.snpeff_annotation.summarize_ann",
+            "operation": "summarize_ann"
+          },
+          "source_step_digest": "sha256:09692540677d780216781d93d777d7ee622583d81c179144ee3165f8f0ddd506",
+          "compiled_step_digest": "sha256:09692540677d780216781d93d777d7ee622583d81c179144ee3165f8f0ddd506",
+          "step_effect_digest": "sha256:0d68494b0de052cd80f1e5a6dd1ff5064d6790320ca68a8a8881c2342cfeed6c",
+          "capability_contract_digest": "sha256:c7fe6f897916244a95a9518044482176c091589e3597a68f16dc5fa6998fa6b7",
+          "effect_complete": true,
+          "legacy_compatible": false,
+          "normalizations": [],
+          "issue_dispositions": [],
+          "receipt_digest": "sha256:c94b1619ddda53d6c092be4968379ffd29e4795cd8ebc2fa70b6810465c3e76e",
+          "receipt_id": "step-effect:c94b1619ddda53d6c092be49"
+        },
+        {
+          "schema_version": 1,
+          "compiler_id": "biomind.step_effect_compiler.v1",
+          "compiler_version": 1,
+          "scope": "step",
+          "status": "compiled",
+          "identity": {
+            "task_id": "fix-f6-normal",
+            "plan_id": "plan_780c985c03a482a9ea6c",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "declared_plan_semantic_hash": "6d201fd36cd9890cb7ff059e5a504f14b97a08ab031f2f8fd1a36b6698de5542",
+            "step_id": "finalize_outputs",
+            "step_index": 5,
+            "execution_capability_id": "genomics.snpeff_annotation.finalize_outputs",
+            "operation": "finalize_outputs"
+          },
+          "source_step_digest": "sha256:204a506cbdf1158bf1fb38f9dff5e56a1e29870c268cc8ca455a43ca471104dd",
+          "compiled_step_digest": "sha256:204a506cbdf1158bf1fb38f9dff5e56a1e29870c268cc8ca455a43ca471104dd",
+          "step_effect_digest": "sha256:7d84b1e4a571abb72145e8258b7b367215874a96eb4a7a98c721e4fd7617af4b",
+          "capability_contract_digest": "sha256:3e32a1876e4061f1d95bbbfd288751f784c08ea0b0863517ea2a19a088760528",
+          "effect_complete": true,
+          "legacy_compatible": false,
+          "normalizations": [],
+          "issue_dispositions": [],
+          "receipt_digest": "sha256:117a035d36e2b30bc57082a7b7c3355a8ff8c43fd77ea5ba2ebb482cae104282",
+          "receipt_id": "step-effect:117a035d36e2b30bc57082a7"
+        }
+      ],
+      "normalizations": [],
+      "issue_count": 0,
+      "issue_dispositions": [],
+      "issues_digest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "receipt_digest": "sha256:f49c32cb8039308a7260db22ccea5722e44eafcac1a4d3b2e4b00058d6ee4b2b",
+      "receipt_id": "plan-step-effects:f49c32cb8039308a7260db22"
+    },
+    "task_output_materializations": []
+  }
+}

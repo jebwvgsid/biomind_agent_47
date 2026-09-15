@@ -1,0 +1,176 @@
+{
+  "mode": "v2_empty_skill_execute",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 0,
+    "recovery": 1
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "recovery"
+  ],
+  "executions": [],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current06/public_empty_execute/f6-v2_empty_skill_execute-full.json.gz",
+    "sha256": "a2658bce7cc3be5556d9563648c036a9240979a60036a37a781d25158ef9a86a",
+    "raw_sha256": "ba0abc8c29feaac757681d8ba8a2129bdf06ae630fa05168f563046b2035415a"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "Production PlanReview _prompt_user reads through real safe_input; only safe_input reply is fixed to explicit y. Actual code-approval interrupts resume with explicit y.",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 5,
+    "finalize": 0,
+    "prepare": 2,
+    "summary": 0,
+    "terminal_summary_provider": 1
+  },
+  "terminal": {
+    "status": "blocked",
+    "terminal_diagnostic": {
+      "error_code": "V2_NEW_SYNTHETIC_RC",
+      "stage": "recovery",
+      "error_owner": "recovery",
+      "reason": "自动检查已停止，当前问题尚未解决。\n\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\n\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\n\n命令已执行，returncode=1。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：自动检查已停止，当前问题尚未解决。\n\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\n\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\n\n命令已执行，returncode=1。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：A launched command failed after immutable evidence persistence.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nFollow the actual new isolated attempt.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：create_record=running；inspect_record=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\n\n本次尚未确认生成报告文件。。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nFollow the actual new isolated attempt.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：create_record=running；inspect_record=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n本次尚未确认生成报告文件。\n\n文件交付：failed（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=skipped NO_APPROVED_OUTPUT；stage_status.tsv=skipped NO_APPROVED_OUTPUT；reproduce.sh=skipped NO_APPROVED_OUTPUT\n\n来源阶段：execute；原始错误：V2_NEW_SYNTHETIC_RC；停止阶段：recovery。\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\nstderr（脚本输出，未经独立复核）：[Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current06/public_empty_execute/scratch/biomind-plan-local-graph-8xlqkani/task_outputs/fix-f6-v2_empty_skill_execute/attempts/attempt_29eba2cb3db940ad501b/approved.sh'\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"attempt_29eba2cb3db940ad501b\", \"concerns\": [], \"error_code\": \"V2_NEW_SYNTHETIC_RC\", \"evidence_refs\": [\"exec-attempt_29eba2cb3db940ad501b\"], \"failure_id\": \"failure-fb457cbff424bac8d2939fd6\", \"failure_type\": \"execution_failed\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": 1, \"source_owner\": \"GENERATED_ACTION\", \"source_stage\": \"execute\", \"summary\": \"自动检查已停止，当前问题尚未解决。\\n\\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\\n\\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\\n\\n命令已执行，returncode=1。\\n\\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\\n\\nSupervisor 待核实的疑虑：A launched command failed after immutable evidence persistence.。\\n\\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\\n\\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\\n\\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\\nFollow the actual new isolated attempt.\\n\\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\\n\\n未完成阶段：create_record=running；inspect_record=pending。\\n\\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\\n\\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\\n\\n本次尚未确认生成报告文件。\"}\n已记录 stop_reason：{\"budget_receipt\": {\"detail\": \"Follow the actual new isolated attempt.\", \"error_code\": \"V2_NEW_SYNTHETIC_RC\", \"failure_stage\": \"\", \"model_turns\": 1, \"no_progress_rounds\": 0, \"tool_calls\": 0, \"transport_receipt\": {}}, \"detail\": \"Follow the actual new isolated attempt.\", \"error_code\": \"V2_NEW_SYNTHETIC_RC\", \"failure_stage\": \"\", \"model_turns\": 1, \"no_progress_rounds\": 0, \"termination_reason\": \"\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_authorized\", \"paths\": {}, \"receipts\": {}, \"reason\": \"NO_UNAMBIGUOUS_AUTHORIZED_DIAGNOSTIC_ROOT\"}。内部归档不等于指定文件交付成功。\n\n任务状态：BLOCKED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "detail": "自动检查已停止，当前问题尚未解决。\n\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\n\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\n\n命令已执行，returncode=1。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：自动检查已停止，当前问题尚未解决。\n\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\n\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\n\n命令已执行，returncode=1。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：A launched command failed after immutable evidence persistence.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nFollow the actual new isolated attempt.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：create_record=running；inspect_record=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\n\n本次尚未确认生成报告文件。。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nFollow the actual new isolated attempt.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：create_record=running；inspect_record=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n本次尚未确认生成报告文件。\n\n文件交付：failed（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=skipped NO_APPROVED_OUTPUT；stage_status.tsv=skipped NO_APPROVED_OUTPUT；reproduce.sh=skipped NO_APPROVED_OUTPUT\n\n来源阶段：execute；原始错误：V2_NEW_SYNTHETIC_RC；停止阶段：recovery。\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\nstderr（脚本输出，未经独立复核）：[Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current06/public_empty_execute/scratch/biomind-plan-local-graph-8xlqkani/task_outputs/fix-f6-v2_empty_skill_execute/attempts/attempt_29eba2cb3db940ad501b/approved.sh'\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"attempt_29eba2cb3db940ad501b\", \"concerns\": [], \"error_code\": \"V2_NEW_SYNTHETIC_RC\", \"evidence_refs\": [\"exec-attempt_29eba2cb3db940ad501b\"], \"failure_id\": \"failure-fb457cbff424bac8d2939fd6\", \"failure_type\": \"execution_failed\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": 1, \"source_owner\": \"GENERATED_ACTION\", \"source_stage\": \"execute\", \"summary\": \"自动检查已停止，当前问题尚未解决。\\n\\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\\n\\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\\n\\n命令已执行，returncode=1。\\n\\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\\n\\nSupervisor 待核实的疑虑：A launched command failed after immutable evidence persistence.。\\n\\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\\n\\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\\n\\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\\nFollow the actual new isolated attempt.\\n\\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\\n\\n未完成阶段：create_record=running；inspect_record=pending。\\n\\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\\n\\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\\n\\n本次尚未确认生成报告文件。\"}\n已记录 stop_reason：{\"budget_receipt\": {\"detail\": \"Follow the actual new isolated attempt.\", \"error_code\": \"V2_NEW_SYNTHETIC_RC\", \"failure_stage\": \"\", \"model_turns\": 1, \"no_progress_rounds\": 0, \"tool_calls\": 0, \"transport_receipt\": {}}, \"detail\": \"Follow the actual new isolated attempt.\", \"error_code\": \"V2_NEW_SYNTHETIC_RC\", \"failure_stage\": \"\", \"model_turns\": 1, \"no_progress_rounds\": 0, \"termination_reason\": \"\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_authorized\", \"paths\": {}, \"receipts\": {}, \"reason\": \"NO_UNAMBIGUOUS_AUTHORIZED_DIAGNOSTIC_ROOT\"}。内部归档不等于指定文件交付成功。\n\n任务状态：BLOCKED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "stop_id": "managed-stop:dbbfb9dcac987f157559b6af38cc6f644e60eb66b825572a0adce1d7ef3f1786",
+      "origin": {
+        "source_stage": "execute",
+        "source_owner": "GENERATED_ACTION",
+        "failure_id": "failure-fb457cbff424bac8d2939fd6",
+        "failure_type": "execution_failed",
+        "error_code": "V2_NEW_SYNTHETIC_RC",
+        "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\n\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\n\n命令已执行，returncode=1。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\nSupervisor 待核实的疑虑：A launched command failed after immutable evidence persistence.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nFollow the actual new isolated attempt.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：create_record=running；inspect_record=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\n\n本次尚未确认生成报告文件。",
+        "concerns": [],
+        "evidence_refs": [
+          "exec-attempt_29eba2cb3db940ad501b"
+        ],
+        "returncode": 1,
+        "attempt_id": "attempt_29eba2cb3db940ad501b",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "primary_cause": {
+        "source_stage": "execute",
+        "source_owner": "GENERATED_ACTION",
+        "failure_id": "failure-fb457cbff424bac8d2939fd6",
+        "failure_type": "execution_failed",
+        "error_code": "V2_NEW_SYNTHETIC_RC",
+        "summary": "自动检查已停止，当前问题尚未解决。\n\n原任务：Create one synthetic task-local text record and then inspect whether it can be read. Use the public generic example for exactly these obligations. No annotation, scientific operation, installation, host-resource discovery or external output is requested. Complete both operations through human review and the ordinary execution chain.。\n\n当前步骤：create_record；执行 attempt：attempt_29eba2cb3db940ad501b。\n\n命令已执行，returncode=1。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\nSupervisor 待核实的疑虑：A launched command failed after immutable evidence persistence.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：V2_NEW_SYNTHETIC_RC；连续无进展轮次=0，模型轮次=1，工具调用=0。\n\n模型诊断（尚未验证，不代表指令已接纳或动作已执行）：\nFollow the actual new isolated attempt.\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：create_record=running；inspect_record=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n停止状态尚未确认持久化；本进程不会因此继续自动动作。\n\n本次尚未确认生成报告文件。",
+        "concerns": [],
+        "evidence_refs": [
+          "exec-attempt_29eba2cb3db940ad501b"
+        ],
+        "returncode": 1,
+        "attempt_id": "attempt_29eba2cb3db940ad501b",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "latest_failure": {},
+      "prior_completed_work": [],
+      "execution": {
+        "attempt_id": "attempt_29eba2cb3db940ad501b",
+        "step_id": "create_record",
+        "executed": true,
+        "purpose": "validation",
+        "returncode": 1,
+        "deterministic_passed": false,
+        "validation_status": "unknown",
+        "reviewer_disposition": "inspection_required",
+        "step_status": "running",
+        "committed": false,
+        "executed_script_ref": "/tmp/biomind-plan-authority-v2-current06/public_empty_execute/scratch/biomind-plan-local-graph-8xlqkani/task_outputs/fix-f6-v2_empty_skill_execute/attempts/attempt_29eba2cb3db940ad501b/executed.sh",
+        "command_body_available": true,
+        "stdout": "",
+        "stderr": "[Errno 2] No such file or directory: '/tmp/biomind-plan-authority-v2-current06/public_empty_execute/scratch/biomind-plan-local-graph-8xlqkani/task_outputs/fix-f6-v2_empty_skill_execute/attempts/attempt_29eba2cb3db940ad501b/approved.sh'",
+        "command_body": "\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [{\"identity\": \"plan-artifact-aafaa6dfc82dbb14e2abf484\", \"required_fields\": []}], \"explicit_side_effects\": [], \"produces_observations\": []}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nfrom pathlib import Path\nrecord = Path('/tmp/biomind-plan-authority-v2-current06/public_empty_execute/scratch/biomind-plan-local-graph-8xlqkani/task_outputs/fix-f6-v2_empty_skill_execute/plan_artifacts/synthetic_record.txt')\nrecord.parent.mkdir(parents=True, exist_ok=True)\nrecord.write_text(\"SYNTHETIC RECORD\\n\")\nprint(emit_effect_evidence({'produces_artifacts': {'plan-artifact-aafaa6dfc82dbb14e2abf484': {'path': '/tmp/biomind-plan-authority-v2-current06/public_empty_execute/scratch/biomind-plan-local-graph-8xlqkani/task_outputs/fix-f6-v2_empty_skill_execute/plan_artifacts/synthetic_record.txt'}}, 'produces_observations': {}}))\n"
+      },
+      "causal_execution": {
+        "status": "UNKNOWN"
+      },
+      "current_candidate": {},
+      "inspection_count_scope": {
+        "local_tool_calls": 0,
+        "known_causal_errors": 0,
+        "history_coverage": "bounded_admitted_causal_chain"
+      },
+      "inspection_failures": [],
+      "stop_reason": {
+        "error_code": "V2_NEW_SYNTHETIC_RC",
+        "detail": "Follow the actual new isolated attempt.",
+        "transport_receipt": {},
+        "failure_stage": "",
+        "no_progress_rounds": 0,
+        "model_turns": 1,
+        "tool_calls": 0,
+        "termination_reason": "",
+        "budget_receipt": {
+          "error_code": "V2_NEW_SYNTHETIC_RC",
+          "detail": "Follow the actual new isolated attempt.",
+          "transport_receipt": {},
+          "failure_stage": "",
+          "no_progress_rounds": 0,
+          "model_turns": 1,
+          "tool_calls": 0
+        }
+      },
+      "internal_diagnostic_delivery": {
+        "status": "not_authorized",
+        "paths": {},
+        "receipts": {},
+        "reason": "NO_UNAMBIGUOUS_AUTHORIZED_DIAGNOSTIC_ROOT"
+      },
+      "delivery_status": "failed",
+      "report_paths": {},
+      "report_receipts": {
+        "stage_status.tsv": {
+          "status": "skipped",
+          "reason": "NO_APPROVED_OUTPUT"
+        },
+        "reproduce.sh": {
+          "status": "skipped",
+          "reason": "NO_APPROVED_OUTPUT"
+        },
+        "report.md": {
+          "status": "skipped",
+          "reason": "NO_APPROVED_OUTPUT"
+        }
+      },
+      "persistence_status": "committed",
+      "summary_status": "COMPLETED",
+      "summary_llm_calls": 1,
+      "secondary_causes": []
+    }
+  },
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0,
+  "v2_driver_evidence": "/tmp/biomind-plan-authority-v2-current06/public_empty_execute/v2_empty_skill_execute-driver.json.gz"
+}

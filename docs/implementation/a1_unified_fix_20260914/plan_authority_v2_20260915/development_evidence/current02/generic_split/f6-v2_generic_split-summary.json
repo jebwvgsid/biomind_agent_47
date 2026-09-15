@@ -1,0 +1,1876 @@
+{
+  "mode": "v2_generic_split",
+  "counts": {
+    "consultant": 1,
+    "planner": 2,
+    "generate": 0,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner"
+  ],
+  "executions": [],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current02/generic_split/f6-v2_generic_split-full.json.gz",
+    "sha256": "417562f082202989d7cf465294dfa05f009a0f2ac4dd573f4edfd9d777dbb1c9",
+    "raw_sha256": "0c301f697e2a4fe45f87f4a0d8b3d6784b97be7be9bba239d947b0fb8d6e6f44"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 1,
+    "finalize": 0,
+    "prepare": 2,
+    "summary": 0,
+    "terminal_summary_provider": 1
+  },
+  "terminal": {
+    "status": "failed",
+    "terminal_diagnostic": {
+      "error_code": "PLANNER_MODEL_STOPPED",
+      "stage": "planner",
+      "error_owner": "planner",
+      "reason": "规划已停止，尚未形成批准 Plan；本轮规划没有执行、验证或提交科学步骤。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv Planner may organize these same synthetic obligations into independent or combined steps. Input presence/readability and contig compatibility must actually be checked; the newly created synthetic runtime must be chec。\n\n停止原因：PLANNER_MODEL_STOPPED。\n\n最初拒绝：PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER；Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.\n\n末次拒绝：PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER；Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.\n\n本轮已发起 Planner 请求：2；当前连续结构无进展记录：0。\n\n任务 revision=1；planning epoch=planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b。\n\n最初 provider：call=planner_initial-0003-28de185e6bad；finish_reason=stop；content_status=NORMAL_END；用量记录={\"status\": \"UNKNOWN\"}；用量来源=UNKNOWN。\n本地请求输出上限=UNKNOWN；wire 观察=resolved_not_wire_observed；请求参数 UNKNOWN=UNKNOWN；服务端实际生效上限=UNKNOWN（不把本地设置或用量当作服务端确认）。\n解析诊断（仅已记录字段）：{\"status\": \"passed\", \"source\": \"live_planner_envelope_parser\"}\n\n末次 provider：call=planner_initial-0003-28de185e6bad；finish_reason=stop；content_status=NORMAL_END；用量记录={\"status\": \"UNKNOWN\"}；用量来源=UNKNOWN。\n本地请求输出上限=UNKNOWN；wire 观察=resolved_not_wire_observed；请求参数 UNKNOWN=UNKNOWN；服务端实际生效上限=UNKNOWN（不把本地设置或用量当作服务端确认）。\n解析诊断（仅已记录字段）：{\"status\": \"passed\", \"source\": \"live_planner_envelope_parser\"}\n\n没有已记录的输出长度补救；不能把未执行的补救描述为已尝试。\n\n末次完整问题清单（详细 actual/expected/来源保留在结构化停止事实中）：\n- PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER / PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER @ $.steps[4].resource_uses[2].resource_ref [unknown]；诊断={\"validator_id\": \"biomind.plan_dataflow_compiler.v1\"}\n- PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER / PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER @ $.steps[5].resource_uses[1].resource_ref [unknown]；诊断={\"validator_id\": \"biomind.plan_dataflow_compiler.v1\"}\n- PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER / PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER @ $.steps[5].resource_uses[2].resource_ref [unknown]；诊断={\"validator_id\": \"biomind.plan_dataflow_compiler.v1\"}\n\n当前没有获批步骤或执行 attempt；后续科学流程尚未由本轮规划启动。预算结束或读取失败不能证明输入不兼容、资源不存在或依赖不可用。\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"error_code\": \"PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER\", \"evidence_refs\": [\"object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196\"], \"failure_type\": \"planning_candidate_rejected\", \"source_owner\": \"planner\", \"source_stage\": \"planner\", \"summary\": \"Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.\"}\n已记录 stop_reason：{\"budget_receipt\": {}, \"detail\": \"Planner explicitly stopped without submitting a Plan; its diagnostic is an unverified model report.\", \"error_code\": \"PLANNER_MODEL_STOPPED\", \"model_turns\": 2, \"repeat_count\": 0}\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）\n\n已生成停止报告：/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/stage_status.tsv；/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/report.md\n\n文件交付状态（截至说明生成时；报告自身最终写入结果以持久 receipt 为准）：report.md=created / receipt recorded；stage_status.tsv=created / receipt recorded；reproduce.sh=skipped / NO_EXECUTION_ATTEMPT\n\n没有科学执行 attempt，不生成科学复现脚本；原任务的科学交付尚未完成。",
+      "detail": "规划已停止，尚未形成批准 Plan；本轮规划没有执行、验证或提交科学步骤。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv Planner may organize these same synthetic obligations into independent or combined steps. Input presence/readability and contig compatibility must actually be checked; the newly created synthetic runtime must be chec。\n\n停止原因：PLANNER_MODEL_STOPPED。\n\n最初拒绝：PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER；Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.\n\n末次拒绝：PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER；Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.\n\n本轮已发起 Planner 请求：2；当前连续结构无进展记录：0。\n\n任务 revision=1；planning epoch=planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b。\n\n最初 provider：call=planner_initial-0003-28de185e6bad；finish_reason=stop；content_status=NORMAL_END；用量记录={\"status\": \"UNKNOWN\"}；用量来源=UNKNOWN。\n本地请求输出上限=UNKNOWN；wire 观察=resolved_not_wire_observed；请求参数 UNKNOWN=UNKNOWN；服务端实际生效上限=UNKNOWN（不把本地设置或用量当作服务端确认）。\n解析诊断（仅已记录字段）：{\"status\": \"passed\", \"source\": \"live_planner_envelope_parser\"}\n\n末次 provider：call=planner_initial-0003-28de185e6bad；finish_reason=stop；content_status=NORMAL_END；用量记录={\"status\": \"UNKNOWN\"}；用量来源=UNKNOWN。\n本地请求输出上限=UNKNOWN；wire 观察=resolved_not_wire_observed；请求参数 UNKNOWN=UNKNOWN；服务端实际生效上限=UNKNOWN（不把本地设置或用量当作服务端确认）。\n解析诊断（仅已记录字段）：{\"status\": \"passed\", \"source\": \"live_planner_envelope_parser\"}\n\n没有已记录的输出长度补救；不能把未执行的补救描述为已尝试。\n\n末次完整问题清单（详细 actual/expected/来源保留在结构化停止事实中）：\n- PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER / PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER @ $.steps[4].resource_uses[2].resource_ref [unknown]；诊断={\"validator_id\": \"biomind.plan_dataflow_compiler.v1\"}\n- PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER / PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER @ $.steps[5].resource_uses[1].resource_ref [unknown]；诊断={\"validator_id\": \"biomind.plan_dataflow_compiler.v1\"}\n- PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER / PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER @ $.steps[5].resource_uses[2].resource_ref [unknown]；诊断={\"validator_id\": \"biomind.plan_dataflow_compiler.v1\"}\n\n当前没有获批步骤或执行 attempt；后续科学流程尚未由本轮规划启动。预算结束或读取失败不能证明输入不兼容、资源不存在或依赖不可用。\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"error_code\": \"PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER\", \"evidence_refs\": [\"object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196\"], \"failure_type\": \"planning_candidate_rejected\", \"source_owner\": \"planner\", \"source_stage\": \"planner\", \"summary\": \"Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.\"}\n已记录 stop_reason：{\"budget_receipt\": {}, \"detail\": \"Planner explicitly stopped without submitting a Plan; its diagnostic is an unverified model report.\", \"error_code\": \"PLANNER_MODEL_STOPPED\", \"model_turns\": 2, \"repeat_count\": 0}\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）\n\n已生成停止报告：/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/stage_status.tsv；/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/report.md\n\n文件交付状态（截至说明生成时；报告自身最终写入结果以持久 receipt 为准）：report.md=created / receipt recorded；stage_status.tsv=created / receipt recorded；reproduce.sh=skipped / NO_EXECUTION_ATTEMPT\n\n没有科学执行 attempt，不生成科学复现脚本；原任务的科学交付尚未完成。",
+      "stop_id": "managed-stop:63a08e8a1b6fccd8d6b604647cb6e572efc435d5d8ed6bb3c95bc529285da36f",
+      "origin": {
+        "source_stage": "planner",
+        "source_owner": "planner",
+        "failure_type": "planning_candidate_rejected",
+        "error_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+        "summary": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+        "evidence_refs": [
+          "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196"
+        ]
+      },
+      "primary_cause": {
+        "error_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+        "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+        "validation_issues": [
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[4].resource_uses[2].resource_ref",
+            "repair_target": "$.steps[4].resource_uses[2].resource_ref",
+            "affected_step_ids": [
+              "compile-927"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "compile-927",
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-4f4df87e34168e1a4b3b",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.config",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "compile-927",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "compile-927"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+            "producer_step_ids": [],
+            "machine_evidence": {
+              "consumer_step_id": "compile-927",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.config"
+            }
+          },
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[5].resource_uses[1].resource_ref",
+            "repair_target": "$.steps[5].resource_uses[1].resource_ref",
+            "affected_step_ids": [
+              "effects-146"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "effects-146",
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-c376024f2bfb3597a1cc",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.config",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "effects-146",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "effects-146"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+            "producer_step_ids": [],
+            "machine_evidence": {
+              "consumer_step_id": "effects-146",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.config"
+            }
+          },
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[5].resource_uses[2].resource_ref",
+            "repair_target": "$.steps[5].resource_uses[2].resource_ref",
+            "affected_step_ids": [
+              "effects-146"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "effects-146",
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-18929fe8a0087e932be2",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.db",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "effects-146",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "effects-146"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+            "producer_step_ids": [],
+            "machine_evidence": {
+              "consumer_step_id": "effects-146",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.db"
+            }
+          }
+        ],
+        "status": "observed",
+        "source": {
+          "status": "observed",
+          "task_id": "fix-f6-v2_generic_split",
+          "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+          "task_spec_revision": 1,
+          "attempt": 1,
+          "validation_source": "plan_contract_validation",
+          "failure_fingerprint": "32b1ff0f07eaa6c9be46e7a066645b7465e9f4da4d5d62fb9cd8fedfd852cc7e",
+          "validation_issues": [
+            {
+              "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[4].resource_uses[2].resource_ref",
+              "repair_target": "$.steps[4].resource_uses[2].resource_ref",
+              "affected_step_ids": [
+                "compile-927"
+              ],
+              "affected_fields": [
+                "resource_uses",
+                "proposed_artifacts",
+                "task_output_materializations"
+              ],
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "consumer_step_id": "compile-927",
+              "source": "compiled_plan_dataflow",
+              "affected_artifact": {},
+              "affected_output": {},
+              "issue_id": "plan-dataflow-issue-4f4df87e34168e1a4b3b",
+              "candidate_revision": 1,
+              "authority": "blocking",
+              "blocking": true,
+              "explicit_contract_source": "plan_and_selected_capability_contract",
+              "contract_revision": "unknown",
+              "resource_id": "plan.config",
+              "canonical_resource_id": "unknown",
+              "binding_evidence": {
+                "status": "unknown"
+              },
+              "consumer_step": "compile-927",
+              "dependency_ancestors": [],
+              "recognized_candidate_sources": [],
+              "source_effect_kinds": [],
+              "accepted_sources": [],
+              "rejected_sources": [],
+              "actual_facts": {
+                "required": false,
+                "consumer_step_id": "compile-927"
+              },
+              "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+              "producer_step_ids": [],
+              "machine_evidence": {
+                "consumer_step_id": "compile-927",
+                "validator_id": "biomind.plan_dataflow_compiler.v1",
+                "source": "compiled_plan_dataflow",
+                "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+                "canonical_resource_id": "unknown",
+                "resource_id": "plan.config"
+              }
+            },
+            {
+              "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[5].resource_uses[1].resource_ref",
+              "repair_target": "$.steps[5].resource_uses[1].resource_ref",
+              "affected_step_ids": [
+                "effects-146"
+              ],
+              "affected_fields": [
+                "resource_uses",
+                "proposed_artifacts",
+                "task_output_materializations"
+              ],
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "consumer_step_id": "effects-146",
+              "source": "compiled_plan_dataflow",
+              "affected_artifact": {},
+              "affected_output": {},
+              "issue_id": "plan-dataflow-issue-c376024f2bfb3597a1cc",
+              "candidate_revision": 1,
+              "authority": "blocking",
+              "blocking": true,
+              "explicit_contract_source": "plan_and_selected_capability_contract",
+              "contract_revision": "unknown",
+              "resource_id": "plan.config",
+              "canonical_resource_id": "unknown",
+              "binding_evidence": {
+                "status": "unknown"
+              },
+              "consumer_step": "effects-146",
+              "dependency_ancestors": [],
+              "recognized_candidate_sources": [],
+              "source_effect_kinds": [],
+              "accepted_sources": [],
+              "rejected_sources": [],
+              "actual_facts": {
+                "required": false,
+                "consumer_step_id": "effects-146"
+              },
+              "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+              "producer_step_ids": [],
+              "machine_evidence": {
+                "consumer_step_id": "effects-146",
+                "validator_id": "biomind.plan_dataflow_compiler.v1",
+                "source": "compiled_plan_dataflow",
+                "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+                "canonical_resource_id": "unknown",
+                "resource_id": "plan.config"
+              }
+            },
+            {
+              "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[5].resource_uses[2].resource_ref",
+              "repair_target": "$.steps[5].resource_uses[2].resource_ref",
+              "affected_step_ids": [
+                "effects-146"
+              ],
+              "affected_fields": [
+                "resource_uses",
+                "proposed_artifacts",
+                "task_output_materializations"
+              ],
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "consumer_step_id": "effects-146",
+              "source": "compiled_plan_dataflow",
+              "affected_artifact": {},
+              "affected_output": {},
+              "issue_id": "plan-dataflow-issue-18929fe8a0087e932be2",
+              "candidate_revision": 1,
+              "authority": "blocking",
+              "blocking": true,
+              "explicit_contract_source": "plan_and_selected_capability_contract",
+              "contract_revision": "unknown",
+              "resource_id": "plan.db",
+              "canonical_resource_id": "unknown",
+              "binding_evidence": {
+                "status": "unknown"
+              },
+              "consumer_step": "effects-146",
+              "dependency_ancestors": [],
+              "recognized_candidate_sources": [],
+              "source_effect_kinds": [],
+              "accepted_sources": [],
+              "rejected_sources": [],
+              "actual_facts": {
+                "required": false,
+                "consumer_step_id": "effects-146"
+              },
+              "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+              "producer_step_ids": [],
+              "machine_evidence": {
+                "consumer_step_id": "effects-146",
+                "validator_id": "biomind.plan_dataflow_compiler.v1",
+                "source": "compiled_plan_dataflow",
+                "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+                "canonical_resource_id": "unknown",
+                "resource_id": "plan.db"
+              }
+            }
+          ],
+          "response_integrity": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "fix-f6-v2_generic_split",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+              "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+              "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+            },
+            "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+            "call_id": "planner_initial-0003-28de185e6bad",
+            "provider_attempt_id": "provider-attempt-eafbfd5760ab-1-246309e5",
+            "provider_request_id": "",
+            "raw_digest": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+            "raw_ref": "object:sha256:fabf03e99f31fd832f502658ec521fb7029fa2fa3980151d84e436e79eb91f76",
+            "finish_reason": "stop",
+            "reported_usage": {
+              "status": "UNKNOWN"
+            },
+            "usage_source": "UNKNOWN",
+            "usage_status": "UNKNOWN",
+            "transport_status": "COMPLETED",
+            "content_status": "NORMAL_END",
+            "parser_diagnostic": {
+              "status": "passed",
+              "source": "live_planner_envelope_parser"
+            },
+            "resolved_output_policy": {
+              "schema_version": 1,
+              "output_policy_source": "unknown_existing_provider_default",
+              "output_policy_version": "planner-output-policy-v1",
+              "provider_capability_source": "UNKNOWN",
+              "provider_capability_version": "UNKNOWN",
+              "provider_capability_evidence_level": "UNKNOWN",
+              "provider_documented_output_ceiling": null,
+              "provider_documented_output_ceiling_label": null,
+              "provider_documented_context_limit": null,
+              "requested_output_limit": null,
+              "wire_output_parameter_key": null,
+              "wire_output_parameter_value": null,
+              "wire_observation_status": "resolved_not_wire_observed",
+              "server_effective_output_limit": null,
+              "application_context_limit": 200000,
+              "input_reserve_used": 16000,
+              "initial_output_token_limit": null,
+              "length_recovery_output_token_limit": null,
+              "max_length_corrective_calls_per_epoch": 1,
+              "can_increase": false,
+              "apply_output_binding": false,
+              "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+              "recovery": false,
+              "legacy_epoch": false,
+              "restrictions": [],
+              "model_parameter_hash_version": "planner-model-parameters-v2",
+              "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+            },
+            "attempted_remediation": {}
+          },
+          "occurrence_receipt": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "fix-f6-v2_generic_split",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+              "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+              "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+            },
+            "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+            "ordinal": 1,
+            "call_id": "planner_initial-0003-28de185e6bad",
+            "failure_attempt": 1,
+            "id": "planner-occurrence:9197e42d971c51ee012983ff7fd75fe980950a1804d8fcbbd9b3253a9e6cc2df"
+          },
+          "candidate_source": {
+            "context_ref": "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196",
+            "raw_candidate_sha256": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+            "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+            "candidate_ordinal": 1
+          }
+        },
+        "response_integrity": {
+          "schema_version": 1,
+          "scope": {
+            "task_id": "fix-f6-v2_generic_split",
+            "task_revision": 1,
+            "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+            "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+            "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+          },
+          "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+          "call_id": "planner_initial-0003-28de185e6bad",
+          "provider_attempt_id": "provider-attempt-eafbfd5760ab-1-246309e5",
+          "provider_request_id": "",
+          "raw_digest": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+          "raw_ref": "object:sha256:fabf03e99f31fd832f502658ec521fb7029fa2fa3980151d84e436e79eb91f76",
+          "finish_reason": "stop",
+          "reported_usage": {
+            "status": "UNKNOWN"
+          },
+          "usage_source": "UNKNOWN",
+          "usage_status": "UNKNOWN",
+          "transport_status": "COMPLETED",
+          "content_status": "NORMAL_END",
+          "parser_diagnostic": {
+            "status": "passed",
+            "source": "live_planner_envelope_parser"
+          },
+          "resolved_output_policy": {
+            "schema_version": 1,
+            "output_policy_source": "unknown_existing_provider_default",
+            "output_policy_version": "planner-output-policy-v1",
+            "provider_capability_source": "UNKNOWN",
+            "provider_capability_version": "UNKNOWN",
+            "provider_capability_evidence_level": "UNKNOWN",
+            "provider_documented_output_ceiling": null,
+            "provider_documented_output_ceiling_label": null,
+            "provider_documented_context_limit": null,
+            "requested_output_limit": null,
+            "wire_output_parameter_key": null,
+            "wire_output_parameter_value": null,
+            "wire_observation_status": "resolved_not_wire_observed",
+            "server_effective_output_limit": null,
+            "application_context_limit": 200000,
+            "input_reserve_used": 16000,
+            "initial_output_token_limit": null,
+            "length_recovery_output_token_limit": null,
+            "max_length_corrective_calls_per_epoch": 1,
+            "can_increase": false,
+            "apply_output_binding": false,
+            "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+            "recovery": false,
+            "legacy_epoch": false,
+            "restrictions": [],
+            "model_parameter_hash_version": "planner-model-parameters-v2",
+            "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+          },
+          "attempted_remediation": {}
+        }
+      },
+      "latest_failure": {
+        "error_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+        "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+        "validation_issues": [
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[4].resource_uses[2].resource_ref",
+            "repair_target": "$.steps[4].resource_uses[2].resource_ref",
+            "affected_step_ids": [
+              "compile-927"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "machine_evidence": {
+              "consumer_step_id": "compile-927",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.config"
+            },
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "compile-927",
+            "producer_step_ids": [],
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-4f4df87e34168e1a4b3b",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.config",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "compile-927",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "compile-927"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+          },
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[5].resource_uses[1].resource_ref",
+            "repair_target": "$.steps[5].resource_uses[1].resource_ref",
+            "affected_step_ids": [
+              "effects-146"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "machine_evidence": {
+              "consumer_step_id": "effects-146",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.config"
+            },
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "effects-146",
+            "producer_step_ids": [],
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-c376024f2bfb3597a1cc",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.config",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "effects-146",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "effects-146"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+          },
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[5].resource_uses[2].resource_ref",
+            "repair_target": "$.steps[5].resource_uses[2].resource_ref",
+            "affected_step_ids": [
+              "effects-146"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "machine_evidence": {
+              "consumer_step_id": "effects-146",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.db"
+            },
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "effects-146",
+            "producer_step_ids": [],
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-18929fe8a0087e932be2",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.db",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "effects-146",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "effects-146"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+          }
+        ],
+        "candidate_source": {
+          "context_ref": "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196",
+          "raw_candidate_sha256": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+          "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+          "candidate_ordinal": 1
+        },
+        "response_integrity": {
+          "schema_version": 1,
+          "scope": {
+            "task_id": "fix-f6-v2_generic_split",
+            "task_revision": 1,
+            "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+            "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+            "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+          },
+          "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+          "call_id": "planner_initial-0003-28de185e6bad",
+          "provider_attempt_id": "provider-attempt-eafbfd5760ab-1-246309e5",
+          "provider_request_id": "",
+          "raw_digest": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+          "raw_ref": "object:sha256:fabf03e99f31fd832f502658ec521fb7029fa2fa3980151d84e436e79eb91f76",
+          "finish_reason": "stop",
+          "reported_usage": {
+            "status": "UNKNOWN"
+          },
+          "usage_source": "UNKNOWN",
+          "usage_status": "UNKNOWN",
+          "transport_status": "COMPLETED",
+          "content_status": "NORMAL_END",
+          "parser_diagnostic": {
+            "status": "passed",
+            "source": "live_planner_envelope_parser"
+          },
+          "resolved_output_policy": {
+            "schema_version": 1,
+            "output_policy_source": "unknown_existing_provider_default",
+            "output_policy_version": "planner-output-policy-v1",
+            "provider_capability_source": "UNKNOWN",
+            "provider_capability_version": "UNKNOWN",
+            "provider_capability_evidence_level": "UNKNOWN",
+            "provider_documented_output_ceiling": null,
+            "provider_documented_output_ceiling_label": null,
+            "provider_documented_context_limit": null,
+            "requested_output_limit": null,
+            "wire_output_parameter_key": null,
+            "wire_output_parameter_value": null,
+            "wire_observation_status": "resolved_not_wire_observed",
+            "server_effective_output_limit": null,
+            "application_context_limit": 200000,
+            "input_reserve_used": 16000,
+            "initial_output_token_limit": null,
+            "length_recovery_output_token_limit": null,
+            "max_length_corrective_calls_per_epoch": 1,
+            "can_increase": false,
+            "apply_output_binding": false,
+            "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+            "recovery": false,
+            "legacy_epoch": false,
+            "restrictions": [],
+            "model_parameter_hash_version": "planner-model-parameters-v2",
+            "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+          },
+          "attempted_remediation": {}
+        }
+      },
+      "prior_completed_work": [],
+      "execution": {
+        "step_id": "",
+        "attempt_id": "",
+        "executed": false,
+        "returncode": null,
+        "deterministic_passed": false,
+        "validation_status": "not_performed",
+        "reviewer_disposition": "not_performed",
+        "committed": false,
+        "step_status": "not_started",
+        "command_body_available": false
+      },
+      "causal_execution": {},
+      "current_candidate": {},
+      "inspection_count_scope": {},
+      "inspection_failures": [],
+      "stop_reason": {
+        "error_code": "PLANNER_MODEL_STOPPED",
+        "detail": "Planner explicitly stopped without submitting a Plan; its diagnostic is an unverified model report.",
+        "budget_receipt": {},
+        "model_turns": 2,
+        "repeat_count": 0
+      },
+      "internal_diagnostic_delivery": {
+        "status": "not_authorized",
+        "paths": {},
+        "receipts": {},
+        "reason": "NO_CURRENT_DIAGNOSTIC_AUTHORIZATION"
+      },
+      "delivery_status": "partial",
+      "report_paths": {
+        "stage_status.tsv": "/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/stage_status.tsv",
+        "report.md": "/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/report.md"
+      },
+      "report_receipts": {
+        "reproduce.sh": {
+          "status": "skipped",
+          "reason": "NO_EXECUTION_ATTEMPT"
+        },
+        "stage_status.tsv": {
+          "path": "/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/stage_status.tsv",
+          "sha256": "b6a331bd7a4fe8d9e2283d593957c684173f72ca4af584a60762def925ca116c",
+          "operation_id": "271315d3da9a5c118a236feb82d230f3ac4354e8ad7c450a48af4526e5846272",
+          "ownership": {
+            "operation_id": "271315d3da9a5c118a236feb82d230f3ac4354e8ad7c450a48af4526e5846272",
+            "path": "/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/stage_status.tsv",
+            "sha256": "b6a331bd7a4fe8d9e2283d593957c684173f72ca4af584a60762def925ca116c",
+            "proof_name": ".runtime-report-proof-271315d3da9a5c118a236feb82d230f3ac4354e8ad7c450a48af4526e5846272",
+            "device": 2051,
+            "inode": 8410009
+          },
+          "status": "created",
+          "stop_id": "managed-stop:63a08e8a1b6fccd8d6b604647cb6e572efc435d5d8ed6bb3c95bc529285da36f",
+          "task_id": "fix-f6-v2_generic_split"
+        },
+        "report.md": {
+          "path": "/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/report.md",
+          "sha256": "0fc426f813250ce3cf46c5b7a68115b2e9b11218c5ff0f36a07011d99901bd3e",
+          "operation_id": "6d572ed9aa4bf73b7856b4254da9baa76cd20e8deb46db27723b0ed259b4beaf",
+          "ownership": {
+            "operation_id": "6d572ed9aa4bf73b7856b4254da9baa76cd20e8deb46db27723b0ed259b4beaf",
+            "path": "/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/report.md",
+            "sha256": "0fc426f813250ce3cf46c5b7a68115b2e9b11218c5ff0f36a07011d99901bd3e",
+            "proof_name": ".runtime-report-proof-6d572ed9aa4bf73b7856b4254da9baa76cd20e8deb46db27723b0ed259b4beaf",
+            "device": 2051,
+            "inode": 8410014
+          },
+          "status": "created",
+          "stop_id": "managed-stop:63a08e8a1b6fccd8d6b604647cb6e572efc435d5d8ed6bb3c95bc529285da36f",
+          "task_id": "fix-f6-v2_generic_split"
+        }
+      },
+      "persistence_status": "committed",
+      "summary_status": "COMPLETED",
+      "summary_llm_calls": 1,
+      "secondary_causes": [],
+      "planning": {
+        "schema_version": 1,
+        "producer": "planner_terminal_facts_v1",
+        "scope": {
+          "task_id": "fix-f6-v2_generic_split",
+          "plan_id": "",
+          "plan_version": "",
+          "step_id": "",
+          "attempt_id": "",
+          "task_revision": 1,
+          "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+          "failure_fingerprint": "32b1ff0f07eaa6c9be46e7a066645b7465e9f4da4d5d62fb9cd8fedfd852cc7e",
+          "candidate_context_ref": "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196"
+        },
+        "task_semantic_hash": "sha256:886f4d1cb842750045ef514e1b3dd52845920f308697ded2c2b5fc4ccecd9d13",
+        "task_summary": "Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv Planner may organize these same synthetic obligations into independent or combined steps. Input presence/readability and contig compatibility must actually be checked; the newly created synthetic runtime must be checked, preparation/build must establish the actual isolated database, and annotation, ANN summary and all requested reports must be physically produced. A failed dependency must block downstream success. No real scientific result is asserted. Also write the checked synthetic input names to preflight_log=/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt",
+        "no_approved_plan": true,
+        "plan_materialized": false,
+        "validation_issues": [
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[4].resource_uses[2].resource_ref",
+            "repair_target": "$.steps[4].resource_uses[2].resource_ref",
+            "affected_step_ids": [
+              "compile-927"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "machine_evidence": {
+              "consumer_step_id": "compile-927",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.config"
+            },
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "compile-927",
+            "producer_step_ids": [],
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-4f4df87e34168e1a4b3b",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.config",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "compile-927",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "compile-927"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+          },
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[5].resource_uses[1].resource_ref",
+            "repair_target": "$.steps[5].resource_uses[1].resource_ref",
+            "affected_step_ids": [
+              "effects-146"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "machine_evidence": {
+              "consumer_step_id": "effects-146",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.config"
+            },
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "effects-146",
+            "producer_step_ids": [],
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-c376024f2bfb3597a1cc",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.config",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "effects-146",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "effects-146"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+          },
+          {
+            "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+            "severity": "error",
+            "disposition": "PROTOCOL_INVALID",
+            "field_path": "$.steps[5].resource_uses[2].resource_ref",
+            "repair_target": "$.steps[5].resource_uses[2].resource_ref",
+            "affected_step_ids": [
+              "effects-146"
+            ],
+            "affected_fields": [
+              "resource_uses",
+              "proposed_artifacts",
+              "task_output_materializations"
+            ],
+            "machine_evidence": {
+              "consumer_step_id": "effects-146",
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "source": "compiled_plan_dataflow",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "canonical_resource_id": "unknown",
+              "resource_id": "plan.db"
+            },
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "consumer_step_id": "effects-146",
+            "producer_step_ids": [],
+            "source": "compiled_plan_dataflow",
+            "affected_artifact": {},
+            "affected_output": {},
+            "issue_id": "plan-dataflow-issue-18929fe8a0087e932be2",
+            "candidate_revision": 1,
+            "authority": "blocking",
+            "blocking": true,
+            "explicit_contract_source": "plan_and_selected_capability_contract",
+            "contract_revision": "unknown",
+            "resource_id": "plan.db",
+            "canonical_resource_id": "unknown",
+            "binding_evidence": {
+              "status": "unknown"
+            },
+            "consumer_step": "effects-146",
+            "dependency_ancestors": [],
+            "recognized_candidate_sources": [],
+            "source_effect_kinds": [],
+            "accepted_sources": [],
+            "rejected_sources": [],
+            "actual_facts": {
+              "required": false,
+              "consumer_step_id": "effects-146"
+            },
+            "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+          }
+        ],
+        "source_failure_status": "terminal",
+        "primary_failure": {
+          "status": "observed",
+          "task_id": "fix-f6-v2_generic_split",
+          "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+          "task_spec_revision": 1,
+          "attempt": 1,
+          "validation_source": "plan_contract_validation",
+          "failure_fingerprint": "32b1ff0f07eaa6c9be46e7a066645b7465e9f4da4d5d62fb9cd8fedfd852cc7e",
+          "validation_issues": [
+            {
+              "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[4].resource_uses[2].resource_ref",
+              "repair_target": "$.steps[4].resource_uses[2].resource_ref",
+              "affected_step_ids": [
+                "compile-927"
+              ],
+              "affected_fields": [
+                "resource_uses",
+                "proposed_artifacts",
+                "task_output_materializations"
+              ],
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "consumer_step_id": "compile-927",
+              "source": "compiled_plan_dataflow",
+              "affected_artifact": {},
+              "affected_output": {},
+              "issue_id": "plan-dataflow-issue-4f4df87e34168e1a4b3b",
+              "candidate_revision": 1,
+              "authority": "blocking",
+              "blocking": true,
+              "explicit_contract_source": "plan_and_selected_capability_contract",
+              "contract_revision": "unknown",
+              "resource_id": "plan.config",
+              "canonical_resource_id": "unknown",
+              "binding_evidence": {
+                "status": "unknown"
+              },
+              "consumer_step": "compile-927",
+              "dependency_ancestors": [],
+              "recognized_candidate_sources": [],
+              "source_effect_kinds": [],
+              "accepted_sources": [],
+              "rejected_sources": [],
+              "actual_facts": {
+                "required": false,
+                "consumer_step_id": "compile-927"
+              },
+              "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+              "producer_step_ids": [],
+              "machine_evidence": {
+                "consumer_step_id": "compile-927",
+                "validator_id": "biomind.plan_dataflow_compiler.v1",
+                "source": "compiled_plan_dataflow",
+                "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+                "canonical_resource_id": "unknown",
+                "resource_id": "plan.config"
+              }
+            },
+            {
+              "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[5].resource_uses[1].resource_ref",
+              "repair_target": "$.steps[5].resource_uses[1].resource_ref",
+              "affected_step_ids": [
+                "effects-146"
+              ],
+              "affected_fields": [
+                "resource_uses",
+                "proposed_artifacts",
+                "task_output_materializations"
+              ],
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "consumer_step_id": "effects-146",
+              "source": "compiled_plan_dataflow",
+              "affected_artifact": {},
+              "affected_output": {},
+              "issue_id": "plan-dataflow-issue-c376024f2bfb3597a1cc",
+              "candidate_revision": 1,
+              "authority": "blocking",
+              "blocking": true,
+              "explicit_contract_source": "plan_and_selected_capability_contract",
+              "contract_revision": "unknown",
+              "resource_id": "plan.config",
+              "canonical_resource_id": "unknown",
+              "binding_evidence": {
+                "status": "unknown"
+              },
+              "consumer_step": "effects-146",
+              "dependency_ancestors": [],
+              "recognized_candidate_sources": [],
+              "source_effect_kinds": [],
+              "accepted_sources": [],
+              "rejected_sources": [],
+              "actual_facts": {
+                "required": false,
+                "consumer_step_id": "effects-146"
+              },
+              "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+              "producer_step_ids": [],
+              "machine_evidence": {
+                "consumer_step_id": "effects-146",
+                "validator_id": "biomind.plan_dataflow_compiler.v1",
+                "source": "compiled_plan_dataflow",
+                "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+                "canonical_resource_id": "unknown",
+                "resource_id": "plan.config"
+              }
+            },
+            {
+              "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+              "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[5].resource_uses[2].resource_ref",
+              "repair_target": "$.steps[5].resource_uses[2].resource_ref",
+              "affected_step_ids": [
+                "effects-146"
+              ],
+              "affected_fields": [
+                "resource_uses",
+                "proposed_artifacts",
+                "task_output_materializations"
+              ],
+              "validator_id": "biomind.plan_dataflow_compiler.v1",
+              "consumer_step_id": "effects-146",
+              "source": "compiled_plan_dataflow",
+              "affected_artifact": {},
+              "affected_output": {},
+              "issue_id": "plan-dataflow-issue-18929fe8a0087e932be2",
+              "candidate_revision": 1,
+              "authority": "blocking",
+              "blocking": true,
+              "explicit_contract_source": "plan_and_selected_capability_contract",
+              "contract_revision": "unknown",
+              "resource_id": "plan.db",
+              "canonical_resource_id": "unknown",
+              "binding_evidence": {
+                "status": "unknown"
+              },
+              "consumer_step": "effects-146",
+              "dependency_ancestors": [],
+              "recognized_candidate_sources": [],
+              "source_effect_kinds": [],
+              "accepted_sources": [],
+              "rejected_sources": [],
+              "actual_facts": {
+                "required": false,
+                "consumer_step_id": "effects-146"
+              },
+              "required_condition": "A hard input requires a necessary producer result or a different explicit dependency.",
+              "producer_step_ids": [],
+              "machine_evidence": {
+                "consumer_step_id": "effects-146",
+                "validator_id": "biomind.plan_dataflow_compiler.v1",
+                "source": "compiled_plan_dataflow",
+                "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+                "canonical_resource_id": "unknown",
+                "resource_id": "plan.db"
+              }
+            }
+          ],
+          "response_integrity": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "fix-f6-v2_generic_split",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+              "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+              "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+            },
+            "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+            "call_id": "planner_initial-0003-28de185e6bad",
+            "provider_attempt_id": "provider-attempt-eafbfd5760ab-1-246309e5",
+            "provider_request_id": "",
+            "raw_digest": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+            "raw_ref": "object:sha256:fabf03e99f31fd832f502658ec521fb7029fa2fa3980151d84e436e79eb91f76",
+            "finish_reason": "stop",
+            "reported_usage": {
+              "status": "UNKNOWN"
+            },
+            "usage_source": "UNKNOWN",
+            "usage_status": "UNKNOWN",
+            "transport_status": "COMPLETED",
+            "content_status": "NORMAL_END",
+            "parser_diagnostic": {
+              "status": "passed",
+              "source": "live_planner_envelope_parser"
+            },
+            "resolved_output_policy": {
+              "schema_version": 1,
+              "output_policy_source": "unknown_existing_provider_default",
+              "output_policy_version": "planner-output-policy-v1",
+              "provider_capability_source": "UNKNOWN",
+              "provider_capability_version": "UNKNOWN",
+              "provider_capability_evidence_level": "UNKNOWN",
+              "provider_documented_output_ceiling": null,
+              "provider_documented_output_ceiling_label": null,
+              "provider_documented_context_limit": null,
+              "requested_output_limit": null,
+              "wire_output_parameter_key": null,
+              "wire_output_parameter_value": null,
+              "wire_observation_status": "resolved_not_wire_observed",
+              "server_effective_output_limit": null,
+              "application_context_limit": 200000,
+              "input_reserve_used": 16000,
+              "initial_output_token_limit": null,
+              "length_recovery_output_token_limit": null,
+              "max_length_corrective_calls_per_epoch": 1,
+              "can_increase": false,
+              "apply_output_binding": false,
+              "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+              "recovery": false,
+              "legacy_epoch": false,
+              "restrictions": [],
+              "model_parameter_hash_version": "planner-model-parameters-v2",
+              "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+            },
+            "attempted_remediation": {}
+          },
+          "occurrence_receipt": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "fix-f6-v2_generic_split",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+              "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+              "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+            },
+            "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+            "ordinal": 1,
+            "call_id": "planner_initial-0003-28de185e6bad",
+            "failure_attempt": 1,
+            "id": "planner-occurrence:9197e42d971c51ee012983ff7fd75fe980950a1804d8fcbbd9b3253a9e6cc2df"
+          },
+          "candidate_source": {
+            "context_ref": "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196",
+            "raw_candidate_sha256": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+            "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+            "candidate_ordinal": 1
+          }
+        },
+        "candidate_source": {
+          "context_ref": "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196",
+          "raw_candidate_sha256": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+          "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+          "candidate_ordinal": 1
+        },
+        "primary_context_ref": "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196",
+        "terminal_diagnostic": {
+          "error_code": "PLANNER_MODEL_STOPPED",
+          "error_owner": "planner",
+          "detail": "Planner explicitly stopped without submitting a Plan; its diagnostic is an unverified model report.",
+          "model_diagnostic": {
+            "source": "model_report",
+            "verified": false,
+            "stage": "plan_admission",
+            "error_codes": [
+              "PLAN_RESOURCE_REFERENCE_NOT_DECLARED"
+            ],
+            "attempted_changes": [
+              "Reviewed the step resource_uses declaration; its exact resource_ref is absent from the current declared handles."
+            ],
+            "stop_reason": "I cannot determine a supported untried correction from the available declarations and feedback.",
+            "uncertainties": [
+              "The missing resource reference has not been resolved; this does not establish a scientific or data failure."
+            ],
+            "unperformed_work": [
+              "prepare_database",
+              "build_database",
+              "annotate_variants",
+              "ANN summary and formal report"
+            ]
+          },
+          "response_integrity": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "fix-f6-v2_generic_split",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+              "invocation_id": "inv-82254e1e-5fc3-44cf-a401-4c0a76ec9942",
+              "candidate_scope_id": "candidate-scope-967c6949-030f-4d2e-a30a-450d969a2c10"
+            },
+            "claim_id": "planner-call:328de1ecf626a6b508003a0a6ea4c09e9d83fbf552289ecff570c12674017334",
+            "call_id": "planner_initial-0004-e41d2df82b77",
+            "provider_attempt_id": "provider-attempt-d399145a8b37-1-76219c2b",
+            "provider_request_id": "",
+            "raw_digest": "8f1ff5bca8ae05493fd4c63d7e6a9a06eba84811e0b2653f6d2eec5428da08a0",
+            "raw_ref": "",
+            "finish_reason": "stop",
+            "reported_usage": {
+              "status": "UNKNOWN"
+            },
+            "usage_source": "UNKNOWN",
+            "usage_status": "UNKNOWN",
+            "transport_status": "COMPLETED",
+            "content_status": "NORMAL_END",
+            "parser_diagnostic": {
+              "status": "passed",
+              "source": "live_planner_envelope_parser"
+            },
+            "resolved_output_policy": {
+              "schema_version": 1,
+              "output_policy_source": "unknown_existing_provider_default",
+              "output_policy_version": "planner-output-policy-v1",
+              "provider_capability_source": "UNKNOWN",
+              "provider_capability_version": "UNKNOWN",
+              "provider_capability_evidence_level": "UNKNOWN",
+              "provider_documented_output_ceiling": null,
+              "provider_documented_output_ceiling_label": null,
+              "provider_documented_context_limit": null,
+              "requested_output_limit": null,
+              "wire_output_parameter_key": null,
+              "wire_output_parameter_value": null,
+              "wire_observation_status": "resolved_not_wire_observed",
+              "server_effective_output_limit": null,
+              "application_context_limit": 200000,
+              "input_reserve_used": 16000,
+              "initial_output_token_limit": null,
+              "length_recovery_output_token_limit": null,
+              "max_length_corrective_calls_per_epoch": 1,
+              "can_increase": false,
+              "apply_output_binding": false,
+              "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+              "recovery": false,
+              "legacy_epoch": false,
+              "restrictions": [],
+              "model_parameter_hash_version": "planner-model-parameters-v2",
+              "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+            },
+            "attempted_remediation": {}
+          },
+          "remaining_requests": 2
+        },
+        "planning_epoch": {
+          "schema_version": 1,
+          "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+          "parent_epoch_id": "",
+          "start_reason": "initial_planning",
+          "base_task_revision": 1,
+          "base_task_semantic_identity": "sha256:886f4d1cb842750045ef514e1b3dd52845920f308697ded2c2b5fc4ccecd9d13",
+          "base_plan_revision": 0,
+          "base_plan_snapshot_id": "",
+          "base_plan_semantic_identity": "",
+          "base_planner_feedback_revision": 0,
+          "planner_calls_total": 2,
+          "candidate_repairs": 0,
+          "stale_redispatches": 0,
+          "status": "exhausted",
+          "planner_output_policy_version": "planner-output-policy-v1",
+          "planner_response_protocol_version": 3,
+          "call_claim": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "fix-f6-v2_generic_split",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+              "invocation_id": "inv-82254e1e-5fc3-44cf-a401-4c0a76ec9942",
+              "candidate_scope_id": "candidate-scope-967c6949-030f-4d2e-a30a-450d969a2c10"
+            },
+            "ordinal": 2,
+            "output_policy": {
+              "schema_version": 1,
+              "output_policy_source": "unknown_existing_provider_default",
+              "output_policy_version": "planner-output-policy-v1",
+              "provider_capability_source": "UNKNOWN",
+              "provider_capability_version": "UNKNOWN",
+              "provider_capability_evidence_level": "UNKNOWN",
+              "provider_documented_output_ceiling": null,
+              "provider_documented_output_ceiling_label": null,
+              "provider_documented_context_limit": null,
+              "requested_output_limit": null,
+              "wire_output_parameter_key": null,
+              "wire_output_parameter_value": null,
+              "wire_observation_status": "resolved_not_wire_observed",
+              "server_effective_output_limit": null,
+              "application_context_limit": 200000,
+              "input_reserve_used": 16000,
+              "initial_output_token_limit": null,
+              "length_recovery_output_token_limit": null,
+              "max_length_corrective_calls_per_epoch": 1,
+              "can_increase": false,
+              "apply_output_binding": false,
+              "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+              "recovery": false,
+              "legacy_epoch": false,
+              "restrictions": [],
+              "model_parameter_hash_version": "planner-model-parameters-v2",
+              "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+            },
+            "remediation": {},
+            "status": "result_recorded",
+            "claim_id": "planner-call:328de1ecf626a6b508003a0a6ea4c09e9d83fbf552289ecff570c12674017334",
+            "outcome": "model_stopped",
+            "raw_digest": "8f1ff5bca8ae05493fd4c63d7e6a9a06eba84811e0b2653f6d2eec5428da08a0",
+            "response_integrity": {
+              "schema_version": 1,
+              "scope": {
+                "task_id": "fix-f6-v2_generic_split",
+                "task_revision": 1,
+                "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+                "invocation_id": "inv-82254e1e-5fc3-44cf-a401-4c0a76ec9942",
+                "candidate_scope_id": "candidate-scope-967c6949-030f-4d2e-a30a-450d969a2c10"
+              },
+              "claim_id": "planner-call:328de1ecf626a6b508003a0a6ea4c09e9d83fbf552289ecff570c12674017334",
+              "call_id": "planner_initial-0004-e41d2df82b77",
+              "provider_attempt_id": "provider-attempt-d399145a8b37-1-76219c2b",
+              "provider_request_id": "",
+              "raw_digest": "8f1ff5bca8ae05493fd4c63d7e6a9a06eba84811e0b2653f6d2eec5428da08a0",
+              "raw_ref": "",
+              "finish_reason": "stop",
+              "reported_usage": {
+                "status": "UNKNOWN"
+              },
+              "usage_source": "UNKNOWN",
+              "usage_status": "UNKNOWN",
+              "transport_status": "COMPLETED",
+              "content_status": "NORMAL_END",
+              "parser_diagnostic": {
+                "status": "passed",
+                "source": "live_planner_envelope_parser"
+              },
+              "resolved_output_policy": {
+                "schema_version": 1,
+                "output_policy_source": "unknown_existing_provider_default",
+                "output_policy_version": "planner-output-policy-v1",
+                "provider_capability_source": "UNKNOWN",
+                "provider_capability_version": "UNKNOWN",
+                "provider_capability_evidence_level": "UNKNOWN",
+                "provider_documented_output_ceiling": null,
+                "provider_documented_output_ceiling_label": null,
+                "provider_documented_context_limit": null,
+                "requested_output_limit": null,
+                "wire_output_parameter_key": null,
+                "wire_output_parameter_value": null,
+                "wire_observation_status": "resolved_not_wire_observed",
+                "server_effective_output_limit": null,
+                "application_context_limit": 200000,
+                "input_reserve_used": 16000,
+                "initial_output_token_limit": null,
+                "length_recovery_output_token_limit": null,
+                "max_length_corrective_calls_per_epoch": 1,
+                "can_increase": false,
+                "apply_output_binding": false,
+                "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+                "recovery": false,
+                "legacy_epoch": false,
+                "restrictions": [],
+                "model_parameter_hash_version": "planner-model-parameters-v2",
+                "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+              },
+              "attempted_remediation": {}
+            }
+          },
+          "rejected_candidate_comparisons": [
+            {
+              "signature": "e024dce432748af5c77a89e369739226ff5916cfde6c82bf6be7c8a563f244c7",
+              "issues": "02e8944489540514fb7750243e16bf459c467570f97a5ff3b82b8fa1affdc359",
+              "facts": "ccd6048768862ffafdce4683175d29c52ecb1401ec1527b3c11d2a5bbd02fc36",
+              "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f"
+            }
+          ]
+        },
+        "validation_source": "plan_contract_validation",
+        "attempt": 1,
+        "repeat_count": 0,
+        "response_integrity": {
+          "schema_version": 1,
+          "scope": {
+            "task_id": "fix-f6-v2_generic_split",
+            "task_revision": 1,
+            "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+            "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+            "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+          },
+          "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+          "call_id": "planner_initial-0003-28de185e6bad",
+          "provider_attempt_id": "provider-attempt-eafbfd5760ab-1-246309e5",
+          "provider_request_id": "",
+          "raw_digest": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+          "raw_ref": "object:sha256:fabf03e99f31fd832f502658ec521fb7029fa2fa3980151d84e436e79eb91f76",
+          "finish_reason": "stop",
+          "reported_usage": {
+            "status": "UNKNOWN"
+          },
+          "usage_source": "UNKNOWN",
+          "usage_status": "UNKNOWN",
+          "transport_status": "COMPLETED",
+          "content_status": "NORMAL_END",
+          "parser_diagnostic": {
+            "status": "passed",
+            "source": "live_planner_envelope_parser"
+          },
+          "resolved_output_policy": {
+            "schema_version": 1,
+            "output_policy_source": "unknown_existing_provider_default",
+            "output_policy_version": "planner-output-policy-v1",
+            "provider_capability_source": "UNKNOWN",
+            "provider_capability_version": "UNKNOWN",
+            "provider_capability_evidence_level": "UNKNOWN",
+            "provider_documented_output_ceiling": null,
+            "provider_documented_output_ceiling_label": null,
+            "provider_documented_context_limit": null,
+            "requested_output_limit": null,
+            "wire_output_parameter_key": null,
+            "wire_output_parameter_value": null,
+            "wire_observation_status": "resolved_not_wire_observed",
+            "server_effective_output_limit": null,
+            "application_context_limit": 200000,
+            "input_reserve_used": 16000,
+            "initial_output_token_limit": null,
+            "length_recovery_output_token_limit": null,
+            "max_length_corrective_calls_per_epoch": 1,
+            "can_increase": false,
+            "apply_output_binding": false,
+            "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+            "recovery": false,
+            "legacy_epoch": false,
+            "restrictions": [],
+            "model_parameter_hash_version": "planner-model-parameters-v2",
+            "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+          },
+          "attempted_remediation": {}
+        },
+        "occurrence_receipt": {
+          "schema_version": 1,
+          "scope": {
+            "task_id": "fix-f6-v2_generic_split",
+            "task_revision": 1,
+            "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+            "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+            "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+          },
+          "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+          "ordinal": 1,
+          "call_id": "planner_initial-0003-28de185e6bad",
+          "failure_attempt": 1,
+          "id": "planner-occurrence:9197e42d971c51ee012983ff7fd75fe980950a1804d8fcbbd9b3253a9e6cc2df"
+        },
+        "attempted_remediation": [],
+        "first_truncation": {},
+        "output_policy": {
+          "schema_version": 1,
+          "output_policy_source": "unknown_existing_provider_default",
+          "output_policy_version": "planner-output-policy-v1",
+          "provider_capability_source": "UNKNOWN",
+          "provider_capability_version": "UNKNOWN",
+          "provider_capability_evidence_level": "UNKNOWN",
+          "provider_documented_output_ceiling": null,
+          "provider_documented_output_ceiling_label": null,
+          "provider_documented_context_limit": null,
+          "requested_output_limit": null,
+          "wire_output_parameter_key": null,
+          "wire_output_parameter_value": null,
+          "wire_observation_status": "resolved_not_wire_observed",
+          "server_effective_output_limit": null,
+          "application_context_limit": 200000,
+          "input_reserve_used": 16000,
+          "initial_output_token_limit": null,
+          "length_recovery_output_token_limit": null,
+          "max_length_corrective_calls_per_epoch": 1,
+          "can_increase": false,
+          "apply_output_binding": false,
+          "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+          "recovery": false,
+          "legacy_epoch": false,
+          "restrictions": [],
+          "model_parameter_hash_version": "planner-model-parameters-v2",
+          "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+        },
+        "context_read_status": "verified"
+      },
+      "validation_issues": [
+        {
+          "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+          "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+          "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+          "severity": "error",
+          "disposition": "PROTOCOL_INVALID",
+          "field_path": "$.steps[4].resource_uses[2].resource_ref",
+          "repair_target": "$.steps[4].resource_uses[2].resource_ref",
+          "affected_step_ids": [
+            "compile-927"
+          ],
+          "affected_fields": [
+            "resource_uses",
+            "proposed_artifacts",
+            "task_output_materializations"
+          ],
+          "machine_evidence": {
+            "consumer_step_id": "compile-927",
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "source": "compiled_plan_dataflow",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "canonical_resource_id": "unknown",
+            "resource_id": "plan.config"
+          },
+          "validator_id": "biomind.plan_dataflow_compiler.v1",
+          "consumer_step_id": "compile-927",
+          "producer_step_ids": [],
+          "source": "compiled_plan_dataflow",
+          "affected_artifact": {},
+          "affected_output": {},
+          "issue_id": "plan-dataflow-issue-4f4df87e34168e1a4b3b",
+          "candidate_revision": 1,
+          "authority": "blocking",
+          "blocking": true,
+          "explicit_contract_source": "plan_and_selected_capability_contract",
+          "contract_revision": "unknown",
+          "resource_id": "plan.config",
+          "canonical_resource_id": "unknown",
+          "binding_evidence": {
+            "status": "unknown"
+          },
+          "consumer_step": "compile-927",
+          "dependency_ancestors": [],
+          "recognized_candidate_sources": [],
+          "source_effect_kinds": [],
+          "accepted_sources": [],
+          "rejected_sources": [],
+          "actual_facts": {
+            "required": false,
+            "consumer_step_id": "compile-927"
+          },
+          "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+        },
+        {
+          "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+          "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+          "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+          "severity": "error",
+          "disposition": "PROTOCOL_INVALID",
+          "field_path": "$.steps[5].resource_uses[1].resource_ref",
+          "repair_target": "$.steps[5].resource_uses[1].resource_ref",
+          "affected_step_ids": [
+            "effects-146"
+          ],
+          "affected_fields": [
+            "resource_uses",
+            "proposed_artifacts",
+            "task_output_materializations"
+          ],
+          "machine_evidence": {
+            "consumer_step_id": "effects-146",
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "source": "compiled_plan_dataflow",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "canonical_resource_id": "unknown",
+            "resource_id": "plan.config"
+          },
+          "validator_id": "biomind.plan_dataflow_compiler.v1",
+          "consumer_step_id": "effects-146",
+          "producer_step_ids": [],
+          "source": "compiled_plan_dataflow",
+          "affected_artifact": {},
+          "affected_output": {},
+          "issue_id": "plan-dataflow-issue-c376024f2bfb3597a1cc",
+          "candidate_revision": 1,
+          "authority": "blocking",
+          "blocking": true,
+          "explicit_contract_source": "plan_and_selected_capability_contract",
+          "contract_revision": "unknown",
+          "resource_id": "plan.config",
+          "canonical_resource_id": "unknown",
+          "binding_evidence": {
+            "status": "unknown"
+          },
+          "consumer_step": "effects-146",
+          "dependency_ancestors": [],
+          "recognized_candidate_sources": [],
+          "source_effect_kinds": [],
+          "accepted_sources": [],
+          "rejected_sources": [],
+          "actual_facts": {
+            "required": false,
+            "consumer_step_id": "effects-146"
+          },
+          "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+        },
+        {
+          "code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+          "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+          "message": "Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
+          "severity": "error",
+          "disposition": "PROTOCOL_INVALID",
+          "field_path": "$.steps[5].resource_uses[2].resource_ref",
+          "repair_target": "$.steps[5].resource_uses[2].resource_ref",
+          "affected_step_ids": [
+            "effects-146"
+          ],
+          "affected_fields": [
+            "resource_uses",
+            "proposed_artifacts",
+            "task_output_materializations"
+          ],
+          "machine_evidence": {
+            "consumer_step_id": "effects-146",
+            "validator_id": "biomind.plan_dataflow_compiler.v1",
+            "source": "compiled_plan_dataflow",
+            "violation_code": "PLAN_OPTIONAL_RESULT_REQUIRED_BY_CONSUMER",
+            "canonical_resource_id": "unknown",
+            "resource_id": "plan.db"
+          },
+          "validator_id": "biomind.plan_dataflow_compiler.v1",
+          "consumer_step_id": "effects-146",
+          "producer_step_ids": [],
+          "source": "compiled_plan_dataflow",
+          "affected_artifact": {},
+          "affected_output": {},
+          "issue_id": "plan-dataflow-issue-18929fe8a0087e932be2",
+          "candidate_revision": 1,
+          "authority": "blocking",
+          "blocking": true,
+          "explicit_contract_source": "plan_and_selected_capability_contract",
+          "contract_revision": "unknown",
+          "resource_id": "plan.db",
+          "canonical_resource_id": "unknown",
+          "binding_evidence": {
+            "status": "unknown"
+          },
+          "consumer_step": "effects-146",
+          "dependency_ancestors": [],
+          "recognized_candidate_sources": [],
+          "source_effect_kinds": [],
+          "accepted_sources": [],
+          "rejected_sources": [],
+          "actual_facts": {
+            "required": false,
+            "consumer_step_id": "effects-146"
+          },
+          "required_condition": "A hard input requires a necessary producer result or a different explicit dependency."
+        }
+      ],
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split",
+        "plan_id": "",
+        "plan_version": "",
+        "step_id": "",
+        "attempt_id": "",
+        "task_revision": 1,
+        "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+        "failure_fingerprint": "32b1ff0f07eaa6c9be46e7a066645b7465e9f4da4d5d62fb9cd8fedfd852cc7e",
+        "candidate_context_ref": "object:sha256:9fdca21971105f464aa1871a4d1ae0e1a7cfd37cc8e7a331aeed5bc530563196"
+      },
+      "response_integrity": {
+        "schema_version": 1,
+        "scope": {
+          "task_id": "fix-f6-v2_generic_split",
+          "task_revision": 1,
+          "planning_epoch_id": "planning-epoch-4394f7bf-0088-4be6-b504-68d61f9c8b7b",
+          "invocation_id": "inv-144ebba0-81c0-4461-95a8-ff566080af97",
+          "candidate_scope_id": "candidate-scope-7d7284b7-77af-4ac0-bacf-d8b2d00f2994"
+        },
+        "claim_id": "planner-call:c62b920ce9b324547d710be2a1dd204725d14240b8332e4e9c2678f04894580f",
+        "call_id": "planner_initial-0003-28de185e6bad",
+        "provider_attempt_id": "provider-attempt-eafbfd5760ab-1-246309e5",
+        "provider_request_id": "",
+        "raw_digest": "8b4392823ce55ea305d6d5d2d7089f37b6301c17888386ec9393bf03e7409222",
+        "raw_ref": "object:sha256:fabf03e99f31fd832f502658ec521fb7029fa2fa3980151d84e436e79eb91f76",
+        "finish_reason": "stop",
+        "reported_usage": {
+          "status": "UNKNOWN"
+        },
+        "usage_source": "UNKNOWN",
+        "usage_status": "UNKNOWN",
+        "transport_status": "COMPLETED",
+        "content_status": "NORMAL_END",
+        "parser_diagnostic": {
+          "status": "passed",
+          "source": "live_planner_envelope_parser"
+        },
+        "resolved_output_policy": {
+          "schema_version": 1,
+          "output_policy_source": "unknown_existing_provider_default",
+          "output_policy_version": "planner-output-policy-v1",
+          "provider_capability_source": "UNKNOWN",
+          "provider_capability_version": "UNKNOWN",
+          "provider_capability_evidence_level": "UNKNOWN",
+          "provider_documented_output_ceiling": null,
+          "provider_documented_output_ceiling_label": null,
+          "provider_documented_context_limit": null,
+          "requested_output_limit": null,
+          "wire_output_parameter_key": null,
+          "wire_output_parameter_value": null,
+          "wire_observation_status": "resolved_not_wire_observed",
+          "server_effective_output_limit": null,
+          "application_context_limit": 200000,
+          "input_reserve_used": 16000,
+          "initial_output_token_limit": null,
+          "length_recovery_output_token_limit": null,
+          "max_length_corrective_calls_per_epoch": 1,
+          "can_increase": false,
+          "apply_output_binding": false,
+          "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+          "recovery": false,
+          "legacy_epoch": false,
+          "restrictions": [],
+          "model_parameter_hash_version": "planner-model-parameters-v2",
+          "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+        },
+        "attempted_remediation": {}
+      },
+      "first_truncation": {},
+      "output_policy": {
+        "schema_version": 1,
+        "output_policy_source": "unknown_existing_provider_default",
+        "output_policy_version": "planner-output-policy-v1",
+        "provider_capability_source": "UNKNOWN",
+        "provider_capability_version": "UNKNOWN",
+        "provider_capability_evidence_level": "UNKNOWN",
+        "provider_documented_output_ceiling": null,
+        "provider_documented_output_ceiling_label": null,
+        "provider_documented_context_limit": null,
+        "requested_output_limit": null,
+        "wire_output_parameter_key": null,
+        "wire_output_parameter_value": null,
+        "wire_observation_status": "resolved_not_wire_observed",
+        "server_effective_output_limit": null,
+        "application_context_limit": 200000,
+        "input_reserve_used": 16000,
+        "initial_output_token_limit": null,
+        "length_recovery_output_token_limit": null,
+        "max_length_corrective_calls_per_epoch": 1,
+        "can_increase": false,
+        "apply_output_binding": false,
+        "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+        "recovery": false,
+        "legacy_epoch": false,
+        "restrictions": [],
+        "model_parameter_hash_version": "planner-model-parameters-v2",
+        "output_policy_hash": "sha256:0f77a79ef33b39cc4d1d5b9a9c16068c91f652d9a3bb8ea5dfed0e236651ed92"
+      },
+      "attempted_remediation": {},
+      "report_path": "/tmp/biomind-plan-authority-v2-current02/generic_split/scratch/biomind-plan-local-graph-_79x682d/task_outputs/fix-f6-v2_generic_split/report.md"
+    }
+  },
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

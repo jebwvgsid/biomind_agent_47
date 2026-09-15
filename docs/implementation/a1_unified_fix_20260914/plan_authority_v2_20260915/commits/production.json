@@ -1,0 +1,51 @@
+{
+  "commit": "fda82d91a12c4965723dc8482529a0991788d59b",
+  "parent": "81d10c58a236f44c7987f1913190e6927ce23248",
+  "tree": "0cf091e87f2e3a544c781535157829abf5ebb067",
+  "files": [
+    "agent_core/action_runtime.py",
+    "agent_core/completion_gate.py",
+    "agent_core/node_context.py",
+    "agent_core/plan_bindings.py",
+    "agent_core/plan_contract.py",
+    "agent_core/plan_tracker.py",
+    "agent_core/skill_manager.py",
+    "agent_core/step_effects.py",
+    "bio_agents.py",
+    "prompts/manager.py",
+    "tests/a1_unified_fix/run_final.py",
+    "tests/a1_unified_fix/test_f1_f2.py",
+    "tests/a1_unified_fix/test_f3_env_progress.py",
+    "tests/a1_unified_fix/test_f3_late_result.py",
+    "tests/a1_unified_fix/test_f3_progress.py",
+    "tests/a1_unified_fix/test_f6_graph.py",
+    "tests/cli_model_progress_support.py",
+    "tests/ger_fixture_support.py",
+    "tests/plan_authority_v2_20260915/export_review.py",
+    "tests/plan_authority_v2_20260915/test_formal_stop.py",
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py",
+    "tests/plan_authority_v2_20260915/test_graph.py",
+    "tests/plan_authority_v2_20260915/test_public_graph.py",
+    "tests/plan_authority_v2_20260915/test_public_projection.py",
+    "tests/plan_authority_v2_20260915/test_resource_contract.py",
+    "tests/test_plan_local_preaction_convergence_v2.py",
+    "tests/test_planner_wgs_skill_contracts.py"
+  ],
+  "patch_sha256": "92b9840372279c0997465b89e09245ce20feb1b06066342feb224ca4753d411e",
+  "other_index_entries_preserved": true,
+  "validation": {
+    "actual_test_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+    "equivalent_production_source": "current07",
+    "resource_generic_components": "36 PASS",
+    "generic_recovery": "full actual10exec/9Commit/task_verified/reload PASS",
+    "remaining_combination": "IN_PROGRESS; final receipt will report actual results",
+    "planner_context_intersection": "NOT_INCLUDED; protected prior function overlay plus V2 delta required by tested source",
+    "protected_files_separated": [
+      "agent_core/node_context.py",
+      "agent_core/planner_context.py",
+      "prompts/manager.py",
+      "tests/test_plan_local_preaction_convergence_v2.py"
+    ]
+  },
+  "push": false
+}

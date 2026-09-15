@@ -1,0 +1,10 @@
+--- current12/agent_core/step_effects.py
++++ current14/agent_core/step_effects.py
+@@ -3346,6 +3346,7 @@
+         # interpreter. Like the Python scaffold it deliberately fails before
+         # claiming any scientific result; actual evidence remains the model's work.
+         script_payload = ("<shell>\nset -eu\n"
++            "biomind_example_resources=" + shlex.quote(json.dumps(execution_resources, ensure_ascii=False)) + "\n"
+             "printf '%s\\n' 'Admission example only: implement the approved operation and actual evidence before execution.' >&2\n"
+             "exit 1\n</shell>")
+     example = ({"response_type": "biomind_generate_display_v1",

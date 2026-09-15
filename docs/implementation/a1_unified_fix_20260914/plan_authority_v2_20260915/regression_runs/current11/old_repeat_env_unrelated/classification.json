@@ -1,0 +1,19 @@
+{
+  "source_signature": "0ed5f31bfe4d996a4799559701d63b551ea814bcf005d9e5e6d1e217f5e5ea09",
+  "completed": true,
+  "returncode": 0,
+  "source_changes_after_run": [],
+  "tests": [
+    {
+      "nodeid": "tests/a1_unified_fix/test_f6_repeat_graph.py::test_IT03_rejected_candidate_real_transport_end_reports[env_unrelated]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 32.52741729747504,
+      "failure": ""
+    }
+  ],
+  "loaded_modules_count": 134,
+  "loaded_final_equivalence": false,
+  "loaded_proof": "ACTUAL_MODULE_LIST_PLUS_EXPORTED_BYTE_HASH",
+  "mechanism_pass": true
+}

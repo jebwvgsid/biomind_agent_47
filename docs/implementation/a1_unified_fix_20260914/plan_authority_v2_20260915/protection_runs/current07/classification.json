@@ -1,0 +1,21 @@
+{
+  "groups": 11,
+  "groups_rc0": 8,
+  "phase_call_count": 159,
+  "phase_call_pass": 133,
+  "failed_calls": 26,
+  "source_changes": [],
+  "failure_classes": {
+    "f3_components": "12 fixture setup assertions: the selected snpEff Skill has six capabilities; old caller omitted the newly explicit one-step execution_capability_id argument",
+    "f3_late_result": "4 same fixture setup failures before the actual late/cancel window",
+    "resource_scope_cancellation": "9 FileNotFound failures before scenario due to omitted public candidate fixture in export;1 old exact capability registry set omitted the newly explicit generic capability"
+  },
+  "remaining": "These three groups are replayed separately in current08; this directory preserves the original failed outcomes.",
+  "parent_runner": {
+    "path": "tests/a1_unified_fix/run_final.py in working tree",
+    "sha256": "f0d1d9f926aab484cb968595c6d4917af3cc302892edb29ba6a4236fb9dbdba7",
+    "byte_equal_to_current07_export_verified": true,
+    "current08_parent": "loaded directly from frozen export"
+  },
+  "substitutes": "Existing offline guard, fixed provider and explicitly synthetic science; no real external provider/science calls."
+}

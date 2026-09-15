@@ -1,0 +1,21 @@
+{
+  "claim_id": "candidate-call:e78cdf93cf6454d722467f1a18fd054611bd642685f6bb8ab862f6bbd1d628fd",
+  "cached_response": "synthetic public candidate",
+  "policy": {
+    "version": "candidate-corrections-v2",
+    "scope": {
+      "task_id": "base01-real-allocation",
+      "task_revision": 1,
+      "plan_id": "plan_679146cd9cb3509f6a1d",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "step_id": "prepare"
+    },
+    "limit": 4,
+    "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+    "unit": "additional_candidate_calls",
+    "categories_share_total": true
+  },
+  "before_count": 1,
+  "after_count": 1
+}

@@ -1,0 +1,141 @@
+[
+  {
+    "group": "f1f2_components",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 39,
+    "phase_call_pass": 39,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_components",
+    "returncode": 1,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 29,
+    "phase_call_pass": 17,
+    "failed_nodeids": [
+      "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+      "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+      "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+      "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+      "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+      "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+      "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+      "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+      "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+      "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+      "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+      "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response"
+    ],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_late_result",
+    "returncode": 1,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 4,
+    "phase_call_pass": 0,
+    "failed_nodeids": [
+      "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+      "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+      "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+      "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]"
+    ],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_reload",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 1,
+    "phase_call_pass": 1,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "input_approval_askuser",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 49,
+    "phase_call_pass": 49,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "resource_scope_cancellation",
+    "returncode": 1,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 28,
+    "phase_call_pass": 18,
+    "failed_nodeids": [
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim-0-0]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_claim_lock-0-0]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[pre_dispatch-0-1]",
+      "tests/test_plan_cancel_fix.py::test_cancellation_barriers_prevent_admission[atomic-1-1]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[valid]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[invalid]",
+      "tests/test_plan_cancel_fix.py::test_post_await_cancel_has_priority_over_any_response[stop]",
+      "tests/test_plan_cancel_fix.py::test_nonsemantic_generation_still_accepts_valid_plan",
+      "tests/test_plan_cancel_fix.py::test_admission_first_preserves_history_and_closes_execution",
+      "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views"
+    ],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "schema2_hooks",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 5,
+    "phase_call_pass": 5,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "terminal_hook_cancel",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 1,
+    "phase_call_pass": 1,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "terminal_hook_exception",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 1,
+    "phase_call_pass": 1,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "terminal_hook_none",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 1,
+    "phase_call_pass": 1,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "terminal_hook_timeout",
+    "returncode": 0,
+    "source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+    "source_changes": [],
+    "phase_call_count": 1,
+    "phase_call_pass": 1,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  }
+]

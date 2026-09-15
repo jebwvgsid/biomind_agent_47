@@ -1,0 +1,1118 @@
+{
+  "status": "22_SCENARIOS_PASS_WITH_RECORDED_VERSION_AND_LIMITED_REUSE",
+  "unique_cases": 22,
+  "not_a_single_monolithic_run": true,
+  "final_source_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+  "reuse_reason": "All 22 actual action scopes use domain capabilities, so they cannot enter the generic language mismatch exception whose exit literal changed. The later step_effects delta is confined to generate_output_examples. Old fixed providers construct their own replies and do not return that public example unchanged; therefore old graph PASS is reused only for the core parser/approval/execution/evidence/Commit/report paths. New final14 public examples and final12 old F1/F2 39 separately verify the changed projection and ordinary/local/Recovery producers. No claim that all loaded modules match final bytes or that these graphs were rerun on final14.",
+  "cases": [
+    {
+      "group": "old_f6_false_diagnostic",
+      "run_export": "current07",
+      "evidence": "regression_runs/current07/old_f6_false_diagnostic",
+      "run_source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.check_contig_compatibility"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_executions": 1,
+      "actual_commits": 1,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_false_required",
+      "run_export": "current07",
+      "evidence": "regression_runs/current07/old_f6_false_required",
+      "run_source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_executions": 1,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_normal",
+      "run_export": "current07",
+      "evidence": "regression_runs/current07/old_f6_normal",
+      "run_source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 6,
+        "reviewer": 6,
+        "recovery": 0
+      },
+      "actual_executions": 6,
+      "actual_commits": 6,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_partial_build",
+      "run_export": "current07",
+      "evidence": "regression_runs/current07/old_f6_partial_build",
+      "run_source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3,
+        "reviewer": 2,
+        "recovery": 1
+      },
+      "actual_executions": 3,
+      "actual_commits": 2,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_recovery",
+      "run_export": "current07",
+      "evidence": "regression_runs/current07/old_f6_recovery",
+      "run_source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 10,
+        "reviewer": 6,
+        "recovery": 1
+      },
+      "actual_executions": 7,
+      "actual_commits": 6,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_reviewer_correct",
+      "run_export": "current07",
+      "evidence": "regression_runs/current07/old_f6_reviewer_correct",
+      "run_source_signature": "a913b08af0f9e9bbac662d4048f8130128b2ba8e922bc6c28e5add8d3d209cf4",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 6,
+        "reviewer": 8,
+        "recovery": 0
+      },
+      "actual_executions": 6,
+      "actual_commits": 6,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_empty_observation",
+      "run_export": "current08",
+      "evidence": "regression_runs/current08/old_f6_empty_observation",
+      "run_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_executions": 1,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_empty_summary",
+      "run_export": "current08",
+      "evidence": "regression_runs/current08/old_f6_empty_summary",
+      "run_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 5,
+        "reviewer": 4,
+        "recovery": 1
+      },
+      "actual_executions": 5,
+      "actual_commits": 4,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_missing_build_dependency",
+      "run_export": "current08",
+      "evidence": "regression_runs/current08/old_f6_missing_build_dependency",
+      "run_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3,
+        "reviewer": 2,
+        "recovery": 1
+      },
+      "actual_executions": 3,
+      "actual_commits": 2,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_no_evidence",
+      "run_export": "current08",
+      "evidence": "regression_runs/current08/old_f6_no_evidence",
+      "run_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_executions": 1,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_reviewer_exhaust",
+      "run_export": "current08",
+      "evidence": "regression_runs/current08/old_f6_reviewer_exhaust",
+      "run_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 3,
+        "recovery": 1
+      },
+      "actual_executions": 1,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_reviewer_veto",
+      "run_export": "current08",
+      "evidence": "regression_runs/current08/old_f6_reviewer_veto",
+      "run_source_signature": "66b08409630e883dfac1531ebca1b0c5c5a7f19fa9f0c14b31eb2cd53c0b65fc",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_executions": 1,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_carrier_legacy_python",
+      "run_export": "current09",
+      "evidence": "regression_runs/current09/old_carrier_legacy_python",
+      "run_source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "actual_capability_ids": [
+        "genomics.wgs.short.read.mapping.inspect"
+      ],
+      "loaded_module_count": 135,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_executions": 1,
+      "actual_commits": 1,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_carrier_native_code_python",
+      "run_export": "current09",
+      "evidence": "regression_runs/current09/old_carrier_native_code_python",
+      "run_source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.check_contig_compatibility"
+      ],
+      "loaded_module_count": 135,
+      "byte_differences_vs_current11": [
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_executions": 1,
+      "actual_commits": 1,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        },
+        {
+          "module": "bio_agents",
+          "file": "bio_agents.py",
+          "actual_sha256": "66ace4e6b4a1fb3bca65894c3b5b3b5759e56579fee527be2e858a6dcbb79045",
+          "final_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_carrier_legacy_bash",
+      "run_export": "current10",
+      "evidence": "regression_runs/current10/old_carrier_legacy_bash",
+      "run_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "actual_capability_ids": [
+        "genomics.wgs.short.read.mapping.inspect"
+      ],
+      "loaded_module_count": 135,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_executions": 1,
+      "actual_commits": 1,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_recovery_event_failure",
+      "run_export": "current10",
+      "evidence": "regression_runs/current10/old_f6_recovery_event_failure",
+      "run_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_executions": 1,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_report_conflict",
+      "run_export": "current10",
+      "evidence": "regression_runs/current10/old_f6_report_conflict",
+      "run_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1,
+        "reviewer": 1,
+        "recovery": 1
+      },
+      "actual_executions": 1,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_f6_voluntary_stop",
+      "run_export": "current10",
+      "evidence": "regression_runs/current10/old_f6_voluntary_stop",
+      "run_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 1,
+        "recovery": 0
+      },
+      "actual_executions": 1,
+      "actual_commits": 1,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_repeat_aba",
+      "run_export": "current10",
+      "evidence": "regression_runs/current10/old_repeat_aba",
+      "run_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_executions": 0,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_repeat_env_reorder",
+      "run_export": "current10",
+      "evidence": "regression_runs/current10/old_repeat_env_reorder",
+      "run_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_executions": 0,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_repeat_repeat",
+      "run_export": "current10",
+      "evidence": "regression_runs/current10/old_repeat_repeat",
+      "run_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_executions": 0,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    },
+    {
+      "group": "old_repeat_env_unrelated",
+      "run_export": "current11",
+      "evidence": "regression_runs/current11/old_repeat_env_unrelated",
+      "run_source_signature": "0ed5f31bfe4d996a4799559701d63b551ea814bcf005d9e5e6d1e217f5e5ea09",
+      "actual_capability_ids": [
+        "genomics.snpeff_annotation.annotate_variants",
+        "genomics.snpeff_annotation.build_database",
+        "genomics.snpeff_annotation.check_contig_compatibility",
+        "genomics.snpeff_annotation.finalize_outputs",
+        "genomics.snpeff_annotation.prepare_database",
+        "genomics.snpeff_annotation.summarize_ann"
+      ],
+      "loaded_module_count": 134,
+      "byte_differences_vs_current11": [],
+      "final_applicability": "CORE_GRAPH_PATH_REUSE; PUBLIC_EXAMPLE_PROJECTION_RETESTED_SEPARATELY",
+      "proof": "protection_runs/current10_vs09_exit_literal_proof.json",
+      "passed_at_recorded_version": true,
+      "rerun_claim": false,
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 0,
+        "recovery": 0
+      },
+      "actual_executions": 0,
+      "actual_commits": 0,
+      "byte_differences_vs_final14": [
+        {
+          "module": "agent_core.step_effects",
+          "file": "agent_core/step_effects.py",
+          "actual_sha256": "e664f6dda209daa944ef77b0652b2abcf5b825834ea13e9e3246a0c3edb64179",
+          "final_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+        }
+      ],
+      "proofs": [
+        "protection_runs/current10_vs09_exit_literal_proof.json",
+        "protection_runs/current12_vs11_generate_examples_proof.json",
+        "protection_runs/current14_vs12_generic_bash_resources_proof.json"
+      ],
+      "archived_matches_final_candidate_field": "Capture-time comparison only; the final14 comparison is byte_differences_vs_final14 and preserves actual module hashes."
+    }
+  ],
+  "final_version": "current14"
+}

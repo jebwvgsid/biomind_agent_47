@@ -1,0 +1,55 @@
+[
+  {
+    "original": "f6-carrier-legacy_bash.json",
+    "sha256": "11544959a5a36b2f018f8b326d9098b5fba1d256104c663a2a21b23a093bac3d",
+    "archive": "f6-carrier-legacy_bash.json",
+    "archive_sha256": "11544959a5a36b2f018f8b326d9098b5fba1d256104c663a2a21b23a093bac3d"
+  },
+  {
+    "original": "f6-false_diagnostic-full.json.gz",
+    "sha256": "75fde6436480c580ac17ab15eb0d3057d827ffe80683f550929133d5ab66feed",
+    "archive": "f6-false_diagnostic-full.json.gz",
+    "archive_sha256": "75fde6436480c580ac17ab15eb0d3057d827ffe80683f550929133d5ab66feed"
+  },
+  {
+    "original": "f6-false_diagnostic-heartbeat.jsonl",
+    "sha256": "e02abbc28404d25e1a257dd40c9c011df6fc2e22946a3ecca1cef31815f5af85",
+    "archive": "f6-false_diagnostic-heartbeat.jsonl.gz",
+    "archive_sha256": "1049dbae952ee60c0658e89c30df6801f7d30ab8880d14ff07333ed2ff9546aa"
+  },
+  {
+    "original": "f6-false_diagnostic-summary.json",
+    "sha256": "68a1a07771b31dde695003db9b9d27b6c6315d1fef6bb41976528c5a6b25a8b5",
+    "archive": "f6-false_diagnostic-summary.json",
+    "archive_sha256": "68a1a07771b31dde695003db9b9d27b6c6315d1fef6bb41976528c5a6b25a8b5"
+  },
+  {
+    "original": "invocation.json",
+    "sha256": "4678a840e7712c5c71fd97723fac10c1a09fba1d748d9caeb150af39f0dd4cbb",
+    "archive": "invocation.json",
+    "archive_sha256": "4678a840e7712c5c71fd97723fac10c1a09fba1d748d9caeb150af39f0dd4cbb"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "4aa63f552dd88e4e61e7871f863954ece4b9d5dc216c6f8cdd5c3b8c24c87c84",
+    "archive": "pytest-results.json",
+    "archive_sha256": "4aa63f552dd88e4e61e7871f863954ece4b9d5dc216c6f8cdd5c3b8c24c87c84"
+  },
+  {
+    "original": "run_exit.json",
+    "sha256": "2226e2338bf1fe887dcd0644ede83968fe43d9df88155adba30ebfa2c74d5820",
+    "archive": "run_exit.json",
+    "archive_sha256": "2226e2338bf1fe887dcd0644ede83968fe43d9df88155adba30ebfa2c74d5820"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "2a922b269a5b89e5877d1572bfeaea92348d50cf28b3d65e606209c170972879",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "cd0dbc88f2cfc490944f48510337fb8aa2a9396b6887087fa65c0a8fdd3f04b6"
+  },
+  {
+    "original": "f6-preserved-false_diagnostic",
+    "archive": "f6-preserved-false_diagnostic.tar.gz",
+    "archive_sha256": "5d7ff6d17553a007512366a995465da7837b92ed8b63515fdf45a61acdcc06f3"
+  }
+]

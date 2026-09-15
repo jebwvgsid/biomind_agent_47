@@ -1,0 +1,123 @@
+[
+  {
+    "source": "red01",
+    "result_directory": "/tmp/biomind-plan-authority-v2-red01/components",
+    "source_signature": "51cc1bcd1c29477770aea67710a2c4ba3ea732eead59efb488b24013e9e87198",
+    "returncode": 1,
+    "classification": "BASE rejects new generic and single-source contracts",
+    "call_count": 12,
+    "passed": 3,
+    "failed": 9,
+    "nodeids": [
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected"
+    ]
+  },
+  {
+    "source": "red02",
+    "result_directory": "/tmp/biomind-plan-authority-v2-red02/generic_split",
+    "source_signature": "4bcbe8a9267c18f952bb98da42708e8cda1695ec390d13eed7dd0f0918683c54",
+    "returncode": 1,
+    "classification": "BASE rejects v3 in real Plan graph before approval",
+    "call_count": 1,
+    "passed": 0,
+    "failed": 1,
+    "nodeids": [
+      "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]"
+    ]
+  },
+  {
+    "source": "current01",
+    "result_directory": "/tmp/biomind-plan-authority-v2-current01/components",
+    "source_signature": "0ba9d8ae4c8a615388d41e00dccb916715526d74b8fdb61f6d58f7b11b98045d",
+    "returncode": 0,
+    "classification": "first production components pass",
+    "call_count": 12,
+    "passed": 12,
+    "failed": 0,
+    "nodeids": [
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected"
+    ]
+  },
+  {
+    "source": "current01",
+    "result_directory": "/tmp/biomind-plan-authority-v2-current01/generic_split",
+    "source_signature": "0ba9d8ae4c8a615388d41e00dccb916715526d74b8fdb61f6d58f7b11b98045d",
+    "returncode": 1,
+    "classification": "FIXTURE_PROTOCOL_MISMATCH: native JSON returned to declared script_block_v1; no execution",
+    "call_count": 1,
+    "passed": 0,
+    "failed": 1,
+    "nodeids": [
+      "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]"
+    ]
+  },
+  {
+    "source": "current02",
+    "result_directory": "/tmp/biomind-plan-authority-v2-current02/components",
+    "source_signature": "fcb1279da2ea42d86cbbb941c25cb6810a718c8a83a74e9dfb965bcf3143bb5e",
+    "returncode": 0,
+    "classification": "22 component cases pass",
+    "call_count": 22,
+    "passed": 22,
+    "failed": 0,
+    "nodeids": [
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+      "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+      "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+      "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example"
+    ]
+  },
+  {
+    "source": "current02",
+    "result_directory": "/tmp/biomind-plan-authority-v2-current02/generic_split",
+    "source_signature": "fcb1279da2ea42d86cbbb941c25cb6810a718c8a83a74e9dfb965bcf3143bb5e",
+    "returncode": 1,
+    "classification": "V3_DEFAULT_REGRESSION: v2 explicit-results optional default applied to new local contracts; corrected in next source, candidate unchanged",
+    "call_count": 1,
+    "passed": 0,
+    "failed": 1,
+    "nodeids": [
+      "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]"
+    ]
+  }
+]

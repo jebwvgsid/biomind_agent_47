@@ -1,0 +1,102 @@
+{
+  "old_export": "current12",
+  "new_export": "current14",
+  "old_signature": "2ccd683798343be960f4fdd19c13bf75165c99cfb46d44649568e407e9e93b05",
+  "new_signature": "5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212",
+  "all_manifest_changes": [
+    {
+      "path": "agent_core/step_effects.py",
+      "old_sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4",
+      "new_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+    },
+    {
+      "path": "tests/plan_authority_v2_20260915/test_graph.py",
+      "old_sha256": "ff13d935f0cde3422fe633c14edba2b4105171b7e3a2771e0e8ca01c7ca94466",
+      "new_sha256": "820c5b2b010aff0d7d429d3e517abddb0e8bb4306ac72dfbaf42084923177240"
+    }
+  ],
+  "module_bytes_equal": false,
+  "exact_text_proof": {
+    "single_added_source_line": "\"biomind_example_resources=\" + shlex.quote(json.dumps(execution_resources, ensure_ascii=False)) + \"\\n\"",
+    "removing_only_this_line_recovers_entire_current12_module": true,
+    "exact_diff": "current14_vs12_generic_bash_resources.diff"
+  },
+  "ast_proof": {
+    "only_changed_top_level_node": "generate_output_examples",
+    "branch_condition_unchanged": true,
+    "exact_branch_condition": "script_protocol and str(step.get('execution_capability_id') or '') == 'framework.generic.execute' and (str(step.get('tool') or '') == 'bash')",
+    "all_other_module_text_unchanged": true
+  },
+  "delta_meaning": "Only the existing generic Bash/script scaffold gains one safely shell-quoted JSON assignment containing the already-published current execution_resources. The current resource paths remain visible to existing action admission. No new observation or workspace state is emitted, no consumer is bypassed, and the scaffold still exits1.",
+  "current12_actual_loaded_equivalence": {
+    "recorded_modules": 142,
+    "identical_to14_modules": 141,
+    "differing_modules": [
+      {
+        "module": "agent_core.step_effects",
+        "path": "agent_core/step_effects.py",
+        "sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4",
+        "manifest_sha256": "b1b84a92c510cd82efe2bc4c82eaad0cc1cd30b029081b1c06ebf71f50f057c4",
+        "current14_manifest_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+      }
+    ],
+    "new_test_graph_was_loaded_by_old39": false,
+    "old39_test_sources": [
+      {
+        "path": "tests/a1_unified_fix/test_f1_f2.py",
+        "sha256": "f432a364fdc512fa747aa2444ea654ead93ccc0cf2f409459b21f820109fb7d2",
+        "same_in14": true
+      },
+      {
+        "path": "tests/a1_unified_fix/test_f1_protocol.py",
+        "sha256": "19ac2db114a363c687ba80093fb10a83822589d4d0f74eec9ed04d49028df072",
+        "same_in14": true
+      },
+      {
+        "path": "tests/a1_unified_fix/test_f2_scope.py",
+        "sha256": "06b08dba68df24f792f61c455ce1ff412fdfcf337b7d8d85dc9f54be849c9b75",
+        "same_in14": true
+      }
+    ]
+  },
+  "old39_branch_nonreachability": {
+    "ordinary_local_recovery_blocked_actual_modes": {
+      "normal": [
+        "native_action_json"
+      ],
+      "local": [
+        "native_action_json",
+        "native_action_json"
+      ],
+      "recovery": [
+        "native_action_json"
+      ],
+      "blocked": [
+        "native_action_json"
+      ]
+    },
+    "mode_receipts": "current12/f1f2_components/f1-protocol-{normal,local,recovery,blocked}.json.gz#/requests/*/protocol/mode",
+    "only_legacy_script_request": {
+      "mode": "script_block_v1",
+      "execution_capability_id": "sequence.search.local.blast.execute",
+      "tool": "test",
+      "receipt": "current12/f1f2_components/f1-protocol-legacy.json.gz#/requests/0/current_focus/current_step",
+      "condition_result": false
+    },
+    "native_argv_preapproval_graph": {
+      "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "receipt": "current12/f1f2_components/f1-f2-native-ready.json.gz#/requests/0/current_focus/current_step",
+      "condition_result": false
+    },
+    "direct_component_calls": "test_protocol_examples_exact_parser_and_negative_action_shapes and the standalone demo explicitly pass script_protocol=False; the remaining carrier/scope unit cases call unchanged materialization/helper functions.",
+    "conclusion": "The only new branch body is not evaluated by these actual old39 inputs. Their current12 PASS may be narrowly reused in current14; no current14 rerun or whole-module byte equality is claimed."
+  },
+  "dispatch_substitution_boundary": {
+    "normal_local_recovery_blocked": "ProtocolGraph inherits the F6 real _ainvoke_node_llm/_ainvoke_llm wrapper with fixed external model leaf; these request receipts are actual delivered protocol inputs.",
+    "legacy_and_native_preapproval": "ger_fixture_support.generate_until_ready_or_stopped substitutes _ainvoke_node_llm. These are real graph/request assembly/parser/admission regressions, but do not independently validate the model transport/register/consume wrapper. This historical fixture was not edited for the current run."
+  },
+  "other_prior_protection": "Prior selected groups keep their original exact source versions and original loaded hashes. The 11→12 producer proof covers native returned-example equivalence and shared-entry rerun; this12→14 proof covers only the added generic Bash branch body. Root owns each other group dependency comparison.",
+  "old22_core_graph_boundary": "Old22 fixed models author their own candidates and use nongeneric scopes; those runs can witness the corresponding core graph mechanisms. They are not evidence that the new public examples were returned unchanged. Current14 new public-example cases are separate root/incident evidence.",
+  "untested_here": "This document does not claim the new generic Bash resource-path example passes admission; root/incident current14 specialized tests determine that result. No real external model or scientific E2E was run.",
+  "current13": "EXPORT_ONLY / NOT_RUN; superseded before dispatch."
+}

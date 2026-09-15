@@ -1,0 +1,11 @@
+{
+  "classification": "EXTERNAL_TOOL_HOST_INTERRUPTION_CAUSE_UNKNOWN",
+  "actual_run_exit_receipt_exists": false,
+  "production_failure_not_inferred": true,
+  "watchdog_timeout_not_inferred": true,
+  "root_report": "Root concurrently observed own parent exit143 and other agent interruption; no agent intentionally cancelled this case.",
+  "partial_state_sha256": "55ffe8e61570c1ab6a0e9c41a24a06d51b0dba79344cc94523bff0dfd6720f9e",
+  "partial_current_step_id": "aggregate-832",
+  "partial_commits": 5,
+  "replacement": "fresh graph_renamed_repeated_retry01 under same source; original session never resumed"
+}

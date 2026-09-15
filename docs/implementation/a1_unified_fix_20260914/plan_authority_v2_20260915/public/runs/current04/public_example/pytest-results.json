@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012702681124210358,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 11.957238647155464,
+    "failure": "def test_exact_example_from_actual_planner_request_reaches_real_review():\n        async def scenario():\n            case = PublicExampleGraph('public_example')\n            await case.setup()\n            try:\n                await run_admission(case)\n                assert case.values.get('planner_outcome', {}).get('type') == 'plan_review_ready', case.values.get('planner_outcome')\n                assert case.values.get('plan_review_outcome', {}).get('type') == 'approval_pending', case.values.get('plan_review_outcome')\n                assert case.plan_review_inputs and case.example_raw\n                assert case.counts['planner'] == 1 and case.counts['generate'] == 0\n                assert not case.executions and not case.approvals and not case.commits\n                assert case.durable['plan_compilation_receipt']['status'] == 'compiled'\n                assert case.durable['plan_dataflow_receipt']['status'] == 'compiled'\n                save('exact-example-request', {'requests': case.requests, 'exact_example_raw': case.example_raw,\n                     'validator_calls': case.validator_calls, 'values': case.values, 'durable': case.durable,\n                     'plan_review_inputs': case.plan_review_inputs,\n                     'boundary': 'Exact public example admitted from actual request; human review pending, no execution approval or scientific result.'})\n            finally:\n                await case.close()\n>       asyncio.run(scenario())\n\ntests/plan_authority_v2_20260915/test_public_graph.py:171: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def scenario():\n        case = PublicExampleGraph('public_example')\n        await case.setup()\n        try:\n            await run_admission(case)\n>           assert case.values.get('planner_outcome', {}).get('type') == 'plan_review_ready', case.values.get('planner_outcome')\nE           AssertionError: {'schema_version': 1, 'type': 'harness_error', 'summary': 'PLANNER_PROGRESS_RECEIPT_MISSING: Planner stopped without a...o step.', 'scope': {'task_id': 'fix-f6-v2_public_example', 'plan_id': '', 'plan_version': '', 'step_id': '', ...}, ...}\nE           assert 'harness_error' == 'plan_review_ready'\nE             \nE             - plan_review_ready\nE             + harness_error\n\ntests/plan_authority_v2_20260915/test_public_graph.py:158: AssertionError"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_exact_example_from_actual_planner_request_reaches_real_review",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0007029147818684578,
+    "failure": ""
+  }
+]

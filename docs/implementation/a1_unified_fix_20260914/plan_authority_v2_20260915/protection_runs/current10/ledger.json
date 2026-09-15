@@ -1,0 +1,22 @@
+[
+  {
+    "group": "f1f2_components",
+    "returncode": 0,
+    "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+    "source_changes": [],
+    "phase_call_count": 39,
+    "phase_call_pass": 39,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  },
+  {
+    "group": "f3_correction_representatives",
+    "returncode": 0,
+    "source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+    "source_changes": [],
+    "phase_call_count": 5,
+    "phase_call_pass": 5,
+    "failed_nodeids": [],
+    "watchdog_seconds": 360
+  }
+]

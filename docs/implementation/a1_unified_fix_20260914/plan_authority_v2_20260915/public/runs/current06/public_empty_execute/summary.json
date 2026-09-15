@@ -1,0 +1,28 @@
+{
+  "classification": "DRIVER_ASSUMED_APPROVED_SH_INSTEAD_OF_ACTUAL_PYTHON_SOURCE_PROCESS_NOT_LAUNCHED",
+  "source_signature": "86bd08c596e2c4ef34f9357abb8dfc484216d52f584e1e117813b630ffc41b24",
+  "returncode": 1,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_public_example_empty_skills_executes_two_python_steps_and_commits",
+      "outcome": "failed",
+      "duration": 22.104851179756224
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 136,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "pytest-results.json": "530f8f2abf6d274eaf187ef98be59985945036818a49bca23297718262f78d7f",
+    "v2_empty_skill_execute-driver.json.gz": "47d132b8494c2f24c0a03246c1b1aee93b4c847e0f3ee9ee29f28782870888aa",
+    "invocation.json": "c360b4cd447fcf748d52c5293b2775100666377fc47cccef8776f4051d22d93b",
+    "f6-v2_empty_skill_execute-summary.json": "eeb7a109f867c7aa8ef50dff3be46d89b1016065cb4a0d2006d8850dfaed7c64",
+    "stdout.txt": "e1884c536594a314aa0f06ab84c8481b711211f6eefb37f54abb871e0e4d3428",
+    "pytest-results-test_actual_public_example_empty_skills_executes_two_python_steps_and_commits-facts.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "run_exit.json": "069e341e4162d3cb7f57d6ca455d3cbab1a772a8a84f8f9cfabc1c8b7c6c93d0",
+    "f6-v2_empty_skill_execute-full.json.gz": "a2658bce7cc3be5556d9563648c036a9240979a60036a37a781d25158ef9a86a"
+  },
+  "copied_scope": "top-level results only; no scratch or nested preserved runtime trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

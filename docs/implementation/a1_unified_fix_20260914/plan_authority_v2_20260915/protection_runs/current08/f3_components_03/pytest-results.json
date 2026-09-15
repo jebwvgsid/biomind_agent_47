@@ -1,0 +1,152 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00031038839370012283,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 5.710817078128457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000172407366335392,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002646464854478836,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.965006616897881,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016950629651546478,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024322140961885452,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.047503961250186,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015014782547950745,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.84123146533966e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005309442058205605,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.000247180461884e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.63721764087677e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005347402766346931,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.669216185808182e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 7.9362653195858e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006868429481983185,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 7.813330739736557e-05,
+    "failure": ""
+  }
+]

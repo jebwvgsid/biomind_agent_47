@@ -1,0 +1,441 @@
+{
+  "status": "PASS",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 1,
+    "recovery": 1
+  },
+  "approved_actions": 1,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "rc": 0
+    }
+  ],
+  "commits": 0,
+  "generate_outcome": {
+    "schema_version": 1,
+    "type": "action_ready",
+    "summary": "A validated action candidate is ready for Execute.",
+    "scope": {
+      "task_id": "fix-f6-v2_generic_no_observation",
+      "task_revision": 1,
+      "plan_id": "plan_1f692f5dea7edaa83149",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "step_id": "probe-731",
+      "attempt_id": ""
+    },
+    "payload": {
+      "action": {
+        "type": "execute",
+        "action_type": "execute",
+        "language": "bash",
+        "code": "\nset -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"input_probe\", \"required_fields\": [\"value\", \"details\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nfrom pathlib import Path\ninputs = [Path(p) for p in ['/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf']]\nsizes = [len(p.read_bytes()) for p in inputs]\nvalue = all(n > 0 for n in sizes)\ndetails = {\"input_names\": [p.name for p in inputs], \"byte_counts\": sizes}\nprint(\"V2_REAL_READ_COMPLETED_WITHOUT_EVIDENCE\")\nPY\n",
+        "argv": [
+          "bash",
+          "-lc",
+          "\nset -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"input_probe\", \"required_fields\": [\"value\", \"details\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nfrom pathlib import Path\ninputs = [Path(p) for p in ['/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf']]\nsizes = [len(p.read_bytes()) for p in inputs]\nvalue = all(n > 0 for n in sizes)\ndetails = {\"input_names\": [p.name for p in inputs], \"byte_counts\": sizes}\nprint(\"V2_REAL_READ_COMPLETED_WITHOUT_EVIDENCE\")\nPY\n"
+        ],
+        "env": {},
+        "script_adapter": "script_block_v1",
+        "referenced_artifact_handles": [],
+        "generation_mode": "NORMAL",
+        "generation_provenance": {
+          "mode": "NORMAL",
+          "source_route": "controller",
+          "step_id": "probe-731",
+          "plan_revision": 1,
+          "recovery_id": null,
+          "recovery_envelope_id": null,
+          "schema_version": 1
+        },
+        "selected_skill_id": "",
+        "execution_capability_id": "framework.generic.execute",
+        "operation": "execute",
+        "capability_contract": {
+          "schema_version": 1,
+          "capability_id": "framework.generic.execute",
+          "selected_skill_id": "",
+          "required_runtime_binding_ids": [],
+          "optional_runtime_binding_ids": [],
+          "required_artifact_binding_ids": [],
+          "execution_guidance": [
+            "Explicit generic execution through the existing code approval and executor; select tool bash or python.",
+            "Declare exact resource uses and actual observable results in the Plan. A read-only check may have outputs=[] and typed observations.",
+            "No domain helper or runtime availability is implied. Use approved resources only; missing dependencies require evidence, correction or formal blocked/stop.",
+            "This route does not provide an arbitrary-system-call OS sandbox."
+          ],
+          "supported_tools": [
+            "bash",
+            "python"
+          ],
+          "operation": "execute",
+          "contract_source": "framework.controlled_executor",
+          "contract_revision": "generic-execution-v1"
+        },
+        "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+        "runtime_bindings": {},
+        "runtime_binding_records": [],
+        "runtime_binding_manifest": {
+          "schema_version": 1,
+          "action_id": "action_375a0e3404ea4ce8",
+          "plan_id": "plan_1f692f5dea7edaa83149",
+          "step_id": "probe-731",
+          "selected_skill_id": "",
+          "execution_capability_id": "framework.generic.execute",
+          "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+          "scope": "current_action",
+          "bindings": [],
+          "manifest_hash": "sha256:507da2e8b387d019fdb0fa332e34b1cd23f212941a641dd96590a4fb021cbd9a"
+        },
+        "runtime_binding_manifest_hash": "sha256:507da2e8b387d019fdb0fa332e34b1cd23f212941a641dd96590a4fb021cbd9a",
+        "controller_source_diagnostics": [
+          {
+            "code": "MANAGED_LITERAL_IN_FREE_SOURCE",
+            "severity": "HIGH",
+            "source": "managed_artifact_free_source_scan",
+            "location": "line:53",
+            "expected": {
+              "semantic_handle": "input.annotation_gtf",
+              "concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf"
+            },
+            "observed": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf",
+            "message": "A managed-artifact literal occurs in raw source text. The occurrence is visible for audit but is not a route decision.",
+            "evidence_refs": [
+              "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/plan_state.json"
+            ],
+            "authoritative": false
+          },
+          {
+            "code": "MANAGED_LITERAL_IN_FREE_SOURCE",
+            "severity": "HIGH",
+            "source": "managed_artifact_free_source_scan",
+            "location": "line:53",
+            "expected": {
+              "semantic_handle": "input.reference_fasta",
+              "concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa"
+            },
+            "observed": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa",
+            "message": "A managed-artifact literal occurs in raw source text. The occurrence is visible for audit but is not a route decision.",
+            "evidence_refs": [
+              "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/plan_state.json"
+            ],
+            "authoritative": false
+          },
+          {
+            "code": "MANAGED_LITERAL_IN_FREE_SOURCE",
+            "severity": "HIGH",
+            "source": "managed_artifact_free_source_scan",
+            "location": "line:53",
+            "expected": {
+              "semantic_handle": "input.variant_vcf",
+              "concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf"
+            },
+            "observed": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf",
+            "message": "A managed-artifact literal occurs in raw source text. The occurrence is visible for audit but is not a route decision.",
+            "evidence_refs": [
+              "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/plan_state.json"
+            ],
+            "authoritative": false
+          }
+        ],
+        "candidate_generation_event_id": "candidate-call:da2fd981829845b89b179951ecc22d1cdcf3774640f741391d73c34f37c17f8e",
+        "formal_workspace_bindings": [],
+        "binding_contract_rule": {},
+        "generate_binding_resolution": {
+          "environment": {},
+          "records": []
+        },
+        "generate_binding_resolution_digest": "49130909db9874d2ef1e55b5271596c4c1bd9fcf67acfd64aa8e969b8e3cef5a",
+        "workspace_mutation_intent_contracts": [],
+        "managed_artifact_handles": [
+          "input.annotation_gtf",
+          "input.reference_fasta",
+          "input.variant_vcf"
+        ],
+        "referenced_output_handles": [],
+        "materialized_artifacts": {
+          "input.annotation_gtf": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf",
+          "input.reference_fasta": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa",
+          "input.variant_vcf": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf"
+        },
+        "concrete_artifact_bindings": [
+          {
+            "semantic_handle": "input.annotation_gtf",
+            "role": "annotation_gtf",
+            "direction": "input",
+            "required": true,
+            "format": "gtf",
+            "path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf",
+            "exists": true,
+            "readable": true
+          },
+          {
+            "semantic_handle": "input.reference_fasta",
+            "role": "reference_fasta",
+            "direction": "input",
+            "required": true,
+            "format": "fa",
+            "path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa",
+            "exists": true,
+            "readable": true
+          },
+          {
+            "semantic_handle": "input.variant_vcf",
+            "role": "variant_vcf",
+            "direction": "input",
+            "required": true,
+            "format": "vcf",
+            "path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf",
+            "exists": true,
+            "readable": true
+          }
+        ],
+        "controller_output_bindings": [],
+        "candidate_fingerprint": "a2f6996476b1992040b818e2c614fe62836601d008bcf1d79c825237d7ea2ae1",
+        "action_id": "action_375a0e3404ea4ce8",
+        "step_id": "probe-731",
+        "task_revision": 1,
+        "plan_id": "plan_1f692f5dea7edaa83149",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "authoritative_user_turn_revision": 1,
+        "execution_epoch": "0",
+        "purpose": "validation",
+        "command_role": "required_validation",
+        "expected_outputs": [],
+        "expected_step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [],
+          "produces_bindings": [],
+          "produces_observations": [
+            {
+              "identity": "input_probe",
+              "evidence_contract": {
+                "required_fields": [
+                  "value",
+                  "details"
+                ]
+              }
+            }
+          ],
+          "workspace_mutations": [],
+          "explicit_side_effects": []
+        },
+        "expected_evidence": [
+          "Perform the explicitly declared synthetic work and emit only actual measured facts."
+        ],
+        "artifact_env_manifest": {
+          "schema_version": 1,
+          "action_id": "action_375a0e3404ea4ce8",
+          "plan_id": "plan_1f692f5dea7edaa83149",
+          "step_id": "probe-731",
+          "selected_skill_id": "",
+          "execution_capability_id": "framework.generic.execute",
+          "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+          "scope": "current_action",
+          "bindings": [],
+          "manifest_hash": "sha256:507da2e8b387d019fdb0fa332e34b1cd23f212941a641dd96590a4fb021cbd9a"
+        },
+        "artifact_env_manifest_hash": "sha256:507da2e8b387d019fdb0fa332e34b1cd23f212941a641dd96590a4fb021cbd9a",
+        "execution_policy_manifest": {
+          "schema_version": 1,
+          "action_id": "action_375a0e3404ea4ce8",
+          "plan_id": "plan_1f692f5dea7edaa83149",
+          "step_id": "probe-731",
+          "working_directory": "/tmp/biomind-plan-authority-v2-current04/export",
+          "language": "Bash",
+          "scope": "current_action",
+          "policy": {
+            "stdin": "devnull",
+            "process_group": "isolated",
+            "shell_errexit": false,
+            "shell_pipefail": true
+          },
+          "manifest_hash": "sha256:8525e5ddff53c215099276c594a56e206342a3ab2a32cc72ecc95448791b6b50"
+        },
+        "execution_policy_manifest_hash": "sha256:8525e5ddff53c215099276c594a56e206342a3ab2a32cc72ecc95448791b6b50",
+        "action_approval_identity": {
+          "schema_version": 1,
+          "generated_script_sha256": "d85569d7f479bab2f7f2c6f04772478ef50a168290c58e89b46a7cbc7f0d460e",
+          "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+          "runtime_env_manifest_hash": "sha256:507da2e8b387d019fdb0fa332e34b1cd23f212941a641dd96590a4fb021cbd9a",
+          "artifact_env_manifest_hash": "sha256:507da2e8b387d019fdb0fa332e34b1cd23f212941a641dd96590a4fb021cbd9a",
+          "execution_policy_manifest_hash": "sha256:8525e5ddff53c215099276c594a56e206342a3ab2a32cc72ecc95448791b6b50",
+          "working_directory": "/tmp/biomind-plan-authority-v2-current04/export",
+          "approval_identity_hash": "sha256:5ab10e1aa180f6679fba88146aa6657d49377a7c276f216bc8f5dfd77e5ca64b"
+        },
+        "generated_script_sha256": "d85569d7f479bab2f7f2c6f04772478ef50a168290c58e89b46a7cbc7f0d460e",
+        "working_directory": "/tmp/biomind-plan-authority-v2-current04/export",
+        "generated_from_plan_hash": "5063dfaa9baec1b2a057a1e45dde1d3627032b815ae7b824a08e9293c11f1c31",
+        "generated_from_approval_scope_hash": "c866422358b401d55a0f92a9627df92a266a213c693a8367938d430de3c5f1c9",
+        "action_hash": "dc575ce27670ccd4fcd1edf96aaaa9ac3663d36de2a3f470d85ede75fb97fc05",
+        "candidate_repair_source": {
+          "type": "execute",
+          "action_type": "execute",
+          "language": "bash",
+          "code": "\nset -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"input_probe\", \"required_fields\": [\"value\", \"details\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nfrom pathlib import Path\ninputs = [Path(p) for p in ['/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf']]\nsizes = [len(p.read_bytes()) for p in inputs]\nvalue = all(n > 0 for n in sizes)\ndetails = {\"input_names\": [p.name for p in inputs], \"byte_counts\": sizes}\nprint(\"V2_REAL_READ_COMPLETED_WITHOUT_EVIDENCE\")\nPY\n",
+          "argv": [
+            "bash",
+            "-lc",
+            "\nset -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"input_probe\", \"required_fields\": [\"value\", \"details\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nfrom pathlib import Path\ninputs = [Path(p) for p in ['/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa', '/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf']]\nsizes = [len(p.read_bytes()) for p in inputs]\nvalue = all(n > 0 for n in sizes)\ndetails = {\"input_names\": [p.name for p in inputs], \"byte_counts\": sizes}\nprint(\"V2_REAL_READ_COMPLETED_WITHOUT_EVIDENCE\")\nPY\n"
+          ],
+          "env": {},
+          "script_adapter": "script_block_v1",
+          "referenced_artifact_handles": [],
+          "generation_mode": "NORMAL",
+          "generation_provenance": {
+            "mode": "NORMAL",
+            "source_route": "controller",
+            "step_id": "probe-731",
+            "plan_revision": 1,
+            "recovery_id": null,
+            "recovery_envelope_id": null,
+            "schema_version": 1
+          },
+          "selected_skill_id": "",
+          "execution_capability_id": "framework.generic.execute",
+          "operation": "execute",
+          "capability_contract": {
+            "schema_version": 1,
+            "capability_id": "framework.generic.execute",
+            "selected_skill_id": "",
+            "required_runtime_binding_ids": [],
+            "optional_runtime_binding_ids": [],
+            "required_artifact_binding_ids": [],
+            "execution_guidance": [
+              "Explicit generic execution through the existing code approval and executor; select tool bash or python.",
+              "Declare exact resource uses and actual observable results in the Plan. A read-only check may have outputs=[] and typed observations.",
+              "No domain helper or runtime availability is implied. Use approved resources only; missing dependencies require evidence, correction or formal blocked/stop.",
+              "This route does not provide an arbitrary-system-call OS sandbox."
+            ],
+            "supported_tools": [
+              "bash",
+              "python"
+            ],
+            "operation": "execute",
+            "contract_source": "framework.controlled_executor",
+            "contract_revision": "generic-execution-v1"
+          },
+          "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+          "runtime_bindings": {},
+          "runtime_binding_records": [],
+          "runtime_binding_manifest": {
+            "schema_version": 1,
+            "action_id": "",
+            "plan_id": "plan_1f692f5dea7edaa83149",
+            "step_id": "probe-731",
+            "selected_skill_id": "",
+            "execution_capability_id": "framework.generic.execute",
+            "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+            "scope": "current_action",
+            "bindings": [],
+            "manifest_hash": "sha256:09441006e7e341388cbe9eaa885c7963f5edfcb2e1ba6499ec7315e833398dc8"
+          },
+          "runtime_binding_manifest_hash": "sha256:09441006e7e341388cbe9eaa885c7963f5edfcb2e1ba6499ec7315e833398dc8",
+          "controller_source_diagnostics": [
+            {
+              "code": "MANAGED_LITERAL_IN_FREE_SOURCE",
+              "severity": "HIGH",
+              "source": "managed_artifact_free_source_scan",
+              "location": "line:53",
+              "expected": {
+                "semantic_handle": "input.annotation_gtf",
+                "concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf"
+              },
+              "observed": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新注释.gtf",
+              "message": "A managed-artifact literal occurs in raw source text. The occurrence is visible for audit but is not a route decision.",
+              "evidence_refs": [
+                "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/plan_state.json"
+              ],
+              "authoritative": false
+            },
+            {
+              "code": "MANAGED_LITERAL_IN_FREE_SOURCE",
+              "severity": "HIGH",
+              "source": "managed_artifact_free_source_scan",
+              "location": "line:53",
+              "expected": {
+                "semantic_handle": "input.reference_fasta",
+                "concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa"
+              },
+              "observed": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/新参考.fa",
+              "message": "A managed-artifact literal occurs in raw source text. The occurrence is visible for audit but is not a route decision.",
+              "evidence_refs": [
+                "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/plan_state.json"
+              ],
+              "authoritative": false
+            },
+            {
+              "code": "MANAGED_LITERAL_IN_FREE_SOURCE",
+              "severity": "HIGH",
+              "source": "managed_artifact_free_source_scan",
+              "location": "line:53",
+              "expected": {
+                "semantic_handle": "input.variant_vcf",
+                "concrete_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf"
+              },
+              "observed": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/中文 两样本/输入 新构造/两样本.vcf",
+              "message": "A managed-artifact literal occurs in raw source text. The occurrence is visible for audit but is not a route decision.",
+              "evidence_refs": [
+                "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/plan_state.json"
+              ],
+              "authoritative": false
+            }
+          ]
+        },
+        "generated_script": {
+          "version": "generated",
+          "path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/scripts/plan_1f692f5dea7edaa83149/plan_v1/probe-731/action_375a0e3404ea4ce8/generated.sh",
+          "sha256": "d85569d7f479bab2f7f2c6f04772478ef50a168290c58e89b46a7cbc7f0d460e",
+          "producer": "generate",
+          "parent_script_ref": {},
+          "mutation_reason": "model_generation",
+          "created_at": "2026-09-15T13:36:59"
+        },
+        "generated_script_path": "/tmp/biomind-plan-authority-v2-current04/graph_generic_no_observation/scratch/biomind-plan-local-graph-pzy5fdzd/task_outputs/fix-f6-v2_generic_no_observation/scripts/plan_1f692f5dea7edaa83149/plan_v1/probe-731/action_375a0e3404ea4ce8/generated.sh",
+        "generated_script_hash": "d85569d7f479bab2f7f2c6f04772478ef50a168290c58e89b46a7cbc7f0d460e"
+      },
+      "action_id": "action_375a0e3404ea4ce8",
+      "candidate_fingerprint": "a2f6996476b1992040b818e2c614fe62836601d008bcf1d79c825237d7ea2ae1",
+      "validation_evidence": {
+        "status": "validated",
+        "reason_code": ""
+      },
+      "generate_invocation": {
+        "generate_call_id": "generate-a24a8fe369f049f78ba029e7841e8fca",
+        "scope": {
+          "task_id": "fix-f6-v2_generic_no_observation",
+          "task_revision": 1,
+          "plan_id": "plan_1f692f5dea7edaa83149",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "probe-731",
+          "attempt_id": ""
+        },
+        "source_ref": "object:sha256:76d28ab3a585aefc1eb864c22c1cbfa9c21c86761a0fed89e168d7a23d7ebc46",
+        "prompt_assembly_started": true,
+        "prompt_assembly_succeeded": true,
+        "provider_call_attempted": true,
+        "llm_invoked": true
+      }
+    },
+    "evidence_refs": []
+  },
+  "run_exit": {
+    "source_signature": "bf53d050d9800f300aaed29c2a2336e0bc338c30689b50dc65c34c25e6798965",
+    "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current04/export/export_manifest.json",
+    "test_targets": [
+      "-s",
+      "-q",
+      "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_no_observation]"
+    ],
+    "timeout_seconds": 180,
+    "watchdog_is_not_production_termination": true,
+    "returncode": 0,
+    "source_changes_after_run": []
+  }
+}

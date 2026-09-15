@@ -1,0 +1,4 @@
+{
+  "status": "UNKNOWN_FINAL_RECEIPT_NOT_EMITTED",
+  "reason": "Outer watchdog killed this new child before teardown; the export manifest and observed stdout do not substitute a loaded-module receipt."
+}

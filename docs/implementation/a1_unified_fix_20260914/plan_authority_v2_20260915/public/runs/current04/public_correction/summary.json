@@ -1,0 +1,28 @@
+{
+  "classification": "PRODUCTION_PAYLOAD_SCANNER_REJECTS_PUBLIC_STEP_REFERENCE_BEFORE_NEXT_PROVIDER",
+  "source_signature": "bf53d050d9800f300aaed29c2a2336e0bc338c30689b50dc65c34c25e6798965",
+  "returncode": 1,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan",
+      "outcome": "failed",
+      "duration": 12.485491829924285
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 131,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "pytest-results.json": "43705c72e752504298ffe4aa136c27750d56a73dfe1e3e10e967311c6d9e9cd9",
+    "pytest-results-test_actual_next_request_keeps_legacy_bad_reference_then_executes_v3_plan-facts.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "invocation.json": "158e561000de17d7180cd1cf04e06cf3d23f93459cbaae035e8c35f038e68a2e",
+    "f6-v2_generic_split-summary.json": "30f06d9c1eb02bae41e1ada9e616c6fe6c254e9c8a95a28c124b627edb7b685a",
+    "f6-v2_generic_split-full.json.gz": "57a775c0dc2ae88bb62d2e324eeb1293f81aa26c65bba01880b00b1d58a3e7fc",
+    "stdout.txt": "580a07fabfef8d6d429d1f40f16cd0a197fe2eec30b895f2a1eb2587852bd720",
+    "run_exit.json": "b8fa46a1829c47ac4d3c1450298d5458b0cde853344be86fed624db7bfdb0d6a",
+    "v2_generic_split-driver.json.gz": "f5ac26376d60eb3dcc33714df4caead25482d20af8adfb4267b206fabc780ed0"
+  },
+  "copied_scope": "top-level results only; scratch and nested preserved runtime trees not copied",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

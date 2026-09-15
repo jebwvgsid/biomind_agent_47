@@ -1,0 +1,79 @@
+{
+  "status": "FAIL_EXACT_SCOPE_ERROR_LOST_AT_GENERATE",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "approved_actions": 0,
+  "executions": [],
+  "commits": 0,
+  "generate_outcome": {
+    "schema_version": 1,
+    "type": "internal_protocol_error",
+    "summary": "Generate encountered an internal protocol violation and failed closed.",
+    "scope": {
+      "task_id": "fix-f6-v2_generic_language_mismatch",
+      "task_revision": 1,
+      "plan_id": "plan_16491f5ef1a1957253cd",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "step_id": "probe-731",
+      "attempt_id": ""
+    },
+    "payload": {
+      "error_code": "generate_exception",
+      "component": "generate",
+      "actual_outcome": "internal_protocol_error",
+      "actual_route": "END",
+      "execution_status": "not_started",
+      "recovery_entered": false,
+      "outputs_produced": [],
+      "termination_reason": "",
+      "budget_receipt": {},
+      "causal_generation": {},
+      "current_candidate": {
+        "attempt_id": "",
+        "execution_started": false,
+        "approved": false,
+        "candidate_fingerprint": "",
+        "candidate_event_id": "",
+        "cause_code": "generate_exception",
+        "correction_category": "UNKNOWN"
+      },
+      "generate_invocation": {
+        "generate_call_id": "generate-48e98253573e40579fa7468e274a08c0",
+        "scope": {
+          "task_id": "fix-f6-v2_generic_language_mismatch",
+          "task_revision": 1,
+          "plan_id": "plan_16491f5ef1a1957253cd",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "probe-731",
+          "attempt_id": ""
+        },
+        "source_ref": "object:sha256:6bd974ce941a57f7dc8f55fd87825b016eb3def47ec017513e23c35218526c1d",
+        "prompt_assembly_started": true,
+        "prompt_assembly_succeeded": true,
+        "provider_call_attempted": true,
+        "llm_invoked": true
+      }
+    },
+    "evidence_refs": []
+  },
+  "run_exit": {
+    "source_signature": "bf53d050d9800f300aaed29c2a2336e0bc338c30689b50dc65c34c25e6798965",
+    "loaded_source_manifest": "/tmp/biomind-plan-authority-v2-current04/export/export_manifest.json",
+    "test_targets": [
+      "-s",
+      "-q",
+      "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_language_mismatch]"
+    ],
+    "timeout_seconds": 180,
+    "watchdog_is_not_production_termination": true,
+    "returncode": 1,
+    "source_changes_after_run": []
+  }
+}

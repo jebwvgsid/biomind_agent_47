@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_merged]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_merged]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024550873786211014,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_merged]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 119.80976629443467,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_merged]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003414526581764221,
+    "failure": ""
+  }
+]

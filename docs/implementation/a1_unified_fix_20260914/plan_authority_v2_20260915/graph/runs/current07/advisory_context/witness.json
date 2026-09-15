@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "test_duration_seconds": 143.30214219819754,
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 8,
+    "reviewer": 8,
+    "recovery": 0
+  },
+  "plan_review_input_count": 1,
+  "approved_actions": 8,
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_7bb946b36fde40924a8b",
+      "approved_sha256": "a04e3210ba1e0fa982b7c4a2c7efca49bef913853b770e3706c30b8e911fb9fe",
+      "executed_sha256": "e405e7b3917933850ee53a35f49c8227de2b639f00499d9c9ad65849d014b962"
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "rc": 0,
+      "attempt_id": "attempt_d727bfbfe7c1335bbe98",
+      "approved_sha256": "7f3a0f42abef7940eb824caab4e29fbd30e5bbe173ade55ea072a89813267a7a",
+      "executed_sha256": "eaf0a58b5a63a8111c97cf29ec42c711adbb453d5bf23a514f20f66d163e791a"
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "rc": 0,
+      "attempt_id": "attempt_3b43ce854e9a5b156c37",
+      "approved_sha256": "6621f304999f2ac9156a1dcd3842c701f5d5c4d1e19d4aca07d37b87c0546227",
+      "executed_sha256": "7c03eedd6dd7ff120369483c89499c6a9533089d8c0862ac545bd006d23acd61"
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "rc": 0,
+      "attempt_id": "attempt_e66240da08e051dbd784",
+      "approved_sha256": "efac4846c26a7941d342594a7593685d6b88fdf3bb06402b7b033be4ac1ba293",
+      "executed_sha256": "a7ceb48a94ad718a86ff7c20cc6f85e18d2ef9d6a4e62f33ccd9e2cb0fab4305"
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "rc": 0,
+      "attempt_id": "attempt_61cfa2ce10e8e919912d",
+      "approved_sha256": "bf929b47f96c23c66df6a135e2f0bebd8da55ad1d193f8749a60d2d106323abe",
+      "executed_sha256": "45e4c208a051a1c10e5786c1db21d7a89dafbc85c9733c00fc2aa24b5fb3625c"
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "rc": 0,
+      "attempt_id": "attempt_aa139841812c6b778fe3",
+      "approved_sha256": "a46b3abec2b1bbca89ee0d46558625756fb034fd4c932a1c0fb8fccfc61f6839",
+      "executed_sha256": "98ec8c782cfdbbcd9ad7bfe830029fc4b2c370c9e3c0352afb5feb690de6144c"
+    },
+    {
+      "step_id": "aggregate-832",
+      "operation": "summarize_ann",
+      "rc": 0,
+      "attempt_id": "attempt_f922b99218624eb180c3",
+      "approved_sha256": "50ad64d2cd36cbbc18fe5bdddf513a997150042a5298e01354b611beffa30e27",
+      "executed_sha256": "cc81868a292d833ba3501024cf6ee49cf314cc586247b64186420c68a3e45abe"
+    },
+    {
+      "step_id": "deliver-604",
+      "operation": "finalize_outputs",
+      "rc": 0,
+      "attempt_id": "attempt_53bf1bd1eed16a890282",
+      "approved_sha256": "2b9c90826e9337412db4dfa50952dc0c518c2fcbf96e6b221e6b62dc0de35e12",
+      "executed_sha256": "3878b88f700125ef49431082074ebab3e09f9ccaf77d7770aad567e744cf0dfe"
+    }
+  ],
+  "commits": 8,
+  "final_outcome": "task_verified",
+  "generate_outcome_type": "action_ready",
+  "durable_status": "completed",
+  "gate_counterfactuals": [],
+  "provider_modes": [
+    "native_action_json",
+    "script_block_v1"
+  ],
+  "internal_temp_paths": {
+    "ledger-205": "/tmp/biomind-plan-authority-v2-current07/graph_advisory_context/scratch/biomind-plan-local-graph-de14gisx/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt.v2-partial"
+  },
+  "limits": [
+    "fixed model leaf; no real model reliability claim",
+    "synthetic algorithm; no scientific E2E",
+    "inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes",
+    "runtime readiness is an explicit observation of new fixture files, not host environment verification",
+    "trusted tiny scripts plus existing guard; no claim of arbitrary-syscall sandboxing",
+    "reload uses production readers in this process; not an independent restarted graph"
+  ]
+}

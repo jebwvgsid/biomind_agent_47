@@ -1,0 +1,45 @@
+{
+  "status": "3/3 independent existing carrier graph tests PASS",
+  "cases": [
+    {
+      "case": "old_carrier_native_code_python",
+      "actual_candidate": "current09",
+      "actual_source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "classification": "regression_runs/current09/old_carrier_native_code_python/classification.json",
+      "actual_returncode": 0,
+      "pytest_nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]",
+      "actual_loaded_modules": 135,
+      "real_approvals_and_execution_commit": true,
+      "raw_carrier_facts": "regression_runs/current09/old_carrier_native_code_python/f6-carrier-native_code_python.json",
+      "export_manifest_sha256": "83b79136d8631abe74dd3b76fe6ec23f03c552c9291d575045804feb0e8b08ea"
+    },
+    {
+      "case": "old_carrier_legacy_python",
+      "actual_candidate": "current09",
+      "actual_source_signature": "5bed9c956301b2560e6b5749e8e3c27e93edb9dd1147eeec696d9d4f47eddac6",
+      "classification": "regression_runs/current09/old_carrier_legacy_python/classification.json",
+      "actual_returncode": 0,
+      "pytest_nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_python]",
+      "actual_loaded_modules": 135,
+      "real_approvals_and_execution_commit": true,
+      "raw_carrier_facts": "regression_runs/current09/old_carrier_legacy_python/f6-carrier-legacy_python.json",
+      "export_manifest_sha256": "83b79136d8631abe74dd3b76fe6ec23f03c552c9291d575045804feb0e8b08ea"
+    },
+    {
+      "case": "old_carrier_legacy_bash",
+      "actual_candidate": "current10",
+      "actual_source_signature": "1394aae9438ce269866c6f18481a3d9ee8a21c130906b5ac27f89aac929dfac9",
+      "classification": "regression_runs/current10/old_carrier_legacy_bash/classification.json",
+      "actual_returncode": 0,
+      "pytest_nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_bash]",
+      "actual_loaded_modules": 135,
+      "real_approvals_and_execution_commit": true,
+      "raw_carrier_facts": "regression_runs/current10/old_carrier_legacy_bash/f6-carrier-legacy_bash.json",
+      "export_manifest_sha256": "89e6f8ec1c2591a4fe5338760bcf0e61d6a4d9f8308be34fb2354de5f71b588b"
+    }
+  ],
+  "fixed_provider": true,
+  "isolated_inputs_only": true,
+  "scope": "One actual negative diagnostic operation per carrier with formal Plan/approval/helper/executor/effect/gate/Commit; no real external provider or scientific E2E claimed. The native carrier selects snpeff; legacy Python/Bash select WGS inspect. All three are domain capabilities, never framework.generic.execute.",
+  "reuse_boundary": "Actual source versions retained separately. Root current10 proof covers the newly corrected generic-language mismatch exception alias; these selected domain capabilities do not enter that strict generic branch."
+}

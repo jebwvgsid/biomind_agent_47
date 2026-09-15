@@ -1,0 +1,102 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003559580072760582,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 11.316364574246109,
+    "failure": "mode = 'cancel', late_kind = 'valid'\n\n    @pytest.mark.parametrize('mode,late_kind',[('cancel','valid'),('cancel','invalid'),('cancel','blocked'),('nonsemantic','valid')])\n    def test_f3_generate_post_await_boundary(mode,late_kind):\n>       asyncio.run(asyncio.wait_for(scenario(mode,late_kind),45))\n\ntests/a1_unified_fix/test_f3_late_result.py:120: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:520: in wait_for\n    return await fut\n           ^^^^^^^^^\ntests/a1_unified_fix/test_f3_late_result.py:32: in scenario\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0004632193595170975,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003524022176861763,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.3981664115563035,
+    "failure": "mode = 'cancel', late_kind = 'invalid'\n\n    @pytest.mark.parametrize('mode,late_kind',[('cancel','valid'),('cancel','invalid'),('cancel','blocked'),('nonsemantic','valid')])\n    def test_f3_generate_post_await_boundary(mode,late_kind):\n>       asyncio.run(asyncio.wait_for(scenario(mode,late_kind),45))\n\ntests/a1_unified_fix/test_f3_late_result.py:120: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:520: in wait_for\n    return await fut\n           ^^^^^^^^^\ntests/a1_unified_fix/test_f3_late_result.py:32: in scenario\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017498154193162918,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002812277525663376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.41896484047174454,
+    "failure": "mode = 'cancel', late_kind = 'blocked'\n\n    @pytest.mark.parametrize('mode,late_kind',[('cancel','valid'),('cancel','invalid'),('cancel','blocked'),('nonsemantic','valid')])\n    def test_f3_generate_post_await_boundary(mode,late_kind):\n>       asyncio.run(asyncio.wait_for(scenario(mode,late_kind),45))\n\ntests/a1_unified_fix/test_f3_late_result.py:120: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:520: in wait_for\n    return await fut\n           ^^^^^^^^^\ntests/a1_unified_fix/test_f3_late_result.py:32: in scenario\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016423873603343964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027928221970796585,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.36633082665503025,
+    "failure": "mode = 'nonsemantic', late_kind = 'valid'\n\n    @pytest.mark.parametrize('mode,late_kind',[('cancel','valid'),('cancel','invalid'),('cancel','blocked'),('nonsemantic','valid')])\n    def test_f3_generate_post_await_boundary(mode,late_kind):\n>       asyncio.run(asyncio.wait_for(scenario(mode,late_kind),45))\n\ntests/a1_unified_fix/test_f3_late_result.py:120: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:520: in wait_for\n    return await fut\n           ^^^^^^^^^\ntests/a1_unified_fix/test_f3_late_result.py:32: in scenario\n    configure_protocol(case);case._configure_one_step_no_output_plan()\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_plan_local_preaction_convergence_v2.py:947: in _configure_one_step_no_output_plan\n    self.assertEqual(len(fixture_capabilities), 1)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:885: in assertEqual\n    assertion_func(first, second, msg=msg)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <tests.test_plan_local_preaction_convergence_v2.PlanLocalRealGraphTests testMethod=test_graph_e_malformed_script_block_repair_is_visible_to_provider>\nfirst = 6, second = 1, msg = '6 != 1'\n\n    def _baseAssertEqual(self, first, second, msg=None):\n        \"\"\"The default assertEqual implementation, not type specific.\"\"\"\n        if not first == second:\n            standardMsg = '%s != %s' % _common_shorten_repr(first, second)\n            msg = self._formatMessage(msg, standardMsg)\n>           raise self.failureException(msg)\nE           AssertionError: 6 != 1\n\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/unittest/case.py:878: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017283577471971512,
+    "failure": ""
+  }
+]

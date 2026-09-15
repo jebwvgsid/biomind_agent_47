@@ -1,0 +1,102 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003088712692260742,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 10.221680135466158,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001833997666835785,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00027461815625429153,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 10.657113432884216,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001879557967185974,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025434792041778564,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 10.545220205560327,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015949830412864685,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.257718920707703e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 9.378510158509016,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013017095625400543,
+    "failure": ""
+  }
+]

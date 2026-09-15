@@ -1,0 +1,84 @@
+{
+  "classification": "COMPONENT_PASS_13",
+  "source_signature": "44073bcdb2e78e1bd3e95fa41518dafd28bfa8c21ddb81f7d19267c7158c69e5",
+  "returncode": 0,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_reference_projection_preserves_invalid_value_only_at_public_paths",
+      "outcome": "passed",
+      "duration": 0.0006721671670675278
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_other_validator_does_not_gain_step_identity_exception",
+      "outcome": "passed",
+      "duration": 0.0003092372789978981
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_real_capability_validator_exposes_invalid_and_available_ids_only_at_its_public_locus",
+      "outcome": "passed",
+      "duration": 0.02787376195192337
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_skill_bad_value_is_retained_without_exposing_nested_control_metadata",
+      "outcome": "passed",
+      "duration": 0.00037070922553539276
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_retired_association_diagnostic_preserves_each_explicit_bad_reference",
+      "outcome": "passed",
+      "duration": 0.0002992423251271248
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_resource_requirements_v3_and_scoped_legacy_shape_survive_projection",
+      "outcome": "passed",
+      "duration": 0.000539078377187252
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_planning_focus_uses_same_public_diagnostic_projection",
+      "outcome": "passed",
+      "duration": 0.0005309609696269035
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_formal_payload_gate_accepts_only_projected_planner_reference_locations",
+      "outcome": "passed",
+      "duration": 0.002096940763294697
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_single_use_handle_roundtrip_is_exact_and_preserves_prose",
+      "outcome": "passed",
+      "duration": 0.0003612935543060303
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_approved_read_view_consumes_single_use_without_mutating_frozen_source",
+      "outcome": "passed",
+      "duration": 0.0001516612246632576
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[False]",
+      "outcome": "passed",
+      "duration": 0.00017281994223594666
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_explicit_empty_resource_boundary_does_not_reopen_legacy_full_closure[True]",
+      "outcome": "passed",
+      "duration": 0.0001536952331662178
+    },
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_projection.py::test_public_prompt_exposes_complete_generic_single_source_example",
+      "outcome": "passed",
+      "duration": 0.0005460837855935097
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 45,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "pytest-results.json": "c0c3e5bfb929c6aa77c0a5ad66f1f2d4a2be3a6bb89f23a7d66ca57bd979efa1",
+    "invocation.json": "d3ac2c0c6dc23bd5ca6e1af52ee12e90d298346c20f6b84d43e5d9668aef3c49",
+    "stdout.txt": "1d46e10191a9bebcbbccd7308c9eb033b3be96fd8b38027ba9261d7138eba5f2",
+    "run_exit.json": "d99f4d6f10091c222a6d15ce50c00a12f76b0820ff4f9a40469bbe531bd1fdb1"
+  },
+  "copied_scope": "top-level results only; no scratch or nested runtime preserved trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

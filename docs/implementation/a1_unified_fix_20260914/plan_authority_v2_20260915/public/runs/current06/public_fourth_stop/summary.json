@@ -1,0 +1,28 @@
+{
+  "classification": "SAME_MACHINE_ABI_GAP_TARGET_NOT_REACHED",
+  "source_signature": "86bd08c596e2c4ef34f9357abb8dfc484216d52f584e1e117813b630ffc41b24",
+  "returncode": 1,
+  "calls": [
+    {
+      "nodeid": "tests/plan_authority_v2_20260915/test_public_graph.py::test_fourth_formal_stop_is_non_success_without_fifth_request",
+      "outcome": "failed",
+      "duration": 9.120896932668984
+    }
+  ],
+  "source_changed": false,
+  "loaded_count": 131,
+  "source_manifest": "export_manifest.json",
+  "raw_files_sha256": {
+    "f6-v2_fourth_stop-summary.json": "e5b3bcecfc697af41b7fc090a636c4639de293c6872992427927410310cb594c",
+    "pytest-results.json": "b78f5a16e54849e16f1a161f360d3d82b5d89ba7268d01c9283c2635064c23f2",
+    "pytest-results-test_fourth_formal_stop_is_non_success_without_fifth_request-facts.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "invocation.json": "db2f2d4dc6d22450854c5d470fc225b2f7dfd5ef97f63c9ce7a4a2ee193189ee",
+    "v2_fourth_stop-driver.json.gz": "b45b936a163a891f3817ae54f719ff64890bfece4c33de6cfc0e5a93c154a9d7",
+    "stdout.txt": "aa962db6fa8a610eb3b2696e38444c36baeff4ec3bf788499ee81ae8130ccdfb",
+    "run_exit.json": "5512ee208d2f8b3fc2e19ea2274bd789ad5af2336777cb0717c93a7c05fda0f4",
+    "f6-v2_fourth_stop-full.json.gz": "3718a92df97ee7dabe058e4d175a20bc3be7e17fd4aeb894009192ff4fcd8350"
+  },
+  "copied_scope": "top-level results only; no scratch or nested preserved runtime trees",
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

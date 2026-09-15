@@ -1,0 +1,20 @@
+[
+  {
+    "original": "invocation.json",
+    "sha256": "637ff5e06049c92903548aaf063ba3882c75e787507c421d6a2775bd7eeb6bb5",
+    "archive": "invocation.json",
+    "archive_sha256": "637ff5e06049c92903548aaf063ba3882c75e787507c421d6a2775bd7eeb6bb5"
+  },
+  {
+    "original": "pytest-results.json",
+    "sha256": "77325caa93a087fa31c90b336982107bb2c78b6ea5ae9355edbb4a2fde29ae6e",
+    "archive": "pytest-results.json",
+    "archive_sha256": "77325caa93a087fa31c90b336982107bb2c78b6ea5ae9355edbb4a2fde29ae6e"
+  },
+  {
+    "original": "stdout.txt",
+    "sha256": "095d33d9780262b24b0df127be0ff8a5228082be14a90fd16633db2d0c724d97",
+    "archive": "stdout.txt.gz",
+    "archive_sha256": "dd6676a2ff93b210f58d7de2a017ef0c2fbe39be88503be0e4335a8b95f5a4df"
+  }
+]

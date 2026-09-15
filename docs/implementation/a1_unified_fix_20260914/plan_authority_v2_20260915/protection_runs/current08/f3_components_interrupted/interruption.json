@@ -1,0 +1,9 @@
+{
+  "outer_tool_exit_code": 143,
+  "actual_child_exit": "UNKNOWN_NO_RUN_EXIT_RECEIPT",
+  "classification": "EXTERNAL_TEST_DRIVER_INTERRUPTION_CAUSE_UNKNOWN",
+  "root_report": "Concurrent root and other agents also received hostclosed/143; nobody intentionally terminated the queue",
+  "partial_completed_calls": 19,
+  "partial_outcome": "19 reported passed, whole group NOT_PASS; exact cases replayed in separate bounded groups",
+  "source_changes_after_observed_interruption": []
+}

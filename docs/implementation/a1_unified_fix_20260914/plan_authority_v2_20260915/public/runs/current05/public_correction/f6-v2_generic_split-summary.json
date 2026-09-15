@@ -1,0 +1,730 @@
+{
+  "mode": "v2_generic_split",
+  "counts": {
+    "consultant": 1,
+    "planner": 2,
+    "generate": 8,
+    "reviewer": 8,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "final_audit"
+  ],
+  "executions": [
+    {
+      "step_id": "probe-731",
+      "operation": "execute",
+      "execution_capability_id": "framework.generic.execute",
+      "attempt_id": "attempt_412e37565ba73a0d9612",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"input_probe\",\"value\":true,\"details\":{\"input_names\":[\"两样本.vcf\",\"新参考.fa\",\"新注释.gtf\"],\"byte_counts\":[149,38,53]}}]}\n",
+      "stderr": "",
+      "approved_sha256": "a07c12c864f34828c10ec2ea0186da6d8ed2cff27d9ad01ce689580905d6d0e1",
+      "executed_sha256": "e5b9ba04be6eaa7fad37183c7f5cff6355c12c84656481ae758902f4392d261c",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    },
+    {
+      "step_id": "ledger-205",
+      "operation": "execute",
+      "execution_capability_id": "framework.generic.execute",
+      "attempt_id": "attempt_a7de0be2035517bc49c2",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"preflight_log\",\"path\":\"/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt\"}],\"produces_observations\":[{\"identity\":\"preflight_log_written\",\"value\":true,\"details\":{\"input_names\":[\"两样本.vcf\",\"新参考.fa\",\"新注释.gtf\"],\"byte_counts\":[149,38,53],\"temporary_bytes_before_rename\":61,\"temporary_present_after_rename\":false,\"written_bytes\":61}}]}\n",
+      "stderr": "",
+      "approved_sha256": "f1abe3ff30ff13d8cdf5b644c17fae22bc0fd3c35d2c65759dd1c426e1092752",
+      "executed_sha256": "9df429515bbb7d17b1d48609ddf7a4afbb8f9672aeacae96db5b0ef06de27fd3",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    },
+    {
+      "step_id": "gate-418",
+      "operation": "check_contig_compatibility",
+      "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "attempt_id": "attempt_1d134b694291a817c572",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":true}]}\n",
+      "stderr": "",
+      "approved_sha256": "e7d24297495fc8aa3b0812ec8911308db8d08dff6726f22d4f2024b587cf9871",
+      "executed_sha256": "a1843855ab257ebf8c9868a8c3994151704154f2e8b303dbd8437d784e36c53f",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    },
+    {
+      "step_id": "layout-563",
+      "operation": "prepare_database",
+      "execution_capability_id": "genomics.snpeff_annotation.prepare_database",
+      "attempt_id": "attempt_624b4cf397c0b05de5c5",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"plan-artifact-72e3962af4ef881df2714b23\",\"path\":\"/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-72e3962af4ef881df2714b23\"}],\"produces_observations\":[{\"identity\":\"database_layout_prepared\",\"value\":true}]}\n",
+      "stderr": "",
+      "approved_sha256": "34f6e45253c6d8efc5789b7d0bdf3938ab11db4660b429cd4be30dcab55813a0",
+      "executed_sha256": "d229492cc9ff58505acfd25ad1b6be355fa350b46bc9dc685635d7332b772820",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      }
+    },
+    {
+      "step_id": "compile-927",
+      "operation": "build_database",
+      "execution_capability_id": "genomics.snpeff_annotation.build_database",
+      "attempt_id": "attempt_c9a76f45178ce65252a0",
+      "rc": 0,
+      "stdout": "SYNTHETIC_ALGORITHM_COMPLETED:build\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"snpeff_database_ready\",\"value\":true}]}\n",
+      "stderr": "",
+      "approved_sha256": "652cfd6f33c15a662134dd19e3c49b0312203ccfbc53bdcc890513968e028857",
+      "executed_sha256": "977f86f1e81a74d40edc908b52bf99fb6648fa5867a4ade18bc58667cf50ec6f",
+      "actual_workspace_before": {
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      },
+      "actual_workspace_after": {
+        "data/new_fixture_v2/snpEffectPredictor.bin": "c03ae8758a054a069e9baab56929965dcb3da34d9420d7b3d62ff0983bb9911f",
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      }
+    },
+    {
+      "step_id": "effects-146",
+      "operation": "annotate_variants",
+      "execution_capability_id": "genomics.snpeff_annotation.annotate_variants",
+      "attempt_id": "attempt_d0e23e482cce48c04332",
+      "rc": 0,
+      "stdout": "SYNTHETIC_ALGORITHM_COMPLETED:annotate\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"annotated_vcf\",\"path\":\"/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf\"}]}\n",
+      "stderr": "",
+      "approved_sha256": "e43204c142dccc1f97d69b7f781db5cb0974b673a88c87d3f49a8f6ebc1a4e42",
+      "executed_sha256": "4034f5767ebe70243a4ac10207fc5a30a59668af1608936752a8960b2f148ee4",
+      "actual_workspace_before": {
+        "data/new_fixture_v2/snpEffectPredictor.bin": "c03ae8758a054a069e9baab56929965dcb3da34d9420d7b3d62ff0983bb9911f",
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      },
+      "actual_workspace_after": {
+        "data/new_fixture_v2/snpEffectPredictor.bin": "c03ae8758a054a069e9baab56929965dcb3da34d9420d7b3d62ff0983bb9911f",
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      }
+    },
+    {
+      "step_id": "aggregate-832",
+      "operation": "summarize_ann",
+      "execution_capability_id": "genomics.snpeff_annotation.summarize_ann",
+      "attempt_id": "attempt_3150a9275f4628f4c07f",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"ann_summary\",\"path\":\"/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv\"}],\"produces_observations\":[{\"identity\":\"ann_summary_completed\",\"value\":{\"synthetic\":true,\"annotated_records\":1}}]}\n",
+      "stderr": "",
+      "approved_sha256": "4660d1d10459369650ca4d7d79471068ecabe0129962fee1412cf7acbc687e3d",
+      "executed_sha256": "b6380b78d54812ca83d3c4de5d852f8311abd007ee3812b294f40adfe3a5fd89",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    },
+    {
+      "step_id": "deliver-604",
+      "operation": "finalize_outputs",
+      "execution_capability_id": "genomics.snpeff_annotation.finalize_outputs",
+      "attempt_id": "attempt_0f7376edbf0e3105704a",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"report\",\"path\":\"/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/report.md\"},{\"identity\":\"reproduce_script\",\"path\":\"/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh\"},{\"identity\":\"stage_status\",\"path\":\"/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv\"}],\"produces_observations\":[{\"identity\":\"final_outputs_recorded\",\"value\":{\"synthetic\":true,\"physical_reports\":3}}]}\n",
+      "stderr": "",
+      "approved_sha256": "07f698d4c2bbe2eeb3c9ff68bc17bfe2169a3ad114b0ae7272e42d8011effc0e",
+      "executed_sha256": "f0dbd91cb207c78b7136bf6df2c39c75e532e112943ac6d1e8fef3afd1c7c1d2",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    }
+  ],
+  "commit_outcomes": [
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-4ce7443e6177bd5068bc9f0d",
+        "receipt": "typed-step-commit:commit-step-4ce7443e6177bd5068bc9f0d",
+        "before_state_generation": 37,
+        "after_state_generation": 38,
+        "completed_step_id": "probe-731",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [],
+        "accepted_effect_refs": [
+          "input_probe",
+          "attempt_412e37565ba73a0d9612",
+          "validation-16f26d2f4df373ac44a4"
+        ],
+        "completion_report_ref": "completion-report-9210c56ed3473a90cc9cb5e22889997488203c303649cf131871a02bc23db4ec",
+        "semantic_decision_ref": "semantic-decision-851907dec86308264a95cb2a9bdf84a14f92d18a16589580833917ea00623558",
+        "semantic_consumption_ref": "completion-consumption-dafb01ca384d0525187af24b361fcf9c9cbc14d513bbbce0ebf7a37504392e2a",
+        "successor_step_id": "ledger-205"
+      },
+      "evidence_refs": [
+        "validation-16f26d2f4df373ac44a4",
+        "completion-report-9210c56ed3473a90cc9cb5e22889997488203c303649cf131871a02bc23db4ec",
+        "semantic-decision-851907dec86308264a95cb2a9bdf84a14f92d18a16589580833917ea00623558",
+        "completion-consumption-dafb01ca384d0525187af24b361fcf9c9cbc14d513bbbce0ebf7a37504392e2a"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-6810a28908e03c04e98a023b",
+        "receipt": "typed-step-commit:commit-step-6810a28908e03c04e98a023b",
+        "before_state_generation": 56,
+        "after_state_generation": 57,
+        "completed_step_id": "ledger-205",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [
+          "artifact_04f007ebbd0dea496b58@attempt_a7de0be2035517bc49c2"
+        ],
+        "accepted_effect_refs": [
+          "preflight_log_written",
+          "attempt_a7de0be2035517bc49c2",
+          "validation-bfd1ced15c19e1dc97d8",
+          "artifact_04f007ebbd0dea496b58@attempt_a7de0be2035517bc49c2",
+          "preflight_log"
+        ],
+        "completion_report_ref": "completion-report-dcef9c5acddd9bd41e79a502476b4d12b46ecf6947db3f4262f720f9c47a06d9",
+        "semantic_decision_ref": "semantic-decision-a7bb59c2addf81961584c78c3f835c9ef1756590a187ae085674d4cca11dfc09",
+        "semantic_consumption_ref": "completion-consumption-fc4ddab06f99924fed59515866ae08f88591ef15e61ec1b7727c15ae352c13fe",
+        "successor_step_id": "gate-418"
+      },
+      "evidence_refs": [
+        "validation-bfd1ced15c19e1dc97d8",
+        "completion-report-dcef9c5acddd9bd41e79a502476b4d12b46ecf6947db3f4262f720f9c47a06d9",
+        "semantic-decision-a7bb59c2addf81961584c78c3f835c9ef1756590a187ae085674d4cca11dfc09",
+        "completion-consumption-fc4ddab06f99924fed59515866ae08f88591ef15e61ec1b7727c15ae352c13fe"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-3e2fb37c50be28644f6b9b20",
+        "receipt": "typed-step-commit:commit-step-3e2fb37c50be28644f6b9b20",
+        "before_state_generation": 74,
+        "after_state_generation": 75,
+        "completed_step_id": "gate-418",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [],
+        "accepted_effect_refs": [
+          "contigs_compatible",
+          "attempt_1d134b694291a817c572",
+          "validation-f704f7edfe190ad2ab28"
+        ],
+        "completion_report_ref": "completion-report-aac0dc4bd91a12a85ffdfef90d4602d86c78b4553ed9db4cedd0adbc3c011e75",
+        "semantic_decision_ref": "semantic-decision-be173b1c3f9d41761b346765ab276f8e63cceec8b096257c15017cb70bf6f6a7",
+        "semantic_consumption_ref": "completion-consumption-32fa638c3123ed6c84846b10352c36b9adbb7c5e14372c08d72a10dcb5dfa056",
+        "successor_step_id": "layout-563"
+      },
+      "evidence_refs": [
+        "validation-f704f7edfe190ad2ab28",
+        "completion-report-aac0dc4bd91a12a85ffdfef90d4602d86c78b4553ed9db4cedd0adbc3c011e75",
+        "semantic-decision-be173b1c3f9d41761b346765ab276f8e63cceec8b096257c15017cb70bf6f6a7",
+        "completion-consumption-32fa638c3123ed6c84846b10352c36b9adbb7c5e14372c08d72a10dcb5dfa056"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-4c467380080ef6f943f36592",
+        "receipt": "typed-step-commit:commit-step-4c467380080ef6f943f36592",
+        "before_state_generation": 94,
+        "after_state_generation": 95,
+        "completed_step_id": "layout-563",
+        "accepted_binding_refs": [
+          "plan-binding-8ae3dbc6252b10548690",
+          "plan-binding-8a58c29fb889e370fff8"
+        ],
+        "accepted_artifact_refs": [
+          "artifact_71d90774b1176fe2749a@attempt_624b4cf397c0b05de5c5"
+        ],
+        "accepted_effect_refs": [
+          "genome_version",
+          "snpeff_db",
+          "database_layout_prepared",
+          "workspace-receipt-ab53288a0119fe74d49feea4",
+          "attempt_624b4cf397c0b05de5c5",
+          "validation-6d0f710a83eb5e279f33",
+          "action_01d8a83e25279810",
+          "artifact_71d90774b1176fe2749a@attempt_624b4cf397c0b05de5c5",
+          "plan-artifact-72e3962af4ef881df2714b23"
+        ],
+        "completion_report_ref": "completion-report-1073d89547694d9b73ffc734f2739289be00a50e892b05dd2e568ef23f9db6a8",
+        "semantic_decision_ref": "semantic-decision-4101b89ff0eeb0cfe14d44ffaea34825360ae10202d7a0247ce4123d8af1e821",
+        "semantic_consumption_ref": "completion-consumption-2d0e83b33d8427b64485e5bc4f9855072bb7a48e47e46d3c6e064fcd162a0084",
+        "successor_step_id": "compile-927"
+      },
+      "evidence_refs": [
+        "validation-6d0f710a83eb5e279f33",
+        "completion-report-1073d89547694d9b73ffc734f2739289be00a50e892b05dd2e568ef23f9db6a8",
+        "semantic-decision-4101b89ff0eeb0cfe14d44ffaea34825360ae10202d7a0247ce4123d8af1e821",
+        "completion-consumption-2d0e83b33d8427b64485e5bc4f9855072bb7a48e47e46d3c6e064fcd162a0084"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-0e78f2c139354c3c0cf8a51e",
+        "receipt": "typed-step-commit:commit-step-0e78f2c139354c3c0cf8a51e",
+        "before_state_generation": 114,
+        "after_state_generation": 115,
+        "completed_step_id": "compile-927",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [],
+        "accepted_effect_refs": [
+          "snpeff_database_ready",
+          "workspace-receipt-533db0bbfd85adfda49afd13",
+          "attempt_c9a76f45178ce65252a0",
+          "validation-08c8f13275f4f43b6d12"
+        ],
+        "completion_report_ref": "completion-report-7f2bf4753a14f922fa01897aa829dd2b71d2102d0523ca804195c2a3aebeba2b",
+        "semantic_decision_ref": "semantic-decision-21e90337f18798221f507fbd22e25d5652996bb3494d4fa3d414c4d6c16b598c",
+        "semantic_consumption_ref": "completion-consumption-06058cd0934f5d6d18081b9c60686c106c86a1f67f3a3b60d290fa4ddda4f9aa",
+        "successor_step_id": "effects-146"
+      },
+      "evidence_refs": [
+        "validation-08c8f13275f4f43b6d12",
+        "completion-report-7f2bf4753a14f922fa01897aa829dd2b71d2102d0523ca804195c2a3aebeba2b",
+        "semantic-decision-21e90337f18798221f507fbd22e25d5652996bb3494d4fa3d414c4d6c16b598c",
+        "completion-consumption-06058cd0934f5d6d18081b9c60686c106c86a1f67f3a3b60d290fa4ddda4f9aa"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-7125a53b43b7b10ce60d4371",
+        "receipt": "typed-step-commit:commit-step-7125a53b43b7b10ce60d4371",
+        "before_state_generation": 134,
+        "after_state_generation": 135,
+        "completed_step_id": "effects-146",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [
+          "artifact_1f03bf4e77997e983eee@attempt_d0e23e482cce48c04332"
+        ],
+        "accepted_effect_refs": [
+          "attempt_d0e23e482cce48c04332",
+          "validation-445b9255c1e2b7d09c98",
+          "artifact_1f03bf4e77997e983eee@attempt_d0e23e482cce48c04332",
+          "annotated_vcf"
+        ],
+        "completion_report_ref": "completion-report-2ed0e6ff8e4fe5214e62a40282842d9f8e380e8f716a624fbafc4da27201b869",
+        "semantic_decision_ref": "semantic-decision-845ce41ea6207a493e33645c7869e9c52621fd489432659833cfb728967bb92c",
+        "semantic_consumption_ref": "completion-consumption-3a6e4c3d939dd06bf48c7cd9faabc421814c9e53e881814ef205d8cf44142a36",
+        "successor_step_id": "aggregate-832"
+      },
+      "evidence_refs": [
+        "validation-445b9255c1e2b7d09c98",
+        "completion-report-2ed0e6ff8e4fe5214e62a40282842d9f8e380e8f716a624fbafc4da27201b869",
+        "semantic-decision-845ce41ea6207a493e33645c7869e9c52621fd489432659833cfb728967bb92c",
+        "completion-consumption-3a6e4c3d939dd06bf48c7cd9faabc421814c9e53e881814ef205d8cf44142a36"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-347fbebe9cee8f146cefaa56",
+        "receipt": "typed-step-commit:commit-step-347fbebe9cee8f146cefaa56",
+        "before_state_generation": 154,
+        "after_state_generation": 155,
+        "completed_step_id": "aggregate-832",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [
+          "artifact_ecc7dc057df7448ae7d7@attempt_3150a9275f4628f4c07f"
+        ],
+        "accepted_effect_refs": [
+          "ann_summary_completed",
+          "attempt_3150a9275f4628f4c07f",
+          "validation-66ec085b33af30ff8b28",
+          "artifact_ecc7dc057df7448ae7d7@attempt_3150a9275f4628f4c07f",
+          "ann_summary"
+        ],
+        "completion_report_ref": "completion-report-bc56ce167b17e965d1d46927bafd7a6744f59d16b3e7642f0a3cf5c406cf2d92",
+        "semantic_decision_ref": "semantic-decision-75916c68b392e86075133449b0dccf35688f33c3b25a2b919a0cddbd22981fa5",
+        "semantic_consumption_ref": "completion-consumption-11596c277b2fb0e041e76fa22881e69b5f793a7359575eb52a206fd555a3279d",
+        "successor_step_id": "deliver-604"
+      },
+      "evidence_refs": [
+        "validation-66ec085b33af30ff8b28",
+        "completion-report-bc56ce167b17e965d1d46927bafd7a6744f59d16b3e7642f0a3cf5c406cf2d92",
+        "semantic-decision-75916c68b392e86075133449b0dccf35688f33c3b25a2b919a0cddbd22981fa5",
+        "completion-consumption-11596c277b2fb0e041e76fa22881e69b5f793a7359575eb52a206fd555a3279d"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "plan_complete",
+      "summary": "Verified final step committed; final audit is required.",
+      "scope": {
+        "task_id": "fix-f6-v2_generic_split"
+      },
+      "payload": {
+        "commit_id": "commit-step-f06f6326f71b51a8b6cbec5a",
+        "receipt": "typed-step-commit:commit-step-f06f6326f71b51a8b6cbec5a",
+        "before_state_generation": 174,
+        "after_state_generation": 175,
+        "completed_step_id": "deliver-604",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [
+          "artifact_6b49e1cecfc48c92c238@attempt_0f7376edbf0e3105704a",
+          "artifact_dbf099fdbcc6e6e6ffc4@attempt_0f7376edbf0e3105704a",
+          "artifact_68187f9d389cdf1c9069@attempt_0f7376edbf0e3105704a"
+        ],
+        "accepted_effect_refs": [
+          "final_outputs_recorded",
+          "attempt_0f7376edbf0e3105704a",
+          "validation-414fdeb503ea0987aaba",
+          "artifact_68187f9d389cdf1c9069@attempt_0f7376edbf0e3105704a",
+          "artifact_6b49e1cecfc48c92c238@attempt_0f7376edbf0e3105704a",
+          "artifact_dbf099fdbcc6e6e6ffc4@attempt_0f7376edbf0e3105704a",
+          "report",
+          "reproduce_script",
+          "stage_status"
+        ],
+        "completion_report_ref": "completion-report-8fc0c6c3b3f0f8133d817606b2c1e77356285605adbdaa14e5d79a9dc74975d5",
+        "semantic_decision_ref": "semantic-decision-3ad787f2eca76e928a05561e2d6ae861d7fee48fece1d585e2262e752ab1a82e",
+        "semantic_consumption_ref": "completion-consumption-708139e4bfee42f43f0e9be48ff1e368fefa4b2d45f6e138ab966a257b8029df"
+      },
+      "evidence_refs": [
+        "validation-414fdeb503ea0987aaba",
+        "completion-report-8fc0c6c3b3f0f8133d817606b2c1e77356285605adbdaa14e5d79a9dc74975d5",
+        "semantic-decision-3ad787f2eca76e928a05561e2d6ae861d7fee48fece1d585e2262e752ab1a82e",
+        "completion-consumption-708139e4bfee42f43f0e9be48ff1e368fefa4b2d45f6e138ab966a257b8029df"
+      ]
+    }
+  ],
+  "final_outcome": {
+    "schema_version": 1,
+    "type": "task_verified",
+    "summary": "Current execution, verification, and final CompletionGate evidence were atomically accepted.",
+    "scope": {
+      "task_id": "fix-f6-v2_generic_split"
+    },
+    "payload": {
+      "validation_evidence": {
+        "schema_version": 1,
+        "validation_id": "validation-414fdeb503ea0987aaba",
+        "task_id": "fix-f6-v2_generic_split",
+        "step_id": "deliver-604",
+        "action_id": "action_d42b374a926c13ec",
+        "attempt_id": "attempt_0f7376edbf0e3105704a",
+        "status": "VALID",
+        "errors": [],
+        "warnings": [],
+        "info": [
+          "Exit code 0 ✓"
+        ],
+        "returncode_check": {
+          "returncode": 0,
+          "passed": true,
+          "source": "execution_evidence",
+          "process_signal": null,
+          "timeout": false,
+          "oom": false,
+          "executor_exception": ""
+        },
+        "manifest_results": [],
+        "artifact_results": [],
+        "success_criteria_results": [],
+        "effect_results": {
+          "schema_version": 1,
+          "step_id": "deliver-604",
+          "action_id": "action_d42b374a926c13ec",
+          "attempt_id": "attempt_0f7376edbf0e3105704a",
+          "declared_step_effect": {
+            "schema_version": 1,
+            "produces_artifacts": [
+              "report",
+              "reproduce_script",
+              "stage_status"
+            ],
+            "produces_bindings": [],
+            "produces_observations": [
+              "final_outputs_recorded"
+            ],
+            "workspace_mutations": [],
+            "explicit_side_effects": []
+          },
+          "parser_receipt": {
+            "schema_version": 1,
+            "parser_id": "biomind.structured_effect_emission.v1",
+            "raw_stdout_sha256": "9adf7b21544d55d30d99c002cc6631eaf7437ca606a819ff86d14e1434fe05f0",
+            "emission_count": 1,
+            "status": "parsed",
+            "issues": [],
+            "emission_contract": {
+              "schema_version": 1,
+              "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+              "approved_observation_ids": [
+                "final_outputs_recorded"
+              ],
+              "examples": [
+                "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"final_outputs_recorded\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+              ],
+              "rules": [
+                "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+                "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+                "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+                "Reader errors and sampling limits do not establish absence or full scientific validity."
+              ]
+            },
+            "scope": {
+              "task_id": "fix-f6-v2_generic_split",
+              "plan_id": "plan_d7829893e5b84aa0ff21",
+              "plan_version": "plan_v1",
+              "step_id": "deliver-604",
+              "action_id": "action_d42b374a926c13ec",
+              "attempt_id": "attempt_0f7376edbf0e3105704a"
+            }
+          },
+          "produces_artifacts": [
+            {
+              "identity": "report",
+              "path": "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "identity_status": "recorded"
+            },
+            {
+              "identity": "reproduce_script",
+              "path": "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "identity_status": "recorded"
+            },
+            {
+              "identity": "stage_status",
+              "path": "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "identity_status": "recorded"
+            }
+          ],
+          "produces_bindings": [],
+          "produces_observations": [
+            {
+              "identity": "final_outputs_recorded",
+              "value": {
+                "physical_reports": 3,
+                "synthetic": true
+              }
+            }
+          ],
+          "workspace_mutations": [],
+          "workspace_mutation_claims": [],
+          "workspace_mutation_receipt_validations": [],
+          "explicit_side_effects": [],
+          "status": "validated"
+        },
+        "scientific_checks": [
+          {
+            "source": "llm_advisory",
+            "assessment": "ACCEPTABLE",
+            "deterministic_status_unchanged": true
+          },
+          {
+            "source": "final_audit",
+            "assessment": "VALID",
+            "deterministic_status_unchanged": true
+          }
+        ],
+        "recoverability_hints": [],
+        "llm_advisory": {
+          "assessment": "ACCEPTABLE",
+          "concerns": [],
+          "confidence": 0.9,
+          "disposition": "completion_accepted",
+          "issue_dispositions": [
+            {
+              "disposition": "completion_accepted",
+              "explanation": "Only actual synthetic protocol facts are accepted.",
+              "issue_id": "validation-414fdeb503ea0987aaba"
+            },
+            {
+              "disposition": "completion_accepted",
+              "explanation": "Only actual synthetic protocol facts are accepted.",
+              "issue_id": "predicate-result-a9440839092f32d03b3197e08793f1a46cfceded05f8c2d7280e5c3c3940f55f"
+            }
+          ],
+          "parse_status": "valid",
+          "report_id": "completion-report-874c091758b2d0bc247ab8a14915dc355f643e270578f7c596b4a41c81218a50",
+          "review_policy_receipt": {
+            "assessment_id": "assessment:sha256:ce35cc3fbf6d684f90dc46af8b30ad8c75e0ad96cfc80f9fcb58c75fa31a7fb4",
+            "corrections_authorized": 0,
+            "policy": {
+              "max_protocol_corrections": 2,
+              "max_requests": 3,
+              "source": "semantic_completion.REVIEWER_PROTOCOL_CORRECTIONS",
+              "version": "semantic-review-correction-v1"
+            },
+            "producer": "semantic-review-correction-v1",
+            "remaining_requests": 2,
+            "requests_reserved": 1,
+            "responses_received": 1,
+            "scope": {
+              "action_id": "action_d42b374a926c13ec",
+              "attempt_id": "attempt_0f7376edbf0e3105704a",
+              "plan_id": "plan_d7829893e5b84aa0ff21",
+              "plan_version": "plan_v1",
+              "step_id": "deliver-604",
+              "task_id": "fix-f6-v2_generic_split"
+            }
+          },
+          "suggestions": []
+        },
+        "llm_advisory_conflict": false,
+        "evidence_complete": true,
+        "evidence_source": "execution_evidence",
+        "migration_source": "",
+        "migration_warnings": [],
+        "command_role": "analysis_execution",
+        "validator_version": "supervisor-validator-v1",
+        "validation_duration": 1.295069,
+        "created_at": "2026-09-15T05:47:19+00:00"
+      },
+      "completion_gate": {
+        "passed": true,
+        "verdict": "PASS",
+        "message": "Validated evidence satisfies the approved Plan results.",
+        "feedback": "",
+        "missing_artifacts": [],
+        "checked_artifacts": [
+          "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/task_outputs/fix-f6-v2_generic_split/plan_artifacts/plan-artifact-72e3962af4ef881df2714b23",
+          "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf",
+          "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv",
+          "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+          "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "/tmp/biomind-plan-authority-v2-current05/public_correction/scratch/biomind-plan-local-graph-zg_oouzp/中文 两样本/Part2.vairant_annotation/新机制结果/preflight-log.txt"
+        ],
+        "classification": "plan_result_evidence_satisfied",
+        "reconciliation": {},
+        "stale_artifacts": [],
+        "invalid_artifacts": [],
+        "attempt_ids": [],
+        "artifact_version_ids": [],
+        "validation_ids": [],
+        "evidence_refs": [],
+        "declared_effects": {},
+        "satisfied_effects": {},
+        "missing_effects": {},
+        "unexpected_effects": {},
+        "invalid_effects": {},
+        "plan_version": ""
+      },
+      "terminal_receipt": "typed-task-completion:final-audit-da980400e2af467c8ef75034"
+    },
+    "evidence_refs": [
+      "validation-414fdeb503ea0987aaba",
+      "validation-414fdeb503ea0987aaba",
+      "commit-step-f06f6326f71b51a8b6cbec5a"
+    ]
+  },
+  "full": {
+    "path": "/tmp/biomind-plan-authority-v2-current05/public_correction/f6-v2_generic_split-full.json.gz",
+    "sha256": "138c6ea88d85f3878f152f2cde2cb652e537c572583c8aff7dc62209939741fe",
+    "raw_sha256": "7aba129c3c0d5276e5ec4fb580c17171cba210073a3724bd165fbdbc3ea309a6"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "Production PlanReview _prompt_user reads through real safe_input; only safe_input reply is fixed to explicit y. Actual code-approval interrupts resume with explicit y.",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 19,
+    "finalize": 0,
+    "prepare": 10,
+    "summary": 0
+  },
+  "terminal": {},
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0,
+  "v2_driver_evidence": "/tmp/biomind-plan-authority-v2-current05/public_correction/v2_generic_split-driver.json.gz"
+}

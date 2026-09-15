@@ -1,0 +1,28 @@
+{
+  "base_head": "81d10c58a236f44c7987f1913190e6927ce23248",
+  "base_snapshot": "/tmp/biomind-plan-authority-v2-base/export",
+  "scope": "Owned public prompt/projection hunks only; existing overlays preserved",
+  "rows": [
+    {
+      "file": "agent_core/planner_context.py",
+      "base_export_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+      "current_pre_edit_sha256": "e3fe871850d3f106f2527d42faaafd811879b98e9046c2b8a568be23714f3bd8",
+      "source_original": "/tmp/biomind-plan-authority-v2-base/export/agent_core/planner_context.py",
+      "equal": true
+    },
+    {
+      "file": "agent_core/node_context.py",
+      "base_export_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "current_pre_edit_sha256": "23c3443bc5f1b477505a363edc48d2ee407d6551c08b1c210e7451cf1fbe79c2",
+      "source_original": "/tmp/biomind-plan-authority-v2-base/export/agent_core/node_context.py",
+      "equal": true
+    },
+    {
+      "file": "prompts/manager.py",
+      "base_export_sha256": "3dad1832cce3ccb9be48dce64fabcb7bc4a8e5faa12000d1ea1565e328f3d654",
+      "current_pre_edit_sha256": "3dad1832cce3ccb9be48dce64fabcb7bc4a8e5faa12000d1ea1565e328f3d654",
+      "source_original": "/tmp/biomind-plan-authority-v2-base/export/prompts/manager.py",
+      "equal": true
+    }
+  ]
+}
