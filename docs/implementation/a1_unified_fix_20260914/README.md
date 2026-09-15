@@ -70,3 +70,9 @@
 [本轮实施与验收](session_1789456793_fix_20260915/README.md)：已接纳候选关闭旧Generate repair权威而保留预算账本；精确失败step；未执行候选STOP与原因果attempt分离；正式失败日志引用/分页及helper诊断进入实际请求；显式snpeff构造保留通用途径。生产提交 `2ee4397d20006c1b427ef4904265be18d13bbbc6`（BASE `adf299e661a4996e6405eefe815b22d99bec0562`＋保护overlay）。
 
 本单限定机制 COMPLETE：G1六操作7执行/6Commit；G2/G3三执行/两Commit且三报告created；最后合法机会/预算停止均通过。180个唯一pytest ID及7场实际PTY/plain通过，旧失败与开发watchdog保留。真实模型/科学NOT_RUN，原session未恢复、未push。原F1—F6范围及V2保护overlay/PARTIAL提交边界不变；不宣称裸commit部署或真实建库成功。完整实际请求、审批、执行、Commit、STOP/report、加载与净提交范围见分册。
+
+## Generate 协议、进展判定与终态交付（2026-09-15）
+
+[类别修复与第 9 节回执](generate_protocol_terminal_20260915/README.md)：本次局部实施 COMPLETE，生产提交 `5bc79f2cc42eccaeb17caad34cea9c23f989c116`，BASE `4e896f7a47a2c858fd4e2087c89e34759afc58ef`＋保护 overlay。实际载体共用检查入口，检查五态进入持久回执与实际请求；默认省略可派生 binding_env，显式错误仍拒；进展布尔退出单独硬停止权，保留原预算、真重复/循环、正式停止、取消和授权。报告冲突保留，当前 stop 有非覆盖内部诊断与真实 writer receipt；不冒充固定目录或科学完成。
+
+本补充取代旧 F3 中“未证明进展即可提前停止”的政策，不改写旧验证历史。最终 final10 的 198 个 pytest ID 与 5 场真实 PTY/plain 通过；G-A/漏记注入/最后机会均为 7 执行、7 Commit；G-B/预算/真重复均为 2 执行、2 Commit；G-C 为 3 执行、2 Commit，保留 build 的内层失败、日志分页和原因果 attempt。全部必选图和直接消费者在相同源码签名 `02a55fe0c980c389edb2c8865bfaa98fa7e61d706b8894f13f165c9c16f8f712` 下重跑。[验证账本](generate_protocol_terminal_20260915/verification.json)保留原 F20 空 steps fixture 失败与本轮开发反例；实际请求/审批/执行/Commit/STOP/report 的[索引](generate_protocol_terminal_20260915/trace_index.json)和加载/保护清单同目录归档。10 个生产文件、4 个测试文件的净增量提交；56 个其他安全 dirty 文件与两个相交 overlay 保留，未收编。真实模型/科学 NOT_RUN，原 session 未恢复、旧结果未改、未 push，仍不宣称裸 commit 独立部署。

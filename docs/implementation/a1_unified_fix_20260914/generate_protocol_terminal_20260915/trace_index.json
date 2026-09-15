@@ -1,0 +1,2314 @@
+{
+  "archive": "evidence.tar.gz",
+  "archive_sha256": "4181c7038118192a0a25f8fd3944a44f48eed1624cc7977da4fc6ab588faace4",
+  "scope": "New synthetic guarded evidence only; original session has only read-only witness summary. Scripts/reproduce material are not executed by collection.",
+  "graph_trace_locator": {
+    "success": "final10/graph_a_missing/f6-category-success.json.gz",
+    "missing": "final10/graph_a_missing/f6-category-missing.json.gz",
+    "recovery": "final10/graph_c_stop/f6-category-recovery.json.gz",
+    "stop": "final10/graph_c_stop/f6-category-stop.json.gz",
+    "last": "final10/graph_d/f6-category-last.json.gz",
+    "budget": "final10/graph_d/f6-category-budget.json.gz",
+    "repeat": "final10/graph_d/f6-category-repeat.json.gz"
+  },
+  "files": [
+    {
+      "archive_member": "final10/components/F28-real-process-race.json",
+      "sha256": "5c795fc1a1e15769ceaa4a0eb67a53645eafeabfe7eb673a399fbf32acc985b9",
+      "bytes": 1198,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/F28-real-process-race.json"
+    },
+    {
+      "archive_member": "final10/components/f2-carrier-legacy_bash.json",
+      "sha256": "16f117f3230e6c85d4b34465331bc34a8fe7c3d2406c8c68eb7d8cc72849f8f2",
+      "bytes": 4989,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-carrier-legacy_bash.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-heredoc_flags.json",
+      "sha256": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+      "bytes": 409,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-heredoc_flags.json"
+    },
+    {
+      "archive_member": "final10/components/F25-F26-publication.json",
+      "sha256": "4de2499b9637b61a0703210e55989622bdc63eb90fbbc1aa6fab1467a5247e74",
+      "bytes": 3853,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/F25-F26-publication.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-heredoc_x_stdin.json",
+      "sha256": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+      "bytes": 409,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-heredoc_x_stdin.json"
+    },
+    {
+      "archive_member": "final10/components/f2-carrier-both.json",
+      "sha256": "84afda3332f191f1d040eafcfb09c1940e857c3adca9f0b86b5ca397d96aa64e",
+      "bytes": 8510,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-carrier-both.json"
+    },
+    {
+      "archive_member": "final10/components/f2-carrier-python.json",
+      "sha256": "ade3e06147a73f3caafd958b0ac43bda307b18041ea5bc3953685a0cccae6ba4",
+      "bytes": 5095,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-carrier-python.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-module.json",
+      "sha256": "7b5c0d30ee0e3c80976dda317a96254f1c9c3974f3859a78bc64fa713dee6dc7",
+      "bytes": 345,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-module.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-heredoc_cluster.json",
+      "sha256": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+      "bytes": 409,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-heredoc_cluster.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-command.json",
+      "sha256": "6727ababb82ca43dc356a58e56a77be9b6fce7f5e2216b0efc8336d37ba917d2",
+      "bytes": 435,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-command.json"
+    },
+    {
+      "archive_member": "final10/components/f6-generate-class-sequences.json",
+      "sha256": "cbce8b86824cebe1b71810a7c8a51c35cbc534dfe588e43c8c0397f1d1a7a152",
+      "bytes": 69484,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f6-generate-class-sequences.json"
+    },
+    {
+      "archive_member": "final10/components/f1-f2-native-ready.json",
+      "sha256": "af31e5d80e8a990d0a709a780659be756d9bbf6b296cd4c777b011115cf71b2e",
+      "bytes": 251286,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f1-f2-native-ready.json"
+    },
+    {
+      "archive_member": "final10/components/f2-carrier-legacy_python.json",
+      "sha256": "20a579abbc16dd205bca04483a328cb46a7819b60f0ad966f230c2955347376d",
+      "bytes": 4951,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-carrier-legacy_python.json"
+    },
+    {
+      "archive_member": "final10/components/f3-env-unrelated-valid-key.json",
+      "sha256": "74835eaad06d824ad171a5e64fd0c9b8f01ff13485d04c43ab76f2a207e01f4e",
+      "bytes": 1660,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f3-env-unrelated-valid-key.json"
+    },
+    {
+      "archive_member": "final10/components/f3-env-key-reordering.json",
+      "sha256": "c2f9f6147148fcfaa9ea7f91a95eb4e51e347bf9b7e11892d4afdb5afc70be89",
+      "bytes": 5196,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f3-env-key-reordering.json"
+    },
+    {
+      "archive_member": "final10/components/f3-env-exact-value-repair.json",
+      "sha256": "0cbd9f79a53fcd1bdfa4f5d8eddb4eec5bac4ec268e01d76b4b1cae8904d6c13",
+      "bytes": 8992,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f3-env-exact-value-repair.json"
+    },
+    {
+      "archive_member": "final10/components/f3-env-exact-last-chance.json",
+      "sha256": "bf40e41258cfd03cdbef374d6682a3637d97754133de8fb400f449706326a746",
+      "bytes": 216216,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f3-env-exact-last-chance.json"
+    },
+    {
+      "archive_member": "final10/components/f3-independent-reload.json",
+      "sha256": "64188ad2a6e40bd13328350afc27269ec81e5189c2e847c9a96fe02a1f941a01",
+      "bytes": 637,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f3-independent-reload.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-heredoc_string.json",
+      "sha256": "9c0af067ff58393570550bcc00855b782649537ecf855c91f2e76739f3ba16b0",
+      "bytes": 427,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-heredoc_string.json"
+    },
+    {
+      "archive_member": "final10/components/f2-carrier-code.json",
+      "sha256": "1042632d00630ea387d49c2053e1c1df187c42654d62b3933549e71dd3fad7b3",
+      "bytes": 8275,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-carrier-code.json"
+    },
+    {
+      "archive_member": "final10/components/f3-env-existing-progress-row.json",
+      "sha256": "f96182c8d5864bb0126d90b3f133209326ccf128cd6aaaa22b8374c0a6d1410f",
+      "bytes": 6280,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f3-env-existing-progress-row.json"
+    },
+    {
+      "archive_member": "final10/components/f2-carrier-bash.json",
+      "sha256": "76721608cdf5595930b1af66200d56b30626ea2eabcfc8d4a248b707e093bed3",
+      "bytes": 5234,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-carrier-bash.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-argv_python.json",
+      "sha256": "7baddc53daf9c6f95e1b9ea1183a40ff4a74e279390899c6ed1525e76bd5b4ad",
+      "bytes": 409,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-argv_python.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-python_string.json",
+      "sha256": "5eb641422d2a27dd1923148428a19bb1135a4d5f09d895bff1b8c76629e83a06",
+      "bytes": 428,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-python_string.json"
+    },
+    {
+      "archive_member": "final10/components/f6-checker-error-real-boundary.json",
+      "sha256": "425eab18e517ae6d818e2c16cb3514c8d454b8495783f65c5a8f2f350487bdc3",
+      "bytes": 215081,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f6-checker-error-real-boundary.json"
+    },
+    {
+      "archive_member": "final10/components/f2-scope-file.json",
+      "sha256": "ba21e99f645db90654450cfbad05fea944ae3a860ede8ee595171b67f826d343",
+      "bytes": 695,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f2-scope-file.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-6793_class_missing-summary.json",
+      "sha256": "eddf755d9cee34e15b5c1be5dfeb2b670dafe3f733d292b889f388196a4afe43",
+      "bytes": 30858,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-6793_class_missing-summary.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-category-success.json.gz",
+      "sha256": "a9482d6235f2be463e6ce08c4b0aec9fc97f38c5df1e021a4217d5e4e908da11",
+      "bytes": 931369,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-category-success.json.gz"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-category-missing.json.gz",
+      "sha256": "91c53f7f5c1c47e3aa7a332fe44b97d886ed5d9881f09775ed3620cba87c062d",
+      "bytes": 926944,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-category-missing.json.gz"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-6793_class_success-summary.json",
+      "sha256": "b7cb85ac5572ff7c0843f0b029da294a802e396d1d1be29293fea9ef31ebda32",
+      "bytes": 30858,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-6793_class_success-summary.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/plan_state.json",
+      "sha256": "12eb54040d6aa4f0fcb137e5956b98836e5d3ef8e48116c586a8cc3deb190d16",
+      "bytes": 1242530,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/plan_state.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/outputs/annotated.vcf",
+      "sha256": "6d525a3a25eea09ca53e129ecfca2f507f0eb0385d47c90db28aa6c1cc460499",
+      "bytes": 265,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/outputs/annotated.vcf"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/outputs/ann_summary.tsv",
+      "sha256": "3381c679be3843e7da214e1ddc8848ed5f13afe57f1d84f390e20227086222f2",
+      "bytes": 32,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/outputs/ann_summary.tsv"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/outputs/stage_status.tsv",
+      "sha256": "21878fb68bfb107f12479b9080f110b29e40e9c2715d019fc9ff15e7f6df09f7",
+      "bytes": 241,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/outputs/report.md",
+      "sha256": "646b9fb6fbd121412447ff637aab0fbf735e09ce37b51623e95526a285ee722f",
+      "bytes": 120,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/outputs/reproduce.sh",
+      "sha256": "7ca55a9649d34b2824abb57631d5e93f585363de7c00e25d6345ff127a2027e4",
+      "bytes": 115,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/executions/execution_records.jsonl",
+      "sha256": "0ee52a4649a351634a3a71da747fbb88d8552f3c692ceeeab53ec91f00bbfdea",
+      "bytes": 395161,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/exit_status.json",
+      "sha256": "d3536b9338e18b5774ee2be0ca1072308831b6478021e6916a8931f66954f02b",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/approved.sh",
+      "sha256": "ff293cab0f70b5a62f6b1cb1282bc741ee398437455cc48a4c1068eabe217e58",
+      "bytes": 3586,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/executed.sh",
+      "sha256": "0b39cf53733f8417cda5e541c073b22f8ae09ab319964b9666998562c6bf08f8",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/stdout.log",
+      "sha256": "458f8c368ea5f39762bfe7054fafde0bf7d6fd20b95714530c83c56c48199e6b",
+      "bytes": 119,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_0975a4cd6427603db528/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/exit_status.json",
+      "sha256": "b3a745a1020bed5ba057532b9ddc2236ebf0effa806cf521800c9dec2f1a88af",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/approved.sh",
+      "sha256": "3ee4234a8e88b9a67827f4fd46eae69a23a9d351be19f129ce714c22e61b4a8f",
+      "bytes": 4231,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/executed.sh",
+      "sha256": "bc0ac5b6c2010eed59eb9f3e76d90a804aba462889cedd64bbef83d14af9124b",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/stdout.log",
+      "sha256": "85d2ed81e88f5620a0463151489a89dac3cabe1b27426a140316b27cd9e58288",
+      "bytes": 398,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_c5dd55dd5ccc3c8e6038/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/exit_status.json",
+      "sha256": "0e8c3b32ac5f481488d0f1aaaaa39654ad1ee9a2da97eb213b5f3c17c60288f5",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/approved.sh",
+      "sha256": "60b3ea7aa3b067fbccb334b701c43535aab3ea70041f67afb883d03c4d48bb23",
+      "bytes": 4081,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/executed.sh",
+      "sha256": "34c907cefb6fd81f0d84b7c4e72271b7a3bd44e57570e488d38385598ce3bf80",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_a894216cf1484cae47c2/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/exit_status.json",
+      "sha256": "bbe00a5c9ab513613a5d1b1cb4ab5dbf1f408d7415eb18fd3baec88eaf53eff5",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/approved.sh",
+      "sha256": "3eeb8fee9a228648d931acff4335370274b5a4215b80557bcc3d04f868e885d2",
+      "bytes": 5883,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/executed.sh",
+      "sha256": "9a8980b177d9427ff651a18cc9ebf2626e47f4fa75fa272483ed9c7fcccf7812",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/stdout.log",
+      "sha256": "4823755ec5709da196920f522374d3ec3c35b402ccdb26dbaf70459b37b06260",
+      "bytes": 817,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_cc07c7884067ea9edfcf/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/exit_status.json",
+      "sha256": "c948f31b6ca9e706c612be694c9abbeaf266af21df717faf336a0a013c3bead4",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/approved.sh",
+      "sha256": "6941dcfd9327d4726f17207829b93a2fdc1a4997a2294419f760f646eb4d68d0",
+      "bytes": 4582,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/executed.sh",
+      "sha256": "12059f391242b1be41f8175f389acfcd368f442255106d8780028d128d513c37",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/stdout.log",
+      "sha256": "be084abb1491c1d4450c2586d780f73187b16a37f0813b030eb1a30fe9b9513e",
+      "bytes": 411,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_4752c984ce0455953769/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/exit_status.json",
+      "sha256": "232e8f5e08d15eb63ac8ead25f066692be8a8c30bc2cca6f3784a6578c3ab09c",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/approved.sh",
+      "sha256": "b08e35dc76be267233c1adc5e3a5fa122fa0eade32754e118c0ecb3f071d324f",
+      "bytes": 4634,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/executed.sh",
+      "sha256": "a72ec0a44c46e36727a0b1cf71a46b3048e1a63cbd1f324919535781e72f65a9",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/stdout.log",
+      "sha256": "43da4c4a8f740b09c1796b675092106209e9d6547fd724cbe4c237af97227127",
+      "bytes": 325,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_fb87e8f247cf81c8c991/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/exit_status.json",
+      "sha256": "3179f6f58280d9b7ee461b9e7febc792375d096d8353d93117ac775f4bfb2e6d",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/approved.sh",
+      "sha256": "fe539d0e47c5e0e04070d5853d684cbbfed9258779da4a2926faaee1515fdb4e",
+      "bytes": 4407,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/executed.sh",
+      "sha256": "4dca9d4a542f036c62af1fcac5f76e7f2e982fd9ceaf1dab0d41e60af3cbba50",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/stdout.log",
+      "sha256": "713c9eca0f0ee2b695579923481e8d1f5fe9a8d5048d9e7f2053d0be00d3cc08",
+      "bytes": 162,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_success/attempts/attempt_729dff93e6d66dd0e7ca/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/plan_state.json",
+      "sha256": "b4a7d717e5904e6d6d7d3745539fe30e6bb566a6ced2efcb01aa51454c4b5f6c",
+      "bytes": 1237250,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/plan_state.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/annotated.vcf",
+      "sha256": "6d525a3a25eea09ca53e129ecfca2f507f0eb0385d47c90db28aa6c1cc460499",
+      "bytes": 265,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/annotated.vcf"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/ann_summary.tsv",
+      "sha256": "3381c679be3843e7da214e1ddc8848ed5f13afe57f1d84f390e20227086222f2",
+      "bytes": 32,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/ann_summary.tsv"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/stage_status.tsv",
+      "sha256": "21878fb68bfb107f12479b9080f110b29e40e9c2715d019fc9ff15e7f6df09f7",
+      "bytes": 241,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/report.md",
+      "sha256": "646b9fb6fbd121412447ff637aab0fbf735e09ce37b51623e95526a285ee722f",
+      "bytes": 120,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/reproduce.sh",
+      "sha256": "7ca55a9649d34b2824abb57631d5e93f585363de7c00e25d6345ff127a2027e4",
+      "bytes": 115,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/executions/execution_records.jsonl",
+      "sha256": "965b55ba1a83bd8873abf46302146bd64929c02d9e767a858da4ca649388d7eb",
+      "bytes": 395164,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/exit_status.json",
+      "sha256": "96d043688c5acc2ae9924bafe9311ec8d53ace706b0aed669375d399d2de1eaf",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/approved.sh",
+      "sha256": "ca9455307755b2870ddcee9a0ab0b1f696e1d6df4e20b6701a24175f66fe4c2f",
+      "bytes": 4582,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/executed.sh",
+      "sha256": "d205c9f106bf663105f79efc61ea62a9d1c15684428244eca713c9fa0117b2ec",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/stdout.log",
+      "sha256": "3cf4d7da3c9d1d83723fdcdf4fc97073a115f8a2497f719c462f7d759d9ba896",
+      "bytes": 411,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_cbf5cf8727046049b405/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/exit_status.json",
+      "sha256": "5393fc0647530d8e894c28bfe898fc96147b99ba560f1d415afffa49d173c947",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/approved.sh",
+      "sha256": "77702e842df3c986e86bb41e1de92feeae44a14ea9c6c296a3471bc8ea9aceea",
+      "bytes": 4407,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/executed.sh",
+      "sha256": "3076079c1a8282497eb1db5b0b00becd0971cbdaa0b2d0ef6776549359b32e38",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/stdout.log",
+      "sha256": "713c9eca0f0ee2b695579923481e8d1f5fe9a8d5048d9e7f2053d0be00d3cc08",
+      "bytes": 162,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_c99710085070714fb47a/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/exit_status.json",
+      "sha256": "cd6cee7a85f8d8c9ba4499a7cfa3b909e306e48ce3a394daa015c87aba02c3d0",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/approved.sh",
+      "sha256": "b85cc488db3ca0c475c4c07c1a805ed6ad755cf1bb9919bbce8c8d31a8199d9f",
+      "bytes": 3586,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/executed.sh",
+      "sha256": "351c77a82a989eb05c3da9ab5cbb3432e14d69637d9d681eee26188960ba1524",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/stdout.log",
+      "sha256": "458f8c368ea5f39762bfe7054fafde0bf7d6fd20b95714530c83c56c48199e6b",
+      "bytes": 119,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_27cafb68043500f88ca7/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/exit_status.json",
+      "sha256": "7816f5122cc2afa58ce99ce09fbcab64b053013ea2644906fb4b70df6db9564b",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/approved.sh",
+      "sha256": "2d30c6de76017164bc670aa28695d3f383acf342aea849e03312b25ffa72066f",
+      "bytes": 5883,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/executed.sh",
+      "sha256": "7db2a87f3a79465e32bf9bb04fda9baabdebc7066685c494b8daa370ad446e44",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/stdout.log",
+      "sha256": "ba3412a4ae15b614b515814e350e259b049c89d5bc4e2e3c33c48c67adb4cb70",
+      "bytes": 817,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_e64489ae295d6c6882e2/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/exit_status.json",
+      "sha256": "07205a7723edd75bebb569dd5357fa2edb957ea884c5243d2f7ae8bf2f387dad",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/approved.sh",
+      "sha256": "f3308a04145d7d86b30efb296c63d4c9b9e1e1fe7c91f4d32159b9aee0a7c3a8",
+      "bytes": 4634,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/executed.sh",
+      "sha256": "799c00194727beba25857d31501e14ec34fee3700140e01fb36511f76ef04084",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/stdout.log",
+      "sha256": "a1fe15c61d0cbd9b7e43329651f52d0c3dc96ecc66337757334e91c62b13e347",
+      "bytes": 325,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_26149a833b8988da5c7d/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/exit_status.json",
+      "sha256": "0e7a64316e77be6815572c9081faa367ab5685f576d36d237ba164bf9bf61e60",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/approved.sh",
+      "sha256": "7737217a3dbd972515c79b6c4f1121d2dbe86773ba28bbad93117bf051888ce2",
+      "bytes": 4231,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/executed.sh",
+      "sha256": "121b7d0cfec1875877bbf3ca029386b280731990032b93cd8524524ebc0bb789",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/stdout.log",
+      "sha256": "511a19cfff0c812778b81f7192d90abb439a446ea8deb90cee8f45489b039d4c",
+      "bytes": 398,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_5cfb2ed614a17ca64c55/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/exit_status.json",
+      "sha256": "cae98877176b2d40c54ca3f5b3078e15dd8c29fea934d5c68f73af4964e8433c",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/approved.sh",
+      "sha256": "63459a8789cb435d348dbfd719e95863eac5e47ebbe239a66f91e7a25521e3b5",
+      "bytes": 4081,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/executed.sh",
+      "sha256": "21513ebc66a3d45a620c2f43264e7d33fe9daf2947449ecef97f316c60349ac7",
+      "bytes": 2491,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_a_missing/f6-preserved-6793_class_missing/attempts/attempt_25c2cb65ad60fc25a5f2/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-category-recovery.json.gz",
+      "sha256": "72f4c9ac94432ceb3eac891220dfe7d7f8f0ef7bcbdd6fdf24d611d0a426a58d",
+      "bytes": 534193,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-category-recovery.json.gz"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-6793_class_recovery-summary.json",
+      "sha256": "83ea303dc69df97e988bf1c6ab0a5ebcface8fc4ca0ec8261a79135a26f6c208",
+      "bytes": 49873,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-6793_class_recovery-summary.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-6793_class_stop-summary.json",
+      "sha256": "96ba34125be3b0d0ef75dc5fbe5bfe88f0657aa6b61cfb6476cb1cf89f761fed",
+      "bytes": 33865,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-6793_class_stop-summary.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-category-stop.json.gz",
+      "sha256": "2826fa6790a521d03f34ebcbfe6b1260998a108d2bc63097433a3a9370f6047f",
+      "bytes": 640190,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-category-stop.json.gz"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/plan_state.json",
+      "sha256": "35fc48d9f8aa2aa2bec44bf359caf6995ec2d22ae5bcb0f873894e464584fee4",
+      "bytes": 1011219,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/plan_state.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/outputs/stage_status.tsv",
+      "sha256": "78c18b1912fe5e9f1f1bf8d3f595a7cb3d14160dea717e95c1744c4a7e5c2d49",
+      "bytes": 36,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/outputs/report.md",
+      "sha256": "f9efaa9f38fbda7de50a2d914506ec2fdc583860d4c9884157ab14ce2ef7783d",
+      "bytes": 30,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/outputs/reproduce.sh",
+      "sha256": "9e5f7977a878aab157f85cce725158ec08c0a3436a95831d256b2bacb73faf5c",
+      "bytes": 40,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/executions/execution_records.jsonl",
+      "sha256": "9dc287f9f388580dc27e02b8293472af2689785976c25f0de4a753747e2203e6",
+      "bytes": 177688,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/exit_status.json",
+      "sha256": "795374bec0c4d2460c0c0128c15f06da9a0dabd86b3d4bea1e42043898bfe09a",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/approved.sh",
+      "sha256": "b7d0647893eda8f7d741fcb430f36cd35e571b2660232edb9ca0d9931bbc6b20",
+      "bytes": 4572,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/executed.sh",
+      "sha256": "8e74b23f3d30dddc09c829ed84048d80be3b570d8443cb5d51efe41a11beed35",
+      "bytes": 2469,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/stdout.log",
+      "sha256": "015657d7601db5e3c87aa7ef89b4afae18779266730d6263a11dc49ef96ea910",
+      "bytes": 409,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_5301c8e3a89444f17fd9/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/exit_status.json",
+      "sha256": "f7130cd8e504302e82c668ce6e2d4853d6cbcae867e197932e5384224b50a74a",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/approved.sh",
+      "sha256": "e751bd56ed757d3af6498cb6a7593f6acdd46c92a8745737bf91cec2b5217bf3",
+      "bytes": 4072,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/executed.sh",
+      "sha256": "31347213140667364279dab307bd4b7b49b3be6309514b0e1d952e7b7699ea64",
+      "bytes": 2469,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_d3bd0654678855f37b65/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/exit_status.json",
+      "sha256": "63f96c236f8da0e38ad7f2442becac8f485d790adceab202dc84bc5964a53150",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/approved.sh",
+      "sha256": "4c02d2ba64b483b4967f8bd028e8ffb085ebc5b7420fded66a46bb990be07a1a",
+      "bytes": 4657,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/executed.sh",
+      "sha256": "f6d4a2d789ab8972b517a3d35411621b94ab05537459c8c514e0d1e82276d213",
+      "bytes": 2469,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/stdout.log",
+      "sha256": "5d460da73540afc836ed05108cdadb241fec1f3f1e78173ceb3dada13672fb16",
+      "bytes": 1091,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_recovery/attempts/attempt_11aa0eae6d6768a4ed19/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/plan_state.json",
+      "sha256": "7e98e46bb305456e035616613d864c9ca7dbc736ff7df835c0f39a73cb32eb62",
+      "bytes": 820626,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/plan_state.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/outputs/stage_status.tsv",
+      "sha256": "78c18b1912fe5e9f1f1bf8d3f595a7cb3d14160dea717e95c1744c4a7e5c2d49",
+      "bytes": 36,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/outputs/report.md",
+      "sha256": "f9efaa9f38fbda7de50a2d914506ec2fdc583860d4c9884157ab14ce2ef7783d",
+      "bytes": 30,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/outputs/reproduce.sh",
+      "sha256": "9e5f7977a878aab157f85cce725158ec08c0a3436a95831d256b2bacb73faf5c",
+      "bytes": 40,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/executions/execution_records.jsonl",
+      "sha256": "1d10dcf972ac7b28e30b3ff98c2ee50af94e05f4bece64f9a1e466404f73fac8",
+      "bytes": 84709,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/exit_status.json",
+      "sha256": "d986faded89519d8095b5c337ea445d31df34f65ff90f86e3e067dab33b53900",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/approved.sh",
+      "sha256": "628b55f864eda9524cf20aad72cae3e890ea2efeb76b6cc753ad4af73ee19e8a",
+      "bytes": 4072,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/executed.sh",
+      "sha256": "0294f2fb94caa37507b467b5308c30eaa94c479adb754d1dc89fcc7312284d62",
+      "bytes": 2425,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_6df1fa3421dfbfa6a55f/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/exit_status.json",
+      "sha256": "3fa811ad4155610bffb6f1f94bcbc1e9a92d91b5bf3392505e0a2d39c83ef7c4",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/approved.sh",
+      "sha256": "bedf37c854f84a6af01fbf7250f380802b89422526c0d7ff6774925f7420e1b3",
+      "bytes": 3577,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/executed.sh",
+      "sha256": "2eb4c12f27097f5dc575e89157d37e70ff7f28b9631cbec7684eeeb5db47672c",
+      "bytes": 2425,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/stdout.log",
+      "sha256": "458f8c368ea5f39762bfe7054fafde0bf7d6fd20b95714530c83c56c48199e6b",
+      "bytes": 119,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/f6-preserved-6793_class_stop/attempts/attempt_e5006c93c507a7964147/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/category-stop-diagnostics/stage_status.tsv",
+      "sha256": "1caae38086bc713758c853046593d9bd6b267fd204b2a95d19aebfceecb7c5e9",
+      "bytes": 850,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/category-stop-diagnostics/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/category-stop-diagnostics/report.md",
+      "sha256": "35ceff238abc6a4306c64a27d81d725c9766afc9d115b71ecfec08e5c2510fce",
+      "bytes": 6306,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/category-stop-diagnostics/report.md"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/category-stop-diagnostics/reproduce.sh",
+      "sha256": "025ea9135bb5eafd905d3f800e019680a4009629761e0a3ec5d3ba6137aab608",
+      "bytes": 565,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/category-stop-diagnostics/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/category-recovery-diagnostics/stage_status.tsv",
+      "sha256": "56846c54d366831c428f612851e1f33efd108e12c8b2e0ab5f08786483b6ea9b",
+      "bytes": 746,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/category-recovery-diagnostics/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/category-recovery-diagnostics/report.md",
+      "sha256": "4c9c165fd67756806fe2f4d6b4929859800d4519b3a4a19feaaf8121b7cebc15",
+      "bytes": 8333,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/category-recovery-diagnostics/report.md"
+    },
+    {
+      "archive_member": "final10/graph_c_stop/category-recovery-diagnostics/reproduce.sh",
+      "sha256": "5cc96d2179feca21ea07e6a75c58c9dbb0c0fa7410ab95b2d7c5c78d72d7fb1b",
+      "bytes": 5134,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_c_stop/category-recovery-diagnostics/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-6793_class_last-summary.json",
+      "sha256": "461fd6b6ac3d2bc908fdeb28c85e98a0efcc7c0ed98d630de35c1ec7a3d4eaa6",
+      "bytes": 30720,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-6793_class_last-summary.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-category-last.json.gz",
+      "sha256": "3aa6026a64daf74544ecf1ffba3a66acb824f6810b4b65ac6cca52c1ad78240f",
+      "bytes": 1351651,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-category-last.json.gz"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-category-budget.json.gz",
+      "sha256": "a9cd2fbd31a7edc6a044913c5bb52760b2d4181fc45564ae99c346477298b901",
+      "bytes": 1024172,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-category-budget.json.gz"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-6793_class_budget-summary.json",
+      "sha256": "69552649073307efa954a75ea4334b241f33224a3965a598ee5749a4fdad9510",
+      "bytes": 53536,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-6793_class_budget-summary.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-6793_class_repeat-summary.json",
+      "sha256": "d6e5710ca1c80efe8624ab63b18e47d44763d23de57b4dfb6e1b6bcb9776dafa",
+      "bytes": 53327,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-6793_class_repeat-summary.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-category-repeat.json.gz",
+      "sha256": "ea1b58d20b7716eb6c521fdf5f6007f05ed89247e0c6af0d9b41d40f0f0a71e6",
+      "bytes": 656314,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-category-repeat.json.gz"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/plan_state.json",
+      "sha256": "b3a6e57c5ebf197e0eb74f36ca349fd8bfe96ab54f6e9e268ff535ae75f11e9f",
+      "bytes": 909955,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/plan_state.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/outputs/stage_status.tsv",
+      "sha256": "78c18b1912fe5e9f1f1bf8d3f595a7cb3d14160dea717e95c1744c4a7e5c2d49",
+      "bytes": 36,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/outputs/report.md",
+      "sha256": "f9efaa9f38fbda7de50a2d914506ec2fdc583860d4c9884157ab14ce2ef7783d",
+      "bytes": 30,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/outputs/reproduce.sh",
+      "sha256": "9e5f7977a878aab157f85cce725158ec08c0a3436a95831d256b2bacb73faf5c",
+      "bytes": 40,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/executions/execution_records.jsonl",
+      "sha256": "cc2a74174e0375d8618b16ae2685a20cd6534a67d24db729a166dbca3348fd16",
+      "bytes": 84337,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/exit_status.json",
+      "sha256": "0491932a1c32d9accad410692a1f66a0c847b3db23de264b4e4bfa724935e36c",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/approved.sh",
+      "sha256": "0290a9d8342b320bf89f10aa9a964626506380eead9ee509fd88b548ad1bcb56",
+      "bytes": 4057,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/executed.sh",
+      "sha256": "47807dd89184158b77a2df033b1efbc33c96bd50fc9bb99c32d0bab331dfc7af",
+      "bytes": 2392,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_04ad7ba6f82affc9c1a5/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/exit_status.json",
+      "sha256": "1ecdfa424ab3f40aad04f298d07023b18ad9b1f085c259e5373adfdb18c483bf",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/approved.sh",
+      "sha256": "33a5cd37e93f8ef30915b1c502b22b2ea566108787c5cd65aaecfb8dd053230c",
+      "bytes": 3562,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/executed.sh",
+      "sha256": "24894cc0f8e8eb55022e9bddccd3020b49c4c9673d6d0a337b138cf45788dbe8",
+      "bytes": 2392,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/stdout.log",
+      "sha256": "458f8c368ea5f39762bfe7054fafde0bf7d6fd20b95714530c83c56c48199e6b",
+      "bytes": 119,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_repeat/attempts/attempt_53346588aeca200e1272/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/plan_state.json",
+      "sha256": "75bfd04c2d515d8d1ef111c6c9c85421b5e5dc2eef658ac794ac38801b86ca40",
+      "bytes": 1031393,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/plan_state.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/outputs/stage_status.tsv",
+      "sha256": "78c18b1912fe5e9f1f1bf8d3f595a7cb3d14160dea717e95c1744c4a7e5c2d49",
+      "bytes": 36,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/outputs/report.md",
+      "sha256": "f9efaa9f38fbda7de50a2d914506ec2fdc583860d4c9884157ab14ce2ef7783d",
+      "bytes": 30,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/outputs/reproduce.sh",
+      "sha256": "9e5f7977a878aab157f85cce725158ec08c0a3436a95831d256b2bacb73faf5c",
+      "bytes": 40,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/executions/execution_records.jsonl",
+      "sha256": "ed6de971bd3b8777b05cd673904e95d0d878b697c73e4b76647dfb921d5340fc",
+      "bytes": 84337,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/exit_status.json",
+      "sha256": "6bc876a61560412a3db8bca8fc9309a82237c2df3c898ac1840eb850fa0cc00a",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/approved.sh",
+      "sha256": "1bdc20f107058b5d760db52ae50655494ae2b066f1612f2284cc4fba2681623d",
+      "bytes": 4057,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/executed.sh",
+      "sha256": "79cd42f572459ba92778473bef4d1280654281a47c57ae5553d79883e145a255",
+      "bytes": 2392,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_872a366b9feb1cf27114/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/exit_status.json",
+      "sha256": "7aa817ecc3b7218f48a7b3efc5afa75a5e43329c7cea40ab7c37183e5fed074f",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/approved.sh",
+      "sha256": "8873670efb88f6dcaebf8cb7c092ac5c2b897a9542b8878f77faa8c58c347018",
+      "bytes": 3562,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/executed.sh",
+      "sha256": "cfa11afdacb51fa8c942c5e863c7da2c1076c0d42aa483377979bc038d06873a",
+      "bytes": 2392,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/stdout.log",
+      "sha256": "458f8c368ea5f39762bfe7054fafde0bf7d6fd20b95714530c83c56c48199e6b",
+      "bytes": 119,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_budget/attempts/attempt_4abc1fe654899ec38ea7/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/plan_state.json",
+      "sha256": "ca72f6bb432fa884d6db06f73823551d0beb758622d30bcfa548d2668e0f7f29",
+      "bytes": 1338687,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/plan_state.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/outputs/annotated.vcf",
+      "sha256": "6d525a3a25eea09ca53e129ecfca2f507f0eb0385d47c90db28aa6c1cc460499",
+      "bytes": 265,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/outputs/annotated.vcf"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/outputs/ann_summary.tsv",
+      "sha256": "3381c679be3843e7da214e1ddc8848ed5f13afe57f1d84f390e20227086222f2",
+      "bytes": 32,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/outputs/ann_summary.tsv"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/outputs/stage_status.tsv",
+      "sha256": "21878fb68bfb107f12479b9080f110b29e40e9c2715d019fc9ff15e7f6df09f7",
+      "bytes": 241,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/outputs/report.md",
+      "sha256": "646b9fb6fbd121412447ff637aab0fbf735e09ce37b51623e95526a285ee722f",
+      "bytes": 120,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/outputs/reproduce.sh",
+      "sha256": "7ca55a9649d34b2824abb57631d5e93f585363de7c00e25d6345ff127a2027e4",
+      "bytes": 115,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/executions/execution_records.jsonl",
+      "sha256": "32bd45a2ab344fe93b91cd03786c36324da492f1eff6b269e50a2055794ad096",
+      "bytes": 390122,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/exit_status.json",
+      "sha256": "fbfb9f72b1937316c75d89b2c8e89bb0e1e6274daf58a2d9e8530cb1c90d6673",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/approved.sh",
+      "sha256": "77f7c68ffa3a111a29f771e9b987b558ffc383ab5a3f7c6bc3dcd0cef0be3dd1",
+      "bytes": 4575,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/executed.sh",
+      "sha256": "89e587965a8f61a9efcc9ea77aaddca6746bf40c897ccdf3924d24b45d6922a4",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/stdout.log",
+      "sha256": "5d69d38e80ea7a647e14d36fe3807094f47a179fbb4ef1afaf761c0d3d98a2ef",
+      "bytes": 317,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_99820f7eb37fb6864f56/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/exit_status.json",
+      "sha256": "32cfa0647b12c0ceeb4c5293c58f3ca28e409beaf6e356b38602f5a0b59297f1",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/approved.sh",
+      "sha256": "17b73bef9566827948850ba27736cc736c8de8e5d233229fc1b86252bac353c8",
+      "bytes": 3562,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/executed.sh",
+      "sha256": "cd470dd518b359b6c33fa0c69004381077f8532ede0e5b1da7ce2a6f8e8a5198",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/stdout.log",
+      "sha256": "458f8c368ea5f39762bfe7054fafde0bf7d6fd20b95714530c83c56c48199e6b",
+      "bytes": 119,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_10d9efb645256f4f6d07/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/exit_status.json",
+      "sha256": "122fa6e2e7c852de65ef3f9c4e3704e9997798d672a91af58a17d4f733cef2ff",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/approved.sh",
+      "sha256": "3ff5c0ab48ac01bff94008885829f03bb23bb239b007bcdd602924dd76ba84a2",
+      "bytes": 4364,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/executed.sh",
+      "sha256": "d0b165da98c428b1622cc4524f9f7be23a4bd09fc74a01205f2689cb6936d800",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/stdout.log",
+      "sha256": "713c9eca0f0ee2b695579923481e8d1f5fe9a8d5048d9e7f2053d0be00d3cc08",
+      "bytes": 162,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_be09a4a52784b4ecf90a/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/exit_status.json",
+      "sha256": "715afd17d586c0133edc0b11ef4afc89b5d30c325768c6c7b425a456b2921059",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/approved.sh",
+      "sha256": "389b1547c4ee59abd12378e8197052aba5fb94f9947b3db073342ddea50b7ef9",
+      "bytes": 5819,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/executed.sh",
+      "sha256": "11bca59b48420cace8310065b65079c3004aca25844852139fe7de834e8cfed9",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/stdout.log",
+      "sha256": "eecc3335b5095979d2c08f42d34173d6b21e321846c0047ba3116a64019fff99",
+      "bytes": 793,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_bf615bca8f3582e84893/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/exit_status.json",
+      "sha256": "d2f7baabc5dabc70df7cf457b57e38c6e22e2b0f8d4d18021b28d5593855f426",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/approved.sh",
+      "sha256": "ceef29a2ed2a9123f052a08f6adbb5a9e60f13b630f2a1feba07522c2c24bacf",
+      "bytes": 4207,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/executed.sh",
+      "sha256": "32381628a2edb9e47a60f087f6d4bf653dcf1f98b9af302f8c67795dd2b93554",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/stdout.log",
+      "sha256": "9781d5e6b1726066147d8d9a0dcbfa237a5aa45db04d805029cd505fabf31f45",
+      "bytes": 390,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_675e9e6f7574fc196c51/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/exit_status.json",
+      "sha256": "9b5012249bace67558dfeb1ed3bdd7259b5dc9d7dc6485bf0ff120a2a23c09de",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/approved.sh",
+      "sha256": "9de20be56189981d34e0b86d75c30f4be3b0d54103904114bed141901066f21c",
+      "bytes": 4544,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/executed.sh",
+      "sha256": "505c0cad3c7a7c68b4c472edd49fc1893856d6eb15d1b53ba086e49b7a592057",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/stdout.log",
+      "sha256": "be8962bd5acfa834922eb37419caaa1456171d41294e51971c2463829e737f99",
+      "bytes": 400,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0cada52dd8398de0de5a/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/exit_status.json",
+      "sha256": "982904f1c97760f3855a4f2aac631c9c04832c9d315a3c90d28806586cdf9814",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/exit_status.json"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/approved.sh",
+      "sha256": "18109931f3e57c02d239d4a555fd504b30d7d4acf14eff5bfd4ec6d64e265d6c",
+      "bytes": 4057,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/approved.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/executed.sh",
+      "sha256": "4df0428e4ac606b3be5230d8dba8f768e4bded781bac81f3cb42ebd1c1f8cd6a",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/executed.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/stderr.log"
+    },
+    {
+      "archive_member": "final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/f6-preserved-6793_class_last/attempts/attempt_0b251177702d984e6afa/stdout.log"
+    },
+    {
+      "archive_member": "final10/graph_d/category-repeat-diagnostics/stage_status.tsv",
+      "sha256": "1cfbb2e3dcaf2b491b6f68500c3896bccec98681350113b12b7316395bd4d101",
+      "bytes": 870,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/category-repeat-diagnostics/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_d/category-repeat-diagnostics/report.md",
+      "sha256": "0002601a16a829be88d5001ea957c4bc4e5c5246e6554f38aa9d726a2ed1d11d",
+      "bytes": 10928,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/category-repeat-diagnostics/report.md"
+    },
+    {
+      "archive_member": "final10/graph_d/category-repeat-diagnostics/reproduce.sh",
+      "sha256": "94de69bdc984cc14105eba5308f4248f1c9269874ef2e3f02f273b1baa3e71a9",
+      "bytes": 566,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/category-repeat-diagnostics/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/graph_d/category-budget-diagnostics/stage_status.tsv",
+      "sha256": "34727de03d2ceb6277da4fbec242a32d12c35501b25cfc043065ba1ed2fe7d93",
+      "bytes": 864,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/category-budget-diagnostics/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/graph_d/category-budget-diagnostics/report.md",
+      "sha256": "139d6893edf8d2f8fa25ac50097a10a7cf50eb811f947d5db3a8c9ca85fdc14e",
+      "bytes": 10971,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/category-budget-diagnostics/report.md"
+    },
+    {
+      "archive_member": "final10/graph_d/category-budget-diagnostics/reproduce.sh",
+      "sha256": "e0d6c7814d58d1b802656e5814335d283f33a56c4dcd160fc161b189bf287e98",
+      "bytes": 566,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/graph_d/category-budget-diagnostics/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-loaded.json",
+      "sha256": "fc259b6513fec69767b85bbae2fbf48a3f31159a0f70b7038cc8270dd6ebd04c",
+      "bytes": 27025,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-loaded.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-protocol-blocked-summary.json",
+      "sha256": "bad1c67a0a797a8b1bf0fc7a8a756edf8a5c402f926fff13f59889a00c22b890",
+      "bytes": 22083,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-protocol-blocked-summary.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-capture-local-1.json",
+      "sha256": "217f625e0692a65158aa92b7d91c0081bf228339a4d57a10bfd592262651c39a",
+      "bytes": 69515,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-capture-local-1.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-empty_object-list.json",
+      "sha256": "181c279cad7706c798f1d0db66b883c0fea38249c9b30ebcefe5f065257b2888",
+      "bytes": 212401,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-empty_object-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-late-nonsemantic-valid.json",
+      "sha256": "11768ccf4d61823432a939ee14489883164a0ddb1a18e4d16cc6f2550a26b881",
+      "bytes": 36536,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-late-nonsemantic-valid.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-capture-local-2.json",
+      "sha256": "9faa410a6e2b303b375c006b853fdb5fb590bba3d7aa998cdad6643549c14646",
+      "bytes": 78685,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-capture-local-2.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-recovery.json",
+      "sha256": "5c5a48fa763e8e4d5eb1b1645962a378184f6046326f546f96e1fbc8bf59a7a5",
+      "bytes": 686301,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-recovery.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-legacy-list.json",
+      "sha256": "b1f9c446600598d0dfd2ed9c3705c0939d49e1f0bb90c5dbb423a88d5c664968",
+      "bytes": 210662,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-legacy-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-replay-list.json",
+      "sha256": "26caa71e3a8020043ef6dd8b39e60129bd9697e9efcd490cd07d24cf28cd99ad",
+      "bytes": 213601,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-replay-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-late-cancel-blocked.json",
+      "sha256": "36fecb78279e558491d57288a176e0fc61e05676a8c6ce864a08941b2065697e",
+      "bytes": 7378,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-late-cancel-blocked.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-uuid-list.json",
+      "sha256": "0430397b95634c55eb1ecdf6823ef7397e22000a9b017a5f2b1381d99078787d",
+      "bytes": 90663,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-uuid-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-helper_checkpoint-list.json",
+      "sha256": "f430bb688cc66a231e37674a4d8d76624de6c859354580195202d04b70339073",
+      "bytes": 168640,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-helper_checkpoint-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-blocked.json",
+      "sha256": "663c44a223e95f6fea56521b511e2be11558a0903904ddd3479448c3080d485a",
+      "bytes": 613461,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-blocked.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-valid-str.json",
+      "sha256": "f02577d7ef3950efe5f618ec6dbdc19caa65d74f5047a9b1640bfee1895e1ba2",
+      "bytes": 213320,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-valid-str.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-protocol-normal-summary.json",
+      "sha256": "4113c0708f3c63406393e29f2557eab0b8718d0639c583755cc71dbb468ce136",
+      "bytes": 1721,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-protocol-normal-summary.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-capture-normal-1.json",
+      "sha256": "ca9aa297935503c5f95fc7521b0f1a015f134e64a1f9f4b8bca760b90a50edbc",
+      "bytes": 69515,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-capture-normal-1.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-blocked-list.json",
+      "sha256": "ad2c5056685ecd8a3286ca6570e3f95a5fc6e96719ef277ce54999f34ed01dd6",
+      "bytes": 137102,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-blocked-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-syntax_checkpoint-list.json",
+      "sha256": "cfde0db763303baaba0f2356ae28e0f5bf7d47154fb13c5aa93229b399fe3fb7",
+      "bytes": 135943,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-syntax_checkpoint-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-recovery-summary.json",
+      "sha256": "aa1400b437029498c50c023ec1d55eba1c04f6baaf0a03f2a0cfb718ed67cbbd",
+      "bytes": 2230,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-recovery-summary.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-local.json",
+      "sha256": "45e2630f382acef9d5f11748eff6ec4dbf01fe8af8953d8da434d719f111804e",
+      "bytes": 539963,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-local.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-capture-recovery-2.json",
+      "sha256": "39271ab7e5b0cc00fcf06ccc0016d24aa2ed9539135b16bbc820ef56b9ecac35",
+      "bytes": 54272,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-capture-recovery-2.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-valid-NoneType.json",
+      "sha256": "259d78d32a78893c339ea7f1b942c6253264e1af3eb0b963bc844188a8226770",
+      "bytes": 213615,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-valid-NoneType.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-legacy.json",
+      "sha256": "00841cc4b621326d5e880c5bce593ff75eafe06e07e937a161a25ef8a83a7467",
+      "bytes": 157367,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-legacy.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-demo.json",
+      "sha256": "61a8afec01e4b0b26b3bb287c9f9607120f8d973259212dd85a23f2831648261",
+      "bytes": 2443,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-demo.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-capture-blocked-2.json",
+      "sha256": "499954aa2b3073fbe484365e5fe30a0765e9abd43c1c3b4a7e60716cbcb2b16f",
+      "bytes": 75951,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-capture-blocked-2.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-late-cancel-invalid.json",
+      "sha256": "d2b966577c73ba30eab66007b7a409b2508ce08f1f029d3b40fe9ff47c7cbd5b",
+      "bytes": 7378,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-late-cancel-invalid.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-protocol-local-summary.json",
+      "sha256": "f8ad4e9639d6fae42e80b16b55c4e8e5dda05226d70e81cca366fa2b7c1cf6c6",
+      "bytes": 1735,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-protocol-local-summary.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-late-cancel-valid.json",
+      "sha256": "4fdc315d53b9c585a2bd6f1daeab317a776b731169306626f4ff354677a4039b",
+      "bytes": 7362,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-late-cancel-valid.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-repeat-list.json",
+      "sha256": "8a147e3359387e49f765de54727f66150a9fd77672a7cf6aee20f25d01bc0d5f",
+      "bytes": 90269,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-repeat-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f1-protocol-normal.json",
+      "sha256": "93f88557f71c92aefcb4575cc5118ff33cb2d71fc29662fd9da1428a58687867",
+      "bytes": 412696,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f1-protocol-normal.json"
+    },
+    {
+      "archive_member": "final10/protections/f3-valid-list.json",
+      "sha256": "1c0e62afb8a2954986f38b88056e9e1aaaec9652f3b68697078ff3757a859b29",
+      "bytes": 213347,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f3-valid-list.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-local/plan_state.json",
+      "sha256": "4d5ebefcb4dda903203a372724ff9e50297709efec6677e688af06a2c4107766",
+      "bytes": 601553,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-local/plan_state.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-recovery/plan_state.json",
+      "sha256": "5c5bee26c697b7d5c8960b15f620901c224561278cb01666abe0078c42f04954",
+      "bytes": 636069,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-recovery/plan_state.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-recovery/executions/execution_records.jsonl",
+      "sha256": "b663befbd88569fb30c73144859397297657eaf908430b9d6958b82b8bcf1ce8",
+      "bytes": 43749,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-recovery/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/exit_status.json",
+      "sha256": "39b0615afd812ccd63a85d9f1efcdc3bac71bbd101526bf90fdae46402bb7a65",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/exit_status.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/approved.sh",
+      "sha256": "62eefafacec09e7703b997ff0ac2c4fba95e166352ccc5239b87977c79918be6",
+      "bytes": 4142,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/approved.sh"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/executed.sh",
+      "sha256": "a41c2778a3e210652ca39d34bd477640c97ac59a8f4a7e4092492d3ac8d818aa",
+      "bytes": 2337,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/executed.sh"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/stderr.log",
+      "sha256": "86e8d6f0ffa7a26fe25b9ba313639cf72cb55a7b93ca755616acbe6354d99af4",
+      "bytes": 25,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/stderr.log"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-recovery/attempts/attempt_1defbef679134535b783/stdout.log"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-normal/plan_state.json",
+      "sha256": "ec493e645d0062d06bce3ce454866eafe31679c8d92d659fdf7691f8ece23517",
+      "bytes": 543905,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-normal/plan_state.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/plan_state.json",
+      "sha256": "f1d70fdfabaaae0f73ed83f176fbdb0296573c1ab5cb7988f917a13af5c98261",
+      "bytes": 570724,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/plan_state.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/outputs/stage_status.tsv",
+      "sha256": "636d8dbbc82ad397748b24fd39acda3f480cc51b275661de594e695c8ec9b4aa",
+      "bytes": 765,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/outputs/report.md",
+      "sha256": "7071688c78607a3acd77a0bbc778f25877f77b8d1849c75f9f8279e1f7dea415",
+      "bytes": 4830,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/outputs/reproduce.sh",
+      "sha256": "bd408bd43ee873a5d688ad127510ddc4540f8457c799993d6a2db5c619198278",
+      "bytes": 566,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/executions/execution_records.jsonl",
+      "sha256": "28463fda9bab9b07a7a5721120f06b07af1f1558e95f769a40b09c347b591648",
+      "bytes": 43563,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/exit_status.json",
+      "sha256": "662d92c31cc6f28efc7807f57c8ce029b208d81e9ea4387401751e5192afcfc6",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/exit_status.json"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/approved.sh",
+      "sha256": "055685660ed14b00d92c05dfde8a4abc0ddcf13382e72d4ae8306d6f1b9e6ee8",
+      "bytes": 4069,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/approved.sh"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/executed.sh",
+      "sha256": "ba37886a4739090e0dfb5fa6bb1dbcdb0d8aea386b8ee642a9596de5e9b5e352",
+      "bytes": 2425,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/executed.sh"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/stderr.log"
+    },
+    {
+      "archive_member": "final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/stdout.log",
+      "sha256": "664b3a6e6fa3c8a665896e0110e24cc038583fb9d1bc492c308c2e9687a9208c",
+      "bytes": 123,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/protections/f6-preserved-protocol-blocked/attempts/attempt_1635d22e3361b8f10450/stdout.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-false_required-summary.json",
+      "sha256": "a08bd87b9c9e019eb5b80365d33b2a329307f988c139e74247d64fd9f4b6124e",
+      "bytes": 26832,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-false_required-summary.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/terminal-summary-none.json",
+      "sha256": "f97ba1df24e404eec0c5942f03e559a39d7ed9ade77ddd55fc920ab52b49362f",
+      "bytes": 44067,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/terminal-summary-none.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/terminal-summary-timeout.json",
+      "sha256": "b3b176c0cec050f4570961d9f610cdbbe9a7b83d444357db1e18a6a78e17d2fd",
+      "bytes": 44219,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/terminal-summary-timeout.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/terminal-summary-exception.json",
+      "sha256": "eb7d40f972ed45f74e51f25c885a81be71cfb52b57edf0c4ac0ef8bca3c1dc51",
+      "bytes": 44273,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/terminal-summary-exception.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-v2_empty_skill_execute-summary.json",
+      "sha256": "812fce7f561ed47798ae8849fb28e99a495277f4d9d635009ad907e4f8fe1eb6",
+      "bytes": 16444,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-v2_empty_skill_execute-summary.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/terminal-summary-cancel.json",
+      "sha256": "c5d004e48394356c269877186d67c0088b7eb09833a7978f28896248bc94dee8",
+      "bytes": 43848,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/terminal-summary-cancel.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/plan_state.json",
+      "sha256": "bae97e15c7389ae2b28bcb1a1f8eacb8e0d4917922fc097de306069e818bcb82",
+      "bytes": 266865,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/plan_state.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/executions/execution_records.jsonl",
+      "sha256": "15fbf3c1ef1c2299625c3c25dd4acfd17140a061b0f5979abbfcc4f06380a207",
+      "bytes": 77883,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/exit_status.json",
+      "sha256": "6c2efb1f44d4e92af66b1871eb2eed1a1f654c646cb6533bea078de1a8ecd650",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/exit_status.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/executed.sh",
+      "sha256": "2c95d5bb1b3df07c5a2161f35a73785b1378314f0e9127aba276d227ef51c7a5",
+      "bytes": 2514,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/executed.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/stderr.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/stdout.log",
+      "sha256": "c4cb6f6ab034d0630240e23061d3cb50773ebcbb93c7dfabc980d5ee95092440",
+      "bytes": 120,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_6a103236b08e638e7e03/stdout.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/exit_status.json",
+      "sha256": "466ddc00a0372966517adf7bc1f5bb28d378a8774182bf64b36c68046ab0f259",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/exit_status.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/executed.sh",
+      "sha256": "b7b829d7f7e2451aaa24665f882602d1c60c49ad1b0836ce152f15a4efdfa577",
+      "bytes": 2514,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/executed.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/stderr.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/stdout.log",
+      "sha256": "c9c819901f3ba1c2a4c20c4f058a915b45cbcc915dcff7a8ad1283cb28966ab4",
+      "bytes": 311,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-v2_empty_skill_execute/attempts/attempt_36ecbfb5b6297029e669/stdout.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/plan_state.json",
+      "sha256": "7a665b17df5f74caa8605856b68fb182a4013b3943be54513491c2fb3727513b",
+      "bytes": 621459,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/plan_state.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/outputs/stage_status.tsv",
+      "sha256": "1c97aaf4bc580c2efbab1a150e1b3101aa56b545dff54fb56a4e7c93901eb42e",
+      "bytes": 797,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/outputs/stage_status.tsv"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/outputs/report.md",
+      "sha256": "d114f802c96a99d282d5548655a580b6df344ec749f810d91383de0822e6e012",
+      "bytes": 3772,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/outputs/report.md"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/outputs/reproduce.sh",
+      "sha256": "9e3391c8f1bfab10d4db83fe16fd435de79101e572a20e6764279ceb49562874",
+      "bytes": 4534,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/outputs/reproduce.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/executions/execution_records.jsonl",
+      "sha256": "409ccfe6c043f64b008d7435e7172e123cc237df218b59f86839a5acbcebd309",
+      "bytes": 43486,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/executions/execution_records.jsonl"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/exit_status.json",
+      "sha256": "589879e6d1ade09f2d1a7258ed3c4c939c90ba0c73f8826053c10e0c59d2f643",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/exit_status.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/approved.sh",
+      "sha256": "7fa6fd358eda104e35dd406f8373e6f8736e2391a7d8bc425d5a1da0fc4455a5",
+      "bytes": 4072,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/approved.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/executed.sh",
+      "sha256": "ff3e58447c6469640a03dcefe80ea523a22b8802e5eda3d94e985fc573e638ef",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/executed.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/stderr.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/stdout.log",
+      "sha256": "acf9b1c4aea377744d8693ac7c23f92006fab840177064cc0e97a8fdda1af165",
+      "bytes": 124,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_91cd26487054dd46b6a3/stdout.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/exit_status.json",
+      "sha256": "f5f976973b99110849eaf6a1c91673efb7a93860bce431ebfd088af2c35863de",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/exit_status.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/approved.sh",
+      "sha256": "2a78c913cc35a2a4f3583671fa9d4bac9133a26992a6fabb42ba6b2812d0f8bf",
+      "bytes": 4078,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/approved.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/executed.sh",
+      "sha256": "0a87a0a977cb48106b5e1fe548a9598644d06c3c4d5ca09d0c63e978adb118ed",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/executed.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/stderr.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/stdout.log",
+      "sha256": "acf9b1c4aea377744d8693ac7c23f92006fab840177064cc0e97a8fdda1af165",
+      "bytes": 124,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_255ed46b766c6a1f042f/stdout.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/exit_status.json",
+      "sha256": "59ad921758e89ed5dbc99627018b85cc0c3f05092f6b09856ae5340880fbaaee",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/exit_status.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/approved.sh",
+      "sha256": "b273579e50c53ea3386f1d3623439f996b0487af2529e6fb174ed2d67424a8c9",
+      "bytes": 4063,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/approved.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/executed.sh",
+      "sha256": "d704ed20aa3ad009a43cb500dcacb48d3c86f6df14548b14afcc7aaecd557c9e",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/executed.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/stderr.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/stdout.log",
+      "sha256": "acf9b1c4aea377744d8693ac7c23f92006fab840177064cc0e97a8fdda1af165",
+      "bytes": 124,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_84ed692f39c06abe16bb/stdout.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/exit_status.json",
+      "sha256": "f8fada047c6bf56ca198be08a8c098dc812dd6630e4e6e5bcba3d5d27d043282",
+      "bytes": 103,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/exit_status.json"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/approved.sh",
+      "sha256": "8b381e01abca087a5e9ea10db9bcbac9462569ea0d9e078b9553f0794154cd08",
+      "bytes": 4069,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/approved.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/executed.sh",
+      "sha256": "5375b3d276d5115d59e532c8630960ce98d7e6313f09f9f8f410957ffe5ffb45",
+      "bytes": 2370,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/executed.sh"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/stderr.log"
+    },
+    {
+      "archive_member": "final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/stdout.log",
+      "sha256": "acf9b1c4aea377744d8693ac7c23f92006fab840177064cc0e97a8fdda1af165",
+      "bytes": 124,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/v2_hooks/f6-preserved-false_required/attempts/attempt_acbc35c574fe2ebc3207/stdout.log"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/entry-implementation-schema2-none.json",
+      "sha256": "9155d3c4ef8d120c00018c9059c44bf6d427989305d7d22dacdbf4fe84eeb404",
+      "bytes": 106149,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/entry-implementation-schema2-none.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/f4-OSError.json",
+      "sha256": "21e001cf38f18a1f814596cf276ac7b3acd5c994fbc302bd5e6455e1dfa6cd54",
+      "bytes": 40318,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/f4-OSError.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/entry-implementation-schema2-normal.json",
+      "sha256": "a295be314cd5f0e684f816030bbcd47e47df17ac2086f0aaf4d6c040fce7e7ad",
+      "bytes": 72565,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/entry-implementation-schema2-normal.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/f4-eof.json",
+      "sha256": "4d6addce93d91f27196dfbb6fa42d3576f6a30f7329e2be69fded1dff6ca6e07",
+      "bytes": 23320,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/f4-eof.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/entry-implementation-schema2-timeout.json",
+      "sha256": "0af0a86a7ddda676a723e9ab35c34afc8adaff7a04c061256f02a1a984e07af7",
+      "bytes": 106927,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/entry-implementation-schema2-timeout.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/entry-implementation-schema2-exception.json",
+      "sha256": "b8fa8bcf6d88ce15faa56318cef3245c97b8e91f599ba36242201b665f8c41ae",
+      "bytes": 106485,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/entry-implementation-schema2-exception.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/f4-ValueError.json",
+      "sha256": "6dda036c40cb70119408ceec6611e21844e6f7501c4235bb39058c0f641d9b75",
+      "bytes": 40353,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/f4-ValueError.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/f4-answers.json",
+      "sha256": "c90143ba8d0ea8fdf7cd4aa5d72cb5713d5fb55e2b11af83518c798ed117d3ee",
+      "bytes": 24322,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/f4-answers.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/entry-implementation-schema2-cancel.json",
+      "sha256": "9d74eaa7c2d1cfbb92f3a8902150757b8d9ffeb100e04b695734b11d26d86cb7",
+      "bytes": 65114,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/entry-implementation-schema2-cancel.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/f4-cancel.json",
+      "sha256": "4b03d234a611bd6839a130643fbba10886421fd77de4a4c2b9fcf69f7352cb52",
+      "bytes": 21753,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/f4-cancel.json"
+    },
+    {
+      "archive_member": "final10/registered_hooks_ask/f4-interrupt.json",
+      "sha256": "3c860a593d94580bad01be67007b1adbeb99c1fedf2d27f41b756e6722b46850",
+      "bytes": 21753,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/registered_hooks_ask/f4-interrupt.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_approve/result.json",
+      "sha256": "cce8e152539b17ceff105c74bb09394d39963f2f8d5a886c013b7809d7d34778",
+      "bytes": 597549,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_approve/result.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_approve/checks.json",
+      "sha256": "ed4abf0b0767439e5b32c41db0c36ba56641f8c69c375e89ba996d18c90d7324",
+      "bytes": 457,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_approve/checks.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_approve/business.json",
+      "sha256": "605f86a2632f515c46064e7a64f55f3ba9556ae9e925366941b15f618fb14988",
+      "bytes": 168099,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_approve/business.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_approve/durable.json",
+      "sha256": "d6df1064dcc55ae999d5598036ec0c1d680a99ec89dc73bcd9ac6d6fc0f6334a",
+      "bytes": 203296,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_approve/durable.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_approve/terminal.raw",
+      "sha256": "3d29d9917d4ef6abce46cf35e8a8b4723dc7c43b4c3b00d5036ea30612d5737f",
+      "bytes": 59835,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_approve/terminal.raw"
+    },
+    {
+      "archive_member": "final10/pty_plain_eof/result.json",
+      "sha256": "1b93ed9ca6509ef6ddda53081479b0689de54f0324657097cc79152233d98839",
+      "bytes": 491008,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_eof/result.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_eof/checks.json",
+      "sha256": "c91f01320e2ee25fae433ce7da5613d812f1621b926295709ee5eb60b4a1eba8",
+      "bytes": 390,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_eof/checks.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_eof/business.json",
+      "sha256": "8cd41e9d92f67b04523a2e94f4cd4f4343cf3acdddb864584b01183f283face2",
+      "bytes": 119143,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_eof/business.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_eof/durable.json",
+      "sha256": "45f4cc3f50c7457b22a5fc9ed9c32d8c838527eefd7261803fbdf815f64892dc",
+      "bytes": 167575,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_eof/durable.json"
+    },
+    {
+      "archive_member": "final10/pty_plain_eof/terminal.raw",
+      "sha256": "89ae8060c257c7e9d8bc9540ca7dcdea1f3f7231a4dbea214259aa8728c3e273",
+      "bytes": 40114,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_plain_eof/terminal.raw"
+    },
+    {
+      "archive_member": "final10/pty_tty_approve/result.json",
+      "sha256": "0a81cb6091f3774e71f5687d78be9fcdc81b745ce38862be4bf1ff0f7229c2c8",
+      "bytes": 1075584,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_approve/result.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_approve/checks.json",
+      "sha256": "279027cdf502d7782e44e4878f3bf789261425823d1259927e65ed3c6d6c756f",
+      "bytes": 633,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_approve/checks.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_approve/business.json",
+      "sha256": "9be0d5e67d0a9874520f5f91d8d90b9e62ebceea518b43fd72ea550879698b1a",
+      "bytes": 168358,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_approve/business.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_approve/durable.json",
+      "sha256": "3e8777d8df6b25d0931ec9958daae95569d95b1896c96a2b414e5afb1cb4cf5a",
+      "bytes": 203290,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_approve/durable.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_approve/terminal.raw",
+      "sha256": "d3a82e8afbb336c04ceb14d8aa81f0ccc5419e4200aa2ab94ceaa00dd7e9b63f",
+      "bytes": 32821,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_approve/terminal.raw"
+    },
+    {
+      "archive_member": "final10/pty_tty_blank_paste/result.json",
+      "sha256": "18817c4e05c465637df108f382fcb24a2e5c271b7d10715bcf532cd10ca4914e",
+      "bytes": 654836,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_blank_paste/result.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_blank_paste/checks.json",
+      "sha256": "7635ed77a3e796f08334e860942317fbc71c8d7cd5afde383c15c337e8b9e328",
+      "bytes": 505,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_blank_paste/checks.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_blank_paste/business.json",
+      "sha256": "0d95edbfe8ffe1c8fc9031f7d012ddfd7ccce64f0c821ea0beed0971c519f09e",
+      "bytes": 168428,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_blank_paste/business.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_blank_paste/durable.json",
+      "sha256": "0a9273c31d2e2cb3ec878897d14ab71466dcb68b9e7f55d472e37e7186fa5e16",
+      "bytes": 203302,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_blank_paste/durable.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_blank_paste/terminal.raw",
+      "sha256": "269fad0e4c4783414ad81ae7d999c740514b1a24f9aa26ab320f6720003b6c7e",
+      "bytes": 24664,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_blank_paste/terminal.raw"
+    },
+    {
+      "archive_member": "final10/pty_tty_queued/result.json",
+      "sha256": "410d827d67c4c0216e7c5ef420018756a57c9e2970625eddd8ef7d50d94d933d",
+      "bytes": 654750,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_queued/result.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_queued/checks.json",
+      "sha256": "7635ed77a3e796f08334e860942317fbc71c8d7cd5afde383c15c337e8b9e328",
+      "bytes": 505,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_queued/checks.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_queued/business.json",
+      "sha256": "36c5c787766725438b45583fe2a5b32c69816626b0712db66f452e530b0c25a8",
+      "bytes": 168363,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_queued/business.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_queued/durable.json",
+      "sha256": "6d9fc84b68d722b35d5842fa4bd38e9180387daaee05a129b6efba9792b971e0",
+      "bytes": 203287,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_queued/durable.json"
+    },
+    {
+      "archive_member": "final10/pty_tty_queued/terminal.raw",
+      "sha256": "053e744f113ee7b71c28c330d7427ede7339bdab62a7b91440f06097f11bc196",
+      "bytes": 24539,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/pty_tty_queued/terminal.raw"
+    },
+    {
+      "archive_member": "run01/results/pytest-results.json",
+      "sha256": "c1a3b8a5cbbc3315b7b21a18a4d261ea02c1fee1764d6578c7ccd9309c00062d",
+      "bytes": 35524,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run01/results/pytest-results.json"
+    },
+    {
+      "archive_member": "run02/graph/pytest-results.json",
+      "sha256": "b2596b156fd8db79b7b142dbfb83e4b4c4064766fcd8c1002cdfe13096a0ca3a",
+      "bytes": 3332,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run02/graph/pytest-results.json"
+    },
+    {
+      "archive_member": "run03/component/pytest-results.json",
+      "sha256": "502552ef9d45e070aa5721094808c5abb4d94c78772e4cdcfd5bd6106c5c0686",
+      "bytes": 71346,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run03/component/pytest-results.json"
+    },
+    {
+      "archive_member": "run04/ga_gb/pytest-results.json",
+      "sha256": "0f84984381ed2ff20c577b28349a5b4cd47c1462bc495360cabea645a309d490",
+      "bytes": 8006,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run04/ga_gb/pytest-results.json"
+    },
+    {
+      "archive_member": "run04/gc_repeat/pytest-results.json",
+      "sha256": "b477829a69668a826edbb8ff78c1bcf3f1e4123c1777b25c2c82fb7e033af3b7",
+      "bytes": 7232,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run04/gc_repeat/pytest-results.json"
+    },
+    {
+      "archive_member": "run04/gd_budget/pytest-results.json",
+      "sha256": "3e3a391c01bb37e56529deea5a52e5476fbf823e7dcf95b208e35561569e1e49",
+      "bytes": 8007,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run04/gd_budget/pytest-results.json"
+    },
+    {
+      "archive_member": "run05/missing/pytest-results.json",
+      "sha256": "5554e3dc32dfd85327a0634592a43ba40bb30c8236a82fa8dabc934d7002968f",
+      "bytes": 4812,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run05/missing/pytest-results.json"
+    },
+    {
+      "archive_member": "run06/progress/pytest-results.json",
+      "sha256": "55e3ad1c51760f9f149ed0834c1e234239f500741601ccd9ff509ec707327497",
+      "bytes": 24721,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run06/progress/pytest-results.json"
+    },
+    {
+      "archive_member": "run08/checker/pytest-results.json",
+      "sha256": "b6fdbc46e504238a207b1d26e102a4e77c1ea4e04b825467a1a525e2578d1b73",
+      "bytes": 6889,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run08/checker/pytest-results.json"
+    },
+    {
+      "archive_member": "witness/historical_witness.json",
+      "sha256": "5f4040233a6149d87b1cb78ef184ed722ff8215bbb4881c08d2782361fa2f028",
+      "bytes": 4711,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/historical_witness.json"
+    },
+    {
+      "archive_member": "witness/existing_f20_precondition.json",
+      "sha256": "8189883cfbbfcc88f0a32a23fc00a64e728e9912b77cb70031b07ee41574230f",
+      "bytes": 558,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/existing_f20_precondition.json"
+    },
+    {
+      "archive_member": "run05/missing/f6-category-missing.json.gz",
+      "sha256": "8efcb2f3315dd296b81089319325db09182b1fb5502da9c8b3273a0fb604b7cb",
+      "bytes": 923808,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/run05/missing/f6-category-missing.json.gz"
+    },
+    {
+      "archive_member": "final10/components/f6-generate-class-sequences.json",
+      "sha256": "cbce8b86824cebe1b71810a7c8a51c35cbc534dfe588e43c8c0397f1d1a7a152",
+      "bytes": 69484,
+      "original_new_test_path": "/tmp/biomind-generate-class-20260915/final10/components/f6-generate-class-sequences.json"
+    }
+  ]
+}
