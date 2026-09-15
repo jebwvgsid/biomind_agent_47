@@ -91,21 +91,34 @@ def snpeff_prefix(args: argparse.Namespace) -> list[str | Raw]:
     return [Raw(args.snpeff_command)]
 
 
+def snpeff_argv(prefix, *, operation, global_options=(), operation_args=()):
+    """Explicit snpEff constructor; never parses or rewrites generated scripts.
+
+    prefix is the selected launcher or Java/options/-jar/JAR sequence. Callers
+    explicitly select the operation and all scientific arguments.
+    """
+    if operation not in {"build", "ann", "download", "databases", "dump"}:
+        raise ValueError("Unsupported explicit snpEff constructor operation")
+    return [*prefix, operation, *global_options, *operation_args]
+
+
 def snpeff_cmd(args: argparse.Namespace, extra: list[str | Path | Raw]) -> str:
-    parts = snpeff_prefix(args)
     extra_parts = list(extra)
     # snpEff parses the first positional token as its subcommand.  Keeping
     # build/download before global options is important: otherwise options
     # such as -gtf22 are interpreted by the default `ann` command.
-    if extra_parts and str(extra_parts[0]) in {"build", "download", "databases", "dump"}:
-        parts.append(extra_parts.pop(0))
+    operation = str(extra_parts.pop(0)) if extra_parts and str(extra_parts[0]) in {"build", "ann", "download", "databases", "dump"} else "ann"
+    options = []
     if args.config:
-        parts.extend(["-c", args.config])
+        options.extend(["-c", args.config])
     elif args.use_project_config:
-        parts.extend(["-c", "snpEff.project.config"])
+        options.extend(["-c", "snpEff.project.config"])
     if args.data_dir:
-        parts.extend(["-configOption", f"data.dir={args.data_dir}"])
-    parts.extend(extra_parts)
+        options.extend(["-configOption", f"data.dir={args.data_dir}"])
+    # The metadata probe is not an annotation operation; preserve its public
+    # standalone form while scientific operations use the explicit constructor.
+    parts = ([*snpeff_prefix(args), *options, *extra_parts] if extra_parts == ["-version"] else
+             snpeff_argv(snpeff_prefix(args), operation=operation, global_options=options, operation_args=extra_parts))
     return " ".join(q(part) for part in parts)
 
 

@@ -17,7 +17,7 @@ from agent_core.state_contract_store import StateContractStore, StateContractInt
 INSPECTION_BACKEND = "state_contract_inspection"
 INSPECTION_OBJECT_KINDS = frozenset({
     "validation", "completion_report", "semantic_decision", "step_attempt", "execution",
-    "action", "script", "task_context", "plan", "diagnostic", "parser_receipt", "causal_history", "generation_context",
+    "action", "script", "task_context", "plan", "diagnostic", "parser_receipt", "causal_history", "generation_context", "failure_log",
 })
 INSPECTION_SCOPE_FIELDS = (
     "task_id", "plan_id", "plan_version", "step_id", "attempt_id", "episode_id",
@@ -298,6 +298,24 @@ def prepare_inspection_evidence(
         ("parser_receipt", scope["attempt_id"] or "not_executed", scoped(parser_receipt=(facts.get("effect_evidence") or {}).get("parser_receipt") or {},
             availability="recorded" if (facts.get("effect_evidence") or {}).get("parser_receipt") else "HISTORICAL_BODY_UNAVAILABLE")),
     ]
+    if execution_error is None and scope["attempt_id"]:
+        for log in execution.get("failure_logs", []) or []:
+            if (log.get("source") != "runtime_attester_snapshot"
+                    or any(str(log.get(key) or "") != scope[key]
+                           for key in ("task_id", "plan_id", "step_id", "attempt_id"))
+                    or log.get("action_id") != execution.get("action_id")):
+                continue
+            log_body = deepcopy(log)
+            chunks = log_body.pop("text_chunks", [])
+            text = "".join(chunks)
+            # Stored content is already bounded/redacted by the runtime. The
+            # registry offers only evidence.read, retaining all scope guards.
+            if log.get("status") == "captured" and ("sha256:" + hashlib.sha256(text.encode()).hexdigest()) != log.get("text_sha256"):
+                continue
+            log_body["text_lines"] = [line[i:i + 2000] for line in text.splitlines(keepends=True)
+                                      for i in range(0, len(line), 2000)]
+            objects.append(("failure_log", str(log.get("relative_path")), scoped(log=log_body,
+                read_instructions="Use evidence.read with this ref_id. If truncated, repeat evidence.read on the same ref with start_line=cursor.next_start_line; no step.inspect or evidence.glob. Log publication is not step completion.")))
     # Current Generate's semantic input/candidate/feedback can be inspected on
     # demand. Reuse its immutable message snapshots; do not copy System prompts
     # or claim that a reconstructed episode is an exact historical wire call.
@@ -394,7 +412,7 @@ def prepare_inspection_evidence(
         for ref in (parent.get("inspection_publication") or {}).get("refs") or ():
             entry = (task.get("inspection_ref_registry") or {}).get(ref) or {}
             kind = (entry.get("scope") or {}).get("object_kind")
-            if kind not in {"execution", "script", "validation", "completion_report", "semantic_decision", "parser_receipt", "causal_history"}:
+            if kind not in {"execution", "script", "validation", "completion_report", "semantic_decision", "parser_receipt", "causal_history", "failure_log"}:
                 continue
             row = {"ref_id": ref, "object_kind": kind, "source_digest": entry.get("digest"), "source_scope": entry.get("scope")}
             try:

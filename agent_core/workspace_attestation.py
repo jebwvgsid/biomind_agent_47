@@ -770,6 +770,66 @@ def prepare_mutation_intents(
     return results
 
 
+def capture_mutation_failure_logs(journal: Mapping[str, Any], *, capability_id: str) -> list[Dict[str, Any]]:
+    """Snapshot the selected snpEff build's documented log, never arbitrary paths.
+
+    The frozen mutation's predictor postcondition determines the database
+    directory. Only build.log beside it, observed by this attempt's attester,
+    is eligible. Reads require its exact captured hash and reject symlinks.
+    A missing/unreadable log does not change the scientific outcome.
+    """
+    from agent_core.approved_resource_locator import open_approved_resource
+    from agent_core.context_lineage import redact_text
+    if capability_id != "genomics.snpeff_annotation.build_database":
+        return []
+    logs = []
+    for intent in journal.get("intents", []) or []:
+        if (intent.get("operation") != "build_database"
+                or intent.get("mutation") != "build_database"
+                or intent.get("status") in {"prepared", "started"}):
+            continue
+        root = Path(str(intent.get("formal_concrete_path") or ""))
+        after = intent.get("after_evidence") or {}
+        if not after.get("reliable") or str(root) != after.get("root"):
+            continue
+        for condition in intent.get("resolved_postconditions", []) or []:
+            relative = Path(str(condition.get("relative_path") or ""))
+            if (condition.get("kind") != "file_nonempty" or len(relative.parts) != 3
+                    or relative.parts[0] != "data" or relative.name != "snpEffectPredictor.bin"
+                    or relative.is_absolute() or ".." in relative.parts):
+                continue
+            log_relative = str(relative.with_name("build.log"))
+            entry = next((row for row in after.get("entries", []) if row.get("relative_path") == log_relative), {})
+            if entry.get("kind") != "file" or entry.get("symlink") or not entry.get("content_hash"):
+                continue
+            path = root / log_relative
+            row = {"source": "runtime_attester_snapshot", "relative_path": log_relative,
+                **{key: intent.get(key) for key in ("task_id", "plan_id", "plan_revision", "step_id", "action_id", "attempt_id", "intent_id")},
+                "source_sha256": entry["content_hash"], "status": "unavailable"}
+            try:
+                # Ancestor checks precede opening, including workspace parents.
+                if any(p.is_symlink() for p in reversed((path, *path.parents))):
+                    raise ValueError("FAILURE_LOG_SYMLINK_DENIED")
+                with open_approved_resource(path) as stream:
+                    body = stream.read(1024 * 1024 + 1)
+                if len(body) > 1024 * 1024:
+                    raise ValueError("FAILURE_LOG_SIZE_LIMIT")
+                if "sha256:" + hashlib.sha256(body).hexdigest() != entry["content_hash"]:
+                    raise ValueError("FAILURE_LOG_SNAPSHOT_CHANGED")
+                text = redact_text(body.decode("utf-8"))
+                row.update(status="captured", size_bytes=len(body),
+                    text_sha256="sha256:" + hashlib.sha256(text.encode()).hexdigest(),
+                    redacted=text.encode() != body,
+                    # One physical line may exceed reader limits; reversible
+                    # chunks keep the immutable view pageable without loss.
+                    text_chunks=[text[i:i + 2000] for i in range(0, len(text), 2000)],
+                    representation="join text_chunks; UTF-8 log snapshot, not completion evidence")
+            except (ValueError, OSError, UnicodeError) as exc:
+                row["unavailable_reason"] = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+            logs.append(row)
+    return logs
+
+
 def _bounded_file_hash(path: Path, *, limit: int) -> str:
     try:
         stat = path.stat()

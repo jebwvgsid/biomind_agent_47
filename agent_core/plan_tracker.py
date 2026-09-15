@@ -4869,8 +4869,27 @@ def record_preaction_contract_failure(
     candidate_fingerprint: str,
     repair_attempt_count: int = 0,
     termination_reason: str = "",
+    step_id: Optional[str] = None,
+    expected_scope: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Persist immutable primary and bounded latest/terminal pre-action failures."""
+    from agent_core.workflow.candidate_repair import candidate_repair_scope
+    target_id = str(state.get("current_step_id") or "") if step_id is None else str(step_id)
+    actual_scope = candidate_repair_scope(state, task_id=state.get("task_id"), step_id=target_id)
+    target_step = next((row for row in state.get("steps", []) if isinstance(row, dict)
+                   and row.get("step_id") == target_id), None)
+    if (not target_step or target_id != str(state.get("current_step_id") or "")
+            or (expected_scope is not None and dict(expected_scope) != actual_scope)
+            or str(target_step.get("status") or "") in {"passed", "done", "completed", "cancelled", "skipped"}
+            or (state.get("task_state") or {}).get("status") in {"completed", "cancelled"}):
+        raise ValueError("PREACTION_FAILURE_SCOPE_STALE")
+    previous_latest = (state.get("failure") or {}).get("latest_failure") or {}
+    if (previous_latest.get("candidate_fingerprint") == candidate_fingerprint
+            and previous_latest.get("fingerprint") == error_fingerprint
+            and previous_latest.get("scope") == actual_scope
+            and int(previous_latest.get("repair_attempt_count") or 0) == int(repair_attempt_count or 0)
+            and str((state.get("failure") or {}).get("termination_reason") or "") == str(termination_reason)):
+        return deepcopy(state["failure"])
     now = _now()
     prior = dict(state.get("failure") or {}) if isinstance(state.get("failure"), Mapping) else {}
     latest_code = str(violation.get("code") or "PRE_ACTION_CONTRACT_FAILURE")
@@ -4888,8 +4907,7 @@ def record_preaction_contract_failure(
         "candidate_fingerprint": str(candidate_fingerprint or ""),
         "execution_started": False,
         "attempt_id": "",
-        "scope": {"task_id": str(state.get("task_id") or ""), "plan_id": str(state.get("plan_id") or ""),
-                  "plan_version": str(state.get("plan_version") or ""), "step_id": str(state.get("current_step_id") or "")},
+        "scope": actual_scope,
         "repair_attempt_count": int(repair_attempt_count or 0),
         "recorded_at": now,
     }
@@ -4958,18 +4976,8 @@ def record_preaction_contract_failure(
             prior.get("message") or "Generated action failed its pre-action contract."
         )
         state["task_state"] = task_state
-        for step in state.get("steps", []) or []:
-            if not isinstance(step, dict):
-                continue
-            if str(step.get("status") or "").lower() in {
-                STATUS_RUNNING,
-                STATUS_READY,
-                STATUS_PENDING,
-                STATUS_DIAGNOSING,
-            }:
-                step["status"] = STATUS_FAILED
-                step["updated_at"] = now
-                break
+        target_step["status"] = STATUS_FAILED
+        target_step["updated_at"] = now
     state["failure"] = prior
     state["updated_at"] = now
     return deepcopy(prior)

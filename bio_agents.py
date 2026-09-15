@@ -11878,6 +11878,8 @@ class BioAnalystAgent:
         return (
             "Repair the previous generated action instead of regenerating the step from scratch. "
             "Fix only the reported violation. Preserve all unrelated already-valid content. "
+            "The previous candidate is the current rejected candidate, not an older resolved rejection. "
+            "Preserve the current admitted Recovery directive and its required checks; they are not unrelated changes. "
             "Do not introduce unrelated inputs, outputs, managed artifact handles, checks, "
             "working directories, or workflow logic. Do not re-plan the step."
         )
@@ -12517,6 +12519,8 @@ class BioAnalystAgent:
             if key not in {"code", "messages", "raw_response"}
         }
         plan_state["task_state"] = task_state
+        from agent_core.workflow.candidate_repair import resolve_admitted_candidate_repairs
+        resolve_admitted_candidate_repairs(plan_state, bound)
         return bound
 
     @timed_phase("generate.commit_candidate")
@@ -16569,6 +16573,8 @@ class BioAnalystAgent:
             )) if frozen_input and binding_comparable else []
             comparison_rows = []
             for historical in scoped_rows:
+                if historical.get("resolved_by"):
+                    continue  # Accepted fixes end comparison applicability, never the budget ledger.
                 comparable = deepcopy(historical)
                 if not comparable.get("progress_assessment"):
                     recorded = ((historical.get("recovery_context") or {}).get("action_contract") or {}).get("structured_candidate")
@@ -16674,6 +16680,8 @@ class BioAnalystAgent:
                     repair_ordinal if not repair_allowed else max(0, repair_ordinal - 1)
                 ),
                 termination_reason=termination_reason,
+                step_id=step_id,
+                expected_scope=durable_scope,
             )
             receipt: Dict[str, Any] = {}
             recovery_rollover: Dict[str, Any] = {}
@@ -44041,6 +44049,7 @@ question. Never guess a scientific or database identity.
                         "stage": "script_block",
                         "code": ScriptBlockError.code,
                         "message": str(exc),
+                        **(exc.__cause__.to_dict() if hasattr(exc.__cause__, "to_dict") else {}),
                     }
             if not generate_script_protocol and structured_action.get("type") == "execute":
                 # Resolve the actual native interpreter operand before any
@@ -44052,7 +44061,8 @@ question. Never guess a scientific or database identity.
                 except ValueError as exc:
                     structured_action = {}
                     action_parse_error = {"stage": "action_schema", "code": str(exc),
-                        "field_path": "$.code|argv", "message": str(exc)}
+                        "field_path": "$.code|argv", "message": str(exc),
+                        **(exc.to_dict() if hasattr(exc, "to_dict") else {})}
             if (
                 recovery_semantic_action_protocol
                 and str(structured_action.get("type") or "") == "execute"
@@ -44274,6 +44284,9 @@ question. Never guess a scientific or database identity.
                             structured_action
                         ),
                         termination_reason="operation_binding_contract_invalid",
+                        step_id=current_step_id,
+                        expected_scope=candidate_repair_scope(generate_invocation_plan_state,
+                            task_id=task_id, step_id=current_step_id),
                     )
                     save_plan_state(self.data_path, task_id, current_action_plan)
                     primary_failure = {
@@ -44788,6 +44801,9 @@ question. Never guess a scientific or database identity.
                             candidate_fingerprint=candidate_fingerprint,
                             repair_attempt_count=0,
                             termination_reason="internal_protocol_not_repairable",
+                            step_id=current_step_id,
+                            expected_scope=candidate_repair_scope(generate_invocation_plan_state,
+                                task_id=task_id, step_id=current_step_id),
                         )
                         save_plan_state(self.data_path, task_id, current_action_plan)
                         return {
@@ -50667,6 +50683,9 @@ question. Never guess a scientific or database identity.
                 held_execution["timed_out"] = diagnostic_timed_out
                 held_execution["command_role"] = command_role
                 held_execution["argv"] = execution_argv
+                from agent_core.workspace_attestation import capture_mutation_failure_logs
+                held_execution["failure_logs"] = capture_mutation_failure_logs(mutation_attestation_journal,
+                    capability_id=str(pending_action.get("execution_capability_id") or ""))
                 held_execution = {key: redact_text(value) if isinstance(value, str) else value for key, value in held_execution.items()}
                 execution_evidence["recovery_execution_facts_ref"] = StateContractStore(self.data_path, task_id).put_object("execution.recovery_facts", held_execution)
             except Exception as facts_error:

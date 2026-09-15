@@ -213,6 +213,27 @@ def _scope(durable, prior_scope=None):
         "episode_id": str(record.get("source_fingerprint") or _mapping(task.get("runtime_recovery")).get("active_episode_id") or "")}
 
 
+def _candidate_stop_identity(durable):
+    """Identity of current generation facts, independent of execution identity.
+
+    Uses existing durable records; no epoch or counter grants another request.
+    The old verification attempt is retained and compared as a causal scope.
+    """
+    task = _mapping(durable.get("task_state"))
+    ledger = _mapping(task.get("candidate_repair_state"))
+    step_id = str(durable.get("current_step_id") or "")
+    return _hash({
+        "generation": task.get("generate_context_episode"),
+        "recovery": _mapping(task.get("recovery_state")).get("generation_claim"),
+        "rejections": {key: row for key, row in _mapping(ledger.get("events")).items()
+            if _mapping(row.get("scope")).get("step_id") == step_id},
+        "provider_claims": {key: row for key, row in _mapping(ledger.get("provider_claims")).items()
+            if _mapping(row.get("scope")).get("step_id") == step_id},
+        "actions": {key: row for key, row in _mapping(_mapping(durable.get("provenance_state")).get("actions")).items()
+            if row.get("step_id") == step_id},
+    })
+
+
 def _matches(durable, stop):
     if _mapping(durable.get("task_state")).get("status") in {"completed", "cancelled"}:
         return False
@@ -233,6 +254,24 @@ def _matches(durable, stop):
         if str(stop.get("consultant_invocation_id") or "") != str(invocation.get("invocation_id") or ""):
             return False
     actual = _scope(durable, stop.get("scope"))
+    candidate_identity = stop.get("candidate_scope_identity")
+    if candidate_identity:
+        # Null means this candidate did not execute, never "any attempt".
+        if (candidate_identity != _candidate_stop_identity(durable)
+                or actual != stop.get("causal_scope")
+                or stop.get("scope", {}).get("attempt_id") != ""
+                or stop.get("scope", {}).get("episode_id") != ""):
+            return False
+        if actual["attempt_id"]:
+            causal = _mapping(_mapping(_mapping(durable.get("provenance_state")).get("attempts")).get(actual["attempt_id"]))
+            if not causal or any(str(causal.get(key) or "") != actual[key]
+                                 for key in ("plan_id", "plan_version", "step_id")):
+                return False
+        observed = _mapping(_mapping(stop.get("boundary")).get("outcome")).get("scope") or {}
+        if any(str(observed[key]) != str(actual.get(key, ""))
+               for key in ("task_id", "plan_id", "plan_version", "step_id") if observed.get(key)):
+            return False
+        actual.update(attempt_id="", episode_id="")
     # A newly CREATED/STARTED attempt supersedes an old failure packet even
     # before another causal packet has been published.
     from agent_core.plan_tracker import active_attempt
@@ -306,6 +345,7 @@ def build_managed_stop(task_id, values, durable, boundary):
     _ref, record, packet = _active_packet(durable)
     observed = _mapping(outcome.get("scope"))
     fixed_scope = _scope(durable)
+    causal_scope = deepcopy(fixed_scope)
     no_execution = (boundary["node"] == "generate" or (
         boundary["node"] == "execute" and payload.get("command_started") is False))
     if no_execution:
@@ -315,7 +355,7 @@ def build_managed_stop(task_id, values, durable, boundary):
         fixed_scope.update(attempt_id="", episode_id="")
         from agent_core.active_state import current_generation_causal_reference
         parent = current_generation_causal_reference(durable)
-        if parent.get("status") == "verified" and parent == payload.get("causal_generation"):
+        if parent.get("status") == "verified" and (not payload.get("causal_generation") or parent == payload.get("causal_generation")):
             _ref = parent["failure_packet_ref"]
             record = _mapping(_mapping(_mapping(durable.get("task_state")).get("causal_failure_packets")).get(_ref))
             packet = _mapping(record.get("failure_packet"))
@@ -345,6 +385,8 @@ def build_managed_stop(task_id, values, durable, boundary):
             archive_ref=str(payload.get("recovery_archive_ref") or ""))
     value.update(producer=PRODUCER, status=boundary["status"], scope=fixed_scope, authority=_authority(durable),
         boundary=deepcopy(boundary), summary_status="IMPLEMENTED", summary_skip_reason="", summary_llm_calls=0)
+    if no_execution:
+        value.update(candidate_scope_identity=_candidate_stop_identity(durable), causal_scope=causal_scope)
     value["scope"]["task_id"] = task_id
     value["stage"] = value["stop_reason"].get("failure_stage") or payload.get("failure_stage") or ("recovery.inspection" if value["origin"].get("failure_type") == "inspection_required" else str(boundary["node"]))
     value["origin"].setdefault("source_stage", {"verification_outcome":"supervisor", "completion_gate_outcome":"supervisor"}.get(str(record.get("source_kind")), str(record.get("source_kind") or boundary["node"]).removesuffix("_outcome")))
@@ -368,7 +410,12 @@ def build_managed_stop(task_id, values, durable, boundary):
                 summary=_safe(primary.get("detail") or payload.get("detail") or outcome.get("summary")))
     value["associated_attempts"] = _associated_attempts(durable, packet, _ref)
     value["current_candidate"] = deepcopy(_mapping(payload.get("current_candidate")))
+    if no_execution and not value["current_candidate"]:
+        value["current_candidate"] = {"execution_started": False, "attempt_id": "",
+            "generate_invocation": deepcopy(_mapping(payload.get("generate_invocation")))}
     value["causal_generation"] = deepcopy(_mapping(payload.get("causal_generation")))
+    if no_execution and packet and not value["causal_generation"]:
+        value["causal_generation"] = deepcopy(parent)
     value["causal_execution"] = deepcopy(value["execution"]) if packet else {"status":"UNKNOWN"}
     if packet:
         value["causal_execution"].update(scope={"task_id":task_id,"plan_id":durable.get("plan_id"),
@@ -467,6 +514,7 @@ def explanation(stop):
         parts.append("最近因果执行：attempt=" + str(causal["attempt_id"]) + "；rc=" + str(causal.get("returncode"))
             + "；步骤=" + str(causal.get("step_id")) + "。已消费的证据只用于说明，未重新授权执行。")
         if causal.get("stderr"):parts.append("因果执行 stderr：" + _safe(causal["stderr"],2000))
+        if causal.get("stdout"):parts.append("因果执行 stdout（含内部进程报告；外层 rc0 不代表步骤完成）：" + _safe(causal["stdout"],2000))
     if stop.get("current_candidate"):
         parts.append("末次候选：" + _safe(json.dumps(stop["current_candidate"],ensure_ascii=False),2000))
     if stop.get("inspection_count_scope"):
@@ -586,6 +634,17 @@ def _save(data_path, value, *, loader, saver, claim=False):
     if claim and prior.get("summary_attempted"):
         raise ValueError("SUMMARY_ALREADY_ATTEMPTED")
     set_task_status(fresh, value["status"], value["stop_reason"]["error_code"])
+    if value.get("candidate_scope_identity"):
+        # A terminal pre-execution decision belongs to this precise step,
+        # including verification_pending after a failed causal execution.
+        target = next((row for row in _steps(fresh) if row.get("step_id") == value["scope"]["step_id"]), None)
+        if target and target.get("status") not in {"passed", "done", "completed", "cancelled", "skipped"}:
+            target["status"] = value["status"]
+            target["terminal_reason"] = value["stop_reason"]["error_code"]
+            value["execution"]["step_status"] = value["status"]
+            for row in value.get("stages", []):
+                if row.get("step_id") == target["step_id"]:
+                    row["status"] = target["status"]
     if value.get("planning") and _mapping(fresh.get("task_state")).get("planning_failure"):
         # The typed graph already chose this legitimate terminal boundary.
         # Closing its matching correction capsule does not decide a new route.
@@ -802,7 +861,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         execution = value.get("causal_execution") if value.get("causal_execution",{}).get("attempt_id") else value["execution"]
         for stage in value["stages"]:
             current = stage["step_id"] == value["scope"]["step_id"]
-            observed = ("failed" if execution.get("returncode") not in (None, 0) else "succeeded" if execution.get("returncode") == 0 else "not_started_or_unknown") if current else ("completed" if stage["status"] in {"done", "passed", "completed"} else "not_started_or_unknown")
+            observed = ("process_failed" if execution.get("returncode") not in (None, 0) else "process_returned_zero" if execution.get("returncode") == 0 else "not_started_or_unknown") if current else ("completed" if stage["status"] in {"done", "passed", "completed"} else "not_started_or_unknown")
             rows.append("\t".join((stage["step_id"],stage["status"],observed,str(bool(execution.get("committed"))) if current else str(any(row["step_id"] == stage["step_id"] for row in value.get("prior_completed_work", []))), ("latest attempt purpose=" + str(execution.get("purpose") or "UNKNOWN") + "; primary causal returncode=" + str(value.get("origin", {}).get("returncode")) + "; formal verification/commit remain authoritative") if current else "formal verification/commit remain authoritative")))
         rows.append("run\t" + value["status"] + "\tstopped\tfalse\t" + value["stop_reason"]["error_code"])
         bodies["stage_status.tsv"] = "\n".join(rows) + "\n"

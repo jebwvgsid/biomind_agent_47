@@ -3497,6 +3497,34 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
     raise ValueError("EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC")
 
 
+class EffectHelperError(ValueError):
+    """Public, measured carrier facts; no candidate authority or environment."""
+    def __init__(self, code, *, actual, reason, expected):
+        super().__init__(code)
+        self.diagnostic = {"code": code, "field_path": "$.code|argv", "actual": actual,
+                           "reason": reason, "message": reason, "expected": expected}
+
+    def to_dict(self):
+        return deepcopy(self.diagnostic)
+
+
+def _helper_diagnostic(body, template, language, *, carrier_source="code"):
+    positions = [i for i, line in enumerate(body.splitlines(), 1) if line == EFFECT_HELPER_MARKER]
+    scopes = []
+    for line in positions:
+        try:
+            _assert_helper_scope(body, language, line - 1)
+            scope = "python_comment"
+        except ValueError:
+            scope = "outside_supported_python_scope"
+        scopes.append({"source": carrier_source, "line": line, "scope": scope})
+    return {"language": language or "UNKNOWN", "carrier_source": carrier_source,
+        "marker_count": len(positions), "marker_positions": scopes,
+        "template_available": bool(template.get("available")),
+        "template_schema_version": template.get("schema_version"),
+        "template_sha256": template.get("template_sha256", "UNKNOWN")}
+
+
 def materialize_effect_template(body: str, template: Mapping[str, Any], *, language: str = "python") -> str:
     """Expand one exact marker BEFORE validation, candidate identity and approval.
 
@@ -3506,13 +3534,22 @@ def materialize_effect_template(body: str, template: Mapping[str, Any], *, langu
     """
     lines = body.splitlines(keepends=True)
     markers = [i for i, line in enumerate(lines) if line.rstrip("\r\n") == EFFECT_HELPER_MARKER]
+    actual = _helper_diagnostic(body, template, language)
+    def fail(code, reason):
+        raise EffectHelperError(code, actual=actual, reason=reason,
+            expected="Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.")
     if not markers:
         if EFFECT_HELPER_MARKER in body:
-            raise ValueError("EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE")
+            fail("EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE", "The marker is present but not on its own unindented line.")
         return body
-    if len(markers) != 1 or not template.get("available"):
-        raise ValueError("EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE")
-    _assert_helper_scope(body, language, markers[0])
+    if len(markers) != 1:
+        fail("EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE", "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.")
+    if not template.get("available"):
+        fail("EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE", "The current approved helper template is unavailable; marker count is valid.")
+    try:
+        _assert_helper_scope(body, language, markers[0])
+    except ValueError as exc:
+        fail(str(exc), "The unique marker is outside the supported Python comment scope for the declared carrier.")
     code = str(template.get("python_template") or "")
     if not code or hashlib.sha256(code.encode()).hexdigest() != template.get("template_sha256"):
         raise ValueError("EFFECT_HELPER_TEMPLATE_DIGEST_MISMATCH")
@@ -3528,18 +3565,40 @@ def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, 
     argv = list(result.get("argv") or [])
     code = str(result.get("code") or "")
     carrier = _inline_interpreter_body(argv)
+    declared_language = str(result.get("language") or "").lower()
+    source = "argv[" + str(carrier[0]) + "]" if carrier else "code"
+    actual_body = argv[carrier[0]] if carrier else code
+    language = carrier[1] if carrier else declared_language or "bash"
+    actual = _helper_diagnostic(actual_body, template, language, carrier_source=source)
+    actual.update(declared_language=declared_language or "UNKNOWN",
+        interpreter_argv_prefix=argv[:carrier[0]] if carrier else [],
+        declaration_missing=not carrier and not declared_language,
+        fallback_language="bash" if not carrier and not declared_language else None)
+    expected = "Declare language=python or an explicit interpreter argv; Bash requires one single-quoted Python heredoc. code and argv must denote the same body and interpreter."
+    if (EFFECT_HELPER_MARKER in actual_body and not carrier and not declared_language):
+        raise EffectHelperError("EFFECT_HELPER_CARRIER_UNDECLARED", actual=actual,
+            reason="Helper injection requires an explicit carrier declaration. The legacy fallback is Bash; source contents do not choose an interpreter.", expected=expected)
+    aliases = {"py": "python", "shell": "bash", "sh": "bash"}
+    if carrier and declared_language and aliases.get(declared_language, declared_language) != carrier[1]:
+        raise EffectHelperError("EFFECT_TEMPLATE_NATIVE_LANGUAGE_ARGV_MISMATCH", actual=actual,
+            reason="Declared language and actual argv interpreter disagree.", expected=expected)
     if argv and code:
         if carrier is None and code.strip() == shlex.join(argv) and EFFECT_HELPER_MARKER not in code:
             return result  # Exact display of the native non-script command.
         if carrier is None or argv[carrier[0]].strip() != code.strip():
-            raise ValueError("EFFECT_TEMPLATE_NATIVE_BODY_ARGV_MISMATCH")
+            raise EffectHelperError("EFFECT_TEMPLATE_NATIVE_BODY_ARGV_MISMATCH", actual=actual,
+                reason="code does not equal the actual argv script operand.", expected=expected)
     if argv and carrier is None:
         if any(EFFECT_HELPER_MARKER in arg for arg in argv):
             raise ValueError("EFFECT_HELPER_ARGV_CARRIER_UNSUPPORTED_USE_PYTHON_C_OR_QUOTED_HEREDOC")
         return result
     body = argv[carrier[0]] if carrier else code
     language = carrier[1] if carrier else str(result.get("language") or "bash").lower()
-    expanded = materialize_effect_template(body, template, language=language)
+    try:
+        expanded = materialize_effect_template(body, template, language=language)
+    except EffectHelperError as exc:
+        exc.diagnostic["actual"] = actual
+        raise
     if carrier:
         argv[carrier[0]] = expanded
         result["argv"] = argv
@@ -3579,6 +3638,7 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
                 "rules": [
                     "This contract describes execution stdout facts, not the top-level action response. Follow the current Generate output protocol; never wrap a native action in action_json or a script fence.",
                     "In one Python script or one single-quoted Python heredoc, put the exact marker # BIOMIND_EFFECT_HELPER on its own unindented line. BioMind expands its frozen code before checking and approval. Do not expand or rewrite the helper yourself.",
+                    "Native code with this marker must explicitly declare language=python, or use argv=[<published Python interpreter>, '-c', <Python body>]. For Bash use an explicit Bash carrier and one quoted Python heredoc. Do not also put a marker in the outer Bash comments. argv-only is supported. These same carrier rules apply after Recovery and during local correction.",
                     "Call print(emit_effect_evidence(actual_facts)) with a native Python data object. Pass paths/labels as argv, not Python source interpolation; avoid nested python -c / json.dumps / command substitution / json.loads.",
                     "Supply categorized actual_facts, for example {'produces_observations': {'an exact declared identity': {'value': actual_value}}}, only after performing the real checks or operations. A flat identity map is invalid. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.",
                     "Publication accepts a subset of the approved declarations. Omit artifacts that were not produced; do not create a path or placeholder to publish blocked facts. Omission itself asserts nothing. All supplied identities and required fields remain checked.",

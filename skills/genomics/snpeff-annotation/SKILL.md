@@ -224,6 +224,7 @@ metadata:
         execution_guidance:
           - Choose one stable task-local genome version and declare the genome_version and snpeff_db bindings.
           - Prepare the approved task-local config and database layout without discovering or selecting another reference.
+          - This selected capability produces a separate immutable snpEff config artifact consumed by build and annotation. Declare its output handle; describing a config inside the mutable workspace does not supply that cross-step interface. This does not restrict the explicit generic execution capability.
       - capability_id: genomics.snpeff_annotation.build_database
         operation: build_database
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
@@ -252,6 +253,7 @@ metadata:
         execution_guidance:
           - Build only the approved task-local custom database.
           - Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths.
+          - Preserve the actual command argv and inner returncode. Write build.log beside the approved predictor target (data/<genome_version>/build.log); the runtime can publish its attester-matched snapshot for Recovery evidence.read. An outer Python rc0 is not inner build success.
       - capability_id: genomics.snpeff_annotation.annotate_variants
         operation: annotate_variants
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
@@ -487,6 +489,17 @@ replace `step.outputs`.
    - Variants have plausible ANN fields and no systematic chromosome-not-found warnings.
 
 ## Custom Database Workflow
+
+The optional pure `snpeff_argv(prefix, operation=..., global_options=..., operation_args=...)`
+constructor in `scripts/render_snpeff_annotation_scripts.py` is used by that renderer.
+For example, with explicitly selected values, construct
+`snpeff_argv([java_bin, '-jar', jar_path], operation='build', global_options=['-c', config_path, '-dataDir', data_dir], operation_args=['-gtf22', '-v', genome_version])`.
+Select `operation='ann'` for annotation. This helper does not inspect or repair arbitrary generated Python/Bash.
+Free generated code remains responsible for the same command shape and needs a new approval after correction.
+When recovering, read the published `failure_log` evidence ref with `evidence.read`, then continue on that
+same ref at `cursor.next_start_line` if truncated. `Command: 'ann'` together with `Unknown option '-gtf22'`
+is evidence to inspect subcommand placement, not proof of a damaged GTF or unavailable installation.
+Retain the inner returncode, missing predictor and log facts separately from the wrapper's exit code.
 
 1. Choose a project-specific `genome-version` from the exact reference and annotation release, such as `species_ref_release`, not a broad species or taxonomy label.
 2. Create a project config with:

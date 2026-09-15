@@ -451,6 +451,8 @@ def validate_candidate_repair_receipt(
     committed = dict(raw_committed or {})
     if not committed:
         raise CandidateRepairReceiptError("CANDIDATE_REPAIR_RECEIPT_NOT_COMMITTED")
+    if committed.get("resolved_by"):
+        raise CandidateRepairReceiptError("CANDIDATE_REPAIR_RECEIPT_RESOLVED")
     committed_identity = {
         "scope": observed_scope,
         "candidate_event_id": str(receipt.get("candidate_event_id") or ""),
@@ -533,12 +535,35 @@ def latest_candidate_repair_receipt(data_path, task_id, state, scope):
     last = max(events, key=lambda row: int(row.get('repair_ordinal') or 0), default={})
     if not last:
         return {}
+    if last.get('resolved_by'):
+        return {}  # History and its budget remain; this is no longer an instruction.
     if last.get('status') != 'repairable':
         raise CandidateRepairReceiptError('GENERATE_REPAIR_SCOPE_STOPPED')
     ref = last['receipt_ref']
     body = StateContractStore(data_path, task_id).read_object(ref, expected_type=CANDIDATE_REPAIR_RECEIPT_OBJECT_TYPE)
     return validate_candidate_repair_receipt({**body, 'receipt_ref': ref}, data_path=data_path, task_id=task_id,
         expected_scope=scope, expected_candidate_fingerprint=last['candidate_fingerprint'], committed_repair_state=ledger)
+
+
+def resolve_admitted_candidate_repairs(state, action):
+    """Retire pending diagnostics in the same CAS as real action admission.
+
+    This records representation acceptance, not approval/execution/completion.
+    Never delete events, change ordinals, or create a new budget scope.
+    """
+    task = state.get('task_state') or {}
+    ledger = task.get('candidate_repair_state') or {}
+    scope = candidate_repair_scope(state, task_id=state.get('task_id'), step_id=action.get('step_id'))
+    accepted = ((state.get('provenance_state') or {}).get('actions') or {}).get(action.get('action_id'))
+    if not accepted or not action.get('generated_script_hash'):
+        return
+    resolution = {'action_id': action['action_id'],
+        'candidate_event_id': str(action.get('candidate_generation_event_id') or ''),
+        'generated_script_sha256': action['generated_script_hash'],
+        'basis': 'admitted_action_bound', 'execution_success': 'not_assessed'}
+    for row in (ledger.get('events') or {}).values():
+        if row.get('scope') == scope and row.get('status') == 'repairable' and not row.get('resolved_by'):
+            row['resolved_by'] = deepcopy(resolution)
 
 
 def claim_candidate_generation(data_path, task_id, scope, *, invocation_id, receipt_id=''):
