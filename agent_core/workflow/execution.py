@@ -545,7 +545,7 @@ class TypedGenerate:
                             "ordinal",
                             int(validated_projection_receipt["repair_ordinal"]),
                         ),
-                        ("progress_proven", True),
+                        ("progress_proven", bool(validated_projection_receipt["progress_proven"])),
                         (
                             "rejection_event_id",
                             str(
@@ -1080,11 +1080,11 @@ class TypedGenerate:
                     receipt_limit = int(repair["repair_limit"])
                     effective_limit = receipt_limit  # Immutable producer policy owns this scope.
                     progress_proven = repair.get("progress_proven") is True
-                    if not progress_proven or ordinal > effective_limit:
+                    if ordinal > effective_limit:
                         outcome_type = "internal_protocol_error"
                         payload = {
                             **_internal_generate_failure_payload(value, exit_reason=exit_reason),
-                            "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED" if not progress_proven else "GENERATE_REPAIR_BUDGET_EXHAUSTED",
+                            "error_code": "GENERATE_REPAIR_BUDGET_EXHAUSTED",
                             "component": "typed_generate_repair_governance",
                             "candidate_fingerprint": candidate_fingerprint,
                             "error_fingerprint": error_fingerprint,

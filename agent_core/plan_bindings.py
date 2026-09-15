@@ -1704,7 +1704,8 @@ def public_binding_requirements(frozen, *, operation, workspace_bindings):
             for name in rule.get("produces_bindings", [])},
         "consumed_bindings": {name: {"ref": "plan_binding:" + name} for name in rule.get("consumes_bindings", [])},
         "binding_env": {"owner": "system", "declared_mapping": deepcopy(rule.get("required_binding_env") or {}),
-            "compatibility": "If supplied, every mapping must equal this declaration."},
+            "default": "Omit binding_env. The system derives it from this approved rule before approval; put actual values only in produced_bindings.",
+            "compatibility": "Optional legacy source declaration only. If supplied, every mapping must equal this declaration; never put an actual environment value here."},
         "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."}
 
 
@@ -1768,10 +1769,12 @@ def normalize_public_action_bindings(action, *, frozen, scope, workspace_binding
             row = matches[0]
             normalized["produced_bindings"][name]["value"] = {key: deepcopy(row[key]) for key in
                 ("canonical_resource_id", "resource_kind", "binding_revision", "plan_handle", "binding_id")}
-        supplied = raw.get("binding_env") or {}
+        supplied = raw.get("binding_env", {})
         required = dict(rule.get("required_binding_env") or {})
         if not isinstance(supplied, Mapping) or any(key not in required or value != required[key] for key,value in supplied.items()):
-            raise PlanBindingError("BINDING_ENV_CONTRACT_MISMATCH", field_path="binding_env")
+            raise PlanBindingError("BINDING_ENV_CONTRACT_MISMATCH", field_path="binding_env",
+                actual=deepcopy(supplied), expected=deepcopy(required),
+                detail="Delete optional binding_env for system derivation, or supply the exact source objects. Actual values belong in produced_bindings.")
         normalized["binding_env"] = deepcopy(required)
     digest = lambda value: hashlib.sha256(_canonical(value).encode()).hexdigest()
     receipt = {"schema_version": 1, "producer": "managed_binding_normalizer", "protocol": "legacy_full_v1" if legacy else PUBLIC_BINDING_PROTOCOL,
@@ -1816,7 +1819,7 @@ def binding_input_progress_facts(action, requirements):
         for name, expected in requirements.get('consumed_bindings', {}).items():
             if consumed.get(name) == expected:
                 facts.add('consumed_bindings.' + name)
-    supplied = action.get('binding_env') or {}
+    supplied = action.get('binding_env', {})
     expected = requirements.get('binding_env', {}).get('declared_mapping', {})
     if isinstance(supplied, Mapping) and all(k in expected and v == expected[k] for k,v in supplied.items()):
         facts.add('binding_env')
@@ -1834,7 +1837,7 @@ def public_binding_shape_violations(candidate, requirements):
     issues = []
     def issue(code, path, observed, message):
         issues.append({"code": code, "field_path": path,
-            "observed_type": type(observed).__name__, "message": message,
+            "observed_type": type(observed).__name__, "actual": deepcopy(observed), "message": message,
             "check_source": "public_binding_shape_violations"})
     if candidate.get("operation") != requirements.get("operation"):
         issue("ACTION_OPERATION_SCOPE_MISMATCH", "operation", candidate.get("operation"),
@@ -1843,7 +1846,8 @@ def public_binding_shape_violations(candidate, requirements):
     expected = requirements.get("binding_env", {}).get("declared_mapping", {})
     if not isinstance(supplied, Mapping) or any(key not in expected or value != expected[key] for key, value in supplied.items()):
         issue("BINDING_ENV_CONTRACT_MISMATCH", "binding_env", supplied,
-              "The system owns the declared mapping; any supplied mapping must match it exactly.")
+              "Delete optional binding_env for system derivation, or supply the exact source objects in binding_input_requirements.binding_env.declared_mapping. Actual values belong in produced_bindings.")
+        issues[-1]["expected"] = deepcopy(expected)
     produced = candidate.get("produced_bindings", {})
     if not isinstance(produced, Mapping):
         issue("BINDING_PUBLIC_VALUE_SHAPE_INVALID", "produced_bindings", produced,

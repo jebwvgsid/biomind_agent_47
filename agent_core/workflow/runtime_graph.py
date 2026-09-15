@@ -36,7 +36,10 @@ def route_generate_outcome(state: Mapping[str, Any]) -> str:
         receipt = dict(payload.get("budget_receipt") or {})
         if (
             payload.get("repairable") is True
-            and receipt.get("progress_proven") is True
+            and (receipt.get("progress_proven") is True or (
+                receipt.get("correction_authorized") is True
+                and bool(receipt.get("receipt_ref"))
+                and (receipt.get("progress_assessment") or {}).get("repeat_proven") is False))
             and int(receipt.get("ordinal") or 0) <= int(receipt.get("limit") or 0)
         ):
             return "generate"

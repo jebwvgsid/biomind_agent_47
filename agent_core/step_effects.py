@@ -3366,6 +3366,7 @@ def generate_output_examples(step: Mapping[str, Any], *, script_protocol: bool,
         "top_level": ("Return one supported executable block/display envelope or the complete blocked JSON."
             if script_protocol else "Return exactly one raw JSON object with action_type; no prose, Markdown, action_json wrapper or multiple actions."),
         "action_example": example,
+        "derived_field_policy": "Normally omit binding_env: approved binding rules derive its source mapping and effective values before approval. Keep genuine values in produced_bindings. Explicit source overrides remain strictly validated. operation is the explicit execution operation and must match the published approved capability, never infer it from step_id.",
         "facts_example": facts, "blocked_example": blocked,
         "facts_example_scope": "Non-executable shape template only. Placeholder values are not measured facts and must not be published.",
         "synthetic_protocol_demo": demo,
@@ -3559,13 +3560,31 @@ def materialize_effect_template(body: str, template: Mapping[str, Any], *, langu
     return "".join(lines)
 
 
-def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, Any]) -> Dict[str, Any]:
-    """Materialize the actual native carrier before its approval identity exists."""
-    result = deepcopy(dict(action))
+def executable_carrier(action: Mapping[str, Any]) -> Dict[str, Any]:
+    """Read the existing explicit carrier, without reading files or guessing code.
+
+    File commands remain external commands: their contents require the existing
+    approved file/identity path, never an arbitrary Generate-time filesystem read.
+    """
+    result = dict(action)
     argv = list(result.get("argv") or [])
     code = str(result.get("code") or "")
     carrier = _inline_interpreter_body(argv)
     declared_language = str(result.get("language") or "").lower()
+    return {"argv": argv, "code": code, "inline": carrier,
+        "declared_language": declared_language,
+        "body": argv[carrier[0]] if carrier else code if not argv else "",
+        "language": carrier[1] if carrier else declared_language or ("bash" if not argv else ""),
+        "source": "argv[" + str(carrier[0]) + "]" if carrier else "code" if not argv else "external_argv",
+        "script_available": bool(carrier or (code and not argv))}
+
+
+def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, Any]) -> Dict[str, Any]:
+    """Materialize the actual native carrier before its approval identity exists."""
+    result = deepcopy(dict(action))
+    selected = executable_carrier(result)
+    argv, code, carrier = selected["argv"], selected["code"], selected["inline"]
+    declared_language = selected["declared_language"]
     source = "argv[" + str(carrier[0]) + "]" if carrier else "code"
     actual_body = argv[carrier[0]] if carrier else code
     language = carrier[1] if carrier else declared_language or "bash"

@@ -12128,6 +12128,7 @@ class BioAnalystAgent:
                 projection["progress_assessment"] = {
                     key: deepcopy(progress[key]) for key in (
                         "basis", "newly_satisfied_targets", "resolved_targets",
+                        "check_records", "unknown_targets", "failed_checks", "new_failure_targets",
                         "pending_targets", "binding_axis", "scientific_success",
                     ) if key in progress
                 }
@@ -12266,7 +12267,7 @@ class BioAnalystAgent:
         if isinstance(budget_receipt, Mapping):
             for key, expected in (
                 ("ordinal", int(validated["repair_ordinal"])),
-                ("progress_proven", True),
+                ("progress_proven", bool(validated["progress_proven"])),
                 ("rejection_event_id", str(validated["rejection_event_id"])),
                 ("receipt_ref", str(validated["receipt_ref"])),
             ):
@@ -12290,7 +12291,7 @@ class BioAnalystAgent:
                     int(validated["repair_limit"])
                     - int(validated["repair_ordinal"]),
                 ),
-                "progress_proven": True,
+                "progress_proven": bool(validated["progress_proven"]),
                 "rejection_event_id": str(validated["rejection_event_id"]),
                 "receipt_ref": str(validated["receipt_ref"]),
             },
@@ -16150,6 +16151,7 @@ class BioAnalystAgent:
         recovery_generated: bool = False,
         revoke_pending_action_id: str = "",
         validated_representation_targets: Sequence[str] = (),
+        check_records: Sequence[Mapping[str, Any]] = (),
     ) -> Dict[str, Any]:
         """CAS-commit one rejection, repair charge, and trusted receipt reference."""
 
@@ -16605,6 +16607,7 @@ class BioAnalystAgent:
                 candidate=candidate, representation_targets=representation_targets,
                 binding_facts=public_valid_facts if frozen_input and binding_comparable else None,
                 violations=normalized_violations, prior_rows=comparison_rows, contract_ref=contract_ref,
+                check_records=check_records,
             )
             progress_proven = progress_assessment["progress_proven"]
             budgets = dict(task_state.get("budgets") or {})
@@ -16641,14 +16644,16 @@ class BioAnalystAgent:
                 == PreActionRepairDomain.GENERATED_SEMANTIC.value
             )
             repair_allowed = bool(
-                progress_proven
+                not progress_assessment["repeat_proven"]
                 and repair_ordinal <= repair_limit
                 and (format_repair_allowed or semantic_repair_allowed)
             )
-            no_progress = not progress_proven or bool(
+            no_progress = progress_assessment["repeat_proven"] or bool(
                 policy_decision.reason_code == "corrective_generate_no_progress"
             )
+            internal_check_stop = not repair_allowed and first_violation.get("owner") == "INTERNAL_PROTOCOL"
             termination_reason = (
+                "candidate_check_unavailable" if internal_check_stop else
                 "repair_no_progress"
                 if no_progress
                 else "action_format_repair_budget_exhausted"
@@ -16714,8 +16719,8 @@ class BioAnalystAgent:
                         candidate_event_id=source_candidate_event_id,
                         rejection_event_id=event_id,
                         repair_limit=repair_limit,
-                        progress_proven=True,
-                        policy_receipt=policy_receipt,
+                        progress_proven=progress_proven,
+                        policy_receipt={**policy_receipt, "correction_authorized": True},
                     )
                 except (CandidateRepairReceiptError, OSError, ValueError) as exc:
                     repair_allowed = False
@@ -16776,6 +16781,8 @@ class BioAnalystAgent:
             terminal_reason_code = (
                 secondary_failure_code
                 if secondary_failures
+                else str(first_violation.get("code") or "CANDIDATE_CHECK_ERROR")
+                if internal_check_stop
                 else "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED"
                 if no_progress and progress_assessment["basis"] == "recurrent_rejected_candidate"
                 else "GENERATE_REPAIR_NO_VALIDATED_PROGRESS"
@@ -42056,7 +42063,10 @@ question. Never guess a scientific or database identity.
                                 else (
                                     "Return one raw JSON object with action_type=execute, code or argv plus "
                                     "typed produced_bindings and any declared operation, "
-                                    "consumed_bindings, and binding_env fields. Use exactly the "
+                                    "consumed_bindings fields. Normally omit binding_env: the approved "
+                                    "rule derives its source mapping and effective values before approval. "
+                                    "Optional explicit binding_env must match the published source objects, "
+                                    "not contain actual values. Use exactly the "
                                     "binding identities declared by the approved StepEffect. "
                                     "When a Skill binding contract is present, create or reuse "
                                     "values exactly as that contract declares. Use the formal "
@@ -43853,6 +43863,7 @@ question. Never guess a scientific or database identity.
                 else self._extract_structured_action_result(content))
             structured_action = structured_parse_result.action
             candidate_validated_representation_targets: List[str] = []
+            candidate_check_records: List[Dict[str, Any]] = []
             action_parse_error = deepcopy(structured_parse_result.error)
             provider_candidate = deepcopy(structured_action)
             # Script mode may request a non-success stop through the existing
@@ -44208,21 +44219,26 @@ question. Never guess a scientific or database identity.
                     exit_reason=exit_reason,
                     candidate_event_id=candidate_event_id,
                     recovery_generated=recovery_generated,
-                    validated_representation_targets=candidate_validated_representation_targets,
+                    validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                 )
 
-            if str(structured_action.get("type") or "") == "execute" and structured_action.get("code"):
-                from execution.script_validation import check_script_body
-                syntax = check_script_body(str(structured_action["code"]), str(structured_action.get("language") or "bash"))
-                if syntax["status"] == "invalid" or (syntax["status"] == "unavailable" and str(structured_action.get("language") or "bash").lower() in {"bash", "shell", "sh", "python", "py"}):
+            if str(structured_action.get("type") or "") == "execute":
+                from execution.script_validation import check_executable_action
+                syntax = check_executable_action(structured_action)
+                candidate_check_records.append(syntax)
+                if syntax["check_status"] == "PASS":
+                    candidate_validated_representation_targets.append("executable_syntax")
+                elif syntax["required"] and syntax["check_status"] != "NOT_APPLICABLE":
                     return {"messages": [response], **reject_current_candidate(
-                        violation={"code": syntax["code"], "message": syntax["detail"],
-                            "field_path": "$.code", "syntax_check": syntax},
-                        repair_stage="script_body_validation", validation_source="execution.script_validation.check_script_body",
+                        violation={"code": syntax.get("code") or "SCRIPT_SYNTAX_CHECK_INCOMPLETE",
+                            "message": syntax.get("detail") or "Required syntax check did not complete.",
+                            "owner": "GENERATED_ACTION" if syntax["check_status"] == "FAIL" else "INTERNAL_PROTOCOL",
+                            "field_path": syntax["source"], "syntax_check": syntax},
+                        repair_stage="script_body_validation", validation_source="execution.script_validation.check_executable_action",
+                        repair_domain=(PreActionRepairDomain.GENERATED_SEMANTIC.value if syntax["check_status"] == "FAIL"
+                            else PreActionRepairDomain.INTERNAL_PROTOCOL.value),
                         contract_ref={"protocol": "exact_executable_body", "execution_started": False},
                         exit_reason="script_body_validation_rejected")}
-                if syntax["status"] == "valid":
-                    candidate_validated_representation_targets.append("executable_syntax")
 
             # Admission decides whether this response is valid. Rejected-candidate
             # recurrence belongs to the shared ledger after the actual gate; a
@@ -44242,7 +44258,7 @@ question. Never guess a scientific or database identity.
                         structured_action, frozen=generate_frozen_binding_input, scope=invocation_audit.scope,
                         workspace_bindings=generate_workspace_bindings, raw_public_candidate=structured_parse_result.candidate)
                 except PlanBindingError as exc:
-                    return {"messages": [response], **self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
+                    return {"messages": [response], **self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                         task_id=task_id, plan_state=generate_invocation_plan_state, approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id, candidate=candidate_for_repair, candidate_fingerprint="",
                         previous_candidate_fingerprint="", violations=[exc.to_dict()], visible_artifacts=generate_visible_artifacts,
@@ -44338,7 +44354,7 @@ question. Never guess a scientific or database identity.
                     }
                 if operation_admission.status == "candidate_rejected":
                     operation_violations = list(operation_admission.violations)
-                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
+                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                         task_id=task_id,
                         plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
@@ -44441,7 +44457,7 @@ question. Never guess a scientific or database identity.
                             "reason_code": failure["error_code"],
                             "next_step": "finish",
                         }
-                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
+                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                         task_id=task_id,
                         plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
@@ -44490,6 +44506,7 @@ question. Never guess a scientific or database identity.
                     or {}
                 ))
                 admitted_action = deepcopy(structured_action)
+                admitted_action["candidate_check_records"] = deepcopy(candidate_check_records)
                 if binding_normalization:
                     admitted_action["binding_normalization_receipt"] = binding_normalization
                 admitted_action["formal_workspace_bindings"] = deepcopy(
@@ -44535,7 +44552,7 @@ question. Never guess a scientific or database identity.
                             "generate_exit_reason": "binding_dependency_unavailable",
                             "next_step": "supervisor",
                         }
-                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
+                    rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                         task_id=task_id,
                         plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot,
@@ -44917,7 +44934,7 @@ question. Never guess a scientific or database identity.
                             and recovery_context_obj.failure_stage == "pre_action_contract"
                             else ""
                         )
-                        rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
+                        rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                             task_id=task_id,
                             plan_state=generate_invocation_plan_state,
                             approved_plan_snapshot=approved_action_snapshot,
@@ -45053,7 +45070,7 @@ question. Never guess a scientific or database identity.
                         "actual": str(structured_action.get("language") or ""),
                         "message": "The action language must match the explicitly approved generic tool."}
                     return {"messages": [response], **self._candidate_admission_rejection_update(
-                        validated_representation_targets=candidate_validated_representation_targets,
+                        validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                         task_id=task_id, plan_state=generate_invocation_plan_state,
                         approved_plan_snapshot=generate_approved_snapshot, step_id=current_step_id,
                         candidate=candidate_for_repair, candidate_fingerprint="",
@@ -45153,7 +45170,7 @@ question. Never guess a scientific or database identity.
                         },
                     )
                     if exc.code == "EXTERNAL_SCRIPT_INVALID":
-                        rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets,
+                        rejection_update = self._candidate_admission_rejection_update(validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                             task_id=task_id,
                             plan_state=generate_invocation_plan_state,
                             approved_plan_snapshot=generate_approved_snapshot,
@@ -45950,7 +45967,7 @@ question. Never guess a scientific or database identity.
                     exit_reason="unrecognized_action",
                     candidate_event_id=candidate_event_id,
                     recovery_generated=recovery_generated,
-                    validated_representation_targets=candidate_validated_representation_targets,
+                    validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                 )
                 repair_feedback = self._action_format_repair_feedback(
                     state,

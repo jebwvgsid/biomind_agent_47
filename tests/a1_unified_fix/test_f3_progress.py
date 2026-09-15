@@ -201,7 +201,12 @@ def test_recovery_policy_consumes_same_trusted_progress_for_same_candidate():
     for progress in (True,False):
         evidence={**base,'candidate_progress':{'producer':'biomind.generate_candidate_admission.v1','progress_proven':progress}}
         decision=policy.decide(pre_action_evidence=evidence,budgets={'generated_semantic_repair_count':1})
-        assert decision.kind==('RETRY_CURRENT_ACTION' if progress else 'ESCALATE'),decision.to_dict()
+        # Progress is diagnostic; only independently proven recurrence may stop early.
+        assert decision.kind=='RETRY_CURRENT_ACTION',decision.to_dict()
+    repeated={**base,'candidate_progress':{'producer':'biomind.generate_candidate_admission.v1',
+        'progress_proven':False,'repeat_proven':True}}
+    decision=policy.decide(pre_action_evidence=repeated,budgets={'generated_semantic_repair_count':1})
+    assert decision.kind=='ESCALATE' and decision.reason_code=='corrective_generate_no_progress'
 
 
 def test_comparison_keeps_permissions_effects_program_and_versions():

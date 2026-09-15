@@ -72,11 +72,12 @@ def candidate_progress_assessment(
     *, candidate: Any, representation_targets: Sequence[str],
     binding_facts: Sequence[str] | None, violations: Sequence[Mapping[str, Any]],
     prior_rows: Sequence[Mapping[str, Any]], contract_ref: Mapping[str, Any],
+    check_records: Sequence[Mapping[str, Any]] = (),
 ) -> Dict[str, Any]:
-    """One ledger decision from actual parser/validator observations.
+    """Diagnostic progress and proven recurrence from validator observations.
 
-    Error-code changes are diagnostics, not progress. A rejected novel candidate
-    needs a newly satisfied target; no scientific success is inferred here. Full
+    Error-code changes are diagnostics, not progress. Unproven progress alone
+    cannot terminate correction; no scientific success is inferred here. Full
     admission runs before this function, so a now-valid candidate needs no extra
     repair authorization. Historical rows without observations remain comparable
     by full identity, but cannot supply invented validation facts.
@@ -130,15 +131,25 @@ def candidate_progress_assessment(
         proven, basis = True, "initial_rejection"
     elif recurrence or legacy_repeat:
         proven, basis = False, "recurrent_rejected_candidate"
-    elif previous and (gained_representation or removed_env_targets) and not lost_representation:
+    elif previous and (gained_representation or removed_env_targets):
         proven, basis = True, "validated_representation_target"
-    elif (previous and bindings is not None and gained_bindings
-          and not lost_representation
-          and not (old_bindings - set(bindings))):
+    elif previous and bindings is not None and gained_bindings:
         proven, basis = True, "validated_binding_target"
     else:
         proven, basis = False, "no_validated_target_progress"
-    return {"schema_version": 1, "producer": CANDIDATE_REPAIR_RECEIPT_PRODUCER,
+    checks = {str(row["check_id"]): deepcopy(dict(row)) for row in check_records if row.get("check_id")}
+    checks.setdefault("executable_syntax", {"check_id": "executable_syntax",
+        "check_status": "PASS" if "executable_syntax" in representation else "NOT_EVALUATED",
+        "detail": "Recorded validator checkpoint" if "executable_syntax" in representation else "No syntax result recorded at this admission boundary."})
+    unknown = sorted({key for key in lost_representation
+        if checks.get(key, {}).get("check_status") not in {"PASS", "FAIL", "NOT_APPLICABLE"}} | {key for key, row in checks.items()
+        if row.get("check_status") in {"NOT_EVALUATED", "CHECK_ERROR"}})
+    failed = sorted(key for key, row in checks.items() if row.get("check_status") == "FAIL")
+    return {"schema_version": 2, "producer": CANDIDATE_REPAIR_RECEIPT_PRODUCER,
+        "repeat_proven": bool(recurrence or legacy_repeat),
+        "stop_authority": "proven_recurrence_only; progress_proven is diagnostic",
+        "check_records": checks, "unknown_targets": unknown,
+        "failed_checks": failed, "new_failure_targets": sorted(set(pending_targets) - set(prior_targets)) if previous else [],
         "progress_proven": proven, "basis": basis,
         "comparison_fingerprint": comparison, "validation_signature": validation_signature,
         "comparison_context_fingerprint": comparison_context,
@@ -288,14 +299,16 @@ def issue_candidate_repair_receipt(
         or ordinal < 1
         or limit < 1
         or ordinal > limit
-        or progress_proven is not True
+        or (progress_proven is not True and not (
+            (policy_receipt or {}).get("correction_authorized") is True
+            and (policy_receipt or {}).get("progress_assessment", {}).get("repeat_proven") is False))
     ):
         raise CandidateRepairReceiptError(
             "CANDIDATE_REPAIR_RECEIPT_EVIDENCE_INCOMPLETE",
             "feedback, source event, validator evidence, and an allowed repair budget are required",
         )
     body: Dict[str, Any] = {
-        "schema_version": CANDIDATE_REPAIR_RECEIPT_SCHEMA_VERSION,
+        "schema_version": 2,
         "producer": CANDIDATE_REPAIR_RECEIPT_PRODUCER,
         "scope": normalized_scope,
         "candidate_fingerprint": candidate_id,
@@ -306,7 +319,7 @@ def issue_candidate_repair_receipt(
         "repair_stage": str(repair_stage or "pre_execution_candidate_admission"),
         "repair_ordinal": ordinal,
         "repair_limit": limit,
-        "progress_proven": True,
+        "progress_proven": bool(progress_proven),
         "validation_source": source,
         "contract_ref": deepcopy(dict(contract_ref or {})),
         "failure_stage": "pre_execution_candidate_admission",
@@ -367,7 +380,7 @@ def validate_candidate_repair_receipt(
         raise CandidateRepairReceiptError(
             "CANDIDATE_REPAIR_RECEIPT_SCHEMA_UNSUPPORTED"
         ) from exc
-    if schema_version != CANDIDATE_REPAIR_RECEIPT_SCHEMA_VERSION:
+    if schema_version not in {CANDIDATE_REPAIR_RECEIPT_SCHEMA_VERSION, 2}:
         raise CandidateRepairReceiptError("CANDIDATE_REPAIR_RECEIPT_SCHEMA_UNSUPPORTED")
     if str(receipt.get("producer") or "") != CANDIDATE_REPAIR_RECEIPT_PRODUCER:
         raise CandidateRepairReceiptError("CANDIDATE_REPAIR_RECEIPT_PRODUCER_INVALID")
@@ -417,7 +430,11 @@ def validate_candidate_repair_receipt(
         ) from exc
     if ordinal < 1 or limit < 1 or ordinal > limit:
         raise CandidateRepairReceiptError("CANDIDATE_REPAIR_RECEIPT_BUDGET_INVALID")
-    if receipt.get("progress_proven") is not True:
+    if receipt.get("progress_proven") is not True and not (
+        schema_version == 2
+        and (receipt.get("policy_receipt") or {}).get("correction_authorized") is True
+        and (receipt.get("policy_receipt") or {}).get("progress_assessment", {}).get("repeat_proven") is False
+    ):
         raise CandidateRepairReceiptError("CANDIDATE_REPAIR_RECEIPT_PROGRESS_INVALID")
 
     expected_candidate_id = candidate_repair_fingerprint(

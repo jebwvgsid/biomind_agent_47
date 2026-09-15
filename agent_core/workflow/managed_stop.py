@@ -613,6 +613,8 @@ def projection(stop):
          "execution": stop["execution"], "causal_execution":stop.get("causal_execution",{}),
          "current_candidate":stop.get("current_candidate",{}), "inspection_count_scope":stop.get("inspection_count_scope",{}), "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
          "internal_diagnostic_delivery":deepcopy(stop.get("internal_diagnostic_delivery") or {}),
+         "required_output_status":stop.get("required_output_status", "unknown"),
+         "scientific_completion":stop.get("scientific_completion", "not_completed"),
          "delivery_status": report_delivery_status(stop.get("report_receipts")), "report_paths": stop["report_paths"], "report_receipts": stop["report_receipts"], "persistence_status": stop["persistence_status"],
          "summary_status": stop["summary_status"], "summary_llm_calls": stop["summary_llm_calls"],
          "secondary_causes": stop["secondary_failures"]}
@@ -666,6 +668,26 @@ def _save(data_path, value, *, loader, saver, claim=False):
     return fresh
 
 
+def _managed_diagnostic_targets(durable, task_root, stop_id):
+    """Archive a terminal trace in the already owned task store, not a deliverable.
+
+    Prefer an explicitly approved diagnostic output. Otherwise the existing
+    state/trace write authority permits only this run's internal diagnostic
+    copies. It grants no authority over the user's fixed output paths.
+    """
+    targets, authorization = _internal_report_targets(durable, task_root, stop_id)
+    if targets:
+        return targets, authorization
+    task_id = str(durable.get("task_id") or "")
+    if (not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,159}", task_id)
+            or task_root.name != task_id or task_root.parent.name != "task_outputs"
+            or not (task_root / "plan_state.json").is_file()
+            or not current_managed_stop(durable).get("stop_id") == stop_id):
+        return {}, "NO_CURRENT_TASK_STORE_DIAGNOSTIC_AUTHORITY"
+    target = _path(task_root / "state_contract" / "terminal_diagnostics" / _hash({"task_id": task_id, "stop_id": stop_id}))
+    return {name: _path(target / name) for name in ("report.md", "stage_status.tsv", "reproduce.sh")}, "task_store_terminal_trace:" + stop_id
+
+
 async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load_plan_state, saver=save_plan_state):
     try: durable = loader(agent.data_path, task_id)
     except Exception: durable = {"task_id": task_id, "_load_failed": True}
@@ -691,7 +713,6 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
             value.update(resolution="stale_scope", persistence_status="not_applied", summary_status="SKIPPED", summary_skip_reason="STALE_SCOPE")
             return value
     if prior:
-        if prior.get("reports_status") == "finalized": return prior
         value = deepcopy(prior)
     if value.get("planning") and value["scope"].get("candidate_context_ref"):
         # Optional enrichment only: base contains the complete durable issues
@@ -789,7 +810,8 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         if "reserved_cost" not in policy: skip = skip or "SUMMARY_COST_BOUND_UNKNOWN"
         elif float(policy["remaining_cost"]) < float(policy["reserved_cost"]): skip = skip or "GLOBAL_COST_BUDGET_INSUFFICIENT"
     if skip:
-        value["summary_status"], value["summary_skip_reason"] = "SKIPPED", skip
+        if not value.get("summary_attempted"):
+            value["summary_status"], value["summary_skip_reason"] = "SKIPPED", skip
     else:
         try:
             value.update(summary_attempted=True, summary_status="ATTEMPTED", summary_llm_calls=1, summary_reserved_tokens=reserve)
@@ -844,18 +866,6 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     try: durable = _save(agent.data_path, value, loader=loader, saver=saver)
     except Exception as exc: _secondary(value, "summary.persist", "SUMMARY_RECEIPT_PERSIST_FAILED", exc)
     try:
-        if value.get("planning"):
-            if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,159}", str(task_id)):
-                raise ValueError("MANAGED_STOP_TASK_ID_REJECTED")
-            task_root = _path(Path(agent.data_path).absolute() / "task_outputs" / task_id)
-            targets = {name: _path(task_root / name) for name in ("report.md", "stage_status.tsv")}
-            spec = canonical_task_spec_for_state(durable)
-            inputs = {str(i.get("canonical_path") or i.get("path") or "") for i in spec.get("inputs") or [] if isinstance(i, Mapping)}
-            if any(str(target) in inputs for target in targets.values()):
-                raise ValueError("MANAGED_STOP_REPORT_INPUT_OVERLAP")
-            value["report_receipts"]["reproduce.sh"] = {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}
-        else:
-            targets = _report_targets(durable, Path(agent.data_path).absolute() / "task_outputs" / task_id)
         bodies = _report_bodies(value)
         rows = ["stage\tworkflow_status\texecution_status\tcommitted\tnotes"]
         execution = value.get("causal_execution") if value.get("causal_execution",{}).get("attempt_id") else value["execution"]
@@ -877,6 +887,18 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         else:
             value["frozen_report_bodies"] = deepcopy(bodies)
             durable = _save(agent.data_path, value, loader=loader, saver=saver)
+        if value.get("planning"):
+            if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,159}", str(task_id)):
+                raise ValueError("MANAGED_STOP_TASK_ID_REJECTED")
+            task_root = _path(Path(agent.data_path).absolute() / "task_outputs" / task_id)
+            targets = {name: _path(task_root / name) for name in ("report.md", "stage_status.tsv")}
+            spec = canonical_task_spec_for_state(durable)
+            inputs = {str(i.get("canonical_path") or i.get("path") or "") for i in spec.get("inputs") or [] if isinstance(i, Mapping)}
+            if any(str(target) in inputs for target in targets.values()):
+                raise ValueError("MANAGED_STOP_REPORT_INPUT_OVERLAP")
+            value["report_receipts"]["reproduce.sh"] = {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}
+        else:
+            targets = _report_targets(durable, Path(agent.data_path).absolute() / "task_outputs" / task_id)
         for name in ("stage_status.tsv", "reproduce.sh", "report.md"):
             path = targets.get(name)
             if not path:
@@ -889,24 +911,38 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
                 value["report_paths"][name] = str(path)
                 value["report_receipts"][name] = {**receipt, "status": "created", "stop_id": value["stop_id"], "task_id": task_id}
             except Exception as exc:
+                value["report_paths"].pop(name, None)
                 value["report_receipts"][name] = {"status": "failed", "path": str(path), "task_id": task_id, "stop_id": value["stop_id"], "reason": _code(getattr(exc, "code", ""), "REPORT_WRITE_FAILED")}
                 _secondary(value, "report." + name, value["report_receipts"][name]["reason"], exc)
     except Exception as exc:
         _secondary(value, "report.contract", "REPORT_CONTRACT_FAILED", exc)
-    value["internal_diagnostic_delivery"] = {"status":"not_needed","paths":{},"receipts":{}}
+        value["report_paths"] = {}
+        value["report_receipts"] = {name: {"status": "failed", "reason": "REPORT_CONTRACT_FAILED"}
+            for name in ("report.md", "stage_status.tsv", "reproduce.sh")}
+    value["required_output_status"] = ("conflict" if any(
+        row.get("reason") == "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+        for row in value.get("report_receipts", {}).values()) else report_delivery_status(value.get("report_receipts")))
+    value["scientific_completion"] = "not_completed"
+    value["internal_diagnostic_delivery"] = {"status":"not_needed","paths":{},"receipts":{},
+        "scope": "internal_terminal_trace_only; not fixed-path delivery or scientific completion"}
     if report_delivery_status(value.get("report_receipts")) != "complete":
         internal=value["internal_diagnostic_delivery"]
         try:
             fresh=loader(agent.data_path,task_id)
-            targets, authorization=_internal_report_targets(fresh, Path(agent.data_path).absolute()/"task_outputs"/task_id,value["stop_id"])
+            targets, authorization=_managed_diagnostic_targets(fresh, Path(agent.data_path).absolute()/"task_outputs"/task_id,value["stop_id"])
             if not targets:
                 internal.update(status="not_authorized",reason=authorization)
             else:
+                if not value.get("frozen_diagnostic_bodies"):
+                    diagnostic_bodies = deepcopy(value["frozen_report_bodies"])
+                    diagnostic_bodies["report.md"] += "\nInternal terminal diagnostic only. Required output status: " + value["required_output_status"] + "; scientific completion: not_completed.\n\n" + json.dumps(value["report_receipts"], ensure_ascii=False, indent=2) + "\n"
+                    value["frozen_diagnostic_bodies"] = diagnostic_bodies
+                    _save(agent.data_path, value, loader=loader, saver=saver)
                 for name,path in targets.items():
                     try:
-                        receipt=publish_report(agent.data_path,task_id,path,value["frozen_report_bodies"][name],
+                        receipt=publish_report(agent.data_path,task_id,path,value["frozen_diagnostic_bodies"][name],
                             owner=value["stop_id"]+":internal",authorization_ref=authorization,
-                            scope_guard=lambda current: _matches(current,value) and _internal_report_targets(current,
+                            scope_guard=lambda current: _matches(current,value) and _managed_diagnostic_targets(current,
                                 Path(agent.data_path).absolute()/"task_outputs"/task_id,value["stop_id"])==(targets,authorization))
                         internal["paths"][name]=str(path);internal["receipts"][name]={**receipt,"status":"created"}
                     except Exception as exc:

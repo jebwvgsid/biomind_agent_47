@@ -4937,13 +4937,13 @@ class RecoveryPolicy:
                     and progress.get("producer") == "biomind.generate_candidate_admission.v1"
                     and isinstance(progress.get("progress_proven"), bool)
                 )
-                no_progress = (not progress["progress_proven"] if trusted_progress else
+                no_progress = (progress.get("repeat_proven") is True if trusted_progress else
                     bool(candidate_fingerprint and candidate_fingerprint == previous_candidate_fingerprint))
                 if no_progress:
                     return self._decision(
                         RecoveryDecisionKind.ESCALATE.value,
                         reason_code="corrective_generate_no_progress",
-                        reason=("The candidate ledger found no validated correction progress."
+                        reason=("The current candidate ledger proves a rejected-candidate recurrence."
                             if trusted_progress else "Corrective Generate reproduced the same invalid candidate."),
                         evidence=violations or missing,
                         failure_owner=pre_owner,

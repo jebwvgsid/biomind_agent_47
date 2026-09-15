@@ -11,6 +11,31 @@ import sys
 import time
 
 
+def check_executable_action(action: dict) -> dict:
+    """Check the same explicit operand used by helper materialization/Execute."""
+    from agent_core.step_effects import executable_carrier
+    selected = executable_carrier(action)
+    record = {"schema_version": 1, "check_id": "executable_syntax",
+        "rule": "bounded_static_syntax_v1", "source": selected["source"],
+        "language": selected["language"], "execution_started": False}
+    if not selected["script_available"]:
+        return {**record, "check_status": "NOT_APPLICABLE", "required": False,
+            "detail": "External argv/file command has no declared inline source; file identity and execution authorization remain separately required."}
+    # R remains a supported execution carrier without a configured static
+    # checker. Preserve that existing boundary explicitly, never call it PASS.
+    record.update(required=selected["language"] != "r", body_sha256=hashlib.sha256(selected["body"].encode()).hexdigest())
+    try:
+        result = check_script_body(selected["body"], selected["language"])
+    except Exception as exc:
+        return {**record, "check_status": "CHECK_ERROR", "code": "SCRIPT_SYNTAX_CHECK_INTERNAL_ERROR",
+            "detail": type(exc).__name__}
+    status = {"valid": "PASS", "invalid": "FAIL", "unavailable": "NOT_EVALUATED"}.get(result.get("status"), "CHECK_ERROR")
+    if result.get("code") == "SCRIPT_SYNTAX_CHECK_PROCESS_FAILED":
+        status = "CHECK_ERROR"
+    return {**record, "check_status": status, "result": result,
+        "code": result.get("code", ""), "detail": result.get("detail", "")}
+
+
 def check_script_body(body: str, language: str, *, timeout: float = 5.0) -> dict:
     """Return syntax facts only; never clean source or infer scientific success."""
     deadline = time.monotonic() + min(5.0, max(0.01, timeout))
