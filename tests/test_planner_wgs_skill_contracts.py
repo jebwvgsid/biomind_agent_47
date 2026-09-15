@@ -54,16 +54,21 @@ class PlannerWGSSkillContractTests(unittest.TestCase):
         }
 
     def test_formal_declarations_reach_registry_semantic_and_runtime_views(self):
-        self.assertEqual(set(self.registry), {
+        domain_registry = {key: contract for key, contract in self.registry.items()
+                           if contract.get("selected_skill_id") in SKILLS}
+        self.assertEqual(set(domain_registry), {
             MAPPING + ".execute", MAPPING + ".inspect", MAPPING + ".prepare_reference",
             GATK + ".execute", GATK + ".inspect",
         })
+        self.assertEqual(set(self.registry), set(domain_registry) | {"framework.generic.execute"})
+        self.assertEqual(self.registry["framework.generic.execute"]["selected_skill_id"], "")
+        self.assertEqual(set(self.registry["framework.generic.execute"]["supported_tools"]), {"bash", "python"})
         semantic, _ = self.manager.get_semantic_execution_capabilities(list(SKILLS))
         projected = {
             item["capability_id"]: item
             for skill in semantic for item in skill["execution_capabilities"]
         }
-        for capability_id, contract in self.registry.items():
+        for capability_id, contract in domain_registry.items():
             self.assertIn("SKILL.md#generate.execution_capabilities", contract["contract_source"])
             self.assertTrue(contract["contract_revision"].endswith("-effects-v1"))
             self.assertEqual(projected[capability_id], contract)

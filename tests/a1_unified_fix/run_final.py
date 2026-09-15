@@ -1,7 +1,7 @@
 """Run one bounded final-candidate group with the existing offline guard.
 
 The parent imports only safe test support. Each child gets the existing explicit
-environment, a new scratch tree and an external 180-second watchdog. This file
+environment, a new scratch tree and an external watchdog (default 180 seconds). This file
 adds receipts, not production outcomes or synthetic success state.
 """
 from pathlib import Path
@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--export', dest='source', type=Path, required=True)
     parser.add_argument('--results', type=Path, required=True)
+    parser.add_argument('--watchdog-seconds', type=int, choices=range(180, 361), default=180)
     args, targets = parser.parse_known_args()
     source, results = args.source.resolve(), args.results.resolve()
     assert source.is_relative_to(Path('/tmp')) and results.is_relative_to(Path('/tmp'))
@@ -29,10 +30,11 @@ def main():
     from cli_model_progress_support import launch
     receipt = {'source_signature': manifest['source_signature'],
                'loaded_source_manifest': str(source / 'export_manifest.json'),
-               'test_targets': targets, 'timeout_seconds': 180,
+               'test_targets': targets, 'timeout_seconds': args.watchdog_seconds,
                'watchdog_is_not_production_termination': True}
     try:
-        receipt['returncode'] = launch(source, results, targets, installed_cli=True)
+        receipt['returncode'] = launch(source, results, targets, installed_cli=True,
+                                     watchdog_seconds=args.watchdog_seconds)
     except subprocess.TimeoutExpired:
         receipt.update(returncode=124, timeout=True, classification='TEST_WATCHDOG_NOT_PASS')
     receipt['source_changes_after_run'] = verify()

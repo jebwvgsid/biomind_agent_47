@@ -1204,8 +1204,8 @@ def compile_step_effect(
             "complete": False,
         }
 
-    source_step = deepcopy(dict(step))
-    from agent_core.plan_bindings import resource_bindings_for_step
+    from agent_core.plan_bindings import resource_bindings_for_step, project_step_resource_usage
+    source_step = project_step_resource_usage(step)
     resource_bindings = resource_bindings_for_step(resource_bindings or {}, source_step)
     compiled_step = deepcopy(source_step)
     step_id = str(source_step.get("step_id") or source_step.get("id") or "")
@@ -1712,6 +1712,7 @@ def _dataflow_semantic_projection(plan_state: Mapping[str, Any]) -> Dict[str, An
                     "step_id",
                     "inputs",
                     "outputs",
+                    "resource_uses",
                     "dependencies",
                     "execution_capability_id",
                     "operation",
@@ -2123,8 +2124,10 @@ def compile_plan_dataflow(
         )
         return {}, {}, [issue]
 
-    from agent_core.plan_bindings import capability_workspace_roles, resource_bindings_for_step
+    from agent_core.plan_bindings import capability_workspace_roles, resource_bindings_for_step, project_step_resource_usage
     source_plan = deepcopy(dict(plan_state))
+    source_plan["steps"] = [project_step_resource_usage(step) if isinstance(step, Mapping) else deepcopy(step)
+                            for step in source_plan.get("steps", []) or []]
     binding_issues: list[Dict[str, Any]] = []
     compiled_bindings: Dict[str, Dict[str, Any]]
     if resource_bindings is None:
@@ -2234,6 +2237,10 @@ def compile_plan_dataflow(
         for field, effect_kind in (("inputs", "READ"), ("outputs", "PRODUCE")):
             for ref_index, raw_ref in enumerate(step.get(field, []) or []):
                 resource_ref = str(raw_ref or "")
+                field_path = f"$.steps[{step_index}].{field}[{ref_index}]"
+                if field == "inputs" and "resource_uses" in step:
+                    read_indexes = [i for i, use in enumerate(step["resource_uses"]) if use.get("access") == "read"]
+                    field_path = f"$.steps[{step_index}].resource_uses[{read_indexes[ref_index]}].resource_ref"
                 declared_result = result_contracts.get(resource_ref)
                 if effect_kind == "READ" and declared_result is not None and not declared_result["required"]:
                     dataflow_issues.append(_dataflow_issue(
@@ -2241,15 +2248,14 @@ def compile_plan_dataflow(
                         plan_state=compiled_plan,
                         resource_ref=resource_ref,
                         consumer_step=step_id,
-                        field_path=f"$.steps[{step_index}].inputs[{ref_index}]",
-                        affected_fields=["inputs", "proposed_artifacts", "task_output_materializations"],
+                        field_path=field_path,
+                        affected_fields=["resource_uses" if "resource_uses" in step else "inputs", "proposed_artifacts", "task_output_materializations"],
                         actual_facts={"required": False, "consumer_step_id": step_id},
                         required_condition="A hard input requires a necessary producer result or a different explicit dependency.",
                         message="Optional output is consumed as a mandatory input; Planner must correct necessity or the dependency without silent promotion.",
                         affected_step_ids=[step_id],
                     ))
                 binding = _binding_for_ref(resource_ref, compiled_bindings)
-                field_path = f"$.steps[{step_index}].{field}[{ref_index}]"
                 if not binding:
                     dataflow_issues.append(_dataflow_issue(
                         "PLAN_RESOURCE_BINDING_MISSING",

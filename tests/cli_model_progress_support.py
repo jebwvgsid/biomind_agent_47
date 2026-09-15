@@ -38,7 +38,11 @@ class TimedWriter(io.StringIO):
 
 def launch(export_root: Path, results: Path, tests: list[str], *,
            fatal_diagnostics: bool = False, fatal_selftest: bool = False,
-           installed_cli: bool = False) -> int:
+           installed_cli: bool = False, watchdog_seconds: int = 180) -> int:
+    # A longer multi-step mechanism test may need a longer external watchdog.
+    # This never changes any production call budget or successful-test oracle.
+    if type(watchdog_seconds) is not int or not 180 <= watchdog_seconds <= 360:
+        raise ValueError("Test watchdog must be an integer between 180 and 360 seconds")
     export_root = export_root.resolve()
     results = results.resolve()
     if not export_root.is_relative_to(Path("/tmp")) or not results.is_relative_to(Path("/tmp")):
@@ -70,10 +74,11 @@ def launch(export_root: Path, results: Path, tests: list[str], *,
         environment["BIOMIND_OFFLINE_FATAL_SELFTEST"] = "1"
     command = [PYTHON, str(export_root / "tests" / "cli_model_progress_support.py"),
                "--guarded-child", str(export_root), *tests]
-    (results / "invocation.json").write_text(json.dumps({"command": command, "environment": environment}, indent=2))
+    (results / "invocation.json").write_text(json.dumps({"command": command, "environment": environment,
+                                                       "external_test_watchdog_seconds": watchdog_seconds}, indent=2))
     with (results / "stdout.txt").open("w", encoding="utf-8") as log:
         process = subprocess.run(command, env=environment, cwd=export_root, stdout=log,
-                                 stderr=subprocess.STDOUT, timeout=180)
+                                 stderr=subprocess.STDOUT, timeout=watchdog_seconds)
     print(json.dumps({"returncode": process.returncode, "results": str(results)}))
     return process.returncode
 

@@ -130,8 +130,9 @@ async def last_chance_graph():
     await case.asyncSetUp()
     task = 'f3-env-exact-last-chance'
     try:
-        configure_protocol(case)
-        case._configure_one_step_no_output_plan()
+        capability_id = 'genomics.snpeff_annotation.check_contig_compatibility'
+        configure_protocol(case, execution_capability_id=capability_id)
+        case._configure_one_step_no_output_plan(execution_capability_id=capability_id)
         original = case._planner_payload
         def plan():
             payload = original()

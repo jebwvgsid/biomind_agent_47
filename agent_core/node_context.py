@@ -231,6 +231,38 @@ def _without_control_metadata(value: Any) -> Any:
 
 def control_metadata_leaks(value: Any, path: str = "$LLMPayload") -> List[str]:
     """Return precise paths at which control-plane metadata entered a payload."""
+    public_step_paths: set[str] = set()
+    if path == "$LLMPayload" and isinstance(value, Mapping):
+        # The correction producer already distinguishes public candidate step
+        # references from Controller identities by validator and exact field.
+        # Reuse that decision only at the two formal Planner focus locations;
+        # neither arbitrary nested step_id nor a caller-supplied path is exempt.
+        from agent_core.planner_context import provider_correction_feedback
+        current_focus = value.get("current_focus")
+        locations = [(value.get("planning"), "$LLMPayload.planning")]
+        if isinstance(current_focus, Mapping):
+            locations.append((current_focus.get("planning"), "$LLMPayload.current_focus.planning"))
+        for planning, prefix in locations:
+            if not isinstance(planning, Mapping):
+                continue
+            issues = planning.get("violations")
+            if not isinstance(issues, list):
+                continue
+            for index, issue in enumerate(issues):
+                if not isinstance(issue, Mapping):
+                    continue
+                projected = provider_correction_feedback({"validation_issues": [issue]})["validation_issues"][0]
+                def collect(item: Any, current: str) -> None:
+                    if isinstance(item, Mapping):
+                        for key, child in item.items():
+                            child_path = f"{current}.{key}"
+                            if key == "step_id":
+                                public_step_paths.add(child_path)
+                            collect(child, child_path)
+                    elif isinstance(item, (list, tuple)):
+                        for offset, child in enumerate(item):
+                            collect(child, f"{current}[{offset}]")
+                collect(projected, f"{prefix}.violations[{index}]")
     leaks: List[str] = []
     if isinstance(value, Mapping):
         for raw_key, item in value.items():
@@ -259,7 +291,7 @@ def control_metadata_leaks(value: Any, path: str = "$LLMPayload") -> List[str]:
             pattern.match(stripped) for pattern in _CONTROL_VALUE_PATTERNS
         ):
             leaks.append(path)
-    return sorted(set(leaks))
+    return sorted(set(leaks) - public_step_paths)
 
 
 def assert_llm_payload_clean(value: Any) -> None:
@@ -959,7 +991,7 @@ def _constraint_rows(
 
 
 _LLM_SAFE_STEP_FIELDS = frozenset({
-    "title", "action", "purpose", "tool", "inputs", "input_ids",
+    "title", "action", "purpose", "tool", "inputs", "input_ids", "resource_uses",
     "input_artifacts", "input_refs", "input_contracts", "outputs",
     "output_ids", "output_artifacts", "output_refs", "output_contracts",
     "constraints", "constraint_ids", "semantic_constraint_ids",
@@ -985,6 +1017,10 @@ def _llm_safe_step_projection(raw: Mapping[str, Any]) -> Dict[str, Any]:
         and value not in (None, "", [], {})
     })
     row = dict(projected) if isinstance(projected, Mapping) else {}
+    if isinstance(raw.get("resource_uses"), list) and not raw["resource_uses"]:
+        # An explicit empty v3 use list is a resource boundary, not a legacy
+        # step lacking declarations. Keep it visible to closure selection.
+        row["resource_uses"] = []
     if isinstance(row.get("artifacts"), list):
         row["artifacts"] = [
             dict(_without_control_metadata({
@@ -1090,6 +1126,7 @@ def _project_step_semantic_references(
         "consumer_step_id": "plan_step",
         "input_ref": "artifact",
         "output_ref": "artifact",
+        "resource_ref": "artifact",
         "artifact_id": "artifact",
         "constraint_id": "constraint",
         "requirement_id": "constraint",
@@ -1205,9 +1242,11 @@ def approved_current_step_artifact_usage(
     # Snapshot steps carry the same typed refs.  This is a compatibility
     # projection for early v1.2.1 snapshots whose resolved usage list was
     # absent, not a semantic inference from prose.
-    for field, relation in (("inputs", "consume"), ("outputs", "produce")):
-        for value in current.get(field, []) or []:
-            add(value, relation, field=field)
+    from agent_core.plan_bindings import step_resource_inputs
+    for value in step_resource_inputs(current):
+        add(value, "consume", field="resource_uses" if "resource_uses" in current else "inputs")
+    for value in current.get("outputs", []) or []:
+        add(value, "produce", field="outputs")
 
     plan_local = dict(
         snapshot.get("plan_local_artifacts")
@@ -1402,7 +1441,7 @@ def _select_current_step_closure(
 
     has_explicit_edges = bool(referenced_constraints or referenced_artifacts)
     policy = "current-step-closure-v2"
-    if current and not has_explicit_edges:
+    if current and not has_explicit_edges and "resource_uses" not in current:
         # Read-only compatibility for plans created before semantic references
         # were mandatory.  New PlanSpec validation rejects this shape.
         referenced_constraints = set(known_constraint_handles)
@@ -1616,26 +1655,14 @@ def _planning_failure_focus(
             return [project_artifact_identities(item) for item in value]
         return deepcopy(value)
 
-    violations = []
-    for raw in failure.get("validation_issues", []) or []:
-        if not isinstance(raw, Mapping):
-            continue
-        visible_fields = {
-            "code", "message", "severity", "disposition", "field_path",
-            "affected_step_ids", "affected_artifact",
-            "affected_output", "expected_identity", "observed_identity",
-            "violated_invariant", "required_postcondition", "affected_fields",
-            "machine_evidence", "expected_type", "received_type",
-            "received_excerpt", "parser_message", "line", "column", "offset",
-            "response_excerpt",
-            "possible_effect_kinds", "normalization_source", "expected_contract",
-        }
-        row = _without_control_metadata({
-            key: deepcopy(value)
-            for key, value in raw.items()
-            if str(key) in visible_fields
-        })
-        violations.append(project_artifact_identities(row))
+    # Use the same trusted-source/path projection as the appended correction
+    # event. A second generic sanitizer here used to erase its repair target.
+    from agent_core.planner_context import provider_correction_feedback
+    public_feedback = provider_correction_feedback({
+        "validation_issues": failure.get("validation_issues", []) or [],
+    })
+    violations = [project_artifact_identities(row)
+                  for row in public_feedback["validation_issues"]]
     affected_step_keys: set[str] = set()
     affected_fields: set[str] = set()
     for violation in violations:
@@ -1658,7 +1685,7 @@ def _planning_failure_focus(
             key: deepcopy(value)
             for key, value in step.items()
             if key in {
-                "step_key", "action", "purpose", "tool", "inputs", "outputs",
+                "step_key", "action", "purpose", "tool", "inputs", "outputs", "resource_uses",
                 "dependencies", "skill_ids", "workflow_stage_ids", "batch_id",
                 "risk_level", "execution_capability_id", "operation",
                 "produces_bindings", "produces_observations",
@@ -3106,6 +3133,12 @@ def resolve_plan_proposal_handles(
                 step[field] = resolve_list(
                     step.get(field), object_type="artifact",
                 )
+        if isinstance(step.get("resource_uses"), list):
+            for use in step["resource_uses"]:
+                if isinstance(use, MutableMapping) and "resource_ref" in use:
+                    use["resource_ref"] = resolve_scalar(
+                        use["resource_ref"], object_type="artifact",
+                    )
         for field in ("outputs", "output_ids", "output_artifacts", "output_refs"):
             if field in step:
                 step[field] = resolve_list(

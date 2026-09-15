@@ -110,7 +110,9 @@ def test_native_argv_generate_materializes_before_action_ready():
         case.SKILL_ID='genomics/snpeff-annotation'
         await case.asyncSetUp()
         try:
-            configure_protocol(case);case._configure_one_step_no_output_plan();original=case._planner_payload
+            capability_id='genomics.snpeff_annotation.check_contig_compatibility'
+            configure_protocol(case,execution_capability_id=capability_id)
+            case._configure_one_step_no_output_plan(execution_capability_id=capability_id);original=case._planner_payload
             def plan():
                 result=original();result['steps'][0].update(execution_capability_id='genomics.snpeff_annotation.check_contig_compatibility',operation='check_contig_compatibility',produces_observations=[{'identity':'contigs_compatible','evidence_contract':{'required_fields':['value']}}]);return result
             case._planner_payload=plan

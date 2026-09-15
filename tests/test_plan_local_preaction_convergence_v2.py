@@ -868,13 +868,19 @@ class PlanLocalRealGraphTests(unittest.IsolatedAsyncioTestCase):
                 item.stop()
         return events, captures, report_path
 
-    def _configure_one_step_no_output_plan(self) -> None:
+    def _configure_one_step_no_output_plan(self, *, execution_capability_id: str | None = None) -> None:
         original_planner = self._planner_payload
         original_consultant = self._consultant_payload
         capability_registry = self.agent.skill_manager.get_execution_capability_registry(
             [self.SKILL_ID]
         )
-        capability_id = next(iter(capability_registry))
+        fixture_capabilities = [key for key, contract in capability_registry.items()
+                                if contract.get("selected_skill_id") == self.SKILL_ID]
+        if execution_capability_id is not None:
+            self.assertIn(execution_capability_id, fixture_capabilities)
+            fixture_capabilities = [execution_capability_id]
+        self.assertEqual(len(fixture_capabilities), 1)
+        capability_id = fixture_capabilities[0]
 
         def one_step_plan() -> dict[str, Any]:
             payload = original_planner()

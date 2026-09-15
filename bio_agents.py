@@ -12880,6 +12880,16 @@ class BioAnalystAgent:
                 declared_language,
                 detect_script_language(str(bound.get("code") or "")),
             )
+            from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID
+            if execution_capability_id == GENERIC_EXECUTION_CAPABILITY_ID:
+                approved_tool = str(step.get("tool") or "")
+                if {"bash": "Bash", "python": "Python"}.get(approved_tool) != action_language:
+                    raise ActionRuntimeContractError(
+                        "GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH",
+                        approved_tool=approved_tool,
+                        actual_language=action_language,
+                        step_id=step_id,
+                    )
             action_identity = {
                 "action_id": action_id,
                 "plan_id": plan_id,
@@ -15117,17 +15127,19 @@ class BioAnalystAgent:
             if len(normalized) > SkillManager.MAX_ACTIVE_SKILLS:
                 violations.append(validation_issue(
                     "PLAN_STEP_SKILL_LIMIT_EXCEEDED",
+                    severity="warning",
+                    disposition="NORMALIZED",
                     owner="planner",
-                    repair_target=skill_path,
                     field_path=skill_path,
                     message=(
-                        f"Plan step declares {len(normalized)} skills; at most "
-                        f"{SkillManager.MAX_ACTIVE_SKILLS} are allowed."
+                        f"Plan step declares {len(normalized)} Skills. Consider "
+                        "using only the context needed by this step; retaining "
+                        "the declared selection requires no confirmation or retry."
                     ),
                     validator_id="plan_skill_bindings",
                     step_id=step_id,
                     actual_value=len(normalized),
-                    expected_contract={"max_active_skills": SkillManager.MAX_ACTIVE_SKILLS},
+                    advisory_only=True,
                 ))
             outside = [skill_id for skill_id in normalized if skill_id not in selected]
             for skill_id in outside:
@@ -15145,7 +15157,7 @@ class BioAnalystAgent:
                     step_id=step_id,
                     actual_value=skill_id,
                 ))
-            if not unknown and not outside and len(normalized) <= SkillManager.MAX_ACTIVE_SKILLS:
+            if not unknown and not outside:
                 step["skill_ids"] = normalized
         return violations
 
@@ -15164,7 +15176,7 @@ class BioAnalystAgent:
             }
         outside = [skill_id for skill_id in active if skill_id not in selected_pool]
         unresolved = list(step.get("unresolved_skill_ids") or [])
-        if unresolved or outside or len(active) > SkillManager.MAX_ACTIVE_SKILLS:
+        if unresolved or outside:
             return {
                 "active_skills": [],
                 "future_skills": [],
@@ -15202,7 +15214,7 @@ class BioAnalystAgent:
         if not declared:
             return []
         allowed = set(self._selected_skill_ids(skill_ids or []))
-        return [skill_id for skill_id in active if skill_id in allowed][: SkillManager.MAX_ACTIVE_SKILLS]
+        return [skill_id for skill_id in active if skill_id in allowed]
 
     @staticmethod
     def _workflow_batch_sort_key(batch_id: str) -> Tuple[int, str]:
@@ -38398,7 +38410,10 @@ question. Never guess a scientific or database identity.
                 if planner_skill_pool:
                     selected_skills = planner_skill_pool
                     skill_selection_source = "legacy_workflow_stage_migration"
-            if self.skill_manager and not planner_skill_pool:
+            # A formal schema-2 handoff may intentionally select no domain
+            # Skill. Its Planner can explicitly choose the built-in generic
+            # executor; domain capabilities still require their selected Skill.
+            if self.skill_manager and not planner_skill_pool and not schema2_handoff_ready:
                 return {
                     "messages": [
                         SystemMessage(
@@ -39714,6 +39729,7 @@ question. Never guess a scientific or database identity.
             candidate_usage: List[Dict[str, Any]] = []
             allocation_intent: Dict[str, Any] = {}
             candidate_resource_bindings: Dict[str, Dict[str, Any]] = {}
+            candidate_advisories: List[Dict[str, Any]] = []
             plan_proposal: Any = {}
             try:
                 plan_proposal = json.loads(plan_content)
@@ -39773,10 +39789,16 @@ question. Never guess a scientific or database identity.
                                     continue
                                 previous = parse_planner_outcome_envelope(baseline["raw_candidate"], allow_legacy_plan=False).plan_candidate_body()
                                 deterministic_issues.extend(validate_planner_consumption_correction(previous, plan_proposal, baseline["validation_issues"]))
-                        if deterministic_issues:
+                        from agent_core.plan_tracker import BLOCKING_VALIDATION_SEVERITIES
+                        normalized_deterministic = [normalize_validation_issue(issue) for issue in deterministic_issues]
+                        candidate_advisories.extend(issue for issue in normalized_deterministic
+                            if str(issue.get("severity") or "").lower() not in BLOCKING_VALIDATION_SEVERITIES)
+                        blocking_deterministic = [issue for issue in normalized_deterministic
+                            if str(issue.get("severity") or "").lower() in BLOCKING_VALIDATION_SEVERITIES]
+                        if blocking_deterministic:
                             structure_errors = [
                                 normalize_validation_issue(issue)
-                                for issue in deterministic_issues
+                                for issue in blocking_deterministic
                             ]
                         else:
                             candidate_resource_bindings = (
@@ -39936,6 +39958,7 @@ question. Never guess a scientific or database identity.
                 task_spec=task_spec,
                 defer_workspace_coverage=True,
             )
+            violations.extend(candidate_advisories)
             effect_capability_registry = (
                 self.skill_manager.get_execution_capability_registry(selected_skills)
                 if self.skill_manager else {}
@@ -40002,7 +40025,12 @@ question. Never guess a scientific or database identity.
                 candidate_for_repair,
                 violations,
             )
-            violations = list(candidate_for_repair.get("validation_issues") or [])
+            # The existing validation owner preserves all diagnostics and
+            # determines blocking severities. Advice is not another request,
+            # confirmation, or rejection gate.
+            from agent_core.plan_tracker import BLOCKING_VALIDATION_SEVERITIES
+            violations = [issue for issue in candidate_for_repair.get("validation_issues", [])
+                          if str(issue.get("severity") or "").lower() in BLOCKING_VALIDATION_SEVERITIES]
             initial_contract_violations = deepcopy(violations)
             validation_reason_codes = sorted({
                 str(item.get("code") or item.get("violation_code") or item.get("field") or "semantic_plan_violation")
@@ -44990,13 +45018,37 @@ question. Never guess a scientific or database identity.
             if structured_action and str(structured_action.get("type") or "") not in {
                 "step_completion_candidate", "plan_patch", "blocked"
             }:
-                structured_action = self._bind_pending_action(
-                    structured_action,
-                    state,
-                    task_id,
-                    plan_state=deepcopy(active_plan_state),
-                    persist=False,
-                )
+                try:
+                    structured_action = self._bind_pending_action(
+                        structured_action,
+                        state,
+                        task_id,
+                        plan_state=deepcopy(active_plan_state),
+                        persist=False,
+                    )
+                except ActionRuntimeContractError as exc:
+                    if exc.code != "GENERIC_EXECUTION_TOOL_SCOPE_MISMATCH":
+                        raise
+                    # This is a correctable candidate/tool disagreement, before
+                    # approval or execution. Preserve the same repair ledger
+                    # and parser/helper checkpoints used by other candidates.
+                    violation = {**exc.to_diagnostic(), "field_path": "$.language",
+                        "expected": str(generate_step.get("tool") or ""),
+                        "actual": str(structured_action.get("language") or ""),
+                        "message": "The action language must match the explicitly approved generic tool."}
+                    return {"messages": [response], **self._candidate_admission_rejection_update(
+                        validated_representation_targets=candidate_validated_representation_targets,
+                        task_id=task_id, plan_state=generate_invocation_plan_state,
+                        approved_plan_snapshot=generate_approved_snapshot, step_id=current_step_id,
+                        candidate=candidate_for_repair, candidate_fingerprint="",
+                        previous_candidate_fingerprint="", violations=[violation],
+                        visible_artifacts=generate_visible_artifacts,
+                        repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value,
+                        repair_stage="generic_executor_scope",
+                        validation_source="BioAnalystAgent._bind_pending_action",
+                        contract_ref={"capability_id": str(generate_step.get("execution_capability_id") or "")},
+                        exit_reason="generic_executor_scope_rejected",
+                        candidate_event_id=candidate_event_id, recovery_generated=recovery_generated)}
             if (
                 structured_action
                 and str(structured_action.get("result_contract") or "")

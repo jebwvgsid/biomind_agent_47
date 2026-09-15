@@ -3302,9 +3302,58 @@ class CompletionGate:
                 for version in dict(provenance.get("artifact_heads") or {}).values()
                 for row in [dict((provenance.get("artifacts") or {}).get(str(version)) or {})]
             }
+            result_contracts = plan_result_contracts(plan_state)
+            required_workspaces = {
+                ref: contract for ref, contract in result_contracts.items()
+                if contract.get("required") and contract.get("resource_kind") == "mutable_workspace"
+            }
+            if required_workspaces:
+                # A sealed state chain is a planning prerequisite, not execution
+                # evidence. validate_task_evidence above has already rechecked
+                # every completed step's current attempt and attested effects.
+                from .plan_tracker import validate_required_workspace_coverage
+                workspace_issues = validate_required_workspace_coverage(plan_state)
+                missing_workspaces = {
+                    str(ref) for issue in workspace_issues
+                    for ref in issue.get("affected_output_ids", [])
+                }
+                attested_paths: Dict[str, set[str]] = {}
+                for step in _steps(plan_state):
+                    sources, _ = _current_effect_sources(plan_state, str(step.get("step_id") or ""))
+                    for payload, accepted in sources:
+                        if not accepted:
+                            continue
+                        for row in _effect_items(payload.get("workspace_mutations")):
+                            if not isinstance(row, Mapping) or row.get("attested") is not True:
+                                continue
+                            identity = _effect_identity("workspace_mutations", row).partition("::")[0]
+                            path = str(row.get("formal_concrete_path") or "")
+                            if identity and path:
+                                attested_paths.setdefault(identity, set()).add(path)
+                for ref, contract in required_workspaces.items():
+                    required_path = str(contract.get("canonical_path") or "")
+                    try:
+                        path_valid = bool(required_path) and (
+                            Path(required_path).is_absolute()
+                            and Path(required_path).is_dir()
+                            and any(Path(path).resolve() == Path(required_path).resolve()
+                                    for path in attested_paths.get(ref, ()))
+                        )
+                    except OSError:
+                        path_valid = False
+                    if not path_valid:
+                        missing_workspaces.add(ref)
+                if missing_workspaces:
+                    return GateResult(
+                        False,
+                        message="Required workspaces lack an evidenced state chain or their exact bound directory.",
+                        feedback="Inspect the approved state transitions and workspace evidence for: " + ", ".join(sorted(missing_workspaces)),
+                        classification="plan_workspace_state_incomplete",
+                        missing_artifacts=sorted(missing_workspaces),
+                    )
             missing_results = [
-                ref for ref, contract in plan_result_contracts(plan_state).items()
-                if contract.get("required")
+                ref for ref, contract in result_contracts.items()
+                if contract.get("required") and ref not in required_workspaces
                 and str(versions_by_logical.get(ref, {}).get("status") or "") != "valid"
             ]
             if missing_results:

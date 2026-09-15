@@ -2060,8 +2060,10 @@ class SkillManager:
         self,
         skill_ids: Sequence[str],
     ) -> Dict[str, Dict[str, Any]]:
-        """Return stable Skill-owned execution contracts keyed by capability ID."""
-        registry: Dict[str, Dict[str, Any]] = {}
+        """Return explicit executor and selected Skill contracts by exact ID."""
+        from agent_core.action_runtime import generic_execution_capability
+        generic = generic_execution_capability()
+        registry: Dict[str, Dict[str, Any]] = {generic["capability_id"]: generic}
         for sid in self.normalize_selected_skills(
             list(skill_ids or []), max_results=self.MAX_SELECTED_SKILLS
         ):
@@ -2168,7 +2170,8 @@ class SkillManager:
         plan_state: Mapping[str, Any],
         selected_skill_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
-        """Reject missing, unknown, or cross-Skill capability scope pre-approval."""
+        """Validate the explicitly selected executor or domain interface."""
+        from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID, GENERIC_EXECUTION_TOOLS
         registry = self.get_execution_capability_registry(selected_skill_ids)
         issues: List[Dict[str, Any]] = []
         for index, raw in enumerate(plan_state.get("steps", []) or []):
@@ -2182,20 +2185,32 @@ class SkillManager:
             capability_id = str(raw.get("execution_capability_id") or "").strip()
             available = [
                 key for key, contract in registry.items()
-                if str(contract.get("selected_skill_id") or "") in set(step_skills)
+                if key == GENERIC_EXECUTION_CAPABILITY_ID or str(contract.get("selected_skill_id") or "") in set(step_skills)
             ]
             if not capability_id:
                 issues.append({
                     "code": "ACTION_CAPABILITY_SCOPE_MISSING",
                     "owner": "planner",
+                    "validator_id": "plan_execution_capabilities",
                     "severity": "error",
                     "field_path": f"$.steps[{index}].execution_capability_id",
                     "json_pointer": f"$.steps[{index}].execution_capability_id",
                     "plan_step_id": str(raw.get("step_id") or ""),
                     "selected_skill_id": step_skills[0] if len(step_skills) == 1 else "",
                     "available_capability_ids": available,
-                    "message": "Executable step must select one enumerated Skill capability.",
+                    "message": "Select framework.generic.execute with tool bash/python, or an enumerated capability of a selected Skill. No route is inferred from a missing or unknown ID.",
                 })
+                continue
+            if capability_id == GENERIC_EXECUTION_CAPABILITY_ID:
+                if str(raw.get("tool") or "") not in GENERIC_EXECUTION_TOOLS:
+                    issues.append({
+                        "code": "GENERIC_EXECUTION_TOOL_UNSUPPORTED", "owner": "planner", "severity": "error",
+                        "validator_id": "plan_execution_capabilities",
+                        "field_path": f"$.steps[{index}].tool", "json_pointer": f"$.steps[{index}].tool",
+                        "plan_step_id": str(raw.get("step_id") or ""),
+                        "actual": raw.get("tool"), "expected": sorted(GENERIC_EXECUTION_TOOLS),
+                        "message": "The generic route supports the existing bash/python executor only. Explicitly choose a supported tool; unknown tools never fall back.",
+                    })
                 continue
             contract = registry.get(capability_id)
             contract_skill = str((contract or {}).get("selected_skill_id") or "")
@@ -2203,6 +2218,7 @@ class SkillManager:
                 issues.append({
                     "code": "UNKNOWN_EXECUTION_CAPABILITY",
                     "owner": "planner",
+                    "validator_id": "plan_execution_capabilities",
                     "severity": "error",
                     "field_path": f"$.steps[{index}].execution_capability_id",
                     "json_pointer": f"$.steps[{index}].execution_capability_id",
@@ -2221,6 +2237,7 @@ class SkillManager:
     ) -> Dict[str, Any]:
         """Bind Controller-computed contract hashes into Plan semantic identity."""
         candidate = deepcopy(dict(plan_state or {}))
+        from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID
         registry = self.get_execution_capability_registry(selected_skill_ids)
         for raw in candidate.get("steps", []) or []:
             if not isinstance(raw, dict):
@@ -2230,12 +2247,13 @@ class SkillManager:
             step_skills = {str(item) for item in raw.get("skill_ids", []) or []}
             if (
                 isinstance(contract, Mapping)
-                and str(contract.get("selected_skill_id") or "") in step_skills
+                and (capability_id == GENERIC_EXECUTION_CAPABILITY_ID
+                     or str(contract.get("selected_skill_id") or "") in step_skills)
             ):
                 raw["capability_contract_hash"] = capability_contract_hash(contract)
                 # Freeze only while authoring a new approval, never during
                 # Generate or reload of a previously approved invocation.
-                meta = self.get_skill_meta(str(contract.get("selected_skill_id") or ""))
+                meta = self.get_skill_meta(str(contract.get("selected_skill_id") or "")) if contract.get("selected_skill_id") else {}
                 binding = dict((meta.get("generate") or {}).get("binding_contract") or {})
                 if binding.get("public_input_protocol"):
                     from agent_core.plan_bindings import instantiate_step_binding_contract

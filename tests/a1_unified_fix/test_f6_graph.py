@@ -235,7 +235,9 @@ print('SYNTHETIC_ALGORITHM_COMPLETED:'+operation)
 
     def current_operation(self):
         from agent_core.plan_tracker import load_plan_state
-        return str(load_plan_state(self.root,self.task).get('current_step_id') or '')
+        durable = load_plan_state(self.root, self.task)
+        current_id = durable.get('current_step_id')
+        return str(next(step for step in durable['steps'] if step['step_id'] == current_id)['operation'])
 
     def plan(self):
         registry = self.agent.skill_manager.get_execution_capability_registry([SID])
@@ -305,21 +307,24 @@ print('SYNTHETIC_ALGORITHM_COMPLETED:'+operation)
         from agent_core.workspace_attestation import project_current_action_workspace_bindings
         durable=load_plan_state(self.root,self.task)
         snapshot=load_approved_plan_snapshot(self.root,self.task,state=durable)
-        step=next(x for x in snapshot['steps'] if x['step_id']==operation)
+        step=next(x for x in snapshot['steps'] if x['step_id']==durable['current_step_id'])
         registry=self.agent.skill_manager.get_execution_capability_registry([SID]);cap=registry[step['execution_capability_id']]
         template=json.loads(next(m.content for m in messages if getattr(m,'name','')=='approved_effect_emission_template'))
         wire=str(messages)
         paths={}
-        for identity in durable['steps'][OPS.index(operation)].get('outputs',[]):
+        current_step=next(x for x in durable['steps'] if x['step_id']==durable['current_step_id'])
+        for identity in current_step.get('outputs',[]):
             path=(durable.get('plan_artifacts',{}).get(identity) or durable.get('artifact_ledger',{}).get(identity) or {}).get('canonical_path')
+            if not path:
+                outputs=((durable.get('current_task') or {}).get('task_spec') or {}).get('output_contracts') or []
+                matches=[row for row in outputs if identity in (row.get('artifact_id'),row.get('output_id'),row.get('semantic_handle'))]
+                assert len(matches)<=1,(identity,matches)
+                path=matches[0].get('canonical_path') if matches else None
             if path:paths[identity]=path
         # Use the actually published declaration identities and public paths.
         outdecl=template['declarations']['produces_artifacts']
         for row in outdecl:
             identity=row['identity']
-            if identity not in paths:
-                matched=next((str(p) for role,p in self.outputs.items() if role in identity),None)
-                if matched:paths[identity]=matched
             assert identity in wire and paths.get(identity) in wire,(operation,identity,paths)
         binding={}
         if operation in OPS[1:4]:

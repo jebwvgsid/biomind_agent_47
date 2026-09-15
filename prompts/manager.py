@@ -1826,15 +1826,19 @@ historical task revision, current task revision, and base Plan revision as
 required by its decision schema.
 
 During a full replan, preserve every completed step's step identity, typed
-inputs, typed outputs, artifact identities, and dependency identities. You may
+resource use, typed outputs, artifact identities, and dependency identities. You may
 rewrite prose and may restructure failed steps and the pending suffix.
 
-The approved Plan is the single execution definition of required results. Decide
-necessity from the original user request, accepted clarifications, selected Skill
-and actual downstream needs. Preserve explicit user deliverables and names.
-Declare metadata.result_contract_version=1. In each Plan artifact_contract or
-task_output_materializations row, set required=true only for a necessary result;
-new omitted required defaults to false. Omit unnecessary auxiliary files. An input,
+The approved Plan freezes the execution definition of required results. Existing
+output.* necessity, path policy and exact canonical path come from the formal
+TaskSpec output with that exact identity and are frozen with the Plan. Version 3
+does not ask you to repeat or override those facts in task_output_materializations.
+For new plan.* artifacts, decide necessity from the original request, accepted
+clarifications, selected Skill and actual downstream needs. In version 3 a declared
+plan-local artifact defaults to required; write required=false only when it is
+optional. Preserve explicit user deliverables and names; omit unnecessary auxiliary
+files. metadata.result_contract_version may be omitted in version 3, or set to 1.
+An input,
 EXECUTE action, title, success_criteria path or template does not create a file duty.
 A mandatory consumer of an optional artifact is a candidate contradiction: decide
 whether to make that result necessary or change the dependency/effect; do not
@@ -1851,11 +1855,26 @@ never list that workspace in outputs or make it optional to evade coverage.
 proposed_artifacts declares new Plan-owned results, and each declaration
 has local_ref=plan.<task-specific-local-handle>, an object semantic_view, and an
 artifact_contract with object_kind=file|directory, lifecycle=plan_local, and
-materialization_policy_id=managed_intermediate_v1. Inputs consume; outputs produce;
+materialization_policy_id=managed_intermediate_v1. Resource reads consume; outputs produce;
 dependencies only order steps. A consumed intermediate must be produced by one
 reachable dependency.
 
-Plan resource protocol version 2: a capability ID names executable ability,
+New Plans use metadata.resource_contract_version=3 (the Planner response schema
+remains version 2). Each step declares resource_uses exactly once:
+[{"resource_ref":"<exact input.*, output.* or declared plan.* handle>",
+  "access":"read|mutate","role":"<selected-domain-helper-role, only when needed>"}].
+resource_ref identifies the resource; access declares this step's use. Omit role
+when no selected domain helper requires it. A read must have a real initial or
+reachable producer/state source. A mutate use needs a declared mutable workspace
+and its separate workspace_mutations transition/evidence facts. outputs remains
+the sole immutable-artifact producer declaration. Dependencies order steps;
+they do not supply missing resources, access, or runtime evidence.
+Do not also write steps[].inputs, its legacy aliases, or resource-side
+role_associations in version 3. These are not independently editable copies.
+The runtime may derive read-only compatibility views from resource_uses; those
+views do not authorize new resources and are not fields to return in a Plan.
+
+A capability ID names executable ability,
 never a file or workspace. For a NEW resource, OMIT resource_binding. Declare
 local_ref, semantic_view and artifact_contract; the system creates its scoped
 identity and revision. Set artifact_contract.resource_kind=mutable_workspace
@@ -1867,34 +1886,34 @@ the system copies identity, lifecycle and revision from that authoritative row.
 Do not manufacture canonical_resource_id, availability_origin or revision.
 Wrong-domain, stale or unregistered references are rejected, never silently renamed.
 Never infer aliases from basename, suffix, path, role prose or similar spelling.
-Old approved snapshots retain their original reader semantics; new candidates
-must satisfy this current admission contract.
+Old approved snapshots retain their original reader semantics. Legacy version 2
+candidate expressions remain a compatibility input: inputs and resource-side
+role_associations keep their original meaning. A legacy association has exactly
+step_id, capability_id and role; its step_id must reference an actually declared
+step with that selected capability. In legacy correction feedback, step_key
+identifies the value for association.step_id. An existing read association does
+not replace the legacy step.inputs read reference. Contradictory, stale or
+mixed-version declarations are errors; do not silently discard one side or add
+an access field to a legacy association. Use version 3 for new candidate output.
 
-For a new workspace implementing a frozen capability role, add role_associations
-to that same proposed_artifacts declaration. Each item has exactly step_id,
-capability_id and role; use only the workspace roles enumerated in the resource
-requirements for that step's selected capability. This explicit association is
-local to that step/capability and grants only its declared access. In correction
-feedback, step_key names the value to put in the association's step_id; combine
-it with the exact expected capability_id and role. Repeat it for
-each sharing step, including artifact-backed read consumers; no global alias is
-created. Keep workspace_mutations and inputs referring to the chosen plan.*
-resource. For snpEff, a plan.snpeff_data_dir declaration can carry:
-"role_associations": [
-  {"step_id":"prepare_database","capability_id":"genomics.snpeff_annotation.prepare_database","role":"artifact.snpeff_data_dir"},
-  {"step_id":"build_database","capability_id":"genomics.snpeff_annotation.build_database","role":"artifact.snpeff_data_dir"},
-  {"step_id":"annotate_variants","capability_id":"genomics.snpeff_annotation.annotate_variants","role":"artifact.snpeff_data_dir"}
-]
-Use your actual declared step IDs. Preserve prepare -> build -> annotation and
-their required states/evidence; annotation receives read permission only. Planned
-state availability is not evidence of an existing directory or successful build.
+With a selected snpEff helper, a version-3 preparation step can use
+{"resource_ref":"plan.snpeff_data_dir","access":"mutate","role":"artifact.snpeff_data_dir"}
+and an annotation step can use the same resource with access="read" and the same
+role. Declare each use only on its step, alongside the required mutation/state
+facts where applicable. Preserve the helper's actual prepare/build/annotation
+state dependencies without fixing step names or forcing unrelated checks into
+that template. Planned state availability is not an existing directory or a
+successful build. Step identity is independent of operation: use your actual
+declared step IDs in dependencies and other surviving step references.
 
-Use path_policy=managed_exact for a user-specified delivery name; use
-model_selectable when the logical result is required but its final filename may
-be selected from actual authorized outputs. On a new plan.* artifact_contract,
+For a new plan.* artifact_contract, use path_policy=managed_exact for an exact
+delivery name and model_selectable only when the final filename may be selected
+from actual authorized outputs. Existing output.* policies come from TaskSpec;
+do not repeat or replace them. On a new plan.* artifact_contract,
 path is an optional safe relative path under the existing managed allocation root;
 it does not authorize another directory. For a user-specified output directory,
-reuse its approved output handle and task_output_materializations. Do not change
+reuse its approved output handle. Only when its file path remains unresolved,
+declare a safe relative path in task_output_materializations. Do not change
 an exact user name merely to make a candidate pass. Description belongs in the
 existing semantic_view; source_refs may identify relevant user/Skill evidence.
 Purpose is descriptive. A formally approved probe, validation or record_failure
@@ -1906,7 +1925,11 @@ a file. `outputs` describes only immutable-artifact production. Use `operation`
 plus one or more of `produces_bindings`, `produces_observations`,
 `workspace_mutations`, or `explicit_side_effects` for legitimate non-artifact
 effects. An empty `outputs` array is valid when another effect is declared.
-Use exact operation/effect identities from the selected Skill capability. If a
+When selecting a domain capability, use its exact operation/effect interfaces.
+For explicit framework.generic.execute, operation is execute and tool is python
+or bash; declare the actual observable effects needed by this approved step.
+Generic checks need no invented domain capability, helper role or output file.
+If a
 validator reports PLAN_STEP_EFFECT_UNSPECIFIED, revise the complete candidate
 from that structured evidence; never invent a file merely to satisfy review.
 Use the actual declared capability/evidence schema, not invented state names or
@@ -1921,6 +1944,41 @@ contract_revision. A mutation cannot satisfy a READ or required state in the
 same step. Multiple mutations of one canonical workspace must be explicitly
 ordered through dependencies; list order is not a dependency.
 Mutable workspaces belong in workspace_mutations, never in outputs.
+
+A complete version-3 example follows for the limited task "create one synthetic
+record and inspect whether it can be read". Its resource is declared inside this
+Plan; its two step IDs differ from operation and remain separate instances.
+This example does not replace the current user's obligations, assert execution,
+or require ordinary read-only checks to create a file. Do not copy its wrapper
+into your JSON response. Observation declarations specify evidence shape, never
+an already-successful value.
+<generic_plan_example schema_version="1">
+{
+  "outcome_type": "SUBMIT_PLAN_FOR_REVIEW",
+  "proposed_artifacts": [{
+    "local_ref": "plan.synthetic_record",
+    "semantic_view": {"role": "synthetic_record", "format": "text", "description": "The explicitly requested task-local synthetic record"},
+    "artifact_contract": {"object_kind": "file", "lifecycle": "plan_local", "resource_kind": "immutable_artifact", "materialization_policy_id": "managed_intermediate_v1", "required": true, "path_policy": "managed_exact", "path": "synthetic_record.txt"}
+  }],
+  "steps": [{
+    "step_id": "create_record", "title": "Create the requested synthetic record",
+    "action": "execute", "purpose": "validation", "tool": "python",
+    "execution_capability_id": "framework.generic.execute", "operation": "execute",
+    "resource_uses": [], "outputs": ["plan.synthetic_record"], "dependencies": [],
+    "skill_ids": [], "success_criteria": ["Write the requested synthetic content to the allocated record and return evidence of the actual file"], "risk_level": "low"
+  }, {
+    "step_id": "inspect_record", "title": "Inspect the produced record",
+    "action": "execute", "purpose": "validation", "tool": "python",
+    "execution_capability_id": "framework.generic.execute", "operation": "execute",
+    "resource_uses": [{"resource_ref": "plan.synthetic_record", "access": "read"}],
+    "outputs": [], "dependencies": ["create_record"], "skill_ids": [],
+    "produces_observations": [{"observation_id": "record_readable", "value_type": "boolean", "evidence_contract": {"required_fields": ["value"]}}],
+    "success_criteria": ["Attempt to read the actual record and report the observed boolean honestly, including a negative result"], "risk_level": "low"
+  }],
+  "validation_checklist": [{"check_id": "exact_record_use", "description": "The inspection reads the exact artifact produced by its declared predecessor"}],
+  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 3, "result_contract_version": 1}
+}
+</generic_plan_example>
 
 SUBMIT_PLAN_FOR_REVIEW schema placeholders:
 {
@@ -1937,9 +1995,9 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
     "action": "search|execute|install|ask_user|finish",
     "purpose": "analysis|validation|probe|record_failure|install|user_input",
     "tool": "<selected-capability-or-runner>",
-    "execution_capability_id": "<enumerated-current-skill-capability-id-or-empty>",
-    "operation": "<enumerated-current-skill-operation-or-empty>",
-    "inputs": ["<existing-input-or-plan-handle>"],
+    "execution_capability_id": "<selected-domain-capability-id-or-framework.generic.execute>",
+    "operation": "<selected-domain-operation-or-execute-for-generic>",
+    "resource_uses": [{"resource_ref":"<exact-resource-handle>","access":"read|mutate"}],
     "outputs": ["<existing-output-or-plan-handle>"],
     "produces_bindings": ["<declared-semantic-binding-id>"],
     "produces_observations": ["<declared-observation-id>"],
@@ -1947,29 +2005,36 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
     "explicit_side_effects": ["<declared-supported-side-effect-id>"],
     "dependencies": ["<task-specific-step-id>"],
     "success_criteria": ["<task-specific-criterion>"],
-    "skill_ids": ["<selected-capability-id>"],
+    "skill_ids": ["<canonical-selected-skill-id; may be empty for explicit generic execution>"],
     "workflow_stage_ids": [],
     "batch_id": "",
     "risk_level": "low|medium|high"
   }],
   "validation_checklist": [{"check_id": "<task-specific-check-id>", "description": "<semantic-self-check>"}],
-  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 2, "result_contract_version": 1},
-  "task_output_materializations": [{"output_ref": "<existing-output-handle>", "path": "<safe-relative-filename>", "required": true, "path_policy": "managed_exact|model_selectable", "description": "<result-necessity>"}]
+  "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2", "resource_contract_version": 3, "result_contract_version": 1},
+  "task_output_materializations": [{"output_ref": "<existing-output-handle-with-unresolved-path>", "path": "<safe-relative-filename>", "description": "<path-selection-explanation>"}]
 }
 
 Omit proposed_artifacts and task_output_materializations when they are not needed.
-Current Plan result path_policy values are: __PLAN_RESULT_PATH_POLICIES__.
-For managed_exact, preserve the declared safe relative path under the managed root.
-For model_selectable, the generated action may select the actual result filename;
+In version 3, workflow_stage_ids and batch_id are optional: omit them when this
+Plan does not use a workflow batch. If supplied, they retain their declared types
+and must reference valid authorized workflow entries; they do not dictate a step topology.
+New plan.* result path_policy values are: __PLAN_RESULT_PATH_POLICIES__.
+For managed_exact plan-local results, preserve the declared safe relative path under the managed root.
+For model_selectable plan-local results, the generated action may select the actual result filename;
 retain the semantic output handle and validate the accepted result evidence.
 A legacy TaskSpec may say planner_materialized: that describes TaskSpec ownership,
-not a valid Plan result policy. Select the Plan policy from the actual path
-obligation; never translate that legacy value by an unconditional alias.
-Keep existing TaskSpec output handles in step.outputs and declare the Plan result
-in task_output_materializations.
-For existing output handles, declare necessity and path policy in the Plan
-materialization row, including when reusing an existing exact path. This is a Plan
-declaration, not a TaskSpec rewrite. A readonly check may use outputs=[] with its
+not permission to override its frozen required or path policy. The compiler reads
+the existing output contract by exact identity; do not guess by role or name.
+Keep existing TaskSpec output handles in step.outputs. In version 3, omit the
+task_output_materializations row when an exact canonical path already exists;
+for an unresolved required TaskSpec file (including planner_materialized or
+model_selectable ownership), supply only its output_ref and safe relative path
+(description/source_refs/validator may accompany it). required and path_policy in
+that row are retired and rejected. New plan.* artifact_contract declarations still
+own their distinct necessity and path facts. Strict legacy version-2 Plans retain
+their original explicit materialization contract; do not mix the two versions.
+A readonly check may use outputs=[] with its
 actual observation effect; negative findings may complete an inspection request
 without authorizing subsequent analysis. A later reporting step must consume the
 same accepted, scoped observation through the execution history and explicit
@@ -1978,9 +2043,21 @@ reports, reproducibility scripts, statistics and stage status. If a real depende
 blocks computation, use the existing authorized stop/report path to state what
 was and was not executed; do not invent scientific results or call it scientific
 success merely because failure reporting completed.
-For every execute step, select exactly one execution_capability_id enumerated
-by that step's selected Skill and use its canonical operation/effect contract.
-Never invent capability, effect, or runtime binding IDs. Omit optional effect
+For every execute step, explicitly choose one supported execution path:
+(1) a domain execution_capability_id enumerated by the step's selected Skill,
+with that capability's canonical operation and actual helper interfaces; or
+(2) execution_capability_id="framework.generic.execute", operation="execute",
+tool="python" or "bash", with skill_ids allowed to be []. Generic execution uses
+the existing Plan review, action generation, code approval, executor, evidence
+and Commit boundaries. It grants no ambient resource access or runtime readiness,
+and provides no claim of an arbitrary-system-call OS sandbox. Unknown capability
+or tool IDs are errors, never an implicit fallback to generic execution.
+Skill IDs (for example genomics/snpeff-annotation), domain capability IDs (for
+example genomics.snpeff_annotation.prepare_database), the generic execution path,
+step instance IDs and operations are different fields and cannot substitute
+for each other. A step ID need not equal its operation; separate uses of the
+same operation remain separate steps and approvals.
+Never invent domain capability, helper effect, or runtime binding IDs. Omit optional effect
 arrays that do not apply; do not fabricate an artifact for an observation-only,
 binding-only, or workspace-mutating operation.
 Read every highlighted constraint and put task-specific semantic checks in
@@ -1988,6 +2065,14 @@ validation_checklist. Before submission, self-check resource producer/consumer
 reachability, exact output identities, JSONPath-addressable constraints, and
 all review evidence from the previous attempt. Protocol validators check only
 machine contracts and return observations; they do not choose the next node.
+
+Steps may be split or combined when the user's obligations, real resource
+dependencies and selected tool interfaces permit it. Internal implementation
+files need not become global Plan artifacts unless another step consumes them
+or the user requires their delivery. Planning suggestions and warning-severity
+issues are non-blocking: you may retain your proposal without an extra
+confirmation field or a mandatory explanation. Real identity, dependency,
+authorization and interface violations must still be corrected.
 
 If a required user-owned semantic fact is genuinely absent, return:
 {"outcome_type":"TASKSPEC_RECONCILIATION_REQUIRED","missing_semantic_facts":[{"fact_key":"<missing-fact>","reason":"<why-required>","affected_operation_id":"<operation>","relevant_confirmed_decision_ids":[],"durable_evidence_may_resolve":true}]}"""

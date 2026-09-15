@@ -752,7 +752,7 @@ _VALIDATION_EMPTY_FACT_FIELDS = {
     "required_condition", "accepted_sources", "rejected_sources",
     "recognized_candidate_sources", "dependency_ancestors",
     "producer_step_ids", "source_effect_kinds", "unsupported_effect_ids",
-    "actual_issues", "requirements",
+    "actual_issues", "requirements", "received_id", "available_capability_ids",
 }
 
 
@@ -857,7 +857,7 @@ def _bounded_candidate_semantic_view(
         return {}
     steps: List[Dict[str, Any]] = []
     allowed_step_fields = (
-        "step_id", "title", "action", "purpose", "tool", "inputs", "outputs",
+        "step_id", "title", "action", "purpose", "tool", "inputs", "outputs", "resource_uses",
         "dependencies", "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
         "execution_capability_id", "operation", "produces_bindings",
         "produces_observations", "workspace_mutations", "explicit_side_effects",
@@ -938,7 +938,8 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
         "response_excerpt", "constraint_source", "source_ref", "validator_id",
         "consumer_step_id", "producer_step_ids", "actual_value",
         "expected_contract", "possible_effect_kinds", "candidate_sources",
-        "expected", "actual", "source", "capability_id",
+        "expected", "actual", "source", "capability_id", "owner",
+        "received_id", "available_capability_ids", "selected_skill_id",
         "capability_artifact_effects", "unsupported_effects", "unsupported_effect_ids",
         "contract_source", "contract_version", "schema_ref", "requirements",
         "actual_issues",
@@ -1021,7 +1022,7 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
 
 
 _PLANNER_CORRECTION_STRUCTURE_FIELDS = (
-    "action", "purpose", "tool", "inputs", "outputs", "dependencies",
+    "action", "purpose", "tool", "inputs", "outputs", "resource_uses", "dependencies",
     "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
     "execution_capability_id", "operation", "produces_bindings",
     "produces_observations", "workspace_mutations", "explicit_side_effects",
@@ -5805,10 +5806,15 @@ def normalize_plan_step(
         title=title,
         workflow_stage_ids=step["workflow_stage_ids"],
     )
-    step["inputs"] = _string_list(
-        step.get("inputs") if step.get("inputs") not in (None, "", []) else (step.get("input_contracts") or parsed.get("inputs")),
-        dict_keys=("path", "description", "role"),
-    )
+    if "resource_uses" in step:
+        from agent_core.plan_bindings import step_resource_inputs
+        step["resource_uses"] = deepcopy(step["resource_uses"])
+        step["inputs"] = step_resource_inputs(step)
+    else:
+        step["inputs"] = _string_list(
+            step.get("inputs") if step.get("inputs") not in (None, "", []) else (step.get("input_contracts") or parsed.get("inputs")),
+            dict_keys=("path", "description", "role"),
+        )
     step["outputs"] = _string_list(
         step.get("outputs") if isinstance(step.get("outputs"), list) else (step.get("output_contracts") or parsed.get("outputs")),
         dict_keys=("path", "description", "role"),
@@ -6422,6 +6428,8 @@ def _semantic_step(step: PlanStep) -> Dict[str, Any]:
         if part.strip() and not ignored_inline_labels.match(part)
     )
     payload = {field: normalized.get(field) for field in PLAN_STEP_FIELDS if field != "status"}
+    if "resource_uses" in normalized:
+        payload["resource_uses"] = deepcopy(normalized["resource_uses"])
     if normalized.get("generate_binding_input_contract"):
         payload["generate_binding_input_contract"] = deepcopy(normalized["generate_binding_input_contract"])
     payload["title"] = semantic_title
@@ -9392,7 +9400,9 @@ def normalize_task_output_materializations(
     """Validate Planner-owned filenames without creating another output identity."""
     candidate = deepcopy(state)
     from .plan_contract import plan_uses_explicit_results
+    from .plan_bindings import plan_uses_resource_uses
     explicit_results = plan_uses_explicit_results(candidate)
+    single_task_outputs = plan_uses_resource_uses(candidate)
     spec = dict(task_spec or _current_task_spec(candidate))
     contracts = [
         dict(row) for row in spec.get("output_contracts", []) or []
@@ -9471,6 +9481,15 @@ def normalize_task_output_materializations(
             ))
             continue
         output_id = str(contract.get("output_id") or contract.get("artifact_id") or output_ref)
+        if single_task_outputs:
+            conflicts = [key for key in ("required", "path_policy") if key in raw and raw[key] != contract.get(key, True if key == "required" else "")]
+            if conflicts:
+                issues.append(validation_issue("TASK_OUTPUT_AUTHORITY_CONFLICT", owner="planner",
+                    field_path=f"$.task_output_materializations[{index}].{conflicts[0]}",
+                    repair_target="$.task_output_materializations", actual={key: raw[key] for key in conflicts},
+                    expected={key: contract.get(key, True if key == "required" else "") for key in conflicts},
+                    message="TaskSpec owns delivery necessity and path policy; filename choices cannot override them."))
+                continue
         if output_id in seen:
             issues.append(validation_issue(
                 "TASK_OUTPUT_MATERIALIZATION_DUPLICATE",
@@ -9567,10 +9586,10 @@ def normalize_task_output_materializations(
             "output_id": output_id,
             "path": path_text,
             "canonical_path": canonical_path,
-            "origin": "planner",
+            "origin": "task_spec_filename_choice" if single_task_outputs else "planner",
             **({
-                "required": bool(raw.get("required", False)),
-                "path_policy": str(raw.get("path_policy") or "model_selectable"),
+                "required": bool(contract.get("required", True)) if single_task_outputs else bool(raw.get("required", False)),
+                "path_policy": str(contract.get("path_policy") or "") if single_task_outputs else str(raw.get("path_policy") or "model_selectable"),
                 **{key: deepcopy(raw[key]) for key in ("validator", "description", "source_refs") if key in raw},
             } if explicit_results else {}),
         })
@@ -9578,11 +9597,12 @@ def normalize_task_output_materializations(
     for contract in contracts:
         output_id = str(contract.get("output_id") or contract.get("artifact_id") or "")
         if (
-            not explicit_results
+            (single_task_outputs or not explicit_results)
             and bool(contract.get("required", True))
             and str(contract.get("artifact_kind") or "file").lower() == "file"
             and not str(contract.get("canonical_path") or "").strip()
-            and str(contract.get("path_policy") or "") == "planner_materialized"
+            and (str(contract.get("path_policy") or "") == "planner_materialized"
+                 or single_task_outputs and str(contract.get("path_policy") or "") == "model_selectable")
             and output_id not in seen
         ):
             issues.append(validation_issue(
@@ -9601,7 +9621,7 @@ def normalize_task_output_materializations(
                     },
                     observed_identity={"materialization": "missing"},
                     machine_evidence={
-                        "path_policy": "planner_materialized",
+                        "path_policy": str(contract.get("path_policy") or ""),
                         "required": True,
                     },
                 ),
@@ -10113,7 +10133,7 @@ def derive_plan_validation_state(
         item for item in normalized
         if str(item.get("severity") or "").lower() in BLOCKING_VALIDATION_SEVERITIES
     ]
-    fingerprint = _validation_convergence_fingerprint(candidate, normalized)
+    fingerprint = _validation_convergence_fingerprint(candidate, blocking)
     history = [
         dict(item) for item in candidate.get("validation_convergence_history", []) or []
         if isinstance(item, Mapping)
@@ -11494,7 +11514,7 @@ def _rewrite_plan_resource_bindings_after_allocation(
             if str(value)
         }
         aliases.update({alias, identity})
-        if row.get("role_associations") and row.get("binding_source") == "candidate_local_artifact":
+        if (row.get("role_associations") or row.get("resource_use_projection_version") == 3) and row.get("binding_source") == "candidate_local_artifact":
             allocated = {str(value) for local, value in allocation_mapping.items() if str(local) in aliases}
             if len(allocated) != 1:
                 raise ValueError("PLAN_RESOURCE_ROLE_ALLOCATION_AMBIGUOUS")
@@ -11577,7 +11597,7 @@ def _prepare_atomic_plan_objects(
         effect_mapping = dict(allocation_mapping)
         for local, allocated in allocation_mapping.items():
             resource = dict((state.get("plan_resource_bindings") or {}).get(local) or {})
-            if resource.get("role_associations") and resource.get("binding_source") == "candidate_local_artifact":
+            if (resource.get("role_associations") or resource.get("resource_use_projection_version") == 3) and resource.get("binding_source") == "candidate_local_artifact":
                 effect_mapping[str(resource["canonical_resource_id"])] = allocated
         rewritten = rewrite_candidate_local_refs(
             {"steps": state.get("steps", []) or []},
@@ -11731,6 +11751,14 @@ def _prepare_atomic_plan_objects(
             "created_generation": int(state.get("state_generation") or current_generation),
             "created_at": _now(),
         }
+        from .plan_bindings import plan_uses_resource_uses
+        if plan_uses_resource_uses(state):
+            snapshot.update({
+                "plan_document": deepcopy(dict(state.get("plan_document") or {})),
+                "task_output_contracts": deepcopy(list((task_record.get("task_spec") or {}).get("output_contracts") or [])),
+                "task_output_materializations": deepcopy(list(state.get("task_output_materializations") or [])),
+                "plan_resource_bindings": deepcopy(dict(state.get("plan_resource_bindings") or {})),
+            })
         snapshot_ref = store.put_object("plan_snapshot_v121", snapshot)
         pending_id = "approval-" + _stable_payload_hash({
             "plan_snapshot_ref": snapshot_ref,

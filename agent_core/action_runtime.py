@@ -21,6 +21,35 @@ RUNTIME_MANIFEST_SCHEMA_VERSION = 1
 ARTIFACT_MANIFEST_SCHEMA_VERSION = 1
 EXECUTION_POLICY_MANIFEST_SCHEMA_VERSION = 1
 ACTION_APPROVAL_IDENTITY_SCHEMA_VERSION = 1
+GENERIC_EXECUTION_CAPABILITY_ID = "framework.generic.execute"
+GENERIC_EXECUTION_TOOLS = frozenset({"bash", "python"})
+
+
+def generic_execution_capability() -> Dict[str, Any]:
+    """The existing controlled executor, explicitly selected without a Skill.
+
+    This contract grants no ambient resources or runtime bindings. The approved
+    step owns resource use and observable effects; action approval and the
+    existing execution/evidence boundaries still apply. Unknown IDs never use
+    this route implicitly.
+    """
+    return normalize_capability_contract({
+        "capability_id": GENERIC_EXECUTION_CAPABILITY_ID,
+        "selected_skill_id": "",
+        "operation": "execute",
+        "contract_source": "framework.controlled_executor",
+        "contract_revision": "generic-execution-v1",
+        "supported_tools": sorted(GENERIC_EXECUTION_TOOLS),
+        "required_runtime_binding_ids": [],
+        "optional_runtime_binding_ids": [],
+        "required_artifact_binding_ids": [],
+        "execution_guidance": [
+            "Explicit generic execution through the existing code approval and executor; select tool bash or python.",
+            "Declare exact resource uses and actual observable results in the Plan. A read-only check may have outputs=[] and typed observations.",
+            "No domain helper or runtime availability is implied. Use approved resources only; missing dependencies require evidence, correction or formal blocked/stop.",
+            "This route does not provide an arbitrary-system-call OS sandbox.",
+        ],
+    })
 
 _ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
 _BINDING_ID_RE = re.compile(r"^(?:runtime|artifact)\.[a-z0-9][a-z0-9_.-]{0,126}$")
@@ -46,6 +75,7 @@ LLM_CAPABILITY_FIELD_ALLOWLIST = (
     "workspace_mutations",
     "explicit_side_effects",
     "execution_guidance",
+    "supported_tools",
 )
 
 _OPTIONAL_CAPABILITY_EFFECT_LIST_FIELDS = (
@@ -198,6 +228,8 @@ def normalize_capability_contract(
         "required_artifact_binding_ids": required_artifacts,
         "execution_guidance": guidance,
     }
+    if "supported_tools" in value:
+        normalized["supported_tools"] = _string_ids(value["supported_tools"])
     # Effect semantics are an additive contract extension.  Preserve the exact
     # normalized shape (and therefore the contract hash) of every legacy
     # capability that did not declare them.  An explicitly declared empty list

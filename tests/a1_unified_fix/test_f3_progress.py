@@ -50,7 +50,9 @@ async def graph_sequence(mode,env):
     await case.asyncSetUp()
     task='f3-'+mode+'-'+type(env).__name__
     try:
-        configure_protocol(case);case._configure_one_step_no_output_plan()
+        capability_id='genomics.snpeff_annotation.check_contig_compatibility'
+        configure_protocol(case,execution_capability_id=capability_id)
+        case._configure_one_step_no_output_plan(execution_capability_id=capability_id)
         original=case._planner_payload
         def plan():
             p=original();p['steps'][0].update(

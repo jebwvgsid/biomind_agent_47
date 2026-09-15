@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 PLAN_CONTRACT_VERSION = "1.2.1"
 MINIMUM_PLAN_READER_VERSION = "1.2.1"
-PLAN_READER_VERSION = "1.2.2"
+PLAN_READER_VERSION = "1.2.3"
 RECONCILIATION_FINGERPRINT_SCHEMA_VERSION = 1
 PLANNING_EPOCH_SCHEMA_VERSION = 1
 MAX_RECONCILIATION_NONPROGRESS = 2
@@ -113,6 +113,9 @@ def plan_uses_explicit_results(value: Mapping[str, Any]) -> bool:
     Existing approved schema-2 Plans keep their original defaults and hashes.
     The marker is part of the existing Plan document, not another task contract.
     """
+    from agent_core.plan_bindings import plan_uses_resource_uses
+    if plan_uses_resource_uses(value):
+        return True
     document = value.get("plan_document")
     document = document if isinstance(document, Mapping) else value
     metadata = document.get("metadata")
@@ -130,6 +133,8 @@ def plan_result_contracts(value: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]
     physical filenames create a result or upgrade its necessity.
     """
     explicit = plan_uses_explicit_results(value)
+    from agent_core.plan_bindings import plan_uses_resource_uses
+    uses_v3 = plan_uses_resource_uses(value)
     rows: Dict[str, Dict[str, Any]] = {}
     allocation = dict(value.get("artifact_allocation_mapping") or {})
     allocated = dict(allocation.get("local_to_authoritative") or {})
@@ -140,15 +145,15 @@ def plan_result_contracts(value: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]
         ref = str(allocated.get(str(raw["local_ref"])) or raw["local_ref"])
         rows[ref] = {
             **contract,
-            "required": bool(contract.get("required", not explicit)),
+            "required": bool(contract.get("required", uses_v3 or not explicit)),
             "description": str((raw.get("semantic_view") or {}).get("description") or ""),
         }
-    for ref, raw in dict(value.get("plan_artifacts") or {}).items():
+    for ref, raw in dict(value.get("plan_artifacts") or (value.get("plan_local_artifacts") if uses_v3 else {}) or {}).items():
         if not isinstance(raw, Mapping):
             continue
         rows[str(ref)] = {
             **dict(raw),
-            "required": bool(raw.get("required", not explicit)),
+            "required": bool(raw.get("required", uses_v3 or not explicit)),
         }
     for raw in value.get("task_output_materializations", []) or []:
         if not isinstance(raw, Mapping):
@@ -156,6 +161,26 @@ def plan_result_contracts(value: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]
         ref = str(raw.get("output_ref") or raw.get("output_id") or "")
         if ref:
             rows[ref] = {**dict(raw), "required": bool(raw.get("required", not explicit))}
+    if uses_v3:
+        # The live TaskSpec, or its exact immutable snapshot projection, owns
+        # delivery necessity and path policy. A filename choice cannot change it.
+        current = value.get("current_task")
+        task = current.get("task_spec") if isinstance(current, Mapping) else value.get("task_spec")
+        outputs = task.get("output_contracts", []) if isinstance(task, Mapping) else value.get("task_output_contracts", [])
+        materialized = {str(key): row for row in value.get("task_output_materializations", []) or [] if isinstance(row, Mapping)
+                        for key in (row.get("output_ref"), row.get("output_id")) if key}
+        for output in outputs:
+            if not isinstance(output, Mapping):
+                continue
+            ref = str(output.get("artifact_id") or output.get("output_id") or output.get("semantic_handle") or "")
+            if not ref:
+                continue
+            chosen = next((materialized[str(key)] for key in (output.get("artifact_id"), output.get("output_id"), output.get("semantic_handle"))
+                           if key and str(key) in materialized), {})
+            rows[ref] = {**dict(chosen), **deepcopy(dict(output)),
+                "required": bool(output.get("required", True)),
+                "canonical_path": str(output.get("canonical_path") or chosen.get("canonical_path") or ""),
+                "path_policy": str(output.get("path_policy") or ""), "necessity_source": "task_spec"}
     return rows
 
 
@@ -307,9 +332,12 @@ def assert_reader_compatible(
 
 
 def minimum_reader_for_plan(value: Mapping[str, Any]) -> str:
-    """Only the additive scoped-role surface requires the new reader."""
+    """Require new semantics only for definitions using that version's fields."""
+    from agent_core.plan_bindings import plan_uses_resource_uses
+    if plan_uses_resource_uses(value) or any("resource_uses" in step for step in value.get("steps", []) or [] if isinstance(step, Mapping)):
+        return "1.2.3"
     if any(row.get("role_associations") for row in dict(value.get("plan_resource_bindings") or {}).values() if isinstance(row, Mapping)):
-        return PLAN_READER_VERSION
+        return "1.2.2"
     return str(value.get("minimum_reader_version") or MINIMUM_PLAN_READER_VERSION)
 
 
@@ -408,6 +436,8 @@ def structured_plan_candidate_diagnostics(
 ) -> List[Dict[str, Any]]:
     """Validate the shared structured Plan body without semantic inference."""
     diagnostics: List[Dict[str, Any]] = []
+    from agent_core.plan_bindings import plan_uses_resource_uses
+    uses_v3 = plan_uses_resource_uses(payload)
     metadata_value = payload.get("metadata")
     schema_version = (
         metadata_value.get("schema_version")
@@ -430,6 +460,8 @@ def structured_plan_candidate_diagnostics(
         if legacy_schema
         else STRUCTURED_PLAN_STEP_LIST_FIELDS
     )
+    if uses_v3:
+        step_list_fields = frozenset((step_list_fields - {"inputs"}) | {"resource_uses"})
     for key in required_top_level_fields:
         if key not in payload:
             diagnostics.append({
@@ -456,9 +488,29 @@ def structured_plan_candidate_diagnostics(
                 "message": "must be an object",
             })
             continue
-        for field in sorted(
-            STRUCTURED_PLAN_STEP_SCALAR_FIELDS | step_list_fields
-        ):
+        if uses_v3 and "inputs" in step:
+            diagnostics.append({"field_path": f"$.steps[{index}].inputs",
+                "message": "inputs is retired in resource_contract_version=3; declare reads once in resource_uses"})
+        if uses_v3 and isinstance(step.get("resource_uses"), list):
+            for use_index, use in enumerate(step["resource_uses"]):
+                root = f"$.steps[{index}].resource_uses[{use_index}]"
+                if not isinstance(use, Mapping):
+                    diagnostics.append({"field_path": root, "message": "must be an object"})
+                    continue
+                for key in sorted(set(use) - {"resource_ref", "access", "role"}):
+                    diagnostics.append({"field_path": root + "." + key, "message": "unexpected resource use field"})
+                if not isinstance(use.get("resource_ref"), str) or not use.get("resource_ref"):
+                    diagnostics.append({"field_path": root + ".resource_ref", "message": "must be an explicit non-empty resource handle"})
+                if use.get("access") not in ("read", "mutate"):
+                    diagnostics.append({"field_path": root + ".access", "message": "must equal read or mutate"})
+                if "role" in use and (not isinstance(use["role"], str) or not use["role"]):
+                    diagnostics.append({"field_path": root + ".role", "message": "must be a non-empty exact selected helper role"})
+        required_step_fields = STRUCTURED_PLAN_STEP_SCALAR_FIELDS | step_list_fields
+        if uses_v3:
+            # A single Plan need not opt into historical workflow/batch fields.
+            # Explicit values still use the same type and reference validators.
+            required_step_fields -= {"batch_id", "workflow_stage_ids"}
+        for field in sorted(required_step_fields):
             if field not in step:
                 diagnostics.append({
                     "field_path": f"$.steps[{index}].{field}",
@@ -476,11 +528,6 @@ def structured_plan_candidate_diagnostics(
                     "field_path": f"$.steps[{index}].{field}",
                     "message": "must be an array",
                 })
-        if isinstance(step.get("skill_ids"), list) and len(step["skill_ids"]) > 3:
-            diagnostics.append({
-                "field_path": f"$.steps[{index}].skill_ids",
-                "message": "must contain at most three selected skill IDs",
-            })
         for field in sorted(STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS):
             if field in step and not isinstance(step.get(field), str):
                 diagnostics.append({
@@ -576,7 +623,7 @@ def structured_plan_candidate_diagnostics(
                 "message": f"must equal {expected_contract}",
             })
         if "result_contract_version" in metadata and (
-            legacy_schema or not plan_uses_explicit_results(payload)
+            legacy_schema or type(metadata.get("result_contract_version")) is not int or metadata["result_contract_version"] != PLAN_RESULT_CONTRACT_VERSION
         ):
             diagnostics.append({
                 "field_path": "$.metadata.result_contract_version",
@@ -590,6 +637,11 @@ def structured_plan_candidate_diagnostics(
             "field_path": "$.proposed_artifacts",
             "message": "must be an array",
         })
+    if uses_v3:
+        for index, artifact in enumerate(payload.get("proposed_artifacts") if isinstance(payload.get("proposed_artifacts"), list) else []):
+            if isinstance(artifact, Mapping) and "role_associations" in artifact:
+                diagnostics.append({"field_path": f"$.proposed_artifacts[{index}].role_associations",
+                    "message": "role_associations is retired in resource_contract_version=3; declare the exact role on the using step's resource_uses"})
     materializations = payload.get("task_output_materializations")
     if materializations is not None:
         if not isinstance(materializations, list):
@@ -605,7 +657,7 @@ def structured_plan_candidate_diagnostics(
                         "message": "must be an object",
                     })
                     continue
-                result_fields = {"required", "path_policy", "validator", "description", "source_refs"}
+                result_fields = {"validator", "description", "source_refs"} if uses_v3 else {"required", "path_policy", "validator", "description", "source_refs"}
                 unexpected = set(row) - (
                     {"output_ref", "path"}
                     | (result_fields if plan_uses_explicit_results(payload) else set())
@@ -613,7 +665,7 @@ def structured_plan_candidate_diagnostics(
                 if unexpected:
                     diagnostics.append({
                         "field_path": f"$.task_output_materializations[{index}]",
-                        "message": "contains unexpected fields: " + ", ".join(sorted(unexpected)),
+                        "message": ("required/path_policy are TaskSpec-owned and retired from v3 filename choices; " if uses_v3 and unexpected & {"required", "path_policy"} else "") + "contains unexpected fields: " + ", ".join(sorted(unexpected)),
                     })
                 for field in ("output_ref", "path"):
                     if not isinstance(row.get(field), str) or not str(row.get(field) or "").strip():
@@ -805,10 +857,10 @@ def parse_planner_outcome_envelope(
 def planner_stop_wire_example() -> Dict[str, Any]:
     """The normal Planner's mutually exclusive, non-success response branch."""
     return {"outcome_type": STOP_PLANNING, "diagnostic": {
-        "stage": "plan_admission", "error_codes": ["PLAN_RESOURCE_ROLE_ASSOCIATION_MISSING"],
-        "attempted_changes": ["Removed resource_binding from the new workspace declaration; an explicit step/capability role association is still missing."],
+        "stage": "plan_admission", "error_codes": ["PLAN_RESOURCE_REFERENCE_NOT_DECLARED"],
+        "attempted_changes": ["Reviewed the step resource_uses declaration; its exact resource_ref is absent from the current declared handles."],
         "stop_reason": "I cannot determine a supported untried correction from the available declarations and feedback.",
-        "uncertainties": ["The missing role association has not been resolved; this does not establish a scientific or data failure."],
+        "uncertainties": ["The missing resource reference has not been resolved; this does not establish a scientific or data failure."],
         "unperformed_work": ["prepare_database", "build_database", "annotate_variants", "ANN summary and formal report"]}}
 
 
@@ -1043,35 +1095,42 @@ def candidate_artifact_ref_keys(
         if not isinstance(step, Mapping):
             continue
         step_id = str(step.get("step_id") or f"step-{step_index + 1}")
-        for field, relation in (("inputs", "consume"), ("outputs", "produce")):
-            for ref_index, raw_ref in enumerate(step.get(field, []) or []):
-                ref = str(raw_ref or "")
-                key = keys.get(ref)
-                if key is None:
-                    raise PlannerCandidateError(
-                        "ARTIFACT_REFERENCE_UNKNOWN",
-                        f"$.steps[{step_index}].{field}[{ref_index}]",
-                        ref,
-                        diagnostic={
-                            "affected_step_ids": [step_id],
-                            "affected_artifact": {"handle": ref},
-                            "expected_identity": {
-                                "kind": "registered_artifact_handle",
-                                "allowed_namespaces": ["input.*", "output.*", "plan.*"],
-                            },
-                            "observed_identity": {"handle": ref},
-                            "machine_evidence": {
-                                "relation": relation,
-                                "known_handles": sorted(keys),
-                            },
+        references = [(f"outputs[{i}]", "outputs", "produce", ref) for i, ref in enumerate(step.get("outputs", []) or [])]
+        if "resource_uses" in step:
+            references.extend((f"resource_uses[{i}].resource_ref", "resource_uses", "consume" if use.get("access") == "read" else "mutate", use.get("resource_ref"))
+                              for i, use in enumerate(step.get("resource_uses") or []) if isinstance(use, Mapping))
+        else:
+            references.extend((f"inputs[{i}]", "inputs", "consume", ref) for i, ref in enumerate(step.get("inputs", []) or []))
+        for path, field, relation, raw_ref in references:
+            ref = str(raw_ref or "")
+            key = keys.get(ref)
+            if key is None:
+                raise PlannerCandidateError(
+                    "ARTIFACT_REFERENCE_UNKNOWN",
+                    f"$.steps[{step_index}].{path}",
+                    ref,
+                    diagnostic={
+                        "affected_step_ids": [step_id],
+                        "affected_artifact": {"handle": ref},
+                        "expected_identity": {
+                            "kind": "registered_artifact_handle",
+                            "allowed_namespaces": ["input.*", "output.*", "plan.*"],
                         },
-                    )
-                usage.append({
-                    "step_id": step_id,
-                    "relation": relation,
-                    "field": field,
-                    "artifact_ref": key.to_dict(),
-                })
+                        "observed_identity": {"handle": ref},
+                        "machine_evidence": {
+                            "relation": relation,
+                            "known_handles": sorted(keys),
+                        },
+                    },
+                )
+            if relation == "mutate":
+                continue  # State/availability semantics come from the explicit mutation.
+            usage.append({
+                "step_id": step_id,
+                "relation": relation,
+                "field": field,
+                "artifact_ref": key.to_dict(),
+            })
     for index, row in enumerate(candidate.get("task_output_materializations", []) or []):
         if not isinstance(row, Mapping):
             continue
@@ -1253,6 +1312,10 @@ def planner_candidate_body_from_state(state: Mapping[str, Any]) -> Dict[str, Any
         | STRUCTURED_PLAN_STEP_LIST_FIELDS
         | STRUCTURED_PLAN_STEP_OPTIONAL_LIST_FIELDS
     )
+    from agent_core.plan_bindings import plan_uses_resource_uses
+    if plan_uses_resource_uses(state):
+        step_fields.discard("inputs")
+        step_fields.add("resource_uses")
     if legacy_schema:
         step_fields.add("semantic_constraint_ids")
     steps: List[Dict[str, Any]] = []
@@ -1305,7 +1368,7 @@ def planner_candidate_body_from_state(state: Mapping[str, Any]) -> Dict[str, Any
                 **({
                     key: deepcopy(item[key])
                     for key in ("required", "path_policy", "validator", "description", "source_refs")
-                    if key in item
+                    if key in item and not (plan_uses_resource_uses(state) and key in {"required", "path_policy"})
                 } if plan_uses_explicit_results(state) else {}),
                 "output_ref": str(
                     item.get("output_ref") or item.get("output_id") or ""
@@ -1545,22 +1608,16 @@ def validate_planner_consumption_correction(
     previous_candidate: Mapping[str, Any], candidate: Mapping[str, Any],
     previous_issues: Sequence[Mapping[str, Any]],
 ) -> List[Dict[str, Any]]:
-    """Require reviewable semantics when removing a specifically rejected READ.
+    """Offer nonblocking context when a rejected READ is removed.
 
-    This validates an explicit change explanation, not its scientific truth.
-    Original Plan Review, producer/DAG checks and final delivery verification
-    retain their authority. Callers must establish the same planning epoch.
+    Actual resource/dataflow and TaskSpec delivery checks decide admissibility;
+    prose explaining a scientific choice never substitutes for those checks.
     """
     from agent_core.plan_tracker import validation_issue
+    from agent_core.plan_bindings import step_resource_inputs
     def references(step):
         return {str(row if isinstance(row, str) else row.get("resource_ref") or row.get("artifact_ref") or row.get("ref") or "")
-                for row in step.get("inputs") or [] if isinstance(row, (str, Mapping))}
-    def statements(plan, step):
-        local = {str(value) for value in step.get("success_criteria") or [] if isinstance(value, str)}
-        owner = str(step.get("step_id") or "")
-        global_rows = {str(row.get("description") or "") for row in plan.get("validation_checklist") or []
-                       if isinstance(row, Mapping) and owner and owner in str(row.get("description") or "")}
-        return local | global_rows
+                for row in step_resource_inputs(step) if isinstance(row, (str, Mapping))}
     previous_steps = {str(row.get("step_id") or ""): row for row in previous_candidate.get("steps") or [] if isinstance(row, Mapping)}
     steps = {str(row.get("step_id") or ""): (i, row) for i, row in enumerate(candidate.get("steps") or []) if isinstance(row, Mapping)}
     issues, seen = [], set()
@@ -1577,16 +1634,13 @@ def validate_planner_consumption_correction(
         index, current = steps.get(owner, (-1, {}))
         if resource in references(current):
             continue
-        added = statements(candidate, current) - statements(previous_candidate, prior)
-        if current and any(resource in value for value in added):
-            continue
-        field = f"$.steps[{index}].inputs" if index >= 0 else "$.steps"
+        field = f"$.steps[{index}].resource_uses" if index >= 0 and "resource_uses" in current else f"$.steps[{index}].inputs" if index >= 0 else "$.steps"
         issues.append(validation_issue(
-            "PLAN_CONSUMPTION_CHANGE_REVIEW_REQUIRED", owner="planner", field_path=field, repair_target=field,
+            "PLAN_CONSUMPTION_CHANGE_ADVISORY", severity="warning", owner="planner", field_path=field, repair_target=field,
             validator_id="planner_consumption_change_review", consumer_step_id=owner, resource_id=resource,
-            actual="previously declared READ removed without a new targeted review basis",
-            expected="Retain the required READ with a reachable producer, or explain in this step's success_criteria / targeted validation_checklist why content is not read and which approved source preserves the promised delivery.",
-            message=f"{owner} removed READ {resource}. A DAG pass alone does not validate this consumption change. State its source and semantic basis for original Plan Review; do not invent an execution receipt.",
+            actual="previously declared READ removed",
+            expected="The current declared resources, actual dependencies and TaskSpec delivery obligations remain subject to their existing checks.",
+            message=f"{owner} no longer declares READ {resource}. This advisory requires no explanation, acknowledgement or extra model call; actual interface and dependency checks still apply.",
         ))
     return issues
 
@@ -1825,6 +1879,7 @@ def prepare_allocation_intent(
         "planning_epoch_id": str(planning_epoch_id),
         "declarations": declarations,
         "status": "prepared",
+        **({"resource_contract_version": 3} if (candidate.get("metadata") or {}).get("resource_contract_version") == 3 else {}),
         **({"result_contract_version": PLAN_RESULT_CONTRACT_VERSION}
            if plan_uses_explicit_results(candidate) else {}),
     }
@@ -1886,7 +1941,7 @@ def promote_allocation_intent(
         }
         if intent.get("result_contract_version") == PLAN_RESULT_CONTRACT_VERSION:
             bindings[logical_id].update({
-                "required": bool(contract.get("required", False)),
+                "required": bool(contract.get("required", intent.get("resource_contract_version") == 3)),
                 "path_policy": str(contract.get("path_policy") or "model_selectable"),
                 **{key: deepcopy(contract[key]) for key in (
                     "validation_contract_id", "source_refs",
@@ -1932,6 +1987,10 @@ def rewrite_candidate_local_refs(
     for step in result.get("steps", []) or []:
         if not isinstance(step, dict):
             continue
+        if "resource_uses" in step:
+            for use in step["resource_uses"]:
+                if isinstance(use, dict):
+                    use["resource_ref"] = str(mapping.get(str(use.get("resource_ref") or ""), str(use.get("resource_ref") or "")))
         for field in ("inputs", "outputs"):
             step[field] = [
                 str(mapping.get(str(value), str(value)))
