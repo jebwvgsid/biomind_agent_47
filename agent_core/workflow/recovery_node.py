@@ -184,6 +184,7 @@ def _normalize_inherited_materials(
 ) -> tuple[list[HumanMessage], dict[str, dict[str, Any]]]:
     messages: list[HumanMessage] = []
     descriptors: dict[str, dict[str, Any]] = {}
+    seen_sources: set[str] = set()
     for ordinal, raw in enumerate(values or (), start=1):
         descriptor: dict[str, Any]
         if isinstance(raw, BaseMessage):
@@ -223,6 +224,13 @@ def _normalize_inherited_materials(
                 "RECOVERY_INHERITED_MATERIAL_INVALID: "
                 + type(raw).__name__
             )
+        if descriptor.get("source_ref") and descriptor.get("content_hash"):
+            identity = _canonical({key: descriptor.get(key) for key in (
+                "source_ref", "content_hash", "coverage", "scope", "object_revision",
+                "skill_id", "material_kind", "residency", "selected")})
+            if identity in seen_sources:
+                continue
+            seen_sources.add(identity)
         message_id = _message_id(
             message, fallback=f"{epoch_id}:inherited:{ordinal:04d}"
         )
@@ -318,7 +326,7 @@ def _build_compaction_request(
         unit = SourceUnit(
             unit_id=unit_id,
             kind=(
-                "selected_skill_material"
+                ("selected_skill_material" if descriptor.get("skill_id") else "selected_evidence_material")
                 if selected else "recovery_local_message"
             ),
             source_ref=source_ref,
@@ -766,6 +774,7 @@ def _business_resume_state(
         "provider_usage": deepcopy(list(
             source.get("provider_usage") or ()
         )),
+        "compaction_maintenance": deepcopy(dict(source.get("compaction_maintenance") or {})),
         "compaction_bypass_remaining": 0,
         "compaction_failures": deepcopy(list(
             source.get("compaction_failures") or ()
@@ -838,10 +847,7 @@ class Schema2RecoveryNode:
         except (asyncio.CancelledError, KeyboardInterrupt):
             raise
         except Exception as exc:
-            raise RecoveryAgentError(
-                "RECOVERY_EVENT_PERSISTENCE_FAILED",
-                f"{event}: {type(exc).__name__}",
-            ) from exc
+            logger.warning("Recovery observation sink failed: event=%s error=%s", event, type(exc).__name__)
 
     @staticmethod
     def _persisted_activation_matches(
@@ -872,6 +878,11 @@ class Schema2RecoveryNode:
         durable: Mapping[str, Any],
         seed: Any,
     ) -> None:
+        if str((durable.get("task_state") or {}).get("status") or "") == "cancelled":
+            raise ContextEpochCASConflict("RECOVERY_CONTEXT_TASK_CANCELLED", "active task is cancelled")
+        current_task = asyncio.current_task()
+        if current_task is not None and current_task.cancelling():
+            raise asyncio.CancelledError()
         try:
             projection = project_recovery_seed(parent_state, durable)
         except Exception as exc:
@@ -1769,6 +1780,7 @@ class Schema2RecoveryNode:
                 recovery_archive_ref=linked_previous_archive_ref,
             )
         archive = None
+        maintenance = deepcopy(dict(budget_state.get("compaction_maintenance") or {}))
 
         while True:
             try:
@@ -1817,6 +1829,7 @@ class Schema2RecoveryNode:
                     recovery_archive_ref=linked_previous_archive_ref,
                 )
 
+            episode.setdefault("_resume_state", {})["compaction_maintenance"] = deepcopy(maintenance)
             try:
                 archive = archive_recovery_episode(
                     phase_store=self.phase_store,
@@ -1964,6 +1977,7 @@ class Schema2RecoveryNode:
                     invoke_compactor,
                     estimator=self.token_estimator,
                     max_attempts=2,
+                    maintenance_state=maintenance,
                 )
                 (
                     candidate_inherited,
@@ -2009,6 +2023,7 @@ class Schema2RecoveryNode:
                     if isinstance(episode.get("_resume_state"), Mapping)
                     else {}
                 )
+                business_resume_state["compaction_maintenance"] = deepcopy(maintenance)
                 # This immutable write is the final operation before the local
                 # PlanState CAS.  Any failure leaves the old archived episode,
                 # durable active pointer, and in-memory context untouched.
@@ -2058,7 +2073,13 @@ class Schema2RecoveryNode:
                         ),
                     )
                 boundary_budget = dict(boundary.get("budget") or {})
-                if not bool(boundary_budget.get("hard_block")):
+                prior_fallbacks = list((episode.get("_resume_state") or {}).get("compaction_failures") or ())
+                await self._emit_event("recovery_compaction_rejected", {"task_id": task_id,
+                    "source_epoch_id": context_epoch_id, "applied": False,
+                    "error_code": str(getattr(exc, "code", "RECOVERY_CONTEXT_COMPACTION_FAILED")),
+                    "maintenance_calls": len(maintenance.get("calls", ()))})
+                if not bool(boundary_budget.get("hard_block")) and len(prior_fallbacks) < 2:
+
                     failure = (
                         exc.to_dict()
                         if isinstance(exc, ContextCompactionError)
@@ -2088,6 +2109,7 @@ class Schema2RecoveryNode:
                         "fallback": "safe_uncompacted_request",
                     })
                     resumed["compaction_failures"] = failures
+                    resumed["compaction_maintenance"] = deepcopy(maintenance)
                     # Permit exactly one still-safe provider dispatch.  Any
                     # subsequent round is measured again and can establish a
                     # fresh boundary; a hard-blocked request is never sent.
@@ -2117,16 +2139,26 @@ class Schema2RecoveryNode:
                 )
 
             durable = committed_durable
+            await self._emit_event("recovery_compaction_applied", {"task_id": task_id,
+                "source_epoch_id": context_epoch_id, "active_epoch_id": prepared.epoch.record.epoch_id,
+                "candidate_archive_ref": candidate_archive.archive_ref, "applied": True,
+                "maintenance_calls": len(maintenance.get("calls", ()))})
             inherited_messages = candidate_inherited
             local_messages = candidate_local
             inherited_descriptors = candidate_descriptors
             budget_state = deepcopy(dict(
                 episode.get("_resume_state") or {}
             ))
+            budget_state["compaction_maintenance"] = deepcopy(maintenance)
+            # Exact protected inputs can remain above the soft target. The next
+            # dispatch still checks the hard limit; do not immediately recompact
+            # the just-activated summary without one business opportunity.
+            budget_state["compaction_bypass_remaining"] = 1
             overflow_epoch += 1
             context_epoch_id = prepared.epoch.record.epoch_id
             linked_previous_archive_ref = candidate_archive.archive_ref
 
+        episode.setdefault("_resume_state", {})["compaction_maintenance"] = deepcopy(maintenance)
         error = dict(episode.get("terminal_error") or {})
         directive = dict(episode.get("directive") or {})
         if error or not directive:

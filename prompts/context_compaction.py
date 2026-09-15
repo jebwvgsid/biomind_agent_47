@@ -45,7 +45,7 @@ original source_unit_id values. Never name segment or summary-node IDs in the
 final plan. Exact retention is performed mechanically from the archived
 original body, while summary/retrieval state must keep the original identity.
 
-In normal mode, prefer exact retention of selected Skill material and current
+In normal mode, exact retention of selected material is mandatory. Follow selection_policy and must_retain_exact_unit_ids. protected_exact_source_units are supplied here in full, were NOT mapped, and must be retained by ID. Prefer retention of other current
 task-critical source material. Do not use filenames, extensions, headings,
 keywords, age, or lexical similarity as a substitute for reasoning about the
 supplied units. A target token count is a working target, not permission to
@@ -54,7 +54,7 @@ discard selected material that still fits safely.
 Use capacity_pressure mode only when the supplied capacity feedback says the
 exact selection cannot fit the safe provider input. If selected material is
 summarized, emit one material_retrieval_state entry per affected source unit,
-using only the exact source_ref, content_hash, coverage, skill_id, and
+including required source_unit_id, residency, reason, summary, missing_details, and using only the exact source_ref, content_hash, coverage, skill_id, and
 retrieval_ref supplied by the runtime. Explain missing details and how the
 exact source can be recovered. Never invent a path, hash, source ID, scope, or
 coverage range.
@@ -134,8 +134,10 @@ def build_context_compaction_prompt(
     handled by the caller's explicit hierarchical compaction workflow.
     """
 
+    from agent_core.workflow.context_compaction import compaction_response_schema
     ordinal = max(1, int(attempt_ordinal or 1))
     envelope = {
+        "response_schema": compaction_response_schema(),
         "prompt_id": CONTEXT_COMPACTION_PROMPT_ID,
         "prompt_schema_version": CONTEXT_COMPACTION_PROMPT_SCHEMA_VERSION,
         "attempt_ordinal": ordinal,

@@ -964,6 +964,7 @@ class RecoveryLocalToolDispatcher:
             return self.inspection_reader.read(
                 entry.to_dict(), locator,
                 start_line=args.get("start_line", 1), end_line=args.get("end_line"),
+                causal_path=args.get("causal_path", ()),
             )
         if entry.backend not in {"recovery_evidence", "durable_registry", "opaque_reference"}:
             raise RecoveryToolError("INSPECTION_BACKEND_UNSUPPORTED", entry.backend)

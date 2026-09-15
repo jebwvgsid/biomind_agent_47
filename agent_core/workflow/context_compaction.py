@@ -20,8 +20,9 @@ import inspect
 import json
 import math
 import re
+import time
 from copy import deepcopy
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, replace, fields
 from types import MappingProxyType
 from typing import Any, Awaitable, Callable, Mapping, Protocol, Sequence
 
@@ -1320,11 +1321,7 @@ class MaterialRetrievalState:
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "MaterialRetrievalState":
-        allowed = {
-            "source_unit_id", "skill_id", "source_ref", "content_hash",
-            "coverage", "residency", "reason", "summary",
-            "missing_details", "retrieval_ref", "scope",
-        }
+        allowed = {item.name for item in fields(cls)}
         _reject_unknown_keys(value, allowed, "material_retrieval_state")
         return cls(
             source_unit_id=value.get("source_unit_id", ""),
@@ -1377,13 +1374,7 @@ class CompactionPlan:
         if not isinstance(value, Mapping):
             raise ContextCompactionError("COMPACTION_PLAN_INVALID")
         _reject_mutation_fields(value)
-        allowed = {
-            "schema_version", "compaction_request_id", "source_epoch_id",
-            "source_manifest_hash", "mode", "retain_exact_unit_ids",
-            "summary_source_unit_ids", "summary",
-            "material_retrieval_state", "unresolved_items",
-            "selection_rationale",
-        }
+        allowed = {item.name for item in fields(cls)}
         _reject_unknown_keys(value, allowed, "compaction_plan")
         schema_version = _require_nonnegative_int(
             value.get("schema_version"), "schema_version"
@@ -1465,6 +1456,21 @@ class CompactionPlan:
             ],
             "selection_rationale": self.selection_rationale,
         }
+
+
+def compaction_response_schema() -> dict[str, Any]:
+    """Prompt and strict parsers share the dataclass field owners."""
+    material = {item.name: {"type": "object" if item.name in {"coverage", "scope"} else "string"}
+                for item in fields(MaterialRetrievalState)}
+    material["residency"]["enum"] = ["summarized", "externalized"]
+    props = {item.name: {"type": "string"} for item in fields(CompactionPlan)}
+    props.update(schema_version={"const": 1}, mode={"enum": ["normal", "capacity_pressure"]},
+        retain_exact_unit_ids={"type": "array", "items": {"type": "string"}},
+        summary_source_unit_ids={"type": "array", "items": {"type": "string"}},
+        unresolved_items={"type": "array"}, material_retrieval_state={"type": "array", "items": {
+            "type": "object", "additionalProperties": False, "properties": material,
+            "required": [key for key in material if key not in {"scope", "skill_id"}]}})
+    return {"type": "object", "additionalProperties": False, "properties": props, "required": list(props)}
 
 
 def parse_compaction_plan(value: Any) -> CompactionPlan:
@@ -2120,17 +2126,21 @@ def _coalesced_coverage_spans(
 def _verify_complete_hierarchical_coverage(
     nodes: Sequence[HierarchicalSummaryNode],
     manifest: SourceUnitManifest,
+    exact_units: Sequence[SourceUnit] = (),
 ) -> tuple[Mapping[str, Any], ...]:
     spans = _coalesced_coverage_spans(nodes)
     by_parent: dict[str, list[Mapping[str, Any]]] = {}
     for span in spans:
         by_parent.setdefault(str(span["parent_source_unit_id"]), []).append(span)
     units = manifest.by_id()
-    if set(by_parent) != set(units):
+    exact_ids = {unit.unit_id for unit in exact_units}
+    if set(by_parent) & exact_ids or set(by_parent) | exact_ids != set(units):
         raise ContextCompactionError(
             "HIERARCHICAL_SOURCE_COVERAGE_INCOMPLETE"
         )
     for unit in manifest.units:
+        if unit.unit_id in exact_ids:
+            continue
         cursor = 0
         for span in by_parent[unit.unit_id]:
             if (
@@ -2316,9 +2326,10 @@ def _parse_merge_response(
 def _hierarchical_selector_payload(
     request: CompactionRequest,
     nodes: Sequence[HierarchicalSummaryNode],
+    exact_materials: Sequence[RetainedSourceMaterial] = (),
 ) -> dict[str, Any]:
     coverage = _verify_complete_hierarchical_coverage(
-        nodes, request.source_manifest
+        nodes, request.source_manifest, [item.unit for item in exact_materials]
     )
     return {
         "schema_version": CONTEXT_COMPACTION_SCHEMA_VERSION,
@@ -2338,6 +2349,8 @@ def _hierarchical_selector_payload(
         "model_visible_source_coverage": [
             _thaw_json(item) for item in coverage
         ],
+        "protected_exact_source_units": [item.to_dict(include_body=True) for item in exact_materials],
+        "must_retain_exact_unit_ids": [item.unit.unit_id for item in exact_materials],
         "prior_summary": request.prior_summary,
         "prior_retrieval_state": [
             _thaw_json(item) for item in request.prior_retrieval_state
@@ -2356,6 +2369,7 @@ def _fit_source_segments_for_map(
     """Find the largest capacity-only segment size whose real map wire fits."""
 
     safe = _compactor_wire_safe_tokens(request.budget_policy)
+    safe -= min(512, safe // 20)
     upper = max(1, estimator.estimate(body).tokens)
     low = 1
     best: LosslessSegmentResult | None = None
@@ -2439,6 +2453,8 @@ async def _invoke_hierarchical_operation(
         except asyncio.CancelledError:
             raise
         except ContextCompactionError as exc:
+            if exc.code == "COMPACTION_MAINTENANCE_BUDGET_EXHAUSTED":
+                raise
             feedback = {
                 "previous_attempt": ordinal,
                 "error_code": exc.code,
@@ -2481,6 +2497,8 @@ async def _prepare_hierarchical_selector(
     *,
     estimator: TokenEstimator,
     max_attempts: int,
+    exact_materials: Sequence[RetainedSourceMaterial] = (),
+    maintenance_state: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Map every reversible range, then lossily reduce until selector fits."""
 
@@ -2509,11 +2527,39 @@ async def _prepare_hierarchical_selector(
                 },
             )
 
+    protected_ids = {item.unit.unit_id for item in exact_materials}
+    # The exact region and all fixed metadata must fit before spending any map.
+    protected_wire = build_context_compaction_messages({
+        "fixed_components": _thaw_json(request.fixed_components),
+        "source_manifest": request.source_manifest.to_dict(),
+        "protected_exact_source_units": [item.to_dict(include_body=True) for item in exact_materials],
+    })
+    if measure_compactor_wire_tokens(protected_wire, policy=request.budget_policy, estimator=estimator) > safe:
+        raise ContextCompactionCapacityError("COMPACTION_PROTECTED_WIRE_UNSAFE_BEFORE_MAP")
+    cache = (maintenance_state if maintenance_state is not None else {}).setdefault("validated_maps", {})
     for parent in request.source_manifest.units:
+        if parent.unit_id in protected_ids:
+            continue
         body = resolve_source_body(parent, resolver)
-        segmented = _fit_source_segments_for_map(
-            request, parent, body, estimator=estimator
-        )
+        segmentation_key = _digest({"source_ref": parent.source_ref, "content_hash": parent.content_hash,
+            "coverage": _thaw_json(parent.coverage), "origin": _thaw_json(parent.provenance.get("material_descriptor") or {}),
+            "selected_revision": request.selected_revision, "safe": safe,
+            "source_scope": {key: _thaw_json(value) for key, value in parent.scope.items()
+                if key not in {"epoch_id", "history_version", "failure_id"}},
+            "estimator": {"name": estimator.estimate("").estimator_name, "version": estimator.estimate("").estimator_version}})
+        segmentation_limits = (maintenance_state if maintenance_state is not None else {}).setdefault("segmentation_limits", {})
+        saved_limit = segmentation_limits.get(segmentation_key)
+        segmented = (segment_source_unit_losslessly(parent, body, max_segment_tokens=saved_limit, estimator=estimator)
+                     if isinstance(saved_limit, int) and saved_limit > 0 else None)
+        if segmented is not None and any(measure_compactor_wire_tokens(build_context_segment_map_messages(
+                _segment_map_payload(request, parent, segment, segmented.bodies[segment.body_ref]),
+                attempt_ordinal=2, validation_feedback=_HIERARCHICAL_RETRY_RESERVE_FEEDBACK),
+                policy=request.budget_policy, estimator=estimator) > safe for segment in segmented.segments):
+            segmented = None
+        if segmented is None:
+            segmented = _fit_source_segments_for_map(request, parent, body, estimator=estimator)
+            segmentation_limits[segmentation_key] = max(segment.token_count for segment in segmented.segments)
+
         reconstructed_body = segmented.reconstruct()
         reconstructed.append({
             "source_unit_id": parent.unit_id,
@@ -2528,23 +2574,39 @@ async def _prepare_hierarchical_selector(
             payload = _segment_map_payload(
                 request, parent, segment, segment_body
             )
-            ensure_call_budget("map_source_segment")
-            parsed, attempt_records, wire_tokens = (
-                await _invoke_hierarchical_operation(
-                    compactor=compactor,
-                    build_messages=build_context_segment_map_messages,
-                    payload=payload,
-                    parse_response=lambda value, p=parent, s=segment: (
-                        _parse_segment_map_response(
-                            value, request=request, parent=p, segment=s
-                        )
-                    ),
-                    request=request,
-                    estimator=estimator,
-                    operation="map_source_segment",
-                    max_attempts=max_attempts,
+            cache_key = _digest({"version": "validated-map-v1", "prompt": build_context_segment_map_messages(payload)[0]["content"],
+                "source_ref": parent.source_ref, "content_hash": parent.content_hash,
+                "coverage": _thaw_json(parent.coverage), "kind": parent.kind,
+                "skill_id": parent.skill_id, "selected": parent.selected,
+                "selected_revision": request.selected_revision,
+                "source_scope": {key: _thaw_json(value) for key, value in parent.scope.items()
+                    if key not in {"epoch_id", "history_version", "failure_id"}},
+                "origin": _thaw_json(parent.provenance.get("material_descriptor") or {}),
+                "segment_hash": segment.content_hash, "segment_coverage": _thaw_json(segment.coverage)})
+            cached = cache.get(cache_key)
+            if cached and cached.get("integrity") != _digest({key: value for key, value in cached.items() if key != "integrity"}):
+                cached = None
+            if cached:
+                parsed = (cached["summary"], cached["missing_details"])
+                attempt_records, wire_tokens = (), 0
+            else:
+                ensure_call_budget("map_source_segment")
+                parsed, attempt_records, wire_tokens = (
+                    await _invoke_hierarchical_operation(
+                        compactor=compactor,
+                        build_messages=build_context_segment_map_messages,
+                        payload=payload,
+                        parse_response=lambda value, p=parent, s=segment: (
+                            _parse_segment_map_response(
+                                value, request=request, parent=p, segment=s
+                            )
+                        ),
+                        request=request,
+                        estimator=estimator,
+                        operation="map_source_segment",
+                        max_attempts=max_attempts,
+                    )
                 )
-            )
             summary, missing_details = parsed
             span = _source_span(parent, segment)
             summary_id = "hmap-" + _digest({
@@ -2580,11 +2642,18 @@ async def _prepare_hierarchical_selector(
                     "HIERARCHICAL_MAP_SUMMARY_OVER_BUDGET",
                     segment.unit_id,
                 )
+            if not cached:
+                cache[cache_key] = {"summary": parsed[0], "missing_details": parsed[1],
+                    "source_archive_ref": request.source_archive_ref, "source_manifest_hash": request.source_manifest_hash,
+                    "source_unit_id": parent.unit_id, "segment_unit_id": segment.unit_id}
+                cache[cache_key]["integrity"] = _digest(cache[cache_key])
             nodes.append(node)
             segment_manifest.append({
                 "parent_source_unit_id": parent.unit_id,
                 "segment_source_unit": segment.to_dict(),
                 "model_visible": True,
+                "reused_validated_map": bool(cached),
+                "map_source_archive_ref": (cached or {}).get("source_archive_ref", request.source_archive_ref),
                 "wire_estimated_tokens": wire_tokens,
             })
             trace_calls.append({
@@ -2602,10 +2671,10 @@ async def _prepare_hierarchical_selector(
             })
 
     complete_leaf_coverage = _verify_complete_hierarchical_coverage(
-        nodes, request.source_manifest
+        nodes, request.source_manifest, [item.unit for item in exact_materials]
     )
     level = 0
-    selector_payload = _hierarchical_selector_payload(request, nodes)
+    selector_payload = _hierarchical_selector_payload(request, nodes, exact_materials)
     selector_messages = build_context_compaction_messages(selector_payload)
     selector_wire_tokens = measure_compactor_wire_tokens(
         selector_messages, policy=request.budget_policy, estimator=estimator
@@ -2697,7 +2766,7 @@ async def _prepare_hierarchical_selector(
                 "output_summary_id": output.summary_id,
                 "output_summary_hash": output.summary_hash,
             })
-        next_payload = _hierarchical_selector_payload(request, next_nodes)
+        next_payload = _hierarchical_selector_payload(request, next_nodes, exact_materials)
         next_messages = build_context_compaction_messages(next_payload)
         next_tokens = measure_compactor_wire_tokens(
             next_messages, policy=request.budget_policy, estimator=estimator
@@ -2744,6 +2813,7 @@ async def prepare_compaction(
     *,
     estimator: TokenEstimator | None = None,
     max_attempts: int = DEFAULT_COMPACTION_MAX_ATTEMPTS,
+    maintenance_state: dict[str, Any] | None = None,
 ) -> PreparedCompaction:
     """Run bounded model attempts against one frozen source manifest.
 
@@ -2765,7 +2835,74 @@ async def prepare_compaction(
     initial_budget = measure_uncompacted_request(
         request, resolver, estimator=active_estimator
     )
+    maintenance = maintenance_state if maintenance_state is not None else {}
+    maintenance.setdefault("calls", [])
+    maintenance.setdefault("charged_tokens", 0)
+    maintenance.setdefault("elapsed_seconds", 0.0)
+    call_limit = min(64, DEFAULT_HIERARCHICAL_MAX_MODEL_CALLS)
+    token_limit = 2 * request.budget_policy.effective_context_limit_tokens
+    wall_limit = 300.0
+    original_compactor = compactor
+    transaction_started = time.monotonic()
+    elapsed_before_transaction = maintenance["elapsed_seconds"]
+
+    async def budgeted_compactor(messages):
+        maintenance["elapsed_seconds"] = elapsed_before_transaction + time.monotonic() - transaction_started
+        estimate = measure_compactor_wire_tokens(messages, policy=request.budget_policy, estimator=active_estimator)
+        reservation = estimate + request.budget_policy.output_reserve_tokens
+        if (len(maintenance["calls"]) >= call_limit
+                or maintenance["charged_tokens"] + reservation > token_limit
+                or maintenance["elapsed_seconds"] >= wall_limit):
+            raise ContextCompactionCapacityError("COMPACTION_MAINTENANCE_BUDGET_EXHAUSTED", feedback={
+                "call_limit": call_limit, "token_limit": token_limit, "wall_seconds_limit": wall_limit,
+                "calls_used": len(maintenance["calls"]), "charged_tokens": maintenance["charged_tokens"]})
+        record = {"request_id": request.compaction_request_id, "wire_sha256": _digest(messages),
+                  "estimated_input_tokens": estimate, "reserved_tokens": reservation,
+                  "usage_status": "UNKNOWN", "status": "started"}
+        maintenance["calls"].append(record)
+        maintenance["charged_tokens"] += reservation
+        started = time.monotonic()
+        try:
+            response = await asyncio.wait_for(_await_if_needed(original_compactor(messages)),
+                timeout=max(0.001, wall_limit - maintenance["elapsed_seconds"]))
+            usage = getattr(response, "usage_metadata", None) or {}
+            metadata = getattr(response, "response_metadata", None) or {}
+            usage = usage or metadata.get("token_usage") or metadata.get("usage") or {}
+            total = usage.get("total_tokens")
+            if isinstance(total, int) and not isinstance(total, bool) and total > 0:
+                record.update(usage_status="known", total_tokens=total)
+                maintenance["charged_tokens"] += total - reservation
+            record["status"] = "returned"
+            return response
+        except BaseException as exc:
+            record["status"] = "cancelled" if isinstance(exc, asyncio.CancelledError) else "failed"
+            raise
+        finally:
+            elapsed = time.monotonic() - started
+            record["elapsed_seconds"] = elapsed
+            maintenance["elapsed_seconds"] = elapsed_before_transaction + time.monotonic() - transaction_started
+
+    compactor = budgeted_compactor
+    selected = tuple(RetainedSourceMaterial(unit=unit, body=resolve_source_body(unit, resolver))
+        for unit in request.source_manifest.units if unit.selected)
+    policy_plan = CompactionPlan(request.compaction_request_id, request.source_epoch_id,
+        request.source_manifest_hash, "normal", tuple(item.unit.unit_id for item in selected),
+        (), "", (), (), "selected exact capacity measurement")
+    selected_budget = measure_provider_input(_assembled_components(request, selected, policy_plan),
+        policy=request.budget_policy, estimator=active_estimator)
+    pressure = selected_budget.hard_block
+    protected = () if pressure else selected
+    if not pressure and all(unit.selected for unit in request.source_manifest.units):
+        raise ContextCompactionCapacityError("COMPACTION_NO_REDUCIBLE_SOURCE", feedback={
+            "reason": "all source units are protected and fit safely; permit only a measured safe fallback",
+            "exact_selected_estimated_tokens": selected_budget.estimated_input_tokens})
+    selection_policy = {"mode": "capacity_pressure" if pressure else "normal",
+        "exact_selected_estimated_tokens": selected_budget.estimated_input_tokens,
+        "safe_input_tokens": request.budget_policy.safe_input_tokens,
+        "must_retain_exact_unit_ids": [item.unit.unit_id for item in protected],
+        "reason": "exact_selected_exceeds_safe_input" if pressure else "exact_selected_fits_safe_input"}
     payload = request.to_prompt_payload(resolver)
+    payload["selection_policy"] = selection_policy
     first_wire = build_context_compaction_messages(payload)
     first_wire_tokens = measure_compactor_wire_tokens(
         first_wire,
@@ -2780,9 +2917,12 @@ async def prepare_compaction(
             compactor,
             estimator=active_estimator,
             max_attempts=attempts_limit,
+            exact_materials=protected,
+            maintenance_state=maintenance,
         )
+        payload["selection_policy"] = selection_policy
     attempt_records: list[CompactionAttemptRecord] = []
-    feedback: dict[str, Any] = {}
+    feedback: dict[str, Any] = {"selection_policy": selection_policy}
     for ordinal in range(1, attempts_limit + 1):
         messages = build_context_compaction_messages(
             payload,
@@ -2801,13 +2941,19 @@ async def prepare_compaction(
             )
             response = await _await_if_needed(compactor(messages))
             plan = parse_compaction_plan(response)
+            if set(selection_policy["must_retain_exact_unit_ids"]) - set(plan.retain_exact_unit_ids):
+                raise ContextCompactionError("COMPACTION_PROTECTED_SELECTION_CHANGED")
+            if plan.mode == "capacity_pressure" and not pressure:
+                raise ContextCompactionError("COMPACTION_CAPACITY_PRESSURE_NOT_ESTABLISHED")
             epoch = assemble_compacted_epoch(
                 plan, request, resolver, estimator=active_estimator
             )
         except asyncio.CancelledError:
             raise
         except ContextCompactionError as exc:
-            feedback = {
+            if exc.code == "COMPACTION_MAINTENANCE_BUDGET_EXHAUSTED":
+                raise
+            feedback = {"selection_policy": selection_policy,
                 "previous_attempt": ordinal,
                 "error_code": exc.code,
                 "detail": exc.detail,

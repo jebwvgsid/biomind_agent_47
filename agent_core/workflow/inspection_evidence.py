@@ -10,7 +10,7 @@ import json
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from agent_core.state_contract_store import StateContractStore, StateContractIntegrityError
 
@@ -415,18 +415,20 @@ def prepare_inspection_evidence(
             if kind not in {"execution", "script", "validation", "completion_report", "semantic_decision", "parser_receipt", "causal_history", "failure_log"}:
                 continue
             row = {"ref_id": ref, "object_kind": kind, "source_digest": entry.get("digest"), "source_scope": entry.get("scope")}
-            try:
-                reader = InspectionObjectReader(data_path, scope={k: entry["scope"].get(k, "") for k in INSPECTION_SCOPE_FIELDS})
-                row["body"] = reader.read_causal_parent_body(entry, entry.get("locator") or {},
-                    durable=durable, parent_ref=parent_ref, decision_id=decision)
-            except (ValueError, OSError) as exc:
-                row["unavailable_reason"] = str(getattr(exc, "code", "") or "PARENT_EVIDENCE_READ_FAILED")
+            # Keep the original object under its original digest/scope. The active
+            # history object grants bounded reads; it never copies a parent's body.
+            row["object_revision"] = (entry.get("scope") or {}).get("object_revision")
+            row["available"] = bool((entry.get("scope") or {}).get("readable"))
             inherited.append(row)
         objects.append(("causal_history", parent_ref, scoped(
             use="historical_diagnostic_only", formal_evidence_reuse=False,
-            original_failure=deepcopy(parent.get("failure_packet") or {}),
+            parent_packet_ref=parent_ref, parent_decision_ref=decision,
+            original_failure={key: deepcopy((parent.get("failure_packet") or {}).get(key))
+                for key in ("failure_id", "incident_id", "packet_version", "step_id", "attempt_ref", "action_ref", "source_outcome_ref")},
             parent_evidence=inherited,
-            prior_tool_results=deepcopy(receipt.get("causal_observation_receipts") or []),
+            prior_tool_results=[{key: deepcopy(row.get(key)) for key in
+                ("request_id", "tool", "source_ref", "content_sha256", "cursor", "truncated", "error")}
+                for row in receipt.get("causal_observation_receipts") or []],
             recovery_archive_ref=str(receipt.get("recovery_archive_ref") or ""))))
     store = StateContractStore(data_path, scope["task_id"])
     entries: dict[str, dict[str, Any]] = {}
@@ -494,6 +496,7 @@ class InspectionObjectReader:
     """Fixed store accessor.  No provider path, remote locator or raw task dump."""
     def __init__(self, data_path: str, *, scope: Mapping[str, Any]) -> None:
         self.scope = dict(scope)
+        self.data_path = str(data_path)
         self.store = StateContractStore(data_path, self.scope["task_id"])
 
     def _assert_current_authority(self, entry: Mapping[str, Any], locator: Mapping[str, Any]) -> None:
@@ -605,8 +608,37 @@ class InspectionObjectReader:
         _assert_body_scope(kind, body, self.scope)
         return deepcopy(dict(body))
 
-    def read(self, entry: Mapping[str, Any], locator: Mapping[str, Any], *, start_line: int = 1, end_line: int | None = None) -> dict[str, Any]:
+    def read(self, entry: Mapping[str, Any], locator: Mapping[str, Any], *, start_line: int = 1, end_line: int | None = None, causal_path: Sequence[str] = ()) -> dict[str, Any]:
         body = self.read_body(entry, locator)
+        if not isinstance(causal_path, (list, tuple)) or len(causal_path) > 8:
+            raise InspectionEvidenceError("CAUSAL_READ_PATH_INVALID")
+        # Each edge must be explicitly granted by the already verified parent
+        # object. The active outer descriptor was checked against current CAS state.
+        for ref in causal_path:
+            if not isinstance(ref, str) or (entry.get("scope") or {}).get("object_kind") != "causal_history":
+                raise InspectionEvidenceError("CAUSAL_READ_PATH_INVALID")
+            grants = [row for row in body.get("parent_evidence", ()) if row.get("ref_id") == ref]
+            if len(grants) != 1:
+                raise InspectionEvidenceError("CAUSAL_READ_REF_NOT_GRANTED")
+            grant = grants[0]
+            path = self.store.root.parent / "plan_state.json"
+            _assert_storage_path(self.store, path)
+            if path.stat().st_size > MAX_INSPECTION_AUTHORITY_BYTES:
+                raise InspectionEvidenceError("INSPECTION_AUTHORITY_SIZE_LIMIT")
+            durable = json.loads(path.read_text())
+            assert_current_inspection_scope(durable, self.scope)
+            saved = ((durable.get("task_state") or {}).get("inspection_ref_registry") or {}).get(ref) or {}
+            if (saved.get("digest") != grant.get("source_digest") or saved.get("scope") != grant.get("source_scope")
+                    or any(str(saved.get(key) or "") != str(self.scope.get(key) or "")
+                        for key in ("task_id", "plan_id", "step_id"))
+                    or (saved.get("scope") or {}).get("plan_version") != self.scope.get("plan_version")):
+                raise InspectionEvidenceError("CAUSAL_READ_REF_SCOPE_MISMATCH")
+            reader = InspectionObjectReader(self.data_path,
+                scope={key: saved["scope"].get(key, "") for key in INSPECTION_SCOPE_FIELDS})
+            # Use the same task store; only the verified historical scope changes.
+            reader.store = self.store
+            body = reader._read_verified_body(saved, saved.get("locator") or {})
+            entry = saved
         meta = dict(entry["scope"])
         kind = str(meta["object_kind"])
         try:
@@ -650,7 +682,8 @@ class InspectionObjectReader:
         return {
             "tool": "evidence.read", "source_ref": entry["ref_id"],
             "source_object_id": meta["source_object_id"], "object_kind": kind,
-            "object_revision": 1, "digest": entry["digest"], "scope": dict(self.scope),
+            "object_revision": 1, "digest": entry["digest"], "scope": {key: meta.get(key, "") for key in INSPECTION_SCOPE_FIELDS},
+            "causal_path": list(causal_path), "authority": "historical_diagnostic_only" if causal_path else "current_inspection",
             "content": "\n".join(selected), "format": "application/json",
             "representation": representation,
             "start_line": start, "end_line": actual_end, "total_lines": len(lines),

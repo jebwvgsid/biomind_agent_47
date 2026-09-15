@@ -91,6 +91,9 @@ Evidence rules:
 - readable=false refs are source metadata only. Do not retry them as if they provided an alternative readable object; use an explicitly offered readable handle.
 - When built-in readers cannot represent an authorized object, run_diagnostic_probe requests one bounded diagnostic operation declared in the selected Skill; it returns to this investigation and never completes the main step. Unsupported operation is different from unauthorized access.
 - Never rerun a scientific command to inspect its evidence. Reading a receipt does not approve completion; revalidate through the existing typed directive.
+- Candidate binding value/type/source, Commit acceptance, deterministic gate and model concerns are separate facts. A candidate value absent from a display is not absent from its immutable action. Use the declared upstream Commit/predicate references and their stated limits; contig-name compatibility does not establish assembly identity. A task-local database ID is not an assembly version assertion.
+- For inspection_required, first read the exact missing evidence or CompletionReport. If execution already occurred and only projection, visibility, or the remaining review/Commit is missing, use revalidate with the original attempt's evidence refs. retry_step must explain in instruction the actual defect, its evidence and the facts the new action will change. Repeating the same action cannot fix a report projection. Real configuration/layout defects still require a newly approved corrected action.
+- Resolve layout concerns using the approved workspace W, the explicit contract data root D, and recorded configuration/locations. W may itself end in data; W/data is not wrong merely because data occurs twice. Do not select an alternative existing directory or alter the approved root. Missing reads remain unknown; a concern is not an attester-confirmed failure.
 - A valid blocked/partial effect publication records observed facts, not completed scientific outputs. Keep process returncode, missing capability facts and any publication error distinct. When a required capability is confirmed missing and there is no new verified compatible implementation, choose blocked or ask_user rather than regenerate the same dependency check. Never fabricate an artifact path to satisfy a success obligation; dependent steps still require verified inputs. Any independent work must already have an approved Plan/directive scope.
 - When a current result has the right sample, stage, method and content but a different name, use this existing round to choose exact observed candidates; do not infer equivalence from name, suffix or format alone. If evidence is insufficient, inspect it first. For a model_selectable result, submit revalidate with result_selections [{artifact_id, observed_path, operation:"accept_actual"}]. For an exact required delivery name, submit organize_result with operation:"copy_to_exact" for each chosen result. Target paths, machine identities and the local command derive from the approved result contract; never supply code or invented paths. Include related index/sidecar results explicitly so consumers remain consistent. This only proposes local acceptance/copy and revalidation, not a new Plan or rerun of the main computation. Wrong sample, stage, parameters or insufficient evidence cannot be fixed by renaming.
 - If authorized evidence cannot resolve the concern, state what is known, what reads failed, and what remains unresolved. Tool errors or exhausted budgets do not prove a missing runtime dependency or a contig mismatch.
@@ -469,9 +472,10 @@ def recovery_tool_schemas() -> list[dict[str, Any]]:
             "content_hash": {"type": "string"},
             "coverage": {"type": "object"},
         }),
-        ("evidence_read", "Read bounded evidence through an opaque evidence ref. Follow the returned cursor. Oversized JSON strings use json_chunk_envelope_v1: concatenate content_chunks and verify body_json_sha256 before JSON decoding; the same scope and reader limits apply.", {
+        ("evidence_read", "Read bounded evidence through an opaque evidence ref. Optional causal_path follows only parent ref IDs granted by a causal_history object; historical diagnosis never accepts current effects. Follow the returned cursor. Oversized JSON strings use json_chunk_envelope_v1: concatenate content_chunks and verify body_json_sha256 before JSON decoding; the same scope and reader limits apply.", {
             "evidence_ref": {"type": "string"}, "start_line": {"type": "integer"},
             "end_line": {"type": "integer"},
+            "causal_path": {"type": "array", "items": {"type": "string"}, "maxItems": 8},
         }),
         ("evidence_glob", "List bounded evidence names through an opaque scope ref.", {"scope_ref": {"type": "string"}}),
     )
@@ -863,10 +867,10 @@ class RecoveryAgentLoop:
         except (asyncio.CancelledError, KeyboardInterrupt):
             raise
         except Exception as exc:
-            raise RecoveryAgentError(
-                "RECOVERY_EVENT_PERSISTENCE_FAILED",
-                f"{event}: {type(exc).__name__}",
-            ) from exc
+            # Tool/response receipts have their own persistence owners. A UI
+            # observation failure must not abort the admitted business boundary.
+            import logging
+            logging.getLogger(__name__).warning("Recovery observation sink failed: event=%s error=%s", event, type(exc).__name__)
 
     async def _model_invoke(
         self,
