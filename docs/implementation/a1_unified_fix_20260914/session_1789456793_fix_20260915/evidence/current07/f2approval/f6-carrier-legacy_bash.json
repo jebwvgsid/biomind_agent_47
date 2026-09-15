@@ -1,0 +1,324 @@
+{
+  "carrier": "legacy_bash",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 1,
+    "recovery": 0
+  },
+  "candidate": [
+    {
+      "carrier": "legacy_bash",
+      "public_protocol": "{\"action_example\": {\"payload\": \"<python>\\n# BIOMIND_EFFECT_HELPER\\ndef perform_approved_operation(operation, resources):\\n    # Implement the approved scientific calculation; do not infer facts from paths.\\n    raise RuntimeError('Admission example only: the approved scientific operation is not implemented')\\n\\nactual_facts = perform_approved_operation('inspect', {'artifacts': {'input.annotation_gtf': {'direction': 'input', 'path': '/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/新注释.gtf'}, 'input.reference_fasta': {'direction': 'input', 'path': '/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/新参考.fa'}, 'input.variant_vcf': {'direction': 'input', 'path': '/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/两样本.vcf'}}, 'runtime': {}, 'workspaces': {}})\\nprint(emit_effect_evidence(actual_facts))\\n</python>\", \"public_message\": \"候选已形成，等待检查与审批。\", \"response_type\": \"biomind_generate_display_v1\"}, \"blocked_example\": {\"reason\": \"The current rejection remains unresolved after the attempted correction. No new evidence supports another candidate; the unresolved requirement must be checked before continuing. This does not complete the scientific step.\", \"type\": \"blocked\"}, \"example_scope\": \"The complete action uses current published operation/resources and only determinate binding values for admission. It intentionally fails without publishing facts until the MODEL implements the approved scientific calculation. Admission is not scientific completion. Unknown required values produce a complete blocked alternative. The separate synthetic demo is never a current-step action or observation.\", \"facts_example\": {\"produces_observations\": {\"validation_observation\": {\"value\": \"actual observed value\"}}}, \"facts_example_scope\": \"Non-executable shape template only. Placeholder values are not measured facts and must not be published.\", \"facts_rule\": \"action JSON precedes approval; categorized actual_facts is helper input inside the Python process; BIOMIND_EFFECT_EVIDENCE_JSON is execution stdout. Workspace mutations and produced binding acceptance belong to their attester and Commit, not this serializer.\", \"feedback_rule\": \"Correct the precise current representation or binding error in this node. If there is no new basis after attempted corrections, submit blocked before the remaining budget is exhausted. Changing an error code or script alone proves neither progress nor success.\", \"mode\": \"script_block_v1\", \"synthetic_protocol_demo\": {\"code\": \"# BIOMIND_EFFECT_HELPER\\nitems = [item for item in [1, 2, 3] if item < 0]\\nobserved = bool(items)\\nprint(emit_effect_evidence({'produces_observations': {'synthetic_demo_matches': {'value': observed, 'items': items}}}))\\n\", \"helper_scope\": \"Materialize this demonstration using only its own step declarations. Actual execution computes False and an empty list; these are not current-step observations.\", \"scope\": \"Standalone synthetic protocol demonstration only. This is NOT an action for the current step; never publish this identity under the current declarations.\", \"step\": {\"produces_observations\": [{\"evidence_contract\": {\"required_fields\": [\"value\", \"items\"]}, \"identity\": \"synthetic_demo_matches\"}], \"step_id\": \"synthetic-protocol-demo\"}}, \"top_level\": \"Return one supported executable block/display envelope or the complete blocked JSON.\"}",
+      "raw": "<shell>\nset -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'PY'\n# BIOMIND_EFFECT_HELPER\nfrom pathlib import Path\nimport sys\nv={x.split(\"\\t\")[0] for x in Path('/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/两样本.vcf').read_text().splitlines() if x and not x.startswith(\"#\")}\nr={x[1:].split()[0] for x in Path('/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/新参考.fa').read_text().splitlines() if x.startswith(\">\")}\ng={x.split(\"\\t\")[0] for x in Path('/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/新注释.gtf').read_text().splitlines() if x and not x.startswith(\"#\")}\nobserved=bool(v) and v.issubset(r) and bool(v & g)\nprint(\"ACTUAL_INTERPRETER=\"+sys.executable)\nprint(emit_effect_evidence({'produces_observations':{'validation_observation':{'value':observed}}}))\nPY\n</shell>",
+      "unexpanded_source_sha256": "65f0b6646cc4f3a8111a7771cc2adcbcc3dd058f8a0b2fd76ed02ef8f6c6b073"
+    }
+  ],
+  "execution": [
+    {
+      "operation": "inspect",
+      "attempt_id": "attempt_c88a36693ed9603bc850",
+      "rc": 0,
+      "stdout": "ACTUAL_INTERPRETER=/public/home/liusiqi/anaconda3/envs/biomind/bin/python\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":false}]}\n",
+      "stderr": "",
+      "approved_sha256": "a3866dcb1ad21a27f3bf81c63db0639db75e0e24255a987868bacf50f32dead7",
+      "executed_sha256": "8a24b2169e0b628eb72b922248540767bf61d850396c8b0e07ee15fb24233e28",
+      "approved_code": "\nset -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'PY'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"validation_observation\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nfrom pathlib import Path\nimport sys\nv={x.split(\"\\t\")[0] for x in Path('/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/两样本.vcf').read_text().splitlines() if x and not x.startswith(\"#\")}\nr={x[1:].split()[0] for x in Path('/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/新参考.fa').read_text().splitlines() if x.startswith(\">\")}\ng={x.split(\"\\t\")[0] for x in Path('/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/中文 两样本/输入 新构造/新注释.gtf').read_text().splitlines() if x and not x.startswith(\"#\")}\nobserved=bool(v) and v.issubset(r) and bool(v & g)\nprint(\"ACTUAL_INTERPRETER=\"+sys.executable)\nprint(emit_effect_evidence({'produces_observations':{'validation_observation':{'value':observed}}}))\nPY\n",
+      "wrapper": "#!/bin/bash\nset +e\n: > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/stdout.log\n: > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/stderr.log\nprintf 'runner=%s script=%s\\n' '/usr/bin/bash -o pipefail' /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/approved.sh > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/command_trace.log\n/usr/bin/bash -o pipefail /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/approved.sh > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/stdout.log 2> /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/stderr.log\nrc=$?\nprintf 'returncode=%s\\n' \"$rc\" >> /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/command_trace.log\nfinished_at=$(date -Iseconds 2>/dev/null || date)\nprintf '{\"attempt_id\":\"attempt_c88a36693ed9603bc850\",\"returncode\":%s,\"finished_at\":\"%s\"}\\n' \"$rc\" \"$finished_at\" > '/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/exit_status.json.tmp.$$'\nmv '/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/exit_status.json.tmp.$$' /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/exit_status.json\nexit \"$rc\"\n",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {},
+      "approved_path": "/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-8ju_03y0/task_outputs/fix-f6-false_diagnostic/attempts/attempt_c88a36693ed9603bc850/approved.sh",
+      "declared_environment": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/biomind/bin:/usr/bin:/bin",
+        "LC_ALL": "C.UTF-8",
+        "PYTHONNOUSERSITE": "1"
+      }
+    }
+  ],
+  "commit": [
+    {
+      "commit_step_outcome": {
+        "schema_version": 1,
+        "type": "plan_complete",
+        "summary": "Verified final step committed; final audit is required.",
+        "scope": {
+          "task_id": "fix-f6-false_diagnostic"
+        },
+        "payload": {
+          "commit_id": "commit-step-516bc64162036ae11490f4e5",
+          "receipt": "typed-step-commit:commit-step-516bc64162036ae11490f4e5",
+          "before_state_generation": 33,
+          "after_state_generation": 34,
+          "completed_step_id": "check_contig_compatibility",
+          "accepted_binding_refs": [],
+          "accepted_artifact_refs": [],
+          "accepted_effect_refs": [
+            "validation_observation",
+            "attempt_c88a36693ed9603bc850",
+            "validation-6f91379e83fa9eb857c8"
+          ],
+          "completion_report_ref": "completion-report-61434effb37454b9de2abcec457389dfd59c71041b40aacae0565df116d958ae",
+          "semantic_decision_ref": "semantic-decision-6454b43b349e422471a288ea698ef2342cf25ebfd4f3a2141b6aeb264e999dac",
+          "semantic_consumption_ref": "completion-consumption-737e80968981310377d3cee1811fd64c3635f28531d162a6ee22dae0a5f99c1d"
+        },
+        "evidence_refs": [
+          "validation-6f91379e83fa9eb857c8",
+          "completion-report-61434effb37454b9de2abcec457389dfd59c71041b40aacae0565df116d958ae",
+          "semantic-decision-6454b43b349e422471a288ea698ef2342cf25ebfd4f3a2141b6aeb264e999dac",
+          "completion-consumption-737e80968981310377d3cee1811fd64c3635f28531d162a6ee22dae0a5f99c1d"
+        ]
+      },
+      "current_step_id": "",
+      "plan_id": "plan_1943dc53ce2fb8045243",
+      "plan_version": "plan_v1",
+      "recovery_outcome": {},
+      "managed_run_boundary": {
+        "node": "commit_step",
+        "field": "commit_step_outcome",
+        "outcome": {
+          "schema_version": 1,
+          "type": "plan_complete",
+          "summary": "Verified final step committed; final audit is required.",
+          "scope": {
+            "task_id": "fix-f6-false_diagnostic"
+          },
+          "payload": {
+            "commit_id": "commit-step-516bc64162036ae11490f4e5",
+            "receipt": "typed-step-commit:commit-step-516bc64162036ae11490f4e5",
+            "before_state_generation": 33,
+            "after_state_generation": 34,
+            "completed_step_id": "check_contig_compatibility",
+            "accepted_binding_refs": [],
+            "accepted_artifact_refs": [],
+            "accepted_effect_refs": [
+              "validation_observation",
+              "attempt_c88a36693ed9603bc850",
+              "validation-6f91379e83fa9eb857c8"
+            ],
+            "completion_report_ref": "completion-report-61434effb37454b9de2abcec457389dfd59c71041b40aacae0565df116d958ae",
+            "semantic_decision_ref": "semantic-decision-6454b43b349e422471a288ea698ef2342cf25ebfd4f3a2141b6aeb264e999dac",
+            "semantic_consumption_ref": "completion-consumption-737e80968981310377d3cee1811fd64c3635f28531d162a6ee22dae0a5f99c1d"
+          },
+          "evidence_refs": [
+            "validation-6f91379e83fa9eb857c8",
+            "completion-report-61434effb37454b9de2abcec457389dfd59c71041b40aacae0565df116d958ae",
+            "semantic-decision-6454b43b349e422471a288ea698ef2342cf25ebfd4f3a2141b6aeb264e999dac",
+            "completion-consumption-737e80968981310377d3cee1811fd64c3635f28531d162a6ee22dae0a5f99c1d"
+          ]
+        },
+        "scope": {
+          "task_id": "fix-f6-false_diagnostic",
+          "plan_id": "plan_1943dc53ce2fb8045243",
+          "plan_version": "plan_v1",
+          "current_step_id": "check_contig_compatibility"
+        }
+      }
+    }
+  ],
+  "final_audit": {
+    "schema_version": 1,
+    "type": "task_verified",
+    "summary": "Current execution, verification, and final CompletionGate evidence were atomically accepted.",
+    "scope": {
+      "task_id": "fix-f6-false_diagnostic"
+    },
+    "payload": {
+      "validation_evidence": {
+        "schema_version": 1,
+        "validation_id": "validation-6f91379e83fa9eb857c8",
+        "task_id": "fix-f6-false_diagnostic",
+        "step_id": "check_contig_compatibility",
+        "action_id": "action_b7c2240d585869d4",
+        "attempt_id": "attempt_c88a36693ed9603bc850",
+        "status": "VALID",
+        "errors": [],
+        "warnings": [],
+        "info": [
+          "Exit code 0 ✓"
+        ],
+        "returncode_check": {
+          "returncode": 0,
+          "passed": true,
+          "source": "execution_evidence",
+          "process_signal": null,
+          "timeout": false,
+          "oom": false,
+          "executor_exception": ""
+        },
+        "manifest_results": [],
+        "artifact_results": [],
+        "success_criteria_results": [],
+        "effect_results": {
+          "schema_version": 1,
+          "step_id": "check_contig_compatibility",
+          "action_id": "action_b7c2240d585869d4",
+          "attempt_id": "attempt_c88a36693ed9603bc850",
+          "declared_step_effect": {
+            "schema_version": 1,
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "identity": "validation_observation",
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                }
+              }
+            ],
+            "workspace_mutations": [],
+            "explicit_side_effects": []
+          },
+          "parser_receipt": {
+            "schema_version": 1,
+            "parser_id": "biomind.structured_effect_emission.v1",
+            "raw_stdout_sha256": "c29495fdbfce899d47b6b941fc974fc4d35c76e3a52c44802c5480f0aa1b0a84",
+            "emission_count": 1,
+            "status": "parsed",
+            "issues": [],
+            "emission_contract": {
+              "schema_version": 1,
+              "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+              "approved_observation_ids": [
+                "validation_observation"
+              ],
+              "examples": [
+                "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+              ],
+              "rules": [
+                "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+                "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+                "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+                "Reader errors and sampling limits do not establish absence or full scientific validity."
+              ]
+            },
+            "scope": {
+              "task_id": "fix-f6-false_diagnostic",
+              "plan_id": "plan_1943dc53ce2fb8045243",
+              "plan_version": "plan_v1",
+              "step_id": "check_contig_compatibility",
+              "action_id": "action_b7c2240d585869d4",
+              "attempt_id": "attempt_c88a36693ed9603bc850"
+            }
+          },
+          "produces_artifacts": [],
+          "produces_bindings": [],
+          "produces_observations": [
+            {
+              "identity": "validation_observation",
+              "value": false
+            }
+          ],
+          "workspace_mutations": [],
+          "workspace_mutation_claims": [],
+          "workspace_mutation_receipt_validations": [],
+          "explicit_side_effects": [],
+          "status": "validated"
+        },
+        "scientific_checks": [
+          {
+            "source": "llm_advisory",
+            "assessment": "ACCEPTABLE",
+            "deterministic_status_unchanged": true
+          },
+          {
+            "source": "final_audit",
+            "assessment": "VALID",
+            "deterministic_status_unchanged": true
+          }
+        ],
+        "recoverability_hints": [],
+        "llm_advisory": {
+          "assessment": "ACCEPTABLE",
+          "concerns": [],
+          "confidence": 0.9,
+          "disposition": "completion_accepted",
+          "issue_dispositions": [
+            {
+              "disposition": "completion_accepted",
+              "explanation": "Only actual synthetic protocol facts are accepted.",
+              "issue_id": "validation-6f91379e83fa9eb857c8"
+            },
+            {
+              "disposition": "completion_accepted",
+              "explanation": "Only actual synthetic protocol facts are accepted.",
+              "issue_id": "predicate-result-4aebecba36eff47a97692805656bf9b1198749affb1fd28375ccc48bb7c7ffb9"
+            }
+          ],
+          "parse_status": "valid",
+          "report_id": "completion-report-f9a64771af0452f59deed86991125840bc421dec3212457f2f2c464ed290ff46",
+          "review_policy_receipt": {
+            "assessment_id": "assessment:sha256:bd79eea0bc9e7bcb94c55d5a63c7110a56564e6297ab7f4c877d0f52ca28d0b2",
+            "corrections_authorized": 0,
+            "policy": {
+              "max_protocol_corrections": 2,
+              "max_requests": 3,
+              "source": "semantic_completion.REVIEWER_PROTOCOL_CORRECTIONS",
+              "version": "semantic-review-correction-v1"
+            },
+            "producer": "semantic-review-correction-v1",
+            "remaining_requests": 2,
+            "requests_reserved": 1,
+            "responses_received": 1,
+            "scope": {
+              "action_id": "action_b7c2240d585869d4",
+              "attempt_id": "attempt_c88a36693ed9603bc850",
+              "plan_id": "plan_1943dc53ce2fb8045243",
+              "plan_version": "plan_v1",
+              "step_id": "check_contig_compatibility",
+              "task_id": "fix-f6-false_diagnostic"
+            }
+          },
+          "suggestions": []
+        },
+        "llm_advisory_conflict": false,
+        "evidence_complete": true,
+        "evidence_source": "execution_evidence",
+        "migration_source": "",
+        "migration_warnings": [],
+        "command_role": "required_validation",
+        "validator_version": "supervisor-validator-v1",
+        "validation_duration": 0.516533,
+        "created_at": "2026-09-15T09:04:31+00:00"
+      },
+      "completion_gate": {
+        "passed": true,
+        "verdict": "PASS",
+        "message": "",
+        "feedback": "",
+        "missing_artifacts": [],
+        "checked_artifacts": [],
+        "classification": "passed",
+        "reconciliation": {},
+        "stale_artifacts": [],
+        "invalid_artifacts": [],
+        "attempt_ids": [],
+        "artifact_version_ids": [],
+        "validation_ids": [],
+        "evidence_refs": [],
+        "declared_effects": {},
+        "satisfied_effects": {},
+        "missing_effects": {},
+        "unexpected_effects": {},
+        "invalid_effects": {},
+        "plan_version": ""
+      },
+      "terminal_receipt": "typed-task-completion:final-audit-3bc1a14bb0e92af772257835"
+    },
+    "evidence_refs": [
+      "validation-6f91379e83fa9eb857c8",
+      "validation-6f91379e83fa9eb857c8",
+      "commit-step-516bc64162036ae11490f4e5"
+    ]
+  },
+  "test_process_environment_declared_before_graph": {
+    "PATH": "/public/home/liusiqi/anaconda3/envs/biomind/bin:/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONNOUSERSITE": "1"
+  },
+  "candidate_environment": "No provider env property or binding is declared; only the predeclared isolated external process context is supplied.",
+  "scope": "One diagnostic operation with formal handoff/Plan/approval/helper/executor/effect/gate/Commit; no physical report requested.",
+  "legacy_execution_policy": "Production executes approved script file with non-login runner; adapter argv remains unmodified metadata."
+}

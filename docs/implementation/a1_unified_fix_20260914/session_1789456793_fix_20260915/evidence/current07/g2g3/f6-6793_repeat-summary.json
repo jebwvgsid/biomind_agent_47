@@ -1,0 +1,530 @@
+{
+  "mode": "6793_repeat",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 6,
+    "reviewer": 2,
+    "recovery": 4
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "recovery",
+    "generate",
+    "generate"
+  ],
+  "executions": [
+    {
+      "operation": "check_contig_compatibility",
+      "attempt_id": "attempt_7228986d7f362e0d0c65",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":true}]}\n",
+      "stderr": "",
+      "approved_sha256": "4cda02bbf5ad9dd7966511ce2c8901117241dd6164965a5b6968437a731ad1ed",
+      "executed_sha256": "0210f5c3d78c60e4846c2314413eebe3391e362ec205396beb3d12ae4388736f",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    },
+    {
+      "operation": "prepare_database",
+      "attempt_id": "attempt_9ff634addca4b90bcad7",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"plan-artifact-8eaf842d8f7958809ad79561\",\"path\":\"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-8eaf842d8f7958809ad79561\"}],\"produces_observations\":[{\"identity\":\"database_layout_prepared\",\"value\":true}]}\n",
+      "stderr": "",
+      "approved_sha256": "20f2ce89901ef1ac9b6c2cc432d4ffa3b9cfa64641a1b5ad4635bb321ad2cfe4",
+      "executed_sha256": "61078063beeb6f101597bca4d59d1a0042376d99105a70af19de3af72faf126f",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      }
+    },
+    {
+      "operation": "build_database",
+      "attempt_id": "attempt_28f622a2be49cf78ad1b",
+      "rc": 0,
+      "stdout": "{\"inner_returncode\": 255, \"actual_argv\": [\"/public/home/liusiqi/anaconda3/envs/biomind/bin/python\", \"-I\", \"-S\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_java\", \"-jar\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_snpeff.jar\", \"build\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e\", \"new_fixture_v2\", \"--synthetic-fail\"], \"build_log\": \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e/data/new_fixture_v2/build.log\", \"predictor_exists\": false}\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"snpeff_database_ready\",\"value\":false}]}\n",
+      "stderr": "",
+      "approved_sha256": "43ac83a4c7e2613b70bce567051c5683804c4a27a2810044bb39c5b1330b08ae",
+      "executed_sha256": "f871c846ad7b718544be706def0c1278681036f191f76d80bd1cf7b3fb6eb0a5",
+      "actual_workspace_before": {
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      },
+      "actual_workspace_after": {
+        "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+        "data/new_fixture_v2/build.log": "daa59796e3e5b58c6bcbb8ba53d9cb0dc5162c6f0564755fae69b1b7fea21e84",
+        "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+      }
+    }
+  ],
+  "commit_outcomes": [
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-6793_repeat"
+      },
+      "payload": {
+        "commit_id": "commit-step-2c0364601c2b1afd1380e299",
+        "receipt": "typed-step-commit:commit-step-2c0364601c2b1afd1380e299",
+        "before_state_generation": 33,
+        "after_state_generation": 34,
+        "completed_step_id": "check_contig_compatibility",
+        "accepted_binding_refs": [],
+        "accepted_artifact_refs": [],
+        "accepted_effect_refs": [
+          "contigs_compatible",
+          "attempt_7228986d7f362e0d0c65",
+          "validation-1710af2581ce65a55cb0"
+        ],
+        "completion_report_ref": "completion-report-f819ff0a7e7dfb476e2bd97e26ad20e3c1a2ae24a7e8062cdba5a96152899013",
+        "semantic_decision_ref": "semantic-decision-df2f8f861abc69693b0975a652ddc1c0af19649b6f8e2ade25381ade31922dc9",
+        "semantic_consumption_ref": "completion-consumption-ad3df3ff65d0896fd1f4b080376adc42faeda13a5ee632475b93e167bbe06a62",
+        "successor_step_id": "prepare_database"
+      },
+      "evidence_refs": [
+        "validation-1710af2581ce65a55cb0",
+        "completion-report-f819ff0a7e7dfb476e2bd97e26ad20e3c1a2ae24a7e8062cdba5a96152899013",
+        "semantic-decision-df2f8f861abc69693b0975a652ddc1c0af19649b6f8e2ade25381ade31922dc9",
+        "completion-consumption-ad3df3ff65d0896fd1f4b080376adc42faeda13a5ee632475b93e167bbe06a62"
+      ]
+    },
+    {
+      "schema_version": 1,
+      "type": "next_step_ready",
+      "summary": "Verified step committed and one successor activated.",
+      "scope": {
+        "task_id": "fix-f6-6793_repeat"
+      },
+      "payload": {
+        "commit_id": "commit-step-7083edd29aa0d3a226d0e6d9",
+        "receipt": "typed-step-commit:commit-step-7083edd29aa0d3a226d0e6d9",
+        "before_state_generation": 53,
+        "after_state_generation": 54,
+        "completed_step_id": "prepare_database",
+        "accepted_binding_refs": [
+          "plan-binding-2babd6fe5dd9788c6af5",
+          "plan-binding-f9d8f87f502c82e09dfa"
+        ],
+        "accepted_artifact_refs": [
+          "artifact_15497e8795ce38965825@attempt_9ff634addca4b90bcad7"
+        ],
+        "accepted_effect_refs": [
+          "genome_version",
+          "snpeff_db",
+          "database_layout_prepared",
+          "workspace-receipt-4a57b76f46465f82a04c68fe",
+          "attempt_9ff634addca4b90bcad7",
+          "validation-632f090618fb72248a00",
+          "action_e1b6f7273c8025ff",
+          "artifact_15497e8795ce38965825@attempt_9ff634addca4b90bcad7",
+          "plan-artifact-8eaf842d8f7958809ad79561"
+        ],
+        "completion_report_ref": "completion-report-cc38447a9978b2411e18437a6087298cb4e667ace8ee4b1068e1c0cd525449f1",
+        "semantic_decision_ref": "semantic-decision-c5ea192b43fe2813b3da4977b1361bc68d3ec110aea3fe2fda56348ceb7b325f",
+        "semantic_consumption_ref": "completion-consumption-0706b7139ef216b25e391f02c00e8a5929ed3b857fdb957aabc6479271bb9558",
+        "successor_step_id": "build_database"
+      },
+      "evidence_refs": [
+        "validation-632f090618fb72248a00",
+        "completion-report-cc38447a9978b2411e18437a6087298cb4e667ace8ee4b1068e1c0cd525449f1",
+        "semantic-decision-c5ea192b43fe2813b3da4977b1361bc68d3ec110aea3fe2fda56348ceb7b325f",
+        "completion-consumption-0706b7139ef216b25e391f02c00e8a5929ed3b857fdb957aabc6479271bb9558"
+      ]
+    }
+  ],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/f6-6793_repeat-full.json.gz",
+    "sha256": "8efe25d18b4df4b4d73bae4c3bcc2f53483d389183b09221b3a758f2560fee1a",
+    "raw_sha256": "eef9d326b79e3e7e3b8b4e5b2e0686335e17cce9dab59c03bda1e2b339736598"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 12,
+    "finalize": 0,
+    "prepare": 7,
+    "summary": 0,
+    "terminal_summary_provider": 1
+  },
+  "terminal": {
+    "status": "failed",
+    "terminal_diagnostic": {
+      "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+      "stage": "generate",
+      "error_owner": "generate",
+      "reason": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv。\n\n当前步骤：build_database；执行 attempt：。\n\n末次候选尚未执行；本轮已有真实因果执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：A launched command failed after immutable evidence persistence.。\n\n实际读取失败：step.inspect [wrong-kind-log] INSPECTION_REF_KIND_MISMATCH (ref=inspection:sha256:e27c0a28a666d2019ee3a0cd6141e49e741b9e3f00b156b2316794f9208e573a): {\"actual_kind\":\"evidence\",\"allowed_tools\":[\"evidence.read\"],\"declared_readable_candidates\":[],\"expected_kinds\":[\"phase_archive\"],\"ref_id\":\"inspection:sha256:e27c0a28a666d2019ee3a0cd6141e49e741b9e3f00b156b2316794f9208e573a\"}。\n\n停止原因：GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：build_database=failed；annotate_variants=pending；summarize_ann=pending；finalize_outputs=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：execute；原始错误：EXECUTION_FAILED；停止阶段：generate。\n\n最近因果执行：attempt=attempt_28f622a2be49cf78ad1b；rc=0；步骤=build_database。已消费的证据只用于说明，未重新授权执行。\n\n因果执行 stdout（含内部进程报告；外层 rc0 不代表步骤完成）：{\"inner_returncode\": 255, \"actual_argv\": [\"/public/home/liusiqi/anaconda3/envs/biomind/bin/python\", \"-I\", \"-S\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_java\", \"-jar\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_snpeff.jar\", \"build\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e\", \"new_fixture_v2\", \"--synthetic-fail\"], \"build_log\": \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e/data/new_fixture_v2/build.log\", \"predictor_exists\": false}\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"snpeff_database_ready\",\"value\":false}]}\n\n\n末次候选：{\"attempt_id\": \"\", \"execution_started\": false, \"approved\": false, \"candidate_fingerprint\": \"f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b\", \"candidate_event_id\": \"generate-candidate:sha256:ae62f31ef90577973821e8ca6c2b58b6169415ba0b77a812581b94ff64b14fd6\", \"cause_code\": \"EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE\", \"correction_category\": \"representation\"}\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 1, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\n当前故障 attempt：attempt_28f622a2be49cf78ad1b；rc=0；正式排放数=1；观测记录数=0；see formal verification/commit\n\n候选有效性=UNKNOWN；进程成功=True；正式证据满足=UNKNOWN；步骤完成=False\n\n末次候选错误：EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE；Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.\n\n已有正式提交：check_contig_compatibility (typed-step-commit:commit-step-2c0364601c2b1afd1380e299)；prepare_database (typed-step-commit:commit-step-7083edd29aa0d3a226d0e6d9)\n\n停止策略：repair_no_progress；修正记录：{\"version\": \"candidate-corrections-v2\", \"scope\": {\"task_id\": \"fix-f6-6793_repeat\", \"task_revision\": 1, \"plan_id\": \"plan_eb515470b3951eef4279\", \"plan_version\": \"plan_v1\", \"plan_revision\": 1, \"step_id\": \"build_database\"}, \"limit\": 4, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"categories_share_total\": true, \"rejection_ordinal\": 3, \"corrections_authorized_before\": 2, \"corrections_observed_before_rejection\": 2, \"remaining_before_authorization\": 2, \"category\": \"representation\", \"progress_assessment\": {\"schema_version\": 1, \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"basis\": \"recurrent_rejected_candidate\", \"comparison_fingerprint\": \"043867880d30fc8c97f73bb773b70fd7c072d7792589a27042b18ff13b61bc22\", \"validation_signature\": \"42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b\", \"comparison_context_fingerprint\": \"548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820\", \"representation_targets\": [\"action_schema_complete\", \"action_type\", \"execute.argv_shape\", \"execute.env_keys\", \"execute.env_object\", \"execute.env_values\", \"execute.executable_body\", \"execute.outputs_shape\", \"json_object\"], \"binding_facts\": [\"binding_env\", \"consumed_bindings.genome_version\", \"consumed_bindings.snpeff_db\", \"operation\"], \"binding_axis\": \"evaluated\", \"newly_satisfied_targets\": [], \"resolved_targets\": [], \"pending_targets\": [\"$.code|argv\"], \"scientific_success\": \"not_assessed\"}, \"correction_authorized\": false, \"corrections_authorized\": 2, \"remaining\": 2, \"repair_ordinal\": 3, \"repair_limit\": 4, \"event_id\": \"candidate-rejection:d77563c7ad2f1f5b215ffe1a\", \"correction_category\": \"representation\"}\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"attempt_28f622a2be49cf78ad1b\", \"concerns\": [], \"error_code\": \"EXECUTION_FAILED\", \"evidence_refs\": [\"exec-attempt_28f622a2be49cf78ad1b\"], \"failure_id\": \"failure-dbc667cc7ad62c42ba4cc96c\", \"failure_type\": \"execution_failed\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": 0, \"source_owner\": \"GENERATED_ACTION\", \"source_stage\": \"execute\", \"summary\": \"A launched command failed after immutable evidence persistence.\"}\n已记录 stop_reason：{\"budget_receipt\": {\"categories_share_total\": true, \"category\": \"representation\", \"correction_authorized\": false, \"correction_category\": \"representation\", \"corrections_authorized\": 2, \"corrections_authorized_before\": 2, \"corrections_observed_before_rejection\": 2, \"event_id\": \"candidate-rejection:d77563c7ad2f1f5b215ffe1a\", \"limit\": 4, \"progress_assessment\": {\"basis\": \"recurrent_rejected_candidate\", \"binding_axis\": \"evaluated\", \"binding_facts\": [\"binding_env\", \"consumed_bindings.genome_version\", \"consumed_bindings.snpeff_db\", \"operation\"], \"comparison_context_fingerprint\": \"548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820\", \"comparison_fingerprint\": \"043867880d30fc8c97f73bb773b70fd7c072d7792589a27042b18ff13b61bc22\", \"newly_satisfied_targets\": [], \"pending_targets\": [\"$.code|argv\"], \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"representation_targets\": [\"action_schema_complete\", \"action_type\", \"execute.argv_shape\", \"execute.env_keys\", \"execute.env_object\", \"execute.env_values\", \"execute.executable_body\", \"execute.outputs_shape\", \"json_object\"], \"resolved_targets\": [], \"schema_version\": 1, \"scientific_success\": \"not_assessed\", \"validation_signature\": \"42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b\"}, \"rejection_ordinal\": 3, \"remaining\": 2, \"remaining_before_authorization\": 2, \"repair_limit\": 4, \"repair_ordinal\": 3, \"scope\": {\"plan_id\": \"plan_eb515470b3951eef4279\", \"plan_revision\": 1, \"plan_version\": \"plan_v1\", \"step_id\": \"build_database\", \"task_id\": \"fix-f6-6793_repeat\", \"task_revision\": 1}, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"version\": \"candidate-corrections-v2\"}, \"detail\": \"Generate encountered an internal protocol violation and failed c\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "detail": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv。\n\n当前步骤：build_database；执行 attempt：。\n\n末次候选尚未执行；本轮已有真实因果执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：A launched command failed after immutable evidence persistence.。\n\n实际读取失败：step.inspect [wrong-kind-log] INSPECTION_REF_KIND_MISMATCH (ref=inspection:sha256:e27c0a28a666d2019ee3a0cd6141e49e741b9e3f00b156b2316794f9208e573a): {\"actual_kind\":\"evidence\",\"allowed_tools\":[\"evidence.read\"],\"declared_readable_candidates\":[],\"expected_kinds\":[\"phase_archive\"],\"ref_id\":\"inspection:sha256:e27c0a28a666d2019ee3a0cd6141e49e741b9e3f00b156b2316794f9208e573a\"}。\n\n停止原因：GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：build_database=failed；annotate_variants=pending；summarize_ann=pending；finalize_outputs=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：execute；原始错误：EXECUTION_FAILED；停止阶段：generate。\n\n最近因果执行：attempt=attempt_28f622a2be49cf78ad1b；rc=0；步骤=build_database。已消费的证据只用于说明，未重新授权执行。\n\n因果执行 stdout（含内部进程报告；外层 rc0 不代表步骤完成）：{\"inner_returncode\": 255, \"actual_argv\": [\"/public/home/liusiqi/anaconda3/envs/biomind/bin/python\", \"-I\", \"-S\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_java\", \"-jar\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_snpeff.jar\", \"build\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e\", \"new_fixture_v2\", \"--synthetic-fail\"], \"build_log\": \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e/data/new_fixture_v2/build.log\", \"predictor_exists\": false}\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"snpeff_database_ready\",\"value\":false}]}\n\n\n末次候选：{\"attempt_id\": \"\", \"execution_started\": false, \"approved\": false, \"candidate_fingerprint\": \"f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b\", \"candidate_event_id\": \"generate-candidate:sha256:ae62f31ef90577973821e8ca6c2b58b6169415ba0b77a812581b94ff64b14fd6\", \"cause_code\": \"EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE\", \"correction_category\": \"representation\"}\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 1, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\n当前故障 attempt：attempt_28f622a2be49cf78ad1b；rc=0；正式排放数=1；观测记录数=0；see formal verification/commit\n\n候选有效性=UNKNOWN；进程成功=True；正式证据满足=UNKNOWN；步骤完成=False\n\n末次候选错误：EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE；Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.\n\n已有正式提交：check_contig_compatibility (typed-step-commit:commit-step-2c0364601c2b1afd1380e299)；prepare_database (typed-step-commit:commit-step-7083edd29aa0d3a226d0e6d9)\n\n停止策略：repair_no_progress；修正记录：{\"version\": \"candidate-corrections-v2\", \"scope\": {\"task_id\": \"fix-f6-6793_repeat\", \"task_revision\": 1, \"plan_id\": \"plan_eb515470b3951eef4279\", \"plan_version\": \"plan_v1\", \"plan_revision\": 1, \"step_id\": \"build_database\"}, \"limit\": 4, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"categories_share_total\": true, \"rejection_ordinal\": 3, \"corrections_authorized_before\": 2, \"corrections_observed_before_rejection\": 2, \"remaining_before_authorization\": 2, \"category\": \"representation\", \"progress_assessment\": {\"schema_version\": 1, \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"basis\": \"recurrent_rejected_candidate\", \"comparison_fingerprint\": \"043867880d30fc8c97f73bb773b70fd7c072d7792589a27042b18ff13b61bc22\", \"validation_signature\": \"42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b\", \"comparison_context_fingerprint\": \"548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820\", \"representation_targets\": [\"action_schema_complete\", \"action_type\", \"execute.argv_shape\", \"execute.env_keys\", \"execute.env_object\", \"execute.env_values\", \"execute.executable_body\", \"execute.outputs_shape\", \"json_object\"], \"binding_facts\": [\"binding_env\", \"consumed_bindings.genome_version\", \"consumed_bindings.snpeff_db\", \"operation\"], \"binding_axis\": \"evaluated\", \"newly_satisfied_targets\": [], \"resolved_targets\": [], \"pending_targets\": [\"$.code|argv\"], \"scientific_success\": \"not_assessed\"}, \"correction_authorized\": false, \"corrections_authorized\": 2, \"remaining\": 2, \"repair_ordinal\": 3, \"repair_limit\": 4, \"event_id\": \"candidate-rejection:d77563c7ad2f1f5b215ffe1a\", \"correction_category\": \"representation\"}\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"attempt_28f622a2be49cf78ad1b\", \"concerns\": [], \"error_code\": \"EXECUTION_FAILED\", \"evidence_refs\": [\"exec-attempt_28f622a2be49cf78ad1b\"], \"failure_id\": \"failure-dbc667cc7ad62c42ba4cc96c\", \"failure_type\": \"execution_failed\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": 0, \"source_owner\": \"GENERATED_ACTION\", \"source_stage\": \"execute\", \"summary\": \"A launched command failed after immutable evidence persistence.\"}\n已记录 stop_reason：{\"budget_receipt\": {\"categories_share_total\": true, \"category\": \"representation\", \"correction_authorized\": false, \"correction_category\": \"representation\", \"corrections_authorized\": 2, \"corrections_authorized_before\": 2, \"corrections_observed_before_rejection\": 2, \"event_id\": \"candidate-rejection:d77563c7ad2f1f5b215ffe1a\", \"limit\": 4, \"progress_assessment\": {\"basis\": \"recurrent_rejected_candidate\", \"binding_axis\": \"evaluated\", \"binding_facts\": [\"binding_env\", \"consumed_bindings.genome_version\", \"consumed_bindings.snpeff_db\", \"operation\"], \"comparison_context_fingerprint\": \"548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820\", \"comparison_fingerprint\": \"043867880d30fc8c97f73bb773b70fd7c072d7792589a27042b18ff13b61bc22\", \"newly_satisfied_targets\": [], \"pending_targets\": [\"$.code|argv\"], \"producer\": \"biomind.generate_candidate_admission.v1\", \"progress_proven\": false, \"representation_targets\": [\"action_schema_complete\", \"action_type\", \"execute.argv_shape\", \"execute.env_keys\", \"execute.env_object\", \"execute.env_values\", \"execute.executable_body\", \"execute.outputs_shape\", \"json_object\"], \"resolved_targets\": [], \"schema_version\": 1, \"scientific_success\": \"not_assessed\", \"validation_signature\": \"42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b\"}, \"rejection_ordinal\": 3, \"remaining\": 2, \"remaining_before_authorization\": 2, \"repair_limit\": 4, \"repair_ordinal\": 3, \"scope\": {\"plan_id\": \"plan_eb515470b3951eef4279\", \"plan_revision\": 1, \"plan_version\": \"plan_v1\", \"step_id\": \"build_database\", \"task_id\": \"fix-f6-6793_repeat\", \"task_revision\": 1}, \"source\": \"task_state.budgets.max_candidate_repairs_per_epoch\", \"unit\": \"additional_candidate_calls\", \"version\": \"candidate-corrections-v2\"}, \"detail\": \"Generate encountered an internal protocol violation and failed c\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：FAILED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+      "origin": {
+        "source_stage": "execute",
+        "source_owner": "GENERATED_ACTION",
+        "failure_id": "failure-dbc667cc7ad62c42ba4cc96c",
+        "failure_type": "execution_failed",
+        "error_code": "EXECUTION_FAILED",
+        "summary": "A launched command failed after immutable evidence persistence.",
+        "concerns": [],
+        "evidence_refs": [
+          "exec-attempt_28f622a2be49cf78ad1b"
+        ],
+        "returncode": 0,
+        "attempt_id": "attempt_28f622a2be49cf78ad1b",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "primary_cause": {
+        "error_code": "EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.",
+        "reason": "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.",
+        "current_step": "build_database",
+        "fingerprint": "fd1ca23692263de5b926e31be5a5a9e4f020e39b53ec79da1f80dcbecae229e9",
+        "candidate_fingerprint": "9c223e86691aabd914a34f8f23ec4c3f36723e59ffdb836815251e6c66b6332e",
+        "execution_started": true,
+        "repair_attempted": true,
+        "repair_exhausted": true,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.",
+        "summary": "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.",
+        "recorded_at": "2026-09-15T17:05:30",
+        "expected_realization": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.",
+        "latest_failure": {
+          "error_code": "EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.",
+          "fingerprint": "b1bbbc7c9dcd14c083ef509291f1a3a81c3f866ad54e6f1fab57a425432bcae7",
+          "candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "fix-f6-6793_repeat",
+            "task_revision": 1,
+            "plan_id": "plan_eb515470b3951eef4279",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "repair_attempt_count": 3,
+          "recorded_at": "2026-09-15T17:06:32",
+          "field_path": "$.code|argv",
+          "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template."
+        },
+        "last_seen_at": "2026-09-15T17:06:32",
+        "repair_attempt_count": 3,
+        "last_candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+        "last_error_fingerprint": "b1bbbc7c9dcd14c083ef509291f1a3a81c3f866ad54e6f1fab57a425432bcae7",
+        "resolved_at": "2026-09-15T17:05:54+08:00",
+        "termination_reason": "repair_no_progress",
+        "terminal_failure": {
+          "error_code": "EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.",
+          "fingerprint": "b1bbbc7c9dcd14c083ef509291f1a3a81c3f866ad54e6f1fab57a425432bcae7",
+          "candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "fix-f6-6793_repeat",
+            "task_revision": 1,
+            "plan_id": "plan_eb515470b3951eef4279",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "repair_attempt_count": 3,
+          "recorded_at": "2026-09-15T17:06:32",
+          "field_path": "$.code|argv",
+          "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.",
+          "termination_reason": "repair_no_progress"
+        }
+      },
+      "latest_failure": {
+        "error_code": "EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "Marker count is not one; inspect the listed source lines. Template availability is a separate fact. Remove the extra marker and submit a new carrier; no automatic injection point is chosen.",
+        "fingerprint": "b1bbbc7c9dcd14c083ef509291f1a3a81c3f866ad54e6f1fab57a425432bcae7",
+        "candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+        "execution_started": false,
+        "attempt_id": "",
+        "scope": {
+          "task_id": "fix-f6-6793_repeat",
+          "task_revision": 1,
+          "plan_id": "plan_eb515470b3951eef4279",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "build_database"
+        },
+        "repair_attempt_count": 3,
+        "recorded_at": "2026-09-15T17:06:32",
+        "field_path": "$.code|argv",
+        "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template."
+      },
+      "prior_completed_work": [
+        {
+          "step_id": "check_contig_compatibility",
+          "commit_id": "commit-step-2c0364601c2b1afd1380e299",
+          "receipt": "typed-step-commit:commit-step-2c0364601c2b1afd1380e299",
+          "committed": true
+        },
+        {
+          "step_id": "prepare_database",
+          "commit_id": "commit-step-7083edd29aa0d3a226d0e6d9",
+          "receipt": "typed-step-commit:commit-step-7083edd29aa0d3a226d0e6d9",
+          "committed": true
+        }
+      ],
+      "execution": {
+        "attempt_id": "",
+        "step_id": "build_database",
+        "executed": false,
+        "purpose": "UNKNOWN",
+        "returncode": null,
+        "deterministic_passed": false,
+        "validation_status": "not_performed",
+        "reviewer_disposition": "not_performed",
+        "step_status": "failed",
+        "committed": false,
+        "executed_script_ref": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/attempts/attempt_28f622a2be49cf78ad1b/executed.sh",
+        "command_body_available": false
+      },
+      "causal_execution": {
+        "attempt_id": "attempt_28f622a2be49cf78ad1b",
+        "step_id": "build_database",
+        "executed": true,
+        "purpose": "UNKNOWN",
+        "returncode": 0,
+        "deterministic_passed": false,
+        "validation_status": "unknown",
+        "reviewer_disposition": "inspection_required",
+        "step_status": "failed",
+        "committed": false,
+        "executed_script_ref": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/attempts/attempt_28f622a2be49cf78ad1b/executed.sh",
+        "command_body_available": true,
+        "scope": {
+          "task_id": "fix-f6-6793_repeat",
+          "plan_id": "plan_eb515470b3951eef4279",
+          "plan_version": "plan_v1",
+          "step_id": "build_database",
+          "attempt_id": "attempt_28f622a2be49cf78ad1b"
+        },
+        "failure_packet_ref": "failure-packet:sha256:3533071659a4b6e44c6790a9f8bd5719839a30fdf1bb9a22cbc91ec1e2f959dd",
+        "read_only": true,
+        "stdout": "{\"inner_returncode\": 255, \"actual_argv\": [\"/public/home/liusiqi/anaconda3/envs/biomind/bin/python\", \"-I\", \"-S\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_java\", \"-jar\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/\\u660e\\u786e\\u79d1\\u5b66\\u66ff\\u8eab runtime/synthetic_snpeff.jar\", \"build\", \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e\", \"new_fixture_v2\", \"--synthetic-fail\"], \"build_log\": \"/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-6789132d2d930d982576917e/data/new_fixture_v2/build.log\", \"predictor_exists\": false}\nBIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"snpeff_database_ready\",\"value\":false}]}\n",
+        "stderr": "",
+        "command_body": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S -c 'import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('\"'\"'{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"snpeff_database_ready\", \"required_fields\": []}]}'\"'\"')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, '\"'\"'BIOMIND_EFFECT_EVIDENCE_JSON='\"'\"', publication=True)\nfrom pathlib import Path\nimport os, subprocess, json\ndb=Path(os.environ[\"SNPEFF_DB\"]); genome=os.environ[\"GENOME_VERSION\"]\nassert Path('\"'\"'/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/新参考.fa'\"'\"').read_bytes()\nassert Path('\"'\"'/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/输入 新构造/新注释.gtf'\"'\"').read_bytes()\nassert Path('\"'\"'/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/task_outputs/fix-f6-6793_repeat/plan_artifacts/plan-artifact-8eaf842d8f7958809ad79561'\"'\"').read_bytes()\nlog=db/\"data\"/genome/\"build.log\"\nargv=['\"'\"'/public/home/liusiqi/anaconda3/envs/biomind/bin/python'\"'\"', '\"'\"'-I'\"'\"', '\"'\"'-S'\"'\"', '\"'\"'/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/明确科学替身 runtime/synthetic_java'\"'\"', '\"'\"'-jar'\"'\"', '\"'\"'/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/明确科学替身 runtime/synthetic_snpeff.jar'\"'\"', '\"'\"'build'\"'\"']+[str(db),genome]+[\"--synthetic-fail\"]\nwith log.open(\"w\") as out:\n    result=subprocess.run(argv,stdout=out,stderr=subprocess.STDOUT)\npredictor=db/\"data\"/genome/\"snpEffectPredictor.bin\"\nready=result.returncode==0 and predictor.is_file() and predictor.stat().st_size>0\nprint(json.dumps({\"inner_returncode\":result.returncode,\"actual_argv\":argv,\"build_log\":str(log),\"predictor_exists\":predictor.is_file()}))\nprint(emit_effect_evidence({\"produces_observations\":{\"snpeff_database_ready\":{\"value\":ready}}}))\n'"
+      },
+      "current_candidate": {
+        "attempt_id": "",
+        "execution_started": false,
+        "approved": false,
+        "candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+        "candidate_event_id": "generate-candidate:sha256:ae62f31ef90577973821e8ca6c2b58b6169415ba0b77a812581b94ff64b14fd6",
+        "cause_code": "EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE",
+        "correction_category": "representation"
+      },
+      "inspection_count_scope": {
+        "local_tool_calls": 0,
+        "known_causal_errors": 1,
+        "history_coverage": "bounded_admitted_causal_chain"
+      },
+      "inspection_failures": [
+        {
+          "tool_call_id": "wrong-kind-log",
+          "tool": "step.inspect",
+          "error_code": "INSPECTION_REF_KIND_MISMATCH",
+          "evidence_ref": "inspection:sha256:e27c0a28a666d2019ee3a0cd6141e49e741b9e3f00b156b2316794f9208e573a",
+          "detail": "{\"actual_kind\":\"evidence\",\"allowed_tools\":[\"evidence.read\"],\"declared_readable_candidates\":[],\"expected_kinds\":[\"phase_archive\"],\"ref_id\":\"inspection:sha256:e27c0a28a666d2019ee3a0cd6141e49e741b9e3f00b156b2316794f9208e573a\"}",
+          "scope": "admitted_causal_history"
+        }
+      ],
+      "stop_reason": {
+        "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+        "detail": "Generate encountered an internal protocol violation and failed closed.",
+        "transport_receipt": {},
+        "failure_stage": "",
+        "no_progress_rounds": 0,
+        "model_turns": 0,
+        "tool_calls": 0,
+        "termination_reason": "repair_no_progress",
+        "budget_receipt": {
+          "version": "candidate-corrections-v2",
+          "scope": {
+            "task_id": "fix-f6-6793_repeat",
+            "task_revision": 1,
+            "plan_id": "plan_eb515470b3951eef4279",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "limit": 4,
+          "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+          "unit": "additional_candidate_calls",
+          "categories_share_total": true,
+          "rejection_ordinal": 3,
+          "corrections_authorized_before": 2,
+          "corrections_observed_before_rejection": 2,
+          "remaining_before_authorization": 2,
+          "category": "representation",
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": false,
+            "basis": "recurrent_rejected_candidate",
+            "comparison_fingerprint": "043867880d30fc8c97f73bb773b70fd7c072d7792589a27042b18ff13b61bc22",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_keys",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env",
+              "consumed_bindings.genome_version",
+              "consumed_bindings.snpeff_db",
+              "operation"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "$.code|argv"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "correction_authorized": false,
+          "corrections_authorized": 2,
+          "remaining": 2,
+          "repair_ordinal": 3,
+          "repair_limit": 4,
+          "event_id": "candidate-rejection:d77563c7ad2f1f5b215ffe1a",
+          "correction_category": "representation"
+        }
+      },
+      "internal_diagnostic_delivery": {
+        "status": "not_needed",
+        "paths": {},
+        "receipts": {}
+      },
+      "delivery_status": "complete",
+      "report_paths": {
+        "stage_status.tsv": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "reproduce.sh": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "report.md": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+      },
+      "report_receipts": {
+        "stage_status.tsv": {
+          "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "sha256": "bde06fa9a5ddb73a0a3f6b70fc0cc8164a8a43614bb6167c80ce54f292c8827c",
+          "operation_id": "b6899163021376c94db4377bebf60892aa7361156d8e6e445ab4ddbbde1b708e",
+          "ownership": {
+            "operation_id": "b6899163021376c94db4377bebf60892aa7361156d8e6e445ab4ddbbde1b708e",
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+            "sha256": "bde06fa9a5ddb73a0a3f6b70fc0cc8164a8a43614bb6167c80ce54f292c8827c",
+            "proof_name": ".runtime-report-proof-b6899163021376c94db4377bebf60892aa7361156d8e6e445ab4ddbbde1b708e",
+            "device": 2051,
+            "inode": 11010106
+          },
+          "status": "created",
+          "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+          "task_id": "fix-f6-6793_repeat"
+        },
+        "reproduce.sh": {
+          "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "sha256": "2492694e98d25bd20bd3ddec30fa1e252e88c7492f89c3f5021788eb9cf6ccb1",
+          "operation_id": "d5d93d8026584ef3e038dc1a6c1861ad8beddb61571dcaefcabeebf19ec9e8cc",
+          "ownership": {
+            "operation_id": "d5d93d8026584ef3e038dc1a6c1861ad8beddb61571dcaefcabeebf19ec9e8cc",
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+            "sha256": "2492694e98d25bd20bd3ddec30fa1e252e88c7492f89c3f5021788eb9cf6ccb1",
+            "proof_name": ".runtime-report-proof-d5d93d8026584ef3e038dc1a6c1861ad8beddb61571dcaefcabeebf19ec9e8cc",
+            "device": 2051,
+            "inode": 11010122
+          },
+          "status": "created",
+          "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+          "task_id": "fix-f6-6793_repeat"
+        },
+        "report.md": {
+          "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+          "sha256": "0cc819192557cc646d8be187e8d09c90b3d0aa365741145267c22a245832f264",
+          "operation_id": "45e79e26cd338e83a5f9cd36ef335d6c815a73035b1ce3a3379832b0bbacf886",
+          "ownership": {
+            "operation_id": "45e79e26cd338e83a5f9cd36ef335d6c815a73035b1ce3a3379832b0bbacf886",
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+            "sha256": "0cc819192557cc646d8be187e8d09c90b3d0aa365741145267c22a245832f264",
+            "proof_name": ".runtime-report-proof-45e79e26cd338e83a5f9cd36ef335d6c815a73035b1ce3a3379832b0bbacf886",
+            "device": 2051,
+            "inode": 11010153
+          },
+          "status": "created",
+          "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+          "task_id": "fix-f6-6793_repeat"
+        }
+      },
+      "persistence_status": "committed",
+      "summary_status": "COMPLETED",
+      "summary_llm_calls": 1,
+      "secondary_causes": [],
+      "report_path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+    }
+  },
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

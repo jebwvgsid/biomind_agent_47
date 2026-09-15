@@ -1,0 +1,722 @@
+{
+  "mode": "nonsemantic",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "action_approval": 0
+  },
+  "routes_observed": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate"
+  ],
+  "outcome": {
+    "schema_version": 1,
+    "type": "action_ready",
+    "summary": "A validated action candidate is ready for Execute.",
+    "scope": {
+      "task_id": "fix-f3-late-generate-nonsemantic-valid",
+      "task_revision": 1,
+      "plan_id": "plan_a7f3abad1ebc93701df6",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "step_id": "step-direct",
+      "attempt_id": ""
+    },
+    "payload": {
+      "action": {
+        "type": "execute",
+        "source": "action_json",
+        "code": "bash -lc 'printf '\"'\"'%s\\n'\"'\"' '\"'\"'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'\"'\"''",
+        "argv": [
+          "bash",
+          "-lc",
+          "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+        ],
+        "env": {},
+        "outputs": [],
+        "language": "bash",
+        "operation": "check_contig_compatibility",
+        "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b",
+        "binding_env": {},
+        "binding_normalization_receipt": {
+          "schema_version": 2,
+          "producer": "managed_binding_normalizer",
+          "protocol": "public_handle_v2",
+          "scope": {
+            "task_id": "fix-f3-late-generate-nonsemantic-valid",
+            "task_revision": 1,
+            "plan_id": "plan_a7f3abad1ebc93701df6",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct",
+            "attempt_id": ""
+          },
+          "contract_digest": "1e25cf2a51bde874ceaef00d9c3593087078ad1b92daea06e8e0729aed1f3f4c",
+          "catalog_digests": [],
+          "raw_digest": "7dbad982b6793846572614a77c9f5d832e05218460628c9c3d30bf93fbc40c97",
+          "normalized_digest": "be299952eafbb53059447f350227dd1af5a1e62e65db7e2d22af67916dcfcbd0",
+          "raw_candidate": {
+            "type": "execute",
+            "source": "action_json",
+            "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+            "argv": [
+              "bash",
+              "-lc",
+              "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+            ],
+            "env": {},
+            "outputs": [],
+            "language": "bash",
+            "operation": "check_contig_compatibility",
+            "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b"
+          },
+          "normalized_candidate": {
+            "type": "execute",
+            "source": "action_json",
+            "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+            "argv": [
+              "bash",
+              "-lc",
+              "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+            ],
+            "env": {},
+            "outputs": [],
+            "language": "bash",
+            "operation": "check_contig_compatibility",
+            "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b",
+            "binding_env": {}
+          },
+          "raw_public_candidate": {
+            "action_type": "execute",
+            "operation": "check_contig_compatibility",
+            "language": "bash",
+            "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+            "env": {},
+            "outputs": []
+          },
+          "raw_public_digest": "21ad67608c6319dc7ec3e87508bd1abaf7d6547b6940022a96e726debfaa4e9a",
+          "raw_representation": "parsed_action_before_binding",
+          "receipt_id": "binding-normalization-fdcb772cbe662bcde9a58c1d62f335d1dba816867405a84dd7cc1d1c3ef37c97"
+        },
+        "formal_workspace_bindings": [],
+        "binding_contract_rule": {},
+        "generate_binding_resolution": {
+          "environment": {},
+          "records": []
+        },
+        "generate_binding_resolution_digest": "49130909db9874d2ef1e55b5271596c4c1bd9fcf67acfd64aa8e969b8e3cef5a",
+        "workspace_mutation_intent_contracts": [],
+        "managed_artifact_handles": [],
+        "referenced_output_handles": [],
+        "materialized_artifacts": {},
+        "concrete_artifact_bindings": [],
+        "controller_output_bindings": [],
+        "candidate_fingerprint": "afd5b6e513448c78a36f1e0b22c86bf20f0c328210f7149fb39363f57bd5e3e8",
+        "action_id": "action_1ea8f0499baa9430",
+        "step_id": "step-direct",
+        "task_revision": 1,
+        "plan_id": "plan_a7f3abad1ebc93701df6",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "authoritative_user_turn_revision": 1,
+        "execution_epoch": "0",
+        "purpose": "analysis",
+        "command_role": "primary",
+        "expected_outputs": [],
+        "expected_step_effect": {
+          "schema_version": 1,
+          "produces_artifacts": [],
+          "produces_bindings": [],
+          "produces_observations": [
+            {
+              "identity": "contigs_compatible",
+              "evidence_contract": {
+                "required_fields": [
+                  "value"
+                ]
+              },
+              "predicate": {
+                "applicability": {
+                  "execution_capability_ids": [
+                    "genomics.snpeff_annotation.prepare_database",
+                    "genomics.snpeff_annotation.build_database",
+                    "genomics.snpeff_annotation.annotate_variants",
+                    "genomics.snpeff_annotation.summarize_ann",
+                    "genomics.snpeff_annotation.finalize_outputs"
+                  ],
+                  "kind": "plan_contains_any_execution_capability",
+                  "schema_version": 1
+                },
+                "expected": true,
+                "failure_disposition": "correction_required",
+                "missing_disposition": "inspection_required",
+                "operator": "boolean_equals",
+                "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                "parser_id": "biomind.genomics.contig_compatibility.v1",
+                "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+              }
+            }
+          ],
+          "workspace_mutations": [],
+          "explicit_side_effects": []
+        },
+        "expected_evidence": [
+          "the approved command exits"
+        ],
+        "selected_skill_id": "genomics/snpeff-annotation",
+        "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+        "capability_contract": {
+          "schema_version": 1,
+          "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "selected_skill_id": "genomics/snpeff-annotation",
+          "required_runtime_binding_ids": [],
+          "optional_runtime_binding_ids": [],
+          "required_artifact_binding_ids": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta",
+            "artifact.variant_vcf"
+          ],
+          "execution_guidance": [
+            "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+            "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+            "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+            "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+          ],
+          "operation": "check_contig_compatibility",
+          "consumes_artifacts": [
+            "artifact.annotation_gtf",
+            "artifact.reference_fasta",
+            "artifact.variant_vcf"
+          ],
+          "produces_artifacts": [],
+          "produces_bindings": [],
+          "produces_observations": [
+            {
+              "observation_id": "contigs_compatible",
+              "predicate": {
+                "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+                "operator": "boolean_equals",
+                "expected": true,
+                "parser_id": "biomind.genomics.contig_compatibility.v1",
+                "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                "failure_disposition": "correction_required",
+                "missing_disposition": "inspection_required",
+                "applicability": {
+                  "schema_version": 1,
+                  "kind": "plan_contains_any_execution_capability",
+                  "execution_capability_ids": [
+                    "genomics.snpeff_annotation.prepare_database",
+                    "genomics.snpeff_annotation.build_database",
+                    "genomics.snpeff_annotation.annotate_variants",
+                    "genomics.snpeff_annotation.summarize_ann",
+                    "genomics.snpeff_annotation.finalize_outputs"
+                  ]
+                }
+              },
+              "evidence_contract": {
+                "required_fields": [
+                  "value"
+                ]
+              }
+            }
+          ],
+          "workspace_mutations": [],
+          "explicit_side_effects": []
+        },
+        "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+        "runtime_bindings": {},
+        "runtime_binding_records": [],
+        "runtime_binding_manifest": {
+          "schema_version": 1,
+          "action_id": "action_1ea8f0499baa9430",
+          "plan_id": "plan_a7f3abad1ebc93701df6",
+          "step_id": "step-direct",
+          "selected_skill_id": "genomics/snpeff-annotation",
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "scope": "current_action",
+          "bindings": [],
+          "manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db"
+        },
+        "runtime_binding_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+        "artifact_env_manifest": {
+          "schema_version": 1,
+          "action_id": "action_1ea8f0499baa9430",
+          "plan_id": "plan_a7f3abad1ebc93701df6",
+          "step_id": "step-direct",
+          "selected_skill_id": "genomics/snpeff-annotation",
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "scope": "current_action",
+          "bindings": [],
+          "manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db"
+        },
+        "artifact_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+        "execution_policy_manifest": {
+          "schema_version": 1,
+          "action_id": "action_1ea8f0499baa9430",
+          "plan_id": "plan_a7f3abad1ebc93701df6",
+          "step_id": "step-direct",
+          "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+          "language": "Bash",
+          "scope": "current_action",
+          "policy": {
+            "stdin": "devnull",
+            "process_group": "isolated",
+            "shell_errexit": false,
+            "shell_pipefail": true
+          },
+          "manifest_hash": "sha256:faea3d01559976e880e388eadb2856a3a9b1e97ac407d4bf17c2fc99e82c8d9f"
+        },
+        "execution_policy_manifest_hash": "sha256:faea3d01559976e880e388eadb2856a3a9b1e97ac407d4bf17c2fc99e82c8d9f",
+        "action_approval_identity": {
+          "schema_version": 1,
+          "generated_script_sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "runtime_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+          "artifact_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+          "execution_policy_manifest_hash": "sha256:faea3d01559976e880e388eadb2856a3a9b1e97ac407d4bf17c2fc99e82c8d9f",
+          "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+          "approval_identity_hash": "sha256:d10ea45e0e2328e987be27e985972269acc8af4fe9186b1a95fce56d9b1871cb"
+        },
+        "generated_script_sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+        "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+        "generated_from_plan_hash": "0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+        "generated_from_approval_scope_hash": "e81bde4fdb0292eb663fa10eb9d30233293780692cf05352e79577cb7bf433e6",
+        "action_hash": "5cdf1b9755ea4a8b27e9c4f38f84796bd40f97c87c9ab1a5fc81496181f7842e",
+        "candidate_repair_source": {
+          "action_type": "execute",
+          "operation": "check_contig_compatibility",
+          "language": "bash",
+          "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+          "env": {},
+          "outputs": []
+        },
+        "generated_script": {
+          "version": "generated",
+          "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-2raqh5y6/task_outputs/fix-f3-late-generate-nonsemantic-valid/scripts/plan_a7f3abad1ebc93701df6/plan_v1/step-direct/action_1ea8f0499baa9430/generated.sh",
+          "sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+          "producer": "generate",
+          "parent_script_ref": {},
+          "mutation_reason": "model_generation",
+          "created_at": "2026-09-15T17:01:10"
+        },
+        "generated_script_path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-2raqh5y6/task_outputs/fix-f3-late-generate-nonsemantic-valid/scripts/plan_a7f3abad1ebc93701df6/plan_v1/step-direct/action_1ea8f0499baa9430/generated.sh",
+        "generated_script_hash": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d"
+      },
+      "action_id": "action_1ea8f0499baa9430",
+      "candidate_fingerprint": "afd5b6e513448c78a36f1e0b22c86bf20f0c328210f7149fb39363f57bd5e3e8",
+      "validation_evidence": {
+        "status": "validated",
+        "reason_code": ""
+      },
+      "generate_invocation": {
+        "generate_call_id": "generate-7a9adca60e134eeea065f2afdb655a18",
+        "scope": {
+          "task_id": "fix-f3-late-generate-nonsemantic-valid",
+          "task_revision": 1,
+          "plan_id": "plan_a7f3abad1ebc93701df6",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct",
+          "attempt_id": ""
+        },
+        "source_ref": "object:sha256:f1de3c1cecce3b1b71b4ca89b41f6352e418a2eed26b784e6707e86947b83049",
+        "prompt_assembly_started": true,
+        "prompt_assembly_succeeded": true,
+        "provider_call_attempted": true,
+        "llm_invoked": true
+      }
+    },
+    "evidence_refs": []
+  },
+  "next_route": "execute",
+  "post_cancel_outcomes": [],
+  "barrier": {
+    "binding": {
+      "invocation_id": "inv-47c9d884-464f-40c1-9df0-3a174b23701a",
+      "node_type": "generate",
+      "staleness_domain": "generate-v1",
+      "state_generation": 20,
+      "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+      "task_record_hash": "sha256:5808b2e0a3fdb86de53e3ca46544f76dbb43154fbf122e12ecce1a3bebc55633",
+      "plan_semantic_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+      "plan_record_hash": "sha256:66459d1dc30e03dbe32a502609b16ba0da6db67d030b2e8267c4afe77ca0e365",
+      "task_revision": 1,
+      "plan_revision": 1,
+      "authoritative_user_turn_revision": 1,
+      "continuation_id": "",
+      "approval_ref": "object:sha256:ea7c0cffe4e5529268177549d33c6676d3c0c7ddeb402a6cd66e664e10fe45c8",
+      "approval_applicability": "applicable",
+      "step_id": "step-direct",
+      "execution_epoch": "0",
+      "attempt_id": "",
+      "failure_fingerprint": "",
+      "violation_set_identity": "",
+      "action_identity": "",
+      "evidence_identity": "",
+      "candidate_scope_id": "",
+      "touched_entity_versions": {
+        "selected_skill_revision": "sha256:96127eddfd53e7833a8b24dc3c9114e829ad97c6230b8f82ba679886f6e72036"
+      },
+      "semantic_handle_map": {
+        "step.step-direct": {
+          "semantic_handle": "step.step-direct",
+          "object_type": "plan_step",
+          "stable_identity": "step-direct",
+          "direction": "",
+          "allowed_usage": [
+            "reference",
+            "replace",
+            "execute",
+            "review"
+          ],
+          "metadata": {
+            "index": 1
+          }
+        }
+      }
+    },
+    "before": {
+      "state_generation": 20,
+      "plan_id": "plan_a7f3abad1ebc93701df6",
+      "plan_revision": 1,
+      "plan_version": "plan_v1",
+      "current_step_id": "step-direct",
+      "approval_status": "approved"
+    },
+    "after_mutation": {
+      "state_generation": 21,
+      "plan_id": "plan_a7f3abad1ebc93701df6",
+      "plan_revision": 1,
+      "plan_version": "plan_v1",
+      "current_step_id": "step-direct",
+      "approval_status": "approved",
+      "task_status": "running"
+    }
+  },
+  "durable_status": "running",
+  "pending_action": {
+    "type": "execute",
+    "source": "action_json",
+    "argv": [
+      "bash",
+      "-lc",
+      "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+    ],
+    "env": {},
+    "outputs": [],
+    "language": "bash",
+    "operation": "check_contig_compatibility",
+    "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b",
+    "binding_env": {},
+    "binding_normalization_receipt": {
+      "schema_version": 2,
+      "producer": "managed_binding_normalizer",
+      "protocol": "public_handle_v2",
+      "scope": {
+        "task_id": "fix-f3-late-generate-nonsemantic-valid",
+        "task_revision": 1,
+        "plan_id": "plan_a7f3abad1ebc93701df6",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct",
+        "attempt_id": ""
+      },
+      "contract_digest": "1e25cf2a51bde874ceaef00d9c3593087078ad1b92daea06e8e0729aed1f3f4c",
+      "catalog_digests": [],
+      "raw_digest": "7dbad982b6793846572614a77c9f5d832e05218460628c9c3d30bf93fbc40c97",
+      "normalized_digest": "be299952eafbb53059447f350227dd1af5a1e62e65db7e2d22af67916dcfcbd0",
+      "raw_candidate": {
+        "type": "execute",
+        "source": "action_json",
+        "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+        "argv": [
+          "bash",
+          "-lc",
+          "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+        ],
+        "env": {},
+        "outputs": [],
+        "language": "bash",
+        "operation": "check_contig_compatibility",
+        "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b"
+      },
+      "normalized_candidate": {
+        "type": "execute",
+        "source": "action_json",
+        "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+        "argv": [
+          "bash",
+          "-lc",
+          "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'"
+        ],
+        "env": {},
+        "outputs": [],
+        "language": "bash",
+        "operation": "check_contig_compatibility",
+        "candidate_generation_event_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b",
+        "binding_env": {}
+      },
+      "raw_public_candidate": {
+        "action_type": "execute",
+        "operation": "check_contig_compatibility",
+        "language": "bash",
+        "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+        "env": {},
+        "outputs": []
+      },
+      "raw_public_digest": "21ad67608c6319dc7ec3e87508bd1abaf7d6547b6940022a96e726debfaa4e9a",
+      "raw_representation": "parsed_action_before_binding",
+      "receipt_id": "binding-normalization-fdcb772cbe662bcde9a58c1d62f335d1dba816867405a84dd7cc1d1c3ef37c97"
+    },
+    "formal_workspace_bindings": [],
+    "binding_contract_rule": {},
+    "generate_binding_resolution": {
+      "environment": {},
+      "records": []
+    },
+    "generate_binding_resolution_digest": "49130909db9874d2ef1e55b5271596c4c1bd9fcf67acfd64aa8e969b8e3cef5a",
+    "workspace_mutation_intent_contracts": [],
+    "managed_artifact_handles": [],
+    "referenced_output_handles": [],
+    "materialized_artifacts": {},
+    "concrete_artifact_bindings": [],
+    "controller_output_bindings": [],
+    "candidate_fingerprint": "afd5b6e513448c78a36f1e0b22c86bf20f0c328210f7149fb39363f57bd5e3e8",
+    "action_id": "action_1ea8f0499baa9430",
+    "step_id": "step-direct",
+    "task_revision": 1,
+    "plan_id": "plan_a7f3abad1ebc93701df6",
+    "plan_version": "plan_v1",
+    "plan_revision": 1,
+    "authoritative_user_turn_revision": 1,
+    "execution_epoch": "0",
+    "purpose": "analysis",
+    "command_role": "primary",
+    "expected_outputs": [],
+    "expected_step_effect": {
+      "schema_version": 1,
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "identity": "contigs_compatible",
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          },
+          "predicate": {
+            "applicability": {
+              "execution_capability_ids": [
+                "genomics.snpeff_annotation.prepare_database",
+                "genomics.snpeff_annotation.build_database",
+                "genomics.snpeff_annotation.annotate_variants",
+                "genomics.snpeff_annotation.summarize_ann",
+                "genomics.snpeff_annotation.finalize_outputs"
+              ],
+              "kind": "plan_contains_any_execution_capability",
+              "schema_version": 1
+            },
+            "expected": true,
+            "failure_disposition": "correction_required",
+            "missing_disposition": "inspection_required",
+            "operator": "boolean_equals",
+            "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+            "parser_id": "biomind.genomics.contig_compatibility.v1",
+            "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+          }
+        }
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    },
+    "expected_evidence": [
+      "the approved command exits"
+    ],
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+    "capability_contract": {
+      "schema_version": 1,
+      "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "selected_skill_id": "genomics/snpeff-annotation",
+      "required_runtime_binding_ids": [],
+      "optional_runtime_binding_ids": [],
+      "required_artifact_binding_ids": [
+        "artifact.annotation_gtf",
+        "artifact.reference_fasta",
+        "artifact.variant_vcf"
+      ],
+      "execution_guidance": [
+        "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+        "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+        "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+        "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+      ],
+      "operation": "check_contig_compatibility",
+      "consumes_artifacts": [
+        "artifact.annotation_gtf",
+        "artifact.reference_fasta",
+        "artifact.variant_vcf"
+      ],
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "observation_id": "contigs_compatible",
+          "predicate": {
+            "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+            "operator": "boolean_equals",
+            "expected": true,
+            "parser_id": "biomind.genomics.contig_compatibility.v1",
+            "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+            "failure_disposition": "correction_required",
+            "missing_disposition": "inspection_required",
+            "applicability": {
+              "schema_version": 1,
+              "kind": "plan_contains_any_execution_capability",
+              "execution_capability_ids": [
+                "genomics.snpeff_annotation.prepare_database",
+                "genomics.snpeff_annotation.build_database",
+                "genomics.snpeff_annotation.annotate_variants",
+                "genomics.snpeff_annotation.summarize_ann",
+                "genomics.snpeff_annotation.finalize_outputs"
+              ]
+            }
+          },
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          }
+        }
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    },
+    "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+    "runtime_bindings": {},
+    "runtime_binding_records": [],
+    "runtime_binding_manifest": {
+      "schema_version": 1,
+      "action_id": "action_1ea8f0499baa9430",
+      "plan_id": "plan_a7f3abad1ebc93701df6",
+      "step_id": "step-direct",
+      "selected_skill_id": "genomics/snpeff-annotation",
+      "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+      "scope": "current_action",
+      "bindings": [],
+      "manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db"
+    },
+    "runtime_binding_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+    "artifact_env_manifest": {
+      "schema_version": 1,
+      "action_id": "action_1ea8f0499baa9430",
+      "plan_id": "plan_a7f3abad1ebc93701df6",
+      "step_id": "step-direct",
+      "selected_skill_id": "genomics/snpeff-annotation",
+      "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+      "scope": "current_action",
+      "bindings": [],
+      "manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db"
+    },
+    "artifact_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+    "execution_policy_manifest": {
+      "schema_version": 1,
+      "action_id": "action_1ea8f0499baa9430",
+      "plan_id": "plan_a7f3abad1ebc93701df6",
+      "step_id": "step-direct",
+      "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+      "language": "Bash",
+      "scope": "current_action",
+      "policy": {
+        "stdin": "devnull",
+        "process_group": "isolated",
+        "shell_errexit": false,
+        "shell_pipefail": true
+      },
+      "manifest_hash": "sha256:faea3d01559976e880e388eadb2856a3a9b1e97ac407d4bf17c2fc99e82c8d9f"
+    },
+    "execution_policy_manifest_hash": "sha256:faea3d01559976e880e388eadb2856a3a9b1e97ac407d4bf17c2fc99e82c8d9f",
+    "action_approval_identity": {
+      "schema_version": 1,
+      "generated_script_sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+      "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+      "runtime_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+      "artifact_env_manifest_hash": "sha256:27ad265e937bb91f5dfbc0e361c7e87564ac558ea4185ec5750a9f70b09b65db",
+      "execution_policy_manifest_hash": "sha256:faea3d01559976e880e388eadb2856a3a9b1e97ac407d4bf17c2fc99e82c8d9f",
+      "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+      "approval_identity_hash": "sha256:d10ea45e0e2328e987be27e985972269acc8af4fe9186b1a95fce56d9b1871cb"
+    },
+    "generated_script_sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+    "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+    "generated_from_plan_hash": "0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+    "generated_from_approval_scope_hash": "e81bde4fdb0292eb663fa10eb9d30233293780692cf05352e79577cb7bf433e6",
+    "action_hash": "5cdf1b9755ea4a8b27e9c4f38f84796bd40f97c87c9ab1a5fc81496181f7842e",
+    "candidate_repair_source": {
+      "action_type": "execute",
+      "operation": "check_contig_compatibility",
+      "language": "bash",
+      "code": "printf '%s\\n' 'BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":false}]}'",
+      "env": {},
+      "outputs": []
+    },
+    "generated_script": {
+      "version": "generated",
+      "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-2raqh5y6/task_outputs/fix-f3-late-generate-nonsemantic-valid/scripts/plan_a7f3abad1ebc93701df6/plan_v1/step-direct/action_1ea8f0499baa9430/generated.sh",
+      "sha256": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d",
+      "producer": "generate",
+      "parent_script_ref": {},
+      "mutation_reason": "model_generation",
+      "created_at": "2026-09-15T17:01:10"
+    },
+    "generated_script_path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-2raqh5y6/task_outputs/fix-f3-late-generate-nonsemantic-valid/scripts/plan_a7f3abad1ebc93701df6/plan_v1/step-direct/action_1ea8f0499baa9430/generated.sh",
+    "generated_script_hash": "201e52b6ebda8a29084110541f39c75b550690720ce7cd05922137d0e364f98d"
+  },
+  "provider_claims": {
+    "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b": {
+      "claim_id": "candidate-call:b21a0425ea85b7f429c0f722ac4d4f440ac3a6a827c3cb2d76f009d31ffb600b",
+      "scope": {
+        "task_id": "fix-f3-late-generate-nonsemantic-valid",
+        "task_revision": 1,
+        "plan_id": "plan_a7f3abad1ebc93701df6",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct"
+      },
+      "authorization": "initial:1a42fe9c91aafc135a57807b8f12e5ecad37850ebb7b8d83ca26b4312d219023",
+      "status": "completed",
+      "invocation_id": "generate-7a9adca60e134eeea065f2afdb655a18",
+      "corrective_ordinal": 0,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "fix-f3-late-generate-nonsemantic-valid",
+          "task_revision": 1,
+          "plan_id": "plan_a7f3abad1ebc93701df6",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true
+      },
+      "response_ref": "object:sha256:360c30b4aac93fe27c1dae8e1734f26c8b1bc14825b147b29da53e65537563cd"
+    }
+  },
+  "candidate_rejection_events": {},
+  "attempts": {},
+  "loaded_source": {
+    "bio_agents": "07ecac5f48bca8167b7530b97c11a7284bc1fd98f68dc02a433adeef028d18a6"
+  },
+  "fixture_boundary": "fixed provider and Plan yes input; runtime readiness/memory hooks are existing fixture stubs; actual TypedGenerate/parser/CAS/staleness and route; no Execute dispatched"
+}

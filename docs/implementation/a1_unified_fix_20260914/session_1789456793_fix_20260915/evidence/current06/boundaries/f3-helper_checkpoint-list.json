@@ -1,0 +1,2701 @@
+{
+  "mode": "helper_checkpoint",
+  "env_type": "list",
+  "provider_calls": 3,
+  "replay": {},
+  "outcomes": [
+    {
+      "schema_version": 1,
+      "type": "candidate_rejected",
+      "summary": "A bounded generated candidate defect can be corrected.",
+      "scope": {
+        "task_id": "f3-helper_checkpoint-list",
+        "task_revision": 1,
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct",
+        "attempt_id": ""
+      },
+      "payload": {
+        "step_id": "step-direct",
+        "violation_owner": "GENERATED_ACTION",
+        "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "error_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+        "feedback": "The marker is present but not on its own unindented line.",
+        "budget_receipt": {
+          "version": "candidate-corrections-v2",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "limit": 4,
+          "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+          "unit": "additional_candidate_calls",
+          "categories_share_total": true,
+          "rejection_ordinal": 1,
+          "corrections_authorized_before": 0,
+          "corrections_observed_before_rejection": 0,
+          "remaining_before_authorization": 4,
+          "category": "representation",
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "3aa2c5d80367e04499e4e97861deefc72851dbff381d8ad8c28cd5c3a34a69eb",
+            "validation_signature": "c47f0b4e1e632a07cb18a3f972999230f16f137a556df115b42b7eab145fbb6c",
+            "comparison_context_fingerprint": "83e84265a62e1df88b7c008e6ef8d413aa765ca2406f1bd78d4bb3e0d7cd07d8",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_keys",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "$.code|argv",
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "ordinal": 1,
+          "remaining": 3,
+          "progress_proven": true,
+          "rejection_event_id": "candidate-rejection:520087d6fc8dc893d34b1a8e",
+          "receipt_ref": "object:sha256:706275c851d994b5a32115fbee66b5ecfb858194da00141e7295386c857ec6a7"
+        },
+        "repairable": true,
+        "repair_context": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "error_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+          "violation_owner": "GENERATED_ACTION",
+          "feedback": "The marker is present but not on its own unindented line.",
+          "repair_domain": "representation",
+          "repair_stage": "action_schema",
+          "repair_ordinal": 1,
+          "repair_limit": 4,
+          "progress_proven": true,
+          "validation_source": "BioAnalystAgent._extract_structured_action_result",
+          "contract_ref": {
+            "protocol": "semantic_action_v2",
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "requirements": {
+              "protocol": "public_handle_v2",
+              "operation": "check_contig_compatibility",
+              "produced_bindings": {},
+              "consumed_bindings": {},
+              "binding_env": {
+                "owner": "system",
+                "declared_mapping": {},
+                "compatibility": "If supplied, every mapping must equal this declaration."
+              },
+              "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+            }
+          },
+          "failure_stage": "pre_execution_candidate_admission",
+          "execution_status": "not_started",
+          "exact_violations": [
+            {
+              "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+              "owner": "GENERATED_ACTION",
+              "message": "The marker is present but not on its own unindented line.",
+              "field_path": "$.code|argv",
+              "observed": {
+                "action_type": "execute",
+                "operation": "wrong-operation",
+                "language": "python",
+                "env": {},
+                "outputs": [],
+                "code": "if True:\n  # BIOMIND_EFFECT_HELPER\n  print('synthetic')\n"
+              },
+              "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.",
+              "actual": {
+                "language": "python",
+                "carrier_source": "code",
+                "marker_count": 0,
+                "marker_positions": [],
+                "template_available": true,
+                "template_schema_version": 1,
+                "template_sha256": "cfa87f9eff6f6770d75e95c5c5efe67483d38e706c42430de43bbd1eb98d7cc5",
+                "declared_language": "python",
+                "interpreter_argv_prefix": [],
+                "declaration_missing": false,
+                "fallback_language": null
+              },
+              "protocol_error": {
+                "stage": "action_schema",
+                "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+                "field_path": "$.code|argv",
+                "message": "The marker is present but not on its own unindented line.",
+                "actual": {
+                  "language": "python",
+                  "carrier_source": "code",
+                  "marker_count": 0,
+                  "marker_positions": [],
+                  "template_available": true,
+                  "template_schema_version": 1,
+                  "template_sha256": "cfa87f9eff6f6770d75e95c5c5efe67483d38e706c42430de43bbd1eb98d7cc5",
+                  "declared_language": "python",
+                  "interpreter_argv_prefix": [],
+                  "declaration_missing": false,
+                  "fallback_language": null
+                },
+                "reason": "The marker is present but not on its own unindented line.",
+                "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template."
+              },
+              "failure_stage": "pre_execution_candidate_admission"
+            },
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "field_path": "operation",
+              "observed_type": "str",
+              "message": "Use the fixed invocation operation: check_contig_compatibility",
+              "check_source": "public_binding_shape_violations",
+              "owner": "GENERATED_ACTION"
+            }
+          ],
+          "previous_candidate": {
+            "kind": "malformed_generate_response",
+            "response_sha256": "68895b0b9c56664f814abf8a1616b471b13d7132f89d106169b8add56db8b6ab",
+            "response_char_count": 177,
+            "response_excerpt": "{\"action_type\": \"execute\", \"operation\": \"wrong-operation\", \"language\": \"python\", \"env\": {}, \"outputs\": [], \"code\": \"if True:\\n  # BIOMIND_EFFECT_HELPER\\n  print('synthetic')\\n\"}",
+            "parsed_candidate": {
+              "action_type": "execute",
+              "operation": "wrong-operation",
+              "language": "python",
+              "env": {},
+              "outputs": [],
+              "code": "if True:\n  # BIOMIND_EFFECT_HELPER\n  print('synthetic')\n"
+            },
+            "parser_selection": {
+              "response_container_source": "active_protocol_parser",
+              "stage": "action_schema",
+              "json_candidate_source": "decoded_candidate",
+              "excerpt_kind": "bounded_parser_excerpt",
+              "excerpt_sha256": "68895b0b9c56664f814abf8a1616b471b13d7132f89d106169b8add56db8b6ab"
+            }
+          },
+          "protocol_error": {
+            "stage": "action_schema",
+            "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+            "message": "The marker is present but not on its own unindented line."
+          },
+          "candidate_event_id": "candidate-call:5e9f400d56920dbf196cd131ac41e929d63732143f3173a7189d2ca1e2e77680",
+          "rejection_event_id": "candidate-rejection:520087d6fc8dc893d34b1a8e",
+          "policy_receipt": {
+            "version": "candidate-corrections-v2",
+            "scope": {
+              "task_id": "f3-helper_checkpoint-list",
+              "task_revision": 1,
+              "plan_id": "plan_4fed9569bae8b2cf6397",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "limit": 4,
+            "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+            "unit": "additional_candidate_calls",
+            "categories_share_total": true,
+            "rejection_ordinal": 1,
+            "corrections_authorized_before": 0,
+            "corrections_observed_before_rejection": 0,
+            "remaining_before_authorization": 4,
+            "category": "representation",
+            "progress_assessment": {
+              "schema_version": 1,
+              "producer": "biomind.generate_candidate_admission.v1",
+              "progress_proven": true,
+              "basis": "initial_rejection",
+              "comparison_fingerprint": "3aa2c5d80367e04499e4e97861deefc72851dbff381d8ad8c28cd5c3a34a69eb",
+              "validation_signature": "c47f0b4e1e632a07cb18a3f972999230f16f137a556df115b42b7eab145fbb6c",
+              "comparison_context_fingerprint": "83e84265a62e1df88b7c008e6ef8d413aa765ca2406f1bd78d4bb3e0d7cd07d8",
+              "representation_targets": [
+                "action_schema_complete",
+                "action_type",
+                "execute.argv_shape",
+                "execute.env_keys",
+                "execute.env_object",
+                "execute.env_values",
+                "execute.executable_body",
+                "execute.outputs_shape",
+                "json_object"
+              ],
+              "binding_facts": [
+                "binding_env"
+              ],
+              "binding_axis": "evaluated",
+              "newly_satisfied_targets": [],
+              "resolved_targets": [],
+              "pending_targets": [
+                "$.code|argv",
+                "operation"
+              ],
+              "scientific_success": "not_assessed"
+            }
+          },
+          "receipt_id": "candidate-repair-receipt:76c2d3873bacbd3886f33869",
+          "receipt_ref": "object:sha256:706275c851d994b5a32115fbee66b5ecfb858194da00141e7295386c857ec6a7"
+        },
+        "execution_status": "not_started",
+        "generate_invocation": {
+          "generate_call_id": "generate-dfa1380cf0da4fcca07b6a8419e025a6",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct",
+            "attempt_id": ""
+          },
+          "source_ref": "object:sha256:43777355d1f147eabc3d0bb33467171461229de5ed975606301c85148f517bcc",
+          "prompt_assembly_started": true,
+          "prompt_assembly_succeeded": true,
+          "provider_call_attempted": true,
+          "llm_invoked": true
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "schema_version": 1,
+      "type": "candidate_rejected",
+      "summary": "A bounded generated candidate defect can be corrected.",
+      "scope": {
+        "task_id": "f3-helper_checkpoint-list",
+        "task_revision": 1,
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct",
+        "attempt_id": ""
+      },
+      "payload": {
+        "step_id": "step-direct",
+        "violation_owner": "GENERATED_ACTION",
+        "candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "error_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+        "feedback": "The action operation is not authorized by the selected approved capability.",
+        "budget_receipt": {
+          "version": "candidate-corrections-v2",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "limit": 4,
+          "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+          "unit": "additional_candidate_calls",
+          "categories_share_total": true,
+          "rejection_ordinal": 2,
+          "corrections_authorized_before": 1,
+          "corrections_observed_before_rejection": 1,
+          "remaining_before_authorization": 3,
+          "category": "candidate_contract",
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+            "validation_signature": "91ede59be172393eecdf8ac0301913859e98534ac367e547a341a219f234fe24",
+            "comparison_context_fingerprint": "8d92f69ae4d656caadecdc302493ec06619bbce2a7f31d6bf08a068a266c6436",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "effect_helper_materialization",
+              "executable_syntax",
+              "execute.argv_shape",
+              "execute.env_keys",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [
+              "effect_helper_materialization",
+              "executable_syntax"
+            ],
+            "resolved_targets": [
+              "$.code|argv"
+            ],
+            "pending_targets": [
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "ordinal": 2,
+          "remaining": 2,
+          "progress_proven": true,
+          "rejection_event_id": "candidate-rejection:59b6f6ce89402c5eabc4e12a",
+          "receipt_ref": "object:sha256:9e9b7751ff62f8697d85bf71575111ee1f47365709ef5a56854ec0a489753e24"
+        },
+        "repairable": true,
+        "repair_context": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "error_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+          "violation_owner": "GENERATED_ACTION",
+          "feedback": "The action operation is not authorized by the selected approved capability.",
+          "repair_domain": "generated_semantic",
+          "repair_stage": "operation_binding_admission",
+          "repair_ordinal": 2,
+          "repair_limit": 4,
+          "progress_proven": true,
+          "validation_source": "agent_core.plan_bindings.validate_operation_binding_admission",
+          "contract_ref": {
+            "authority": "execution_capability_registry",
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "contract_source": "generate.execution_capabilities[genomics.snpeff_annotation.check_contig_compatibility]",
+            "contract_revision": "1",
+            "requirements": {
+              "protocol": "public_handle_v2",
+              "operation": "check_contig_compatibility",
+              "produced_bindings": {},
+              "consumed_bindings": {},
+              "binding_env": {
+                "owner": "system",
+                "declared_mapping": {},
+                "compatibility": "If supplied, every mapping must equal this declaration."
+              },
+              "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+            }
+          },
+          "failure_stage": "pre_execution_candidate_admission",
+          "execution_status": "not_started",
+          "exact_violations": [
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "owner": "GENERATED_ACTION",
+              "message": "The action operation is not authorized by the selected approved capability.",
+              "operation": "wrong-operation",
+              "expected_operation": "check_contig_compatibility",
+              "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+              "field_path": "operation",
+              "contract_source": "generate.execution_capabilities[genomics.snpeff_annotation.check_contig_compatibility]"
+            }
+          ],
+          "previous_candidate": {
+            "action_type": "execute",
+            "operation": "wrong-operation",
+            "language": "python",
+            "env": {},
+            "outputs": [],
+            "code": "# BIOMIND_EFFECT_HELPER\nprint('synthetic')\n"
+          },
+          "protocol_error": {
+            "stage": "operation_binding_admission",
+            "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+            "message": "The action operation is not authorized by the selected approved capability."
+          },
+          "candidate_event_id": "candidate-call:aa4098e00831128944a822dd69458d7de3d4187101788e2d9dd2fa9981b68872",
+          "rejection_event_id": "candidate-rejection:59b6f6ce89402c5eabc4e12a",
+          "policy_receipt": {
+            "version": "candidate-corrections-v2",
+            "scope": {
+              "task_id": "f3-helper_checkpoint-list",
+              "task_revision": 1,
+              "plan_id": "plan_4fed9569bae8b2cf6397",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "limit": 4,
+            "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+            "unit": "additional_candidate_calls",
+            "categories_share_total": true,
+            "rejection_ordinal": 2,
+            "corrections_authorized_before": 1,
+            "corrections_observed_before_rejection": 1,
+            "remaining_before_authorization": 3,
+            "category": "candidate_contract",
+            "progress_assessment": {
+              "schema_version": 1,
+              "producer": "biomind.generate_candidate_admission.v1",
+              "progress_proven": true,
+              "basis": "validated_representation_target",
+              "comparison_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+              "validation_signature": "91ede59be172393eecdf8ac0301913859e98534ac367e547a341a219f234fe24",
+              "comparison_context_fingerprint": "8d92f69ae4d656caadecdc302493ec06619bbce2a7f31d6bf08a068a266c6436",
+              "representation_targets": [
+                "action_schema_complete",
+                "action_type",
+                "effect_helper_materialization",
+                "executable_syntax",
+                "execute.argv_shape",
+                "execute.env_keys",
+                "execute.env_object",
+                "execute.env_values",
+                "execute.executable_body",
+                "execute.outputs_shape",
+                "json_object"
+              ],
+              "binding_facts": [
+                "binding_env"
+              ],
+              "binding_axis": "evaluated",
+              "newly_satisfied_targets": [
+                "effect_helper_materialization",
+                "executable_syntax"
+              ],
+              "resolved_targets": [
+                "$.code|argv"
+              ],
+              "pending_targets": [
+                "operation"
+              ],
+              "scientific_success": "not_assessed"
+            }
+          },
+          "receipt_id": "candidate-repair-receipt:494006b202cc21f831577f2c",
+          "receipt_ref": "object:sha256:9e9b7751ff62f8697d85bf71575111ee1f47365709ef5a56854ec0a489753e24"
+        },
+        "execution_status": "not_started",
+        "generate_invocation": {
+          "generate_call_id": "generate-cd2dda6731a54f359883ec6abdd7f665",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct",
+            "attempt_id": ""
+          },
+          "source_ref": "object:sha256:43777355d1f147eabc3d0bb33467171461229de5ed975606301c85148f517bcc",
+          "prompt_assembly_started": true,
+          "prompt_assembly_succeeded": true,
+          "provider_call_attempted": true,
+          "llm_invoked": true
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "schema_version": 1,
+      "type": "action_ready",
+      "summary": "A validated action candidate is ready for Execute.",
+      "scope": {
+        "task_id": "f3-helper_checkpoint-list",
+        "task_revision": 1,
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct",
+        "attempt_id": ""
+      },
+      "payload": {
+        "action": {
+          "type": "execute",
+          "source": "action_json",
+          "code": "python -c 'import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('\"'\"'{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}'\"'\"')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, '\"'\"'BIOMIND_EFFECT_EVIDENCE_JSON='\"'\"', publication=True)\nprint('\"'\"'synthetic'\"'\"')'",
+          "argv": [
+            "python",
+            "-c",
+            "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')"
+          ],
+          "env": {},
+          "outputs": [],
+          "language": "bash",
+          "operation": "check_contig_compatibility",
+          "candidate_generation_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8",
+          "binding_env": {},
+          "binding_normalization_receipt": {
+            "schema_version": 2,
+            "producer": "managed_binding_normalizer",
+            "protocol": "public_handle_v2",
+            "scope": {
+              "task_id": "f3-helper_checkpoint-list",
+              "task_revision": 1,
+              "plan_id": "plan_4fed9569bae8b2cf6397",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct",
+              "attempt_id": ""
+            },
+            "contract_digest": "1e25cf2a51bde874ceaef00d9c3593087078ad1b92daea06e8e0729aed1f3f4c",
+            "catalog_digests": [],
+            "raw_digest": "4d7a581edf8048f3f5b8593b9e9e59c3cd2a88aa88665bfc964691376e381ab3",
+            "normalized_digest": "0b669b5b762c18393c9eaccd2fac39d5728184a6a931b7c050a4063b3ed764b2",
+            "raw_candidate": {
+              "type": "execute",
+              "source": "action_json",
+              "code": "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')",
+              "argv": [
+                "python",
+                "-c",
+                "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')"
+              ],
+              "env": {},
+              "outputs": [],
+              "language": "python",
+              "operation": "check_contig_compatibility",
+              "candidate_generation_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8"
+            },
+            "normalized_candidate": {
+              "type": "execute",
+              "source": "action_json",
+              "code": "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')",
+              "argv": [
+                "python",
+                "-c",
+                "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')"
+              ],
+              "env": {},
+              "outputs": [],
+              "language": "python",
+              "operation": "check_contig_compatibility",
+              "candidate_generation_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8",
+              "binding_env": {}
+            },
+            "raw_public_candidate": {
+              "action_type": "execute",
+              "operation": "check_contig_compatibility",
+              "language": "python",
+              "env": {},
+              "outputs": [],
+              "code": "# BIOMIND_EFFECT_HELPER\nprint('synthetic')\n"
+            },
+            "raw_public_digest": "7a65fb4f0ab119a4488ef8d006448619f476e4d56782654906a7d3a387156529",
+            "raw_representation": "parsed_action_before_binding",
+            "receipt_id": "binding-normalization-4e7d72d9c30fb23cf40fc208cb7ad72dffbc5abd472720b6ded0e1ce7fcfad53"
+          },
+          "formal_workspace_bindings": [],
+          "binding_contract_rule": {},
+          "generate_binding_resolution": {
+            "environment": {},
+            "records": []
+          },
+          "generate_binding_resolution_digest": "49130909db9874d2ef1e55b5271596c4c1bd9fcf67acfd64aa8e969b8e3cef5a",
+          "workspace_mutation_intent_contracts": [],
+          "managed_artifact_handles": [],
+          "referenced_output_handles": [],
+          "materialized_artifacts": {},
+          "concrete_artifact_bindings": [],
+          "controller_output_bindings": [],
+          "candidate_fingerprint": "a49e0f5f13d9c0e5e8a7b846a59f739524655d5f38111bb135d03fe162c2cd77",
+          "action_id": "action_92b6fb9f9a4455ba",
+          "step_id": "step-direct",
+          "task_revision": 1,
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "authoritative_user_turn_revision": 1,
+          "execution_epoch": "0",
+          "purpose": "analysis",
+          "command_role": "primary",
+          "expected_outputs": [],
+          "expected_step_effect": {
+            "schema_version": 1,
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "identity": "contigs_compatible",
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                },
+                "predicate": {
+                  "applicability": {
+                    "execution_capability_ids": [
+                      "genomics.snpeff_annotation.prepare_database",
+                      "genomics.snpeff_annotation.build_database",
+                      "genomics.snpeff_annotation.annotate_variants",
+                      "genomics.snpeff_annotation.summarize_ann",
+                      "genomics.snpeff_annotation.finalize_outputs"
+                    ],
+                    "kind": "plan_contains_any_execution_capability",
+                    "schema_version": 1
+                  },
+                  "expected": true,
+                  "failure_disposition": "correction_required",
+                  "missing_disposition": "inspection_required",
+                  "operator": "boolean_equals",
+                  "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                  "parser_id": "biomind.genomics.contig_compatibility.v1",
+                  "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+                }
+              }
+            ],
+            "workspace_mutations": [],
+            "explicit_side_effects": []
+          },
+          "expected_evidence": [
+            "the approved command exits"
+          ],
+          "selected_skill_id": "genomics/snpeff-annotation",
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "capability_contract": {
+            "schema_version": 1,
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "required_runtime_binding_ids": [],
+            "optional_runtime_binding_ids": [],
+            "required_artifact_binding_ids": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta",
+              "artifact.variant_vcf"
+            ],
+            "execution_guidance": [
+              "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+              "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+              "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+              "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+            ],
+            "operation": "check_contig_compatibility",
+            "consumes_artifacts": [
+              "artifact.annotation_gtf",
+              "artifact.reference_fasta",
+              "artifact.variant_vcf"
+            ],
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "observation_id": "contigs_compatible",
+                "predicate": {
+                  "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+                  "operator": "boolean_equals",
+                  "expected": true,
+                  "parser_id": "biomind.genomics.contig_compatibility.v1",
+                  "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                  "failure_disposition": "correction_required",
+                  "missing_disposition": "inspection_required",
+                  "applicability": {
+                    "schema_version": 1,
+                    "kind": "plan_contains_any_execution_capability",
+                    "execution_capability_ids": [
+                      "genomics.snpeff_annotation.prepare_database",
+                      "genomics.snpeff_annotation.build_database",
+                      "genomics.snpeff_annotation.annotate_variants",
+                      "genomics.snpeff_annotation.summarize_ann",
+                      "genomics.snpeff_annotation.finalize_outputs"
+                    ]
+                  }
+                },
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                }
+              }
+            ],
+            "workspace_mutations": [],
+            "explicit_side_effects": []
+          },
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "runtime_bindings": {},
+          "runtime_binding_records": [],
+          "runtime_binding_manifest": {
+            "schema_version": 1,
+            "action_id": "action_92b6fb9f9a4455ba",
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "step_id": "step-direct",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+            "scope": "current_action",
+            "bindings": [],
+            "manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612"
+          },
+          "runtime_binding_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+          "artifact_env_manifest": {
+            "schema_version": 1,
+            "action_id": "action_92b6fb9f9a4455ba",
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "step_id": "step-direct",
+            "selected_skill_id": "genomics/snpeff-annotation",
+            "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+            "scope": "current_action",
+            "bindings": [],
+            "manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612"
+          },
+          "artifact_env_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+          "execution_policy_manifest": {
+            "schema_version": 1,
+            "action_id": "action_92b6fb9f9a4455ba",
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "step_id": "step-direct",
+            "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+            "language": "Bash",
+            "scope": "current_action",
+            "policy": {
+              "stdin": "devnull",
+              "process_group": "isolated",
+              "shell_errexit": false,
+              "shell_pipefail": true
+            },
+            "manifest_hash": "sha256:614565492cb33e6c09824ce90c7fff73f74674beb4c7ae14ac6764d3012309df"
+          },
+          "execution_policy_manifest_hash": "sha256:614565492cb33e6c09824ce90c7fff73f74674beb4c7ae14ac6764d3012309df",
+          "action_approval_identity": {
+            "schema_version": 1,
+            "generated_script_sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+            "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+            "runtime_env_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+            "artifact_env_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+            "execution_policy_manifest_hash": "sha256:614565492cb33e6c09824ce90c7fff73f74674beb4c7ae14ac6764d3012309df",
+            "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+            "approval_identity_hash": "sha256:423a74757d85763df3fa4a545e5b7d84406a3d693496d8c98692e73581c5ce8c"
+          },
+          "generated_script_sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+          "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+          "generated_from_plan_hash": "0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+          "generated_from_approval_scope_hash": "e5648eb9f180bc7f3d5112bccb479df6d6398292854405555c7d07ee9ed26d5a",
+          "action_hash": "545b0e165e4ca9d727dcd44c32312d5fd8d8d8a45b267bf6f6eb1c4aee26d17f",
+          "candidate_repair_source": {
+            "action_type": "execute",
+            "operation": "check_contig_compatibility",
+            "language": "python",
+            "env": {},
+            "outputs": [],
+            "code": "# BIOMIND_EFFECT_HELPER\nprint('synthetic')\n"
+          },
+          "generated_script": {
+            "version": "generated",
+            "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-tre_3pw7/task_outputs/f3-helper_checkpoint-list/scripts/plan_4fed9569bae8b2cf6397/plan_v1/step-direct/action_92b6fb9f9a4455ba/generated.sh",
+            "sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+            "producer": "generate",
+            "parent_script_ref": {},
+            "mutation_reason": "model_generation",
+            "created_at": "2026-09-15T17:01:11"
+          },
+          "generated_script_path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-tre_3pw7/task_outputs/f3-helper_checkpoint-list/scripts/plan_4fed9569bae8b2cf6397/plan_v1/step-direct/action_92b6fb9f9a4455ba/generated.sh",
+          "generated_script_hash": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99"
+        },
+        "action_id": "action_92b6fb9f9a4455ba",
+        "candidate_fingerprint": "a49e0f5f13d9c0e5e8a7b846a59f739524655d5f38111bb135d03fe162c2cd77",
+        "validation_evidence": {
+          "status": "validated",
+          "reason_code": ""
+        },
+        "generate_invocation": {
+          "generate_call_id": "generate-18cebed807f94921a1847616c99a00ad",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct",
+            "attempt_id": ""
+          },
+          "source_ref": "object:sha256:43777355d1f147eabc3d0bb33467171461229de5ed975606301c85148f517bcc",
+          "prompt_assembly_started": true,
+          "prompt_assembly_succeeded": true,
+          "provider_call_attempted": true,
+          "llm_invoked": true
+        }
+      },
+      "evidence_refs": []
+    }
+  ],
+  "rows": [
+    {
+      "schema_version": 1,
+      "event_id": "candidate-rejection:520087d6fc8dc893d34b1a8e",
+      "candidate_event_id": "candidate-call:5e9f400d56920dbf196cd131ac41e929d63732143f3173a7189d2ca1e2e77680",
+      "scope": {
+        "task_id": "f3-helper_checkpoint-list",
+        "task_revision": 1,
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct"
+      },
+      "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+      "error_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+      "repair_stage": "action_schema",
+      "repair_domain": "representation",
+      "repair_ordinal": 1,
+      "repair_limit": 4,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "f3-helper_checkpoint-list",
+          "task_revision": 1,
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 1,
+        "corrections_authorized_before": 0,
+        "corrections_observed_before_rejection": 0,
+        "remaining_before_authorization": 4,
+        "category": "representation",
+        "progress_assessment": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "progress_proven": true,
+          "basis": "initial_rejection",
+          "comparison_fingerprint": "3aa2c5d80367e04499e4e97861deefc72851dbff381d8ad8c28cd5c3a34a69eb",
+          "validation_signature": "c47f0b4e1e632a07cb18a3f972999230f16f137a556df115b42b7eab145fbb6c",
+          "comparison_context_fingerprint": "83e84265a62e1df88b7c008e6ef8d413aa765ca2406f1bd78d4bb3e0d7cd07d8",
+          "representation_targets": [
+            "action_schema_complete",
+            "action_type",
+            "execute.argv_shape",
+            "execute.env_keys",
+            "execute.env_object",
+            "execute.env_values",
+            "execute.executable_body",
+            "execute.outputs_shape",
+            "json_object"
+          ],
+          "binding_facts": [
+            "binding_env"
+          ],
+          "binding_axis": "evaluated",
+          "newly_satisfied_targets": [],
+          "resolved_targets": [],
+          "pending_targets": [
+            "$.code|argv",
+            "operation"
+          ],
+          "scientific_success": "not_assessed"
+        },
+        "correction_authorized": true,
+        "corrections_authorized": 1,
+        "remaining": 3
+      },
+      "correction_category": "representation",
+      "progress_proven": true,
+      "progress_assessment": {
+        "schema_version": 1,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "progress_proven": true,
+        "basis": "initial_rejection",
+        "comparison_fingerprint": "3aa2c5d80367e04499e4e97861deefc72851dbff381d8ad8c28cd5c3a34a69eb",
+        "validation_signature": "c47f0b4e1e632a07cb18a3f972999230f16f137a556df115b42b7eab145fbb6c",
+        "comparison_context_fingerprint": "83e84265a62e1df88b7c008e6ef8d413aa765ca2406f1bd78d4bb3e0d7cd07d8",
+        "representation_targets": [
+          "action_schema_complete",
+          "action_type",
+          "execute.argv_shape",
+          "execute.env_keys",
+          "execute.env_object",
+          "execute.env_values",
+          "execute.executable_body",
+          "execute.outputs_shape",
+          "json_object"
+        ],
+        "binding_facts": [
+          "binding_env"
+        ],
+        "binding_axis": "evaluated",
+        "newly_satisfied_targets": [],
+        "resolved_targets": [],
+        "pending_targets": [
+          "$.code|argv",
+          "operation"
+        ],
+        "scientific_success": "not_assessed"
+      },
+      "public_valid_facts": [
+        "binding_env"
+      ],
+      "validation_source": "BioAnalystAgent._extract_structured_action_result",
+      "contract_ref": {
+        "protocol": "semantic_action_v2",
+        "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+        "requirements": {
+          "protocol": "public_handle_v2",
+          "operation": "check_contig_compatibility",
+          "produced_bindings": {},
+          "consumed_bindings": {},
+          "binding_env": {
+            "owner": "system",
+            "declared_mapping": {},
+            "compatibility": "If supplied, every mapping must equal this declaration."
+          },
+          "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+        }
+      },
+      "violation_owner": "GENERATED_ACTION",
+      "reason_code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+      "exact_violations": [
+        {
+          "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+          "owner": "GENERATED_ACTION",
+          "message": "The marker is present but not on its own unindented line.",
+          "field_path": "$.code|argv",
+          "observed": {
+            "action_type": "execute",
+            "operation": "wrong-operation",
+            "language": "python",
+            "env": {},
+            "outputs": [],
+            "code": "if True:\n  # BIOMIND_EFFECT_HELPER\n  print('synthetic')\n"
+          },
+          "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.",
+          "actual": {
+            "language": "python",
+            "carrier_source": "code",
+            "marker_count": 0,
+            "marker_positions": [],
+            "template_available": true,
+            "template_schema_version": 1,
+            "template_sha256": "cfa87f9eff6f6770d75e95c5c5efe67483d38e706c42430de43bbd1eb98d7cc5",
+            "declared_language": "python",
+            "interpreter_argv_prefix": [],
+            "declaration_missing": false,
+            "fallback_language": null
+          },
+          "protocol_error": {
+            "stage": "action_schema",
+            "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+            "field_path": "$.code|argv",
+            "message": "The marker is present but not on its own unindented line.",
+            "actual": {
+              "language": "python",
+              "carrier_source": "code",
+              "marker_count": 0,
+              "marker_positions": [],
+              "template_available": true,
+              "template_schema_version": 1,
+              "template_sha256": "cfa87f9eff6f6770d75e95c5c5efe67483d38e706c42430de43bbd1eb98d7cc5",
+              "declared_language": "python",
+              "interpreter_argv_prefix": [],
+              "declaration_missing": false,
+              "fallback_language": null
+            },
+            "reason": "The marker is present but not on its own unindented line.",
+            "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template."
+          },
+          "failure_stage": "pre_execution_candidate_admission"
+        },
+        {
+          "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+          "field_path": "operation",
+          "observed_type": "str",
+          "message": "Use the fixed invocation operation: check_contig_compatibility",
+          "check_source": "public_binding_shape_violations",
+          "owner": "GENERATED_ACTION"
+        }
+      ],
+      "status": "repairable",
+      "exit_reason": "unrecognized_action",
+      "terminal_exit_reason": "unrecognized_action_exhausted",
+      "terminal_reason_code": "",
+      "termination_reason": "",
+      "execution_status": "not_started",
+      "recovery_entered": false,
+      "outputs_produced": [],
+      "primary_failure": {
+        "error_code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "The marker is present but not on its own unindented line.",
+        "reason": "The marker is present but not on its own unindented line.",
+        "current_step": "step-direct",
+        "fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+        "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "execution_started": false,
+        "repair_attempted": false,
+        "repair_exhausted": false,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "The marker is present but not on its own unindented line.",
+        "summary": "The marker is present but not on its own unindented line.",
+        "recorded_at": "2026-09-15T17:01:08",
+        "expected_realization": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.",
+        "latest_failure": {
+          "error_code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "The marker is present but not on its own unindented line.",
+          "fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+          "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "repair_attempt_count": 0,
+          "recorded_at": "2026-09-15T17:01:08",
+          "field_path": "$.code|argv",
+          "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template."
+        },
+        "last_seen_at": "2026-09-15T17:01:08",
+        "repair_attempt_count": 0,
+        "last_candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "last_error_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e"
+      },
+      "secondary_failures": [],
+      "recovery_context": {
+        "schema_version": "4",
+        "context_id": "recovery-context-8702cd00cf8d530ac6bce574",
+        "task_id": "f3-helper_checkpoint-list",
+        "step_id": "step-direct",
+        "action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "error_class": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+        "error_fingerprint": "4d9bf11d79797457c8c30c68dfc385342b4bc8179a9ea0e44c2e77c254c30336",
+        "failure_stage": "pre_action_contract",
+        "approved_plan_snapshot_id": "plan-snapshot-ff0106b772103bb7cae4a25c",
+        "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "repair_ordinal": 1,
+        "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+        "task_spec_summary": {},
+        "effective_user_facts": {},
+        "current_step": {
+          "action": "execute",
+          "artifacts": [],
+          "bound_outputs": [],
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "dependencies": [],
+          "depends_on": [],
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "generate_binding_input_contract": {
+            "binding_contract": {
+              "derived_artifact_layout": {
+                "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+                "data_root": "<snpeff_db artifact>/data",
+                "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+                "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+              },
+              "operations": {
+                "annotate_variants": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "required_state": "snpeff_database_ready",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "build_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "prepare_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [],
+                  "produces_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "produced_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "produced_binding"
+                    }
+                  }
+                }
+              },
+              "public_input_protocol": "public_handle_v2",
+              "schema_version": 1
+            },
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "protocol": "public_handle_v2"
+          },
+          "inputs": [],
+          "operation": "check_contig_compatibility",
+          "outputs": [],
+          "purpose": "analysis",
+          "renderer_id": "",
+          "renderer_invocation_contract": {},
+          "risk_level": "low",
+          "selected_skill_id": "",
+          "semantic_claims": [],
+          "semantic_constraint_ids": [],
+          "skill_ids": [
+            "genomics/snpeff-annotation"
+          ],
+          "step_effect": {
+            "explicit_side_effects": [],
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                },
+                "identity": "contigs_compatible",
+                "predicate": {
+                  "applicability": {
+                    "execution_capability_ids": [
+                      "genomics.snpeff_annotation.prepare_database",
+                      "genomics.snpeff_annotation.build_database",
+                      "genomics.snpeff_annotation.annotate_variants",
+                      "genomics.snpeff_annotation.summarize_ann",
+                      "genomics.snpeff_annotation.finalize_outputs"
+                    ],
+                    "kind": "plan_contains_any_execution_capability",
+                    "schema_version": 1
+                  },
+                  "expected": true,
+                  "failure_disposition": "correction_required",
+                  "missing_disposition": "inspection_required",
+                  "operator": "boolean_equals",
+                  "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                  "parser_id": "biomind.genomics.contig_compatibility.v1",
+                  "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+                }
+              }
+            ],
+            "schema_version": 1,
+            "workspace_mutations": []
+          },
+          "step_id": "step-direct",
+          "step_type": "atomic",
+          "success_criteria": [
+            "the approved command exits"
+          ],
+          "title": "Run one approved command",
+          "tool": "test"
+        },
+        "action_contract": {
+          "structured_candidate": {
+            "kind": "malformed_generate_response",
+            "response_sha256": "68895b0b9c56664f814abf8a1616b471b13d7132f89d106169b8add56db8b6ab",
+            "response_char_count": 177,
+            "response_excerpt": "{\"action_type\": \"execute\", \"operation\": \"wrong-operation\", \"language\": \"python\", \"env\": {}, \"outputs\": [], \"code\": \"if True:\\n  # BIOMIND_EFFECT_HELPER\\n  print('synthetic')\\n\"}",
+            "parsed_candidate": {
+              "action_type": "execute",
+              "operation": "wrong-operation",
+              "language": "python",
+              "env": {},
+              "outputs": [],
+              "code": "if True:\n  # BIOMIND_EFFECT_HELPER\n  print('synthetic')"
+            },
+            "parser_selection": {
+              "response_container_source": "active_protocol_parser",
+              "stage": "action_schema",
+              "json_candidate_source": "decoded_candidate",
+              "excerpt_kind": "bounded_parser_excerpt",
+              "excerpt_sha256": "68895b0b9c56664f814abf8a1616b471b13d7132f89d106169b8add56db8b6ab"
+            }
+          },
+          "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4"
+        },
+        "execution": {},
+        "validation": {
+          "status": "invalid",
+          "failure_stage": "pre_action_contract",
+          "violations": [
+            {
+              "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+              "owner": "GENERATED_ACTION",
+              "message": "The marker is present but not on its own unindented line.",
+              "field_path": "$.code|argv",
+              "observed": {
+                "action_type": "execute",
+                "operation": "wrong-operation",
+                "language": "python",
+                "env": {},
+                "outputs": [],
+                "code": "if True:\n  # BIOMIND_EFFECT_HELPER\n  print('synthetic')"
+              },
+              "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.",
+              "actual": {
+                "language": "python",
+                "carrier_source": "code",
+                "marker_count": 0,
+                "marker_positions": [],
+                "template_available": true,
+                "template_schema_version": 1,
+                "template_sha256": "cfa87f9eff6f6770d75e95c5c5efe67483d38e706c42430de43bbd1eb98d7cc5",
+                "declared_language": "python",
+                "interpreter_argv_prefix": [],
+                "declaration_missing": false,
+                "fallback_language": null
+              },
+              "protocol_error": {
+                "stage": "action_schema",
+                "code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+                "field_path": "$.code|argv",
+                "message": "The marker is present but not on its own unindented line.",
+                "actual": {
+                  "language": "python",
+                  "carrier_source": "code",
+                  "marker_count": 0,
+                  "marker_positions": [],
+                  "template_available": true,
+                  "template_schema_version": 1,
+                  "template_sha256": "cfa87f9eff6f6770d75e95c5c5efe67483d38e706c42430de43bbd1eb98d7cc5",
+                  "declared_language": "python",
+                  "interpreter_argv_prefix": [],
+                  "declaration_missing": false,
+                  "fallback_language": null
+                },
+                "reason": "The marker is present but not on its own unindented line.",
+                "expected": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template."
+              },
+              "failure_stage": "pre_execution_candidate_admission"
+            },
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "field_path": "operation",
+              "observed_type": "str",
+              "message": "Use the fixed invocation operation: check_contig_compatibility",
+              "check_source": "public_binding_shape_violations",
+              "owner": "GENERATED_ACTION"
+            }
+          ],
+          "repair_domain": "representation",
+          "candidate_progress": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "3aa2c5d80367e04499e4e97861deefc72851dbff381d8ad8c28cd5c3a34a69eb",
+            "validation_signature": "c47f0b4e1e632a07cb18a3f972999230f16f137a556df115b42b7eab145fbb6c",
+            "comparison_context_fingerprint": "83e84265a62e1df88b7c008e6ef8d413aa765ca2406f1bd78d4bb3e0d7cd07d8",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "execute.argv_shape",
+              "execute.env_keys",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "$.code|argv",
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          }
+        },
+        "completion": {},
+        "progress": {},
+        "runtime": {
+          "approved_plan_snapshot_id": "plan-snapshot-ff0106b772103bb7cae4a25c",
+          "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+          "repair_ordinal": 1
+        },
+        "machine_audit_findings": [],
+        "available_evidence": [],
+        "manifest": {},
+        "artifacts": [],
+        "recent_attempts": [],
+        "already_tried_strategies": [],
+        "recovery_decision": {
+          "schema_version": 5,
+          "failure_class": "SCRIPT_BUG",
+          "failure_owner": "GENERATED_ACTION",
+          "error_is_real": true,
+          "primary_execution_succeeded": false,
+          "evidence_sufficient": true,
+          "recommended_action": "FORMAT_REPAIR",
+          "rerun_required": false,
+          "consume_retry_budget": false,
+          "user_notification_required": false,
+          "reason": "The proposed action violates the current action protocol.",
+          "verdict": "repair",
+          "root_cause": "The proposed action violates the current action protocol.",
+          "failure_type": "generated_action_contract_error",
+          "confidence": 1.0,
+          "missing_evidence": [],
+          "repair_strategy": "",
+          "next_action": "FORMAT_REPAIR",
+          "requires_user_input": false,
+          "selected_hypothesis_id": null,
+          "evidence": [
+            "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+            "ACTION_OPERATION_SCOPE_MISMATCH",
+            "error_fingerprint=4d9bf11d79797457c8c30c68dfc385342b4bc8179a9ea0e44c2e77c254c30336",
+            "invalid_response_hash=12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4"
+          ],
+          "rejected_alternatives": [],
+          "action_type": "repair_previous_action",
+          "commands": [],
+          "patches": [],
+          "files_to_backup": [],
+          "files_to_modify": [],
+          "rerun_command": null,
+          "verification_checks": [],
+          "rollback_steps": [],
+          "expected_new_evidence": [],
+          "risk_level": "medium",
+          "violates_user_constraint": false,
+          "constraint_conflict_reason": null,
+          "evidence_assessments": [],
+          "new_hypothesis_proposals": [],
+          "recommended_probe_id": null,
+          "probe_reason": "",
+          "preferred_execution_mode": "INLINE",
+          "probe_objective": "",
+          "kind": "FORMAT_REPAIR",
+          "reason_code": "generated_action_contract_error",
+          "action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "step_id": "step-direct",
+          "attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "consume_budget": "action_format_repair_count",
+          "repair_domain": "representation",
+          "plan_patch_reason": null,
+          "blocked_evidence": [],
+          "decision_id": "recovery-82ba0491b620963d287a",
+          "incident_id": "incident-f7e9f038f25fa98fa6ab",
+          "idempotency_key": "recovery-82ba0491b620963d287a",
+          "decision_owner": "RecoveryPolicy",
+          "next_route": "generate",
+          "source_node": "generate",
+          "disposition": "RETRY_GENERATE",
+          "target_route": "generate",
+          "status": "pending",
+          "step_attempt": 0,
+          "trigger_event_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "trigger_node": "generate",
+          "consumed_at": "",
+          "superseded_reason": "",
+          "migration_source": "",
+          "migration_conflicts": [],
+          "task_id": "f3-helper_checkpoint-list",
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "failed_step_id": "",
+          "rollback_to_step_id": "",
+          "first_bad_step_id": "",
+          "invalid_artifact_ids": [],
+          "invalidate_descendants": true,
+          "affected_step_ids": [],
+          "preserve_files_for_audit": true,
+          "evidence_refs": [],
+          "machine_findings_considered": [],
+          "repair_target": "",
+          "repair_instruction": "",
+          "plan_step_id": "",
+          "manifest_id": "",
+          "failed_stage_id": "",
+          "rewind_to_stage_id": "",
+          "invalidate_stage_ids": [],
+          "missing_capability": "",
+          "missing_producer_artifact_id": "",
+          "allowed_patch_scope": [],
+          "source_failure_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+          "recovery_context_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+          "failed_action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "failed_execution_attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "budget_class": "action_format_repair_count",
+          "execution_purpose": "PRIMARY",
+          "completion_eligibility": true,
+          "source_scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct",
+            "failed_action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+            "failed_execution_attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+            "source_failure_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e"
+          },
+          "identity_finalized": true,
+          "identity_payload_hash": "d1f1021cc301f1c09d59e583134f47724ac64cf03d3dfe4cbd7c964cd88c6879",
+          "expected_state_generation": 22
+        },
+        "allowed_actions": [],
+        "log_references": [],
+        "bounded_log_excerpt": "",
+        "conflicts": [],
+        "skill_policy": {},
+        "diagnosis": {},
+        "limits": {}
+      },
+      "recovery_context_digest": "recovery-context-8702cd00cf8d530ac6bce574",
+      "policy_decision": {
+        "schema_version": 5,
+        "failure_class": "SCRIPT_BUG",
+        "failure_owner": "GENERATED_ACTION",
+        "error_is_real": true,
+        "primary_execution_succeeded": false,
+        "evidence_sufficient": true,
+        "recommended_action": "FORMAT_REPAIR",
+        "rerun_required": false,
+        "consume_retry_budget": false,
+        "user_notification_required": false,
+        "reason": "The proposed action violates the current action protocol.",
+        "verdict": "repair",
+        "root_cause": "The proposed action violates the current action protocol.",
+        "failure_type": "generated_action_contract_error",
+        "confidence": 1.0,
+        "missing_evidence": [],
+        "repair_strategy": "",
+        "next_action": "FORMAT_REPAIR",
+        "requires_user_input": false,
+        "selected_hypothesis_id": null,
+        "evidence": [
+          "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+          "ACTION_OPERATION_SCOPE_MISMATCH",
+          "error_fingerprint=4d9bf11d79797457c8c30c68dfc385342b4bc8179a9ea0e44c2e77c254c30336",
+          "invalid_response_hash=12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4"
+        ],
+        "rejected_alternatives": [],
+        "action_type": "repair_previous_action",
+        "commands": [],
+        "patches": [],
+        "files_to_backup": [],
+        "files_to_modify": [],
+        "rerun_command": null,
+        "verification_checks": [],
+        "rollback_steps": [],
+        "expected_new_evidence": [],
+        "risk_level": "medium",
+        "violates_user_constraint": false,
+        "constraint_conflict_reason": null,
+        "evidence_assessments": [],
+        "new_hypothesis_proposals": [],
+        "recommended_probe_id": null,
+        "probe_reason": "",
+        "preferred_execution_mode": "INLINE",
+        "probe_objective": "",
+        "kind": "FORMAT_REPAIR",
+        "reason_code": "generated_action_contract_error",
+        "action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "step_id": "step-direct",
+        "attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "consume_budget": "action_format_repair_count",
+        "repair_domain": "representation",
+        "plan_patch_reason": null,
+        "blocked_evidence": [],
+        "decision_id": "recovery-82ba0491b620963d287a",
+        "incident_id": "incident-f7e9f038f25fa98fa6ab",
+        "idempotency_key": "recovery-82ba0491b620963d287a",
+        "decision_owner": "RecoveryPolicy",
+        "next_route": "generate",
+        "source_node": "generate",
+        "disposition": "RETRY_GENERATE",
+        "target_route": "generate",
+        "status": "pending",
+        "step_attempt": 0,
+        "trigger_event_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "trigger_node": "generate",
+        "consumed_at": "",
+        "superseded_reason": "",
+        "migration_source": "",
+        "migration_conflicts": [],
+        "task_id": "f3-helper_checkpoint-list",
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "failed_step_id": "",
+        "rollback_to_step_id": "",
+        "first_bad_step_id": "",
+        "invalid_artifact_ids": [],
+        "invalidate_descendants": true,
+        "affected_step_ids": [],
+        "preserve_files_for_audit": true,
+        "evidence_refs": [],
+        "machine_findings_considered": [],
+        "repair_target": "",
+        "repair_instruction": "",
+        "plan_step_id": "",
+        "manifest_id": "",
+        "failed_stage_id": "",
+        "rewind_to_stage_id": "",
+        "invalidate_stage_ids": [],
+        "missing_capability": "",
+        "missing_producer_artifact_id": "",
+        "allowed_patch_scope": [],
+        "source_failure_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+        "recovery_context_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+        "failed_action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "failed_execution_attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "budget_class": "action_format_repair_count",
+        "execution_purpose": "PRIMARY",
+        "completion_eligibility": true,
+        "source_scope": {
+          "task_id": "f3-helper_checkpoint-list",
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "failed_execution_attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "source_failure_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e"
+        },
+        "identity_finalized": true,
+        "identity_payload_hash": "d1f1021cc301f1c09d59e583134f47724ac64cf03d3dfe4cbd7c964cd88c6879",
+        "expected_state_generation": 22
+      },
+      "policy_envelope": {
+        "schema_version": 1,
+        "recovery_decision_id": "recovery-82ba0491b620963d287a",
+        "recovery_context_id": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+        "step_id": "step-direct",
+        "action_id": "recovery_action_49be49b9bfb544fa",
+        "recovery_strategy": "FORMAT_REPAIR",
+        "execution_purpose": "PRIMARY",
+        "execution_mode": "INLINE",
+        "result_contract": "FORMAL_OUTPUTS",
+        "source_scope": {
+          "task_id": "f3-helper_checkpoint-list",
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "failed_execution_attempt_id": "pre-action:1:12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+          "source_failure_fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e"
+        },
+        "hypothesis_id": null,
+        "probe_id": null,
+        "scratch_capability": null,
+        "policy_version": "recovery-execution-policy-v1",
+        "created_from": "deterministic",
+        "immutable_hash": "25fda3f5aa7f23b8f89f9dd47740b7f6e671fd27009e345834e772eb164e854e",
+        "completion_eligible": true
+      },
+      "recovery_generation_rollover": {},
+      "causal_generation": {},
+      "receipt_id": "candidate-repair-receipt:76c2d3873bacbd3886f33869",
+      "receipt_ref": "object:sha256:706275c851d994b5a32115fbee66b5ecfb858194da00141e7295386c857ec6a7",
+      "recorded_at": "2026-09-15T17:01:08",
+      "resolved_by": {
+        "action_id": "action_92b6fb9f9a4455ba",
+        "candidate_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8",
+        "generated_script_sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+        "basis": "admitted_action_bound",
+        "execution_success": "not_assessed"
+      }
+    },
+    {
+      "schema_version": 1,
+      "event_id": "candidate-rejection:59b6f6ce89402c5eabc4e12a",
+      "candidate_event_id": "candidate-call:aa4098e00831128944a822dd69458d7de3d4187101788e2d9dd2fa9981b68872",
+      "scope": {
+        "task_id": "f3-helper_checkpoint-list",
+        "task_revision": 1,
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct"
+      },
+      "candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+      "error_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+      "repair_stage": "operation_binding_admission",
+      "repair_domain": "generated_semantic",
+      "repair_ordinal": 2,
+      "repair_limit": 4,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "f3-helper_checkpoint-list",
+          "task_revision": 1,
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 2,
+        "corrections_authorized_before": 1,
+        "corrections_observed_before_rejection": 1,
+        "remaining_before_authorization": 3,
+        "category": "candidate_contract",
+        "progress_assessment": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "progress_proven": true,
+          "basis": "validated_representation_target",
+          "comparison_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "validation_signature": "91ede59be172393eecdf8ac0301913859e98534ac367e547a341a219f234fe24",
+          "comparison_context_fingerprint": "8d92f69ae4d656caadecdc302493ec06619bbce2a7f31d6bf08a068a266c6436",
+          "representation_targets": [
+            "action_schema_complete",
+            "action_type",
+            "effect_helper_materialization",
+            "executable_syntax",
+            "execute.argv_shape",
+            "execute.env_keys",
+            "execute.env_object",
+            "execute.env_values",
+            "execute.executable_body",
+            "execute.outputs_shape",
+            "json_object"
+          ],
+          "binding_facts": [
+            "binding_env"
+          ],
+          "binding_axis": "evaluated",
+          "newly_satisfied_targets": [
+            "effect_helper_materialization",
+            "executable_syntax"
+          ],
+          "resolved_targets": [
+            "$.code|argv"
+          ],
+          "pending_targets": [
+            "operation"
+          ],
+          "scientific_success": "not_assessed"
+        },
+        "correction_authorized": true,
+        "corrections_authorized": 2,
+        "remaining": 2
+      },
+      "correction_category": "candidate_contract",
+      "progress_proven": true,
+      "progress_assessment": {
+        "schema_version": 1,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "progress_proven": true,
+        "basis": "validated_representation_target",
+        "comparison_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "validation_signature": "91ede59be172393eecdf8ac0301913859e98534ac367e547a341a219f234fe24",
+        "comparison_context_fingerprint": "8d92f69ae4d656caadecdc302493ec06619bbce2a7f31d6bf08a068a266c6436",
+        "representation_targets": [
+          "action_schema_complete",
+          "action_type",
+          "effect_helper_materialization",
+          "executable_syntax",
+          "execute.argv_shape",
+          "execute.env_keys",
+          "execute.env_object",
+          "execute.env_values",
+          "execute.executable_body",
+          "execute.outputs_shape",
+          "json_object"
+        ],
+        "binding_facts": [
+          "binding_env"
+        ],
+        "binding_axis": "evaluated",
+        "newly_satisfied_targets": [
+          "effect_helper_materialization",
+          "executable_syntax"
+        ],
+        "resolved_targets": [
+          "$.code|argv"
+        ],
+        "pending_targets": [
+          "operation"
+        ],
+        "scientific_success": "not_assessed"
+      },
+      "public_valid_facts": [
+        "binding_env"
+      ],
+      "validation_source": "agent_core.plan_bindings.validate_operation_binding_admission",
+      "contract_ref": {
+        "authority": "execution_capability_registry",
+        "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+        "contract_source": "generate.execution_capabilities[genomics.snpeff_annotation.check_contig_compatibility]",
+        "contract_revision": "1",
+        "requirements": {
+          "protocol": "public_handle_v2",
+          "operation": "check_contig_compatibility",
+          "produced_bindings": {},
+          "consumed_bindings": {},
+          "binding_env": {
+            "owner": "system",
+            "declared_mapping": {},
+            "compatibility": "If supplied, every mapping must equal this declaration."
+          },
+          "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+        }
+      },
+      "violation_owner": "GENERATED_ACTION",
+      "reason_code": "ACTION_OPERATION_SCOPE_MISMATCH",
+      "exact_violations": [
+        {
+          "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+          "owner": "GENERATED_ACTION",
+          "message": "The action operation is not authorized by the selected approved capability.",
+          "operation": "wrong-operation",
+          "expected_operation": "check_contig_compatibility",
+          "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "field_path": "operation",
+          "contract_source": "generate.execution_capabilities[genomics.snpeff_annotation.check_contig_compatibility]"
+        }
+      ],
+      "status": "repairable",
+      "exit_reason": "binding_operation_contract_mismatch",
+      "terminal_exit_reason": "binding_operation_contract_mismatch_exhausted",
+      "terminal_reason_code": "",
+      "termination_reason": "",
+      "execution_status": "not_started",
+      "recovery_entered": false,
+      "outputs_produced": [],
+      "primary_failure": {
+        "error_code": "EFFECT_HELPER_MARKER_REQUIRES_OWN_UNINDENTED_LINE",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "The marker is present but not on its own unindented line.",
+        "reason": "The marker is present but not on its own unindented line.",
+        "current_step": "step-direct",
+        "fingerprint": "bd11212826b2a691c294aeb8ad81c68e9282e0e91e55086ba2ae0881fa724c9e",
+        "candidate_fingerprint": "12214d745d3b4efa1a19c1cee89f61fd8ceb6545e85522c1355ebec0225682e4",
+        "execution_started": false,
+        "repair_attempted": true,
+        "repair_exhausted": false,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "The marker is present but not on its own unindented line.",
+        "summary": "The marker is present but not on its own unindented line.",
+        "recorded_at": "2026-09-15T17:01:08",
+        "expected_realization": "Exactly one unindented # BIOMIND_EFFECT_HELPER in an explicitly declared Python script or single-quoted Python heredoc; use the published available template.",
+        "latest_failure": {
+          "error_code": "ACTION_OPERATION_SCOPE_MISMATCH",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "The action operation is not authorized by the selected approved capability.",
+          "fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+          "candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "task_revision": 1,
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "repair_attempt_count": 1,
+          "recorded_at": "2026-09-15T17:01:10",
+          "field_path": "operation"
+        },
+        "last_seen_at": "2026-09-15T17:01:10",
+        "repair_attempt_count": 1,
+        "last_candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "last_error_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b"
+      },
+      "secondary_failures": [],
+      "recovery_context": {
+        "schema_version": "4",
+        "context_id": "recovery-context-b524a94e57d9c2a4d091e09c",
+        "task_id": "f3-helper_checkpoint-list",
+        "step_id": "step-direct",
+        "action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "error_class": "ACTION_OPERATION_SCOPE_MISMATCH",
+        "error_fingerprint": "234cb58f6f326faa68878ccff0d1d926252aea604e37290470520c4c4052f810",
+        "failure_stage": "pre_action_contract",
+        "approved_plan_snapshot_id": "plan-snapshot-ff0106b772103bb7cae4a25c",
+        "candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "repair_ordinal": 2,
+        "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+        "task_spec_summary": {},
+        "effective_user_facts": {},
+        "current_step": {
+          "action": "execute",
+          "artifacts": [],
+          "bound_outputs": [],
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "dependencies": [],
+          "depends_on": [],
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "generate_binding_input_contract": {
+            "binding_contract": {
+              "derived_artifact_layout": {
+                "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+                "data_root": "<snpeff_db artifact>/data",
+                "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+                "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+              },
+              "operations": {
+                "annotate_variants": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "required_state": "snpeff_database_ready",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "build_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "prepare_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [],
+                  "produces_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "produced_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "produced_binding"
+                    }
+                  }
+                }
+              },
+              "public_input_protocol": "public_handle_v2",
+              "schema_version": 1
+            },
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "protocol": "public_handle_v2"
+          },
+          "inputs": [],
+          "operation": "check_contig_compatibility",
+          "outputs": [],
+          "purpose": "analysis",
+          "renderer_id": "",
+          "renderer_invocation_contract": {},
+          "risk_level": "low",
+          "selected_skill_id": "",
+          "semantic_claims": [],
+          "semantic_constraint_ids": [],
+          "skill_ids": [
+            "genomics/snpeff-annotation"
+          ],
+          "step_effect": {
+            "explicit_side_effects": [],
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                },
+                "identity": "contigs_compatible",
+                "predicate": {
+                  "applicability": {
+                    "execution_capability_ids": [
+                      "genomics.snpeff_annotation.prepare_database",
+                      "genomics.snpeff_annotation.build_database",
+                      "genomics.snpeff_annotation.annotate_variants",
+                      "genomics.snpeff_annotation.summarize_ann",
+                      "genomics.snpeff_annotation.finalize_outputs"
+                    ],
+                    "kind": "plan_contains_any_execution_capability",
+                    "schema_version": 1
+                  },
+                  "expected": true,
+                  "failure_disposition": "correction_required",
+                  "missing_disposition": "inspection_required",
+                  "operator": "boolean_equals",
+                  "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                  "parser_id": "biomind.genomics.contig_compatibility.v1",
+                  "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+                }
+              }
+            ],
+            "schema_version": 1,
+            "workspace_mutations": []
+          },
+          "step_id": "step-direct",
+          "step_type": "atomic",
+          "success_criteria": [
+            "the approved command exits"
+          ],
+          "title": "Run one approved command",
+          "tool": "test"
+        },
+        "action_contract": {
+          "structured_candidate": {
+            "action_type": "execute",
+            "operation": "wrong-operation",
+            "language": "python",
+            "env": {},
+            "outputs": [],
+            "code": "# BIOMIND_EFFECT_HELPER\nprint('synthetic')"
+          },
+          "candidate_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d"
+        },
+        "execution": {},
+        "validation": {
+          "status": "invalid",
+          "failure_stage": "pre_action_contract",
+          "violations": [
+            {
+              "code": "ACTION_OPERATION_SCOPE_MISMATCH",
+              "owner": "GENERATED_ACTION",
+              "message": "The action operation is not authorized by the selected approved capability.",
+              "operation": "wrong-operation",
+              "expected_operation": "check_contig_compatibility",
+              "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+              "field_path": "operation",
+              "contract_source": "generate.execution_capabilities[genomics.snpeff_annotation.check_contig_compatibility]"
+            }
+          ],
+          "repair_domain": "generated_semantic",
+          "candidate_progress": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+            "validation_signature": "91ede59be172393eecdf8ac0301913859e98534ac367e547a341a219f234fe24",
+            "comparison_context_fingerprint": "8d92f69ae4d656caadecdc302493ec06619bbce2a7f31d6bf08a068a266c6436",
+            "representation_targets": [
+              "action_schema_complete",
+              "action_type",
+              "effect_helper_materialization",
+              "executable_syntax",
+              "execute.argv_shape",
+              "execute.env_keys",
+              "execute.env_object",
+              "execute.env_values",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": [
+              "binding_env"
+            ],
+            "binding_axis": "evaluated",
+            "newly_satisfied_targets": [
+              "effect_helper_materialization",
+              "executable_syntax"
+            ],
+            "resolved_targets": [
+              "$.code|argv"
+            ],
+            "pending_targets": [
+              "operation"
+            ],
+            "scientific_success": "not_assessed"
+          }
+        },
+        "completion": {},
+        "progress": {},
+        "runtime": {
+          "approved_plan_snapshot_id": "plan-snapshot-ff0106b772103bb7cae4a25c",
+          "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+          "repair_ordinal": 2
+        },
+        "machine_audit_findings": [],
+        "available_evidence": [],
+        "manifest": {},
+        "artifacts": [],
+        "recent_attempts": [],
+        "already_tried_strategies": [],
+        "recovery_decision": {
+          "schema_version": 5,
+          "failure_class": "SCRIPT_BUG",
+          "failure_owner": "GENERATED_ACTION",
+          "error_is_real": true,
+          "primary_execution_succeeded": false,
+          "evidence_sufficient": true,
+          "recommended_action": "PATCH_SCRIPT",
+          "rerun_required": false,
+          "consume_retry_budget": false,
+          "user_notification_required": false,
+          "reason": "The structured action is well-formed but violates the managed-artifact contract.",
+          "verdict": "repair",
+          "root_cause": "The structured action is well-formed but violates the managed-artifact contract.",
+          "failure_type": "generated_action_contract_error",
+          "confidence": 1.0,
+          "missing_evidence": [],
+          "repair_strategy": "",
+          "next_action": "PATCH_SCRIPT",
+          "requires_user_input": false,
+          "selected_hypothesis_id": null,
+          "evidence": [
+            "ACTION_OPERATION_SCOPE_MISMATCH",
+            "error_fingerprint=234cb58f6f326faa68878ccff0d1d926252aea604e37290470520c4c4052f810",
+            "invalid_response_hash=84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d"
+          ],
+          "rejected_alternatives": [],
+          "action_type": "regenerate_script",
+          "commands": [],
+          "patches": [],
+          "files_to_backup": [],
+          "files_to_modify": [],
+          "rerun_command": null,
+          "verification_checks": [],
+          "rollback_steps": [],
+          "expected_new_evidence": [],
+          "risk_level": "medium",
+          "violates_user_constraint": false,
+          "constraint_conflict_reason": null,
+          "evidence_assessments": [],
+          "new_hypothesis_proposals": [],
+          "recommended_probe_id": null,
+          "probe_reason": "",
+          "preferred_execution_mode": "INLINE",
+          "probe_objective": "",
+          "kind": "RETRY_CURRENT_ACTION",
+          "reason_code": "generated_action_contract_error",
+          "action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "step_id": "step-direct",
+          "attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "consume_budget": "generate_attempts_by_step",
+          "repair_domain": "generated_semantic",
+          "plan_patch_reason": null,
+          "blocked_evidence": [],
+          "decision_id": "recovery-8b2bbcca60db5ad0a40a",
+          "incident_id": "incident-8c3f2161455d950a2b07",
+          "idempotency_key": "recovery-8b2bbcca60db5ad0a40a",
+          "decision_owner": "RecoveryPolicy",
+          "next_route": "generate",
+          "source_node": "generate",
+          "disposition": "RETRY_GENERATE",
+          "target_route": "generate",
+          "status": "pending",
+          "step_attempt": 0,
+          "trigger_event_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "trigger_node": "generate",
+          "consumed_at": "",
+          "superseded_reason": "",
+          "migration_source": "",
+          "migration_conflicts": [],
+          "task_id": "f3-helper_checkpoint-list",
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "failed_step_id": "",
+          "rollback_to_step_id": "",
+          "first_bad_step_id": "",
+          "invalid_artifact_ids": [],
+          "invalidate_descendants": true,
+          "affected_step_ids": [],
+          "preserve_files_for_audit": true,
+          "evidence_refs": [],
+          "machine_findings_considered": [],
+          "repair_target": "",
+          "repair_instruction": "",
+          "plan_step_id": "",
+          "manifest_id": "",
+          "failed_stage_id": "",
+          "rewind_to_stage_id": "",
+          "invalidate_stage_ids": [],
+          "missing_capability": "",
+          "missing_producer_artifact_id": "",
+          "allowed_patch_scope": [],
+          "source_failure_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+          "recovery_context_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+          "failed_action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "failed_execution_attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "budget_class": "generate_attempts_by_step",
+          "execution_purpose": "PRIMARY",
+          "completion_eligibility": true,
+          "source_scope": {
+            "task_id": "f3-helper_checkpoint-list",
+            "plan_id": "plan_4fed9569bae8b2cf6397",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct",
+            "failed_action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+            "failed_execution_attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+            "source_failure_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b"
+          },
+          "identity_finalized": true,
+          "identity_payload_hash": "fa00b25bc924bd01c99160177285ed7cd4ede98c780451c4a9fc9b1c5442ced1",
+          "expected_state_generation": 30
+        },
+        "allowed_actions": [],
+        "log_references": [],
+        "bounded_log_excerpt": "",
+        "conflicts": [],
+        "skill_policy": {},
+        "diagnosis": {},
+        "limits": {}
+      },
+      "recovery_context_digest": "recovery-context-b524a94e57d9c2a4d091e09c",
+      "policy_decision": {
+        "schema_version": 5,
+        "failure_class": "SCRIPT_BUG",
+        "failure_owner": "GENERATED_ACTION",
+        "error_is_real": true,
+        "primary_execution_succeeded": false,
+        "evidence_sufficient": true,
+        "recommended_action": "PATCH_SCRIPT",
+        "rerun_required": false,
+        "consume_retry_budget": false,
+        "user_notification_required": false,
+        "reason": "The structured action is well-formed but violates the managed-artifact contract.",
+        "verdict": "repair",
+        "root_cause": "The structured action is well-formed but violates the managed-artifact contract.",
+        "failure_type": "generated_action_contract_error",
+        "confidence": 1.0,
+        "missing_evidence": [],
+        "repair_strategy": "",
+        "next_action": "PATCH_SCRIPT",
+        "requires_user_input": false,
+        "selected_hypothesis_id": null,
+        "evidence": [
+          "ACTION_OPERATION_SCOPE_MISMATCH",
+          "error_fingerprint=234cb58f6f326faa68878ccff0d1d926252aea604e37290470520c4c4052f810",
+          "invalid_response_hash=84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d"
+        ],
+        "rejected_alternatives": [],
+        "action_type": "regenerate_script",
+        "commands": [],
+        "patches": [],
+        "files_to_backup": [],
+        "files_to_modify": [],
+        "rerun_command": null,
+        "verification_checks": [],
+        "rollback_steps": [],
+        "expected_new_evidence": [],
+        "risk_level": "medium",
+        "violates_user_constraint": false,
+        "constraint_conflict_reason": null,
+        "evidence_assessments": [],
+        "new_hypothesis_proposals": [],
+        "recommended_probe_id": null,
+        "probe_reason": "",
+        "preferred_execution_mode": "INLINE",
+        "probe_objective": "",
+        "kind": "RETRY_CURRENT_ACTION",
+        "reason_code": "generated_action_contract_error",
+        "action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "step_id": "step-direct",
+        "attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "consume_budget": "generate_attempts_by_step",
+        "repair_domain": "generated_semantic",
+        "plan_patch_reason": null,
+        "blocked_evidence": [],
+        "decision_id": "recovery-8b2bbcca60db5ad0a40a",
+        "incident_id": "incident-8c3f2161455d950a2b07",
+        "idempotency_key": "recovery-8b2bbcca60db5ad0a40a",
+        "decision_owner": "RecoveryPolicy",
+        "next_route": "generate",
+        "source_node": "generate",
+        "disposition": "RETRY_GENERATE",
+        "target_route": "generate",
+        "status": "pending",
+        "step_attempt": 0,
+        "trigger_event_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "trigger_node": "generate",
+        "consumed_at": "",
+        "superseded_reason": "",
+        "migration_source": "",
+        "migration_conflicts": [],
+        "task_id": "f3-helper_checkpoint-list",
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "failed_step_id": "",
+        "rollback_to_step_id": "",
+        "first_bad_step_id": "",
+        "invalid_artifact_ids": [],
+        "invalidate_descendants": true,
+        "affected_step_ids": [],
+        "preserve_files_for_audit": true,
+        "evidence_refs": [],
+        "machine_findings_considered": [],
+        "repair_target": "",
+        "repair_instruction": "",
+        "plan_step_id": "",
+        "manifest_id": "",
+        "failed_stage_id": "",
+        "rewind_to_stage_id": "",
+        "invalidate_stage_ids": [],
+        "missing_capability": "",
+        "missing_producer_artifact_id": "",
+        "allowed_patch_scope": [],
+        "source_failure_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+        "recovery_context_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+        "failed_action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "failed_execution_attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+        "budget_class": "generate_attempts_by_step",
+        "execution_purpose": "PRIMARY",
+        "completion_eligibility": true,
+        "source_scope": {
+          "task_id": "f3-helper_checkpoint-list",
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "failed_execution_attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "source_failure_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b"
+        },
+        "identity_finalized": true,
+        "identity_payload_hash": "fa00b25bc924bd01c99160177285ed7cd4ede98c780451c4a9fc9b1c5442ced1",
+        "expected_state_generation": 30
+      },
+      "policy_envelope": {
+        "schema_version": 1,
+        "recovery_decision_id": "recovery-8b2bbcca60db5ad0a40a",
+        "recovery_context_id": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b",
+        "step_id": "step-direct",
+        "action_id": "recovery_action_3575bfe35323f7c2",
+        "recovery_strategy": "PATCH_SCRIPT",
+        "execution_purpose": "PRIMARY",
+        "execution_mode": "INLINE",
+        "result_contract": "FORMAL_OUTPUTS",
+        "source_scope": {
+          "task_id": "f3-helper_checkpoint-list",
+          "plan_id": "plan_4fed9569bae8b2cf6397",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "failed_execution_attempt_id": "pre-action:2:84c8d6694aac07230413c845de7d6d3e6aa64fcc5ca66f6761f6ffa1bbd34b8d",
+          "source_failure_fingerprint": "03e9f1627da4032f92ce8530343aab84d5a347aa0f1dd038737cfc070222bd9b"
+        },
+        "hypothesis_id": null,
+        "probe_id": null,
+        "scratch_capability": null,
+        "policy_version": "recovery-execution-policy-v1",
+        "created_from": "deterministic",
+        "immutable_hash": "636f9a7a9f47983e58714ae23cf135e2f76d4cf5bb41db2aedf4d97b2f5b90ba",
+        "completion_eligible": true
+      },
+      "recovery_generation_rollover": {},
+      "causal_generation": {},
+      "receipt_id": "candidate-repair-receipt:494006b202cc21f831577f2c",
+      "receipt_ref": "object:sha256:9e9b7751ff62f8697d85bf71575111ee1f47365709ef5a56854ec0a489753e24",
+      "recorded_at": "2026-09-15T17:01:10",
+      "resolved_by": {
+        "action_id": "action_92b6fb9f9a4455ba",
+        "candidate_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8",
+        "generated_script_sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+        "basis": "admitted_action_bound",
+        "execution_success": "not_assessed"
+      }
+    }
+  ],
+  "pending_action": {
+    "type": "execute",
+    "source": "action_json",
+    "argv": [
+      "python",
+      "-c",
+      "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')"
+    ],
+    "env": {},
+    "outputs": [],
+    "language": "bash",
+    "operation": "check_contig_compatibility",
+    "candidate_generation_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8",
+    "binding_env": {},
+    "binding_normalization_receipt": {
+      "schema_version": 2,
+      "producer": "managed_binding_normalizer",
+      "protocol": "public_handle_v2",
+      "scope": {
+        "task_id": "f3-helper_checkpoint-list",
+        "task_revision": 1,
+        "plan_id": "plan_4fed9569bae8b2cf6397",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct",
+        "attempt_id": ""
+      },
+      "contract_digest": "1e25cf2a51bde874ceaef00d9c3593087078ad1b92daea06e8e0729aed1f3f4c",
+      "catalog_digests": [],
+      "raw_digest": "4d7a581edf8048f3f5b8593b9e9e59c3cd2a88aa88665bfc964691376e381ab3",
+      "normalized_digest": "0b669b5b762c18393c9eaccd2fac39d5728184a6a931b7c050a4063b3ed764b2",
+      "raw_candidate": {
+        "type": "execute",
+        "source": "action_json",
+        "code": "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')",
+        "argv": [
+          "python",
+          "-c",
+          "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')"
+        ],
+        "env": {},
+        "outputs": [],
+        "language": "python",
+        "operation": "check_contig_compatibility",
+        "candidate_generation_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8"
+      },
+      "normalized_candidate": {
+        "type": "execute",
+        "source": "action_json",
+        "code": "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')",
+        "argv": [
+          "python",
+          "-c",
+          "import json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('{\"produces_artifacts\": [], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"contigs_compatible\", \"required_fields\": [\"value\"]}]}')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, 'BIOMIND_EFFECT_EVIDENCE_JSON=', publication=True)\nprint('synthetic')"
+        ],
+        "env": {},
+        "outputs": [],
+        "language": "python",
+        "operation": "check_contig_compatibility",
+        "candidate_generation_event_id": "candidate-call:2d039ea43eee8541745fa177cbaef32d282cae78d650c26c46aea02045a4ccc8",
+        "binding_env": {}
+      },
+      "raw_public_candidate": {
+        "action_type": "execute",
+        "operation": "check_contig_compatibility",
+        "language": "python",
+        "env": {},
+        "outputs": [],
+        "code": "# BIOMIND_EFFECT_HELPER\nprint('synthetic')\n"
+      },
+      "raw_public_digest": "7a65fb4f0ab119a4488ef8d006448619f476e4d56782654906a7d3a387156529",
+      "raw_representation": "parsed_action_before_binding",
+      "receipt_id": "binding-normalization-4e7d72d9c30fb23cf40fc208cb7ad72dffbc5abd472720b6ded0e1ce7fcfad53"
+    },
+    "formal_workspace_bindings": [],
+    "binding_contract_rule": {},
+    "generate_binding_resolution": {
+      "environment": {},
+      "records": []
+    },
+    "generate_binding_resolution_digest": "49130909db9874d2ef1e55b5271596c4c1bd9fcf67acfd64aa8e969b8e3cef5a",
+    "workspace_mutation_intent_contracts": [],
+    "managed_artifact_handles": [],
+    "referenced_output_handles": [],
+    "materialized_artifacts": {},
+    "concrete_artifact_bindings": [],
+    "controller_output_bindings": [],
+    "candidate_fingerprint": "a49e0f5f13d9c0e5e8a7b846a59f739524655d5f38111bb135d03fe162c2cd77",
+    "action_id": "action_92b6fb9f9a4455ba",
+    "step_id": "step-direct",
+    "task_revision": 1,
+    "plan_id": "plan_4fed9569bae8b2cf6397",
+    "plan_version": "plan_v1",
+    "plan_revision": 1,
+    "authoritative_user_turn_revision": 1,
+    "execution_epoch": "0",
+    "purpose": "analysis",
+    "command_role": "primary",
+    "expected_outputs": [],
+    "expected_step_effect": {
+      "schema_version": 1,
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "identity": "contigs_compatible",
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          },
+          "predicate": {
+            "applicability": {
+              "execution_capability_ids": [
+                "genomics.snpeff_annotation.prepare_database",
+                "genomics.snpeff_annotation.build_database",
+                "genomics.snpeff_annotation.annotate_variants",
+                "genomics.snpeff_annotation.summarize_ann",
+                "genomics.snpeff_annotation.finalize_outputs"
+              ],
+              "kind": "plan_contains_any_execution_capability",
+              "schema_version": 1
+            },
+            "expected": true,
+            "failure_disposition": "correction_required",
+            "missing_disposition": "inspection_required",
+            "operator": "boolean_equals",
+            "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+            "parser_id": "biomind.genomics.contig_compatibility.v1",
+            "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+          }
+        }
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    },
+    "expected_evidence": [
+      "the approved command exits"
+    ],
+    "selected_skill_id": "genomics/snpeff-annotation",
+    "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+    "capability_contract": {
+      "schema_version": 1,
+      "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "selected_skill_id": "genomics/snpeff-annotation",
+      "required_runtime_binding_ids": [],
+      "optional_runtime_binding_ids": [],
+      "required_artifact_binding_ids": [
+        "artifact.annotation_gtf",
+        "artifact.reference_fasta",
+        "artifact.variant_vcf"
+      ],
+      "execution_guidance": [
+        "Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.",
+        "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID.",
+        "Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.",
+        "Use the supplied concrete artifact paths explicitly; this capability has no runtime resources."
+      ],
+      "operation": "check_contig_compatibility",
+      "consumes_artifacts": [
+        "artifact.annotation_gtf",
+        "artifact.reference_fasta",
+        "artifact.variant_vcf"
+      ],
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "observation_id": "contigs_compatible",
+          "predicate": {
+            "predicate_id": "genomics.snpeff.contigs_compatible.v1",
+            "operator": "boolean_equals",
+            "expected": true,
+            "parser_id": "biomind.genomics.contig_compatibility.v1",
+            "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+            "failure_disposition": "correction_required",
+            "missing_disposition": "inspection_required",
+            "applicability": {
+              "schema_version": 1,
+              "kind": "plan_contains_any_execution_capability",
+              "execution_capability_ids": [
+                "genomics.snpeff_annotation.prepare_database",
+                "genomics.snpeff_annotation.build_database",
+                "genomics.snpeff_annotation.annotate_variants",
+                "genomics.snpeff_annotation.summarize_ann",
+                "genomics.snpeff_annotation.finalize_outputs"
+              ]
+            }
+          },
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          }
+        }
+      ],
+      "workspace_mutations": [],
+      "explicit_side_effects": []
+    },
+    "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+    "runtime_bindings": {},
+    "runtime_binding_records": [],
+    "runtime_binding_manifest": {
+      "schema_version": 1,
+      "action_id": "action_92b6fb9f9a4455ba",
+      "plan_id": "plan_4fed9569bae8b2cf6397",
+      "step_id": "step-direct",
+      "selected_skill_id": "genomics/snpeff-annotation",
+      "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+      "scope": "current_action",
+      "bindings": [],
+      "manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612"
+    },
+    "runtime_binding_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+    "artifact_env_manifest": {
+      "schema_version": 1,
+      "action_id": "action_92b6fb9f9a4455ba",
+      "plan_id": "plan_4fed9569bae8b2cf6397",
+      "step_id": "step-direct",
+      "selected_skill_id": "genomics/snpeff-annotation",
+      "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+      "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+      "scope": "current_action",
+      "bindings": [],
+      "manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612"
+    },
+    "artifact_env_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+    "execution_policy_manifest": {
+      "schema_version": 1,
+      "action_id": "action_92b6fb9f9a4455ba",
+      "plan_id": "plan_4fed9569bae8b2cf6397",
+      "step_id": "step-direct",
+      "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+      "language": "Bash",
+      "scope": "current_action",
+      "policy": {
+        "stdin": "devnull",
+        "process_group": "isolated",
+        "shell_errexit": false,
+        "shell_pipefail": true
+      },
+      "manifest_hash": "sha256:614565492cb33e6c09824ce90c7fff73f74674beb4c7ae14ac6764d3012309df"
+    },
+    "execution_policy_manifest_hash": "sha256:614565492cb33e6c09824ce90c7fff73f74674beb4c7ae14ac6764d3012309df",
+    "action_approval_identity": {
+      "schema_version": 1,
+      "generated_script_sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+      "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+      "runtime_env_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+      "artifact_env_manifest_hash": "sha256:5999942b7830213772eedabe4603f50766cbb6058c51efa17490ffd9f7066612",
+      "execution_policy_manifest_hash": "sha256:614565492cb33e6c09824ce90c7fff73f74674beb4c7ae14ac6764d3012309df",
+      "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+      "approval_identity_hash": "sha256:423a74757d85763df3fa4a545e5b7d84406a3d693496d8c98692e73581c5ce8c"
+    },
+    "generated_script_sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+    "working_directory": "/tmp/biomind-6793-fix-20260915/current06/export",
+    "generated_from_plan_hash": "0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+    "generated_from_approval_scope_hash": "e5648eb9f180bc7f3d5112bccb479df6d6398292854405555c7d07ee9ed26d5a",
+    "action_hash": "545b0e165e4ca9d727dcd44c32312d5fd8d8d8a45b267bf6f6eb1c4aee26d17f",
+    "candidate_repair_source": {
+      "action_type": "execute",
+      "operation": "check_contig_compatibility",
+      "language": "python",
+      "env": {},
+      "outputs": [],
+      "code": "# BIOMIND_EFFECT_HELPER\nprint('synthetic')\n"
+    },
+    "generated_script": {
+      "version": "generated",
+      "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-tre_3pw7/task_outputs/f3-helper_checkpoint-list/scripts/plan_4fed9569bae8b2cf6397/plan_v1/step-direct/action_92b6fb9f9a4455ba/generated.sh",
+      "sha256": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99",
+      "producer": "generate",
+      "parent_script_ref": {},
+      "mutation_reason": "model_generation",
+      "created_at": "2026-09-15T17:01:11"
+    },
+    "generated_script_path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-tre_3pw7/task_outputs/f3-helper_checkpoint-list/scripts/plan_4fed9569bae8b2cf6397/plan_v1/step-direct/action_92b6fb9f9a4455ba/generated.sh",
+    "generated_script_hash": "3b1860e8bc81fe454169987b20ef053c4e51a526830755ff1ddb05b23932cc99"
+  },
+  "requests_contain_prior_exact_error": [
+    false,
+    false,
+    false
+  ],
+  "loaded_bio_agents_sha256": "07ecac5f48bca8167b7530b97c11a7284bc1fd98f68dc02a433adeef028d18a6",
+  "boundary": "real Plan/approval/TypedGenerate/parser/CAS/ledger, fixed provider; no execution dispatched"
+}

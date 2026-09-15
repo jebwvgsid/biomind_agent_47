@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003121085464954376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 76.00051686819643,
+    "failure": "scenario = 'stop'\n\n    @pytest.mark.parametrize('scenario', ['success', 'stop', 'repeat'])\n    def test_continuous_incident(scenario):\n        async def run():\n            fixture = IncidentGraph(scenario)\n            await fixture.setup()\n            try:\n                values, durable = await fixture.run()\n                save('6793-' + scenario + '-witness', {'timeline': fixture.timeline, 'values': values,\n                    'durable': durable, 'terminal': fixture.terminal}, full=True)\n                assert fixture.build_calls >= 4, (fixture.build_calls, values.get('generate_outcome'))\n                assert not any(row['event'] == 'failure_log_not_published' for row in fixture.timeline)\n                attempts = list(durable['provenance_state']['attempts'].values())\n                build = [a for a in attempts if a['step_id'] == 'build_database']\n                assert build[0]['returncode'] == 0\n                assert len(fixture.commits) == (6 if scenario == 'success' else 2)\n                if scenario == 'success':\n                    assert durable['task_state']['status'] == 'completed'\n                    assert len(build) == 2 and len(fixture.executions) == 7\n                else:\n                    assert len(build) == 1 and len(fixture.executions) == 3\n                    assert all(a['step_id'] not in OPS[3:] for a in attempts)\n                    assert all(s['status'] != 'failed' for s in durable['steps'] if s['step_id'] in OPS[3:])\n                    diagnostic = fixture.terminal['terminal_diagnostic']\n                    assert diagnostic['persistence_status'] == 'committed'\n                    assert diagnostic['delivery_status'] == 'complete'\n                    assert diagnostic['execution']['attempt_id'] == ''\n                    assert diagnostic['causal_execution']['attempt_id'] == build[0]['attempt_id']\n                    assert all(fixture.outputs[r].is_file() for r in ['report', 'reproduce_script', 'stage_status'])\n            finally:\n                await fixture.close()\n>       asyncio.run(run())\n\ntests/a1_unified_fix/test_session_6793_chain.py:227: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n    async def run():\n        fixture = IncidentGraph(scenario)\n        await fixture.setup()\n        try:\n            values, durable = await fixture.run()\n            save('6793-' + scenario + '-witness', {'timeline': fixture.timeline, 'values': values,\n                'durable': durable, 'terminal': fixture.terminal}, full=True)\n>           assert fixture.build_calls >= 4, (fixture.build_calls, values.get('generate_outcome'))\nE           AssertionError: (2, {'schema_version': 1, 'type': 'internal_protocol_error', 'summary': 'Generate encountered an internal protocol vio... 'fix-f6-6793_stop', 'task_revision': 1, 'plan_id': 'plan_b86c7a30f1d9b714a515', 'plan_version': 'plan_v1', ...}, ...})\nE           assert 2 >= 4\nE            +  where 2 = <test_session_6793_chain.IncidentGraph object at 0x149218a85820>.build_calls\n\ntests/a1_unified_fix/test_session_6793_chain.py:206: AssertionError"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0004166429862380028,
+    "failure": ""
+  }
+]

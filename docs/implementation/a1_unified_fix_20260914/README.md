@@ -63,3 +63,10 @@
 已增加显式通用 Bash/Python 执行，v3 resource_uses 单来源和 TaskSpec 输出义务读取，降级无硬依据的三 Skill/READ 文字解释偏好，并同步当前公开动作/停止示例。保留未知对象、来源与依赖、权限、批准对象、证据、必需输出、预算/去重/停止/取消和输入保护。新 8 个完整图场景、旧 22 个图场景、额外公开协议与保护回归逐场列版本；244 个唯一 pytest ID 为 243 PASS + 1 已存在的 WGS 版本断言 FAIL，另有真实 PTY/plain 14 场景 PASS。固定 provider/科学替身不构成真实模型或科学 E2E。
 
 整体状态 **PARTIAL**：10 个生产文件及 18 个测试文件的可隔离净补丁已提交；公开投影的另一处 V2 增量与先存未提交 planner_context 基础函数相交，保留工作树改动及精确 patch，未收编旧函数。已测候选是安全工作树 + 保护 overlay，不等于裸提交。最终 current14 468 文件签名 `5b99904ba6d63cf4486234cddaeb2b339a959b2a562cb40cc6352202ef781212`；逐进程实际加载证明另存，导出清单不冒充加载证明。生产逻辑最后提交 `5673b236c80a694e27e72e7b0f90f0a9946bf4b9`，完整链与净文件范围见分册 commit_files.tsv / net_change_summary.json。未恢复原 session、未调用真实 API/科学工具、未 push。
+
+
+## session_1789456793 连续故障修复（2026-09-15）
+
+[本轮实施与验收](session_1789456793_fix_20260915/README.md)：已接纳候选关闭旧Generate repair权威而保留预算账本；精确失败step；未执行候选STOP与原因果attempt分离；正式失败日志引用/分页及helper诊断进入实际请求；显式snpeff构造保留通用途径。生产提交 `2ee4397d20006c1b427ef4904265be18d13bbbc6`（BASE `adf299e661a4996e6405eefe815b22d99bec0562`＋保护overlay）。
+
+本单限定机制 COMPLETE：G1六操作7执行/6Commit；G2/G3三执行/两Commit且三报告created；最后合法机会/预算停止均通过。180个唯一pytest ID及7场实际PTY/plain通过，旧失败与开发watchdog保留。真实模型/科学NOT_RUN，原session未恢复、未push。原F1—F6范围及V2保护overlay/PARTIAL提交边界不变；不宣称裸commit部署或真实建库成功。完整实际请求、审批、执行、Commit、STOP/report、加载与净提交范围见分册。

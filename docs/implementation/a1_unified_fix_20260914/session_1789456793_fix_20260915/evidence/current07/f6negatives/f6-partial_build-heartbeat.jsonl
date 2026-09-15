@@ -1,0 +1,7 @@
+{"monotonic": 4351778.342836505, "mode": "partial_build", "calls": {"consultant": 0, "planner": 0, "generate": 0, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4351789.507765064, "mode": "partial_build", "calls": {"consultant": 1, "planner": 1, "generate": 1, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4351803.201374585, "mode": "partial_build", "calls": {"consultant": 1, "planner": 1, "generate": 2, "reviewer": 1, "recovery": 0}, "executions": 1, "commits": 1}
+{"monotonic": 4351814.774552232, "mode": "partial_build", "calls": {"consultant": 1, "planner": 1, "generate": 2, "reviewer": 1, "recovery": 0}, "executions": 2, "commits": 1}
+{"monotonic": 4351826.907967378, "mode": "partial_build", "calls": {"consultant": 1, "planner": 1, "generate": 3, "reviewer": 2, "recovery": 0}, "executions": 2, "commits": 2}
+{"monotonic": 4351838.133063749, "mode": "partial_build", "calls": {"consultant": 1, "planner": 1, "generate": 3, "reviewer": 2, "recovery": 0}, "executions": 2, "commits": 2}
+{"monotonic": 4351849.303409996, "mode": "partial_build", "calls": {"consultant": 1, "planner": 1, "generate": 3, "reviewer": 2, "recovery": 1}, "executions": 3, "commits": 2}

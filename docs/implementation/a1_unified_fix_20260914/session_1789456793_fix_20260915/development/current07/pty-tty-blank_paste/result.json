@@ -1,0 +1,22 @@
+{
+  "root": "/tmp/biomind-6793-fix-20260915/current07/pty-tty-blank_paste",
+  "returncode": -15,
+  "actual_kernel_pty": true,
+  "mode": "tty",
+  "scenario": "blank_paste",
+  "source_signature": "e4052102ae2e605901594cb0269836ed77510d20f05d17b80449663f1accde6b",
+  "parent_harness_sha256": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538",
+  "guarded_child_harness_sha256": "cba6d096ef71ecf860491a0f15a43cca24f63d76a6a1ccb7743c3cffc0980538",
+  "source_unchanged": true,
+  "frames": {},
+  "actions": [
+    {
+      "at": 4351856.316808074,
+      "event": "cursor-report"
+    }
+  ],
+  "business": {},
+  "error": {},
+  "unknown_vt": [],
+  "transfer": {}
+}

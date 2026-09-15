@@ -1,0 +1,248 @@
+{
+  "mode": "protocol-blocked",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 1,
+    "recovery": 0
+  },
+  "routes": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "__interrupt__",
+    "execute",
+    "supervisor",
+    "commit_step",
+    "generate"
+  ],
+  "executions": [
+    {
+      "operation": "check_contig_compatibility",
+      "attempt_id": "attempt_6e6cc99c701c86d2f419",
+      "rc": 0,
+      "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"contigs_compatible\",\"value\":true}]}\n",
+      "stderr": "",
+      "approved_sha256": "c7b49136a146123c268407d8eb8b9e5400cfd3cd06115cc0d23d6031960d7dd0",
+      "executed_sha256": "04c154649cf28dabef40338d31252d21b58e38cc97a12a1a7da443e1126a7648",
+      "actual_workspace_before": {},
+      "actual_workspace_after": {}
+    }
+  ],
+  "commit_outcomes": [],
+  "final_outcome": null,
+  "full": {
+    "path": "/tmp/biomind-6793-fix-20260915/current06/protection/f6-protocol-blocked-full.json.gz",
+    "sha256": "025012df3ecba296ac5798b88d9661310274d8829d7a811ac99938a10049a1e6",
+    "raw_sha256": "9120608763917105d0f1367fc665c24418788dafe0cd72c3a73f7cb1dcbefe84"
+  },
+  "substitutes": {
+    "model": "fixed business replies",
+    "science": "new executable writes explicit synthetic predictor/ANN shapes",
+    "runtime_observation": "make_runtime_evidence for actually created synthetic files; not host Java availability",
+    "approval": "existing middleware interrupts resumed with explicit y; Plan input via existing _prompt_user",
+    "memory": "real archive/finalize/summary restored; schema2 compactor enabled and real prepare spied"
+  },
+  "hook_hits": {
+    "observe": 6,
+    "finalize": 0,
+    "prepare": 3,
+    "summary": 0,
+    "terminal_summary_provider": 1
+  },
+  "terminal": {
+    "status": "blocked",
+    "terminal_diagnostic": {
+      "error_code": "GENERATE_BLOCKED",
+      "stage": "generate",
+      "error_owner": "generate",
+      "reason": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv。\n\n当前步骤：prepare_database；执行 attempt：。\n\n没有可确认的命令执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：Generate recorded a durable terminal blocker.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：GENERATE_BLOCKED；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：prepare_database=blocked；build_database=pending；annotate_variants=pending；summarize_ann=pending；finalize_outputs=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md。\n\n附加问题：EXECUTION_DETAILS_UNAVAILABLE。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：generate；原始错误：GENERATE_BLOCKED；停止阶段：generate。\n\n末次候选：{\"execution_started\": false, \"attempt_id\": \"\", \"generate_invocation\": {\"generate_call_id\": \"generate-ea65a25d9b03447a8dd90a4682841128\", \"scope\": {\"task_id\": \"fix-f6-protocol-blocked\", \"task_revision\": 1, \"plan_id\": \"plan_81e9fa78f498e1c3d4d8\", \"plan_version\": \"plan_v1\", \"plan_revision\": 1, \"step_id\": \"prepare_database\", \"attempt_id\": \"\"}, \"source_ref\": \"object:sha256:131e4b343352ab7663a80f5f62df1c09e911a8612520d9f275d3e57729ccd9df\", \"prompt_assembly_started\": true, \"prompt_assembly_succeeded\": true, \"provider_call_attempted\": true, \"llm_invoked\": true}}\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\n已有正式提交：check_contig_compatibility (typed-step-commit:commit-step-f588c0ef96993b7722664f0f)\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"\", \"concerns\": [], \"error_code\": \"GENERATE_BLOCKED\", \"evidence_refs\": [], \"failure_id\": \"\", \"failure_type\": \"blocked\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": null, \"source_owner\": \"UNKNOWN\", \"source_stage\": \"generate\", \"summary\": \"Generate recorded a durable terminal blocker.\"}\n已记录 stop_reason：{\"budget_receipt\": {}, \"detail\": \"Generate recorded a durable terminal blocker.\", \"error_code\": \"GENERATE_BLOCKED\", \"failure_stage\": \"\", \"model_turns\": 0, \"no_progress_rounds\": 0, \"termination_reason\": \"\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：BLOCKED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "detail": "自动检查已停止，当前问题尚未解决。\n\n原任务：Run a six-operation synthetic snpEff framework mechanism: check contigs, prepare an isolated database layout, build via the explicitly authorized synthetic algorithm executable, annotate synthetic ANN records, parse summaries, and deliver all required physical outputs. These are synthetic protocol fixtures, never real scientific snpEff results. Genome version new_fixture_v2; readonly inputs: /tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/输入 新构造/两样本.vcf, /tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/输入 新构造/新参考.fa, /tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/输入 新构造/新注释.gtf; required outputs: annotated_vcf=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/annotated.vcf, ann_summary=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/ann_summary.tsv, report=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md, reproduce_script=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh, stage_status=/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv。\n\n当前步骤：prepare_database；执行 attempt：。\n\n没有可确认的命令执行记录。\n\n确定性检查：尚无足够事实确认通过；步骤正式提交：未提交。\n\n原始起因（断言待核实）：Generate recorded a durable terminal blocker.。\n\n本次没有已记录的工具读取错误；策略仍未形成可接纳的解决决定。\n\n停止原因：GENERATE_BLOCKED；连续无进展轮次=0，模型轮次=0，工具调用=0。\n\n读取失败或预算结束不能证明科学依赖不可用、数据不兼容或科学目标已经完成。\n\n未完成阶段：prepare_database=blocked；build_database=pending；annotate_variants=pending；summarize_ann=pending；finalize_outputs=pending。\n\n尚无本次后续科学结果的完成证明；生成状态报告不等于科学产物通过验收。\n\n已生成报告：/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv；/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh；/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md。\n\n附加问题：EXECUTION_DETAILS_UNAVAILABLE。\n\n文件交付：complete（截至本次说明生成时；冻结正文不回写，最终交付以持久 receipt 为准）；report.md=created ；stage_status.tsv=created ；reproduce.sh=created \n\n来源阶段：generate；原始错误：GENERATE_BLOCKED；停止阶段：generate。\n\n末次候选：{\"execution_started\": false, \"attempt_id\": \"\", \"generate_invocation\": {\"generate_call_id\": \"generate-ea65a25d9b03447a8dd90a4682841128\", \"scope\": {\"task_id\": \"fix-f6-protocol-blocked\", \"task_revision\": 1, \"plan_id\": \"plan_81e9fa78f498e1c3d4d8\", \"plan_version\": \"plan_v1\", \"plan_revision\": 1, \"step_id\": \"prepare_database\", \"attempt_id\": \"\"}, \"source_ref\": \"object:sha256:131e4b343352ab7663a80f5f62df1c09e911a8612520d9f275d3e57729ccd9df\", \"prompt_assembly_started\": true, \"prompt_assembly_succeeded\": true, \"provider_call_attempted\": true, \"llm_invoked\": true}}\n\n检查计数范围：{\"local_tool_calls\": 0, \"known_causal_errors\": 0, \"history_coverage\": \"bounded_admitted_causal_chain\"}\n\n已有正式提交：check_contig_compatibility (typed-step-commit:commit-step-f588c0ef96993b7722664f0f)\n\nAI 辅助说明（不改变上述事实）：\n已记录 origin：{\"attempt_id\": \"\", \"concerns\": [], \"error_code\": \"GENERATE_BLOCKED\", \"evidence_refs\": [], \"failure_id\": \"\", \"failure_type\": \"blocked\", \"process_fact_scope\": \"original causal execution; no scientific validity inferred\", \"returncode\": null, \"source_owner\": \"UNKNOWN\", \"source_stage\": \"generate\", \"summary\": \"Generate recorded a durable terminal blocker.\"}\n已记录 stop_reason：{\"budget_receipt\": {}, \"detail\": \"Generate recorded a durable terminal blocker.\", \"error_code\": \"GENERATE_BLOCKED\", \"failure_stage\": \"\", \"model_turns\": 0, \"no_progress_rounds\": 0, \"termination_reason\": \"\", \"tool_calls\": 0, \"transport_receipt\": {}}\n\n内部诊断归档：{\"status\": \"not_needed\", \"paths\": {}, \"receipts\": {}}。内部归档不等于指定文件交付成功。\n\n任务状态：BLOCKED；自动执行已停止。\n\n停止总结生成状态：COMPLETED（仅表示总结处理状态，不代表任务成功）",
+      "stop_id": "managed-stop:754c567c7c280d966d6cd2c7c6971b7ec4de21034a2434c455678cff9e02ebf9",
+      "origin": {
+        "source_stage": "generate",
+        "source_owner": "UNKNOWN",
+        "failure_id": "",
+        "failure_type": "blocked",
+        "error_code": "GENERATE_BLOCKED",
+        "summary": "Generate recorded a durable terminal blocker.",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "primary_cause": {
+        "source_stage": "generate",
+        "source_owner": "UNKNOWN",
+        "failure_id": "",
+        "failure_type": "blocked",
+        "error_code": "GENERATE_BLOCKED",
+        "summary": "Generate recorded a durable terminal blocker.",
+        "concerns": [],
+        "evidence_refs": [],
+        "returncode": null,
+        "attempt_id": "",
+        "process_fact_scope": "original causal execution; no scientific validity inferred"
+      },
+      "latest_failure": {},
+      "prior_completed_work": [
+        {
+          "step_id": "check_contig_compatibility",
+          "commit_id": "commit-step-f588c0ef96993b7722664f0f",
+          "receipt": "typed-step-commit:commit-step-f588c0ef96993b7722664f0f",
+          "committed": true
+        }
+      ],
+      "execution": {
+        "attempt_id": "",
+        "step_id": "prepare_database",
+        "executed": false,
+        "purpose": "UNKNOWN",
+        "returncode": null,
+        "deterministic_passed": false,
+        "validation_status": "not_performed",
+        "reviewer_disposition": "not_performed",
+        "step_status": "blocked",
+        "committed": false,
+        "executed_script_ref": "",
+        "command_body_available": false
+      },
+      "causal_execution": {
+        "status": "UNKNOWN"
+      },
+      "current_candidate": {
+        "execution_started": false,
+        "attempt_id": "",
+        "generate_invocation": {
+          "generate_call_id": "generate-ea65a25d9b03447a8dd90a4682841128",
+          "scope": {
+            "task_id": "fix-f6-protocol-blocked",
+            "task_revision": 1,
+            "plan_id": "plan_81e9fa78f498e1c3d4d8",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "prepare_database",
+            "attempt_id": ""
+          },
+          "source_ref": "object:sha256:131e4b343352ab7663a80f5f62df1c09e911a8612520d9f275d3e57729ccd9df",
+          "prompt_assembly_started": true,
+          "prompt_assembly_succeeded": true,
+          "provider_call_attempted": true,
+          "llm_invoked": true
+        }
+      },
+      "inspection_count_scope": {
+        "local_tool_calls": 0,
+        "known_causal_errors": 0,
+        "history_coverage": "bounded_admitted_causal_chain"
+      },
+      "inspection_failures": [],
+      "stop_reason": {
+        "error_code": "GENERATE_BLOCKED",
+        "detail": "Generate recorded a durable terminal blocker.",
+        "transport_receipt": {},
+        "failure_stage": "",
+        "no_progress_rounds": 0,
+        "model_turns": 0,
+        "tool_calls": 0,
+        "termination_reason": "",
+        "budget_receipt": {}
+      },
+      "internal_diagnostic_delivery": {
+        "status": "not_needed",
+        "paths": {},
+        "receipts": {}
+      },
+      "delivery_status": "complete",
+      "report_paths": {
+        "stage_status.tsv": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "reproduce.sh": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "report.md": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+      },
+      "report_receipts": {
+        "stage_status.tsv": {
+          "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "sha256": "636d8dbbc82ad397748b24fd39acda3f480cc51b275661de594e695c8ec9b4aa",
+          "operation_id": "2a4976c4b3b685eb72f5298a87473e39f4741fa7f607c88e26ed2ad7a144e0a1",
+          "ownership": {
+            "operation_id": "2a4976c4b3b685eb72f5298a87473e39f4741fa7f607c88e26ed2ad7a144e0a1",
+            "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+            "sha256": "636d8dbbc82ad397748b24fd39acda3f480cc51b275661de594e695c8ec9b4aa",
+            "proof_name": ".runtime-report-proof-2a4976c4b3b685eb72f5298a87473e39f4741fa7f607c88e26ed2ad7a144e0a1",
+            "device": 2051,
+            "inode": 10892283
+          },
+          "status": "created",
+          "stop_id": "managed-stop:754c567c7c280d966d6cd2c7c6971b7ec4de21034a2434c455678cff9e02ebf9",
+          "task_id": "fix-f6-protocol-blocked"
+        },
+        "reproduce.sh": {
+          "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "sha256": "c4e8a86142c7a83521d339b44064a0552e14900641699911247880eead877c4f",
+          "operation_id": "13a09e2375bf12558f72594d4b72762a5585534e936d432a56d88cb192e02a61",
+          "ownership": {
+            "operation_id": "13a09e2375bf12558f72594d4b72762a5585534e936d432a56d88cb192e02a61",
+            "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+            "sha256": "c4e8a86142c7a83521d339b44064a0552e14900641699911247880eead877c4f",
+            "proof_name": ".runtime-report-proof-13a09e2375bf12558f72594d4b72762a5585534e936d432a56d88cb192e02a61",
+            "device": 2051,
+            "inode": 10892286
+          },
+          "status": "created",
+          "stop_id": "managed-stop:754c567c7c280d966d6cd2c7c6971b7ec4de21034a2434c455678cff9e02ebf9",
+          "task_id": "fix-f6-protocol-blocked"
+        },
+        "report.md": {
+          "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+          "sha256": "26d9926efff897edec786903e0735ed1a5be5f0d27aa4c8d5d54294ce7d3db7c",
+          "operation_id": "0145dc75030c7d03a9df028df8651784ea01eec36f7dd4021d00cc8e94306ee5",
+          "ownership": {
+            "operation_id": "0145dc75030c7d03a9df028df8651784ea01eec36f7dd4021d00cc8e94306ee5",
+            "path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+            "sha256": "26d9926efff897edec786903e0735ed1a5be5f0d27aa4c8d5d54294ce7d3db7c",
+            "proof_name": ".runtime-report-proof-0145dc75030c7d03a9df028df8651784ea01eec36f7dd4021d00cc8e94306ee5",
+            "device": 2051,
+            "inode": 10892372
+          },
+          "status": "created",
+          "stop_id": "managed-stop:754c567c7c280d966d6cd2c7c6971b7ec4de21034a2434c455678cff9e02ebf9",
+          "task_id": "fix-f6-protocol-blocked"
+        }
+      },
+      "persistence_status": "committed",
+      "summary_status": "COMPLETED",
+      "summary_llm_calls": 1,
+      "secondary_causes": [
+        {
+          "stage": "execution.details",
+          "error_code": "EXECUTION_DETAILS_UNAVAILABLE",
+          "exception_type": "ValueError",
+          "detail": "EXECUTION_FACT_SCOPE_MISMATCH"
+        }
+      ],
+      "report_path": "/tmp/biomind-6793-fix-20260915/current06/protection/scratch/biomind-plan-local-graph-vk03pp64/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+    }
+  },
+  "test_diagnostic_adapter": "old bootstrap scheduled stack dump cancelled; fatal handler retained; independent launcher timeout retained; light event-loop heartbeat",
+  "real": [
+    "handoff",
+    "Plan",
+    "resource association",
+    "approval snapshot",
+    "Generate/parser/helper",
+    "script approval",
+    "tiny executor",
+    "effect parser",
+    "workspace attester",
+    "Reviewer parser",
+    "CompletionGate",
+    "Commit/CAS",
+    "FinalAudit"
+  ],
+  "real_provider_calls": 0,
+  "real_scientific_tool_calls": 0
+}

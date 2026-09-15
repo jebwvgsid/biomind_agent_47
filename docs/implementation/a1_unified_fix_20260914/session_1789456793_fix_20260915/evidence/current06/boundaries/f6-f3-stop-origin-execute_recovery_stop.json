@@ -1,0 +1,107 @@
+{
+  "mode": "execute_recovery_stop",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "reviewer": 0,
+    "recovery": 0
+  },
+  "diagnostic_stage": "recovery",
+  "origin": {
+    "source_stage": "execute",
+    "source_owner": "GENERATED_ACTION",
+    "failure_id": "failure-e7f5e32b4b78a3cc10c118c6",
+    "failure_type": "execution_failed",
+    "error_code": "EXECUTION_FAILED",
+    "summary": "A launched command failed after immutable evidence persistence.",
+    "concerns": [],
+    "evidence_refs": [
+      "exec-attempt_4ca753ae59d74af466b3"
+    ],
+    "returncode": 7,
+    "attempt_id": "attempt_4ca753ae59d74af466b3",
+    "process_fact_scope": "original causal execution; no scientific validity inferred"
+  },
+  "causal_execution": {
+    "attempt_id": "attempt_4ca753ae59d74af466b3",
+    "step_id": "check_contig_compatibility",
+    "executed": true,
+    "purpose": "UNKNOWN",
+    "returncode": 7,
+    "deterministic_passed": false,
+    "validation_status": "unknown",
+    "reviewer_disposition": "inspection_required",
+    "step_status": "running",
+    "committed": false,
+    "executed_script_ref": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-89dls006/task_outputs/fix-f6-recovery_event_failure/attempts/attempt_4ca753ae59d74af466b3/executed.sh",
+    "command_body_available": false,
+    "scope": {
+      "task_id": "fix-f6-recovery_event_failure",
+      "plan_id": "plan_6980e52dd0421903b70c",
+      "plan_version": "plan_v1",
+      "step_id": "check_contig_compatibility",
+      "attempt_id": "attempt_4ca753ae59d74af466b3"
+    },
+    "failure_packet_ref": "failure-packet:sha256:592500c6723675f3b2af5fa8c29c89f786780ab83e826c6d831bb869f041fe34",
+    "read_only": true
+  },
+  "execution_attempts": [
+    {
+      "attempt_id": "attempt_4ca753ae59d74af466b3",
+      "rc": 7
+    }
+  ],
+  "report_has_generate_origin": false,
+  "report_has_execute_origin": true,
+  "report_receipts": {
+    "stage_status.tsv": {
+      "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-89dls006/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+      "sha256": "5f83f2a75d91fd5fc0d1e963c8afa08ab68e41151f2e1295a3fc633a7ba0718d",
+      "operation_id": "08514e76761054c9e18c0196e56d4dc865ab83c917eb19e5bd96d2ba2d23ea95",
+      "ownership": {
+        "operation_id": "08514e76761054c9e18c0196e56d4dc865ab83c917eb19e5bd96d2ba2d23ea95",
+        "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-89dls006/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "sha256": "5f83f2a75d91fd5fc0d1e963c8afa08ab68e41151f2e1295a3fc633a7ba0718d",
+        "proof_name": ".runtime-report-proof-08514e76761054c9e18c0196e56d4dc865ab83c917eb19e5bd96d2ba2d23ea95",
+        "device": 2051,
+        "inode": 10893153
+      },
+      "status": "created",
+      "stop_id": "managed-stop:8e386c3ea2290c6499cca91d0fe9397cd2f9919d1bcf025e73579bdbc492c52c",
+      "task_id": "fix-f6-recovery_event_failure"
+    },
+    "reproduce.sh": {
+      "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-89dls006/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+      "sha256": "cd3bbb93a9f1d22809a290f0d965afa49b466d7047b3c74d84e8b766aeb9f256",
+      "operation_id": "7fdb65c922c802ff6f731c7e95b76477f0383fcfe4abd398fbd46b961f3bcc78",
+      "ownership": {
+        "operation_id": "7fdb65c922c802ff6f731c7e95b76477f0383fcfe4abd398fbd46b961f3bcc78",
+        "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-89dls006/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "sha256": "cd3bbb93a9f1d22809a290f0d965afa49b466d7047b3c74d84e8b766aeb9f256",
+        "proof_name": ".runtime-report-proof-7fdb65c922c802ff6f731c7e95b76477f0383fcfe4abd398fbd46b961f3bcc78",
+        "device": 2051,
+        "inode": 10893158
+      },
+      "status": "created",
+      "stop_id": "managed-stop:8e386c3ea2290c6499cca91d0fe9397cd2f9919d1bcf025e73579bdbc492c52c",
+      "task_id": "fix-f6-recovery_event_failure"
+    },
+    "report.md": {
+      "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-89dls006/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+      "sha256": "e53ba053edf1692791087725bfb55914832edfa26f3b5e5d16b75a517a93c281",
+      "operation_id": "5839736ef8158859a2d8ca62a5e0a101363ebae01d1a24c1341e2dcb95cc3134",
+      "ownership": {
+        "operation_id": "5839736ef8158859a2d8ca62a5e0a101363ebae01d1a24c1341e2dcb95cc3134",
+        "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-89dls006/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+        "sha256": "e53ba053edf1692791087725bfb55914832edfa26f3b5e5d16b75a517a93c281",
+        "proof_name": ".runtime-report-proof-5839736ef8158859a2d8ca62a5e0a101363ebae01d1a24c1341e2dcb95cc3134",
+        "device": 2051,
+        "inode": 10893198
+      },
+      "status": "created",
+      "stop_id": "managed-stop:8e386c3ea2290c6499cca91d0fe9397cd2f9919d1bcf025e73579bdbc492c52c",
+      "task_id": "fix-f6-recovery_event_failure"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+等待输入
+🏭 Software Repository: /tmp/biomind-6793-fix-20260915/current07/pty2-tty-approve/scratc
+h/biomind-plan-local-graph-uq6g7pz2· Ctrl+O 历史 · Ctrl+C 取消
+📂 Source Install Path (Default): /tmp/biomind-6793-fix-20260915/current07/pty2-tty-appr
+计划审批
+计划 plan_e33c5694231df57920a4 · 步骤数 12
+审批显示正文 SHA-256: 4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816
+下方为当前冻结计划的完整正文；可滚动查看后明确确认。
+/details 或 F2 可再次查看同一完整对象；查看/返回不代表批准。
+计划审批                                                                               ^
+
+## Plan Identity
+- Plan ID: `plan_e33c5694231df57920a4`
+- Plan Version: `plan_v1`
+- Parent Version: `none`
+- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`
+- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`
+- Execution Cursor: `none`
+- Next Executable Step: `plan-inspect-0`
+- Changed Stable Step IDs: `none`
+
+## Highlighted Constraints
+- none
+                                                                                       v
+仍待审批 · Esc 返回；查看不代表批准
+↑↓ / PgUp PgDn 浏览 · Esc 返回；Enter 不批准

@@ -1,0 +1,12 @@
+#!/bin/bash
+set +e
+: > /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/stdout.log
+: > /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/stderr.log
+printf 'runner=%s script=%s\n' '/usr/bin/bash -o pipefail' /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/approved.sh > /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/command_trace.log
+/usr/bin/bash -o pipefail /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/approved.sh > /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/stdout.log 2> /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/stderr.log
+rc=$?
+printf 'returncode=%s\n' "$rc" >> /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/command_trace.log
+finished_at=$(date -Iseconds 2>/dev/null || date)
+printf '{"attempt_id":"attempt_4455f612b252e19faa6f","returncode":%s,"finished_at":"%s"}\n' "$rc" "$finished_at" > '/tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/exit_status.json.tmp.$$'
+mv '/tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/exit_status.json.tmp.$$' /tmp/biomind-6793-fix-20260915/current07/v2-generic_split/scratch/biomind-plan-local-graph-p5xoxr2r/task_outputs/fix-f6-v2_generic_split/attempts/attempt_4455f612b252e19faa6f/exit_status.json
+exit "$rc"

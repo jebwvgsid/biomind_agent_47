@@ -1,0 +1,13 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001317868009209633,
+    "failure": ""
+  }
+]

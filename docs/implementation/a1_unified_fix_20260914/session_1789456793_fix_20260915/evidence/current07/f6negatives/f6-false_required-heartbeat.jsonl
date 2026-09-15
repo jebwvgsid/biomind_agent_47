@@ -1,0 +1,3 @@
+{"monotonic": 4351745.715860425, "mode": "false_required", "calls": {"consultant": 0, "planner": 0, "generate": 0, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4351757.914174306, "mode": "false_required", "calls": {"consultant": 1, "planner": 1, "generate": 1, "reviewer": 0, "recovery": 0}, "executions": 0, "commits": 0}
+{"monotonic": 4351768.419956111, "mode": "false_required", "calls": {"consultant": 1, "planner": 1, "generate": 1, "reviewer": 1, "recovery": 0}, "executions": 1, "commits": 0}

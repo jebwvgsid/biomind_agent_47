@@ -1,0 +1,95 @@
+{
+  "commit": "2ee4397d20006c1b427ef4904265be18d13bbbc6",
+  "parent": "adf299e661a4996e6405eefe815b22d99bec0562",
+  "tree": "26e3e37cce9de20c38401b147216bacd7fba646b",
+  "files": [
+    {
+      "path": "bio_agents.py",
+      "blob": "71a85ff71fb6bdfb1ee35d1937a47a1d1a67aa02",
+      "mode": "100644",
+      "committed_sha256": "07ecac5f48bca8167b7530b97c11a7284bc1fd98f68dc02a433adeef028d18a6",
+      "loaded_sha256": "07ecac5f48bca8167b7530b97c11a7284bc1fd98f68dc02a433adeef028d18a6"
+    },
+    {
+      "path": "agent_core/plan_tracker.py",
+      "blob": "00c3e2cb2e0a060f1fade8f3eb0c4a8615fe3d93",
+      "mode": "100644",
+      "committed_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+      "loaded_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec"
+    },
+    {
+      "path": "agent_core/step_effects.py",
+      "blob": "897d65a9131a282c1a0872455871ba697551814e",
+      "mode": "100644",
+      "committed_sha256": "97521eb3046e8273412d1ec74ee3b8b25f00556d7731054438475844c162ddae",
+      "loaded_sha256": "97521eb3046e8273412d1ec74ee3b8b25f00556d7731054438475844c162ddae"
+    },
+    {
+      "path": "agent_core/workflow/candidate_repair.py",
+      "blob": "27b126a2cc84cd01a4d0d60d8afa3837a865daae",
+      "mode": "100644",
+      "committed_sha256": "3cd4090851fec162e5c9a6bea5372cf3660fb543c8226fd2f68d2086ca6cacf8",
+      "loaded_sha256": "3cd4090851fec162e5c9a6bea5372cf3660fb543c8226fd2f68d2086ca6cacf8"
+    },
+    {
+      "path": "agent_core/workflow/inspection_evidence.py",
+      "blob": "2668c88937eac8f6f7e8dd5770730aac09123869",
+      "mode": "100644",
+      "committed_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+      "loaded_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab"
+    },
+    {
+      "path": "agent_core/workflow/managed_stop.py",
+      "blob": "1532da856737b868b5623861963e67dd8c569850",
+      "mode": "100644",
+      "committed_sha256": "8469e79d09e794340669b83a5dfc342a62afea9131e80aee39c88c4f7e379587",
+      "loaded_sha256": "99856a6dcd09d4f755ad4aa2db821e98ced3e5eb86bea790794310b1aa69f1f3"
+    },
+    {
+      "path": "agent_core/workspace_attestation.py",
+      "blob": "02261aa78b8dc2f938833f37b98c819718714913",
+      "mode": "100644",
+      "committed_sha256": "500fa9bc747136ec7240b9366feda0f794889ffff00d8cb97075783951227e6a",
+      "loaded_sha256": "500fa9bc747136ec7240b9366feda0f794889ffff00d8cb97075783951227e6a"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/SKILL.md",
+      "blob": "5d32cbc0b717d7ee5f99e01f25260ba553c45c52",
+      "mode": "100644",
+      "committed_sha256": "7b62ee677e4f5bc0a85e05bbdfdf63343d4b6d60b2998a9e58aef55f86aac68b",
+      "loaded_sha256": "7b62ee677e4f5bc0a85e05bbdfdf63343d4b6d60b2998a9e58aef55f86aac68b"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py",
+      "blob": "8de26443b7ecff1aad788a3008bce95c8dc22a15",
+      "mode": "100644",
+      "committed_sha256": "b057cd7fc30ad923ffddb7ee48b1221b687464464bd68037f18a56006fc9763f",
+      "loaded_sha256": "b057cd7fc30ad923ffddb7ee48b1221b687464464bd68037f18a56006fc9763f"
+    },
+    {
+      "path": "tests/a1_unified_fix/test_session_6793_chain.py",
+      "blob": "c578f536ac37cf1031964b8fa04482a6a983ea96",
+      "mode": "100644",
+      "committed_sha256": "a8a13263da8903941cfaf4c601c225c314f268bc3c04e0be2f2ae1a9257c8a1a",
+      "loaded_sha256": "a8a13263da8903941cfaf4c601c225c314f268bc3c04e0be2f2ae1a9257c8a1a"
+    },
+    {
+      "path": "tests/a1_unified_fix/test_session_6793_boundaries.py",
+      "blob": "b0badc8221ce8fae3e867a22e51201d6060d08d1",
+      "mode": "100644",
+      "committed_sha256": "7bd0a1ea024ea6150f75ab87ba8b835e0784b96d35b587d9a8a6f056b486c352",
+      "loaded_sha256": "7bd0a1ea024ea6150f75ab87ba8b835e0784b96d35b587d9a8a6f056b486c352"
+    },
+    {
+      "path": "tests/a1_unified_fix/session_6793_manifest.py",
+      "blob": "52d467705ab922f929e0f685e8c98248c6b9e4b9",
+      "mode": "100644",
+      "committed_sha256": "b31929e34e0eca460ddc0c4cc2ed815a90b017a32f38eacfff5983ef2fb222af",
+      "loaded_sha256": "b31929e34e0eca460ddc0c4cc2ed815a90b017a32f38eacfff5983ef2fb222af"
+    }
+  ],
+  "other_index_entries_unchanged": true,
+  "worktree_bytes_unchanged": true,
+  "protected_managed_stop_hunks_excluded": true,
+  "push": "NOT_PERFORMED"
+}

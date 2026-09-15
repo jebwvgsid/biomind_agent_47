@@ -1,0 +1,85 @@
+{
+  "mode": "generate_blocked",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 2,
+    "reviewer": 1,
+    "recovery": 0
+  },
+  "diagnostic_stage": "generate",
+  "origin": {
+    "source_stage": "generate",
+    "source_owner": "UNKNOWN",
+    "failure_id": "",
+    "failure_type": "blocked",
+    "error_code": "GENERATE_BLOCKED",
+    "summary": "Generate recorded a durable terminal blocker.",
+    "concerns": [],
+    "evidence_refs": [],
+    "returncode": null,
+    "attempt_id": "",
+    "process_fact_scope": "original causal execution; no scientific validity inferred"
+  },
+  "causal_execution": {
+    "status": "UNKNOWN"
+  },
+  "execution_attempts": [
+    {
+      "attempt_id": "attempt_ee34783e8d332a299171",
+      "rc": 0
+    }
+  ],
+  "report_has_generate_origin": true,
+  "report_has_execute_origin": false,
+  "report_receipts": {
+    "stage_status.tsv": {
+      "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-kfxs5ywt/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+      "sha256": "636d8dbbc82ad397748b24fd39acda3f480cc51b275661de594e695c8ec9b4aa",
+      "operation_id": "11fea7b7fa2d2da42341abe572f19d4284304015df7a5c05bac912bc579733b1",
+      "ownership": {
+        "operation_id": "11fea7b7fa2d2da42341abe572f19d4284304015df7a5c05bac912bc579733b1",
+        "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-kfxs5ywt/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+        "sha256": "636d8dbbc82ad397748b24fd39acda3f480cc51b275661de594e695c8ec9b4aa",
+        "proof_name": ".runtime-report-proof-11fea7b7fa2d2da42341abe572f19d4284304015df7a5c05bac912bc579733b1",
+        "device": 2051,
+        "inode": 10893786
+      },
+      "status": "created",
+      "stop_id": "managed-stop:0a1f768821a0a36b2892e266981ded454ab528a3a91fc906841c181d251e33c4",
+      "task_id": "fix-f6-voluntary_stop"
+    },
+    "reproduce.sh": {
+      "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-kfxs5ywt/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+      "sha256": "22445adeab5461af85789f5b6eee9c87c3f31983e0372917d15308576edf91c0",
+      "operation_id": "dca017d27865943ed490dd14e345c449479e822c4cc090cd4becc6d4f546b91b",
+      "ownership": {
+        "operation_id": "dca017d27865943ed490dd14e345c449479e822c4cc090cd4becc6d4f546b91b",
+        "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-kfxs5ywt/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+        "sha256": "22445adeab5461af85789f5b6eee9c87c3f31983e0372917d15308576edf91c0",
+        "proof_name": ".runtime-report-proof-dca017d27865943ed490dd14e345c449479e822c4cc090cd4becc6d4f546b91b",
+        "device": 2051,
+        "inode": 10893796
+      },
+      "status": "created",
+      "stop_id": "managed-stop:0a1f768821a0a36b2892e266981ded454ab528a3a91fc906841c181d251e33c4",
+      "task_id": "fix-f6-voluntary_stop"
+    },
+    "report.md": {
+      "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-kfxs5ywt/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+      "sha256": "b22588ebbde2a9e149508cc6b5adcd93a89fe41b453f5943d28d6dd12f10698b",
+      "operation_id": "3149e3fc5e8a0c92d3c29390c5fa8068ae65b1ad6734ddee476a87250b83f0a7",
+      "ownership": {
+        "operation_id": "3149e3fc5e8a0c92d3c29390c5fa8068ae65b1ad6734ddee476a87250b83f0a7",
+        "path": "/tmp/biomind-6793-fix-20260915/current06/boundaries/scratch/biomind-plan-local-graph-kfxs5ywt/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+        "sha256": "b22588ebbde2a9e149508cc6b5adcd93a89fe41b453f5943d28d6dd12f10698b",
+        "proof_name": ".runtime-report-proof-3149e3fc5e8a0c92d3c29390c5fa8068ae65b1ad6734ddee476a87250b83f0a7",
+        "device": 2051,
+        "inode": 10891720
+      },
+      "status": "created",
+      "stop_id": "managed-stop:0a1f768821a0a36b2892e266981ded454ab528a3a91fc906841c181d251e33c4",
+      "task_id": "fix-f6-voluntary_stop"
+    }
+  }
+}

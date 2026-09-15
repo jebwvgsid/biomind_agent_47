@@ -1,0 +1,38 @@
+[
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034546107053756714,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 264.6419042535126,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003445371985435486,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_recovery]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_recovery]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003312816843390465,
+    "failure": ""
+  }
+]

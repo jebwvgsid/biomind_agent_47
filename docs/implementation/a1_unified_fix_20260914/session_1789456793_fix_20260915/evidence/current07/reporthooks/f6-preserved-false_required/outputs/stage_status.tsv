@@ -1,0 +1,8 @@
+stage	workflow_status	execution_status	committed	notes
+check_contig_compatibility	verification_pending	process_returned_zero	False	latest attempt purpose=validation; primary causal returncode=None; formal verification/commit remain authoritative
+prepare_database	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+build_database	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+annotate_variants	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+summarize_ann	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+finalize_outputs	pending	not_started_or_unknown	False	formal verification/commit remain authoritative
+run	blocked	stopped	false	F6_SYNTHETIC_CAUSE

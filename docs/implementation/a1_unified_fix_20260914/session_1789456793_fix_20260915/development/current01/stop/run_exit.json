@@ -1,0 +1,14 @@
+{
+  "source_signature": "695e8b23c4e4d8cff5340b1df605943dac8f8bf281cbab1b47d3cb1664d26753",
+  "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current01/export/export_manifest.json",
+  "test_targets": [
+    "-q",
+    "tests/a1_unified_fix/test_session_6793_chain.py",
+    "-k",
+    "stop"
+  ],
+  "timeout_seconds": 360,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 1,
+  "source_changes_after_run": []
+}

@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-6793-fix-20260915/current07/export/tests/cli_model_progress_support.py",
+    "--guarded-child",
+    "/tmp/biomind-6793-fix-20260915/current07/export",
+    "-q",
+    "-p",
+    "tests.a1_unified_fix.session_6793_manifest",
+    "tests/plan_authority_v2_20260915/test_graph.py",
+    "-k",
+    "generic_recovery"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONPATH": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+    "TMPDIR": "/tmp/biomind-6793-fix-20260915/current07/v2-generic_recovery/scratch",
+    "BIOMIND_WIKI_ENABLED": "0",
+    "LOG_LEVEL": "CRITICAL",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-6793-fix-20260915/current07/v2-generic_recovery/pytest-results.json",
+    "BIOMIND_GER_ARTIFACTS": "/tmp/biomind-6793-fix-20260915/current07/v2-generic_recovery",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-6793-fix-20260915/current07/v2-generic_recovery",
+    "BIOMIND_EXEC_LOG_DIR": "/tmp/biomind-6793-fix-20260915/current07/v2-generic_recovery/scratch/executor-logs"
+  },
+  "external_test_watchdog_seconds": 360
+}

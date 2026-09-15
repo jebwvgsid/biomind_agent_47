@@ -1,0 +1,212 @@
+{
+  "mode": "cancel",
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1,
+    "action_approval": 0
+  },
+  "routes_observed": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "generate",
+    "planner"
+  ],
+  "outcome": {
+    "schema_version": 1,
+    "type": "stale_result",
+    "summary": "Generate result became stale before adoption.",
+    "scope": {
+      "task_id": "fix-f3-late-generate-cancel-blocked",
+      "task_revision": 1,
+      "plan_id": "plan_0c8286a34fa6b7166a81",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "step_id": "step-direct",
+      "attempt_id": ""
+    },
+    "payload": {
+      "changed_preconditions": [
+        "approval_applicability"
+      ],
+      "invocation_id": "b2e4f65e2e7d51e61751a4e4",
+      "consumed_revision_hashes": {},
+      "current_revision_hashes": {},
+      "counts_as_failure": false,
+      "generate_invocation": {
+        "generate_call_id": "generate-67f578b4dc6b4ae2b6df240c94c1e6a7",
+        "scope": {
+          "task_id": "fix-f3-late-generate-cancel-blocked",
+          "task_revision": 1,
+          "plan_id": "plan_0c8286a34fa6b7166a81",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct",
+          "attempt_id": ""
+        },
+        "source_ref": "object:sha256:524debfd9319d5817be19447ec62f7c69e6a0aa9c86c83b3bd50b0301677fd09",
+        "prompt_assembly_started": true,
+        "prompt_assembly_succeeded": true,
+        "provider_call_attempted": true,
+        "llm_invoked": true
+      }
+    },
+    "evidence_refs": []
+  },
+  "next_route": "planner",
+  "post_cancel_outcomes": [
+    {
+      "schema_version": 1,
+      "type": "terminal",
+      "summary": "Planner reached a terminal business state.",
+      "scope": {
+        "task_id": "fix-f3-late-generate-cancel-blocked",
+        "plan_id": "plan_0c8286a34fa6b7166a81",
+        "plan_version": "plan_v1",
+        "step_id": "step-direct"
+      },
+      "payload": {
+        "status": "cancelled",
+        "reason_code": "planning_terminal"
+      },
+      "evidence_refs": []
+    }
+  ],
+  "barrier": {
+    "binding": {
+      "invocation_id": "inv-7866bbc7-f190-4baf-9072-218c1cc9fddd",
+      "node_type": "generate",
+      "staleness_domain": "generate-v1",
+      "state_generation": 20,
+      "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+      "task_record_hash": "sha256:98abef6298af5fb1f2549775ff8bdca40ac76f8941ead32db715822372eeb55f",
+      "plan_semantic_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+      "plan_record_hash": "sha256:2750c96161c0c8b42e643aa568bdbe8e6b18352d74b96d7b2e11c6d24501dfd3",
+      "task_revision": 1,
+      "plan_revision": 1,
+      "authoritative_user_turn_revision": 1,
+      "continuation_id": "",
+      "approval_ref": "object:sha256:4c3ffda56bb00c05f46d3a8d4786177be91c13b1e646bf30b4a6ab4f985a344b",
+      "approval_applicability": "applicable",
+      "step_id": "step-direct",
+      "execution_epoch": "0",
+      "attempt_id": "",
+      "failure_fingerprint": "",
+      "violation_set_identity": "",
+      "action_identity": "",
+      "evidence_identity": "",
+      "candidate_scope_id": "",
+      "touched_entity_versions": {
+        "selected_skill_revision": "sha256:96127eddfd53e7833a8b24dc3c9114e829ad97c6230b8f82ba679886f6e72036"
+      },
+      "semantic_handle_map": {
+        "step.step-direct": {
+          "semantic_handle": "step.step-direct",
+          "object_type": "plan_step",
+          "stable_identity": "step-direct",
+          "direction": "",
+          "allowed_usage": [
+            "reference",
+            "replace",
+            "execute",
+            "review"
+          ],
+          "metadata": {
+            "index": 1
+          }
+        }
+      }
+    },
+    "before": {
+      "state_generation": 20,
+      "plan_id": "plan_0c8286a34fa6b7166a81",
+      "plan_revision": 1,
+      "plan_version": "plan_v1",
+      "current_step_id": "step-direct",
+      "approval_status": "approved"
+    },
+    "cancellation_receipt": {
+      "schema_version": 2,
+      "initiator_kind": "user",
+      "owner": "interactive_user",
+      "source_evidence": {
+        "kind": "interactive_cancellation_choice",
+        "source": "audit_generate_provider_await"
+      },
+      "attribution_reason": "independent_cancellation_request",
+      "scope": {
+        "task_id": "fix-f3-late-generate-cancel-blocked",
+        "task_revision": 1,
+        "task_semantic_hash": "sha256:ef448c39d6cf1bd2a6ac9291861d5982fed943b254d8cb4e2370e84987a42bb8",
+        "plan_id": "plan_0c8286a34fa6b7166a81",
+        "plan_version": "plan_v1",
+        "step_id": "step-direct",
+        "planning_epoch_id": "planning-epoch-5e0d8c84-3f0f-428f-8752-2540c2157238"
+      },
+      "request_scope": {
+        "task_id": "fix-f3-late-generate-cancel-blocked"
+      },
+      "receipt_id": "cancel-0c8286a34fa6b7166a81c5c8",
+      "task_id": "fix-f3-late-generate-cancel-blocked",
+      "source": "audit_generate_provider_await",
+      "reason": "Explicit synthetic user cancellation during awaited provider",
+      "requested_at": "2026-09-15T17:01:07+08:00",
+      "command_started": false,
+      "active_provider_ref": "",
+      "state_generation_before": 20,
+      "state_generation_after": 21
+    },
+    "after_mutation": {
+      "state_generation": 21,
+      "plan_id": "plan_0c8286a34fa6b7166a81",
+      "plan_revision": 1,
+      "plan_version": "plan_v1",
+      "current_step_id": "step-direct",
+      "approval_status": "approved",
+      "task_status": "cancelled"
+    }
+  },
+  "durable_status": "cancelled",
+  "pending_action": {},
+  "provider_claims": {
+    "candidate-call:a2f395fe18702fd177ce861252a8862a8a2cb3868ae04d120fc2a1e58cad601e": {
+      "claim_id": "candidate-call:a2f395fe18702fd177ce861252a8862a8a2cb3868ae04d120fc2a1e58cad601e",
+      "scope": {
+        "task_id": "fix-f3-late-generate-cancel-blocked",
+        "task_revision": 1,
+        "plan_id": "plan_0c8286a34fa6b7166a81",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct"
+      },
+      "authorization": "initial:2cc39b9aa38af6f7f106385af8012aee205f7279eb077ecc80a6dbc65abd3168",
+      "status": "completed",
+      "invocation_id": "generate-67f578b4dc6b4ae2b6df240c94c1e6a7",
+      "corrective_ordinal": 0,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "fix-f3-late-generate-cancel-blocked",
+          "task_revision": 1,
+          "plan_id": "plan_0c8286a34fa6b7166a81",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true
+      },
+      "response_ref": "object:sha256:3b86ec4c8c0a51d18a68f6d06e537f03d00aa8d91b21e6e4a324c1845ed1191d"
+    }
+  },
+  "candidate_rejection_events": {},
+  "attempts": {},
+  "loaded_source": {
+    "bio_agents": "07ecac5f48bca8167b7530b97c11a7284bc1fd98f68dc02a433adeef028d18a6"
+  },
+  "fixture_boundary": "fixed provider and Plan yes input; runtime readiness/memory hooks are existing fixture stubs; actual TypedGenerate/parser/CAS/staleness and route; no Execute dispatched"
+}

@@ -1,0 +1,7 @@
+stage	status
+check_contig_compatibility	completed_synthetic
+prepare_database	completed_synthetic
+build_database	completed_synthetic
+annotate_variants	completed_synthetic
+summarize_ann	completed_synthetic
+finalize_outputs	completed_synthetic

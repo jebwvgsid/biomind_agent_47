@@ -1,0 +1,2 @@
+ACTUAL_INTERPRETER=/public/home/liusiqi/anaconda3/envs/biomind/bin/python
+BIOMIND_EFFECT_EVIDENCE_JSON={"schema_version":1,"produces_observations":[{"identity":"validation_observation","value":false}]}

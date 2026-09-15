@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00033226050436496735,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 48.01601444743574,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00032644160091876984,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00029545649886131287,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 27.712746322155,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020773615688085556,
+    "failure": ""
+  }
+]

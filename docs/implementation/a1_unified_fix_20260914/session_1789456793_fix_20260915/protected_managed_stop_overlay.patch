@@ -1,0 +1,24 @@
+diff --git a/agent_core/workflow/managed_stop.py b/agent_core/workflow/managed_stop.py
+index 1532da8..a25a281 100644
+--- a/agent_core/workflow/managed_stop.py
++++ b/agent_core/workflow/managed_stop.py
+@@ -544,7 +544,8 @@ def explanation(stop):
+     if stop.get("internal_diagnostic_delivery"):
+         parts.append("内部诊断归档：" + _safe(json.dumps(stop["internal_diagnostic_delivery"],ensure_ascii=False),3000)
+             + "。内部归档不等于指定文件交付成功。")
+-    parts.append("总结状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
++    parts.append("任务状态：" + str(stop.get("status") or "unknown").upper() + "；自动执行已停止。")
++    parts.append("停止总结生成状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + "（仅表示总结处理状态，不代表任务成功）" + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
+     return "\n\n".join(parts)
+ 
+ 
+@@ -586,7 +587,8 @@ def _planning_explanation(stop):
+     parts.append("当前没有获批步骤或执行 attempt；后续科学流程尚未由本轮规划启动。预算结束或读取失败不能证明输入不兼容、资源不存在或依赖不可用。")
+     if stop.get("summary_text"):
+         parts.append("AI 辅助说明（不改变上述事实）：\n" + stop["summary_text"])
+-    parts.append("总结状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
++    parts.append("任务状态：" + str(stop.get("status") or "unknown").upper() + "；自动执行已停止。")
++    parts.append("停止总结生成状态：" + str(stop.get("summary_status") or "IMPLEMENTED") + "（仅表示总结处理状态，不代表任务成功）" + ("；" + stop["summary_skip_reason"] if stop.get("summary_skip_reason") else ""))
+     if stop.get("persistence_status") != "committed":
+         parts.append("停止事实尚未确认持久化；本进程不会因此继续规划。")
+     if stop.get("report_paths"):

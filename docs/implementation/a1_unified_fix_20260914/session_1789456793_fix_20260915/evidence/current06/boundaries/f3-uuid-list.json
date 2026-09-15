@@ -1,0 +1,1971 @@
+{
+  "mode": "uuid",
+  "env_type": "list",
+  "provider_calls": 2,
+  "replay": {},
+  "outcomes": [
+    {
+      "schema_version": 1,
+      "type": "candidate_rejected",
+      "summary": "A bounded generated candidate defect can be corrected.",
+      "scope": {
+        "task_id": "f3-uuid-list",
+        "task_revision": 1,
+        "plan_id": "plan_6f4bbfcffb19b0661f92",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct",
+        "attempt_id": ""
+      },
+      "payload": {
+        "step_id": "step-direct",
+        "violation_owner": "GENERATED_ACTION",
+        "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "error_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+        "feedback": "execute.env must be an object of string values.",
+        "budget_receipt": {
+          "version": "candidate-corrections-v2",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "limit": 4,
+          "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+          "unit": "additional_candidate_calls",
+          "categories_share_total": true,
+          "rejection_ordinal": 1,
+          "corrections_authorized_before": 0,
+          "corrections_observed_before_rejection": 0,
+          "remaining_before_authorization": 4,
+          "category": "representation",
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "ordinal": 1,
+          "remaining": 3,
+          "progress_proven": true,
+          "rejection_event_id": "candidate-rejection:6756b8a36e127c5ac2fc5bc1",
+          "receipt_ref": "object:sha256:8ca5cd8b01ca55e9a2b8cb455b1e0dd5cecc0abdbbeb616d8c21458d0ebba0d2"
+        },
+        "repairable": true,
+        "repair_context": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "error_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+          "violation_owner": "GENERATED_ACTION",
+          "feedback": "execute.env must be an object of string values.",
+          "repair_domain": "representation",
+          "repair_stage": "action_schema",
+          "repair_ordinal": 1,
+          "repair_limit": 4,
+          "progress_proven": true,
+          "validation_source": "BioAnalystAgent._extract_structured_action_result",
+          "contract_ref": {
+            "protocol": "semantic_action_v2",
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "requirements": {
+              "protocol": "public_handle_v2",
+              "operation": "check_contig_compatibility",
+              "produced_bindings": {},
+              "consumed_bindings": {},
+              "binding_env": {
+                "owner": "system",
+                "declared_mapping": {},
+                "compatibility": "If supplied, every mapping must equal this declaration."
+              },
+              "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+            }
+          },
+          "failure_stage": "pre_execution_candidate_admission",
+          "execution_status": "not_started",
+          "exact_violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "owner": "GENERATED_ACTION",
+              "message": "execute.env must be an object of string values.",
+              "field_path": "env",
+              "observed": {
+                "action_type": "execute",
+                "operation": "check_contig_compatibility",
+                "argv": [
+                  "/usr/bin/printf",
+                  "synthetic"
+                ],
+                "env": [],
+                "outputs": [],
+                "action_id": "framework-001"
+              },
+              "expected": "object",
+              "actual": "array",
+              "protocol_error": {
+                "stage": "action_schema",
+                "code": "ACTION_SCHEMA_TYPE_ERROR",
+                "message": "execute.env must be an object of string values.",
+                "field_path": "env",
+                "expected": "object",
+                "actual": "array",
+                "response_container_source": "raw_json"
+              },
+              "failure_stage": "pre_execution_candidate_admission"
+            }
+          ],
+          "previous_candidate": {
+            "kind": "malformed_generate_response",
+            "response_sha256": "1578a44c53dee35d52bf69f0d59f840367560837c764130e418a019c3e42d2b8",
+            "response_char_count": 167,
+            "response_excerpt": "{\"action_type\": \"execute\", \"operation\": \"check_contig_compatibility\", \"argv\": [\"/usr/bin/printf\", \"synthetic\"], \"env\": [], \"outputs\": [], \"action_id\": \"framework-001\"}",
+            "parsed_candidate": {
+              "action_type": "execute",
+              "operation": "check_contig_compatibility",
+              "argv": [
+                "/usr/bin/printf",
+                "synthetic"
+              ],
+              "env": [],
+              "outputs": [],
+              "action_id": "framework-001"
+            },
+            "parser_selection": {
+              "response_container_source": "raw_json",
+              "stage": "action_schema",
+              "json_candidate_source": "decoded_candidate",
+              "excerpt_kind": "bounded_parser_excerpt",
+              "excerpt_sha256": "1578a44c53dee35d52bf69f0d59f840367560837c764130e418a019c3e42d2b8"
+            }
+          },
+          "protocol_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values."
+          },
+          "candidate_event_id": "candidate-call:8c89bced8077b088883e141ba17f26916fc839d0220685deee0fe01c7f9ff9a1",
+          "rejection_event_id": "candidate-rejection:6756b8a36e127c5ac2fc5bc1",
+          "policy_receipt": {
+            "version": "candidate-corrections-v2",
+            "scope": {
+              "task_id": "f3-uuid-list",
+              "task_revision": 1,
+              "plan_id": "plan_6f4bbfcffb19b0661f92",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "limit": 4,
+            "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+            "unit": "additional_candidate_calls",
+            "categories_share_total": true,
+            "rejection_ordinal": 1,
+            "corrections_authorized_before": 0,
+            "corrections_observed_before_rejection": 0,
+            "remaining_before_authorization": 4,
+            "category": "representation",
+            "progress_assessment": {
+              "schema_version": 1,
+              "producer": "biomind.generate_candidate_admission.v1",
+              "progress_proven": true,
+              "basis": "initial_rejection",
+              "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+              "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+              "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+              "representation_targets": [
+                "action_type",
+                "execute.argv_shape",
+                "execute.executable_body",
+                "execute.outputs_shape",
+                "json_object"
+              ],
+              "binding_facts": null,
+              "binding_axis": "not_evaluated",
+              "newly_satisfied_targets": [],
+              "resolved_targets": [],
+              "pending_targets": [
+                "env"
+              ],
+              "scientific_success": "not_assessed"
+            }
+          },
+          "receipt_id": "candidate-repair-receipt:d3abb56e3ed7e1727454ae25",
+          "receipt_ref": "object:sha256:8ca5cd8b01ca55e9a2b8cb455b1e0dd5cecc0abdbbeb616d8c21458d0ebba0d2"
+        },
+        "execution_status": "not_started",
+        "generate_invocation": {
+          "generate_call_id": "generate-945287246f3143eabed46bfd2d5f7df6",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct",
+            "attempt_id": ""
+          },
+          "source_ref": "object:sha256:02b7c336949de318402c61ccf4ef82bb4a0c88a892ceccbc108a265df0d3f310",
+          "prompt_assembly_started": true,
+          "prompt_assembly_succeeded": true,
+          "provider_call_attempted": true,
+          "llm_invoked": true
+        }
+      },
+      "evidence_refs": []
+    },
+    {
+      "schema_version": 1,
+      "type": "internal_protocol_error",
+      "summary": "Generate encountered an internal protocol violation and failed closed.",
+      "scope": {
+        "task_id": "f3-uuid-list",
+        "task_revision": 1,
+        "plan_id": "plan_6f4bbfcffb19b0661f92",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct",
+        "attempt_id": ""
+      },
+      "payload": {
+        "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+        "component": "generate",
+        "actual_outcome": "internal_protocol_error",
+        "actual_route": "END",
+        "execution_status": "not_started",
+        "recovery_entered": false,
+        "outputs_produced": [],
+        "primary_cause": {
+          "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "execute.env must be an object of string values.",
+          "reason": "execute.env must be an object of string values.",
+          "current_step": "step-direct",
+          "fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+          "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "execution_started": false,
+          "repair_attempted": true,
+          "repair_exhausted": true,
+          "failure_type": "generated_action_contract_error",
+          "failure_stage": "pre_action_contract",
+          "error_owner": "GENERATED_ACTION",
+          "detail": "execute.env must be an object of string values.",
+          "summary": "execute.env must be an object of string values.",
+          "recorded_at": "2026-09-15T17:00:49",
+          "expected_realization": "object",
+          "latest_failure": {
+            "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "owner": "GENERATED_ACTION",
+            "subsystem": "managed_artifacts",
+            "stage": "pre_action_contract",
+            "message": "execute.env must be an object of string values.",
+            "fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+            "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+            "execution_started": false,
+            "attempt_id": "",
+            "scope": {
+              "task_id": "f3-uuid-list",
+              "task_revision": 1,
+              "plan_id": "plan_6f4bbfcffb19b0661f92",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "repair_attempt_count": 2,
+            "recorded_at": "2026-09-15T17:00:50",
+            "field_path": "env",
+            "expected": "object"
+          },
+          "last_seen_at": "2026-09-15T17:00:50",
+          "repair_attempt_count": 2,
+          "last_candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "last_error_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+          "termination_reason": "repair_no_progress",
+          "terminal_failure": {
+            "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+            "owner": "GENERATED_ACTION",
+            "subsystem": "managed_artifacts",
+            "stage": "pre_action_contract",
+            "message": "execute.env must be an object of string values.",
+            "fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+            "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+            "execution_started": false,
+            "attempt_id": "",
+            "scope": {
+              "task_id": "f3-uuid-list",
+              "task_revision": 1,
+              "plan_id": "plan_6f4bbfcffb19b0661f92",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "step-direct"
+            },
+            "repair_attempt_count": 2,
+            "recorded_at": "2026-09-15T17:00:50",
+            "field_path": "env",
+            "expected": "object",
+            "termination_reason": "repair_no_progress"
+          }
+        },
+        "latest_failure": {
+          "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "execute.env must be an object of string values.",
+          "fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+          "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "repair_attempt_count": 2,
+          "recorded_at": "2026-09-15T17:00:50",
+          "field_path": "env",
+          "expected": "object"
+        },
+        "termination_reason": "repair_no_progress",
+        "budget_receipt": {
+          "version": "candidate-corrections-v2",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "limit": 4,
+          "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+          "unit": "additional_candidate_calls",
+          "categories_share_total": true,
+          "rejection_ordinal": 2,
+          "corrections_authorized_before": 1,
+          "corrections_observed_before_rejection": 1,
+          "remaining_before_authorization": 3,
+          "category": "representation",
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": false,
+            "basis": "recurrent_rejected_candidate",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          },
+          "correction_authorized": false,
+          "corrections_authorized": 1,
+          "remaining": 3,
+          "repair_ordinal": 2,
+          "repair_limit": 4,
+          "event_id": "candidate-rejection:0bb228ed3b7f6036313eedf4",
+          "correction_category": "representation"
+        },
+        "causal_generation": {},
+        "current_candidate": {
+          "attempt_id": "",
+          "execution_started": false,
+          "approved": false,
+          "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "candidate_event_id": "candidate-call:e9eb4daadd4d9e2423ab56520c06ab6025e22369899ee87c014398056aa8c3d7",
+          "cause_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "correction_category": "representation"
+        },
+        "generate_invocation": {
+          "generate_call_id": "generate-f86d21c988cc4416884a7f1a587a2697",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct",
+            "attempt_id": ""
+          },
+          "source_ref": "object:sha256:02b7c336949de318402c61ccf4ef82bb4a0c88a892ceccbc108a265df0d3f310",
+          "prompt_assembly_started": true,
+          "prompt_assembly_succeeded": true,
+          "provider_call_attempted": true,
+          "llm_invoked": true
+        }
+      },
+      "evidence_refs": []
+    }
+  ],
+  "rows": [
+    {
+      "schema_version": 1,
+      "event_id": "candidate-rejection:6756b8a36e127c5ac2fc5bc1",
+      "candidate_event_id": "candidate-call:8c89bced8077b088883e141ba17f26916fc839d0220685deee0fe01c7f9ff9a1",
+      "scope": {
+        "task_id": "f3-uuid-list",
+        "task_revision": 1,
+        "plan_id": "plan_6f4bbfcffb19b0661f92",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct"
+      },
+      "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+      "error_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+      "repair_stage": "action_schema",
+      "repair_domain": "representation",
+      "repair_ordinal": 1,
+      "repair_limit": 4,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "f3-uuid-list",
+          "task_revision": 1,
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 1,
+        "corrections_authorized_before": 0,
+        "corrections_observed_before_rejection": 0,
+        "remaining_before_authorization": 4,
+        "category": "representation",
+        "progress_assessment": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "progress_proven": true,
+          "basis": "initial_rejection",
+          "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+          "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+          "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+          "representation_targets": [
+            "action_type",
+            "execute.argv_shape",
+            "execute.executable_body",
+            "execute.outputs_shape",
+            "json_object"
+          ],
+          "binding_facts": null,
+          "binding_axis": "not_evaluated",
+          "newly_satisfied_targets": [],
+          "resolved_targets": [],
+          "pending_targets": [
+            "env"
+          ],
+          "scientific_success": "not_assessed"
+        },
+        "correction_authorized": true,
+        "corrections_authorized": 1,
+        "remaining": 3
+      },
+      "correction_category": "representation",
+      "progress_proven": true,
+      "progress_assessment": {
+        "schema_version": 1,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "progress_proven": true,
+        "basis": "initial_rejection",
+        "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+        "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+        "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+        "representation_targets": [
+          "action_type",
+          "execute.argv_shape",
+          "execute.executable_body",
+          "execute.outputs_shape",
+          "json_object"
+        ],
+        "binding_facts": null,
+        "binding_axis": "not_evaluated",
+        "newly_satisfied_targets": [],
+        "resolved_targets": [],
+        "pending_targets": [
+          "env"
+        ],
+        "scientific_success": "not_assessed"
+      },
+      "public_valid_facts": [],
+      "validation_source": "BioAnalystAgent._extract_structured_action_result",
+      "contract_ref": {
+        "protocol": "semantic_action_v2",
+        "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+        "requirements": {
+          "protocol": "public_handle_v2",
+          "operation": "check_contig_compatibility",
+          "produced_bindings": {},
+          "consumed_bindings": {},
+          "binding_env": {
+            "owner": "system",
+            "declared_mapping": {},
+            "compatibility": "If supplied, every mapping must equal this declaration."
+          },
+          "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+        }
+      },
+      "violation_owner": "GENERATED_ACTION",
+      "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+      "exact_violations": [
+        {
+          "code": "ACTION_SCHEMA_TYPE_ERROR",
+          "owner": "GENERATED_ACTION",
+          "message": "execute.env must be an object of string values.",
+          "field_path": "env",
+          "observed": {
+            "action_type": "execute",
+            "operation": "check_contig_compatibility",
+            "argv": [
+              "/usr/bin/printf",
+              "synthetic"
+            ],
+            "env": [],
+            "outputs": [],
+            "action_id": "framework-001"
+          },
+          "expected": "object",
+          "actual": "array",
+          "protocol_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "failure_stage": "pre_execution_candidate_admission"
+        }
+      ],
+      "status": "repairable",
+      "exit_reason": "unrecognized_action",
+      "terminal_exit_reason": "unrecognized_action_exhausted",
+      "terminal_reason_code": "",
+      "termination_reason": "",
+      "execution_status": "not_started",
+      "recovery_entered": false,
+      "outputs_produced": [],
+      "primary_failure": {
+        "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "execute.env must be an object of string values.",
+        "reason": "execute.env must be an object of string values.",
+        "current_step": "step-direct",
+        "fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+        "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "execution_started": false,
+        "repair_attempted": false,
+        "repair_exhausted": false,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "execute.env must be an object of string values.",
+        "summary": "execute.env must be an object of string values.",
+        "recorded_at": "2026-09-15T17:00:49",
+        "expected_realization": "object",
+        "latest_failure": {
+          "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "execute.env must be an object of string values.",
+          "fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+          "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "repair_attempt_count": 0,
+          "recorded_at": "2026-09-15T17:00:49",
+          "field_path": "env",
+          "expected": "object"
+        },
+        "last_seen_at": "2026-09-15T17:00:49",
+        "repair_attempt_count": 0,
+        "last_candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "last_error_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086"
+      },
+      "secondary_failures": [],
+      "recovery_context": {
+        "schema_version": "4",
+        "context_id": "recovery-context-fdf320114c32c2087a3fbe6d",
+        "task_id": "f3-uuid-list",
+        "step_id": "step-direct",
+        "action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "error_class": "ACTION_SCHEMA_TYPE_ERROR",
+        "error_fingerprint": "166184db3d5359ddf6159d05ff52aa0e3ec4d4fcd7b7acd60e77b98c3844e08c",
+        "failure_stage": "pre_action_contract",
+        "approved_plan_snapshot_id": "plan-snapshot-87794e8c293a62f06c995fdd",
+        "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "repair_ordinal": 1,
+        "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+        "task_spec_summary": {},
+        "effective_user_facts": {},
+        "current_step": {
+          "action": "execute",
+          "artifacts": [],
+          "bound_outputs": [],
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "dependencies": [],
+          "depends_on": [],
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "generate_binding_input_contract": {
+            "binding_contract": {
+              "derived_artifact_layout": {
+                "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+                "data_root": "<snpeff_db artifact>/data",
+                "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+                "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+              },
+              "operations": {
+                "annotate_variants": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "required_state": "snpeff_database_ready",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "build_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "prepare_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [],
+                  "produces_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "produced_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "produced_binding"
+                    }
+                  }
+                }
+              },
+              "public_input_protocol": "public_handle_v2",
+              "schema_version": 1
+            },
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "protocol": "public_handle_v2"
+          },
+          "inputs": [],
+          "operation": "check_contig_compatibility",
+          "outputs": [],
+          "purpose": "analysis",
+          "renderer_id": "",
+          "renderer_invocation_contract": {},
+          "risk_level": "low",
+          "selected_skill_id": "",
+          "semantic_claims": [],
+          "semantic_constraint_ids": [],
+          "skill_ids": [
+            "genomics/snpeff-annotation"
+          ],
+          "step_effect": {
+            "explicit_side_effects": [],
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                },
+                "identity": "contigs_compatible",
+                "predicate": {
+                  "applicability": {
+                    "execution_capability_ids": [
+                      "genomics.snpeff_annotation.prepare_database",
+                      "genomics.snpeff_annotation.build_database",
+                      "genomics.snpeff_annotation.annotate_variants",
+                      "genomics.snpeff_annotation.summarize_ann",
+                      "genomics.snpeff_annotation.finalize_outputs"
+                    ],
+                    "kind": "plan_contains_any_execution_capability",
+                    "schema_version": 1
+                  },
+                  "expected": true,
+                  "failure_disposition": "correction_required",
+                  "missing_disposition": "inspection_required",
+                  "operator": "boolean_equals",
+                  "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                  "parser_id": "biomind.genomics.contig_compatibility.v1",
+                  "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+                }
+              }
+            ],
+            "schema_version": 1,
+            "workspace_mutations": []
+          },
+          "step_id": "step-direct",
+          "step_type": "atomic",
+          "success_criteria": [
+            "the approved command exits"
+          ],
+          "title": "Run one approved command",
+          "tool": "test"
+        },
+        "action_contract": {
+          "structured_candidate": {
+            "kind": "malformed_generate_response",
+            "response_sha256": "1578a44c53dee35d52bf69f0d59f840367560837c764130e418a019c3e42d2b8",
+            "response_char_count": 167,
+            "response_excerpt": "{\"action_type\": \"execute\", \"operation\": \"check_contig_compatibility\", \"argv\": [\"/usr/bin/printf\", \"synthetic\"], \"env\": [], \"outputs\": [], \"action_id\": \"framework-001\"}",
+            "parsed_candidate": {
+              "action_type": "execute",
+              "operation": "check_contig_compatibility",
+              "argv": [
+                "/usr/bin/printf",
+                "synthetic"
+              ],
+              "env": [],
+              "outputs": [],
+              "action_id": "framework-001"
+            },
+            "parser_selection": {
+              "response_container_source": "raw_json",
+              "stage": "action_schema",
+              "json_candidate_source": "decoded_candidate",
+              "excerpt_kind": "bounded_parser_excerpt",
+              "excerpt_sha256": "1578a44c53dee35d52bf69f0d59f840367560837c764130e418a019c3e42d2b8"
+            }
+          },
+          "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636"
+        },
+        "execution": {},
+        "validation": {
+          "status": "invalid",
+          "failure_stage": "pre_action_contract",
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "owner": "GENERATED_ACTION",
+              "message": "execute.env must be an object of string values.",
+              "field_path": "env",
+              "observed": {
+                "action_type": "execute",
+                "operation": "check_contig_compatibility",
+                "argv": [
+                  "/usr/bin/printf",
+                  "synthetic"
+                ],
+                "env": [],
+                "outputs": [],
+                "action_id": "framework-001"
+              },
+              "expected": "object",
+              "actual": "array",
+              "protocol_error": {
+                "stage": "action_schema",
+                "code": "ACTION_SCHEMA_TYPE_ERROR",
+                "message": "execute.env must be an object of string values.",
+                "field_path": "env",
+                "expected": "object",
+                "actual": "array",
+                "response_container_source": "raw_json"
+              },
+              "failure_stage": "pre_execution_candidate_admission"
+            }
+          ],
+          "repair_domain": "representation",
+          "candidate_progress": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          }
+        },
+        "completion": {},
+        "progress": {},
+        "runtime": {
+          "approved_plan_snapshot_id": "plan-snapshot-87794e8c293a62f06c995fdd",
+          "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+          "repair_ordinal": 1
+        },
+        "machine_audit_findings": [],
+        "available_evidence": [],
+        "manifest": {},
+        "artifacts": [],
+        "recent_attempts": [],
+        "already_tried_strategies": [],
+        "recovery_decision": {
+          "schema_version": 5,
+          "failure_class": "SCRIPT_BUG",
+          "failure_owner": "GENERATED_ACTION",
+          "error_is_real": true,
+          "primary_execution_succeeded": false,
+          "evidence_sufficient": true,
+          "recommended_action": "FORMAT_REPAIR",
+          "rerun_required": false,
+          "consume_retry_budget": false,
+          "user_notification_required": false,
+          "reason": "The proposed action violates the current action protocol.",
+          "verdict": "repair",
+          "root_cause": "The proposed action violates the current action protocol.",
+          "failure_type": "generated_action_contract_error",
+          "confidence": 1.0,
+          "missing_evidence": [],
+          "repair_strategy": "",
+          "next_action": "FORMAT_REPAIR",
+          "requires_user_input": false,
+          "selected_hypothesis_id": null,
+          "evidence": [
+            "ACTION_SCHEMA_TYPE_ERROR",
+            "error_fingerprint=166184db3d5359ddf6159d05ff52aa0e3ec4d4fcd7b7acd60e77b98c3844e08c",
+            "invalid_response_hash=2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636"
+          ],
+          "rejected_alternatives": [],
+          "action_type": "repair_previous_action",
+          "commands": [],
+          "patches": [],
+          "files_to_backup": [],
+          "files_to_modify": [],
+          "rerun_command": null,
+          "verification_checks": [],
+          "rollback_steps": [],
+          "expected_new_evidence": [],
+          "risk_level": "medium",
+          "violates_user_constraint": false,
+          "constraint_conflict_reason": null,
+          "evidence_assessments": [],
+          "new_hypothesis_proposals": [],
+          "recommended_probe_id": null,
+          "probe_reason": "",
+          "preferred_execution_mode": "INLINE",
+          "probe_objective": "",
+          "kind": "FORMAT_REPAIR",
+          "reason_code": "generated_action_contract_error",
+          "action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "step_id": "step-direct",
+          "attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "consume_budget": "action_format_repair_count",
+          "repair_domain": "representation",
+          "plan_patch_reason": null,
+          "blocked_evidence": [],
+          "decision_id": "recovery-5c8a1decbcd944d5f12d",
+          "incident_id": "incident-1286ebc951da038a830f",
+          "idempotency_key": "recovery-5c8a1decbcd944d5f12d",
+          "decision_owner": "RecoveryPolicy",
+          "next_route": "generate",
+          "source_node": "generate",
+          "disposition": "RETRY_GENERATE",
+          "target_route": "generate",
+          "status": "pending",
+          "step_attempt": 0,
+          "trigger_event_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "trigger_node": "generate",
+          "consumed_at": "",
+          "superseded_reason": "",
+          "migration_source": "",
+          "migration_conflicts": [],
+          "task_id": "f3-uuid-list",
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "failed_step_id": "",
+          "rollback_to_step_id": "",
+          "first_bad_step_id": "",
+          "invalid_artifact_ids": [],
+          "invalidate_descendants": true,
+          "affected_step_ids": [],
+          "preserve_files_for_audit": true,
+          "evidence_refs": [],
+          "machine_findings_considered": [],
+          "repair_target": "",
+          "repair_instruction": "",
+          "plan_step_id": "",
+          "manifest_id": "",
+          "failed_stage_id": "",
+          "rewind_to_stage_id": "",
+          "invalidate_stage_ids": [],
+          "missing_capability": "",
+          "missing_producer_artifact_id": "",
+          "allowed_patch_scope": [],
+          "source_failure_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+          "recovery_context_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+          "failed_action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "failed_execution_attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "budget_class": "action_format_repair_count",
+          "execution_purpose": "PRIMARY",
+          "completion_eligibility": true,
+          "source_scope": {
+            "task_id": "f3-uuid-list",
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct",
+            "failed_action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+            "failed_execution_attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+            "source_failure_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086"
+          },
+          "identity_finalized": true,
+          "identity_payload_hash": "b2dedb0c5869eafeccb66f4e476d85cc81510f98e121d999d63e42a5935d5f06",
+          "expected_state_generation": 22
+        },
+        "allowed_actions": [],
+        "log_references": [],
+        "bounded_log_excerpt": "",
+        "conflicts": [],
+        "skill_policy": {},
+        "diagnosis": {},
+        "limits": {}
+      },
+      "recovery_context_digest": "recovery-context-fdf320114c32c2087a3fbe6d",
+      "policy_decision": {
+        "schema_version": 5,
+        "failure_class": "SCRIPT_BUG",
+        "failure_owner": "GENERATED_ACTION",
+        "error_is_real": true,
+        "primary_execution_succeeded": false,
+        "evidence_sufficient": true,
+        "recommended_action": "FORMAT_REPAIR",
+        "rerun_required": false,
+        "consume_retry_budget": false,
+        "user_notification_required": false,
+        "reason": "The proposed action violates the current action protocol.",
+        "verdict": "repair",
+        "root_cause": "The proposed action violates the current action protocol.",
+        "failure_type": "generated_action_contract_error",
+        "confidence": 1.0,
+        "missing_evidence": [],
+        "repair_strategy": "",
+        "next_action": "FORMAT_REPAIR",
+        "requires_user_input": false,
+        "selected_hypothesis_id": null,
+        "evidence": [
+          "ACTION_SCHEMA_TYPE_ERROR",
+          "error_fingerprint=166184db3d5359ddf6159d05ff52aa0e3ec4d4fcd7b7acd60e77b98c3844e08c",
+          "invalid_response_hash=2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636"
+        ],
+        "rejected_alternatives": [],
+        "action_type": "repair_previous_action",
+        "commands": [],
+        "patches": [],
+        "files_to_backup": [],
+        "files_to_modify": [],
+        "rerun_command": null,
+        "verification_checks": [],
+        "rollback_steps": [],
+        "expected_new_evidence": [],
+        "risk_level": "medium",
+        "violates_user_constraint": false,
+        "constraint_conflict_reason": null,
+        "evidence_assessments": [],
+        "new_hypothesis_proposals": [],
+        "recommended_probe_id": null,
+        "probe_reason": "",
+        "preferred_execution_mode": "INLINE",
+        "probe_objective": "",
+        "kind": "FORMAT_REPAIR",
+        "reason_code": "generated_action_contract_error",
+        "action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "step_id": "step-direct",
+        "attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "consume_budget": "action_format_repair_count",
+        "repair_domain": "representation",
+        "plan_patch_reason": null,
+        "blocked_evidence": [],
+        "decision_id": "recovery-5c8a1decbcd944d5f12d",
+        "incident_id": "incident-1286ebc951da038a830f",
+        "idempotency_key": "recovery-5c8a1decbcd944d5f12d",
+        "decision_owner": "RecoveryPolicy",
+        "next_route": "generate",
+        "source_node": "generate",
+        "disposition": "RETRY_GENERATE",
+        "target_route": "generate",
+        "status": "pending",
+        "step_attempt": 0,
+        "trigger_event_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "trigger_node": "generate",
+        "consumed_at": "",
+        "superseded_reason": "",
+        "migration_source": "",
+        "migration_conflicts": [],
+        "task_id": "f3-uuid-list",
+        "plan_id": "plan_6f4bbfcffb19b0661f92",
+        "plan_version": "plan_v1",
+        "failed_step_id": "",
+        "rollback_to_step_id": "",
+        "first_bad_step_id": "",
+        "invalid_artifact_ids": [],
+        "invalidate_descendants": true,
+        "affected_step_ids": [],
+        "preserve_files_for_audit": true,
+        "evidence_refs": [],
+        "machine_findings_considered": [],
+        "repair_target": "",
+        "repair_instruction": "",
+        "plan_step_id": "",
+        "manifest_id": "",
+        "failed_stage_id": "",
+        "rewind_to_stage_id": "",
+        "invalidate_stage_ids": [],
+        "missing_capability": "",
+        "missing_producer_artifact_id": "",
+        "allowed_patch_scope": [],
+        "source_failure_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+        "recovery_context_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+        "failed_action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "failed_execution_attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "budget_class": "action_format_repair_count",
+        "execution_purpose": "PRIMARY",
+        "completion_eligibility": true,
+        "source_scope": {
+          "task_id": "f3-uuid-list",
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "failed_execution_attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "source_failure_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086"
+        },
+        "identity_finalized": true,
+        "identity_payload_hash": "b2dedb0c5869eafeccb66f4e476d85cc81510f98e121d999d63e42a5935d5f06",
+        "expected_state_generation": 22
+      },
+      "policy_envelope": {
+        "schema_version": 1,
+        "recovery_decision_id": "recovery-5c8a1decbcd944d5f12d",
+        "recovery_context_id": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+        "step_id": "step-direct",
+        "action_id": "recovery_action_78b5594176e357be",
+        "recovery_strategy": "FORMAT_REPAIR",
+        "execution_purpose": "PRIMARY",
+        "execution_mode": "INLINE",
+        "result_contract": "FORMAL_OUTPUTS",
+        "source_scope": {
+          "task_id": "f3-uuid-list",
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "failed_execution_attempt_id": "pre-action:1:2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+          "source_failure_fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086"
+        },
+        "hypothesis_id": null,
+        "probe_id": null,
+        "scratch_capability": null,
+        "policy_version": "recovery-execution-policy-v1",
+        "created_from": "deterministic",
+        "immutable_hash": "829d52fde219fca51059dd86bab42a7341c45eda6f6deba938eb6d758f65f007",
+        "completion_eligible": true
+      },
+      "recovery_generation_rollover": {},
+      "causal_generation": {},
+      "receipt_id": "candidate-repair-receipt:d3abb56e3ed7e1727454ae25",
+      "receipt_ref": "object:sha256:8ca5cd8b01ca55e9a2b8cb455b1e0dd5cecc0abdbbeb616d8c21458d0ebba0d2",
+      "recorded_at": "2026-09-15T17:00:49"
+    },
+    {
+      "schema_version": 1,
+      "event_id": "candidate-rejection:0bb228ed3b7f6036313eedf4",
+      "candidate_event_id": "candidate-call:e9eb4daadd4d9e2423ab56520c06ab6025e22369899ee87c014398056aa8c3d7",
+      "scope": {
+        "task_id": "f3-uuid-list",
+        "task_revision": 1,
+        "plan_id": "plan_6f4bbfcffb19b0661f92",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "step_id": "step-direct"
+      },
+      "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+      "error_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+      "repair_stage": "action_schema",
+      "repair_domain": "representation",
+      "repair_ordinal": 2,
+      "repair_limit": 4,
+      "policy_receipt": {
+        "version": "candidate-corrections-v2",
+        "scope": {
+          "task_id": "f3-uuid-list",
+          "task_revision": 1,
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "step_id": "step-direct"
+        },
+        "limit": 4,
+        "source": "task_state.budgets.max_candidate_repairs_per_epoch",
+        "unit": "additional_candidate_calls",
+        "categories_share_total": true,
+        "rejection_ordinal": 2,
+        "corrections_authorized_before": 1,
+        "corrections_observed_before_rejection": 1,
+        "remaining_before_authorization": 3,
+        "category": "representation",
+        "progress_assessment": {
+          "schema_version": 1,
+          "producer": "biomind.generate_candidate_admission.v1",
+          "progress_proven": false,
+          "basis": "recurrent_rejected_candidate",
+          "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+          "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+          "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+          "representation_targets": [
+            "action_type",
+            "execute.argv_shape",
+            "execute.executable_body",
+            "execute.outputs_shape",
+            "json_object"
+          ],
+          "binding_facts": null,
+          "binding_axis": "not_evaluated",
+          "newly_satisfied_targets": [],
+          "resolved_targets": [],
+          "pending_targets": [
+            "env"
+          ],
+          "scientific_success": "not_assessed"
+        },
+        "correction_authorized": false,
+        "corrections_authorized": 1,
+        "remaining": 3
+      },
+      "correction_category": "representation",
+      "progress_proven": false,
+      "progress_assessment": {
+        "schema_version": 1,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "progress_proven": false,
+        "basis": "recurrent_rejected_candidate",
+        "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+        "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+        "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+        "representation_targets": [
+          "action_type",
+          "execute.argv_shape",
+          "execute.executable_body",
+          "execute.outputs_shape",
+          "json_object"
+        ],
+        "binding_facts": null,
+        "binding_axis": "not_evaluated",
+        "newly_satisfied_targets": [],
+        "resolved_targets": [],
+        "pending_targets": [
+          "env"
+        ],
+        "scientific_success": "not_assessed"
+      },
+      "public_valid_facts": [],
+      "validation_source": "BioAnalystAgent._extract_structured_action_result",
+      "contract_ref": {
+        "protocol": "semantic_action_v2",
+        "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+        "requirements": {
+          "protocol": "public_handle_v2",
+          "operation": "check_contig_compatibility",
+          "produced_bindings": {},
+          "consumed_bindings": {},
+          "binding_env": {
+            "owner": "system",
+            "declared_mapping": {},
+            "compatibility": "If supplied, every mapping must equal this declaration."
+          },
+          "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+        }
+      },
+      "violation_owner": "GENERATED_ACTION",
+      "reason_code": "ACTION_SCHEMA_TYPE_ERROR",
+      "exact_violations": [
+        {
+          "code": "ACTION_SCHEMA_TYPE_ERROR",
+          "owner": "GENERATED_ACTION",
+          "message": "execute.env must be an object of string values.",
+          "field_path": "env",
+          "observed": {
+            "action_type": "execute",
+            "operation": "check_contig_compatibility",
+            "argv": [
+              "/usr/bin/printf",
+              "synthetic"
+            ],
+            "env": [],
+            "outputs": [],
+            "action_id": "framework-002"
+          },
+          "expected": "object",
+          "actual": "array",
+          "protocol_error": {
+            "stage": "action_schema",
+            "code": "ACTION_SCHEMA_TYPE_ERROR",
+            "message": "execute.env must be an object of string values.",
+            "field_path": "env",
+            "expected": "object",
+            "actual": "array",
+            "response_container_source": "raw_json"
+          },
+          "failure_stage": "pre_execution_candidate_admission"
+        }
+      ],
+      "status": "internal_error",
+      "exit_reason": "unrecognized_action",
+      "terminal_exit_reason": "unrecognized_action_exhausted",
+      "terminal_reason_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+      "termination_reason": "repair_no_progress",
+      "execution_status": "not_started",
+      "recovery_entered": false,
+      "outputs_produced": [],
+      "primary_failure": {
+        "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+        "owner": "GENERATED_ACTION",
+        "subsystem": "managed_artifacts",
+        "stage": "pre_action_contract",
+        "message": "execute.env must be an object of string values.",
+        "reason": "execute.env must be an object of string values.",
+        "current_step": "step-direct",
+        "fingerprint": "6474e3339d4bfb721a7c5dcbfef43811df1a6e235516deaab0c45131dc9b4086",
+        "candidate_fingerprint": "2797c42855d928b557037b0921006f1785d91c7938060013896e3fca4ff2c636",
+        "execution_started": false,
+        "repair_attempted": true,
+        "repair_exhausted": true,
+        "failure_type": "generated_action_contract_error",
+        "failure_stage": "pre_action_contract",
+        "error_owner": "GENERATED_ACTION",
+        "detail": "execute.env must be an object of string values.",
+        "summary": "execute.env must be an object of string values.",
+        "recorded_at": "2026-09-15T17:00:49",
+        "expected_realization": "object",
+        "latest_failure": {
+          "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "execute.env must be an object of string values.",
+          "fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+          "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "repair_attempt_count": 2,
+          "recorded_at": "2026-09-15T17:00:50",
+          "field_path": "env",
+          "expected": "object"
+        },
+        "last_seen_at": "2026-09-15T17:00:50",
+        "repair_attempt_count": 2,
+        "last_candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "last_error_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+        "termination_reason": "repair_no_progress",
+        "terminal_failure": {
+          "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "owner": "GENERATED_ACTION",
+          "subsystem": "managed_artifacts",
+          "stage": "pre_action_contract",
+          "message": "execute.env must be an object of string values.",
+          "fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+          "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "execution_started": false,
+          "attempt_id": "",
+          "scope": {
+            "task_id": "f3-uuid-list",
+            "task_revision": 1,
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-direct"
+          },
+          "repair_attempt_count": 2,
+          "recorded_at": "2026-09-15T17:00:50",
+          "field_path": "env",
+          "expected": "object",
+          "termination_reason": "repair_no_progress"
+        }
+      },
+      "secondary_failures": [],
+      "recovery_context": {
+        "schema_version": "4",
+        "context_id": "recovery-context-a9292fff5ffa34365841fbc2",
+        "task_id": "f3-uuid-list",
+        "step_id": "step-direct",
+        "action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "error_class": "ACTION_SCHEMA_TYPE_ERROR",
+        "error_fingerprint": "2d1332ee0e3044c10e1b050140ef5d4be64e29ef3694459289a61f7ca3b90a86",
+        "failure_stage": "pre_action_contract",
+        "approved_plan_snapshot_id": "plan-snapshot-87794e8c293a62f06c995fdd",
+        "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "repair_ordinal": 2,
+        "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+        "task_spec_summary": {},
+        "effective_user_facts": {},
+        "current_step": {
+          "action": "execute",
+          "artifacts": [],
+          "bound_outputs": [],
+          "capability_contract_hash": "sha256:ebf0389d39495287bab75e463ecf1f41c528cd6f5054e117f39bbe3a905bff53",
+          "dependencies": [],
+          "depends_on": [],
+          "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+          "generate_binding_input_contract": {
+            "binding_contract": {
+              "derived_artifact_layout": {
+                "annotation_gtf": "<data_root>/<genome_version>/genes.gtf",
+                "data_root": "<snpeff_db artifact>/data",
+                "genome_fasta": "<data_root>/genomes/<genome_version>.fa",
+                "predictor": "<data_root>/<genome_version>/snpEffectPredictor.bin"
+              },
+              "operations": {
+                "annotate_variants": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "required_state": "snpeff_database_ready",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "build_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "produces_bindings": [],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "accepted_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "accepted_binding"
+                    }
+                  }
+                },
+                "prepare_database": {
+                  "artifact_binding_requirements": {
+                    "snpeff_db": {
+                      "canonical_resource_id": "artifact.snpeff_data_dir",
+                      "resource_kind": "mutable_workspace"
+                    }
+                  },
+                  "binding_types": {
+                    "genome_version": "string",
+                    "snpeff_db": "artifact_ref"
+                  },
+                  "consumes_bindings": [],
+                  "produces_bindings": [
+                    "genome_version",
+                    "snpeff_db"
+                  ],
+                  "required_binding_env": {
+                    "GENOME_VERSION": {
+                      "name": "genome_version",
+                      "source": "produced_binding"
+                    },
+                    "SNPEFF_DB": {
+                      "name": "snpeff_db",
+                      "source": "produced_binding"
+                    }
+                  }
+                }
+              },
+              "public_input_protocol": "public_handle_v2",
+              "schema_version": 1
+            },
+            "capability_id": "genomics.snpeff_annotation.check_contig_compatibility",
+            "protocol": "public_handle_v2"
+          },
+          "inputs": [],
+          "operation": "check_contig_compatibility",
+          "outputs": [],
+          "purpose": "analysis",
+          "renderer_id": "",
+          "renderer_invocation_contract": {},
+          "risk_level": "low",
+          "selected_skill_id": "",
+          "semantic_claims": [],
+          "semantic_constraint_ids": [],
+          "skill_ids": [
+            "genomics/snpeff-annotation"
+          ],
+          "step_effect": {
+            "explicit_side_effects": [],
+            "produces_artifacts": [],
+            "produces_bindings": [],
+            "produces_observations": [
+              {
+                "evidence_contract": {
+                  "required_fields": [
+                    "value"
+                  ]
+                },
+                "identity": "contigs_compatible",
+                "predicate": {
+                  "applicability": {
+                    "execution_capability_ids": [
+                      "genomics.snpeff_annotation.prepare_database",
+                      "genomics.snpeff_annotation.build_database",
+                      "genomics.snpeff_annotation.annotate_variants",
+                      "genomics.snpeff_annotation.summarize_ann",
+                      "genomics.snpeff_annotation.finalize_outputs"
+                    ],
+                    "kind": "plan_contains_any_execution_capability",
+                    "schema_version": 1
+                  },
+                  "expected": true,
+                  "failure_disposition": "correction_required",
+                  "missing_disposition": "inspection_required",
+                  "operator": "boolean_equals",
+                  "parser_entrypoint": "agent_core.genomics_contig_parser:build_contig_compatibility_receipt",
+                  "parser_id": "biomind.genomics.contig_compatibility.v1",
+                  "predicate_id": "genomics.snpeff.contigs_compatible.v1"
+                }
+              }
+            ],
+            "schema_version": 1,
+            "workspace_mutations": []
+          },
+          "step_id": "step-direct",
+          "step_type": "atomic",
+          "success_criteria": [
+            "the approved command exits"
+          ],
+          "title": "Run one approved command",
+          "tool": "test"
+        },
+        "action_contract": {
+          "structured_candidate": {
+            "kind": "malformed_generate_response",
+            "response_sha256": "716a23440aca38defec0977f4fa682350aa759d45a3b81b01da39cfee8a2be78",
+            "response_char_count": 167,
+            "response_excerpt": "{\"action_type\": \"execute\", \"operation\": \"check_contig_compatibility\", \"argv\": [\"/usr/bin/printf\", \"synthetic\"], \"env\": [], \"outputs\": [], \"action_id\": \"framework-002\"}",
+            "parsed_candidate": {
+              "action_type": "execute",
+              "operation": "check_contig_compatibility",
+              "argv": [
+                "/usr/bin/printf",
+                "synthetic"
+              ],
+              "env": [],
+              "outputs": [],
+              "action_id": "framework-002"
+            },
+            "parser_selection": {
+              "response_container_source": "raw_json",
+              "stage": "action_schema",
+              "json_candidate_source": "decoded_candidate",
+              "excerpt_kind": "bounded_parser_excerpt",
+              "excerpt_sha256": "716a23440aca38defec0977f4fa682350aa759d45a3b81b01da39cfee8a2be78"
+            }
+          },
+          "candidate_fingerprint": "d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb"
+        },
+        "execution": {},
+        "validation": {
+          "status": "invalid",
+          "failure_stage": "pre_action_contract",
+          "violations": [
+            {
+              "code": "ACTION_SCHEMA_TYPE_ERROR",
+              "owner": "GENERATED_ACTION",
+              "message": "execute.env must be an object of string values.",
+              "field_path": "env",
+              "observed": {
+                "action_type": "execute",
+                "operation": "check_contig_compatibility",
+                "argv": [
+                  "/usr/bin/printf",
+                  "synthetic"
+                ],
+                "env": [],
+                "outputs": [],
+                "action_id": "framework-002"
+              },
+              "expected": "object",
+              "actual": "array",
+              "protocol_error": {
+                "stage": "action_schema",
+                "code": "ACTION_SCHEMA_TYPE_ERROR",
+                "message": "execute.env must be an object of string values.",
+                "field_path": "env",
+                "expected": "object",
+                "actual": "array",
+                "response_container_source": "raw_json"
+              },
+              "failure_stage": "pre_execution_candidate_admission"
+            }
+          ],
+          "repair_domain": "representation",
+          "candidate_progress": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": false,
+            "basis": "recurrent_rejected_candidate",
+            "comparison_fingerprint": "aaad79f165c3b3de3c1b1b8da68613a4493ac8e52f5a70a7c421c34c95dfe599",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "representation_targets": [
+              "action_type",
+              "execute.argv_shape",
+              "execute.executable_body",
+              "execute.outputs_shape",
+              "json_object"
+            ],
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "newly_satisfied_targets": [],
+            "resolved_targets": [],
+            "pending_targets": [
+              "env"
+            ],
+            "scientific_success": "not_assessed"
+          }
+        },
+        "completion": {},
+        "progress": {},
+        "runtime": {
+          "approved_plan_snapshot_id": "plan-snapshot-87794e8c293a62f06c995fdd",
+          "authoritative_state_hash": "sha256:0a9a2502f2ac270a60d6ff595a077183bd77f1e81b23097888037939a6f74817",
+          "repair_ordinal": 2
+        },
+        "machine_audit_findings": [],
+        "available_evidence": [],
+        "manifest": {},
+        "artifacts": [],
+        "recent_attempts": [],
+        "already_tried_strategies": [],
+        "recovery_decision": {
+          "schema_version": 5,
+          "failure_class": "SCRIPT_BUG",
+          "failure_owner": "GENERATED_ACTION",
+          "error_is_real": true,
+          "primary_execution_succeeded": false,
+          "evidence_sufficient": true,
+          "recommended_action": "FORMAT_REPAIR",
+          "rerun_required": false,
+          "consume_retry_budget": false,
+          "user_notification_required": false,
+          "reason": "The proposed action violates the current action protocol.",
+          "verdict": "repair",
+          "root_cause": "The proposed action violates the current action protocol.",
+          "failure_type": "generated_action_contract_error",
+          "confidence": 1.0,
+          "missing_evidence": [],
+          "repair_strategy": "",
+          "next_action": "FORMAT_REPAIR",
+          "requires_user_input": false,
+          "selected_hypothesis_id": null,
+          "evidence": [
+            "ACTION_SCHEMA_TYPE_ERROR",
+            "error_fingerprint=2d1332ee0e3044c10e1b050140ef5d4be64e29ef3694459289a61f7ca3b90a86",
+            "invalid_response_hash=d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb"
+          ],
+          "rejected_alternatives": [],
+          "action_type": "repair_previous_action",
+          "commands": [],
+          "patches": [],
+          "files_to_backup": [],
+          "files_to_modify": [],
+          "rerun_command": null,
+          "verification_checks": [],
+          "rollback_steps": [],
+          "expected_new_evidence": [],
+          "risk_level": "medium",
+          "violates_user_constraint": false,
+          "constraint_conflict_reason": null,
+          "evidence_assessments": [],
+          "new_hypothesis_proposals": [],
+          "recommended_probe_id": null,
+          "probe_reason": "",
+          "preferred_execution_mode": "INLINE",
+          "probe_objective": "",
+          "kind": "FORMAT_REPAIR",
+          "reason_code": "generated_action_contract_error",
+          "action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "step_id": "step-direct",
+          "attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "consume_budget": "action_format_repair_count",
+          "repair_domain": "representation",
+          "plan_patch_reason": null,
+          "blocked_evidence": [],
+          "decision_id": "recovery-33213fed9afe617e070f",
+          "incident_id": "incident-0ca9c62193cd10ee25ef",
+          "idempotency_key": "recovery-33213fed9afe617e070f",
+          "decision_owner": "RecoveryPolicy",
+          "next_route": "generate",
+          "source_node": "generate",
+          "disposition": "RETRY_GENERATE",
+          "target_route": "generate",
+          "status": "pending",
+          "step_attempt": 0,
+          "trigger_event_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "trigger_node": "generate",
+          "consumed_at": "",
+          "superseded_reason": "",
+          "migration_source": "",
+          "migration_conflicts": [],
+          "task_id": "f3-uuid-list",
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "failed_step_id": "",
+          "rollback_to_step_id": "",
+          "first_bad_step_id": "",
+          "invalid_artifact_ids": [],
+          "invalidate_descendants": true,
+          "affected_step_ids": [],
+          "preserve_files_for_audit": true,
+          "evidence_refs": [],
+          "machine_findings_considered": [],
+          "repair_target": "",
+          "repair_instruction": "",
+          "plan_step_id": "",
+          "manifest_id": "",
+          "failed_stage_id": "",
+          "rewind_to_stage_id": "",
+          "invalidate_stage_ids": [],
+          "missing_capability": "",
+          "missing_producer_artifact_id": "",
+          "allowed_patch_scope": [],
+          "source_failure_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+          "recovery_context_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+          "failed_action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "failed_execution_attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "budget_class": "action_format_repair_count",
+          "execution_purpose": "PRIMARY",
+          "completion_eligibility": true,
+          "source_scope": {
+            "task_id": "f3-uuid-list",
+            "plan_id": "plan_6f4bbfcffb19b0661f92",
+            "plan_version": "plan_v1",
+            "step_id": "step-direct",
+            "failed_action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+            "failed_execution_attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+            "source_failure_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa"
+          },
+          "identity_finalized": true,
+          "identity_payload_hash": "8a21c78f5822dce0b894b23f0c5048374072c29c3149815ead2118f4f043787d",
+          "expected_state_generation": 30
+        },
+        "allowed_actions": [],
+        "log_references": [],
+        "bounded_log_excerpt": "",
+        "conflicts": [],
+        "skill_policy": {},
+        "diagnosis": {},
+        "limits": {}
+      },
+      "recovery_context_digest": "recovery-context-a9292fff5ffa34365841fbc2",
+      "policy_decision": {
+        "schema_version": 5,
+        "failure_class": "SCRIPT_BUG",
+        "failure_owner": "GENERATED_ACTION",
+        "error_is_real": true,
+        "primary_execution_succeeded": false,
+        "evidence_sufficient": true,
+        "recommended_action": "FORMAT_REPAIR",
+        "rerun_required": false,
+        "consume_retry_budget": false,
+        "user_notification_required": false,
+        "reason": "The proposed action violates the current action protocol.",
+        "verdict": "repair",
+        "root_cause": "The proposed action violates the current action protocol.",
+        "failure_type": "generated_action_contract_error",
+        "confidence": 1.0,
+        "missing_evidence": [],
+        "repair_strategy": "",
+        "next_action": "FORMAT_REPAIR",
+        "requires_user_input": false,
+        "selected_hypothesis_id": null,
+        "evidence": [
+          "ACTION_SCHEMA_TYPE_ERROR",
+          "error_fingerprint=2d1332ee0e3044c10e1b050140ef5d4be64e29ef3694459289a61f7ca3b90a86",
+          "invalid_response_hash=d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb"
+        ],
+        "rejected_alternatives": [],
+        "action_type": "repair_previous_action",
+        "commands": [],
+        "patches": [],
+        "files_to_backup": [],
+        "files_to_modify": [],
+        "rerun_command": null,
+        "verification_checks": [],
+        "rollback_steps": [],
+        "expected_new_evidence": [],
+        "risk_level": "medium",
+        "violates_user_constraint": false,
+        "constraint_conflict_reason": null,
+        "evidence_assessments": [],
+        "new_hypothesis_proposals": [],
+        "recommended_probe_id": null,
+        "probe_reason": "",
+        "preferred_execution_mode": "INLINE",
+        "probe_objective": "",
+        "kind": "FORMAT_REPAIR",
+        "reason_code": "generated_action_contract_error",
+        "action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "step_id": "step-direct",
+        "attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "consume_budget": "action_format_repair_count",
+        "repair_domain": "representation",
+        "plan_patch_reason": null,
+        "blocked_evidence": [],
+        "decision_id": "recovery-33213fed9afe617e070f",
+        "incident_id": "incident-0ca9c62193cd10ee25ef",
+        "idempotency_key": "recovery-33213fed9afe617e070f",
+        "decision_owner": "RecoveryPolicy",
+        "next_route": "generate",
+        "source_node": "generate",
+        "disposition": "RETRY_GENERATE",
+        "target_route": "generate",
+        "status": "pending",
+        "step_attempt": 0,
+        "trigger_event_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "trigger_node": "generate",
+        "consumed_at": "",
+        "superseded_reason": "",
+        "migration_source": "",
+        "migration_conflicts": [],
+        "task_id": "f3-uuid-list",
+        "plan_id": "plan_6f4bbfcffb19b0661f92",
+        "plan_version": "plan_v1",
+        "failed_step_id": "",
+        "rollback_to_step_id": "",
+        "first_bad_step_id": "",
+        "invalid_artifact_ids": [],
+        "invalidate_descendants": true,
+        "affected_step_ids": [],
+        "preserve_files_for_audit": true,
+        "evidence_refs": [],
+        "machine_findings_considered": [],
+        "repair_target": "",
+        "repair_instruction": "",
+        "plan_step_id": "",
+        "manifest_id": "",
+        "failed_stage_id": "",
+        "rewind_to_stage_id": "",
+        "invalidate_stage_ids": [],
+        "missing_capability": "",
+        "missing_producer_artifact_id": "",
+        "allowed_patch_scope": [],
+        "source_failure_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+        "recovery_context_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+        "failed_action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "failed_execution_attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+        "budget_class": "action_format_repair_count",
+        "execution_purpose": "PRIMARY",
+        "completion_eligibility": true,
+        "source_scope": {
+          "task_id": "f3-uuid-list",
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "failed_execution_attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "source_failure_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa"
+        },
+        "identity_finalized": true,
+        "identity_payload_hash": "8a21c78f5822dce0b894b23f0c5048374072c29c3149815ead2118f4f043787d",
+        "expected_state_generation": 30
+      },
+      "policy_envelope": {
+        "schema_version": 1,
+        "recovery_decision_id": "recovery-33213fed9afe617e070f",
+        "recovery_context_id": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa",
+        "step_id": "step-direct",
+        "action_id": "recovery_action_9a6cdc0282b6e77c",
+        "recovery_strategy": "FORMAT_REPAIR",
+        "execution_purpose": "PRIMARY",
+        "execution_mode": "INLINE",
+        "result_contract": "FORMAL_OUTPUTS",
+        "source_scope": {
+          "task_id": "f3-uuid-list",
+          "plan_id": "plan_6f4bbfcffb19b0661f92",
+          "plan_version": "plan_v1",
+          "step_id": "step-direct",
+          "failed_action_id": "generate-candidate:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "failed_execution_attempt_id": "pre-action:2:d3f0a10684f5cfe6802042146272eb3cab2075a32afee26257ceb98ba0830acb",
+          "source_failure_fingerprint": "c828908d0c0cbcb486c011ff7091651586e9c0cf5fcf14b5bdf53a56fa86f8fa"
+        },
+        "hypothesis_id": null,
+        "probe_id": null,
+        "scratch_capability": null,
+        "policy_version": "recovery-execution-policy-v1",
+        "created_from": "deterministic",
+        "immutable_hash": "6ff2e7e9d81788df397c83d16c8d133637489ccc1b329fed8396853994af5d32",
+        "completion_eligible": true
+      },
+      "recovery_generation_rollover": {},
+      "causal_generation": {},
+      "receipt_id": "",
+      "receipt_ref": "",
+      "recorded_at": "2026-09-15T17:00:50"
+    }
+  ],
+  "pending_action": null,
+  "requests_contain_prior_exact_error": [
+    false,
+    true
+  ],
+  "loaded_bio_agents_sha256": "07ecac5f48bca8167b7530b97c11a7284bc1fd98f68dc02a433adeef028d18a6",
+  "boundary": "real Plan/approval/TypedGenerate/parser/CAS/ledger, fixed provider; no execution dispatched"
+}

@@ -1,0 +1,77 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_required]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_required]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00033665169030427933,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_required]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 60.53797663748264,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_required]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003616325557231903,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[partial_build]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[partial_build]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00033093802630901337,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[partial_build]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 78.49769689980894,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[partial_build]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019799266010522842,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025799497961997986,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 36.879047070629895,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021775811910629272,
+    "failure": ""
+  }
+]

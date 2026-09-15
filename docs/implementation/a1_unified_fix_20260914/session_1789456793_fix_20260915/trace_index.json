@@ -1,0 +1,2641 @@
+{
+  "traces": [
+    {
+      "scenario": "f6-6793-success-witness.json.gz",
+      "run": "current07/g1",
+      "full_witness": "evidence/current07/g1/f6-6793-success-witness.json.gz",
+      "actual_messages": "timeline[event=provider_request].request.messages; actual Recovery tool envelopes at log_read; full f6-*-full.json.gz requests include all stages",
+      "steps": [
+        {
+          "step_id": "check_contig_compatibility",
+          "status": "passed",
+          "verification_attempt_id": "attempt_57446140af5eaa3ff378"
+        },
+        {
+          "step_id": "prepare_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_c1486359358808b5b7cb"
+        },
+        {
+          "step_id": "build_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_0b9c795c4ba675cfff58"
+        },
+        {
+          "step_id": "annotate_variants",
+          "status": "passed",
+          "verification_attempt_id": "attempt_f60be75d969d809c5e33"
+        },
+        {
+          "step_id": "summarize_ann",
+          "status": "passed",
+          "verification_attempt_id": "attempt_7f0c69c0cbf14a4d85c9"
+        },
+        {
+          "step_id": "finalize_outputs",
+          "status": "passed",
+          "verification_attempt_id": "attempt_b72fd4815ae616cf13a8"
+        }
+      ],
+      "rejection_events": [
+        {
+          "candidate_event_id": "candidate-call:4caa50cafb3e47998cb545e15177816b38f9086883578ea6855c8a03136212b3",
+          "scope": {
+            "task_id": "fix-f6-6793_success",
+            "task_revision": 1,
+            "plan_id": "plan_f19a1f03de75e1f54124",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "ba3762e16391820467e838dd91d8ab5c6d3d7cafe97fe60b30de7bf7295e5508",
+          "repair_ordinal": 1,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_41633666dac38485",
+            "candidate_event_id": "candidate-call:862dd8d8bd275b320f840e9a3547717bdce06db1a76684a40b7317198abbbb59",
+            "generated_script_sha256": "1fe373d1241a55bfa75cbc7981efb28897e387b2659448a6a3cb1b41050e8509",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 3
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "041197ae736b9a32429ae94bc8e94300e5d77cc77d7f7e2ff11cfb4367712af8",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "generate-candidate:sha256:13f1d41860ce217f3a54d7150721a23d37ca86a08147bb833a82b3e6ac07b437",
+          "scope": {
+            "task_id": "fix-f6-6793_success",
+            "task_revision": 1,
+            "plan_id": "plan_f19a1f03de75e1f54124",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "aa25ebcd0792a38b501d2de006e0f8cedc8ed11dcc15afaed91edd72579831c6",
+          "repair_ordinal": 2,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "recovery_action_3763968eb05f9706",
+            "candidate_event_id": "generate-candidate:sha256:24c6a4fadfaf1bb32377d964aa0f85684e24c70d4ee31d62934479d117a0cc65",
+            "generated_script_sha256": "69124194c930a510707d8ba1ca792a41daae1087c4675a1c7dc73e7cdd918477",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 2
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "c8e17f87defae171f515f59839793b41eae82787dc6553271e0335d5e575598d",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        }
+      ],
+      "provider_request_snapshots": [
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "prepare_database",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 1,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 2,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4caa50cafb3e47998cb545e15177816b38f9086883578ea6855c8a03136212b3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 3,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4caa50cafb3e47998cb545e15177816b38f9086883578ea6855c8a03136212b3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_41633666dac38485",
+                "candidate_event_id": "candidate-call:862dd8d8bd275b320f840e9a3547717bdce06db1a76684a40b7317198abbbb59",
+                "generated_script_sha256": "1fe373d1241a55bfa75cbc7981efb28897e387b2659448a6a3cb1b41050e8509",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4caa50cafb3e47998cb545e15177816b38f9086883578ea6855c8a03136212b3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_41633666dac38485",
+                "candidate_event_id": "candidate-call:862dd8d8bd275b320f840e9a3547717bdce06db1a76684a40b7317198abbbb59",
+                "generated_script_sha256": "1fe373d1241a55bfa75cbc7981efb28897e387b2659448a6a3cb1b41050e8509",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:13f1d41860ce217f3a54d7150721a23d37ca86a08147bb833a82b3e6ac07b437",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "annotate_variants",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4caa50cafb3e47998cb545e15177816b38f9086883578ea6855c8a03136212b3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_41633666dac38485",
+                "candidate_event_id": "candidate-call:862dd8d8bd275b320f840e9a3547717bdce06db1a76684a40b7317198abbbb59",
+                "generated_script_sha256": "1fe373d1241a55bfa75cbc7981efb28897e387b2659448a6a3cb1b41050e8509",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:13f1d41860ce217f3a54d7150721a23d37ca86a08147bb833a82b3e6ac07b437",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "recovery_action_3763968eb05f9706",
+                "candidate_event_id": "generate-candidate:sha256:24c6a4fadfaf1bb32377d964aa0f85684e24c70d4ee31d62934479d117a0cc65",
+                "generated_script_sha256": "69124194c930a510707d8ba1ca792a41daae1087c4675a1c7dc73e7cdd918477",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "summarize_ann",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4caa50cafb3e47998cb545e15177816b38f9086883578ea6855c8a03136212b3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_41633666dac38485",
+                "candidate_event_id": "candidate-call:862dd8d8bd275b320f840e9a3547717bdce06db1a76684a40b7317198abbbb59",
+                "generated_script_sha256": "1fe373d1241a55bfa75cbc7981efb28897e387b2659448a6a3cb1b41050e8509",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:13f1d41860ce217f3a54d7150721a23d37ca86a08147bb833a82b3e6ac07b437",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "recovery_action_3763968eb05f9706",
+                "candidate_event_id": "generate-candidate:sha256:24c6a4fadfaf1bb32377d964aa0f85684e24c70d4ee31d62934479d117a0cc65",
+                "generated_script_sha256": "69124194c930a510707d8ba1ca792a41daae1087c4675a1c7dc73e7cdd918477",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "finalize_outputs",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4caa50cafb3e47998cb545e15177816b38f9086883578ea6855c8a03136212b3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_41633666dac38485",
+                "candidate_event_id": "candidate-call:862dd8d8bd275b320f840e9a3547717bdce06db1a76684a40b7317198abbbb59",
+                "generated_script_sha256": "1fe373d1241a55bfa75cbc7981efb28897e387b2659448a6a3cb1b41050e8509",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:13f1d41860ce217f3a54d7150721a23d37ca86a08147bb833a82b3e6ac07b437",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "recovery_action_3763968eb05f9706",
+                "candidate_event_id": "generate-candidate:sha256:24c6a4fadfaf1bb32377d964aa0f85684e24c70d4ee31d62934479d117a0cc65",
+                "generated_script_sha256": "69124194c930a510707d8ba1ca792a41daae1087c4675a1c7dc73e7cdd918477",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        }
+      ],
+      "attempts": {
+        "attempt_57446140af5eaa3ff378": {
+          "attempt_id": "attempt_57446140af5eaa3ff378",
+          "action_id": "action_0a4fa98ab66a7142",
+          "step_id": "check_contig_compatibility",
+          "plan_id": "plan_f19a1f03de75e1f54124",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_c1486359358808b5b7cb": {
+          "attempt_id": "attempt_c1486359358808b5b7cb",
+          "action_id": "action_7ec2226d516001c8",
+          "step_id": "prepare_database",
+          "plan_id": "plan_f19a1f03de75e1f54124",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_581de6de7f1e1a2aa84a": {
+          "attempt_id": "attempt_581de6de7f1e1a2aa84a",
+          "action_id": "action_41633666dac38485",
+          "step_id": "build_database",
+          "plan_id": "plan_f19a1f03de75e1f54124",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "EVIDENCE_COMMITTED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_0b9c795c4ba675cfff58": {
+          "attempt_id": "attempt_0b9c795c4ba675cfff58",
+          "action_id": "recovery_action_3763968eb05f9706",
+          "step_id": "build_database",
+          "plan_id": "plan_f19a1f03de75e1f54124",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_f60be75d969d809c5e33": {
+          "attempt_id": "attempt_f60be75d969d809c5e33",
+          "action_id": "action_69e95334299008cd",
+          "step_id": "annotate_variants",
+          "plan_id": "plan_f19a1f03de75e1f54124",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_7f0c69c0cbf14a4d85c9": {
+          "attempt_id": "attempt_7f0c69c0cbf14a4d85c9",
+          "action_id": "action_4417ca4ed59a516f",
+          "step_id": "summarize_ann",
+          "plan_id": "plan_f19a1f03de75e1f54124",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_b72fd4815ae616cf13a8": {
+          "attempt_id": "attempt_b72fd4815ae616cf13a8",
+          "action_id": "action_919de91d4a1b3d4b",
+          "step_id": "finalize_outputs",
+          "plan_id": "plan_f19a1f03de75e1f54124",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        }
+      },
+      "stop": {},
+      "log_scope_checks": [
+        {
+          "event": "log_scope_protection",
+          "scope": {
+            "task_id": "fix-f6-6793_success",
+            "plan_id": "plan_f19a1f03de75e1f54124",
+            "plan_version": "plan_v1",
+            "step_id": "build_database",
+            "attempt_id": "attempt_581de6de7f1e1a2aa84a",
+            "episode_id": "recovery-seed-8d9502c27c1f0e23f99c5ffd"
+          },
+          "cross_task_step_attempt_and_unregistered_ref": "rejected"
+        }
+      ]
+    },
+    {
+      "scenario": "f6-6793-repeat-witness.json.gz",
+      "run": "current07/g2g3",
+      "full_witness": "evidence/current07/g2g3/f6-6793-repeat-witness.json.gz",
+      "actual_messages": "timeline[event=provider_request].request.messages; actual Recovery tool envelopes at log_read; full f6-*-full.json.gz requests include all stages",
+      "steps": [
+        {
+          "step_id": "check_contig_compatibility",
+          "status": "passed",
+          "verification_attempt_id": "attempt_7228986d7f362e0d0c65"
+        },
+        {
+          "step_id": "prepare_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_9ff634addca4b90bcad7"
+        },
+        {
+          "step_id": "build_database",
+          "status": "failed",
+          "verification_attempt_id": "attempt_28f622a2be49cf78ad1b"
+        },
+        {
+          "step_id": "annotate_variants",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "summarize_ann",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "finalize_outputs",
+          "status": "pending",
+          "verification_attempt_id": null
+        }
+      ],
+      "rejection_events": [
+        {
+          "candidate_event_id": "candidate-call:723d7d93ea87609cb65286c812385f4f9db0004970a66040c9c894a335937c59",
+          "scope": {
+            "task_id": "fix-f6-6793_repeat",
+            "task_revision": 1,
+            "plan_id": "plan_eb515470b3951eef4279",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "9c223e86691aabd914a34f8f23ec4c3f36723e59ffdb836815251e6c66b6332e",
+          "repair_ordinal": 1,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_53bd5491d85ea64e",
+            "candidate_event_id": "candidate-call:9f47d34872681b68d4d2f43c77b3b1382f374fe75954b78666e2e30c5384ca88",
+            "generated_script_sha256": "43ac83a4c7e2613b70bce567051c5683804c4a27a2810044bb39c5b1330b08ae",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 3
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "9ee7f6ceabe35b2d52c353a7f7288778ac88ae33395480048cf79ae491fac059",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "generate-candidate:sha256:84be3d1f28131e367fef7c9631d587b6058f42826361b58ce6e7e842a54cab51",
+          "scope": {
+            "task_id": "fix-f6-6793_repeat",
+            "task_revision": 1,
+            "plan_id": "plan_eb515470b3951eef4279",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+          "repair_ordinal": 2,
+          "status": "repairable",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 2
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "043867880d30fc8c97f73bb773b70fd7c072d7792589a27042b18ff13b61bc22",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "generate-candidate:sha256:ae62f31ef90577973821e8ca6c2b58b6169415ba0b77a812581b94ff64b14fd6",
+          "scope": {
+            "task_id": "fix-f6-6793_repeat",
+            "task_revision": 1,
+            "plan_id": "plan_eb515470b3951eef4279",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+          "repair_ordinal": 3,
+          "status": "internal_error",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 2
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": false,
+            "basis": "recurrent_rejected_candidate",
+            "comparison_fingerprint": "043867880d30fc8c97f73bb773b70fd7c072d7792589a27042b18ff13b61bc22",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        }
+      ],
+      "provider_request_snapshots": [
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "prepare_database",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 1,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 2,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:723d7d93ea87609cb65286c812385f4f9db0004970a66040c9c894a335937c59",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 3,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:723d7d93ea87609cb65286c812385f4f9db0004970a66040c9c894a335937c59",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_53bd5491d85ea64e",
+                "candidate_event_id": "candidate-call:9f47d34872681b68d4d2f43c77b3b1382f374fe75954b78666e2e30c5384ca88",
+                "generated_script_sha256": "43ac83a4c7e2613b70bce567051c5683804c4a27a2810044bb39c5b1330b08ae",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:723d7d93ea87609cb65286c812385f4f9db0004970a66040c9c894a335937c59",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_53bd5491d85ea64e",
+                "candidate_event_id": "candidate-call:9f47d34872681b68d4d2f43c77b3b1382f374fe75954b78666e2e30c5384ca88",
+                "generated_script_sha256": "43ac83a4c7e2613b70bce567051c5683804c4a27a2810044bb39c5b1330b08ae",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:84be3d1f28131e367fef7c9631d587b6058f42826361b58ce6e7e842a54cab51",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        }
+      ],
+      "attempts": {
+        "attempt_7228986d7f362e0d0c65": {
+          "attempt_id": "attempt_7228986d7f362e0d0c65",
+          "action_id": "action_0a5b84a65aa513ef",
+          "step_id": "check_contig_compatibility",
+          "plan_id": "plan_eb515470b3951eef4279",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_9ff634addca4b90bcad7": {
+          "attempt_id": "attempt_9ff634addca4b90bcad7",
+          "action_id": "action_e1b6f7273c8025ff",
+          "step_id": "prepare_database",
+          "plan_id": "plan_eb515470b3951eef4279",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_28f622a2be49cf78ad1b": {
+          "attempt_id": "attempt_28f622a2be49cf78ad1b",
+          "action_id": "action_53bd5491d85ea64e",
+          "step_id": "build_database",
+          "plan_id": "plan_eb515470b3951eef4279",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "EVIDENCE_COMMITTED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        }
+      },
+      "stop": {
+        "error_code": "GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED",
+        "stage": "generate",
+        "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+        "origin": {
+          "source_stage": "execute",
+          "source_owner": "GENERATED_ACTION",
+          "failure_id": "failure-dbc667cc7ad62c42ba4cc96c",
+          "failure_type": "execution_failed",
+          "error_code": "EXECUTION_FAILED",
+          "summary": "A launched command failed after immutable evidence persistence.",
+          "concerns": [],
+          "evidence_refs": [
+            "exec-attempt_28f622a2be49cf78ad1b"
+          ],
+          "returncode": 0,
+          "attempt_id": "attempt_28f622a2be49cf78ad1b",
+          "process_fact_scope": "original causal execution; no scientific validity inferred"
+        },
+        "current_candidate": {
+          "attempt_id": "",
+          "execution_started": false,
+          "approved": false,
+          "candidate_fingerprint": "f836a53e52916bd156dff4b5f9b8e6cb3bdb4d6763cd0dc4676244ebf890368b",
+          "candidate_event_id": "generate-candidate:sha256:ae62f31ef90577973821e8ca6c2b58b6169415ba0b77a812581b94ff64b14fd6",
+          "cause_code": "EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE",
+          "correction_category": "representation"
+        },
+        "delivery_status": "complete",
+        "report_paths": {
+          "stage_status.tsv": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "reproduce.sh": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "report.md": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+        },
+        "report_receipts": {
+          "stage_status.tsv": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+            "sha256": "bde06fa9a5ddb73a0a3f6b70fc0cc8164a8a43614bb6167c80ce54f292c8827c",
+            "operation_id": "b6899163021376c94db4377bebf60892aa7361156d8e6e445ab4ddbbde1b708e",
+            "ownership": {
+              "operation_id": "b6899163021376c94db4377bebf60892aa7361156d8e6e445ab4ddbbde1b708e",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "bde06fa9a5ddb73a0a3f6b70fc0cc8164a8a43614bb6167c80ce54f292c8827c",
+              "proof_name": ".runtime-report-proof-b6899163021376c94db4377bebf60892aa7361156d8e6e445ab4ddbbde1b708e",
+              "device": 2051,
+              "inode": 11010106
+            },
+            "status": "created",
+            "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+            "task_id": "fix-f6-6793_repeat"
+          },
+          "reproduce.sh": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+            "sha256": "2492694e98d25bd20bd3ddec30fa1e252e88c7492f89c3f5021788eb9cf6ccb1",
+            "operation_id": "d5d93d8026584ef3e038dc1a6c1861ad8beddb61571dcaefcabeebf19ec9e8cc",
+            "ownership": {
+              "operation_id": "d5d93d8026584ef3e038dc1a6c1861ad8beddb61571dcaefcabeebf19ec9e8cc",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "2492694e98d25bd20bd3ddec30fa1e252e88c7492f89c3f5021788eb9cf6ccb1",
+              "proof_name": ".runtime-report-proof-d5d93d8026584ef3e038dc1a6c1861ad8beddb61571dcaefcabeebf19ec9e8cc",
+              "device": 2051,
+              "inode": 11010122
+            },
+            "status": "created",
+            "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+            "task_id": "fix-f6-6793_repeat"
+          },
+          "report.md": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+            "sha256": "0cc819192557cc646d8be187e8d09c90b3d0aa365741145267c22a245832f264",
+            "operation_id": "45e79e26cd338e83a5f9cd36ef335d6c815a73035b1ce3a3379832b0bbacf886",
+            "ownership": {
+              "operation_id": "45e79e26cd338e83a5f9cd36ef335d6c815a73035b1ce3a3379832b0bbacf886",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-m1wtxz2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "0cc819192557cc646d8be187e8d09c90b3d0aa365741145267c22a245832f264",
+              "proof_name": ".runtime-report-proof-45e79e26cd338e83a5f9cd36ef335d6c815a73035b1ce3a3379832b0bbacf886",
+              "device": 2051,
+              "inode": 11010153
+            },
+            "status": "created",
+            "stop_id": "managed-stop:67e54dbd6b8783e74ef544cf214605fa4503f0e177927416212c97e8b94ef126",
+            "task_id": "fix-f6-6793_repeat"
+          }
+        },
+        "persistence_status": "committed",
+        "summary_status": "COMPLETED",
+        "secondary_causes": []
+      },
+      "log_scope_checks": [
+        {
+          "event": "log_scope_protection",
+          "scope": {
+            "task_id": "fix-f6-6793_repeat",
+            "plan_id": "plan_eb515470b3951eef4279",
+            "plan_version": "plan_v1",
+            "step_id": "build_database",
+            "attempt_id": "attempt_28f622a2be49cf78ad1b",
+            "episode_id": "recovery-seed-dbc667cc7ad62c42ba4cc96c"
+          },
+          "cross_task_step_attempt_and_unregistered_ref": "rejected"
+        }
+      ]
+    },
+    {
+      "scenario": "f6-6793-stop-witness.json.gz",
+      "run": "current07/g2g3",
+      "full_witness": "evidence/current07/g2g3/f6-6793-stop-witness.json.gz",
+      "actual_messages": "timeline[event=provider_request].request.messages; actual Recovery tool envelopes at log_read; full f6-*-full.json.gz requests include all stages",
+      "steps": [
+        {
+          "step_id": "check_contig_compatibility",
+          "status": "passed",
+          "verification_attempt_id": "attempt_3607a4471f9ca39af30b"
+        },
+        {
+          "step_id": "prepare_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_17d8ad40f62f08f69ad3"
+        },
+        {
+          "step_id": "build_database",
+          "status": "blocked",
+          "verification_attempt_id": "attempt_738804f593bd146cb5db"
+        },
+        {
+          "step_id": "annotate_variants",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "summarize_ann",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "finalize_outputs",
+          "status": "pending",
+          "verification_attempt_id": null
+        }
+      ],
+      "rejection_events": [
+        {
+          "candidate_event_id": "candidate-call:4f971505ad4df234475723ce528b792d8f22fb190fbdbbd0677d97c715665113",
+          "scope": {
+            "task_id": "fix-f6-6793_stop",
+            "task_revision": 1,
+            "plan_id": "plan_b86c7a30f1d9b714a515",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "591010a2d22e254eec8dcec6f270d0e76aa2fe7a5595fb8599e835dfde1a1902",
+          "repair_ordinal": 1,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_41fe41e28a6aee12",
+            "candidate_event_id": "candidate-call:0b912eb38e17246afb8403b00608b3889335546baaf796fdcf2af06e8563d647",
+            "generated_script_sha256": "0f7a5815275ed1be46b9abb6c7d4f81257816973692e671fa6bb90b6e693547a",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 3
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "68de78c0e83bdd20b3c115f08e95f45000f59d83489e8ad90c4ce4de14d8f4aa",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "generate-candidate:sha256:bfb2c2c0477effdc6aa2d9990bbce79aae82e97bc177f65208e0ebab6fd954d5",
+          "scope": {
+            "task_id": "fix-f6-6793_stop",
+            "task_revision": 1,
+            "plan_id": "plan_b86c7a30f1d9b714a515",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "85397e3339c2eb0d1fb10dc36a0d718a6561b0a5abf3b048c072fba9cfba8e3f",
+          "repair_ordinal": 2,
+          "status": "repairable",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 2
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "fb32ab001a9da4de23e412e84afef435ba1530cae23834736b98c4ea5e636cf1",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        }
+      ],
+      "provider_request_snapshots": [
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "prepare_database",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 1,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 2,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4f971505ad4df234475723ce528b792d8f22fb190fbdbbd0677d97c715665113",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 3,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4f971505ad4df234475723ce528b792d8f22fb190fbdbbd0677d97c715665113",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_41fe41e28a6aee12",
+                "candidate_event_id": "candidate-call:0b912eb38e17246afb8403b00608b3889335546baaf796fdcf2af06e8563d647",
+                "generated_script_sha256": "0f7a5815275ed1be46b9abb6c7d4f81257816973692e671fa6bb90b6e693547a",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:4f971505ad4df234475723ce528b792d8f22fb190fbdbbd0677d97c715665113",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_41fe41e28a6aee12",
+                "candidate_event_id": "candidate-call:0b912eb38e17246afb8403b00608b3889335546baaf796fdcf2af06e8563d647",
+                "generated_script_sha256": "0f7a5815275ed1be46b9abb6c7d4f81257816973692e671fa6bb90b6e693547a",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:bfb2c2c0477effdc6aa2d9990bbce79aae82e97bc177f65208e0ebab6fd954d5",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        }
+      ],
+      "attempts": {
+        "attempt_3607a4471f9ca39af30b": {
+          "attempt_id": "attempt_3607a4471f9ca39af30b",
+          "action_id": "action_d4207f21b14b3422",
+          "step_id": "check_contig_compatibility",
+          "plan_id": "plan_b86c7a30f1d9b714a515",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_17d8ad40f62f08f69ad3": {
+          "attempt_id": "attempt_17d8ad40f62f08f69ad3",
+          "action_id": "action_a42e211cfc37400f",
+          "step_id": "prepare_database",
+          "plan_id": "plan_b86c7a30f1d9b714a515",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_738804f593bd146cb5db": {
+          "attempt_id": "attempt_738804f593bd146cb5db",
+          "action_id": "action_41fe41e28a6aee12",
+          "step_id": "build_database",
+          "plan_id": "plan_b86c7a30f1d9b714a515",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "EVIDENCE_COMMITTED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        }
+      },
+      "stop": {
+        "error_code": "GENERATE_BLOCKED",
+        "stage": "generate",
+        "stop_id": "managed-stop:27446a4c0abd70a17f179b0b27bbcc504fb3f1ca84f46bc5a89e556c3c275d6d",
+        "origin": {
+          "source_stage": "execute",
+          "source_owner": "GENERATED_ACTION",
+          "failure_id": "failure-8997b39514de2eb6f45d369e",
+          "failure_type": "execution_failed",
+          "error_code": "EXECUTION_FAILED",
+          "summary": "A launched command failed after immutable evidence persistence.",
+          "concerns": [],
+          "evidence_refs": [
+            "exec-attempt_738804f593bd146cb5db"
+          ],
+          "returncode": 0,
+          "attempt_id": "attempt_738804f593bd146cb5db",
+          "process_fact_scope": "original causal execution; no scientific validity inferred"
+        },
+        "current_candidate": {
+          "execution_started": false,
+          "attempt_id": "",
+          "generate_invocation": {
+            "generate_call_id": "generate-0a238c786bf84ef7b843605f8ca31afc",
+            "scope": {
+              "task_id": "fix-f6-6793_stop",
+              "task_revision": 1,
+              "plan_id": "plan_b86c7a30f1d9b714a515",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "step_id": "build_database",
+              "attempt_id": ""
+            },
+            "source_ref": "object:sha256:b574d72e17683126b94ab1f7f519bd728ea8c5e5ec7892a138e5213d8cc37fa9",
+            "prompt_assembly_started": true,
+            "prompt_assembly_succeeded": true,
+            "provider_call_attempted": true,
+            "llm_invoked": true
+          }
+        },
+        "delivery_status": "complete",
+        "report_paths": {
+          "stage_status.tsv": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "reproduce.sh": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "report.md": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+        },
+        "report_receipts": {
+          "stage_status.tsv": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+            "sha256": "56846c54d366831c428f612851e1f33efd108e12c8b2e0ab5f08786483b6ea9b",
+            "operation_id": "84a578331acfc9330bd5498d6221cad87ea23c17ff53f0db09111c8b389e8e28",
+            "ownership": {
+              "operation_id": "84a578331acfc9330bd5498d6221cad87ea23c17ff53f0db09111c8b389e8e28",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "56846c54d366831c428f612851e1f33efd108e12c8b2e0ab5f08786483b6ea9b",
+              "proof_name": ".runtime-report-proof-84a578331acfc9330bd5498d6221cad87ea23c17ff53f0db09111c8b389e8e28",
+              "device": 2051,
+              "inode": 11010940
+            },
+            "status": "created",
+            "stop_id": "managed-stop:27446a4c0abd70a17f179b0b27bbcc504fb3f1ca84f46bc5a89e556c3c275d6d",
+            "task_id": "fix-f6-6793_stop"
+          },
+          "reproduce.sh": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+            "sha256": "bd91a108837afc6e986837692f173ef35c35e1d14f4e955d8bc35039451362d0",
+            "operation_id": "a85fd5493a4ee3d2d96c84944b3a437af5bafcfeb5501401961e6c802082e223",
+            "ownership": {
+              "operation_id": "a85fd5493a4ee3d2d96c84944b3a437af5bafcfeb5501401961e6c802082e223",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "bd91a108837afc6e986837692f173ef35c35e1d14f4e955d8bc35039451362d0",
+              "proof_name": ".runtime-report-proof-a85fd5493a4ee3d2d96c84944b3a437af5bafcfeb5501401961e6c802082e223",
+              "device": 2051,
+              "inode": 11010959
+            },
+            "status": "created",
+            "stop_id": "managed-stop:27446a4c0abd70a17f179b0b27bbcc504fb3f1ca84f46bc5a89e556c3c275d6d",
+            "task_id": "fix-f6-6793_stop"
+          },
+          "report.md": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+            "sha256": "bc1c443de6d40cc0c46517abb68a876d44f885b8fdf94b3ef19b5ee898d0536b",
+            "operation_id": "3d8a741cac76a111f838e3b3ca865a737420d587e8802a0b252aaa0c8d5fb1e2",
+            "ownership": {
+              "operation_id": "3d8a741cac76a111f838e3b3ca865a737420d587e8802a0b252aaa0c8d5fb1e2",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/g2g3/scratch/biomind-plan-local-graph-r8hygtij/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "bc1c443de6d40cc0c46517abb68a876d44f885b8fdf94b3ef19b5ee898d0536b",
+              "proof_name": ".runtime-report-proof-3d8a741cac76a111f838e3b3ca865a737420d587e8802a0b252aaa0c8d5fb1e2",
+              "device": 2051,
+              "inode": 11010669
+            },
+            "status": "created",
+            "stop_id": "managed-stop:27446a4c0abd70a17f179b0b27bbcc504fb3f1ca84f46bc5a89e556c3c275d6d",
+            "task_id": "fix-f6-6793_stop"
+          }
+        },
+        "persistence_status": "committed",
+        "summary_status": "COMPLETED",
+        "secondary_causes": []
+      },
+      "log_scope_checks": [
+        {
+          "event": "log_scope_protection",
+          "scope": {
+            "task_id": "fix-f6-6793_stop",
+            "plan_id": "plan_b86c7a30f1d9b714a515",
+            "plan_version": "plan_v1",
+            "step_id": "build_database",
+            "attempt_id": "attempt_738804f593bd146cb5db",
+            "episode_id": "recovery-seed-8997b39514de2eb6f45d369e"
+          },
+          "cross_task_step_attempt_and_unregistered_ref": "rejected"
+        }
+      ]
+    },
+    {
+      "scenario": "f6-6793-carrier_missing-witness.json.gz",
+      "run": "current07/carrier",
+      "full_witness": "evidence/current07/carrier/f6-6793-carrier_missing-witness.json.gz",
+      "actual_messages": "timeline[event=provider_request].request.messages; actual Recovery tool envelopes at log_read; full f6-*-full.json.gz requests include all stages",
+      "steps": [
+        {
+          "step_id": "check_contig_compatibility",
+          "status": "passed",
+          "verification_attempt_id": "attempt_98fd4b2bae13f9f3a2d4"
+        },
+        {
+          "step_id": "prepare_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_a46978324a3f8ff76f0b"
+        },
+        {
+          "step_id": "build_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_7d861e896c71cb54d0a1"
+        },
+        {
+          "step_id": "annotate_variants",
+          "status": "passed",
+          "verification_attempt_id": "attempt_c4f70122fd79c3d5f1a7"
+        },
+        {
+          "step_id": "summarize_ann",
+          "status": "passed",
+          "verification_attempt_id": "attempt_346ba82afc70541c132c"
+        },
+        {
+          "step_id": "finalize_outputs",
+          "status": "passed",
+          "verification_attempt_id": "attempt_e27c67ca3f162be31907"
+        }
+      ],
+      "rejection_events": [
+        {
+          "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+          "scope": {
+            "task_id": "fix-f6-6793_carrier_missing",
+            "task_revision": 1,
+            "plan_id": "plan_a39849e49ba26acd0f8e",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "dd398e7d58f9f980539468a7d0822c5050f957a8a2b4c7a7bdb3a907466ecd4f",
+          "repair_ordinal": 1,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_0958d3336798cafb",
+            "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+            "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 3
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "e00d076f8d4d41062c557c08914acf20162522c783520162b79ccce3d1160d0d",
+            "validation_signature": "13c270319b5c7fe3ceaa2b74ecc89f71eaf7867ff5b534f781901cc595c6c1cb",
+            "comparison_context_fingerprint": "423c0306e39ee285a8a17026724cfe35ed688cf68d24394858024570d34d6617",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:aa437f20da81435a1dcba7c557a7a8e3d75a457963d884d4cd89f5755f138a45",
+          "scope": {
+            "task_id": "fix-f6-6793_carrier_missing",
+            "task_revision": 1,
+            "plan_id": "plan_a39849e49ba26acd0f8e",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "5afd88f4fb5afc5fb12369e8c082e2757e33de228fcb72c1119a367a65f25e58",
+          "repair_ordinal": 1,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_c641c8368f918ed9",
+            "candidate_event_id": "candidate-call:3143347066344d3be79d30d2623a55c5a2e976a4191e1a85a44ab12beba7214f",
+            "generated_script_sha256": "ec520daee10db2e1ebc611f71d970edf8f0603cf4aec331642b82c0be619d247",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 3
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "16f149386de3c176cf29a05e6977dd63f72e7a7e583a8e0370e35811cf67aa4a",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "generate-candidate:sha256:2f2ba80c37a2f8d698acd7a55bb74ff9e2d7108bc84482a040f703d3cdb02f85",
+          "scope": {
+            "task_id": "fix-f6-6793_carrier_missing",
+            "task_revision": 1,
+            "plan_id": "plan_a39849e49ba26acd0f8e",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "build_database"
+          },
+          "candidate_fingerprint": "0b55990deabbabd08c28424da697205e9e6bb7776745e5aeac5583f456d3db29",
+          "repair_ordinal": 2,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "recovery_action_d5d62ea49080c7dd",
+            "candidate_event_id": "generate-candidate:sha256:0d7d93b758b7b26a0b37741fed198fcc9b643de2d50c875bd2363999e9052325",
+            "generated_script_sha256": "7eda1d33c919b551e26f4d13bdb130095e785e93f7833624c531000ab1b7e7f3",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 2
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "f25aa6ca07a0b512266a2e48863cbe5628f030aab768b7a306cfce9aabbbde9a",
+            "validation_signature": "42be403e2270bef995747c113bdbd7502f6d3e06fcddec888c2d0f800651366b",
+            "comparison_context_fingerprint": "548e668368244c0106b34861667884c197162cc74d59fe87d1d2ec4128e4f820",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        }
+      ],
+      "provider_request_snapshots": [
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "prepare_database",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 1,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 2,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:aa437f20da81435a1dcba7c557a7a8e3d75a457963d884d4cd89f5755f138a45",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 3,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:aa437f20da81435a1dcba7c557a7a8e3d75a457963d884d4cd89f5755f138a45",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_c641c8368f918ed9",
+                "candidate_event_id": "candidate-call:3143347066344d3be79d30d2623a55c5a2e976a4191e1a85a44ab12beba7214f",
+                "generated_script_sha256": "ec520daee10db2e1ebc611f71d970edf8f0603cf4aec331642b82c0be619d247",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:aa437f20da81435a1dcba7c557a7a8e3d75a457963d884d4cd89f5755f138a45",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_c641c8368f918ed9",
+                "candidate_event_id": "candidate-call:3143347066344d3be79d30d2623a55c5a2e976a4191e1a85a44ab12beba7214f",
+                "generated_script_sha256": "ec520daee10db2e1ebc611f71d970edf8f0603cf4aec331642b82c0be619d247",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:2f2ba80c37a2f8d698acd7a55bb74ff9e2d7108bc84482a040f703d3cdb02f85",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "annotate_variants",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:aa437f20da81435a1dcba7c557a7a8e3d75a457963d884d4cd89f5755f138a45",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_c641c8368f918ed9",
+                "candidate_event_id": "candidate-call:3143347066344d3be79d30d2623a55c5a2e976a4191e1a85a44ab12beba7214f",
+                "generated_script_sha256": "ec520daee10db2e1ebc611f71d970edf8f0603cf4aec331642b82c0be619d247",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:2f2ba80c37a2f8d698acd7a55bb74ff9e2d7108bc84482a040f703d3cdb02f85",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "recovery_action_d5d62ea49080c7dd",
+                "candidate_event_id": "generate-candidate:sha256:0d7d93b758b7b26a0b37741fed198fcc9b643de2d50c875bd2363999e9052325",
+                "generated_script_sha256": "7eda1d33c919b551e26f4d13bdb130095e785e93f7833624c531000ab1b7e7f3",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "summarize_ann",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:aa437f20da81435a1dcba7c557a7a8e3d75a457963d884d4cd89f5755f138a45",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_c641c8368f918ed9",
+                "candidate_event_id": "candidate-call:3143347066344d3be79d30d2623a55c5a2e976a4191e1a85a44ab12beba7214f",
+                "generated_script_sha256": "ec520daee10db2e1ebc611f71d970edf8f0603cf4aec331642b82c0be619d247",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:2f2ba80c37a2f8d698acd7a55bb74ff9e2d7108bc84482a040f703d3cdb02f85",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "recovery_action_d5d62ea49080c7dd",
+                "candidate_event_id": "generate-candidate:sha256:0d7d93b758b7b26a0b37741fed198fcc9b643de2d50c875bd2363999e9052325",
+                "generated_script_sha256": "7eda1d33c919b551e26f4d13bdb130095e785e93f7833624c531000ab1b7e7f3",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "finalize_outputs",
+          "build_call": 4,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:9f004124bf7d2fd9b4f93611b3ceced6d2695b4d74ff349165d003cce5c62c2b",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_0958d3336798cafb",
+                "candidate_event_id": "candidate-call:1e97a47217c36e18d9c668a062797bf1be0c55bd7e846141b027b3b4085eefd1",
+                "generated_script_sha256": "185982534828d796eb301b467e38eb922d5a4f06ee5b0cabdbbd23307d6f2156",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:aa437f20da81435a1dcba7c557a7a8e3d75a457963d884d4cd89f5755f138a45",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_c641c8368f918ed9",
+                "candidate_event_id": "candidate-call:3143347066344d3be79d30d2623a55c5a2e976a4191e1a85a44ab12beba7214f",
+                "generated_script_sha256": "ec520daee10db2e1ebc611f71d970edf8f0603cf4aec331642b82c0be619d247",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "generate-candidate:sha256:2f2ba80c37a2f8d698acd7a55bb74ff9e2d7108bc84482a040f703d3cdb02f85",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "recovery_action_d5d62ea49080c7dd",
+                "candidate_event_id": "generate-candidate:sha256:0d7d93b758b7b26a0b37741fed198fcc9b643de2d50c875bd2363999e9052325",
+                "generated_script_sha256": "7eda1d33c919b551e26f4d13bdb130095e785e93f7833624c531000ab1b7e7f3",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        }
+      ],
+      "attempts": {
+        "attempt_98fd4b2bae13f9f3a2d4": {
+          "attempt_id": "attempt_98fd4b2bae13f9f3a2d4",
+          "action_id": "action_0958d3336798cafb",
+          "step_id": "check_contig_compatibility",
+          "plan_id": "plan_a39849e49ba26acd0f8e",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_a46978324a3f8ff76f0b": {
+          "attempt_id": "attempt_a46978324a3f8ff76f0b",
+          "action_id": "action_b10f0bc06d0cefa6",
+          "step_id": "prepare_database",
+          "plan_id": "plan_a39849e49ba26acd0f8e",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_b790cee37fa3d8943ed1": {
+          "attempt_id": "attempt_b790cee37fa3d8943ed1",
+          "action_id": "action_c641c8368f918ed9",
+          "step_id": "build_database",
+          "plan_id": "plan_a39849e49ba26acd0f8e",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "EVIDENCE_COMMITTED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_7d861e896c71cb54d0a1": {
+          "attempt_id": "attempt_7d861e896c71cb54d0a1",
+          "action_id": "recovery_action_d5d62ea49080c7dd",
+          "step_id": "build_database",
+          "plan_id": "plan_a39849e49ba26acd0f8e",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_c4f70122fd79c3d5f1a7": {
+          "attempt_id": "attempt_c4f70122fd79c3d5f1a7",
+          "action_id": "action_769a7ebfed4a48fd",
+          "step_id": "annotate_variants",
+          "plan_id": "plan_a39849e49ba26acd0f8e",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_346ba82afc70541c132c": {
+          "attempt_id": "attempt_346ba82afc70541c132c",
+          "action_id": "action_6a604144a6e83665",
+          "step_id": "summarize_ann",
+          "plan_id": "plan_a39849e49ba26acd0f8e",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_e27c67ca3f162be31907": {
+          "attempt_id": "attempt_e27c67ca3f162be31907",
+          "action_id": "action_ccf42ef43d04a438",
+          "step_id": "finalize_outputs",
+          "plan_id": "plan_a39849e49ba26acd0f8e",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        }
+      },
+      "stop": {},
+      "log_scope_checks": [
+        {
+          "event": "log_scope_protection",
+          "scope": {
+            "task_id": "fix-f6-6793_carrier_missing",
+            "plan_id": "plan_a39849e49ba26acd0f8e",
+            "plan_version": "plan_v1",
+            "step_id": "build_database",
+            "attempt_id": "attempt_b790cee37fa3d8943ed1",
+            "episode_id": "recovery-seed-6a4f4647860baeb0174c58c0"
+          },
+          "cross_task_step_attempt_and_unregistered_ref": "rejected"
+        }
+      ]
+    },
+    {
+      "scenario": "f6-6793-last_chance-witness.json.gz",
+      "run": "current07/lastchance",
+      "full_witness": "evidence/current07/lastchance/f6-6793-last_chance-witness.json.gz",
+      "actual_messages": "timeline[event=provider_request].request.messages; actual Recovery tool envelopes at log_read; full f6-*-full.json.gz requests include all stages",
+      "steps": [
+        {
+          "step_id": "check_contig_compatibility",
+          "status": "passed",
+          "verification_attempt_id": "attempt_f97abf6e626ddde39918"
+        },
+        {
+          "step_id": "prepare_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_1bc78b920ae622175ba6"
+        },
+        {
+          "step_id": "build_database",
+          "status": "passed",
+          "verification_attempt_id": "attempt_b682a3b49a8255864f0b"
+        },
+        {
+          "step_id": "annotate_variants",
+          "status": "passed",
+          "verification_attempt_id": "attempt_9fb71bd76971c26fdabc"
+        },
+        {
+          "step_id": "summarize_ann",
+          "status": "passed",
+          "verification_attempt_id": "attempt_03253494ca8d7ea6af6c"
+        },
+        {
+          "step_id": "finalize_outputs",
+          "status": "passed",
+          "verification_attempt_id": "attempt_7ef4d7bf9f6c57a516e3"
+        }
+      ],
+      "rejection_events": [
+        {
+          "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+          "scope": {
+            "task_id": "fix-f6-6793_last_chance",
+            "task_revision": 1,
+            "plan_id": "plan_90c8a86b2ca3750b0ff0",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "eb46e569bb75276450b8c46d3c21cfaeb5666cf2e99ad33f77298bb451e2aeb8",
+          "repair_ordinal": 1,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_e90b05fdbaafad2c",
+            "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+            "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 3
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "8bf24469096c2e43ef6d67bd9cc78fa526dfc1e295bba2fb9a74b5f0eade3cf8",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+          "scope": {
+            "task_id": "fix-f6-6793_last_chance",
+            "task_revision": 1,
+            "plan_id": "plan_90c8a86b2ca3750b0ff0",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "e46f846f35b912b9188da75b328a07e50af0c260beb0e4ef4eb574bfac4f89fa",
+          "repair_ordinal": 2,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_e90b05fdbaafad2c",
+            "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+            "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 2
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "6a7be555933c11af755ebdabe347c108ffa4ac217f53e1b8c03c6591e29296e1",
+            "validation_signature": "2c9a2b5ee725ee5b5c1db265cbee66cc019e495ac285aa0657cab6326e66505d",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+          "scope": {
+            "task_id": "fix-f6-6793_last_chance",
+            "task_revision": 1,
+            "plan_id": "plan_90c8a86b2ca3750b0ff0",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "3b39f34bca31d954dd0ebe5072f5b62cbb6dede39c1defa84f224f0337ed0a8a",
+          "repair_ordinal": 3,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_e90b05fdbaafad2c",
+            "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+            "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 1
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "668396386364850c36c62f5166866d33b6ffd0c263edc0927143cbad39b64737",
+            "validation_signature": "13c270319b5c7fe3ceaa2b74ecc89f71eaf7867ff5b534f781901cc595c6c1cb",
+            "comparison_context_fingerprint": "423c0306e39ee285a8a17026724cfe35ed688cf68d24394858024570d34d6617",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:5667c14b4e474f818c0ab570019f6d12a01b465ad23c900834ae9a6f9e5681ba",
+          "scope": {
+            "task_id": "fix-f6-6793_last_chance",
+            "task_revision": 1,
+            "plan_id": "plan_90c8a86b2ca3750b0ff0",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "8218521ab8b7e50e2c6a8a69e7585b44cfcc149cdcdf031ab3ada2ef75d32f46",
+          "repair_ordinal": 4,
+          "status": "repairable",
+          "resolved_by": {
+            "action_id": "action_e90b05fdbaafad2c",
+            "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+            "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+            "basis": "admitted_action_bound",
+            "execution_success": "not_assessed"
+          },
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 0
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "8218521ab8b7e50e2c6a8a69e7585b44cfcc149cdcdf031ab3ada2ef75d32f46",
+            "validation_signature": "a3723df9ae055ebe75c848210df8a08fc62dc13291fb14ff0d07d8009f9f3f95",
+            "comparison_context_fingerprint": "5fcdd5c2eb28743246c144acfbf65ba274b39e0911db2f89f45e897fb113c192",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        }
+      ],
+      "provider_request_snapshots": [
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:5667c14b4e474f818c0ab570019f6d12a01b465ad23c900834ae9a6f9e5681ba",
+              "repair_ordinal": 4,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "prepare_database",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:5667c14b4e474f818c0ab570019f6d12a01b465ad23c900834ae9a6f9e5681ba",
+              "repair_ordinal": 4,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "build_database",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:5667c14b4e474f818c0ab570019f6d12a01b465ad23c900834ae9a6f9e5681ba",
+              "repair_ordinal": 4,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "annotate_variants",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:5667c14b4e474f818c0ab570019f6d12a01b465ad23c900834ae9a6f9e5681ba",
+              "repair_ordinal": 4,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "summarize_ann",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:5667c14b4e474f818c0ab570019f6d12a01b465ad23c900834ae9a6f9e5681ba",
+              "repair_ordinal": 4,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "finalize_outputs",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:02a601dfcc06be56808e83acf2235049adff08b1cb643afa0087f58b0210b6f3",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:ed77c1f2e81e1ae3c435e3f6650542aa6d697293ae7b9fd7fe8e0581c521fa32",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:6348f31ba0aa980a94d46e657d68df81d2e6ae0485b717b102428802ef383aa7",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            },
+            {
+              "candidate_event_id": "candidate-call:5667c14b4e474f818c0ab570019f6d12a01b465ad23c900834ae9a6f9e5681ba",
+              "repair_ordinal": 4,
+              "status": "repairable",
+              "resolved_by": {
+                "action_id": "action_e90b05fdbaafad2c",
+                "candidate_event_id": "candidate-call:a912cf65e364f7b2ccec87c79940165dc4fa7503c4adcdf098dc9d503d020f37",
+                "generated_script_sha256": "c23a27fbc285a732a4f20cd69e35f1de9dcc96a38a394255a32b77599077869d",
+                "basis": "admitted_action_bound",
+                "execution_success": "not_assessed"
+              }
+            }
+          ]
+        }
+      ],
+      "attempts": {
+        "attempt_f97abf6e626ddde39918": {
+          "attempt_id": "attempt_f97abf6e626ddde39918",
+          "action_id": "action_e90b05fdbaafad2c",
+          "step_id": "check_contig_compatibility",
+          "plan_id": "plan_90c8a86b2ca3750b0ff0",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_1bc78b920ae622175ba6": {
+          "attempt_id": "attempt_1bc78b920ae622175ba6",
+          "action_id": "action_f4cedcd828ab492c",
+          "step_id": "prepare_database",
+          "plan_id": "plan_90c8a86b2ca3750b0ff0",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_b682a3b49a8255864f0b": {
+          "attempt_id": "attempt_b682a3b49a8255864f0b",
+          "action_id": "action_51ee782405f493f5",
+          "step_id": "build_database",
+          "plan_id": "plan_90c8a86b2ca3750b0ff0",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_9fb71bd76971c26fdabc": {
+          "attempt_id": "attempt_9fb71bd76971c26fdabc",
+          "action_id": "action_c37d04b81572d3fe",
+          "step_id": "annotate_variants",
+          "plan_id": "plan_90c8a86b2ca3750b0ff0",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_03253494ca8d7ea6af6c": {
+          "attempt_id": "attempt_03253494ca8d7ea6af6c",
+          "action_id": "action_77a0d29b52379747",
+          "step_id": "summarize_ann",
+          "plan_id": "plan_90c8a86b2ca3750b0ff0",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        },
+        "attempt_7ef4d7bf9f6c57a516e3": {
+          "attempt_id": "attempt_7ef4d7bf9f6c57a516e3",
+          "action_id": "action_034f46e48dfc3b58",
+          "step_id": "finalize_outputs",
+          "plan_id": "plan_90c8a86b2ca3750b0ff0",
+          "plan_version": "plan_v1",
+          "purpose": null,
+          "status": "COMPLETED",
+          "returncode": 0,
+          "generated_script_sha256": null,
+          "approved_script_sha256": null,
+          "execution_record_ref": null
+        }
+      },
+      "stop": {},
+      "log_scope_checks": []
+    },
+    {
+      "scenario": "f6-6793-exhausted-witness.json.gz",
+      "run": "current07/exhausted",
+      "full_witness": "evidence/current07/exhausted/f6-6793-exhausted-witness.json.gz",
+      "actual_messages": "timeline[event=provider_request].request.messages; actual Recovery tool envelopes at log_read; full f6-*-full.json.gz requests include all stages",
+      "steps": [
+        {
+          "step_id": "check_contig_compatibility",
+          "status": "failed",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "prepare_database",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "build_database",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "annotate_variants",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "summarize_ann",
+          "status": "pending",
+          "verification_attempt_id": null
+        },
+        {
+          "step_id": "finalize_outputs",
+          "status": "pending",
+          "verification_attempt_id": null
+        }
+      ],
+      "rejection_events": [
+        {
+          "candidate_event_id": "candidate-call:a876088ed4cee3d6a78aedefeaaa543eca4a3771861df741222951dc51338ee9",
+          "scope": {
+            "task_id": "fix-f6-6793_exhausted",
+            "task_revision": 1,
+            "plan_id": "plan_b6ccc350d4f9e9be2b49",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "4bc1d1d369c367694026db608d77f51201bdeaf77af36522bc43f7e3c86825f6",
+          "repair_ordinal": 1,
+          "status": "repairable",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 3
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "initial_rejection",
+            "comparison_fingerprint": "cd6805d2ac519ffd8ce86f2d4cc41bdfa4208a984557ce05092acc05668d383a",
+            "validation_signature": "c0e1d3d9b468021f5f517683e756938942f8065c264ffb9af27ef4efbe3c891a",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:54a0b674079c0d394ca48812c23983ae0f8ccc90d9334698743783d694968338",
+          "scope": {
+            "task_id": "fix-f6-6793_exhausted",
+            "task_revision": 1,
+            "plan_id": "plan_b6ccc350d4f9e9be2b49",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "b3f781dcfd6bd151fc0d4f1212becc56994c8b9618950ba767bd6c1e26a426ba",
+          "repair_ordinal": 2,
+          "status": "repairable",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 2
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "c9afdcd7624f2f0721b9da7b4ce0df4454aa675f0123882f33c5450b7aa52a47",
+            "validation_signature": "2c9a2b5ee725ee5b5c1db265cbee66cc019e495ac285aa0657cab6326e66505d",
+            "comparison_context_fingerprint": "f5fd1f2e32eaae34f9b473e19665cbb7c045eddedaba32453090ab54eff2e492",
+            "binding_facts": null,
+            "binding_axis": "not_evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:3782dc239e6888e08f7dc604f5a3c7746f50c6827049fdb3c5584471c5b94d93",
+          "scope": {
+            "task_id": "fix-f6-6793_exhausted",
+            "task_revision": 1,
+            "plan_id": "plan_b6ccc350d4f9e9be2b49",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "8e15212ce2788e8f2641cf0200da5eddd84e73bb269545d621994ad00616a78a",
+          "repair_ordinal": 3,
+          "status": "repairable",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 1
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "42fb4eee636b8f3bfc5ceb6ddcc1c9e52f9ff68d8e8801ebbf233ca5a4773299",
+            "validation_signature": "13c270319b5c7fe3ceaa2b74ecc89f71eaf7867ff5b534f781901cc595c6c1cb",
+            "comparison_context_fingerprint": "423c0306e39ee285a8a17026724cfe35ed688cf68d24394858024570d34d6617",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:ca007bef2b71da2b2b1c95e88ee4442779946ea378689994b2ed0095b01ccbce",
+          "scope": {
+            "task_id": "fix-f6-6793_exhausted",
+            "task_revision": 1,
+            "plan_id": "plan_b6ccc350d4f9e9be2b49",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "ec8d53cc7da5ec1588072194ed427c9d448a50681cf43f5c757e9690890010ed",
+          "repair_ordinal": 4,
+          "status": "repairable",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 0
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "ec8d53cc7da5ec1588072194ed427c9d448a50681cf43f5c757e9690890010ed",
+            "validation_signature": "a3723df9ae055ebe75c848210df8a08fc62dc13291fb14ff0d07d8009f9f3f95",
+            "comparison_context_fingerprint": "5fcdd5c2eb28743246c144acfbf65ba274b39e0911db2f89f45e897fb113c192",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        },
+        {
+          "candidate_event_id": "candidate-call:ea7d4197429415451754f13dc159e6d407c791ee900d8fd51c147c5b21d61613",
+          "scope": {
+            "task_id": "fix-f6-6793_exhausted",
+            "task_revision": 1,
+            "plan_id": "plan_b6ccc350d4f9e9be2b49",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "check_contig_compatibility"
+          },
+          "candidate_fingerprint": "17c11281135f9d286cf52d13115c71360a50ccbf647ac57d8e21a956f5933ec3",
+          "repair_ordinal": 5,
+          "status": "internal_error",
+          "resolved_by": null,
+          "policy_receipt": {
+            "limit": 4,
+            "remaining": 0
+          },
+          "progress_assessment": {
+            "schema_version": 1,
+            "producer": "biomind.generate_candidate_admission.v1",
+            "progress_proven": true,
+            "basis": "validated_representation_target",
+            "comparison_fingerprint": "17c11281135f9d286cf52d13115c71360a50ccbf647ac57d8e21a956f5933ec3",
+            "validation_signature": "91ede59be172393eecdf8ac0301913859e98534ac367e547a341a219f234fe24",
+            "comparison_context_fingerprint": "8d92f69ae4d656caadecdc302493ec06619bbce2a7f31d6bf08a068a266c6436",
+            "binding_axis": "evaluated",
+            "scientific_success": "not_assessed"
+          }
+        }
+      ],
+      "provider_request_snapshots": [
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": []
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:a876088ed4cee3d6a78aedefeaaa543eca4a3771861df741222951dc51338ee9",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:a876088ed4cee3d6a78aedefeaaa543eca4a3771861df741222951dc51338ee9",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:54a0b674079c0d394ca48812c23983ae0f8ccc90d9334698743783d694968338",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:a876088ed4cee3d6a78aedefeaaa543eca4a3771861df741222951dc51338ee9",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:54a0b674079c0d394ca48812c23983ae0f8ccc90d9334698743783d694968338",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:3782dc239e6888e08f7dc604f5a3c7746f50c6827049fdb3c5584471c5b94d93",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        },
+        {
+          "event": "provider_request",
+          "operation": "check_contig_compatibility",
+          "build_call": 0,
+          "ledger": [
+            {
+              "candidate_event_id": "candidate-call:a876088ed4cee3d6a78aedefeaaa543eca4a3771861df741222951dc51338ee9",
+              "repair_ordinal": 1,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:54a0b674079c0d394ca48812c23983ae0f8ccc90d9334698743783d694968338",
+              "repair_ordinal": 2,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:3782dc239e6888e08f7dc604f5a3c7746f50c6827049fdb3c5584471c5b94d93",
+              "repair_ordinal": 3,
+              "status": "repairable",
+              "resolved_by": null
+            },
+            {
+              "candidate_event_id": "candidate-call:ca007bef2b71da2b2b1c95e88ee4442779946ea378689994b2ed0095b01ccbce",
+              "repair_ordinal": 4,
+              "status": "repairable",
+              "resolved_by": null
+            }
+          ]
+        }
+      ],
+      "attempts": {},
+      "stop": {
+        "error_code": "GENERATE_REPAIR_BUDGET_EXHAUSTED",
+        "stage": "generate",
+        "stop_id": "managed-stop:7b7053477604f3460935ad0f06bfd365f260036c1eef528491d3ca2517d25bc3",
+        "origin": {
+          "source_stage": "generate",
+          "source_owner": "GENERATED_ACTION",
+          "failure_id": "",
+          "failure_type": "generated_action_contract_error",
+          "error_code": "ACTION_SCHEMA_TYPE_ERROR",
+          "summary": "execute.env must be an object of string values.",
+          "concerns": [],
+          "evidence_refs": [],
+          "returncode": null,
+          "attempt_id": "",
+          "process_fact_scope": "original causal execution; no scientific validity inferred"
+        },
+        "current_candidate": {
+          "attempt_id": "",
+          "execution_started": false,
+          "approved": false,
+          "candidate_fingerprint": "17c11281135f9d286cf52d13115c71360a50ccbf647ac57d8e21a956f5933ec3",
+          "candidate_event_id": "candidate-call:ea7d4197429415451754f13dc159e6d407c791ee900d8fd51c147c5b21d61613",
+          "cause_code": "ACTION_OPERATION_SCOPE_MISMATCH",
+          "correction_category": "candidate_contract"
+        },
+        "delivery_status": "complete",
+        "report_paths": {
+          "stage_status.tsv": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+          "reproduce.sh": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+          "report.md": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md"
+        },
+        "report_receipts": {
+          "stage_status.tsv": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+            "sha256": "9d1d0f5c4134025934df8e7e40eea0d00dbe73248c29a389bdf67a422f35250b",
+            "operation_id": "cbaaec04f69f221f09a5687e290032d5dd4c110e7964b9ae8be8ad9d2b530746",
+            "ownership": {
+              "operation_id": "cbaaec04f69f221f09a5687e290032d5dd4c110e7964b9ae8be8ad9d2b530746",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/stage_status.tsv",
+              "sha256": "9d1d0f5c4134025934df8e7e40eea0d00dbe73248c29a389bdf67a422f35250b",
+              "proof_name": ".runtime-report-proof-cbaaec04f69f221f09a5687e290032d5dd4c110e7964b9ae8be8ad9d2b530746",
+              "device": 2051,
+              "inode": 11011308
+            },
+            "status": "created",
+            "stop_id": "managed-stop:7b7053477604f3460935ad0f06bfd365f260036c1eef528491d3ca2517d25bc3",
+            "task_id": "fix-f6-6793_exhausted"
+          },
+          "reproduce.sh": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+            "sha256": "3e68b3cad747f8903034594b6dd44660c15484ad9724459ebdfc681f8be4b164",
+            "operation_id": "d98265fa7977089054896fbc3593345092b6c593a8304d5ecdec3c50a2d4b562",
+            "ownership": {
+              "operation_id": "d98265fa7977089054896fbc3593345092b6c593a8304d5ecdec3c50a2d4b562",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/reproduce.sh",
+              "sha256": "3e68b3cad747f8903034594b6dd44660c15484ad9724459ebdfc681f8be4b164",
+              "proof_name": ".runtime-report-proof-d98265fa7977089054896fbc3593345092b6c593a8304d5ecdec3c50a2d4b562",
+              "device": 2051,
+              "inode": 11011311
+            },
+            "status": "created",
+            "stop_id": "managed-stop:7b7053477604f3460935ad0f06bfd365f260036c1eef528491d3ca2517d25bc3",
+            "task_id": "fix-f6-6793_exhausted"
+          },
+          "report.md": {
+            "path": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+            "sha256": "a1144e0d92daf3c56975dc73760e4f6e665519bcab81c8722f9deca31b082ebc",
+            "operation_id": "bb04ceb7e7315699b9da8c62714a12d83790d03ad1aeaca8a563ca9cc696ca9f",
+            "ownership": {
+              "operation_id": "bb04ceb7e7315699b9da8c62714a12d83790d03ad1aeaca8a563ca9cc696ca9f",
+              "path": "/tmp/biomind-6793-fix-20260915/current07/exhausted/scratch/biomind-plan-local-graph-mpxwgw2b/中文 两样本/Part2.vairant_annotation/新机制结果/report.md",
+              "sha256": "a1144e0d92daf3c56975dc73760e4f6e665519bcab81c8722f9deca31b082ebc",
+              "proof_name": ".runtime-report-proof-bb04ceb7e7315699b9da8c62714a12d83790d03ad1aeaca8a563ca9cc696ca9f",
+              "device": 2051,
+              "inode": 11011354
+            },
+            "status": "created",
+            "stop_id": "managed-stop:7b7053477604f3460935ad0f06bfd365f260036c1eef528491d3ca2517d25bc3",
+            "task_id": "fix-f6-6793_exhausted"
+          }
+        },
+        "persistence_status": "committed",
+        "summary_status": "COMPLETED",
+        "secondary_causes": []
+      },
+      "log_scope_checks": []
+    }
+  ],
+  "path_rule": "scratch roots were new and torn down; preserved actual outputs/scripts/plan_state live in evidence/<run>/f6-preserved-*. Full references retain original runtime identity; nothing reloaded as an original business session."
+}

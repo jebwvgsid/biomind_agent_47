@@ -1,0 +1,2563 @@
+{
+  "scenario": "approve",
+  "provider_calls": [
+    "consultant",
+    "planner"
+  ],
+  "reviews": [
+    {
+      "body": "## Plan Identity\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none\n\n## Effective Plan\n\n### [plan-inspect-0] 合成步骤 00 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `none`\n- Success criteria: `冻结要求 00-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-1] 合成步骤 01 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-0`\n- Success criteria: `冻结要求 01-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-2] 合成步骤 02 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-1`\n- Success criteria: `冻结要求 02-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-3] 合成步骤 03 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-2`\n- Success criteria: `冻结要求 03-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-4] 合成步骤 04 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-3`\n- Success criteria: `冻结要求 04-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-5] 合成步骤 05 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-4`\n- Success criteria: `冻结要求 05-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-6] 合成步骤 06 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-5`\n- Success criteria: `冻结要求 06-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-7] 合成步骤 07 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-6`\n- Success criteria: `冻结要求 07-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-8] 合成步骤 08 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-7`\n- Success criteria: `冻结要求 08-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-9] 合成步骤 09 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-8`\n- Success criteria: `冻结要求 09-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-10] 合成步骤 10 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-9`\n- Success criteria: `冻结要求 10-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-11] 合成步骤 11 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `plan-inspect-10`\n- Success criteria: `冻结要求 11-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n## Cross-step Artifact Review\n- Does a later step use a file or directory built/generated by an earlier step?\n- If yes, is the same explicit artifact present in producer outputs and consumer inputs?\n- Is any cross-step state carried only through mktemp, shell variables, cwd assumptions, or prose?\n",
+      "body_sha256": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "kind": "plan",
+      "submission": {
+        "ready": true,
+        "identity_matches": true,
+        "reason_code": "PLAN_REVIEW_SUBMISSION_COMMITTED",
+        "submission_id": "plan-submission-275546f37a5061a74035",
+        "receipt": {
+          "schema_version": 1,
+          "protocol_version": 1,
+          "submission_id": "plan-submission-275546f37a5061a74035",
+          "action_type": "submit_plan_for_review",
+          "agent_initiated": true,
+          "status": "pending_review",
+          "task_id": "f5-plan-current",
+          "plan_id": "plan_e33c5694231df57920a4",
+          "plan_version": "plan_v1",
+          "plan_revision": 1,
+          "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+          "plan_snapshot_ref": "object:sha256:6a1219bb9ae52c55d13bba749003741cc2e91c47662c102de5f36f729c6ff0eb",
+          "task_revision": 1,
+          "generated_from_task_revision": 1,
+          "authoritative_user_turn_revision": 1,
+          "planner_claim_id": "planner-call:a5e37a48ded4013a1ddcaeb5ea5381e037e837af024950502ab1ebce7ba0ed93",
+          "planning_epoch_id": "planning-epoch-ef3e33f7-2162-4acd-acaf-b218804178b1",
+          "candidate_scope_id": "candidate-scope-195a49b1-f11d-4dfd-9a8b-7e6f41cfa6c5",
+          "submitted_at": "2026-09-15T09:12:13.567268+00:00"
+        }
+      },
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "payload": {
+        "content": "## Plan Identity\n- Plan ID: `plan_e33c5694231df57920a4`\n- Plan Version: `plan_v1`\n- Parent Version: `none`\n- Semantic Hash: `dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2`\n- Approval Scope: `0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922`\n- Execution Cursor: `none`\n- Next Executable Step: `plan-inspect-0`\n- Changed Stable Step IDs: `none`\n\n## Highlighted Constraints\n- none\n\n## Effective Plan\n\n### [plan-inspect-0] 合成步骤 00 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-blast`\n- Inputs: `none`\n- Outputs: `none`\n- Depends on: `none`\n- Success criteria: `冻结要求 00-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution`\n\n### [plan-inspect-1] 合成步骤 01 / synthetic stage with spaces\n- Action: `EXECUTE`\n- Purpose: `analysis`\n- Skills: `sequence/search/local-bl"
+      }
+    }
+  ],
+  "updates": [
+    {
+      "triage": {
+        "task_mode": "managed",
+        "retrieval_mode": "kb",
+        "request_intent": {
+          "schema_version": 1,
+          "request_kind": "execute",
+          "execution_scope": "managed",
+          "managed_intent_explicit": true,
+          "task_mode": "managed",
+          "retrieval_mode": "kb",
+          "confidence": 1.0,
+          "admission_status": "managed_execution_admitted",
+          "consultation_required": false,
+          "reason": "plan-local graph integration fixture",
+          "llm_call_ref": {
+            "call_id": "task_router-0001-93853bddd99f",
+            "snapshot_ref": "/tmp/biomind-6793-fix-20260915/current07/pty2-plain-approve/scratch/biomind-plan-local-graph-ytizeyvk/task_outputs/f5-plan-current/context_trace/task_router-0001-93853bddd99f/manifest.json",
+            "request_hash": "21fe0cb4b05a08041060bafc77ddae4f0f3481a0da97fa9c206b06919278bdb0",
+            "response_hash": "27af00b3aa17cf6326a6a79433f98ed8d7f4dabe8a6a797412fdaeaad2c9a9bc",
+            "task_revision": 0,
+            "plan_revision": null,
+            "step_id": "",
+            "attempt_id": "",
+            "call_kind": "task_router"
+          }
+        },
+        "intent_admission": {
+          "schema_version": 1,
+          "request_kind": "execute",
+          "execution_scope": "managed",
+          "managed_intent_explicit": true,
+          "task_mode": "managed",
+          "retrieval_mode": "kb",
+          "confidence": 1.0,
+          "admission_status": "managed_execution_admitted",
+          "consultation_required": false,
+          "reason": "plan-local graph integration fixture",
+          "llm_call_ref": {
+            "call_id": "task_router-0001-93853bddd99f",
+            "snapshot_ref": "/tmp/biomind-6793-fix-20260915/current07/pty2-plain-approve/scratch/biomind-plan-local-graph-ytizeyvk/task_outputs/f5-plan-current/context_trace/task_router-0001-93853bddd99f/manifest.json",
+            "request_hash": "21fe0cb4b05a08041060bafc77ddae4f0f3481a0da97fa9c206b06919278bdb0",
+            "response_hash": "27af00b3aa17cf6326a6a79433f98ed8d7f4dabe8a6a797412fdaeaad2c9a9bc",
+            "task_revision": 0,
+            "plan_revision": null,
+            "step_id": "",
+            "attempt_id": "",
+            "call_kind": "task_router"
+          },
+          "decision_source": "llm_request_intent_router",
+          "task_id": "f5-plan-current",
+          "admission_id": "intent-admission-22b7c9b644490a527108",
+          "decided_at": "2026-09-15T17:12:12+08:00"
+        },
+        "managed_intent_admitted": true,
+        "use_scientific_review": true,
+        "validation_level": "scientific",
+        "llm_call_refs": [
+          {
+            "call_id": "task_router-0001-93853bddd99f",
+            "snapshot_ref": "/tmp/biomind-6793-fix-20260915/current07/pty2-plain-approve/scratch/biomind-plan-local-graph-ytizeyvk/task_outputs/f5-plan-current/context_trace/task_router-0001-93853bddd99f/manifest.json",
+            "request_hash": "21fe0cb4b05a08041060bafc77ddae4f0f3481a0da97fa9c206b06919278bdb0",
+            "response_hash": "27af00b3aa17cf6326a6a79433f98ed8d7f4dabe8a6a797412fdaeaad2c9a9bc",
+            "task_revision": 0,
+            "plan_revision": null,
+            "step_id": "",
+            "attempt_id": "",
+            "call_kind": "task_router"
+          }
+        ],
+        "context_lineage_ref": "/tmp/biomind-6793-fix-20260915/current07/pty2-plain-approve/scratch/biomind-plan-local-graph-ytizeyvk/task_outputs/f5-plan-current/context_trace",
+        "triage_outcome": {
+          "schema_version": 1,
+          "type": "consultation_ready",
+          "summary": "Triage classified the request as managed.",
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "step_id": ""
+          },
+          "payload": {
+            "task_mode": "managed",
+            "request_kind": "execute"
+          },
+          "evidence_refs": []
+        },
+        "managed_run_boundary": {
+          "node": "triage",
+          "field": "triage_outcome",
+          "outcome": {
+            "schema_version": 1,
+            "type": "consultation_ready",
+            "summary": "Triage classified the request as managed.",
+            "scope": {
+              "task_id": "f5-plan-current",
+              "plan_id": "plan_e33c5694231df57920a4",
+              "plan_version": "plan_v1",
+              "step_id": ""
+            },
+            "payload": {
+              "task_mode": "managed",
+              "request_kind": "execute"
+            },
+            "evidence_refs": []
+          },
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "",
+            "plan_version": "",
+            "current_step_id": ""
+          }
+        }
+      }
+    },
+    {
+      "consultant": {
+        "runtime_audit": [],
+        "selected_skills": [
+          "sequence/search/local-blast"
+        ],
+        "selected_skills_raw": [
+          "sequence/search/local-blast"
+        ],
+        "resolved_bindings": {},
+        "requirements_summary": "The managed task contract is complete.",
+        "task_spec": {
+          "schema_version": 6,
+          "canonicalization_version": "task-c14n-v3",
+          "task_id": "f5-plan-current",
+          "revision": 1,
+          "goal": "Create and consume a typed plan-local directory, then write a report",
+          "inputs": [],
+          "parameters": {},
+          "output_contracts": [],
+          "confirmed_decisions": [],
+          "unresolved_questions": [],
+          "requirements": [],
+          "source_refs": [
+            "msg-74d0c6c6fa220fe130a0",
+            "object:sha256:858503f9f420e212012d581701d61895fca04fb4b20dfaa97c05d46d65497b72",
+            "object:sha256:d200999db0b510dfd498afd57aea39c58df22a4dd5d7473e80bdc7c7d372fc06"
+          ],
+          "raw_submission_ref": "object:sha256:858503f9f420e212012d581701d61895fca04fb4b20dfaa97c05d46d65497b72"
+        },
+        "task_revision": 1,
+        "consultation_state": {
+          "schema_version": 1,
+          "consultation_id": "f5-plan-current:consultant:0",
+          "task_id": "f5-plan-current",
+          "phase": "ready_to_plan",
+          "consultation_status": "ready",
+          "iteration": 1,
+          "requirements": {
+            "skill-routing": {
+              "id": "skill-routing",
+              "purpose": "Consultant selects documented canonical Skill refs for Planner.",
+              "mandatory": true,
+              "status": "satisfied",
+              "satisfied_by": [
+                "consultant_selected_skill_refs"
+              ],
+              "evidence_provenance": {
+                "kind": "consultant_selection",
+                "selected_skill_ids": [
+                  "sequence/search/local-blast"
+                ]
+              },
+              "freshness": "task_revision",
+              "owner": "consultant",
+              "semantic": true,
+              "active": true,
+              "evidence_status": "checked",
+              "availability_status": "not_applicable",
+              "disposition": "active",
+              "updated_at": "2026-09-15T09:12:12.934298+00:00"
+            },
+            "runtime:sequence-search-local-blast": {
+              "id": "runtime:sequence-search-local-blast",
+              "purpose": "Record current runtime availability evidence for selected executable Skill sequence/search/local-blast.",
+              "mandatory": false,
+              "status": "unresolved",
+              "satisfied_by": [],
+              "evidence_provenance": {
+                "kind": "structured_runtime_evidence",
+                "skill_id": "sequence/search/local-blast",
+                "digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+                "reason_code": ""
+              },
+              "freshness": "current_runtime",
+              "owner": "runtime_preflight",
+              "semantic": false,
+              "active": true,
+              "evidence_status": "pending",
+              "availability_status": "unknown",
+              "disposition": "active",
+              "updated_at": "2026-09-15T09:12:12.934332+00:00"
+            }
+          },
+          "actions": {},
+          "evidence": [],
+          "execute_call_count": 0,
+          "duplicate_reuse_count": 0,
+          "no_progress_count": 0,
+          "max_total_execute": 4,
+          "max_no_progress": 2,
+          "completion_decision": "ready_to_plan",
+          "completion_reason": "agent_planning_handoff_committed",
+          "agent_disposition": "planning_ready",
+          "tool_observations": [],
+          "resource_bindings": [],
+          "agent_progress": {
+            "turn_count": 0,
+            "identical_no_progress_count": 0,
+            "last_fingerprint": ""
+          },
+          "finalize_protocol": null,
+          "created_at": "2026-09-15T09:12:12.888894+00:00",
+          "updated_at": "2026-09-15T09:12:12.935579+00:00",
+          "skill_discovery": {
+            "schema_version": 2,
+            "routing_status": "SELECTED",
+            "reasoning_level": "normal",
+            "task_hypothesis": "",
+            "observed_skill_mentions": [],
+            "input_roles": [],
+            "search_queries_attempted": [],
+            "search_history": [],
+            "catalog_digest": "",
+            "last_search_fingerprint": "",
+            "repeated_search_count": 0,
+            "candidate_skill_ids": [],
+            "candidate_evidence": {},
+            "candidate_skill_refs": [],
+            "loaded_skill_ids": [],
+            "loaded_skill_docs": {},
+            "loaded_skill_refs": [],
+            "pending_document_injection_ids": [],
+            "injected_document_digests": {},
+            "selected_skill_refs": [
+              {
+                "skill_id": "sequence/search/local-blast",
+                "role": "primary",
+                "reason": "",
+                "document_digest": "",
+                "selection_revision": 0,
+                "source": "consultant",
+                "status": "selected"
+              }
+            ],
+            "excluded_skill_refs": [],
+            "rejected_candidates": [],
+            "normal_search_count": 0,
+            "catalog_expansion_count": 0,
+            "reasoning_escalation_count": 0,
+            "premature_finish_count": 0,
+            "capability_gap": false,
+            "capability_gap_reason": "",
+            "budgets": {
+              "normal_searches": 2,
+              "catalog_expansions": 1,
+              "loaded_skill_docs": 8,
+              "reasoning_escalations": 1
+            },
+            "selected_skill_ids": [
+              "sequence/search/local-blast"
+            ]
+          },
+          "active_requirement_ids": [
+            "skill-routing",
+            "runtime:sequence-search-local-blast"
+          ],
+          "active_semantic_requirement_ids": [
+            "skill-routing"
+          ],
+          "active_machine_evidence_ids": [
+            "runtime:sequence-search-local-blast"
+          ],
+          "active_evidence_digest": "100d27a726fea787fcc000d222ee7e5bfb03f9b5ced42ae1619fe212faffbb2d",
+          "unresolved_requirement_ids": [],
+          "discovery_continuation": {
+            "schema_version": 1,
+            "episode_id": "consultant-discovery-e8cdaae6aa57e887fcc9",
+            "cache_key": "3415b679849685ce96b71c7b591e89d9b6a73f5b22422ac25d20dbdde160202e",
+            "identity": {
+              "schema_version": 1,
+              "episode_id": "consultant-discovery-e8cdaae6aa57e887fcc9",
+              "task_id": "f5-plan-current",
+              "consultation_id": "f5-plan-current:consultant:0",
+              "conversation": {
+                "head_ref": "object:sha256:d200999db0b510dfd498afd57aea39c58df22a4dd5d7473e80bdc7c7d372fc06",
+                "turn_count": 1,
+                "user_turn_count": 1
+              },
+              "task_semantic_hash": "sha256:936803d0db1770c9d0ab751fd888d4d7bd21d3fe75421fa69daf5e3454b49e18",
+              "task_revision_observed": 0,
+              "project_id": "offline",
+              "task_mode": "managed",
+              "task_ownership": {
+                "admission_id": "intent-admission-22b7c9b644490a527108",
+                "admission_status": "managed_execution_admitted",
+                "request_kind": "execute",
+                "execution_scope": "managed",
+                "managed_intent_explicit": true,
+                "decision_source": "llm_request_intent_router"
+              },
+              "resolved_bindings_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+              "work_dir": "/tmp/biomind-6793-fix-20260915/current07/pty2-plain-approve/scratch/biomind-plan-local-graph-ytizeyvk",
+              "cache_key": "3415b679849685ce96b71c7b591e89d9b6a73f5b22422ac25d20dbdde160202e"
+            },
+            "base": {
+              "conversation_turns": [
+                {
+                  "content_ref": "object:sha256:858503f9f420e212012d581701d61895fca04fb4b20dfaa97c05d46d65497b72",
+                  "created_at": "2026-09-15T09:12:12.800601+00:00",
+                  "ordinal": 1,
+                  "previous_turn_ref": "",
+                  "question_id": "",
+                  "role": "user",
+                  "turn_id": "U1",
+                  "content": "Create an approved plan-local work directory, consume it, and write the report.",
+                  "turn_ref": "object:sha256:d200999db0b510dfd498afd57aea39c58df22a4dd5d7473e80bdc7c7d372fc06"
+                }
+              ],
+              "semantic_conversation_evidence": [
+                {
+                  "evidence_id": "object:sha256:d200999db0b510dfd498afd57aea39c58df22a4dd5d7473e80bdc7c7d372fc06",
+                  "kind": "user_message",
+                  "excerpt": "[U1 USER]\nCreate an approved plan-local work directory, consume it, and write the report.",
+                  "truncated": false
+                }
+              ],
+              "consultant_context": "Create an approved plan-local work directory, consume it, and write the report.",
+              "consultant_wiki_context": "",
+              "consultant_memory_retrieval_context": "<memory_broker_policy>\n- Consultant is the only broad automatic memory retrieval stage for managed tasks.\n- Curate relevant facts into the FINISH handoff; do not copy all retrieved text forward.\n- Planner and Generate should consume the curated handoff packet and request targeted retrieval only when information is missing.\n</memory_broker_policy>",
+              "user_preferences_context": "",
+              "input_resolution_result": {
+                "relevant": false,
+                "artifact_kind": "",
+                "artifact_label": "",
+                "artifact_role": "",
+                "status": "not_applicable",
+                "task_id": "f5-plan-current",
+                "benchmark_id": "f5-plan-current",
+                "ambiguity_level": "",
+                "samples": [],
+                "resolutions": [],
+                "search_roots": [],
+                "verified_explicit_paths": [],
+                "invalid_explicit_paths": [],
+                "excluded_candidates": [],
+                "formal_candidates": [],
+                "selected_by_sample": {},
+                "ambiguous_samples": [],
+                "ambiguous_resolutions": [],
+                "resolved_inputs": [],
+                "observed_artifacts": [],
+                "candidate_groups": {},
+                "missing_roles": [],
+                "ambiguous_roles": [],
+                "discovery_log": [],
+                "unresolved": false,
+                "unresolved_reasons": [],
+                "consultant_action_hint": ""
+              },
+              "input_resolution_context": "",
+              "workflow_candidate_ids": [],
+              "workflow_catalog": "<workflow_catalog>\nNo metadata workflow match was found. Do not invent a workflow ID; use canonical skills directly unless a loaded template proves a match.\n</workflow_catalog>",
+              "archive_telemetry": {
+                "query_count": 0,
+                "query_chars": 79,
+                "result_chars": 0,
+                "rows_returned": 0,
+                "timed_out": false,
+                "failed_open": true,
+                "busy_or_locked": false,
+                "error_type": "OptionalArchiveObservationDeferred",
+                "elapsed_ms": 0.0,
+                "deferred": true
+              }
+            },
+            "input_inventory_signature": {
+              "schema_version": 1,
+              "path_count": 0,
+              "paths": [],
+              "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+            },
+            "hit_count": 0,
+            "last_cache_hit": false,
+            "updated_at": "2026-09-15T09:12:12.933487+00:00",
+            "invocation_count": 1,
+            "last_cache_reason": "cache_empty",
+            "discovery_delta": {
+              "routing_status": "SELECTED",
+              "discovery_round": 0,
+              "task_hypothesis": "",
+              "search_queries_attempted": [],
+              "candidate_skill_ids": [],
+              "candidate_evidence": {},
+              "loaded_skill_ids": [],
+              "loaded_skill_docs": {},
+              "rejected_candidates": [],
+              "reasoning_level": "normal",
+              "reasoning_escalation_count": 0,
+              "remaining_discovery_budget": {
+                "normal_searches": 2,
+                "catalog_expansions": 1,
+                "loaded_skill_docs": 8,
+                "reasoning_escalations": 1
+              },
+              "selected_skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "pending_user_ambiguity": {},
+              "controller_feedback": []
+            },
+            "archive_telemetry": {
+              "query_count": 0,
+              "query_chars": 79,
+              "result_chars": 0,
+              "rows_returned": 0,
+              "timed_out": false,
+              "failed_open": true,
+              "busy_or_locked": false,
+              "error_type": "OptionalArchiveObservationDeferred",
+              "elapsed_ms": 0.0,
+              "deferred": true
+            }
+          },
+          "resolved_selected_skill_ids": [
+            "sequence/search/local-blast"
+          ],
+          "pending_question": null,
+          "planning_handoff_attempts": [
+            {
+              "attempt_id": "handoff-a30b2aa9749921f9",
+              "committed": true,
+              "error_code": "",
+              "detail": "",
+              "recorded_at": "2026-09-15T09:12:12.935569+00:00"
+            }
+          ],
+          "pending_human_question": null
+        },
+        "pending_human_question": {},
+        "contract_status": "canonical_task_ready",
+        "memory_packet_context": "<consultant_memory_packet>\n<memory_packet_policy>\n- This packet is the primary memory handoff from Consultant to Planner and Generate.\n- It is curated primarily from Wiki and source SessionArchive evidence; TaskSummary is report/cache only.\n- If details are missing, request targeted retrieval instead of repeating broad automatic recall.\n</memory_packet_policy>\n\n<consultant_curated_handoff>\nThe managed task contract is complete.\n</consultant_curated_handoff>\n\n<memory_source_refs>\n- none\n</memory_source_refs>\n</consultant_memory_packet>",
+        "wiki_memory_context": "",
+        "binding_phase": {
+          "phase": "INITIAL_TASK_AND_SKILL_BOOTSTRAP",
+          "canonical_task_exists": false,
+          "active_skill_refs": [],
+          "active_skill_ids": [],
+          "compatibility_selected_skill_ids": [],
+          "committed_skill_binding_exists": false,
+          "materialized_plan_exists": false,
+          "canonical_plan_pointer_present": false,
+          "binding_projection_inconsistent": false
+        },
+        "selected_skill_refs": [
+          {
+            "skill_id": "sequence/search/local-blast",
+            "source_path": "skills/sequence/search/local-blast/SKILL.md",
+            "snapshot_id": "skill-snapshot-8aeed87b7f94db6b002d",
+            "content_hash": "aa8f25fa26f175d6ef800c4f23fc7bb02aa314a3541a50b57640663c5f9c8a00",
+            "scope": "task",
+            "status": "active",
+            "selected_at_task_revision": 1
+          }
+        ],
+        "skill_access_state": {
+          "schema_version": 1,
+          "selected_skill_refs": [
+            {
+              "skill_id": "sequence/search/local-blast",
+              "source_path": "skills/sequence/search/local-blast/SKILL.md",
+              "snapshot_id": "skill-snapshot-8aeed87b7f94db6b002d",
+              "content_hash": "aa8f25fa26f175d6ef800c4f23fc7bb02aa314a3541a50b57640663c5f9c8a00",
+              "scope": "task",
+              "status": "active",
+              "selected_at_task_revision": 1
+            }
+          ],
+          "snapshots": {
+            "skill-snapshot-8aeed87b7f94db6b002d": {
+              "snapshot_id": "skill-snapshot-8aeed87b7f94db6b002d",
+              "skill_id": "sequence/search/local-blast",
+              "source_path": "skills/sequence/search/local-blast/SKILL.md",
+              "content_hash": "aa8f25fa26f175d6ef800c4f23fc7bb02aa314a3541a50b57640663c5f9c8a00",
+              "created_at": "2026-09-15T09:12:12+00:00",
+              "catalog_revision": "skill-catalog-afa24c3d55b0c049",
+              "heading_index": [
+                {
+                  "heading": "Local BLAST Search",
+                  "level": 1,
+                  "start_line": 17,
+                  "end_line": 122
+                },
+                {
+                  "heading": "When To Use",
+                  "level": 2,
+                  "start_line": 21,
+                  "end_line": 30
+                },
+                {
+                  "heading": "Program Choice",
+                  "level": 2,
+                  "start_line": 31,
+                  "end_line": 44
+                },
+                {
+                  "heading": "Core Workflow",
+                  "level": 2,
+                  "start_line": 45,
+                  "end_line": 54
+                },
+                {
+                  "heading": "Command Patterns",
+                  "level": 2,
+                  "start_line": 55,
+                  "end_line": 88
+                },
+                {
+                  "heading": "Filtering Guidance",
+                  "level": 2,
+                  "start_line": 89,
+                  "end_line": 96
+                },
+                {
+                  "heading": "Expected Outputs",
+                  "level": 2,
+                  "start_line": 97,
+                  "end_line": 107
+                },
+                {
+                  "heading": "Validation And Troubleshooting",
+                  "level": 2,
+                  "start_line": 108,
+                  "end_line": 116
+                },
+                {
+                  "heading": "Related Skills",
+                  "level": 2,
+                  "start_line": 117,
+                  "end_line": 122
+                }
+              ],
+              "line_count": 122,
+              "exact_text": "---\nname: local-blast\ndescription: Run BLAST+ locally against custom, private, or downloaded nucleotide/protein databases. Use for local genomes, project-specific annotations, GT21/custom FASTA files, private sequences, reproducible batch searches, and database construction with makeblastdb; do not use for quick public single-query searches when remote BLAST is easier.\nlegacy_ids: [bio-local-blast, local-blast, blast-plus]\nruntime:\n  default_env: bio_sequence_search_local_blast_runtime\n  env_runner: conda run -n bio_sequence_search_local_blast_runtime\n  language: cli\n  packages: [blast]\n  capabilities: [local-blast, blast-plus, makeblastdb, blastp, blastn, blastdbcmd]\n  install_tool: sequence_search_local_blast_runtime\n  install_policy: declared-only\n  install_command: conda create -y -n bio_sequence_search_local_blast_runtime -c conda-forge -c bioconda blast\n  healthcheck: conda run -n bio_sequence_search_local_blast_runtime makeblastdb -version && conda run -n bio_sequence_search_local_blast_runtime blastp -version && conda run -n bio_sequence_search_local_blast_runtime blastn -version && conda run -n bio_sequence_search_local_blast_runtime blastdbcmd -version\n---\n\n# Local BLAST Search\n\nUse this skill for reproducible sequence searches against local or custom databases. Prefer local BLAST whenever sequences are private, the target database is project-specific, or the result must be reproducible from a fixed FASTA snapshot.\n\n## When To Use\n\n- Search private or unpublished query sequences.\n- Search local genome, transcript, CDS, protein, or annotation FASTA files.\n- Search project-specific references such as GT21 gene/protein FASTA files.\n- Run many queries or repeated searches where NCBI remote BLAST would be slow or inappropriate.\n- Build a frozen searchable database from downloaded NCBI, Ensembl, UniProt, or local FASTA records.\n\nDo not use this skill when the user wants a quick public one-off BLAST with no private data, needs distant homolog detection beyond BLAST sensitivity, or asks for final phylogenetic inference.\n\n## Program Choice\n\n| Query | Database | Program |\n|---|---|---|\n| nucleotide | nucleotide | `blastn` |\n| protein | protein | `blastp` |\n| translated nucleotide query | protein | `blastx` |\n| protein | translated nucleotide database | `tblastn` |\n| translated nucleotide query | translated nucleotide database | `tblastx` |\n\nUse `megablast`-like settings only for very similar nucleotide sequences. Use more sensitive `blastn` settings for divergent nucleotide homologs.\n\nNever run `blastn` against a protein BLAST database or `blastp` against a nucleotide BLAST database. If the query/database molecule types are incompatible, choose the appropriate translated BLAST program (`blastx`, `tblastn`, or `tblastx`) only when that biological comparison is meaningful; otherwise record the stage as unresolved/blocked with the verified molecule types. Do not append `|| echo ...` or similar shell fallbacks that hide a BLAST failure exit status.\n\n## Core Workflow\n\n1. Verify query FASTA and target FASTA are non-empty and have stable headers.\n2. Determine molecule type for query and database.\n3. Build or reuse a BLAST database with `makeblastdb`; record the source FASTA, database type, and date.\n4. Choose the correct BLAST program and explicit thresholds.\n5. Run with explicit `-outfmt`, `-evalue`, `-max_target_seqs`, and `-num_threads`.\n6. Parse tabular output, keep all hits needed for coverage/identity filters, and summarize top hits per query.\n7. Validate that query IDs, database title, and hit counts match expectations.\n\n## Command Patterns\n\nBuild nucleotide and protein databases:\n\n```bash\nmakeblastdb -in target_genome.fasta -dbtype nucl -parse_seqids -out blastdb/target_genome\nmakeblastdb -in target_proteins.fasta -dbtype prot -parse_seqids -out blastdb/target_proteins\n```\n\nRun a reproducible tabular search:\n\n```bash\nblastp \\\n  -query query_proteins.fasta \\\n  -db blastdb/target_proteins \\\n  -out results.tsv \\\n  -evalue 1e-5 \\\n  -max_target_seqs 20 \\\n  -num_threads 8 \\\n  -outfmt \"6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen slen qcovs\"\n```\n\nUseful `outfmt 6` fields:\n\n| Field | Meaning |\n|---|---|\n| `qseqid`, `sseqid` | query and subject IDs |\n| `pident` | percent identity |\n| `length` | aligned length |\n| `qstart`, `qend`, `sstart`, `send` | alignment coordinates |\n| `evalue`, `bitscore` | significance and score |\n| `qlen`, `slen` | query and subject lengths |\n| `qcovs` | query coverage per subject |\n\n## Filtering Guidance\n\n- For close homologs, start with `evalue <= 1e-10`, `qcovs >= 50`, and inspect identity by gene family.\n- For distant homologs, relax e-value only with coverage and domain context; consider `sequence-similarity` for PSI-BLAST/HMMER.\n- For short peptides or domains, do not over-rely on percent identity; report alignment length and coverage.\n- For duplicated plant gene families, keep multiple hits and avoid calling an ortholog from a single top BLAST hit.\n- For reciprocal best hit workflows, run both directions with the same database snapshot and thresholds.\n\n## Expected Outputs\n\nWhen useful, produce:\n\n- `blast_results.tsv`: raw tabular BLAST output.\n- `top_hits.tsv`: best or filtered hits per query.\n- `blast_summary.tsv`: query count, hit count, best hit, coverage, identity, e-value, and bitscore.\n- `no_hits.txt`: query IDs with no hit under the chosen threshold.\n\nReport the program, query file, database file/prefix, database type, command parameters, thresholds, number of queries, number of queries with hits, and warnings about short alignments or many equally good paralog hits.\n\n## Validation And Troubleshooting\n\n- Run `blastdbcmd -db <db_prefix> -info` to verify database metadata.\n- If no hits appear, confirm query/database molecule types and whether `blastx` or `tblastn` is needed.\n- If BLAST reports \"No alias or index file found\" or a molecule-type mismatch, treat it as a failed command, not a no-hit result.\n- If headers cannot be retrieved, rebuild with `-parse_seqids` when FASTA IDs are compatible.\n- If output is unexpectedly small, check `-max_target_seqs`, e-value, low-complexity filtering, and sequence orientation.\n- Keep BLAST database files together; missing `.pin/.psq/.phr` or `.nin/.nsq/.nhr` components mean the database is incomplete.\n\n## Related Skills\n\n- `skills/sequence/search/remote-blast` - Public NCBI searches for small jobs.\n- `skills/sequence/search/sequence-similarity` - More sensitive homology workflows.\n- `skills/databases/ncbi/entrez-fetch` - Download sequences for local databases.\n- `skills/databases/ensembl/ensembl-database` - Fetch public Ensembl genes, transcripts, proteins, and ortholog context before local searches.\n"
+            }
+          },
+          "loaded_skill_documents": {},
+          "resource_snapshots": {},
+          "excerpts": {},
+          "excerpt_cache": {},
+          "searches": {},
+          "search_cache": {},
+          "continuations": {},
+          "binding_proposals": {},
+          "skill_tool_results": {},
+          "provider_visible_materials": {},
+          "material_visibility_sequence": 0,
+          "request_occurrences": {},
+          "context_rounds": {},
+          "search_occurrences": {},
+          "search_rounds": {},
+          "proposal_occurrences": {},
+          "events": [
+            {
+              "event": "skill_snapshot_created",
+              "recorded_at": "2026-09-15T09:12:12+00:00",
+              "skill_id": "sequence/search/local-blast",
+              "snapshot_id": "skill-snapshot-8aeed87b7f94db6b002d",
+              "content_hash": "aa8f25fa26f175d6ef800c4f23fc7bb02aa314a3541a50b57640663c5f9c8a00",
+              "status": "active"
+            }
+          ]
+        },
+        "conversation_evidence": {
+          "head_ref": "object:sha256:d200999db0b510dfd498afd57aea39c58df22a4dd5d7473e80bdc7c7d372fc06",
+          "turn_count": 1,
+          "user_turn_count": 1
+        },
+        "canonical_commit": {
+          "succeeded": true,
+          "task_revision": 1,
+          "state_generation": 6,
+          "binding_phase": "INITIAL_TASK_AND_SKILL_BOOTSTRAP"
+        },
+        "consultant_no_progress_ledger": {},
+        "consultant_commit_rejection": {},
+        "consultant_outcome": {
+          "schema_version": 1,
+          "type": "planning_ready",
+          "summary": "The Agent initiated and durably committed the planning handoff.",
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "step_id": ""
+          },
+          "payload": {
+            "task_revision": 1,
+            "contract_status": "canonical_task_ready"
+          },
+          "evidence_refs": []
+        },
+        "phase_invocation_ordinals": {
+          "consultant": 1
+        },
+        "phase_context_audit": {
+          "consultant": {
+            "schema_version": 1,
+            "invocation_id": "consultant-c366320f22291dfbca6e32e6",
+            "invocation_ordinal": 1,
+            "epoch_count": 1,
+            "epochs": [
+              {
+                "last_provider_request": {
+                  "provider_call_recorded": true,
+                  "provider_message_count": 2,
+                  "system_fingerprint": "7e04ae77495258013d3f989204561c16bcdf139be881827ac8e3a6be8c277551",
+                  "seed_fingerprint": "9f9df201fa888bd42d5bb674524abf85d3b60872b30659d2c54ac37ce5ba440c",
+                  "provider_seed_contract_sha256": "f7b3e65f3ef5057dfe607fed3da727077ee96ab81bdc12b6ed95bc4b31ec5b81",
+                  "inherited_message_count": 0,
+                  "pending_event_count": 0,
+                  "visible_material_descriptors": [],
+                  "provider_request_fingerprint": "1bf83539c54a3d16435d126c10dbf82bb098f325001660c291293f06171138fb",
+                  "context_compaction_triggered": false,
+                  "context_compaction": {}
+                },
+                "schema_version": 1,
+                "phase": "consultant",
+                "invocation_id": "consultant-c366320f22291dfbca6e32e6",
+                "epoch_ordinal": 1,
+                "turn_count": 1,
+                "provider_call_count": 1,
+                "provider_message_count": 3,
+                "inherited_message_count": 0,
+                "seed_contract_sha256": "4cf1942962f58f111772c4c900966616065968ce79bd3f2b2c9c4a9804838b94",
+                "provider_seed_contract_sha256": "f7b3e65f3ef5057dfe607fed3da727077ee96ab81bdc12b6ed95bc4b31ec5b81",
+                "outcome_type": "planning_ready",
+                "epoch_boundary": false
+              }
+            ],
+            "transcript_refs": [
+              "phase-archive:sha256:aded923bd5db8100aefe965c4f6646dbee2ff1414f4c91cf27e7c5bb5fa719e4"
+            ],
+            "transcript_in_parent_state": false
+          }
+        },
+        "phase_archive_refs": {
+          "consultant": "phase-archive:sha256:aded923bd5db8100aefe965c4f6646dbee2ff1414f4c91cf27e7c5bb5fa719e4"
+        },
+        "managed_run_boundary": {
+          "node": "consultant",
+          "field": "consultant_outcome",
+          "outcome": {
+            "schema_version": 1,
+            "type": "planning_ready",
+            "summary": "The Agent initiated and durably committed the planning handoff.",
+            "scope": {
+              "task_id": "f5-plan-current",
+              "plan_id": "plan_e33c5694231df57920a4",
+              "plan_version": "plan_v1",
+              "step_id": ""
+            },
+            "payload": {
+              "task_revision": 1,
+              "contract_status": "canonical_task_ready"
+            },
+            "evidence_refs": []
+          },
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "",
+            "plan_version": "",
+            "current_step_id": ""
+          }
+        }
+      }
+    },
+    {
+      "planner": {
+        "current_plan": "## Execution Checklist\n- [ ] [plan-inspect-0] 合成步骤 00 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_00\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: []\n  - Success criteria: 冻结要求 00-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 00-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-1] 合成步骤 01 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_01\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-0]\n  - Success criteria: 冻结要求 01-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 01-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-2] 合成步骤 02 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_02\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-1]\n  - Success criteria: 冻结要求 02-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 02-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-3] 合成步骤 03 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_03\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-2]\n  - Success criteria: 冻结要求 03-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 03-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-4] 合成步骤 04 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_04\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-3]\n  - Success criteria: 冻结要求 04-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 04-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-5] 合成步骤 05 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_05\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-4]\n  - Success criteria: 冻结要求 05-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 05-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-6] 合成步骤 06 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_06\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-5]\n  - Success criteria: 冻结要求 06-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 06-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-7] 合成步骤 07 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_07\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-6]\n  - Success criteria: 冻结要求 07-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 07-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-8] 合成步骤 08 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_08\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-7]\n  - Success criteria: 冻结要求 08-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 08-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-9] 合成步骤 09 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_09\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-8]\n  - Success criteria: 冻结要求 09-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 09-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-10] 合成步骤 10 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_10\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-9]\n  - Success criteria: 冻结要求 10-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 10-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n- [ ] [plan-inspect-11] 合成步骤 11 / synthetic stage with spaces\n  - Action: EXECUTE\n  - Purpose: ANALYSIS\n  - Execution capability: sequence.search.local.blast.execute\n  - Operation: none\n  - Skills: [sequence/search/local-blast]\n  - Inputs:\n    - []\n  - Outputs:\n    - []\n  - Step effect: {\"explicit_side_effects\":[],\"produces_artifacts\":[],\"produces_bindings\":[],\"produces_observations\":[\"fixture_observation_11\"],\"schema_version\":1,\"workspace_mutations\":[]}\n  - Depends on: [plan-inspect-10]\n  - Success criteria: 冻结要求 11-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution; 冻结要求 11-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution\n  - Stage: [none]\n  - Batch: none\n",
+        "plan_progress": "Plan checklist:\n- [ ] 合成步骤 00 / synthetic stage with spaces\n- [ ] 合成步骤 01 / synthetic stage with spaces\n- [ ] 合成步骤 02 / synthetic stage with spaces\n- [ ] 合成步骤 03 / synthetic stage with spaces\n- [ ] 合成步骤 04 / synthetic stage with spaces\n- [ ] 合成步骤 05 / synthetic stage with spaces\n- [ ] 合成步骤 06 / synthetic stage with spaces\n- [ ] 合成步骤 07 / synthetic stage with spaces\n- [ ] 合成步骤 08 / synthetic stage with spaces\n- [ ] 合成步骤 09 / synthetic stage with spaces\n- [ ] 合成步骤 10 / synthetic stage with spaces\n- [ ] 合成步骤 11 / synthetic stage with spaces\nNext step: 合成步骤 00 / synthetic stage with spaces",
+        "plan_id": "plan_e33c5694231df57920a4",
+        "plan_version": "plan_v1",
+        "plan_revision": 1,
+        "state_generation": 12,
+        "current_step_id": "plan-inspect-0",
+        "current_stage_id": "",
+        "task_spec": {
+          "schema_version": 6,
+          "canonicalization_version": "task-c14n-v3",
+          "task_id": "f5-plan-current",
+          "revision": 1,
+          "goal": "Create and consume a typed plan-local directory, then write a report",
+          "inputs": [],
+          "parameters": {},
+          "output_contracts": [],
+          "confirmed_decisions": [],
+          "unresolved_questions": [],
+          "requirements": [],
+          "source_refs": [
+            "msg-74d0c6c6fa220fe130a0",
+            "object:sha256:858503f9f420e212012d581701d61895fca04fb4b20dfaa97c05d46d65497b72",
+            "object:sha256:d200999db0b510dfd498afd57aea39c58df22a4dd5d7473e80bdc7c7d372fc06"
+          ],
+          "raw_submission_ref": "object:sha256:858503f9f420e212012d581701d61895fca04fb4b20dfaa97c05d46d65497b72"
+        },
+        "task_revision": 1,
+        "validation_issues": [],
+        "selected_skills": [
+          "sequence/search/local-blast"
+        ],
+        "runtime_audit": [],
+        "selected_skills_raw": [
+          "sequence/search/local-blast"
+        ],
+        "active_skills": [],
+        "future_skills": [],
+        "required_skills_all": [],
+        "candidate_skills": [],
+        "knowledge_claims": [
+          {
+            "claim_id": "claim_edf36dabb39a29a0",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-0",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-0"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_503764d4c99cb5f7",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-1",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-1"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_f8b91f19c8ee533d",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-2",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-2"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_a0eae1381be5c078",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-3",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-3"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_e62fe7c9f8ac06f9",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-4",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-4"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_73ca243b8cf3591b",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-5",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-5"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_2c27f5dc0d0d3f5b",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-6",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-6"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_d687b86f6806325e",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-7",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-7"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_85932e74fa2207bc",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-8",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-8"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_5c753744c5d011f7",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-9",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-9"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_7872e24746dc3ccd",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-10",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-10"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_18e11650635f9db7",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-11",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-11"
+              ]
+            }
+          }
+        ],
+        "knowledge_conflicts": [],
+        "knowledge_conflict_summary": {
+          "phase": "plan_generated",
+          "unresolved_count": 0,
+          "blocking_conflicts": [],
+          "requires_probe": [],
+          "decisions": [],
+          "active_plan_version": "plan_v1",
+          "stale_steps": [],
+          "revalidation_required_steps": [],
+          "claim_set_hash": "fd20a55bf916a60d2546b9da51ad433267f23699748fd9232a5a941d88b3edc7",
+          "typed_claim_count": 12,
+          "hard_claim_count": 12,
+          "preference_claim_count": 0,
+          "ambiguous_claim_count": 0,
+          "progress_events": []
+        },
+        "knowledge_progress_events": [],
+        "knowledge_claim_set_hash": "fd20a55bf916a60d2546b9da51ad433267f23699748fd9232a5a941d88b3edc7",
+        "canonical_constraint_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "conflict_resolution": {},
+        "plan_stale_steps": [],
+        "plan_revalidation_steps": [],
+        "workflow_state": {
+          "active_batch_id": "",
+          "active_skills": [],
+          "future_skills": [],
+          "workflow_decision": {},
+          "workflow_stages": []
+        },
+        "workflow_handoff": {
+          "active_batch_id": "",
+          "active_skills": [],
+          "future_skills": [],
+          "workflow_decision": {},
+          "workflow_stages": []
+        },
+        "workflow_stages": [],
+        "workflow_id": "",
+        "active_batch_id": "",
+        "skill_selection_source": "consultant_finish",
+        "pending_action": {},
+        "recovery_decision": {},
+        "failure_owner": "",
+        "recovery_scope": "",
+        "recovery_phase": "",
+        "recovery_status": "",
+        "supervisor_verdict": "",
+        "completion_gate_result": {},
+        "planner_outcome": {
+          "schema_version": 1,
+          "type": "plan_review_ready",
+          "summary": "Planner explicitly submitted a durable candidate for review.",
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "step_id": "plan-inspect-0"
+          },
+          "payload": {
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "submission_id": "plan-submission-275546f37a5061a74035"
+          },
+          "evidence_refs": []
+        },
+        "phase_invocation_ordinals": {
+          "consultant": 1,
+          "planner": 1
+        },
+        "phase_context_audit": {
+          "consultant": {
+            "schema_version": 1,
+            "invocation_id": "consultant-c366320f22291dfbca6e32e6",
+            "invocation_ordinal": 1,
+            "epoch_count": 1,
+            "epochs": [
+              {
+                "last_provider_request": {
+                  "provider_call_recorded": true,
+                  "provider_message_count": 2,
+                  "system_fingerprint": "7e04ae77495258013d3f989204561c16bcdf139be881827ac8e3a6be8c277551",
+                  "seed_fingerprint": "9f9df201fa888bd42d5bb674524abf85d3b60872b30659d2c54ac37ce5ba440c",
+                  "provider_seed_contract_sha256": "f7b3e65f3ef5057dfe607fed3da727077ee96ab81bdc12b6ed95bc4b31ec5b81",
+                  "inherited_message_count": 0,
+                  "pending_event_count": 0,
+                  "visible_material_descriptors": [],
+                  "provider_request_fingerprint": "1bf83539c54a3d16435d126c10dbf82bb098f325001660c291293f06171138fb",
+                  "context_compaction_triggered": false,
+                  "context_compaction": {}
+                },
+                "schema_version": 1,
+                "phase": "consultant",
+                "invocation_id": "consultant-c366320f22291dfbca6e32e6",
+                "epoch_ordinal": 1,
+                "turn_count": 1,
+                "provider_call_count": 1,
+                "provider_message_count": 3,
+                "inherited_message_count": 0,
+                "seed_contract_sha256": "4cf1942962f58f111772c4c900966616065968ce79bd3f2b2c9c4a9804838b94",
+                "provider_seed_contract_sha256": "f7b3e65f3ef5057dfe607fed3da727077ee96ab81bdc12b6ed95bc4b31ec5b81",
+                "outcome_type": "planning_ready",
+                "epoch_boundary": false
+              }
+            ],
+            "transcript_refs": [
+              "phase-archive:sha256:aded923bd5db8100aefe965c4f6646dbee2ff1414f4c91cf27e7c5bb5fa719e4"
+            ],
+            "transcript_in_parent_state": false
+          },
+          "planner": {
+            "schema_version": 1,
+            "invocation_id": "planner-eb8897cba84428cbb597cb07",
+            "invocation_ordinal": 1,
+            "epoch_count": 1,
+            "epochs": [
+              {
+                "last_provider_request": {
+                  "provider_call_recorded": true,
+                  "provider_message_count": 2,
+                  "system_fingerprint": "68f1b7a5baf8111c8005cd121a01df60eb3f2ce6d324f27d4f2ae5c9f197c1e4",
+                  "seed_fingerprint": "152dd449456b03ade7bf6af91bccd3412080b84e60cd6c298f1f35d25ed9b6a3",
+                  "provider_seed_contract_sha256": "bc20db2a0688b9deeebf28868aa7e2b645eb3c9e8ab63c8060c40a8f50dba324",
+                  "inherited_message_count": 0,
+                  "pending_event_count": 0,
+                  "visible_material_descriptors": [],
+                  "provider_request_fingerprint": "f055f1599772a0e010ada30092cac06fc1820eedbf3355cfc1f4de104b5dad54",
+                  "context_compaction_triggered": false,
+                  "context_compaction": {}
+                },
+                "schema_version": 1,
+                "phase": "planner",
+                "invocation_id": "planner-eb8897cba84428cbb597cb07",
+                "epoch_ordinal": 1,
+                "turn_count": 1,
+                "provider_call_count": 1,
+                "provider_message_count": 3,
+                "inherited_message_count": 0,
+                "seed_contract_sha256": "0d2516ee89c912d8baff4b6faecf56029dcccb97ae4659625cb7eb58562e3f29",
+                "provider_seed_contract_sha256": "bc20db2a0688b9deeebf28868aa7e2b645eb3c9e8ab63c8060c40a8f50dba324",
+                "outcome_type": "plan_review_ready",
+                "epoch_boundary": false
+              }
+            ],
+            "transcript_refs": [
+              "phase-archive:sha256:d194ddcff1ef9f22ca5971d3a15a2c7f22c6d93efbf1e55627171253475a3429"
+            ],
+            "transcript_in_parent_state": false
+          }
+        },
+        "phase_archive_refs": {
+          "consultant": "phase-archive:sha256:aded923bd5db8100aefe965c4f6646dbee2ff1414f4c91cf27e7c5bb5fa719e4",
+          "planner": "phase-archive:sha256:d194ddcff1ef9f22ca5971d3a15a2c7f22c6d93efbf1e55627171253475a3429"
+        },
+        "managed_run_boundary": {
+          "node": "planner",
+          "field": "planner_outcome",
+          "outcome": {
+            "schema_version": 1,
+            "type": "plan_review_ready",
+            "summary": "Planner explicitly submitted a durable candidate for review.",
+            "scope": {
+              "task_id": "f5-plan-current",
+              "plan_id": "plan_e33c5694231df57920a4",
+              "plan_version": "plan_v1",
+              "step_id": "plan-inspect-0"
+            },
+            "payload": {
+              "plan_id": "plan_e33c5694231df57920a4",
+              "plan_version": "plan_v1",
+              "plan_revision": 1,
+              "submission_id": "plan-submission-275546f37a5061a74035"
+            },
+            "evidence_refs": []
+          },
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "",
+            "plan_version": "",
+            "current_step_id": ""
+          }
+        }
+      }
+    },
+    {
+      "plan_review": {
+        "knowledge_claims": [
+          {
+            "claim_id": "claim_edf36dabb39a29a0",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-0",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-0"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_503764d4c99cb5f7",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-1",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-1"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_f8b91f19c8ee533d",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-2",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-2"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_a0eae1381be5c078",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-3",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-3"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_e62fe7c9f8ac06f9",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-4",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-4"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_73ca243b8cf3591b",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-5",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-5"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_2c27f5dc0d0d3f5b",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-6",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-6"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_d687b86f6806325e",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-7",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-7"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_85932e74fa2207bc",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-8",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-8"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_5c753744c5d011f7",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-9",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-9"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_7872e24746dc3ccd",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-10",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-10"
+              ]
+            }
+          },
+          {
+            "claim_id": "claim_18e11650635f9db7",
+            "proposition": "required_skill.sequence_search_local_blast eq \"sequence/search/local-blast\"",
+            "normalized_proposition": "required_skill.sequence_search_local_blast eq sequence/search/local-blast",
+            "source_type": "plan",
+            "source_reference": null,
+            "strength": "required",
+            "scope": "stage",
+            "scope_id": "plan-inspect-11",
+            "confidence": 0.98,
+            "reliability": 0.95,
+            "valid_from": null,
+            "valid_until": null,
+            "tool_name": null,
+            "tool_version": null,
+            "environment_name": null,
+            "evidence_ids": [],
+            "created_at": "2026-09-15T09:12:13+00:00",
+            "supersedes_claim_id": null,
+            "status": "active",
+            "attributes": {
+              "semantic_key": "required_skill.sequence_search_local_blast",
+              "fact_key": "required_skill.sequence_search_local_blast",
+              "operator": "eq",
+              "value": "sequence/search/local-blast",
+              "condition": null,
+              "ambiguity": null,
+              "needs_clarification": false,
+              "source_text": "",
+              "provenance": [],
+              "step_ids": [
+                "plan-inspect-11"
+              ]
+            }
+          }
+        ],
+        "knowledge_conflicts": [],
+        "knowledge_conflict_summary": {
+          "phase": "before_plan_review",
+          "unresolved_count": 0,
+          "blocking_conflicts": [],
+          "requires_probe": [],
+          "decisions": [],
+          "active_plan_version": "plan_v1",
+          "stale_steps": [],
+          "revalidation_required_steps": [],
+          "claim_set_hash": "fd20a55bf916a60d2546b9da51ad433267f23699748fd9232a5a941d88b3edc7",
+          "typed_claim_count": 12,
+          "hard_claim_count": 12,
+          "preference_claim_count": 0,
+          "ambiguous_claim_count": 0,
+          "progress_events": []
+        },
+        "knowledge_progress_events": [],
+        "knowledge_claim_set_hash": "fd20a55bf916a60d2546b9da51ad433267f23699748fd9232a5a941d88b3edc7",
+        "canonical_constraint_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "conflict_resolution": {},
+        "plan_revision": {
+          "plan_version": "plan_v1",
+          "status": "initial"
+        },
+        "plan_version": "plan_v1",
+        "plan_stale_steps": [],
+        "plan_revalidation_steps": [],
+        "messages": [
+          "content='<control_event type=\"plan_approved\" plan_revision=\"1\" semantic_hash=\"dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2\" />' additional_kwargs={} response_metadata={} id='1f8ffcdb-3c58-49db-a28c-a1fc5cfe39f5'"
+        ],
+        "plan_progress": "Plan checklist:\n- [ ] 合成步骤 00 / synthetic stage with spaces\n- [ ] 合成步骤 01 / synthetic stage with spaces\n- [ ] 合成步骤 02 / synthetic stage with spaces\n- [ ] 合成步骤 03 / synthetic stage with spaces\n- [ ] 合成步骤 04 / synthetic stage with spaces\n- [ ] 合成步骤 05 / synthetic stage with spaces\n- [ ] 合成步骤 06 / synthetic stage with spaces\n- [ ] 合成步骤 07 / synthetic stage with spaces\n- [ ] 合成步骤 08 / synthetic stage with spaces\n- [ ] 合成步骤 09 / synthetic stage with spaces\n- [ ] 合成步骤 10 / synthetic stage with spaces\n- [ ] 合成步骤 11 / synthetic stage with spaces\nNext step: 合成步骤 00 / synthetic stage with spaces",
+        "approval_scope": {
+          "task_hash": "faac9a046384e09a2f490caf86052a1c812c74e55af659a42072dd5df355e163",
+          "task_revision": "1",
+          "plan_id": "plan_e33c5694231df57920a4",
+          "plan_version": "plan_v1",
+          "plan_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+          "task_spec_hash": "3edc29d802ae178b09fa5b94fb2a7d296a4406edb05c2d4c042da62d4bfb7b17",
+          "canonical_constraint_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "claim_set_hash": "fd20a55bf916a60d2546b9da51ad433267f23699748fd9232a5a941d88b3edc7",
+          "input_bindings_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "renderer_invocation_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "selected_skills_hash": "4cf7271ea5291ba34cf7ec1007bb98a66a6d2576c22e8676bbc4850530242531",
+          "projection_hash": "eda675c3e12d4ffd83f06d58142167eeadbbe18a22d82159123f17a96330aca0",
+          "projection_version": "2",
+          "approval_scope_hash": "0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922"
+        },
+        "approval_projection": {
+          "schema_version": 2,
+          "task_id": "f5-plan-current",
+          "plan_id": "plan_e33c5694231df57920a4",
+          "plan_version": "plan_v1",
+          "steps": [
+            {
+              "step_id": "plan-inspect-0",
+              "title": "合成步骤 00 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_00"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [],
+              "success_criteria": [
+                "冻结要求 00-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 00-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-1",
+              "title": "合成步骤 01 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_01"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-0"
+              ],
+              "success_criteria": [
+                "冻结要求 01-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 01-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-2",
+              "title": "合成步骤 02 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_02"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-1"
+              ],
+              "success_criteria": [
+                "冻结要求 02-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 02-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-3",
+              "title": "合成步骤 03 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_03"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-2"
+              ],
+              "success_criteria": [
+                "冻结要求 03-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 03-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-4",
+              "title": "合成步骤 04 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_04"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-3"
+              ],
+              "success_criteria": [
+                "冻结要求 04-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 04-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-5",
+              "title": "合成步骤 05 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_05"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-4"
+              ],
+              "success_criteria": [
+                "冻结要求 05-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 05-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-6",
+              "title": "合成步骤 06 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_06"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-5"
+              ],
+              "success_criteria": [
+                "冻结要求 06-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 06-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-7",
+              "title": "合成步骤 07 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_07"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-6"
+              ],
+              "success_criteria": [
+                "冻结要求 07-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 07-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-8",
+              "title": "合成步骤 08 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_08"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-7"
+              ],
+              "success_criteria": [
+                "冻结要求 08-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 08-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-9",
+              "title": "合成步骤 09 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_09"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-8"
+              ],
+              "success_criteria": [
+                "冻结要求 09-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 09-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-10",
+              "title": "合成步骤 10 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_10"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-9"
+              ],
+              "success_criteria": [
+                "冻结要求 10-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 10-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            },
+            {
+              "step_id": "plan-inspect-11",
+              "title": "合成步骤 11 / synthetic stage with spaces",
+              "action": "EXECUTE",
+              "purpose": "analysis",
+              "execution_capability_id": "sequence.search.local.blast.execute",
+              "capability_contract_hash": "sha256:0aa78bf6bb6ad6cd65769dca85cfe9a4998aa1a00e3eda069c50bd0613f86bac",
+              "skill_ids": [
+                "sequence/search/local-blast"
+              ],
+              "inputs": [],
+              "outputs": [],
+              "step_effect": {
+                "schema_version": 1,
+                "produces_artifacts": [],
+                "produces_bindings": [],
+                "produces_observations": [
+                  "fixture_observation_11"
+                ],
+                "workspace_mutations": [],
+                "explicit_side_effects": []
+              },
+              "depends_on": [
+                "plan-inspect-10"
+              ],
+              "success_criteria": [
+                "冻结要求 11-00: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-01: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-02: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-03: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-04: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-05: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-06: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-07: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-08: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-09: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-10: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution",
+                "冻结要求 11-11: inspect synthetic facts; retain unknown evidence and stop before unauthorized execution"
+              ],
+              "step_type": "atomic",
+              "renderer_id": "",
+              "bound_outputs": [],
+              "renderer_invocation_contract": {}
+            }
+          ],
+          "output_ownership": []
+        },
+        "plan_review_outcome": {
+          "schema_version": 1,
+          "type": "approved_for_execution",
+          "summary": "Plan review approved the plan for execution.",
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "step_id": "plan-inspect-0"
+          },
+          "payload": {
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "approval_status": "approved",
+            "execution_backend": "in_process",
+            "review_receipt_id": "plan-review-663147ac550f434895e1"
+          },
+          "evidence_refs": []
+        },
+        "managed_run_boundary": {
+          "node": "plan_review",
+          "field": "plan_review_outcome",
+          "outcome": {
+            "schema_version": 1,
+            "type": "approved_for_execution",
+            "summary": "Plan review approved the plan for execution.",
+            "scope": {
+              "task_id": "f5-plan-current",
+              "plan_id": "plan_e33c5694231df57920a4",
+              "plan_version": "plan_v1",
+              "step_id": "plan-inspect-0"
+            },
+            "payload": {
+              "plan_id": "plan_e33c5694231df57920a4",
+              "plan_version": "plan_v1",
+              "approval_status": "approved",
+              "execution_backend": "in_process",
+              "review_receipt_id": "plan-review-663147ac550f434895e1"
+            },
+            "evidence_refs": []
+          },
+          "scope": {
+            "task_id": "f5-plan-current",
+            "plan_id": "plan_e33c5694231df57920a4",
+            "plan_version": "plan_v1",
+            "current_step_id": "plan-inspect-0"
+          }
+        }
+      }
+    }
+  ],
+  "executions": 0,
+  "code_approvals": 0,
+  "input": [
+    {
+      "stage": "plan_review",
+      "response": ""
+    }
+  ],
+  "outcome": {
+    "schema_version": 1,
+    "type": "approved_for_execution",
+    "summary": "Plan review approved the plan for execution.",
+    "scope": {
+      "task_id": "f5-plan-current",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "step_id": "plan-inspect-0"
+    },
+    "payload": {
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "approval_status": "approved",
+      "execution_backend": "in_process",
+      "review_receipt_id": "plan-review-663147ac550f434895e1"
+    },
+    "evidence_refs": []
+  },
+  "acceptance": {
+    "ready": true,
+    "reason_code": "PLAN_REVIEW_ACCEPTANCE_COMMITTED",
+    "review_receipt_id": "plan-review-663147ac550f434895e1",
+    "submission_id": "plan-submission-275546f37a5061a74035",
+    "receipt": {
+      "schema_version": 1,
+      "protocol_version": 1,
+      "review_receipt_id": "plan-review-663147ac550f434895e1",
+      "status": "accepted",
+      "submission_id": "plan-submission-275546f37a5061a74035",
+      "approval_id": "approval-257e87a95d3bf6cb70e9",
+      "review_event_id": "review-4ee025aaabad23a606a2",
+      "task_id": "f5-plan-current",
+      "plan_id": "plan_e33c5694231df57920a4",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "plan_semantic_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+      "plan_snapshot_ref": "object:sha256:6a1219bb9ae52c55d13bba749003741cc2e91c47662c102de5f36f729c6ff0eb",
+      "accepted_at": "2026-09-15T09:12:14.371173+00:00"
+    }
+  },
+  "approval_scope": {
+    "task_hash": "faac9a046384e09a2f490caf86052a1c812c74e55af659a42072dd5df355e163",
+    "task_revision": "1",
+    "plan_id": "plan_e33c5694231df57920a4",
+    "plan_version": "plan_v1",
+    "plan_hash": "dec58e0befb493c5b0126db39a7c55873bd9542be07798ed53c30e3ba516ccd2",
+    "task_spec_hash": "3edc29d802ae178b09fa5b94fb2a7d296a4406edb05c2d4c042da62d4bfb7b17",
+    "canonical_constraint_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "claim_set_hash": "fd20a55bf916a60d2546b9da51ad433267f23699748fd9232a5a941d88b3edc7",
+    "input_bindings_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "renderer_invocation_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "selected_skills_hash": "4cf7271ea5291ba34cf7ec1007bb98a66a6d2576c22e8676bbc4850530242531",
+    "projection_hash": "eda675c3e12d4ffd83f06d58142167eeadbbe18a22d82159123f17a96330aca0",
+    "projection_version": "2",
+    "approval_scope_hash": "0e4fe5ca638f768f84d96b5264eb437020126e2bc6341d37ff71885e2f41b922"
+  },
+  "current_approval": {
+    "approval_id": "approval-257e87a95d3bf6cb70e9",
+    "approval_record_ref": "object:sha256:070fa8120c9d32fd705eaba9f2174ffded9336ea3903308e10b5de1972738f15",
+    "plan_snapshot_ref": "object:sha256:6a1219bb9ae52c55d13bba749003741cc2e91c47662c102de5f36f729c6ff0eb",
+    "status": "approved"
+  },
+  "durable_status": "running",
+  "question_waiting": null,
+  "approval_events": [
+    {
+      "phase": "request_created",
+      "monotonic": 4352243.606986471,
+      "request_id": 1,
+      "task_id": "f5-plan-current",
+      "stage": "plan_review",
+      "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "action_id": ""
+    },
+    {
+      "phase": "presentation_started",
+      "monotonic": 4352243.610455021,
+      "request_id": 1,
+      "task_id": "f5-plan-current",
+      "stage": "plan_review",
+      "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "action_id": ""
+    },
+    {
+      "phase": "presentation_written",
+      "monotonic": 4352243.611437845,
+      "request_id": 1,
+      "task_id": "f5-plan-current",
+      "stage": "plan_review",
+      "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "action_id": ""
+    },
+    {
+      "phase": "input_ready",
+      "monotonic": 4352243.611493667,
+      "request_id": 1,
+      "task_id": "f5-plan-current",
+      "stage": "plan_review",
+      "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "action_id": ""
+    },
+    {
+      "phase": "decision_received",
+      "monotonic": 4352243.885859993,
+      "request_id": 1,
+      "task_id": "f5-plan-current",
+      "stage": "plan_review",
+      "review_hash": "4a482406c558cae87d1f01266e3cee06556d6a561e2677ca7e42fea9dd6b2816",
+      "action_id": ""
+    }
+  ],
+  "input_history": [
+    "triage",
+    "consultant",
+    "planner",
+    "plan_review",
+    "✓ Plan approved. Preparing the current step..."
+  ]
+}

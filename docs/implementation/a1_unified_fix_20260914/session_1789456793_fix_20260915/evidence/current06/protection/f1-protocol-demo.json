@@ -1,0 +1,51 @@
+{
+  "status": "ISOLATED_DEMO_EXECUTION_PASS",
+  "published": {
+    "scope": "Standalone synthetic protocol demonstration only. This is NOT an action for the current step; never publish this identity under the current declarations.",
+    "step": {
+      "step_id": "synthetic-protocol-demo",
+      "produces_observations": [
+        {
+          "identity": "synthetic_demo_matches",
+          "evidence_contract": {
+            "required_fields": [
+              "value",
+              "items"
+            ]
+          }
+        }
+      ]
+    },
+    "code": "# BIOMIND_EFFECT_HELPER\nitems = [item for item in [1, 2, 3] if item < 0]\nobserved = bool(items)\nprint(emit_effect_evidence({'produces_observations': {'synthetic_demo_matches': {'value': observed, 'items': items}}}))\n",
+    "helper_scope": "Materialize this demonstration using only its own step declarations. Actual execution computes False and an empty list; these are not current-step observations."
+  },
+  "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"synthetic_demo_matches\",\"value\":false,\"items\":[]}]}\n",
+  "stderr": "",
+  "rc": 0,
+  "parser_receipt": {
+    "schema_version": 1,
+    "parser_id": "biomind.structured_effect_emission.v1",
+    "raw_stdout_sha256": "05051a5b96385d53c79abbe0a98d2296cf6ebb4f3d976e5612575fdc00bec870",
+    "emission_count": 1,
+    "status": "parsed",
+    "issues": [],
+    "emission_contract": {
+      "schema_version": 1,
+      "prefix": "BIOMIND_EFFECT_EVIDENCE_JSON=",
+      "approved_observation_ids": [
+        "synthetic_demo_matches"
+      ],
+      "examples": [
+        "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"synthetic_demo_matches\",\"value\":{\"sample_result\":\"replace with actual value\"}}]}"
+      ],
+      "rules": [
+        "Select an explicit approved observation identity; do not infer an identity from value-only stdout.",
+        "Negative observations are evidence, not automatic completion; approved predicates still apply.",
+        "Execute binds task/plan/step/action/attempt and persists the parser receipt.",
+        "Reader errors and sampling limits do not establish absence or full scientific validity."
+      ]
+    }
+  },
+  "scope": "Standalone demonstration only, not a current-step candidate or observation",
+  "body_sha256": "9dcb39a54c27dce936cc918c09e27c7b1ea68f9e0a8efd903195742ca76491b9"
+}

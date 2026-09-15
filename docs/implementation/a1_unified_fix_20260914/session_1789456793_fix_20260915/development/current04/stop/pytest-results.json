@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003387872129678726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 84.59154947474599,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00029442645609378815,
+    "failure": ""
+  }
+]

@@ -1,0 +1,4 @@
+SYNTHETIC PREFLIGHT
+两样本.vcf
+新参考.fa
+新注释.gtf

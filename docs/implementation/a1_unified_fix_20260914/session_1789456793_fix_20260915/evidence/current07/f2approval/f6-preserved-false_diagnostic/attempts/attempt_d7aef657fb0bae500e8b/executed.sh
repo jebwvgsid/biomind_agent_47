@@ -1,0 +1,12 @@
+#!/bin/bash
+set +e
+: > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/stdout.log
+: > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/stderr.log
+printf 'runner=%s script=%s\n' /public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/approved.py > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/command_trace.log
+/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/approved.py > /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/stdout.log 2> /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/stderr.log
+rc=$?
+printf 'returncode=%s\n' "$rc" >> /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/command_trace.log
+finished_at=$(date -Iseconds 2>/dev/null || date)
+printf '{"attempt_id":"attempt_d7aef657fb0bae500e8b","returncode":%s,"finished_at":"%s"}\n' "$rc" "$finished_at" > '/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/exit_status.json.tmp.$$'
+mv '/tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/exit_status.json.tmp.$$' /tmp/biomind-6793-fix-20260915/current07/f2approval/scratch/biomind-plan-local-graph-rug6qqsg/task_outputs/fix-f6-false_diagnostic/attempts/attempt_d7aef657fb0bae500e8b/exit_status.json
+exit "$rc"

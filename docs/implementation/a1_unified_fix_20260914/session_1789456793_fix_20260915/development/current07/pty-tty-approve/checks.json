@@ -1,0 +1,13 @@
+{
+  "passed": false,
+  "checks": {
+    "child_rc0": false,
+    "business_done": false,
+    "source_unchanged": true,
+    "one_frozen_plan": false,
+    "no_execution_or_code_approval": false,
+    "fixed_provider_only": false,
+    "correct_acceptance": false,
+    "formal_review_receipt": false
+  }
+}

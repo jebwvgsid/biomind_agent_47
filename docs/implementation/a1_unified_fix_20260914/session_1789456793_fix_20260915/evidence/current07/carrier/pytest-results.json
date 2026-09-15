@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[carrier_missing]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[carrier_missing]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003588888794183731,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[carrier_missing]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 185.6260165311396,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[carrier_missing]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003901217132806778,
+    "failure": ""
+  }
+]

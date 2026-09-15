@@ -1,0 +1,2434 @@
+{
+  "implementation_status": "COMPLETE_SCOPED_MECHANISM",
+  "final_source_signature": "e4052102ae2e605901594cb0269836ed77510d20f05d17b80449663f1accde6b",
+  "runs": [
+    {
+      "run": "current06/boundaries",
+      "passed": true,
+      "receipt": "evidence/current06/boundaries/run_exit.json",
+      "manifest": "evidence/current06/boundaries/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[undeclared]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00032648444175720215,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[python]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003153551369905472,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[heredoc]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0006190696731209755,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[argv_only]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00020992383360862732,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[conflict]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00025485269725322723,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[language_conflict]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00024085398763418198,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[zero]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0001596575602889061,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[two]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.000317966565489769,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[unavailable]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00024550314992666245,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[outside]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00023046229034662247,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_exact_step_ownership_and_stale_or_duplicate_registration",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0010044937953352928,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[build-True]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.005959932692348957,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[build-False]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.005522562190890312,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[ann-True]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.005453725345432758,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[ann-False]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.005844193510711193,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[none]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0041253287345170975,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[changed]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.004082060419023037,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[symlink]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.001579022966325283,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[ancestor_symlink]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.001409454271197319,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[escape]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0012654019519686699,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[foreign_capability]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0012161675840616226,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[unreliable]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0012470567598938942,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.45008320547640324,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03954160865396261,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03266448434442282,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03986585605889559,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03295502718538046,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03793432377278805,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009862016886472702,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008609313517808914,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008499324321746826,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008498579263687134,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008585155010223389,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03207896463572979,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03107586409896612,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0019520167261362076,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 2.1813735105097294,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.01947837509214878,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.018845506012439728,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.01853799168020487,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.090411058627069,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.019248721189796925,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03319370932877064,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.08825907204300165,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.057620078325271606,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.03302095923572779,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009836172685027122,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.000967380590736866,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009292149916291237,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009275674819946289,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0010695075616240501,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009400704875588417,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009400388225913048,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008654063567519188,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008658329024910927,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00036000367254018784,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00032824836671352386,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003158682957291603,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003369096666574478,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00019342824816703796,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00019478891044855118,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00018161442130804062,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00020671822130680084,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 7.660643898881972,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 7.553663480095565,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 8.655407804995775,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 7.470058033242822,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 5.875890081748366,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 3.4213566929101944,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 3.3388012927025557,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0006070369854569435,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0006454652175307274,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008242316544055939,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 7.578403667546809,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 8.389698910526931,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.925198964774609,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 4.962620477192104,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.001453666016459465,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008537899702787399,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0020481012761592865,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0015330277383327484,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 8.372807427309453,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.7067267298698425,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0005881665274500847,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 13.72818802203983,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_blocked]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 19.25489376951009,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[execute_recovery_stop]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 18.578248045407236,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_annotation_keeps_default_ann_mode",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0014733904972672462,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_build_failure_preserves_exit_code_and_exposes_bounded_log_tail",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.000888393260538578,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_build_places_subcommand_before_global_options",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0010226266458630562,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_custom_build_requires_nonempty_core_database_artifact",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008587511256337166,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_gene_summary_has_real_renderer_action_ownership",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0011303909122943878,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_gtf_build_contains_real_cli_flag",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0011700959876179695,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_manifest_distinguishes_generated_scripts_from_promised_outputs",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00125176552683115,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_optional_validation_is_automatic_without_legacy_flag",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0007929839193820953,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_optional_validation_records_only_missing_checks",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0011164471507072449,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_preflight_preserves_version_failure_status",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0007734606042504311,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_preflight_reports_runtime_failure_instead_of_exiting_silently",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0007556723430752754,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_prepare_script_replaces_existing_input_symlinks_idempotently",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009182905778288841,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_renderer_rejects_a_guessed_missing_jar_before_writing_scripts",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0019490942358970642,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_renderer_step_ownership_does_not_claim_downstream_results",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0010761301964521408,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_renderer_uses_verified_jar_environment_binding_by_default",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0010123290121555328,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_strict_build_with_validation_fastas_has_no_bypass",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0008021164685487747,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_v3_manifest_contract_is_generic_and_action_driven",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0011360719799995422,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current06/protection",
+      "passed": true,
+      "receipt": "evidence/current06/protection/run_exit.json",
+      "manifest": "evidence/current06/protection/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 17.056456150487065,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 2.2089220732450485,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 2.0197401996701956,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 2.713259879499674,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 24.242178958840668,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[OSError]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.49794986471533775,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[ValueError]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.48820918425917625,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_actual_answer_missing_question_and_old_answer_stay_distinct",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.5625938298180699,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[cancel]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.41632901318371296,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[interrupt]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.40132372081279755,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_real_question_interrupt_and_eof_wait_without_answer_or_approval",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.4388400297611952,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "skipped",
+          "duration": 0.0001812586560845375,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.6371511798352003,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.8779464242979884,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.7922101290896535,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.8756977468729019,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.5962884444743395,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 7.098817988298833,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 10.168755524791777,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 21.834788646548986,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 20.83534317649901,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 3.0572639014571905,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.05666917469352484,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current06/v2components",
+      "passed": true,
+      "receipt": "evidence/current06/v2components/run_exit.json",
+      "manifest": "evidence/current06/v2components/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0013145115226507187,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00016135256737470627,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00015074387192726135,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00015425682067871094,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003280211240053177,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0006050998345017433,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00041981693357229233,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.000209917314350605,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0004322044551372528,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003337664529681206,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.23388669081032276,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00030373968183994293,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[empty_id-PLAN_STEP_ID_MISSING]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00016315840184688568,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[duplicate_id-PLAN_STEP_ID_DUPLICATE]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00013742316514253616,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[missing_dependency-PLAN_DEPENDENCY_UNKNOWN]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.001949693076312542,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[cycle-PLAN_DEPENDENCY_CYCLE]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0016682511195540428,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_authority_cannot_be_added_by_resource_use[forged_scope]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00017811637371778488,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_authority_cannot_be_added_by_resource_use[foreign_resource]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00029854197055101395,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_mutate_cannot_promote_an_immutable_resource",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.000247403047978878,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_read_needs_actual_planned_source_even_without_template",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0009881611913442612,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_task_output_necessity_is_not_repeated",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003731893375515938,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_required_unresolved_path_still_needs_choice[planner_materialized]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00033289194107055664,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_required_unresolved_path_still_needs_choice[model_selectable]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003280024975538254,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_task_output_cannot_be_downgraded",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0003530168905854225,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_exact_task_output_needs_no_materialization_copy",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00028043147176504135,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_frozen_output_projection_requires_its_reader",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0004819333553314209,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_changed_consumption_is_advice_without_confirmation",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00217464379966259,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[None-True]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00023703649640083313,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[False-False]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00022882968187332153,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[True-True]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00022723805159330368,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_explicit_optional_local_cannot_feed_unconditional_read",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0010722605511546135,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_required_workspace_needs_a_sealed_planned_state_chain",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0005958704277873039,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_public_generic_example_has_no_legacy_workflow_obligation",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0016069216653704643,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_workflow_fields_keep_real_types[batch_id-value0]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00022405292838811874,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_workflow_fields_keep_real_types[workflow_stage_ids-]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.0002151457592844963,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v2_workflow_presence_compatibility_is_unchanged",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 0.00020586047321558,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_formal_stop.py::test_first_formal_stop_consumes_one_request_without_approval_or_execution",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 20.629552516154945,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/g1",
+      "passed": true,
+      "receipt": "evidence/current07/g1/run_exit.json",
+      "manifest": "evidence/current07/g1/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[success]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 246.54945220425725,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/g2g3",
+      "passed": true,
+      "receipt": "evidence/current07/g2g3/run_exit.json",
+      "manifest": "evidence/current07/g2g3/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 124.97420338634402,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[repeat]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 127.816505423747,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/carrier",
+      "passed": true,
+      "receipt": "evidence/current07/carrier/run_exit.json",
+      "manifest": "evidence/current07/carrier/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[carrier_missing]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 185.6260165311396,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/lastchance",
+      "passed": true,
+      "receipt": "evidence/current07/lastchance/run_exit.json",
+      "manifest": "evidence/current07/lastchance/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[last_chance]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 155.7758675897494,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/exhausted",
+      "passed": true,
+      "receipt": "evidence/current07/exhausted/run_exit.json",
+      "manifest": "evidence/current07/exhausted/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[exhausted]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 66.88291250728071,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/f2approval",
+      "passed": true,
+      "receipt": "evidence/current07/f2approval/run_exit.json",
+      "manifest": "evidence/current07/f2approval/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 41.28636598587036,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_python]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 11.732904371805489,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_bash]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 11.572170047089458,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/f6negatives",
+      "passed": true,
+      "receipt": "evidence/current07/f6negatives/run_exit.json",
+      "manifest": "evidence/current07/f6negatives/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_required]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 60.53797663748264,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[partial_build]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 78.49769689980894,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 36.879047070629895,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/reporthooks",
+      "passed": true,
+      "receipt": "evidence/current07/reporthooks/run_exit.json",
+      "manifest": "evidence/current07/reporthooks/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 48.01601444743574,
+          "failure": ""
+        },
+        {
+          "nodeid": "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 27.712746322155,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/v2-generic_split",
+      "passed": true,
+      "receipt": "evidence/current07/v2-generic_split/run_exit.json",
+      "manifest": "evidence/current07/v2-generic_split/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 157.9559947149828,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/v2-generic_recovery",
+      "passed": true,
+      "receipt": "evidence/current07/v2-generic_recovery/run_exit.json",
+      "manifest": "evidence/current07/v2-generic_recovery/loaded_manifest.json",
+      "tests": [
+        {
+          "nodeid": "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_recovery]",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 211.3913026014343,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/pty2-plain-approve",
+      "passed": true,
+      "receipt": "evidence/current07/pty2-plain-approve/checks.json",
+      "manifest": "PTY loaded.json + business loaded proof",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 22.51969898212701,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/pty2-tty-approve",
+      "passed": true,
+      "receipt": "evidence/current07/pty2-tty-approve/checks.json",
+      "manifest": "PTY loaded.json + business loaded proof",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 29.711792020127177,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/pty2-tty-blank_paste",
+      "passed": true,
+      "receipt": "evidence/current07/pty2-tty-blank_paste/checks.json",
+      "manifest": "PTY loaded.json + business loaded proof",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 23.875657623633742,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/pty2-tty-eof",
+      "passed": true,
+      "receipt": "evidence/current07/pty2-tty-eof/checks.json",
+      "manifest": "PTY loaded.json + business loaded proof",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 25.828488191589713,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/pty2-tty-queued",
+      "passed": true,
+      "receipt": "evidence/current07/pty2-tty-queued/checks.json",
+      "manifest": "PTY loaded.json + business loaded proof",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 26.19718303810805,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/pty2-tty-semantic",
+      "passed": true,
+      "receipt": "evidence/current07/pty2-tty-semantic/checks.json",
+      "manifest": "PTY loaded.json + business loaded proof",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 25.32018266338855,
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "run": "current07/pty-plain-eof",
+      "passed": true,
+      "receipt": "evidence/current07/pty-plain-eof/checks.json",
+      "manifest": "PTY loaded.json + business loaded proof",
+      "tests": [
+        {
+          "nodeid": "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child",
+          "phase": "call",
+          "outcome": "passed",
+          "duration": 45.2140378523618,
+          "failure": ""
+        }
+      ]
+    }
+  ],
+  "unique_tests": {
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[undeclared]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[python]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[heredoc]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[argv_only]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[conflict]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[language_conflict]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[zero]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[two]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[unavailable]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_carrier_measured_diagnostics[outside]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_exact_step_ownership_and_stale_or_duplicate_registration": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[build-True]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[build-False]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[ann-True]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_selected_renderer_uses_explicit_subcommand_constructor[ann-False]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[none]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[changed]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[symlink]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[ancestor_symlink]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[escape]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[foreign_capability]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_session_6793_boundaries.py::test_failure_log_snapshot_has_no_arbitrary_path_authority[unreliable]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[python]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[bash]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[code]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[both]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_python]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_actual_carrier_tiny_process[legacy_bash]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[duplicate]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[shell_scope]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[nested_c]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[mismatch]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[digest]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[unknown_identity]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_rejects_incomplete_or_conflicting_carrier[flat_facts]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_protocol_examples_exact_parser_and_negative_action_shapes": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f1_f2.py::test_native_argv_generate_materializes_before_action_ready": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[python_string]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[heredoc_string]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[command]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[module]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonexecuted_helper_scope_is_rejected_and_old_substitution_fails[file]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[argv_python]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_flags]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_cluster]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_actual_comment_scope_and_stdin_selector_preserve_arguments[heredoc_x_stdin]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -c 'print(1)' -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -m json.tool -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python script.py -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -W -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -X -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -V -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python --help -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python - && cat -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f2_scope.py::test_nonstdin_modes_and_shell_command_rebinding_do_not_claim_helper_scope[python -; cat -]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env0-array]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[None-null]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[text-string]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_env_parser_preserves_first_failure_without_fingerprint_exception[env3-number]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[code-value0]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[body-value1]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[command-None]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_execute_field_type_is_not_silently_stringified[operation-value3]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[env0]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[None]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_multiround_same_script_reaches_admission_on_last_allowed_response[text]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_decoded_empty_object_preserves_json_progress": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[blocked]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[repeat]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_formal_stop_and_genuine_repeat[uuid]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_aba_error_code_and_system_uuid_cannot_manufacture_progress": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_recovery_policy_consumes_same_trusted_progress_for_same_candidate": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_comparison_keeps_permissions_effects_program_and_versions": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_legacy_progress_metadata_is_compared_without_rewriting_history": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_exact_rejection_event_replay_does_not_charge_or_rewrite": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[helper_checkpoint]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_progress.py::test_actual_helper_and_syntax_success_survive_next_real_admission_rejection[syntax_checkpoint]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_env_key_reordering_is_recurrence_without_false_resolution": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_unrelated_valid_env_key_does_not_repair_pending_field": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_exact_previous_env_value_repair_allows_next_pending_value": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_existing_progress_row_cannot_buy_retry_from_new_diagnostic_checkpoint": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_env_progress.py::test_fully_legal_env_is_admitted_on_last_allowed_response": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_claims.py::test_frozen_budget_and_claim_survive_unknown_exact_replay_and_independent_reload": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_claims.py::test_legacy_recorded_limit_and_stopped_scope_are_not_reopened": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_repeat]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[generate_blocked]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_stop_origin.py::test_origin_tracks_actual_failure_producer_and_keeps_execution_parent[execute_recovery_stop]": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_annotation_keeps_default_ann_mode": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_build_failure_preserves_exit_code_and_exposes_bounded_log_tail": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_build_places_subcommand_before_global_options": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_custom_build_requires_nonempty_core_database_artifact": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_gene_summary_has_real_renderer_action_ownership": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_gtf_build_contains_real_cli_flag": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_manifest_distinguishes_generated_scripts_from_promised_outputs": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_optional_validation_is_automatic_without_legacy_flag": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_optional_validation_records_only_missing_checks": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_preflight_preserves_version_failure_status": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_preflight_reports_runtime_failure_instead_of_exiting_silently": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_prepare_script_replaces_existing_input_symlinks_idempotently": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_renderer_rejects_a_guessed_missing_jar_before_writing_scripts": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_renderer_step_ownership_does_not_claim_downstream_results": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_renderer_uses_verified_jar_environment_binding_by_default": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_strict_build_with_validation_fastas_has_no_bypass": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/test_snpeff_renderer.py::SnpEffRendererTests::test_v3_manifest_contract_is_generic_and_action_driven": {
+      "outcome": "passed",
+      "run": "current06/boundaries"
+    },
+    "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-valid]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-invalid]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[cancel-blocked]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f3_late_result.py::test_f3_generate_post_await_boundary[nonsemantic-valid]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f3_recovery_claim.py::test_recovery_claim_unknown_and_completed_response_survive_independent_reload": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[OSError]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_registered_callback_exception_reaches_real_graph_end_and_stop[ValueError]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_actual_answer_missing_question_and_old_answer_stay_distinct": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[cancel]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_callback_cancel_and_graph_interrupt_propagate[interrupt]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f4_ask_user.py::test_f4_real_question_interrupt_and_eof_wait_without_answer_or_approval": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f5_pty.py::test_f5_guarded_pty_child": {
+      "outcome": "passed",
+      "run": "current07/pty-plain-eof"
+    },
+    "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[normal]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[none]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[exception]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[timeout]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_hooks.py::test_registered_schema2_compactor_actual_trigger_and_failure_boundaries[cancel]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[normal]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[local]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[recovery]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f1_protocol.py::test_examples_from_actual_requests_reach_current_step_admission_or_stop[blocked]": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f1_protocol.py::test_legacy_script_selected_mode_example_from_actual_request_is_admitted": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/a1_unified_fix/test_f1_protocol.py::test_separate_public_demo_computes_false_and_empty_under_only_demo_declarations": {
+      "outcome": "passed",
+      "run": "current06/protection"
+    },
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_explicit_registry_and_runtime_without_domain_skill": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id-nonexistent.domain.execute-UNKNOWN_EXECUTION_CAPABILITY]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[execution_capability_id--ACTION_CAPABILITY_SCOPE_MISSING]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_no_missing_unknown_or_unsupported_route_fallback[tool-imaginary_runner-GENERIC_EXECUTION_TOOL_UNSUPPORTED]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_generic_runtime.py::test_generic_contract_drift_still_rejects": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_wire_has_one_read_declaration": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[inputs]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_retired_fields_rejected[role_associations]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_reference_is_checked_at_real_source_field": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_access_cannot_drop_selected_helper_requirement": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_source_changes_approval_semantics_and_rebuilds_index": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_legacy_stale_association_is_still_rejected": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[empty_id-PLAN_STEP_ID_MISSING]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[duplicate_id-PLAN_STEP_ID_DUPLICATE]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[missing_dependency-PLAN_DEPENDENCY_UNKNOWN]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_identity_and_dependency_guards_remain[cycle-PLAN_DEPENDENCY_CYCLE]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_authority_cannot_be_added_by_resource_use[forged_scope]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_authority_cannot_be_added_by_resource_use[foreign_resource]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_mutate_cannot_promote_an_immutable_resource": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_read_needs_actual_planned_source_even_without_template": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_task_output_necessity_is_not_repeated": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_required_unresolved_path_still_needs_choice[planner_materialized]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_required_unresolved_path_still_needs_choice[model_selectable]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_task_output_cannot_be_downgraded": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_exact_task_output_needs_no_materialization_copy": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_frozen_output_projection_requires_its_reader": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_changed_consumption_is_advice_without_confirmation": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[None-True]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[False-False]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_local_necessity_default_and_allocation_are_consistent[True-True]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_explicit_optional_local_cannot_feed_unconditional_read": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_required_workspace_needs_a_sealed_planned_state_chain": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_public_generic_example_has_no_legacy_workflow_obligation": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_workflow_fields_keep_real_types[batch_id-value0]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v3_explicit_workflow_fields_keep_real_types[workflow_stage_ids-]": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_resource_contract.py::test_v2_workflow_presence_compatibility_is_unchanged": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/plan_authority_v2_20260915/test_formal_stop.py::test_first_formal_stop_consumes_one_request_without_approval_or_execution": {
+      "outcome": "passed",
+      "run": "current06/v2components"
+    },
+    "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[success]": {
+      "outcome": "passed",
+      "run": "current07/g1"
+    },
+    "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[stop]": {
+      "outcome": "passed",
+      "run": "current07/g2g3"
+    },
+    "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[repeat]": {
+      "outcome": "passed",
+      "run": "current07/g2g3"
+    },
+    "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[carrier_missing]": {
+      "outcome": "passed",
+      "run": "current07/carrier"
+    },
+    "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[last_chance]": {
+      "outcome": "passed",
+      "run": "current07/lastchance"
+    },
+    "tests/a1_unified_fix/test_session_6793_chain.py::test_continuous_incident[exhausted]": {
+      "outcome": "passed",
+      "run": "current07/exhausted"
+    },
+    "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[native_code_python]": {
+      "outcome": "passed",
+      "run": "current07/f2approval"
+    },
+    "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_python]": {
+      "outcome": "passed",
+      "run": "current07/f2approval"
+    },
+    "tests/a1_unified_fix/test_f2_approval_graph.py::test_F2_carrier_formal_approval_execution_commit[legacy_bash]": {
+      "outcome": "passed",
+      "run": "current07/f2approval"
+    },
+    "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[false_required]": {
+      "outcome": "passed",
+      "run": "current07/f6negatives"
+    },
+    "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[partial_build]": {
+      "outcome": "passed",
+      "run": "current07/f6negatives"
+    },
+    "tests/a1_unified_fix/test_f6_graph.py::test_F6_real_graph_recovery_and_negative_combinations[report_conflict]": {
+      "outcome": "passed",
+      "run": "current07/f6negatives"
+    },
+    "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[exception]": {
+      "outcome": "passed",
+      "run": "current07/reporthooks"
+    },
+    "tests/a1_unified_fix/test_terminal_hooks.py::test_graph_stop_real_summary_consumer_preserves_facts_and_reports[cancel]": {
+      "outcome": "passed",
+      "run": "current07/reporthooks"
+    },
+    "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_split]": {
+      "outcome": "passed",
+      "run": "current07/v2-generic_split"
+    },
+    "tests/plan_authority_v2_20260915/test_graph.py::test_v2_full_plan_graph[generic_recovery]": {
+      "outcome": "passed",
+      "run": "current07/v2-generic_recovery"
+    }
+  },
+  "unique_test_counts": {
+    "passed": 180,
+    "failed": 0,
+    "skipped": 0
+  },
+  "development": [
+    {
+      "run": "base_witness02/stop",
+      "receipt": "development/base_witness02/stop/run_exit.json",
+      "source_signature": "0cc74cc139b5f6e224e069de00e24ab4629561e13169f8242023fa277969e9d6",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/base_witness02/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "stop"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 1,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "base_witness03/stop",
+      "receipt": "development/base_witness03/stop/run_exit.json",
+      "source_signature": "ca015cc5833cb59a0abb1eadde39a298d705641bdb0e791ec2b0ff6afa0af8a3",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/base_witness03/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "stop"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 1,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current01/stop",
+      "receipt": "development/current01/stop/run_exit.json",
+      "source_signature": "695e8b23c4e4d8cff5340b1df605943dac8f8bf281cbab1b47d3cb1664d26753",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current01/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "stop"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 1,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current02/components",
+      "receipt": "development/current02/components/run_exit.json",
+      "source_signature": "10052851efd8237ae85469a4dd3864dddc0b0853f782342ee1ee2af5d98553cc",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current02/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_boundaries.py",
+        "tests/a1_unified_fix/test_f1_f2.py",
+        "tests/a1_unified_fix/test_f3_progress.py"
+      ],
+      "timeout_seconds": 180,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 1,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current02/stop",
+      "receipt": "development/current02/stop/run_exit.json",
+      "source_signature": "10052851efd8237ae85469a4dd3864dddc0b0853f782342ee1ee2af5d98553cc",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current02/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "stop"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 1,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current03/stop",
+      "receipt": "development/current03/stop/run_exit.json",
+      "source_signature": "3de0984d3447e0ee112f125e13a1ad58379b2f11a5d2679aa9d5ba455c1c0c23",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current03/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "stop"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 1,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current04/stop",
+      "receipt": "development/current04/stop/run_exit.json",
+      "source_signature": "8f432b916fbe48ee6dc8ba2ab919f868bfcf50aa3f7d521068be1ff580e9a8d2",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current04/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "stop"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current05/stops",
+      "receipt": "development/current05/stops/run_exit.json",
+      "source_signature": "184c645dfeb8de6726e5bc79452f3c46ad272742b74fd206cededfa5fe1d7ab8",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current05/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "stop or repeat"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current05/success",
+      "receipt": "development/current05/success/run_exit.json",
+      "source_signature": "184c645dfeb8de6726e5bc79452f3c46ad272742b74fd206cededfa5fe1d7ab8",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current05/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "success"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 0,
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current06/budgets",
+      "receipt": "development/current06/budgets/run_exit.json",
+      "source_signature": "24a5eb571831e25412e672b90cd2374e1b062019fd60d9ec83c0d4922931676f",
+      "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current06/export/export_manifest.json",
+      "test_targets": [
+        "-q",
+        "-p",
+        "tests.a1_unified_fix.session_6793_manifest",
+        "tests/a1_unified_fix/test_session_6793_chain.py",
+        "-k",
+        "last_chance or exhausted or carrier_missing"
+      ],
+      "timeout_seconds": 360,
+      "watchdog_is_not_production_termination": true,
+      "returncode": 124,
+      "timeout": true,
+      "classification": "TEST_WATCHDOG_NOT_PASS",
+      "source_changes_after_run": []
+    },
+    {
+      "run": "current07/pty-tty-queued",
+      "receipt": "development/current07/pty-tty-queued/checks.json",
+      "classification": "70s test parent deadline; raw rc=-15; sequential same-byte retest separately recorded"
+    },
+    {
+      "run": "current07/pty-plain-approve",
+      "receipt": "development/current07/pty-plain-approve/checks.json",
+      "classification": "70s test parent deadline; raw rc=-15; sequential same-byte retest separately recorded"
+    },
+    {
+      "run": "current07/pty-tty-approve",
+      "receipt": "development/current07/pty-tty-approve/checks.json",
+      "classification": "70s test parent deadline; raw rc=-15; sequential same-byte retest separately recorded"
+    },
+    {
+      "run": "current07/pty-tty-semantic",
+      "receipt": "development/current07/pty-tty-semantic/checks.json",
+      "classification": "70s test parent deadline; raw rc=-15; sequential same-byte retest separately recorded"
+    },
+    {
+      "run": "current07/pty-tty-eof",
+      "receipt": "development/current07/pty-tty-eof/checks.json",
+      "classification": "70s test parent deadline; raw rc=-15; sequential same-byte retest separately recorded"
+    },
+    {
+      "run": "current07/pty-tty-blank_paste",
+      "receipt": "development/current07/pty-tty-blank_paste/checks.json",
+      "classification": "70s test parent deadline; raw rc=-15; sequential same-byte retest separately recorded"
+    },
+    {
+      "run": "current07/v2generic",
+      "receipt": "development/current07/v2generic/run_exit.json",
+      "classification": "360s group watchdog; generic_split call PASS, second graph unfinished; both rerun separately without changing production budgets"
+    }
+  ],
+  "development_explanation": {
+    "base_witness": "first v3 fixture incorrectly removed workspace mutations; formal Plan rejected; old watchdog preserved",
+    "current01": "new fixture inherited Bash language while passing Python argv; guard correctly rejected",
+    "current02": "new fixture omitted actually reading declared inputs; correct artifact guard rejected; boundary test found local target variable shadowing; fixed production variable target_step",
+    "current03/base_witness02": "old F6 test executor asserted Bash-only; added owned executor harness for legitimate native Python argv; production executor unchanged",
+    "base_witness03": "valid captured-before witness: A rejected, B actual outer0/inner255/no predictor, Recovery, C different; old no-progress at remaining3, build verification_pending + annotation failed, STOP_STALE_SCOPE writer not entered",
+    "current06/budgets": "three long graphs exceeded external 360s group limit; last chance/exhausted call PASS, missing carrier unfinished; final each graph separately run",
+    "argparse": "two planned regression groups rejected at launcher argument validation: old runner caps external watchdog360; no child/business action; rerun bounded groups",
+    "old_ledgers": "A1 old 9 missing-scope fixtures and V2 prior WGS version assertion remain original historical failures; not erased or counted as new fixes"
+  },
+  "limits": [
+    "No original session business load/resume or old approved script execution",
+    "Real model/API NOT_RUN / NOT_AUTHORIZED",
+    "Real Java/JAR/snpEff and scientific E2E NOT_RUN / NOT_AUTHORIZED",
+    "No science inputs/hidden answers/config credentials/profile read, no install or push",
+    "Dedicated snpEff constructor is explicit selected path only; free generated code has no guaranteed semantic rewriting",
+    "Failure log capture only exact selected build operation, reliable attester snapshot and fixed build.log sibling of predictor; absent/oversize/unavailable log remains explicit unavailable",
+    "Legacy snpEff shell execution test excluded because it bypasses registered guarded child executor; current explicit constructor + real guarded synthetic process separately exercised",
+    "Other old full-architecture branches not repeated; this is bounded affected-interface regression",
+    "V2 protected planner_context partial-commit status remains unchanged; no clean bare-commit deployment claim"
+  ],
+  "layers": {
+    "before_witness": "REPRODUCED (expected failing regression at captured-before bytes)",
+    "components": "PASS",
+    "G1_G2_G3": "FIX_PASS",
+    "production_patch": "COMMITTED",
+    "real_model": "NOT_RUN_NOT_AUTHORIZED",
+    "real_science": "NOT_RUN_NOT_AUTHORIZED"
+  },
+  "pty_scenarios": 7,
+  "skip_accounting": "Ordinary pytest skipped guarded PTY-only entry; seven actual PTY parents/children passed, so aggregate unique node is PASS. No assertion or skip marker changed."
+}

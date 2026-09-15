@@ -1,0 +1,84 @@
+{
+  "base_head": "adf299e661a4996e6405eefe815b22d99bec0562",
+  "current07": "e4052102ae2e605901594cb0269836ed77510d20f05d17b80449663f1accde6b",
+  "current06": "24a5eb571831e25412e672b90cd2374e1b062019fd60d9ec83c0d4922931676f",
+  "changes": {
+    "tests/a1_unified_fix/test_session_6793_chain.py": {
+      "current06": "6f3df78d7e1d8f8bfba0da198ecd21e24484f624a5369253036b863a245b0804",
+      "current07": "a8a13263da8903941cfaf4c601c225c314f268bc3c04e0be2f2ae1a9257c8a1a"
+    },
+    "tests/a1_unified_fix/session_6793_manifest.py": {
+      "current06": "cd6abf19da4cff278d103cf169f53d6435f6fd086643bb9c3588df7a6a97e093",
+      "current07": "b31929e34e0eca460ddc0c4cc2ed815a90b017a32f38eacfff5983ef2fb222af"
+    }
+  },
+  "production_and_public_skill_bytes_identical": true,
+  "component_reuse": "104 boundary/F1-F3/renderer +22 protocol/cancel/AskUser/hook +37 V2 components used current06; all their test bytes and all production/public Skill bytes identical to current07. The two changed files only select the real renderer in new incident graphs and record its loaded callable. All six new incident graph variants rerun at current07.",
+  "bare_commit_tested": false,
+  "historical_original_session_revision": "UNKNOWN beyond existing audit captured hashes",
+  "explicit_external_substitutes": [
+    "fixed provider/model leaf with real request transport/claims",
+    "new runtime observation referencing only synthetic Python process and inert JAR token",
+    "new scientific Python process produces labelled synthetic outputs; no Java/snpEff execution"
+  ],
+  "actual_loading": "Per-process loaded_manifest includes source paths/SHA and callable marshal SHA; manifests alone do not prove execution. Actual request/actions/attempt/Commit traces separately prove exercised paths.",
+  "actual_runtime_overlay_against_base": {
+    "agent_core/node_context.py": {
+      "loaded_sha256": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff",
+      "base_sha256": "15ffa90233ce4212537daa67c26216a3ba1b1dc78d0c3c7e04b704e9a3ea8d3c"
+    },
+    "agent_core/plan_tracker.py": {
+      "loaded_sha256": "820a28065f2cffcbcfe927703bda1e380b2cf17284a61717d08d0ec0eded07ec",
+      "base_sha256": "ad8b9b05143f99abbf3b07ea4770b6bb55e39b1bbd34b0838ab73a8be5fc6f50"
+    },
+    "agent_core/planner_context.py": {
+      "loaded_sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a",
+      "base_sha256": "56ee821ec64db383b9b083f51f9cd63d5ba1b2bfa29d82fff5aac542c7ec4c4d"
+    },
+    "agent_core/provider_message_safety.py": {
+      "loaded_sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "base_sha256": "be8d5353de52a247a48164a8d12a95c32999616aac81e961cf90ab4ba80edf2a"
+    },
+    "agent_core/retriever.py": {
+      "loaded_sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9",
+      "base_sha256": "993ed60bd900a76aad0d00a1c3e782fc9cdb5d97aef6bcc5c62c80dc1a4184de"
+    },
+    "agent_core/step_effects.py": {
+      "loaded_sha256": "97521eb3046e8273412d1ec74ee3b8b25f00556d7731054438475844c162ddae",
+      "base_sha256": "10b872ceee95905e3c564706afe2652b0318a654bed63f951e225a6e12289ac8"
+    },
+    "agent_core/workflow/candidate_repair.py": {
+      "loaded_sha256": "3cd4090851fec162e5c9a6bea5372cf3660fb543c8226fd2f68d2086ca6cacf8",
+      "base_sha256": "c4ad44b0feec0757975cddb8316432369d9299aa92d352322131499fa204e7fa"
+    },
+    "agent_core/workflow/inspection_evidence.py": {
+      "loaded_sha256": "7f95f2b36e23bb925239b1ab5b4e45bee1ada27c01edc6abbf7bf86af10eb9ab",
+      "base_sha256": "e3e128e0937bbf0996853ae95d0948850c99d687b8fce2ca55d3e6a221f8aff0"
+    },
+    "agent_core/workflow/managed_stop.py": {
+      "loaded_sha256": "99856a6dcd09d4f755ad4aa2db821e98ced3e5eb86bea790794310b1aa69f1f3",
+      "base_sha256": "1da3395fedac0598de3289bc03927292a7ea2b1d174a36144671f2949b93c3e5"
+    },
+    "agent_core/workspace_attestation.py": {
+      "loaded_sha256": "500fa9bc747136ec7240b9366feda0f794889ffff00d8cb97075783951227e6a",
+      "base_sha256": "9feac7e99dd99304e23472c60c1a0d115e25fe93b70e257539ae93cfe86176cd"
+    },
+    "bio_agents.py": {
+      "loaded_sha256": "07ecac5f48bca8167b7530b97c11a7284bc1fd98f68dc02a433adeef028d18a6",
+      "base_sha256": "8ec6d04468188b6230b1055d3f1b6f72d23a4c097eeec1dfcfc531a916f5f37d"
+    },
+    "prompts/manager.py": {
+      "loaded_sha256": "fe29c14293813db6e7a3bc05721ebf72367a6d3a3b2ae4c11c40d8bfe68fbc68",
+      "base_sha256": "e5255d83b1ba24cd8db56ee174987da26748d543ceee48dac0da85d2bd5432c2"
+    },
+    "skills/genomics/snpeff-annotation/SKILL.md": {
+      "loaded_sha256": "7b62ee677e4f5bc0a85e05bbdfdf63343d4b6d60b2998a9e58aef55f86aac68b",
+      "base_sha256": "1ce1295a59668778a08ee331280849deabfbacee242a7dffac5ca92a08650d44"
+    },
+    "skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py": {
+      "loaded_sha256": "b057cd7fc30ad923ffddb7ee48b1221b687464464bd68037f18a56006fc9763f",
+      "base_sha256": "2f52b5d5c4138f898e13057cbc9bb90986d4e0596ab6d9349891b362b1331a41"
+    }
+  },
+  "original_export_metadata_note": "The successor exporter copied baseline/overlay metadata from current01. Those historical fields are retained for provenance, not current overlay proof. files/source_signature and per-process loaded receipts are current; actual_runtime_overlay_against_base above recomputes current byte differences."
+}

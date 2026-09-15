@@ -1,0 +1,23 @@
+{
+  "source_signature": "24a5eb571831e25412e672b90cd2374e1b062019fd60d9ec83c0d4922931676f",
+  "loaded_source_manifest": "/tmp/biomind-6793-fix-20260915/current06/export/export_manifest.json",
+  "test_targets": [
+    "-q",
+    "-p",
+    "tests.a1_unified_fix.session_6793_manifest",
+    "tests/a1_unified_fix/test_session_6793_boundaries.py",
+    "tests/a1_unified_fix/test_f1_f2.py",
+    "tests/a1_unified_fix/test_f2_scope.py",
+    "tests/a1_unified_fix/test_f3_progress.py",
+    "tests/a1_unified_fix/test_f3_env_progress.py",
+    "tests/a1_unified_fix/test_f3_claims.py",
+    "tests/a1_unified_fix/test_f3_stop_origin.py",
+    "tests/test_snpeff_renderer.py",
+    "-k",
+    "not build_failure_execution_exposes_internal_log"
+  ],
+  "timeout_seconds": 360,
+  "watchdog_is_not_production_termination": true,
+  "returncode": 0,
+  "source_changes_after_run": []
+}
