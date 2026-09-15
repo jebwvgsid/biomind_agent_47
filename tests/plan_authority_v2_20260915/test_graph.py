@@ -45,6 +45,7 @@ class AuthorityGraph(F6Graph):
         self.path_resolution_receipts = []
         self.internal_temp_paths = {}
         self.final_gate_counterfactuals = []
+        self.blocked_packet_chain = {}
 
     async def setup(self):
         await super().setup()
@@ -583,7 +584,40 @@ class AuthorityGraph(F6Graph):
             diagnostic = self.terminal['terminal_diagnostic']
             assert diagnostic['origin']['attempt_id'] == self.executions[-1]['attempt_id']
             assert diagnostic['origin']['returncode'] == 23
-            assert diagnostic['causal_execution']['attempt_id'] == self.executions[-1]['attempt_id']
+            execution = diagnostic['execution']
+            assert execution['attempt_id'] == self.executions[-1]['attempt_id']
+            assert execution['step_id'] == declared[failed_index]['step_id']
+            assert execution['returncode'] == 23 and execution['executed'] is True
+            assert execution['committed'] is False
+            # A legitimate blocked directive consumes its active packet. The
+            # terminal owner keeps the actual attempt in execution/origin;
+            # causal_execution is conditional on an active parent packet.
+            task_state = self.durable['task_state']
+            assert not task_state['active_failure_packet_ref']
+            assert diagnostic['causal_execution'] == {'status': 'UNKNOWN'}
+            matches = [(identity, receipt) for identity, receipt in task_state['typed_recovery_receipts'].items()
+                if receipt['outcome']['type'] == 'blocked'
+                and receipt['outcome']['scope']['attempt_id'] == execution['attempt_id']]
+            assert len(matches) == 1
+            decision_id, receipt = matches[0]
+            packet_ref = receipt['failure_packet_ref']
+            consumed = task_state['consumed_failure_packet_refs'][packet_ref]
+            assert consumed['decision_id'] == decision_id
+            record = task_state['causal_failure_packets'][packet_ref]
+            packet = record['failure_packet']
+            assert packet['attempt_ref'] == execution['attempt_id']
+            assert packet['step_id'] == execution['step_id']
+            assert record['source_fingerprint'] == receipt['source_fingerprint'] == consumed['source_fingerprint']
+            held_scope = self.values['recovery_outcome']['payload']['inspection_stop']['scope']
+            for key, expected in {'task_id': self.task, 'plan_id': self.durable['plan_id'],
+                    'plan_version': self.durable['plan_version'], 'step_id': execution['step_id'],
+                    'attempt_id': execution['attempt_id']}.items():
+                assert receipt['outcome']['scope'][key] == held_scope[key] == expected
+            assert held_scope['episode_id'] == 'recovery-seed-' + receipt['source_fingerprint']
+            self.blocked_packet_chain = {'decision_id': decision_id, 'failure_packet_ref': packet_ref,
+                'source_fingerprint': receipt['source_fingerprint'], 'held_scope': held_scope,
+                'primary_execution': {key: execution[key] for key in ('attempt_id', 'step_id', 'returncode', 'executed', 'committed')},
+                'active_packet_consumed': True, 'causal_execution': diagnostic['causal_execution']}
             return self.values, self.durable
         assert self.values.get('final_audit_outcome', {}).get('type') == 'task_verified', {
             'planner_outcome': self.values.get('planner_outcome'), 'boundary': self.values.get('managed_run_boundary'),
@@ -710,6 +744,7 @@ class AuthorityGraph(F6Graph):
             'path_resolution_receipts': self.path_resolution_receipts,
             'internal_temp_paths': self.internal_temp_paths,
             'final_gate_counterfactuals': self.final_gate_counterfactuals,
+            'blocked_packet_chain': self.blocked_packet_chain,
             'declared_implementations': self.declared_implementations,
             'limits': ['fixed model leaf; no real model reliability claim', 'synthetic algorithm; no scientific E2E',
                 'inherited TaskRouter intent_admission=test_fixture and Consultant preflight substitutes',

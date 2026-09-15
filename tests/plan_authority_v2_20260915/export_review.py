@@ -53,14 +53,15 @@ def main():
         manifest['files'][relative] = hashlib.sha256(body).hexdigest()
     # Existing cancellation regression reads this already published candidate
     # JSON only. It never loads its original session or referenced science data.
-    relative = 'docs/audits/session_1789369423_plan_resource_cycle/candidate_C_rejected.json'
-    source = REPO / relative
-    assert source.is_file() and not source.is_symlink()
-    body = source.read_bytes()
-    dest = target / relative
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(body)
-    manifest['files'][relative] = hashlib.sha256(body).hexdigest()
+    for name in ('candidate_C_rejected.json', 'task_declarations.json'):
+        relative = 'docs/audits/session_1789369423_plan_resource_cycle/' + name
+        source = REPO / relative
+        assert source.is_file() and not source.is_symlink()
+        body = source.read_bytes()
+        dest = target / relative
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(body)
+        manifest['files'][relative] = hashlib.sha256(body).hexdigest()
     manifest['source_signature'] = hashlib.sha256(json.dumps(manifest['files'], sort_keys=True).encode()).hexdigest()
     (target / 'export_manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n')
     print(json.dumps({'signature': manifest['source_signature'], 'files': len(manifest['files']), 'export': str(target),
