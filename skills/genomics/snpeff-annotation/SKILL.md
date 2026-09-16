@@ -114,6 +114,7 @@ metadata:
       public_input_protocol: public_handle_v2
       operations:
         prepare_database:
+          binding_value_roles: {genome_version: concrete_path_segment}
           produces_bindings: [genome_version, snpeff_db]
           consumes_bindings: []
           binding_types:
@@ -127,6 +128,7 @@ metadata:
             GENOME_VERSION: {source: produced_binding, name: genome_version}
             SNPEFF_DB: {source: produced_binding, name: snpeff_db}
         build_database:
+          binding_value_roles: {genome_version: concrete_path_segment}
           produces_bindings: []
           consumes_bindings: [genome_version, snpeff_db]
           binding_types:
@@ -140,6 +142,7 @@ metadata:
             GENOME_VERSION: {source: accepted_binding, name: genome_version}
             SNPEFF_DB: {source: accepted_binding, name: snpeff_db}
         annotate_variants:
+          binding_value_roles: {genome_version: concrete_path_segment}
           produces_bindings: []
           consumes_bindings: [genome_version, snpeff_db]
           binding_types:

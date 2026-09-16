@@ -19,6 +19,28 @@ _NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,126}$")
 _ENV_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 _VALUE_TYPES = {"string", "integer", "number", "boolean", "json", "artifact_ref"}
 _RESOURCE_KINDS = {"immutable_artifact", "mutable_workspace"}
+# Only trusted operation rules assign these roles. Shell source and opaque
+# strings are never scanned or expanded. The two reserved forms are public.
+_CONCRETE_REFERENCE_RE = re.compile(r"\$(?:\{[A-Za-z_][A-Za-z0-9_]*\}|[A-Za-z_][A-Za-z0-9_]*)")
+_CONCRETE_ROLES = {"concrete_identifier", "concrete_path_segment"}
+
+
+def binding_value_policy(role):
+    if role not in (None, "", "literal") and role not in _CONCRETE_ROLES:
+        raise PlanBindingError("BINDING_VALUE_ROLE_INVALID", role=role)
+    return {"role": role or "literal", "policy_version": 1,
+            "reserved_forms": ["$NAME", "${NAME}"] if role in _CONCRETE_ROLES else [],
+            "expansion": "never"}
+
+
+def binding_value_violation(value, role):
+    policy = binding_value_policy(role)
+    if policy["reserved_forms"] and (not isinstance(value, str) or not value.strip()
+            or _CONCRETE_REFERENCE_RE.search(value)):
+        return "BINDING_CONCRETE_VALUE_REQUIRED"
+    if role == "concrete_path_segment" and (value in {".", ".."} or "/" in value or "\\" in value):
+        return "BINDING_PATH_SEGMENT_INVALID"
+    return ""
 PLAN_RESOURCE_PROTOCOL_VERSION = 2
 PLAN_RESOURCE_ROLE_VERSION = 1
 PLAN_RESOURCE_USES_VERSION = 3
@@ -969,6 +991,10 @@ def resolve_action_binding_environment(
                 env_name=env_name,
                 source=source,
             )
+        role = dict((binding_rule or {}).get("binding_value_roles") or {}).get(name)
+        violation = binding_value_violation(value, role)
+        if violation:
+            raise PlanBindingError(violation, binding_name=name, value_policy=binding_value_policy(role))
         bound_value = deepcopy(value)
         if (
             source == "accepted_binding"
@@ -1034,6 +1060,16 @@ def _validate_binding_value_contract(
             "disposition": "REPAIR_REQUIRED",
         }]
     raw_types = declared_rule.get("binding_types") or {}
+    roles = declared_rule.get("binding_value_roles") or {}
+    if not isinstance(roles, Mapping):
+        return [{"error_code": "BINDING_VALUE_ROLE_INVALID", "disposition": "PROTOCOL_INVALID"}]
+    try:
+        for name, role in roles.items():
+            binding_value_policy(role)
+            if name not in raw_types or raw_types[name] != "string":
+                raise PlanBindingError("BINDING_VALUE_ROLE_INVALID", binding_name=name)
+    except PlanBindingError as exc:
+        return [{"error_code": exc.code, **exc.diagnostic, "disposition": "PROTOCOL_INVALID"}]
     raw_artifact_refs = declared_rule.get("artifact_binding_requirements") or {}
     if not isinstance(raw_types, Mapping) or not isinstance(raw_artifact_refs, Mapping):
         return [{
@@ -1056,6 +1092,13 @@ def _validate_binding_value_contract(
             "disposition": "PROTOCOL_INVALID",
         }]
     for name in sorted(candidates):
+        role = roles.get(name)
+        issue = binding_value_violation(candidates[name].get("value"), role)
+        if issue:
+            violations.append({"error_code": issue, "binding_name": name,
+                "field_path": "produced_bindings." + name + ".value",
+                "value_policy": binding_value_policy(role), "disposition": "REPAIR_REQUIRED",
+                "message": "Supply the concrete value once here; use the derived environment in the script. No shell expansion is performed."})
         expected_type = str(raw_types.get(name) or "").strip()
         if expected_type and expected_type not in _VALUE_TYPES:
             violations.append({
@@ -1697,6 +1740,7 @@ def public_binding_requirements(frozen, *, operation, workspace_bindings):
     return {"protocol": str(frozen.get("protocol") or "legacy_full_v1"),
         "operation": operation,
         "produced_bindings": {name: {"type": types.get(name),
+            "value_policy": binding_value_policy(dict(rule.get("binding_value_roles") or {}).get(name)),
             "value": {"handle": "one exact allowed handle"} if types.get(name) == "artifact_ref" else "model semantic value",
             "allowed_handles": [row["plan_handle"] for row in workspace_bindings
                 if row.get("canonical_resource_id") == dict(artifacts.get(name) or {}).get("canonical_resource_id")
@@ -1812,7 +1856,7 @@ def binding_input_progress_facts(action, requirements):
                 or kind == 'boolean' and type(value) is bool
                 or kind == 'artifact_ref' and isinstance(value, Mapping) and set(value) == {'handle'}
                 and value.get('handle') in expected.get('allowed_handles', []))
-            if valid:
+            if valid and not binding_value_violation(value, expected.get('value_policy', {}).get('role')):
                 facts.add('produced_bindings.' + name)
     consumed = action.get('consumed_bindings') or {}
     if isinstance(consumed, Mapping):

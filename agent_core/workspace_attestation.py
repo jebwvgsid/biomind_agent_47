@@ -445,6 +445,7 @@ def project_current_action_workspace_bindings(
                 or ""
             ),
             "evidence_contract": evidence_contract,
+            "binding_value_roles": deepcopy(dict((binding_rule or {}).get("binding_value_roles") or {})),
             "current_state": _path_state(path),
             "resolved_derived_layout": _resolved_layout(
                 derived_artifact_layout or {}, path
@@ -474,6 +475,7 @@ def provider_workspace_view(rows: Sequence[Mapping[str, Any]]) -> list[Dict[str,
         "contract_source",
         "contract_revision",
         "evidence_contract",
+        "binding_value_roles",
         "current_state",
         "resolved_derived_layout",
     )
@@ -583,6 +585,7 @@ def validate_workspace_action_admission(
             "mutation": str(mutation.get("mutation") or "readwrite"),
             "effect_contract_hash": _digest(mutation),
             "evidence_contract": deepcopy(evidence_contract),
+            "binding_value_roles": deepcopy(binding.get("binding_value_roles") or {}),
             "allow_idempotent_revalidation": bool(
                 evidence_contract.get("allow_idempotent_revalidation") is True
             ),
@@ -686,7 +689,8 @@ def _binding_candidates(action: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
     return result
 
 
-def _render_relative_template(template: str, action: Mapping[str, Any], accepted_bindings=None) -> str:
+def _render_relative_template(template: str, action: Mapping[str, Any], accepted_bindings=None, binding_value_roles=None) -> str:
+    from agent_core.plan_bindings import binding_value_violation
     candidates = _binding_candidates(action)
     for name, value in dict(accepted_bindings or {}).items():
         accepted = {"type": "string", "value": value}
@@ -702,6 +706,9 @@ def _render_relative_template(template: str, action: Mapping[str, Any], accepted
                 "WORKSPACE_POSTCONDITION_BINDING_UNAVAILABLE", binding_name=name
             )
         value = candidate.get("value")
+        violation = binding_value_violation(value, (binding_value_roles or {}).get(name))
+        if violation:
+            raise WorkspaceAttestationError(violation, binding_name=name)
         if not isinstance(value, str) or not value or "/" in value or "\\" in value:
             raise WorkspaceAttestationError(
                 "WORKSPACE_POSTCONDITION_BINDING_INVALID",
@@ -745,7 +752,8 @@ def prepare_mutation_intents(
                 )
             condition = deepcopy(dict(condition_raw))
             relative = _render_relative_template(
-                str(condition.get("relative_path") or ""), action, accepted_bindings
+                str(condition.get("relative_path") or ""), action, accepted_bindings,
+                intent.get("binding_value_roles")
             )
             target = root if not relative else _safe_relative_path(root, relative)
             condition.update({

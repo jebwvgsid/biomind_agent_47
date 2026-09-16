@@ -1,0 +1,1306 @@
+{
+  "spec": "BM-FAILURE-CLOSURE-1789521763-PHASE-E-V2",
+  "run": "/tmp/bm_phase_e_c1_01",
+  "results": [
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.05437902547419071,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.014768007211387157,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00022922269999980927,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0007580071687698364,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014426028355956078,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014707818627357483,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006453897804021835,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013576066121459007,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013741571456193924,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006480477750301361,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0015022847801446915,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014053843915462494,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006350232288241386,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013495581224560738,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014368630945682526,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0007277727127075195,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013515958562493324,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014257431030273438,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006300639361143112,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013369088992476463,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014260131865739822,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006497176364064217,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013406584039330482,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001407712697982788,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0007996223866939545,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013453681021928787,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00018473342061042786,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006495295092463493,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013673575595021248,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001381048932671547,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.000632917508482933,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013611549511551857,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013741571456193924,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006440579891204834,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013805683702230453,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013914145529270172,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006448822095990181,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001531318761408329,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013994332402944565,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006493739783763885,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014604926109313965,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014274846762418747,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.000641397200524807,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013822559267282486,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014750193804502487,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006304988637566566,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001374715007841587,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014139898121356964,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006482219323515892,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013836026191711426,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013846810907125473,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0007825065404176712,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001405268907546997,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001426786184310913,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006493162363767624,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014080125838518143,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014656409621238708,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006422260776162148,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013895407319068909,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014105625450611115,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006512347608804703,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014335699379444122,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015088729560375214,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006391890347003937,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0015354184433817863,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001415582373738289,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006614373996853828,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013980390504002571,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014446023851633072,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.000659857876598835,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013736113905906677,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014416128396987915,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-dataset_label]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-dataset_label]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006591938436031342,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013893088325858116,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-dataset_label]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001408373937010765,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006415229290723801,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014065289869904518,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001417454332113266,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-reference_release]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-reference_release]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0008116019889712334,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014021778479218483,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-reference_release]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014382973313331604,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[None]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[None]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005476381629705429,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[None]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.013904210180044174,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[None]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016723759472370148,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[literal]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[literal]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006160596385598183,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[literal]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003952428698539734,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[literal]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015110056847333908,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v03_frozen_path_and_environment_use_same_value",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v03_frozen_path_and_environment_use_same_value",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005172397941350937,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v03_frozen_path_and_environment_use_same_value",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004470841959118843,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v03_frozen_path_and_environment_use_same_value",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014208443462848663,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[release_2026.09]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[release_2026.09]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006293840706348419,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[release_2026.09]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004150440916419029,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[release_2026.09]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001492239534854889,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[\\u4e2d\\u6587 \\u7248\\u672c]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[\\u4e2d\\u6587 \\u7248\\u672c]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006043668836355209,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[\\u4e2d\\u6587 \\u7248\\u672c]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004084587097167969,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[\\u4e2d\\u6587 \\u7248\\u672c]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001480095088481903,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[cost$5]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[cost$5]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006096838042140007,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[cost$5]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003922613337635994,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[cost$5]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014680437743663788,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal{braces}]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal{braces}]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006007533520460129,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal{braces}]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003987153992056847,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal{braces}]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014963559806346893,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[prefix-dollar$]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[prefix-dollar$]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005963779985904694,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[prefix-dollar$]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00452077854424715,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[prefix-dollar$]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001521613448858261,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal${DOC_ONLY}]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal${DOC_ONLY}]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005979370325803757,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal${DOC_ONLY}]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003893415443599224,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal${DOC_ONLY}]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015377532690763474,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[${LITERAL_TEXT}]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[${LITERAL_TEXT}]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006083473563194275,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[${LITERAL_TEXT}]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003906372003257275,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[${LITERAL_TEXT}]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014925561845302582,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[BUNDLE_HANDLE]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[BUNDLE_HANDLE]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005901921540498734,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[BUNDLE_HANDLE]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0021005449816584587,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[BUNDLE_HANDLE]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001476416364312172,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[FOREIGN_RESOURCE]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[FOREIGN_RESOURCE]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005947081372141838,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[FOREIGN_RESOURCE]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0021230829879641533,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[FOREIGN_RESOURCE]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015033595263957977,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_json_nested_text_is_opaque_not_a_runtime_binding_resolver",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_json_nested_text_is_opaque_not_a_runtime_binding_resolver",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005389098078012466,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_json_nested_text_is_opaque_not_a_runtime_binding_resolver",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0019883858039975166,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_json_nested_text_is_opaque_not_a_runtime_binding_resolver",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013929512351751328,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_consumed_ref_does_not_resolve_from_a_shell_variable",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_consumed_ref_does_not_resolve_from_a_shell_variable",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005392180755734444,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_consumed_ref_does_not_resolve_from_a_shell_variable",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0019490774720907211,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_consumed_ref_does_not_resolve_from_a_shell_variable",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014553498476743698,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[../escape]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[../escape]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006003063172101974,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[../escape]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00177806057035923,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[../escape]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014774221926927567,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested/name]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested/name]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.000614645890891552,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested/name]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001767382025718689,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested/name]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014291144907474518,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested\\\\name]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested\\\\name]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006249668076634407,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested\\\\name]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0017883898690342903,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested\\\\name]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014667212963104248,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006409501656889915,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0017441902309656143,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001503443345427513,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_id-newer-action]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_id-newer-action]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0008663320913910866,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_id-newer-action]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004524108022451401,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_id-newer-action]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016142334789037704,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_digest-newer-digest]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_digest-newer-digest]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006694868206977844,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_digest-newer-digest]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004441369324922562,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_digest-newer-digest]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001582195982336998,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[attempt_id-newer-attempt]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[attempt_id-newer-attempt]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006936294957995415,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[attempt_id-newer-attempt]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004538726061582565,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[attempt_id-newer-attempt]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015812460333108902,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[binding_revision-77]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[binding_revision-77]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006951736286282539,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[binding_revision-77]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004512648098170757,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[binding_revision-77]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016133487224578857,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[plan_revision-99]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[plan_revision-99]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006722314283251762,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[plan_revision-99]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004761035554111004,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[plan_revision-99]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015734415501356125,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[formal_concrete_path-/tmp/other-isolated-path]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[formal_concrete_path-/tmp/other-isolated-path]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006934311240911484,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[formal_concrete_path-/tmp/other-isolated-path]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004484954290091991,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[formal_concrete_path-/tmp/other-isolated-path]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016265641897916794,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v04_scalar_local_correction_reaches_commit",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v04_scalar_local_correction_reaches_commit",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00012185145169496536,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v04_scalar_local_correction_reaches_commit",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 92.02413746062666,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v04_scalar_local_correction_reaches_commit",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002775713801383972,
+      "failure": ""
+    }
+  ]
+}
