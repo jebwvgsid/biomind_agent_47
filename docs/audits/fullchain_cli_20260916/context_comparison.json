@@ -1,0 +1,57 @@
+{
+  "before": {
+    "problem": "complete native tool call missing only schema_version",
+    "provider": "explicit_response_stub",
+    "model_calls": 2,
+    "tools": 0,
+    "format_corrections": 1,
+    "first_request_chars": 27950,
+    "first_request_messages": 2,
+    "prefix_messages": 2,
+    "message_sizes": [
+      {
+        "type": "system",
+        "chars": 9906
+      },
+      {
+        "type": "human",
+        "chars": 16054
+      }
+    ],
+    "prefix_retained_in_followups": true,
+    "first_request_sha256": "6b8a2bb62d4c9e8bed9625a51ac625d8bd0fe3478f282542433f0ea84460a423",
+    "provider_cache_retest": "NOT_RUN",
+    "billing": "UNKNOWN",
+    "full_wire": "evidence/before-same-issue-context.json.gz",
+    "full_wire_sha256": "c8f0e8abae1767f203eb51d80d91f206a932d356a877008372f99c779d055c4b"
+  },
+  "after": {
+    "problem": "complete native tool call missing only schema_version",
+    "provider": "explicit_response_stub",
+    "model_calls": 1,
+    "tools": 0,
+    "format_corrections": 0,
+    "first_request_chars": 28307,
+    "first_request_messages": 2,
+    "prefix_messages": 2,
+    "message_sizes": [
+      {
+        "type": "system",
+        "chars": 9906
+      },
+      {
+        "type": "human",
+        "chars": 16369
+      }
+    ],
+    "prefix_retained_in_followups": true,
+    "first_request_sha256": "d67cf3429bbeb4a52c04436ec8321d6dc53a113367f74bb169c48c04f0757153",
+    "provider_cache_retest": "NOT_RUN",
+    "billing": "UNKNOWN",
+    "full_wire": "evidence/after-same-issue-context.json.gz",
+    "full_wire_sha256": "df87cb9f0b0ff574436e27c31b1011be6213d88cfd1cb65c2b49c98d8b9dd981"
+  },
+  "inference": "One exact protocol correction avoided; not evidence of lower context size, real provider cache, latency or invoice.",
+  "real_cache": "NOT_RUN",
+  "real_token_usage_delta": "NOT_RUN"
+}

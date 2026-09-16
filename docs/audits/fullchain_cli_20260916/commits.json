@@ -1,0 +1,56 @@
+{
+  "base": "8a84fea91d42f8f036d66badef36b13aec6203f8",
+  "production_commit": "c5ab427fa6865a11bf1f5a2d2c81ca7bcdd53003",
+  "production_files": [
+    "agent_core/cli_display.py",
+    "agent_core/cli_lifecycle.py",
+    "agent_core/cli_plain.py",
+    "agent_core/cli_review.py",
+    "agent_core/cli_terminal.py",
+    "agent_core/managed_artifacts.py",
+    "agent_core/reproduction.py",
+    "agent_core/workflow/commit_step.py",
+    "agent_core/workflow/managed_stop.py",
+    "agent_core/workflow/recovery_agent.py",
+    "agent_core/workflow/recovery_node.py",
+    "agent_core/workflow/recovery_reception.py",
+    "agent_core/workflow/recovery_runtime.py",
+    "agent_core/workflow/recovery_tools.py",
+    "agent_core/workflow/verifier.py",
+    "bio_agents.py",
+    "execution/executor.py",
+    "supervisor.py",
+    "skills/genomics/snpeff-annotation/SKILL.md",
+    "skills/genomics/snpeff-annotation/scripts/ann_summary.py",
+    "skills/genomics/snpeff-annotation/scripts/snpeff_checks.py"
+  ],
+  "tests_and_fixture": [
+    "tests/test_fullchain_repair_20260916.py",
+    "tests/test_fullchain_delivery_20260916.py",
+    "tests/test_fullchain_context_comparison_20260916.py",
+    "tests/test_cli_lifecycle_repair_20260916.py",
+    "tests/test_recovery_tools.py",
+    "tests/test_inspection_workflow.py",
+    "tests/test_cli_v2_output.py",
+    "tests/test_cli_generate_public_integration.py",
+    "tests/fixtures/cli_recovery_history_1789537621.json.gz"
+  ],
+  "scopes": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S7",
+    "CLI lifecycle and stop display"
+  ],
+  "preserved": [
+    "S6 full stable Recovery context",
+    "Phase B/E budgets, routing, approval, warning/stop, compaction and cancellation"
+  ],
+  "tests": "440 distinct passing offline cases; 14 pre-existing extended regression failures retained",
+  "audit_commit": "The subsequent commit containing this file; full hash supplied in final receipt.",
+  "push": false,
+  "deployment": false,
+  "original_task_resumed": false
+}

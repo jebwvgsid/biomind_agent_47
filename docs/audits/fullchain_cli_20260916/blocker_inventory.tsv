@@ -1,0 +1,25 @@
+id	source	owner	basis	scope	feedback_and_reentry	disposition
+handoff	agent_core/consultation_state.py:2065	Consultant	TaskSpec/自然语言 handoff	当前用户请求	结构化问题回本节点；不造第二份 TaskSpec	复用
+plan	agent_core/plan_tracker.py:10450	Planner	正式 Plan schema、引用、依赖和任务契约	计划候选/当前 revision	原 Planner 局部纠正；冻结与审批之后再接纳	复用
+plan_outputs	agent_core/plan_tracker.py:9404	Planner	output_ref、已批准根和路径策略	未来输出	拒收无效具体声明；不要求未来文件已存在	复用
+generate_protocol	agent_core/controller_audit.py:78	Generate	完整协议与合法 script/code/argv 载体	当前未执行候选	原 Generate 候选纠正，完整重验	复用
+generate_bindings	agent_core/plan_bindings.py:1255	Generate	具体值、类型与正式引用	结构化动作字段	审批前局部纠正；不解析 shell 变量的业务含义	复用 Phase E C1
+script_syntax	execution/script_validation.py:39	Generate/Execute	对应语言实际语法检查	候选正文/argv 载体	不执行坏候选；修正后新身份、新审批	复用
+literal_paths	agent_core/managed_artifacts.py:848	Generate admission	真实必需输入可用、结构化引用	当前动作资源	删除完整路径子串门槛；声明关系不等于使用已证实	修改 S1
+assembly_retry	bio_agents.py:42921	Generate	一次既有确定性组装重试	当前 invocation	传递原 invocation_audit，保留首因；不新增纠错控制器	修改 S2/T18
+approval	agent_core/human_io.py:335	既有审批入口	完整对象/冻结身份/用户决定	当前候选	拒绝旧审批；详情查看不算批准	保持；仅缩短显示 hash
+execute	bio_agents.py:46384	Execute	动作/审批/资源/运行能力/临执行版本	实际 dispatch 前	保留结构化失败和执行未开始事实	复用
+mutation	agent_core/workspace_attestation.py:491	已有物化核验	声明路径、作用域、实际回执	当前 attempt	真实 mutation 不一致继续阻止接纳	复用；不降 warning
+artifact_scope	agent_core/workflow/recovery_tools.py:259	Recovery read tools	正式物化、当前 plan/attempt 和依赖 accepted 版本	当前可见对象	明确 locator/readability；实际 read 再核查；不全局 latest fallback	修改 S1
+read_tool	agent_core/workflow/recovery_tools.py:662	Recovery read tools	授权对象/权限/实际格式/分页回执	只读取证	失败原码保留；成功取证不提升 accepted	保持并补版本复核
+directive	agent_core/workflow/recovery_reception.py:114	Recovery native receiver	完整原生参数、严格 JSON、唯一 schema 常量	当前结束的工具调用	仅缺键复制适配；其余完整 validator 再验；无新增请求	修改 S2
+recovery_scope	agent_core/workflow/recovery_runtime.py:500	RecoveryRuntime	当前 incident、动作范围、授权与 typed directive	决定接纳	原纠正/恢复出口；不能由展示层选路由	保持
+no_progress	agent_core/workflow/recovery_runtime.py:385	RecoveryRuntime	同 attempt 可靠新内容/覆盖	局部无进展	排除 ID/时间/空页/失败重述；不刷新父资源	修改 S5
+resources	agent_core/workflow/recovery_node.py:1674	RecoveryNode	既有 Phase E 累计账本、请求预留、取消回执	父 incident	enabled/disabled 外部 metadata 留痕；默认 disabled 不变	复用并补 S7 回执
+review	supervisor.py:643	Supervisor/Reviewer	CompletionReport、真实产物、现有 causal_observation_receipts	当前 validation/attempt	语义疑虑由原 Reviewer 按证据判断；不与 Gate 合并	复用
+gate	agent_core/completion_gate.py:2421	CompletionGate	当前 StepEffect 与正式产物/绑定/观测	当前完成条件	真实必要条件未满足继续拒收；warning 语义不改	复用
+commit	agent_core/workflow/commit_step.py:164	CommitStep	scope、完整报告、决定、consumption token、CAS	正式提交	旧身份、冲突和未核验不得提交；成功后通知 CLI	只增显示通知
+summary	skills/genomics/snpeff-annotation/scripts/ann_summary.py:51	本 Skill/原 Reviewer	新 Plan 三分区约定与计数单位	小表内部一致性	拒绝缺列/坏数值/契约冲突；不等于独立 VCF 重扫	修改 S3
+reproduce	agent_core/reproduction.py:18	Generate final delivery	Commit/attempt 描述符与原文/argv/cwd/依赖	当前交付	仅当前已接纳来源；独立复现须另验证	修改 S4
+stop_reports	agent_core/workflow/managed_stop.py:338	既有终态生命周期	持久失败/因果链/报告保护回执	blocked/failed 收尾	只读原始归档、保护旧报告；交付问题另报	复用 overlay 并补真实 episode 计数
+cli	agent_core/cli_display.py:214	CLI display	event/request/item/attempt/commit/stop 身份	展示副本	活动更新、消息完成/重放/晚回执；零业务决策	修改 CLI

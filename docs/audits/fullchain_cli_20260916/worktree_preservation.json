@@ -1,0 +1,470 @@
+{
+  "phase": "before_logical_commit",
+  "head": "8a84fea91d42f8f036d66badef36b13aec6203f8",
+  "branch": "refactor/consultant-controller-authority",
+  "index_sha256": "5d6b5bc7cebcce43dab1ee87d5567aa9412f7dfc7b10566255de219c6059f61e",
+  "original_index_sha256": "5d6b5bc7cebcce43dab1ee87d5567aa9412f7dfc7b10566255de219c6059f61e",
+  "tracked_changes": {
+    "agent_core/node_context.py": {
+      "before": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff",
+      "after": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff"
+    },
+    "agent_core/planner_context.py": {
+      "before": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a",
+      "after": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a"
+    },
+    "agent_core/provider_message_safety.py": {
+      "before": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "after": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+    },
+    "agent_core/workflow/managed_stop.py": {
+      "before": "3f31a07aa66389cab7d4d9ac628d8577094dcc1a7cfc98a12db15611562adab6",
+      "after": "3f31a07aa66389cab7d4d9ac628d8577094dcc1a7cfc98a12db15611562adab6"
+    },
+    "config/__init__.py": {
+      "before": "bba896c13436a1c4eacec68b946e43676ba03b9c895d90c9dafc8a2ce52115f0",
+      "after": "bba896c13436a1c4eacec68b946e43676ba03b9c895d90c9dafc8a2ce52115f0"
+    },
+    "config/config.py": {
+      "before": "ec7d04be7c225a60835fc3a2afea4bc72dcc2c9540cc9de0a3a865a28203caa5",
+      "after": "ec7d04be7c225a60835fc3a2afea4bc72dcc2c9540cc9de0a3a865a28203caa5"
+    },
+    "config/logger.py": {
+      "before": "42657408667fce07c0d36869cfdcf1efedf45279c35604de6a046f1cd75e25a0",
+      "after": "42657408667fce07c0d36869cfdcf1efedf45279c35604de6a046f1cd75e25a0"
+    },
+    "config/settings.py": {
+      "before": "9f0a0227cdf57672dcc0d0888438c16b6d35d258611fba44a1bd44b977cf0310",
+      "after": "9f0a0227cdf57672dcc0d0888438c16b6d35d258611fba44a1bd44b977cf0310"
+    },
+    "config/startup.py": {
+      "before": "fb0e1920dd327ba5f73196aac561b8b4637177def0134b9302b0091aa033578c",
+      "after": "fb0e1920dd327ba5f73196aac561b8b4637177def0134b9302b0091aa033578c"
+    },
+    "docs/audits/architecture/RECOVERY_CONTEXT_CURRENT.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/RECOVERY_PHASE_CONTEXT_CURRENT.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/context_memory_and_compression_contract.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/controller_front_half_retirement_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/controller_runtime_migration_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/global_prompt_context_lifecycle.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/managed_artifact_preexecution_boundary_audit_20260825.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/node_prompt_payload_matrix.tsv": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/node_provider_context_matrix_20260820.tsv": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/open_world_highlighted_requirements_migration_report_20260819.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/pi_migration_rpc_poc_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/pi_migration_stepworker_boundary_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/planner_constraint_provenance_projection_audit_20260818.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/planner_context_reentry_prompt_regression_audit_20260820.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/planner_pending_snapshot_reentry_fix_report_20260819.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/planner_request_component_inventory_20260820.tsv": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/progressive_skill_access_search_and_replan_implementation_report_20260827.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/provider_attempt_session_archive_phase3_implementation_20260826.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/provider_cache_inventory.tsv": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/provider_stream_session_archive_boundary_audit_20260825.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/recovery_context_component_matrix_20260903.tsv": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/recovery_context_disclosure_matrix.tsv": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/recovery_context_engineering_audit_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/recovery_context_engineering_delta_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/recovery_progressive_disclosure_contract.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/recovery_progressive_disclosure_history.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/runtime_and_recovery_context_contract.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/schema2_adapter_semantic_coverage_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/schema2_consultant_agent_loop_20260903.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/semantic_history_authority_matrix.tsv": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/skill_planning_contract_retirement_audit_20260819.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "docs/audits/architecture/skill_planning_contract_retirement_report_20260819.md": {
+      "before": "MISSING",
+      "after": "MISSING"
+    },
+    "prompts/manager.py": {
+      "before": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3",
+      "after": "9e83b25475667ebae2eb9aff3d33913057cbb9134caf68b0145fb96147c214f3"
+    },
+    "tests/planner_fix_acceptance/test_planner_recorded_workflow.py": {
+      "before": "519a8d8812a2ecbd148e4a8957bd641de2fc3cc4861115bda0aa1d2c059e1d20",
+      "after": "519a8d8812a2ecbd148e4a8957bd641de2fc3cc4861115bda0aa1d2c059e1d20"
+    },
+    "tests/test_bio_agents_memory.py": {
+      "before": "cd4a10615295b846f8670a3dc71860aa8024db1b9d59c2fa87fe9c06963e877e",
+      "after": "cd4a10615295b846f8670a3dc71860aa8024db1b9d59c2fa87fe9c06963e877e"
+    },
+    "tests/test_consultant_first_graph_integration_v21.py": {
+      "before": "f5ebf6a8db47b0aaf21a0be05442c1804ee71f5bff0c7b910fb6b390be6b355d",
+      "after": "f5ebf6a8db47b0aaf21a0be05442c1804ee71f5bff0c7b910fb6b390be6b355d"
+    },
+    "tests/test_execution_provenance.py": {
+      "before": "42f20d9e5a5672373fe220561cd53760035ec13f004a01044a65abae11308437",
+      "after": "42f20d9e5a5672373fe220561cd53760035ec13f004a01044a65abae11308437"
+    },
+    "tests/test_generate_capability_scoped_prompt.py": {
+      "before": "d293cce90fec82920a28810897a316bf0954ca0a1df8e85f4053232624067e46",
+      "after": "d293cce90fec82920a28810897a316bf0954ca0a1df8e85f4053232624067e46"
+    },
+    "tests/test_generate_only_output_contract_v2.py": {
+      "before": "7beca200b3ca83503586113e06add4664192bf291bc8ae161f7fddcd0ed9257f",
+      "after": "7beca200b3ca83503586113e06add4664192bf291bc8ae161f7fddcd0ed9257f"
+    },
+    "tests/test_generate_provider_payload_safety.py": {
+      "before": "54fdc14b15f94be24ed89f053bd4274a8843abaa98a2cc9935d7004e98bffb88",
+      "after": "54fdc14b15f94be24ed89f053bd4274a8843abaa98a2cc9935d7004e98bffb88"
+    },
+    "tests/test_node_context_semantic_continuity.py": {
+      "before": "b22c1c92e55696107df3196813d8f936a2ae41073ff8730094625f278d0c86ab",
+      "after": "b22c1c92e55696107df3196813d8f936a2ae41073ff8730094625f278d0c86ab"
+    },
+    "tests/test_output_router.py": {
+      "before": "007429e5626094beb8befa7ac7f06d177b3ef9dcda8566454aef8a2cb78fcb17",
+      "after": "007429e5626094beb8befa7ac7f06d177b3ef9dcda8566454aef8a2cb78fcb17"
+    },
+    "tests/test_plan_contract_convergence_v2.py": {
+      "before": "8a102e123013fd3755ee0bf2ed2170dd3ab9a6993a73ac4f1fb578f7e0511348",
+      "after": "8a102e123013fd3755ee0bf2ed2170dd3ab9a6993a73ac4f1fb578f7e0511348"
+    },
+    "tests/test_plan_lifecycle.py": {
+      "before": "50ff1c57697bb7e69fa40af593c637468ea881ac18c6a094b34dd0038b9431fd",
+      "after": "50ff1c57697bb7e69fa40af593c637468ea881ac18c6a094b34dd0038b9431fd"
+    },
+    "tests/test_plan_local_preaction_convergence_v2.py": {
+      "before": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591",
+      "after": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591"
+    },
+    "tests/test_recovery_agent_loop.py": {
+      "before": "18391b5528afba7cbf4aa9b2989908d784752f6da61c0f2419c2e9ef17d76aed",
+      "after": "18391b5528afba7cbf4aa9b2989908d784752f6da61c0f2419c2e9ef17d76aed"
+    },
+    "tests/test_recovery_agent_seed.py": {
+      "before": "283836f56080d9122fb8842f8391e5140a1b856ac10c425e7b9988c6d841dc34",
+      "after": "283836f56080d9122fb8842f8391e5140a1b856ac10c425e7b9988c6d841dc34"
+    },
+    "tests/test_recovery_context_bounds.py": {
+      "before": "1f2e8d9a20b3cb19ae0d2ccaba1ffec9876a96ba75f842a61aaad64ce8d74ba5",
+      "after": "1f2e8d9a20b3cb19ae0d2ccaba1ffec9876a96ba75f842a61aaad64ce8d74ba5"
+    },
+    "tests/test_recovery_context_p0.py": {
+      "before": "9a0e780290bfc84fd3ffabe5d56806c117d472de28c926c7e9486592865dcced",
+      "after": "9a0e780290bfc84fd3ffabe5d56806c117d472de28c926c7e9486592865dcced"
+    },
+    "tests/test_recovery_progressive_skill_access.py": {
+      "before": "0a0cfa5d33890cf5731c94d477fc63b9088514e89e3bfcd54a6a30a67125a400",
+      "after": "0a0cfa5d33890cf5731c94d477fc63b9088514e89e3bfcd54a6a30a67125a400"
+    },
+    "tests/test_recovery_schema2_node.py": {
+      "before": "4fbbc298140707b3702ef44134b521f050a44343434d551819b43c83df5f5a97",
+      "after": "4fbbc298140707b3702ef44134b521f050a44343434d551819b43c83df5f5a97"
+    },
+    "tests/test_recovery_tools.py": {
+      "before": "74e1e5c2e6a3ac69a16dabaca7d18b465678988f4f0efa718da7b7e87d9dac05",
+      "after": "74e1e5c2e6a3ac69a16dabaca7d18b465678988f4f0efa718da7b7e87d9dac05"
+    },
+    "tests/test_renderer_controller.py": {
+      "before": "1383f5d8fae706b9ecef880721e788643543841d466234c238942ae87b55b7a2",
+      "after": "1383f5d8fae706b9ecef880721e788643543841d466234c238942ae87b55b7a2"
+    },
+    "tests/test_renderer_plan_ownership.py": {
+      "before": "197ef88033ba1986948f4c7cfc4b7aa3f1c6b6a8710b62023654e1fc052e8bb1",
+      "after": "197ef88033ba1986948f4c7cfc4b7aa3f1c6b6a8710b62023654e1fc052e8bb1"
+    },
+    "tests/test_run_profiler.py": {
+      "before": "dca4c590d42dbbeacbfddf9b863f53669476162beb0e8897a750fd4cdf41c846",
+      "after": "dca4c590d42dbbeacbfddf9b863f53669476162beb0e8897a750fd4cdf41c846"
+    },
+    "tests/test_runtime_preflight.py": {
+      "before": "a533b4e680c3a31005fc70b8fa15570bd1e9e18a53e36fb1a1c7c01b4dccfebb",
+      "after": "a533b4e680c3a31005fc70b8fa15570bd1e9e18a53e36fb1a1c7c01b4dccfebb"
+    },
+    "tests/test_schema2_adapter_semantic_coverage.py": {
+      "before": "00a0979349c9a9c6703caf512c39f7bd60c3c240b83765ff6c6109733b72afab",
+      "after": "00a0979349c9a9c6703caf512c39f7bd60c3c240b83765ff6c6109733b72afab"
+    },
+    "tests/test_supervisor_validation_evidence.py": {
+      "before": "9fb7d36cc692b67a13bfb367056b29f84ea5286e0135a19a3fc2e4da1cf96fab",
+      "after": "9fb7d36cc692b67a13bfb367056b29f84ea5286e0135a19a3fc2e4da1cf96fab"
+    },
+    "tests/test_typed_outcomes.py": {
+      "before": "b8004ce72a7964f8470796a37181ff7c4fceea9430b406c065f6d760d8c32d17",
+      "after": "b8004ce72a7964f8470796a37181ff7c4fceea9430b406c065f6d760d8c32d17"
+    }
+  },
+  "status_bytes_unchanged": true,
+  "staged": "",
+  "preserved": true,
+  "historical_sources": {
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/plan_state.json": {
+      "before": "1db31f271e03ce1856ee5ea18290732ce7e56362c76b9b62b271ec18295e61e1",
+      "after": "1db31f271e03ce1856ee5ea18290732ce7e56362c76b9b62b271ec18295e61e1"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/run_metrics.json": {
+      "before": "259ef11cfe7d869bf14a330cf7e3048f2712c94d8e7ca7d7032611e17e87c554",
+      "after": "259ef11cfe7d869bf14a330cf7e3048f2712c94d8e7ca7d7032611e17e87c554"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/context_trace/events.jsonl": {
+      "before": "8c326e90a0e92c16dd947900aacd75cbbb6ebbf751125d601aedf9c197bf5d49",
+      "after": "8c326e90a0e92c16dd947900aacd75cbbb6ebbf751125d601aedf9c197bf5d49"
+    }
+  },
+  "final_checks": [
+    {
+      "phase": "before_commits",
+      "passed": true,
+      "head_branch_index_and_porcelain_unchanged": true,
+      "tracked_bytes_rechecked": [
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "docs/audits/architecture/RECOVERY_CONTEXT_CURRENT.md",
+        "docs/audits/architecture/RECOVERY_PHASE_CONTEXT_CURRENT.md",
+        "docs/audits/architecture/context_memory_and_compression_contract.md",
+        "docs/audits/architecture/controller_front_half_retirement_20260903.md",
+        "docs/audits/architecture/controller_runtime_migration_20260903.md",
+        "docs/audits/architecture/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md",
+        "docs/audits/architecture/global_prompt_context_lifecycle.md",
+        "docs/audits/architecture/managed_artifact_preexecution_boundary_audit_20260825.md",
+        "docs/audits/architecture/node_prompt_payload_matrix.tsv",
+        "docs/audits/architecture/node_provider_context_matrix_20260820.tsv",
+        "docs/audits/architecture/open_world_highlighted_requirements_migration_report_20260819.md",
+        "docs/audits/architecture/pi_migration_rpc_poc_20260903.md",
+        "docs/audits/architecture/pi_migration_stepworker_boundary_20260903.md",
+        "docs/audits/architecture/planner_constraint_provenance_projection_audit_20260818.md",
+        "docs/audits/architecture/planner_context_reentry_prompt_regression_audit_20260820.md",
+        "docs/audits/architecture/planner_pending_snapshot_reentry_fix_report_20260819.md",
+        "docs/audits/architecture/planner_request_component_inventory_20260820.tsv",
+        "docs/audits/architecture/progressive_skill_access_search_and_replan_implementation_report_20260827.md",
+        "docs/audits/architecture/provider_attempt_session_archive_phase3_implementation_20260826.md",
+        "docs/audits/architecture/provider_cache_inventory.tsv",
+        "docs/audits/architecture/provider_stream_session_archive_boundary_audit_20260825.md",
+        "docs/audits/architecture/recovery_context_component_matrix_20260903.tsv",
+        "docs/audits/architecture/recovery_context_disclosure_matrix.tsv",
+        "docs/audits/architecture/recovery_context_engineering_audit_20260903.md",
+        "docs/audits/architecture/recovery_context_engineering_delta_20260903.md",
+        "docs/audits/architecture/recovery_progressive_disclosure_contract.md",
+        "docs/audits/architecture/recovery_progressive_disclosure_history.md",
+        "docs/audits/architecture/runtime_and_recovery_context_contract.md",
+        "docs/audits/architecture/schema2_adapter_semantic_coverage_20260903.md",
+        "docs/audits/architecture/schema2_consultant_agent_loop_20260903.md",
+        "docs/audits/architecture/semantic_history_authority_matrix.tsv",
+        "docs/audits/architecture/skill_planning_contract_retirement_audit_20260819.md",
+        "docs/audits/architecture/skill_planning_contract_retirement_report_20260819.md",
+        "prompts/manager.py",
+        "tests/planner_fix_acceptance/test_planner_recorded_workflow.py",
+        "tests/test_bio_agents_memory.py",
+        "tests/test_consultant_first_graph_integration_v21.py",
+        "tests/test_execution_provenance.py",
+        "tests/test_generate_capability_scoped_prompt.py",
+        "tests/test_generate_only_output_contract_v2.py",
+        "tests/test_generate_provider_payload_safety.py",
+        "tests/test_node_context_semantic_continuity.py",
+        "tests/test_output_router.py",
+        "tests/test_plan_contract_convergence_v2.py",
+        "tests/test_plan_lifecycle.py",
+        "tests/test_plan_local_preaction_convergence_v2.py",
+        "tests/test_recovery_agent_loop.py",
+        "tests/test_recovery_agent_seed.py",
+        "tests/test_recovery_context_bounds.py",
+        "tests/test_recovery_context_p0.py",
+        "tests/test_recovery_progressive_skill_access.py",
+        "tests/test_recovery_schema2_node.py",
+        "tests/test_recovery_tools.py",
+        "tests/test_renderer_controller.py",
+        "tests/test_renderer_plan_ownership.py",
+        "tests/test_run_profiler.py",
+        "tests/test_runtime_preflight.py",
+        "tests/test_schema2_adapter_semantic_coverage.py",
+        "tests/test_supervisor_validation_evidence.py",
+        "tests/test_typed_outcomes.py"
+      ],
+      "configuration_content_not_reopened": [
+        "config/__init__.py",
+        "config/config.py",
+        "config/logger.py",
+        "config/settings.py",
+        "config/startup.py"
+      ],
+      "historical_sha256_rechecked": {
+        "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/plan_state.json": "1db31f271e03ce1856ee5ea18290732ce7e56362c76b9b62b271ec18295e61e1",
+        "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/run_metrics.json": "259ef11cfe7d869bf14a330cf7e3048f2712c94d8e7ca7d7032611e17e87c554",
+        "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/context_trace/events.jsonl": "8c326e90a0e92c16dd947900aacd75cbbb6ebbf751125d601aedf9c197bf5d49"
+      }
+    },
+    {
+      "phase": "after_production_commit",
+      "passed": true,
+      "head_branch_index_and_porcelain_unchanged": true,
+      "tracked_bytes_rechecked": [
+        "agent_core/node_context.py",
+        "agent_core/planner_context.py",
+        "agent_core/provider_message_safety.py",
+        "agent_core/workflow/managed_stop.py",
+        "docs/audits/architecture/RECOVERY_CONTEXT_CURRENT.md",
+        "docs/audits/architecture/RECOVERY_PHASE_CONTEXT_CURRENT.md",
+        "docs/audits/architecture/context_memory_and_compression_contract.md",
+        "docs/audits/architecture/controller_front_half_retirement_20260903.md",
+        "docs/audits/architecture/controller_runtime_migration_20260903.md",
+        "docs/audits/architecture/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md",
+        "docs/audits/architecture/global_prompt_context_lifecycle.md",
+        "docs/audits/architecture/managed_artifact_preexecution_boundary_audit_20260825.md",
+        "docs/audits/architecture/node_prompt_payload_matrix.tsv",
+        "docs/audits/architecture/node_provider_context_matrix_20260820.tsv",
+        "docs/audits/architecture/open_world_highlighted_requirements_migration_report_20260819.md",
+        "docs/audits/architecture/pi_migration_rpc_poc_20260903.md",
+        "docs/audits/architecture/pi_migration_stepworker_boundary_20260903.md",
+        "docs/audits/architecture/planner_constraint_provenance_projection_audit_20260818.md",
+        "docs/audits/architecture/planner_context_reentry_prompt_regression_audit_20260820.md",
+        "docs/audits/architecture/planner_pending_snapshot_reentry_fix_report_20260819.md",
+        "docs/audits/architecture/planner_request_component_inventory_20260820.tsv",
+        "docs/audits/architecture/progressive_skill_access_search_and_replan_implementation_report_20260827.md",
+        "docs/audits/architecture/provider_attempt_session_archive_phase3_implementation_20260826.md",
+        "docs/audits/architecture/provider_cache_inventory.tsv",
+        "docs/audits/architecture/provider_stream_session_archive_boundary_audit_20260825.md",
+        "docs/audits/architecture/recovery_context_component_matrix_20260903.tsv",
+        "docs/audits/architecture/recovery_context_disclosure_matrix.tsv",
+        "docs/audits/architecture/recovery_context_engineering_audit_20260903.md",
+        "docs/audits/architecture/recovery_context_engineering_delta_20260903.md",
+        "docs/audits/architecture/recovery_progressive_disclosure_contract.md",
+        "docs/audits/architecture/recovery_progressive_disclosure_history.md",
+        "docs/audits/architecture/runtime_and_recovery_context_contract.md",
+        "docs/audits/architecture/schema2_adapter_semantic_coverage_20260903.md",
+        "docs/audits/architecture/schema2_consultant_agent_loop_20260903.md",
+        "docs/audits/architecture/semantic_history_authority_matrix.tsv",
+        "docs/audits/architecture/skill_planning_contract_retirement_audit_20260819.md",
+        "docs/audits/architecture/skill_planning_contract_retirement_report_20260819.md",
+        "prompts/manager.py",
+        "tests/planner_fix_acceptance/test_planner_recorded_workflow.py",
+        "tests/test_bio_agents_memory.py",
+        "tests/test_consultant_first_graph_integration_v21.py",
+        "tests/test_execution_provenance.py",
+        "tests/test_generate_capability_scoped_prompt.py",
+        "tests/test_generate_only_output_contract_v2.py",
+        "tests/test_generate_provider_payload_safety.py",
+        "tests/test_node_context_semantic_continuity.py",
+        "tests/test_output_router.py",
+        "tests/test_plan_contract_convergence_v2.py",
+        "tests/test_plan_lifecycle.py",
+        "tests/test_plan_local_preaction_convergence_v2.py",
+        "tests/test_recovery_agent_loop.py",
+        "tests/test_recovery_agent_seed.py",
+        "tests/test_recovery_context_bounds.py",
+        "tests/test_recovery_context_p0.py",
+        "tests/test_recovery_progressive_skill_access.py",
+        "tests/test_recovery_schema2_node.py",
+        "tests/test_recovery_tools.py",
+        "tests/test_renderer_controller.py",
+        "tests/test_renderer_plan_ownership.py",
+        "tests/test_run_profiler.py",
+        "tests/test_runtime_preflight.py",
+        "tests/test_schema2_adapter_semantic_coverage.py",
+        "tests/test_supervisor_validation_evidence.py",
+        "tests/test_typed_outcomes.py"
+      ],
+      "configuration_content_not_reopened": [
+        "config/__init__.py",
+        "config/config.py",
+        "config/logger.py",
+        "config/settings.py",
+        "config/startup.py"
+      ],
+      "historical_sha256_rechecked": {
+        "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/plan_state.json": "1db31f271e03ce1856ee5ea18290732ce7e56362c76b9b62b271ec18295e61e1",
+        "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/run_metrics.json": "259ef11cfe7d869bf14a330cf7e3048f2712c94d8e7ca7d7032611e17e87c554",
+        "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/context_trace/events.jsonl": "8c326e90a0e92c16dd947900aacd75cbbb6ebbf751125d601aedf9c197bf5d49"
+      }
+    }
+  ]
+}

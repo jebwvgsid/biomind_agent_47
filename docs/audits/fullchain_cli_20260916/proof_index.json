@@ -1,0 +1,836 @@
+[
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_core/consumed-stop-counts.json",
+    "bytes": 12445,
+    "sha256": "21eadbd21f0f9f36a38cd061e70d9c4ec9736bea3bb81da2a7d15f14cbaf9130",
+    "cohort": "frozen_core"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_core/generate-accepted-source-wire.json",
+    "bytes": 44303,
+    "sha256": "163b4869a19bb67be7ff159803cce142df789244b15bb7ce932e8995bab33d9c",
+    "cohort": "frozen_core"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_core/delivery-bad_summary.json",
+    "bytes": 10798,
+    "sha256": "407d8f51eae10bfa4eb1b0ee51c93d0274a077a1f0d85f950a3c66de980dcdc7",
+    "cohort": "frozen_core"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_core/delivery-stale_attempt.json",
+    "bytes": 10801,
+    "sha256": "92ac53d748e63d97bebec5f6f6d98ce39a43b40f4c7935d27d44af2c3d97377b",
+    "cohort": "frozen_core"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_core/delivery-missing_dependency.json",
+    "bytes": 11580,
+    "sha256": "2283ccc145eb6a92c97340bcaa6b4e2bdff2550041e0c1516dbf951c72912c65",
+    "cohort": "frozen_core"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_core/same-issue-context.json",
+    "bytes": 29072,
+    "sha256": "4a3af55705fcfe2f98a316d60da31eb1daf63d4dee80696c980e5e51be203ca9",
+    "cohort": "frozen_core"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_core/delivery-valid.json",
+    "bytes": 13142,
+    "sha256": "da81f7d08610bb87994f89de9ffe3df96a582369e168ae7bd7497b52a407c8b1",
+    "cohort": "frozen_core"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-67269b3c37df.json",
+    "bytes": 492,
+    "sha256": "c65b1f6b260ffcf47dcf7405fb7d9f2897c6712f5c4b4ceeb19fbe75a0372913",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-9577a8bfed90.json",
+    "bytes": 477,
+    "sha256": "4142d955fbc42ccc37713196df3337fa020c1cbe504309e760b1d291d0eee7d0",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/outer-stop-tty.json",
+    "bytes": 52085,
+    "sha256": "1f96a5e7b353e4c0295e42313893792e48574bfe230f7ef4a8fa1bfd6957a6e8",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-0417ce37b98d.json",
+    "bytes": 490,
+    "sha256": "fe2b04a8928de066a596625af437d544677446c7799ff82849a5c3bf9f940c5d",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-783ece18206a.json",
+    "bytes": 476,
+    "sha256": "cc4cc279ec6725a68b4766137b6d5fdcceff141c910a8030464971682a025d02",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/lifecycle-plain-True.json",
+    "bytes": 3828,
+    "sha256": "3adb7309a32748713adda56c64a7587430fc8372c74b35f62aed1fb0ffe7fab6",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/recovery-timeout.json",
+    "bytes": 719,
+    "sha256": "b48dab60d81af533cda707f546c3b0add5a4f865a728a8b6d77cddaa7f77e944",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/lifecycle-tty-True.json",
+    "bytes": 5013,
+    "sha256": "4c63dd260cbcd2eb6921e107f03f56ffc1781be6ca32e82affa4f753f8ee95c7",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/lifecycle-plain-False.json",
+    "bytes": 3756,
+    "sha256": "dd3d74ec4346427167cec9dd359712674fbd7734f6282378f498a33b993f7206",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-0667c9dfa50c.json",
+    "bytes": 477,
+    "sha256": "ec3d37544dea849828cde0e4fb8f73b21bded22eef4f53a58802ca7a5cee5c43",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-920f0edac724.json",
+    "bytes": 480,
+    "sha256": "5e2be99a395b37362ebe570bfb8cb44426ce141d633c247c1747d3e0229a46c9",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-4adc33bd9fe7.json",
+    "bytes": 468,
+    "sha256": "330e49531921c1bb8498255c262c796728af7aed963d5912b288d9219e31d9be",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-7b5720b25788.json",
+    "bytes": 484,
+    "sha256": "e1da91d3b99adb4d99431ee60dc2d8b28ed89a558a34bcc87284d583d7dc7664",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/lifecycle-tty-False.json",
+    "bytes": 4941,
+    "sha256": "f665481dd58d44513032d0170255748addefce30dccea36440bde391504a3fda",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/outer-stop-plain.json",
+    "bytes": 52085,
+    "sha256": "05566d2b18259c7894307493b13ccc84e6adb3798d27884f10691fca66c29027",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-eb86e50f8c83.json",
+    "bytes": 480,
+    "sha256": "cc1e0431f6b95a3d719c6f9a55b613b824fe3dde14dc7a4312c209d2dd68bab9",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/exit-f8871989cddd.json",
+    "bytes": 484,
+    "sha256": "7d8b4f37ba713da499c1cbbea981e868c532f0d4a39622231f8c715c0f910cf0",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/recovery-normal.json",
+    "bytes": 794,
+    "sha256": "0ca52c0056b1e0d1965025a38a803c63958cff108d764b6fdd43f5d373b48b8d",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r8/phase_b_compaction_integration.json",
+    "bytes": 152228,
+    "sha256": "8ae0859b5461f0f86909991fc1850c5daa2696a75e049e4daa7299b2aafd47f7",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r6/phase_b_compaction_integration.json",
+    "bytes": 153060,
+    "sha256": "2ac62b3aaceb68d530f987e2cf3014c3bb2d21a04473f1a568e5c552cd739a6b",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r5/phase_b_compaction_integration.json",
+    "bytes": 206257,
+    "sha256": "6e2ae239ea51324d26628da9a2e28556e4547a3e20a03fd5be7ba0ae88dec232",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r0/phase_b_compaction_integration.json",
+    "bytes": 151323,
+    "sha256": "a45f2f527ce557948549dee956c410e8aa6f82ac3e7544e76702286fc7cee642",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r2/phase_b_compaction_integration.json",
+    "bytes": 146488,
+    "sha256": "e24df665cf9ad0f256f48eb825a510f6d525d4b8d05f07f030ee06aefa1f30d8",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T04_T09_T20_real_read_rev0/phase_b_review_commit.json",
+    "bytes": 7502,
+    "sha256": "542580d9183c843fcf0e8772ebe270cd20ef6ddace9bacf465ad2600aee45735",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r1/phase_b_compaction_integration.json",
+    "bytes": 138163,
+    "sha256": "6f8891dc15ba720256049cc5e1c17813a9d2d5094b51d03a5d80aa192d5ab36d",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r4/phase_b_compaction_integration.json",
+    "bytes": 138281,
+    "sha256": "2d278363afaa27ea1960bcae86c78f65cedad29c91002a981a8a779b44e06b7b",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r3/phase_b_compaction_integration.json",
+    "bytes": 138271,
+    "sha256": "e3fe2f1e8c2f9569cf16a39a736567e47f4152485ecdf5e92e8238ae08cfcc73",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r9/phase_b_compaction_integration.json",
+    "bytes": 136965,
+    "sha256": "ac0c1ee2b41f14249ac490e43a364e6dfd767ad309a47116da312b4b398fdded",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r7/phase_b_compaction_integration.json",
+    "bytes": 151332,
+    "sha256": "eab5606b3b0b6cb2a316bc1296fe028bb261cebbe76670eb0ed5c77153ad4cbb",
+    "cohort": "frozen_display_compaction"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-owner-validator_exception.json",
+    "bytes": 53004,
+    "sha256": "fc45cf7b882bff1566e7c202634c3e86cd0e3539c668d8317f4d3279e13f7406",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-supervisor-assessment_pending.json",
+    "bytes": 113086,
+    "sha256": "ecb6635851c2e2a1806bff2fe6bb10cf091ebdf8290661e8cc72d5098efb99af",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-missing_attempt.json",
+    "bytes": 609,
+    "sha256": "4031913e9cce9f4c871487db74c0a21b49ecd87f8b5251df87e3d7874a43eb7a",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-e1-scalar-repair-summary.json",
+    "bytes": 28175,
+    "sha256": "1270fb526946c8e3fc1be03b1d63c23526091660d5fde5e8406d10acdb126b7f",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-e1-scalar-repair.json",
+    "bytes": 309,
+    "sha256": "e3044893a010d5ac6f595f3367f8f7d689845015ef84bf188bdd766fef9be03c",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-owner-commit_cas.json",
+    "bytes": 49208,
+    "sha256": "fbdb50c6e659735c5ebf781135b7cc4fcc97ee2dc60feb3beeae366ce95608d4",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-diagnostic-consumer.json",
+    "bytes": 41512,
+    "sha256": "30ae939046cbc98a729ee2ae5c52696a33f13134c50e4ec07c980fc693dac62d",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-UNRECOGNIZED_VALIDATOR_CODE_93.json",
+    "bytes": 58021,
+    "sha256": "cfd9fd9a09fbdc25e570045ad4cfa69172168d8df6f8fa520bd4d261cd3ce558",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-supervisor-rejected.json",
+    "bytes": 116715,
+    "sha256": "139e64260ae4a33f61c947747a289a5521b31e1a03a43e28679c877348984c4e",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-owner-preexecution.json",
+    "bytes": 48039,
+    "sha256": "95f60181bb658f6f7d9974f802b183f87a9a8f3fe182538224b44b7622202cae",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-WORKSPACE_MUTATION_NOT_ATTESTED.json",
+    "bytes": 58025,
+    "sha256": "a9a50938d8af75aeedc92e532ab6b302c466548a20cbac0414173a3433b7bcdc",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-concern.json",
+    "bytes": 88999,
+    "sha256": "6cb4f8c375ca1140f0b83d38d11de254e056ba1c778f76ea28eece794d9857e4",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-commit_rejection.json",
+    "bytes": 49516,
+    "sha256": "a09b98e9e5497b49a2ef4f494e381a5a4e78980cc94a6cf73785376a40ea08ad",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-owner-diagnostic.json",
+    "bytes": 56677,
+    "sha256": "9bd3f8ddea0786357a224f6915c2bc83d79a996d50c29bae4da7584d8d09dabf",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-phase_d_missing_postcondition-summary.json",
+    "bytes": 4960,
+    "sha256": "9f01a830d47e100a94bdf6ec3486e281c91125e0a5b5d4d3ebba38369c805171",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-supervisor-correction_required.json",
+    "bytes": 113109,
+    "sha256": "4504ed7073d3b403165c276c82cc773ce3a76b4350cfcb8db6a50af13028559f",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-real-graph-rc0.json",
+    "bytes": 310635,
+    "sha256": "b7e7fe4ff641bcf89b04926629d2d79af618cb190c28a3ff7f03c0b63a0183fc",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-supervisor-incomplete_evidence.json",
+    "bytes": 73837,
+    "sha256": "c8cd8195b9a11aec64ee43c75722081860acb51811fc0ff97ff1f0e1efd268d0",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-long-first-wire.json",
+    "bytes": 496988,
+    "sha256": "abe03d335ead2064c01ed14d3b8cbaa68dc01abdffe7a49779da1eca0a1b7858",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-triage-resume.json",
+    "bytes": 76485,
+    "sha256": "ffe9e761a0e9b523b1188da5f7b271b317d2c5c2a66ac17275a8d06d7dada3d3",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-e-owner-install_failure.json",
+    "bytes": 48301,
+    "sha256": "7f9faef617773d3d97c42b7389355a8b99cccb67f79c101d9ca9cc65e315a1ea",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d2-malformed_effect.json",
+    "bytes": 88904,
+    "sha256": "573ab85cebbba9fe3d89c814e33a133f1cc40e567a046db7d8de2fba207d2f8c",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-phase_d_missing_postcondition/plan_state.json",
+    "bytes": 689652,
+    "sha256": "f012b540a3227be5f966cd88a55f9fcd57739b273e756ab58aac6c41a1ebda39",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-phase_d_missing_postcondition/attempts/attempt_713e53a8713538e7aee6/exit_status.json",
+    "bytes": 103,
+    "sha256": "1b072f1f017d0eba64941ddde8b89d44da7e46542d14e9b3a14455ff1a873892",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-phase_d_missing_postcondition/attempts/attempt_0dd2d339ec8149406315/exit_status.json",
+    "bytes": 103,
+    "sha256": "31245e9e0c29703afe93db2d101f4e4ab71bb328ed856e22dde8b3ae532cc6cf",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-e1-scalar-repair/plan_state.json",
+    "bytes": 1223786,
+    "sha256": "025115ff48fd28311c549a24e5119d090d702b2d72009aefcc51a87b98d9881e",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-e1-scalar-repair/attempts/attempt_49682fd29562a4bee374/exit_status.json",
+    "bytes": 103,
+    "sha256": "0f1d18b44332927b13f43f85a8b5de09ce3adc9e435cd6e8b2e71e2c16a2b77c",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-e1-scalar-repair/attempts/attempt_afda78654f92c312a479/exit_status.json",
+    "bytes": 103,
+    "sha256": "6457d76794235fefe6c8dfc384fc763b448cd1b12fe21370222a9abe09268dfc",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-e1-scalar-repair/attempts/attempt_fa26919d6e1924baa19b/exit_status.json",
+    "bytes": 103,
+    "sha256": "c220e17b408e3fb8eb3c0b098d6f1c09fffe3338216e73af85914fe2f229b0a9",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-e1-scalar-repair/attempts/attempt_0502952c973e75529a74/exit_status.json",
+    "bytes": 103,
+    "sha256": "27d79241d0347407a20392bdaceee2598136973b117fd756b6bcb65210568e42",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-e1-scalar-repair/attempts/attempt_519e6ff0492bc3541393/exit_status.json",
+    "bytes": 103,
+    "sha256": "dd97c92e10dd49d32d022584d2b8c5805479362c7f7e5a5869eeaf2e03cfd391",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/f6-preserved-e1-scalar-repair/attempts/attempt_0d636e78b7d0bc17baa5/exit_status.json",
+    "bytes": 103,
+    "sha256": "be5f3d88f6bc1b9b33fc09d28ead42fc6564bfda30d05cb2dd230b5be0facc4e",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-resource-test_v12_failed_reads_and_form0.json",
+    "bytes": 40015,
+    "sha256": "711623ff124020916f1ad2d045c1d5a2607a64a255d072e8a0241e04eee2f094",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-compaction-parent.json",
+    "bytes": 7651,
+    "sha256": "238fbc3e50f397a90991a85068f035b03720a8dd7960f91c18bd3eb966b7114b",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-interrupt-reserved_before_claim.json",
+    "bytes": 888,
+    "sha256": "e9dccc69c0355dc6e31251f5f6d7beadda2e275b95b25ff853bc6840fc875b86",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-resource-test_v13_valid_decision_at_bou0.json",
+    "bytes": 66724,
+    "sha256": "4ab0c07904ed3a90f18a6ca9784c7c26909f893c8cafe2c847ba0b589471e3cb",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-resource-test_v12_missing_usage_remains0.json",
+    "bytes": 50661,
+    "sha256": "d771f0c76f233be461c12ae88fbf98668613c0bce880003663bb2c9cc49ffd45",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-before-business-maintenance-False.json",
+    "bytes": 6042,
+    "sha256": "e1111f2b6d8c9651aa62cd7db59ba34a82c3a247c9db7e50e1e4c86688da33e4",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-cas-resume-unknown.json",
+    "bytes": 30617,
+    "sha256": "acdec219f5aa8dc796ea28ff8ebf1738dfa55811cecd6e2050b1d9f6fd95d807",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-completed-before-archive.json",
+    "bytes": 3297,
+    "sha256": "1ef37ec2afd95165e36eb70d2ea199030f88ea74bffd82dd14bf8fdc317f865d",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-resource-test_v10_oversized_multi_tool_0.json",
+    "bytes": 57277,
+    "sha256": "8da38be558f160f282c5627e3277962164925e41bf872de7228bca08525bf5fc",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-restart-clock.json",
+    "bytes": 571,
+    "sha256": "f8552fa4fe9fa0484bb036551f7a22bba84cfaf817e188c9bc07c3b531dcabdd",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-interrupt-settled_before_finish.json",
+    "bytes": 951,
+    "sha256": "1b466332b79e4c4f6668d274555c4e0e75444ca4c77af8c8841916e0c5c1b544",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-resource-test_v09_v13_distinct_pages_cl0.json",
+    "bytes": 3560,
+    "sha256": "8290e7af4850ecd0a59eed6940a3ad3deba011af563155860c6f8258bd7e29f8",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-interrupt-claimed_before_dispatch.json",
+    "bytes": 890,
+    "sha256": "3ff35ccb719a23b0dd2fe27fe5f103928725c50f258fd6844106d025665ef125",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-interrupt-returned_before_settlement.json",
+    "bytes": 893,
+    "sha256": "0278ec611069223ea06f15d2106c1ec440cbb681f76f15e6672eab4438c5b5e6",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-before-business-maintenance-True.json",
+    "bytes": 1479,
+    "sha256": "ffdb8c800f6bd7d94b157bfb7fce93954a597e3706dac3c93ca7653a22f0e554",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-resource-test_v12_failed_reads_and_form1.json",
+    "bytes": 343008,
+    "sha256": "b0634d07757395b096069d6abd7c00f6b06da3f318de2a8d45d9d7b01e418ab0",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_units/d3_budget_witnesses/e-resource-test_v10_multiple_tools_preser0.json",
+    "bytes": 31410,
+    "sha256": "6c6f586fa0dc959d3cd966a1114224a428265ab4c0b9aa23fd312d6608c52730",
+    "cohort": "frozen_e_units"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/d2-e-commit-cancel-after_commit.json",
+    "bytes": 3544,
+    "sha256": "948fe894c05eaa08000861d553e751229a603db677c980ac6bcc261801c76cdb",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-e-pages-stop-summary.json",
+    "bytes": 30582,
+    "sha256": "c11e502af9bca7bb9b9460f359d71a8ab4d3f339601e2d2338bbb072214ab62a",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/d2-e-chain3.json",
+    "bytes": 75621,
+    "sha256": "76d71aab0029da4af868042379ad8eb84d8411511eabc4df055a1e830cbb451a",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/d2-e-chain4.json",
+    "bytes": 12746,
+    "sha256": "d6abd071489cdeacf49fdf0cee4710156aefacc0684032b481deb93a982fd1bf",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-e-missing-repair-summary.json",
+    "bytes": 29423,
+    "sha256": "3007e1cbf2c28415a7711e5f2cacace48ac70cb71d85a386b0bf195df811853a",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/d2-e-commit-cancel-before_read.json",
+    "bytes": 994,
+    "sha256": "a6bb1c40269e838d14c403682451ce60ebc274ee87d2a955238738959da7c42a",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-e-parser-summary.json",
+    "bytes": 28784,
+    "sha256": "80f1782e26dbca027888af11288cef9fa34e80a9201a02fe370f8019fc2987bc",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/d2-e-commit-cancel-before_write.json",
+    "bytes": 975,
+    "sha256": "c3538929fcd710cd25116a93530b5cf51d222ea93e152cd46072a7f89583b0fe",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-e-chain2.json",
+    "bytes": 178530,
+    "sha256": "d8de36fc82a4125031fec590d497d174ff23e7bf0c8759ad20063f09493463d4",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-pages-stop/plan_state.json",
+    "bytes": 727680,
+    "sha256": "5bc51cb54145ce89705d76199b13def2ada8fb361470bb3f54d453cd47a18e78",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-pages-stop/attempts/attempt_3287d650efcc84b5a012/exit_status.json",
+    "bytes": 103,
+    "sha256": "128fde557b5224c0c9189598adaf0a87c479a1f812afa96c47ab5ea4c8cde55d",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-pages-stop/attempts/attempt_7ec2012e591a3e024526/exit_status.json",
+    "bytes": 103,
+    "sha256": "c981581851870e1bae4bec9af53ef2bfd0cee9353fd0c81f104d8b905b3e709e",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/plan_state.json",
+    "bytes": 1317559,
+    "sha256": "d62285d005c0f02c94c94b932f203a2c57c094905c501a6e45ebed8fcdcc868c",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/attempts/attempt_c945c6a7891df9a38096/exit_status.json",
+    "bytes": 103,
+    "sha256": "7c4e33aea608aa28b71b13b3f8a712d9d94cc16afe562fd5d5da394b34d6685c",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/attempts/attempt_800b3eb8685fb8247d42/exit_status.json",
+    "bytes": 103,
+    "sha256": "7dc9ef34ddc6ea9056659f4a89cfef0206210c4582c602f71eb6a5bbb1b53d4c",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/attempts/attempt_fbec2b2459add3740eb2/exit_status.json",
+    "bytes": 103,
+    "sha256": "9bea87eff8e945ac8a7169fe83ecbe665442aa23e122d154e8214c6f5443f066",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/attempts/attempt_8fdcb3e77dcfde768920/exit_status.json",
+    "bytes": 103,
+    "sha256": "bea19315bc513cfbcd013fce99293d3bb5e4b4fb3b324acfb3926fac83deaca3",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/attempts/attempt_d8734a7bb0a19e21aba2/exit_status.json",
+    "bytes": 103,
+    "sha256": "6ee3532b8b9e919684015d64d093fd353cdab83e5b35fae0bb186f9d52800d52",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/attempts/attempt_22831f98da09867a4a2e/exit_status.json",
+    "bytes": 103,
+    "sha256": "a6f0a26594f2e7d31b5ae43dbf6aa9da367114d3a716ff427ef9863e72746a68",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-missing-repair/attempts/attempt_9b81bd4876060b572ea2/exit_status.json",
+    "bytes": 103,
+    "sha256": "68d488efb418ab7ff2588c22578d1c3fb3dec1fe6177f7a5e10f3de965f0a4c3",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-parser/plan_state.json",
+    "bytes": 650952,
+    "sha256": "a8b4b6016818fffd2e787dba071d83bc45ed2a1ff35019e7295e0eedfeeb9703",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_recovery/f6-preserved-e-parser/attempts/attempt_fb7976120e36173ddae2/exit_status.json",
+    "bytes": 103,
+    "sha256": "9dc35d913333932cba1da0dc5de016afe275acceb5e451a3fe8654c80b4f89cc",
+    "cohort": "frozen_e_recovery"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-e-v20-scalar.json",
+    "bytes": 39808,
+    "sha256": "b40e8edacdc1ff83ba0c96609dc26e6ef6cefd4eed089cd1fffc106812a2fd99",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-e-bundle-scalar-summary.json",
+    "bytes": 28238,
+    "sha256": "3a46ff467debd38b88b75e0b1705a1877e27b5254af2e1b98d651745eda80fec",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-preserved-e-bundle-scalar/plan_state.json",
+    "bytes": 1143730,
+    "sha256": "310f5897aea831c4bcaf5fd9416db28a5ace7bd3c0aeeefc6088dae36adeef57",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-preserved-e-bundle-scalar/attempts/attempt_9e0280490bb59e876b33/exit_status.json",
+    "bytes": 103,
+    "sha256": "ddca78e9712e5649794eea96e075d48afe8cb40af72a44265771361eb81830da",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-preserved-e-bundle-scalar/attempts/attempt_44e6c45eadff3a4399cf/exit_status.json",
+    "bytes": 103,
+    "sha256": "9a52907dd84ff90762002a9f40995cbb3f14842e5ca8450c43f547b5ee4cf911",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-preserved-e-bundle-scalar/attempts/attempt_f4cf3ab1797132b7b4d4/exit_status.json",
+    "bytes": 103,
+    "sha256": "555bb74a30799ed143c69631afee64a2184aae2df4cbded6adb1945af1339fb5",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-preserved-e-bundle-scalar/attempts/attempt_44453e768eeec8a214f2/exit_status.json",
+    "bytes": 103,
+    "sha256": "936db604923ef35f47b3c4339b99c896441e8f3658f4579148fa455a92c1e58d",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-preserved-e-bundle-scalar/attempts/attempt_9987b4665d62a13ba3df/exit_status.json",
+    "bytes": 103,
+    "sha256": "6467ebe9f4ed6b7e8c9fe6e6b6e2ac7511f25bf57b35f0d657a69ef5000642d6",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_scalar/f6-preserved-e-bundle-scalar/attempts/attempt_26a1a52c2ce2e7b8868e/exit_status.json",
+    "bytes": 103,
+    "sha256": "9ed312440f453a0f9202aa9f03b98c214b9a68d08ae8abbc565f29406b52cdfc",
+    "cohort": "frozen_e_scalar"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-e-v20-missing.json",
+    "bytes": 39830,
+    "sha256": "a447cfaa5c0450878f87ea1323cd796a0c2ca24119e529c4e4629e84afb78588",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-e-bundle-missing-summary.json",
+    "bytes": 29399,
+    "sha256": "5fb4abaa9a889f4f39c36c59b61d03d763054c90c9e090ea8b56fc0282ca0ee6",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/plan_state.json",
+    "bytes": 1231948,
+    "sha256": "f0d5040290b43d6491239e19cd304dc30ff6aeba8e763099f3782e293c213afb",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/attempts/attempt_07898a04c5141f6a08f2/exit_status.json",
+    "bytes": 103,
+    "sha256": "54458199478fc96e766e70312e5876dbee72877897af85123e7f68d23e1ba0f9",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/attempts/attempt_c1fba676b0e565abb963/exit_status.json",
+    "bytes": 103,
+    "sha256": "9e2e48251c49b12d316b6c8e623b4591a4dba6565ea536ed89e7b0756973cb47",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/attempts/attempt_c692489d5edbd583149c/exit_status.json",
+    "bytes": 103,
+    "sha256": "1258546f17b0fe0243cb349dd90603dfa38d9f38f4cc78ed45a80d38d686b58e",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/attempts/attempt_869d6a63cfb2ae342859/exit_status.json",
+    "bytes": 103,
+    "sha256": "985fb3988bdf7ef909d33188a12a5f3aa173eaf0dc3337d5fb82a70958dc8b79",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/attempts/attempt_361437b42b1953fe0045/exit_status.json",
+    "bytes": 103,
+    "sha256": "5971a1fb571f1748ad00cc7cd9432b008d3770b6b1eb0a52c64dc7d12b2adb37",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/attempts/attempt_e46aa16eabcc81438348/exit_status.json",
+    "bytes": 103,
+    "sha256": "2f2768a99d91cbf794ba9064354ea87fc64d09a08ad6365f446b498a5c93c034",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_e_missing/f6-preserved-e-bundle-missing/attempts/attempt_bdbbfc8f9f39640bd592/exit_status.json",
+    "bytes": 103,
+    "sha256": "5358be8f46baa1befb6bf6f8a6622d7611709a4db695d1cbc0e72508a33157de",
+    "cohort": "frozen_e_missing"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_generate_acceptance/cli3-nodes-plain-envelope-True-syntax_error.json",
+    "bytes": 221680,
+    "sha256": "5e0d7f11dbf7aaccee2f884dcf18bae453765a056f18ef74d9069d390f07203c",
+    "cohort": "frozen_generate_acceptance"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_generate_acceptance/cli3-nodes-tty-envelope-True-invalid_wrapper.json",
+    "bytes": 218395,
+    "sha256": "0a136f33ad9c6ad19d0cb8b080df3cee734b67d4f168b16ebe2035a6f8d46811",
+    "cohort": "frozen_generate_acceptance"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_generate_acceptance/cli3-nodes-off-envelope-False-syntax_error.json",
+    "bytes": 219248,
+    "sha256": "5d466483660c6a2ca59be60b93919e04482e18a16266c9b409ee9016f0d8400f",
+    "cohort": "frozen_generate_acceptance"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_generate_acceptance/cli3-nodes-plain-envelope-True-invalid_wrapper.json",
+    "bytes": 219216,
+    "sha256": "c642af41412bdee0201ae47a86eba6d5d7f232700a5a2ecfb8abd82491a13ac9",
+    "cohort": "frozen_generate_acceptance"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_generate_acceptance/cli3-nodes-off-envelope-False-invalid_wrapper.json",
+    "bytes": 216804,
+    "sha256": "aaacb2b6987c2e60a34e6b02b6ede0bfe3c92fdf3362dd3cc7525834263b2ed7",
+    "cohort": "frozen_generate_acceptance"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_generate_acceptance/cli3-nodes-off-envelope-True-invalid_wrapper.json",
+    "bytes": 218203,
+    "sha256": "69e3157464bf3f2e57407a405463e2b279c131f2fac29d4d9f03bd9658c266f9",
+    "cohort": "frozen_generate_acceptance"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_generate_acceptance/cli3-actual-tty-output.json",
+    "bytes": 153434,
+    "sha256": "956e90fc269f05ed6eb8c8437ca81639cc660398c93f3e8ac8f5d21415f7a80f",
+    "cohort": "frozen_generate_acceptance"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_historical_replay/historical-replay-tty.json",
+    "bytes": 58511,
+    "sha256": "44543de6126aa7fccb78998bb7f9c4daf9d5368bea723dc171e74960dbdd89aa",
+    "cohort": "frozen_historical_replay"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_historical_replay/historical-replay-plain.json",
+    "bytes": 29142,
+    "sha256": "fd94b470ffb13b8aed364c5af6c3b94b23d25b381632e732bd46af7e9caa2194",
+    "cohort": "frozen_historical_replay"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r6/actual_next_request.json.gz",
+    "copy": "evidence/compaction-test_T09_T10_T14_T15_T16_T18_r6.json.gz",
+    "bytes": 13481,
+    "sha256": "56e25d5ebefe36741cdbe8203d3aab79fffc1f8c9bd1701ac69c3fb5a570ee87"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r0/actual_next_request.json.gz",
+    "copy": "evidence/compaction-test_T09_T10_T14_T15_T16_T18_r0.json.gz",
+    "bytes": 13569,
+    "sha256": "8809ff96484abed3a1d03f6509fd4842426521e9978e49ecfc82b69bd38d1570"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r2/actual_next_request.json.gz",
+    "copy": "evidence/compaction-test_T09_T10_T14_T15_T16_T18_r2.json.gz",
+    "bytes": 13484,
+    "sha256": "1d71fb02b679a021f2c85d2ebeb202d012c231a0d4652cdef444edfbd9df6aa2"
+  },
+  {
+    "path": "/tmp/biomind_fullchain_cli_20260916/frozen_display_compaction/scratch/pytest-of-liusiqi/pytest-0/test_T09_T10_T14_T15_T16_T18_r7/actual_next_request.json.gz",
+    "copy": "evidence/compaction-test_T09_T10_T14_T15_T16_T18_r7.json.gz",
+    "bytes": 13483,
+    "sha256": "c05cf12f9c894a9e484e2fe987d67b0a08eb43ac5b02269a15012c2d84591bbe"
+  }
+]

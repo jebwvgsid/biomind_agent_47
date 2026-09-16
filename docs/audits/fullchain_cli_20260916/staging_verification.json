@@ -1,0 +1,7 @@
+{
+  "shared_files_verified_against_original_overlay_delta": [
+    "agent_core/workflow/managed_stop.py",
+    "tests/test_recovery_tools.py"
+  ],
+  "passed": true
+}

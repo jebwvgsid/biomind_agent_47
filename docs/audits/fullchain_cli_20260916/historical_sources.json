@@ -1,0 +1,104 @@
+{
+  "session": "session_1789537621",
+  "request_count_dedup_key": "call_id",
+  "physical_calls": 72,
+  "files": {
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/plan_state.json": "1db31f271e03ce1856ee5ea18290732ce7e56362c76b9b62b271ec18295e61e1",
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/run_metrics.json": "259ef11cfe7d869bf14a330cf7e3048f2712c94d8e7ca7d7032611e17e87c554",
+    "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789537621/context_trace/events.jsonl": "8c326e90a0e92c16dd947900aacd75cbbb6ebbf751125d601aedf9c197bf5d49"
+  },
+  "event_types": {
+    "consultant_progress": 16,
+    "consultant_preprocess_phase": 72,
+    "consultant_preprocess_total": 6,
+    "recovery_started": 6,
+    "recovery_model_turn_started": 36,
+    "recovery_provider_attempt_started": 36,
+    "recovery_provider_stream_active": 36,
+    "recovery_provider_attempt_completed": 36,
+    "recovery_assistant_message_committed": 36,
+    "recovery_model_turn_completed": 36,
+    "recovery_response_received": 36,
+    "recovery_tool_started": 34,
+    "recovery_tool_observation_committed": 34,
+    "recovery_tool_completed": 28,
+    "recovery_response_feedback_committed": 9,
+    "recovery_directive_admitted": 6,
+    "recovery_tool_failed": 6
+  },
+  "representative_events": [
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_started",
+      "event_kind": "recovery_started",
+      "timestamp": "2026-09-16T05:52:27.200075+00:00",
+      "source_line": 95
+    },
+    {
+      "event_id": "recovery-seed-b25ad3d10015303fda8361b6_assistant_001_reception",
+      "event_kind": "recovery_response_received",
+      "timestamp": "2026-09-16T05:52:31.652462+00:00",
+      "source_line": 102
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_00_uFm96OU0G2gfCXA9lKLH8403_started",
+      "event_kind": "recovery_tool_started",
+      "timestamp": "2026-09-16T05:52:31.684326+00:00",
+      "source_line": 103
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_00_uFm96OU0G2gfCXA9lKLH8403_observation",
+      "event_kind": "recovery_tool_observation_committed",
+      "timestamp": "2026-09-16T05:52:31.709991+00:00",
+      "source_line": 104
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_01_9TsHYnljv80T3bi6KhW03914_started",
+      "event_kind": "recovery_tool_started",
+      "timestamp": "2026-09-16T05:52:31.736110+00:00",
+      "source_line": 106
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_01_9TsHYnljv80T3bi6KhW03914_observation",
+      "event_kind": "recovery_tool_observation_committed",
+      "timestamp": "2026-09-16T05:52:31.768967+00:00",
+      "source_line": 107
+    },
+    {
+      "event_id": "recovery-seed-b25ad3d10015303fda8361b6_assistant_002_reception",
+      "event_kind": "recovery_response_received",
+      "timestamp": "2026-09-16T05:52:35.022431+00:00",
+      "source_line": 115
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_00_VdoitSJYQ5duISfiXRWK0307_started",
+      "event_kind": "recovery_tool_started",
+      "timestamp": "2026-09-16T05:52:35.064217+00:00",
+      "source_line": 116
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_00_VdoitSJYQ5duISfiXRWK0307_observation",
+      "event_kind": "recovery_tool_observation_committed",
+      "timestamp": "2026-09-16T05:52:35.107615+00:00",
+      "source_line": 117
+    },
+    {
+      "event_id": "recovery-seed-b25ad3d10015303fda8361b6_assistant_003_reception",
+      "event_kind": "recovery_response_received",
+      "timestamp": "2026-09-16T05:52:42.243250+00:00",
+      "source_line": 125
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_00_HJAcmWRgL4bnNoH45Xaz7859_started",
+      "event_kind": "recovery_tool_started",
+      "timestamp": "2026-09-16T05:52:42.259205+00:00",
+      "source_line": 126
+    },
+    {
+      "event_id": "recovery_recovery-seed-b25ad3d10015303fda8361b6_recovery-seed-b25ad3d10015303fda8361b6_context-epoch_0_tool_call_00_HJAcmWRgL4bnNoH45Xaz7859_observation",
+      "event_kind": "recovery_tool_observation_committed",
+      "timestamp": "2026-09-16T05:52:42.298304+00:00",
+      "source_line": 127
+    }
+  ],
+  "terminal_capture": "Only supplied screenshot confirmed; full raw terminal recording not located. Overlapping excerpts are presentation evidence, never an additional run."
+}

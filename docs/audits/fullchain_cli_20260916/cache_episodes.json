@@ -1,0 +1,82 @@
+{
+  "source_ledger_sha256": "52cad8f6b92a46bb8645c52c77b62800352c45359c89f352f490f724a0a433f5",
+  "unique_physical_calls": 72,
+  "episodes": [
+    {
+      "seed_id": "recovery-seed-b25ad3d10015303fda8361b6",
+      "calls": 6,
+      "input": 591615,
+      "cached_input": 487680,
+      "output": 2899,
+      "first_call": "recovery_turn-0019-084aefb46b1c",
+      "first_input": 80711,
+      "first_cached": 2944,
+      "subsequent_input": 510904,
+      "subsequent_cached": 484736
+    },
+    {
+      "seed_id": "recovery-seed-8b6e4d931eae4f602134ed9c",
+      "calls": 9,
+      "input": 732609,
+      "cached_input": 647808,
+      "output": 2627,
+      "first_call": "recovery_turn-0029-1fe57c9a6322",
+      "first_input": 67264,
+      "first_cached": 3328,
+      "subsequent_input": 665345,
+      "subsequent_cached": 644480
+    },
+    {
+      "seed_id": "recovery-seed-b658d8ebfa9e38a17759466e",
+      "calls": 2,
+      "input": 153945,
+      "cached_input": 76928,
+      "output": 1560,
+      "first_call": "recovery_turn-0039-e35e2237fb07",
+      "first_input": 73560,
+      "first_cached": 3328,
+      "subsequent_input": 80385,
+      "subsequent_cached": 73600
+    },
+    {
+      "seed_id": "recovery-seed-7400f3c0bfc3bcdd7f97bfb4",
+      "calls": 5,
+      "input": 421660,
+      "cached_input": 333440,
+      "output": 1373,
+      "first_call": "recovery_turn-0042-9fb6b2f090cf",
+      "first_input": 74452,
+      "first_cached": 3328,
+      "subsequent_input": 347208,
+      "subsequent_cached": 330112
+    },
+    {
+      "seed_id": "recovery-seed-32004bf4846c5d85b77b5ac8",
+      "calls": 4,
+      "input": 343116,
+      "cached_input": 253952,
+      "output": 2236,
+      "first_call": "recovery_turn-0048-bc5b7f4c6ceb",
+      "first_input": 74688,
+      "first_cached": 3328,
+      "subsequent_input": 268428,
+      "subsequent_cached": 250624
+    },
+    {
+      "seed_id": "recovery-seed-53c8a1c62924e79a84bca839",
+      "calls": 10,
+      "input": 1045744,
+      "cached_input": 935552,
+      "output": 2917,
+      "first_call": "recovery_turn-0062-2ec55743dbb3",
+      "first_input": 90586,
+      "first_cached": 3328,
+      "subsequent_input": 955158,
+      "subsequent_cached": 932224
+    }
+  ],
+  "provider_cache_retest": "NOT_RUN",
+  "fees": "UNKNOWN",
+  "context_dedup": "NOT_ADOPTED; preserve full stable episode prefix",
+  "trigger_tokens": 170000
+}

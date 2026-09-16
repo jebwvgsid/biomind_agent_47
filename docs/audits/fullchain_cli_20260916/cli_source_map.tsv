@@ -1,0 +1,11 @@
+display	source	production_chain	identity	meaning
+command_exit	execution/executor.py:345	PROCESS_EXITED -> tool_end	execution_attempt_id -> execution:<attempt>	rc0 only; not formal completion
+execution_observation	bio_agents.py:2499	execution output details + activity_check	same execution attempt	raw full display copy in details
+local_check	supervisor.py:2538	Supervisor validation -> activity_check	validation_id + attempt_id	VALID is local only
+formal_check	agent_core/workflow/verifier.py:374	TypedSupervisor -> activity_check	completion_report_id + attempt	verified/inspection_required/etc remain distinct from Commit
+recovery_begin	bio_agents.py:3536	saved recovery_started -> activity	seed_id/event_id	does not declare new scientific execution
+public_message	bio_agents.py:3527	provider-selected public explanation -> emit_public	request/provider/message identity	full protocol remains archived
+tool_result	bio_agents.py:3504	real tool observation -> details + tool_end	seed/context_epoch/tool_request_id	paging/clipping/narrowing/read error from receipt
+commit	agent_core/workflow/commit_step.py:288	successful CAS or exact replay -> step_committed	task_id/commit_id	only Commit marks step complete
+terminal	bio_agents.py:54082	persisted managed_stop -> terminal_state	task_id/stop_id	one terminal; late file receipt is delivery update
+exit	agent_core/cli_terminal.py:765	existing runtime returns -> erase input area/close owner	existing terminal owner	no model or business dispatch
