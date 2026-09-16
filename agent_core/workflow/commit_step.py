@@ -283,6 +283,10 @@ class CommitStep:
             if isinstance(projection, Mapping):
                 result.update(_successor_projection(projection, state=state, durable=current,
                     completed_step_id=str(replay.payload.get("completed_step_id") or "")))
+            from agent_core.cli_display import emit
+            completed_step_id = str(replay.payload.get("completed_step_id") or "")
+            emit("step_committed", "步骤完成：" + completed_step_id + "（Commit 已确认）",
+                 task_id=task_id, step_id=completed_step_id, commit_id=commit_id, item_id=commit_id)
             return result
 
         # A terminal PlanState owns the race regardless of which stale
@@ -654,6 +658,9 @@ class CommitStep:
                     "no_partial_mutation": True,
                 },
             )
+        from agent_core.cli_display import emit
+        emit("step_committed", "步骤完成：" + validation.step_id + "（Commit 已确认）",
+             task_id=task_id, step_id=validation.step_id, commit_id=commit_id, item_id=commit_id)
         return {
             "commit_step_outcome": semantic_outcome.to_dict(),
             **_successor_projection(receipts[commit_id]["successor_projection"],

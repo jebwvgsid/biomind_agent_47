@@ -2534,7 +2534,12 @@ class SupervisorNode:
             evidence.validator_version,
             evidence.validation_duration,
         )
-        print(f"局部执行检查：{evidence.status}；正式完成核验与提交另行判定。")
+        from agent_core.cli_display import emit
+        text = f"局部执行检查：{evidence.status}；正式完成核验与提交另行判定。"
+        if not emit("activity_check", text, task_id=evidence.task_id, node="supervisor",
+                    execution_attempt_id=evidence.attempt_id, activity_id="execution:" + evidence.attempt_id,
+                    event_id="validation:" + evidence.validation_id, status=evidence.status):
+            print(text)
         summary = {
             "validation_id": evidence.validation_id,
             "status": evidence.status,

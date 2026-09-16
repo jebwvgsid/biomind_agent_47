@@ -15,7 +15,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
-from agent_core.managed_artifacts import build_approved_visible_artifact_set
+from agent_core.managed_artifacts import build_approved_visible_artifact_set, build_managed_artifact_bindings
 from agent_core.approved_resource_locator import approved_resource_locator, open_approved_resource, ResourceLocatorError
 from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.recovery_evidence import RecoveryEvidenceReader
@@ -210,10 +210,13 @@ class TypedInspectionRegistry:
             row = self._entries[key].to_dict()
             scope = dict(row["scope"])
             readable = bool(scope.get("readable", scope.get("resolvable", row["backend"] != "opaque_reference")))
+            locator_error = str(self._locators[key].get("locator_error") or "")
+            if locator_error:
+                readable = False
             row.update({
                 "source_object_id": str(scope.get("source_object_id") or key),
                 "readable": readable,
-                "unavailable_reason": str(scope.get("unavailable_reason") or ("" if readable else "NO_REGISTERED_LOCATOR")),
+                "unavailable_reason": locator_error or str(scope.get("unavailable_reason") or ("" if readable else "NO_REGISTERED_LOCATOR")),
                 "allowed_tools": list(scope.get("allowed_tools") or tools_by_kind.get(row["kind"], ["evidence.read"])),
             })
             rows.append(row)
@@ -355,13 +358,67 @@ def build_recovery_inspection_registry(
             ),
             current_step_id=packet.step_id,
         )
-    except Exception:
-        visible = {}
+        bindings = build_managed_artifact_bindings(
+            task_spec, plan_state=durable,
+            approved_plan_snapshot=dict((durable.get("current_plan") or {}).get("plan_spec") or {}),
+            current_step_id=packet.step_id, visible_artifacts=visible,
+        )
+    except (ValueError, TypeError, KeyError) as exc:
+        raise RecoveryToolError("ARTIFACT_REGISTRY_BUILD_FAILED", str(exc)) from exc
     for artifact_id, value in sorted(visible.items()):
         row = dict(value.get("row") or {})
+        direction = value.get("direction")
         try:
+            aliases = {artifact_id, *value.get("aliases", ())}
+            matches = [b for b in bindings.values() if b.artifact_id in aliases or b.semantic_handle in aliases]
+            aliases.update(b.semantic_handle for b in matches)
+            current_inputs = set(str(v) for v in parsed.current_step.get("inputs", ()))
+            consumes_here = bool(current_inputs & aliases)
+            paths = {b.canonical_path for b in matches if b.canonical_path}
+            if len(paths) > 1:
+                raise RecoveryToolError("ARTIFACT_LOCATOR_AMBIGUOUS", artifact_id)
+            if paths:
+                row["canonical_path"] = next(iter(paths))
+            # The current Plan already limits visibility. Only its selected
+            # physical heads may refine a location; never search all versions.
+            provenance = dict(durable.get("provenance_state") or {})
+            artifacts = dict(provenance.get("artifacts") or {})
+            heads = [dict(artifacts.get(str(head)) or {})
+                     for head in set(dict(provenance.get("artifact_heads") or {}).values())]
+            selected = [r for r in heads if str(r.get("logical_artifact_id") or "") in aliases]
+            if selected:
+                eligible = []
+                for record in selected:
+                    if record.get("plan_id") and record["plan_id"] != parsed.plan_spec_ref.plan_id:
+                        continue
+                    producer = (provenance.get("attempts") or {}).get(record.get("producer_attempt_id")) or {}
+                    if any(record.get(k) and str(record[k]) != str(durable.get(k)) for k in ("plan_id", "plan_version")):
+                        continue
+                    if any(producer.get(k) and str(producer[k]) != str(durable.get(k)) for k in ("plan_id", "plan_version")):
+                        continue
+                    if consumes_here and record.get("producer_step_id") in dependency_steps:
+                        # Legacy TaskSpec-wide visibility labels a final task
+                        # artifact "output" even when this step consumes its
+                        # already committed dependency version.
+                        direction = "input"
+                        consumers = record.get("consumer_step_ids") or []
+                        valid_scope = (record.get("status") == "valid" and record.get("validation_status") in {"valid", "passed", "pass"}
+                                       and (not consumers or packet.step_id in consumers))
+                    elif value.get("direction") == "output":
+                        valid_scope = (record.get("producer_step_id") == packet.step_id
+                                       and record.get("producer_attempt_id") == packet.attempt_ref)
+                    else:
+                        consumers = record.get("consumer_step_ids") or []
+                        valid_scope = (record.get("status") == "valid" and record.get("validation_status") in {"valid", "passed", "pass"}
+                                       and (not consumers or packet.step_id in consumers))
+                    if valid_scope:
+                        eligible.append(record)
+                if len(eligible) != 1:
+                    raise RecoveryToolError("ARTIFACT_VERSION_SCOPE_MISMATCH", artifact_id)
+                row.update(eligible[0])
+                row["canonical_path"] = str(eligible[0].get("path") or "")
             normalized = approved_resource_locator(row)
-        except ResourceLocatorError as exc:
+        except (ResourceLocatorError, RecoveryToolError) as exc:
             normalized = {"locator_error": exc.code}
         path = str(normalized.get("path") or "")
         ref_id = "artifact:" + str(artifact_id)
@@ -374,8 +431,13 @@ def build_recovery_inspection_registry(
             backend="managed_artifacts",
             digest=str(row.get("sha256") or _digest(value)),
             size_hint=int(row.get("size") or 0),
-            scope={"access": "current_step", "direction": value.get("direction")},
-        ), locator={**normalized, "artifact_id": artifact_id, "path": path, "binding": value})
+            scope={"access": "current_step", "direction": direction,
+                   "readable": bool(path) and not normalized.get("locator_error"),
+                   "filesystem_readability": "NOT_CHECKED",
+                   "artifact_version_id": str(row.get("artifact_version_id") or ""),
+                   "producer_attempt_id": str(row.get("producer_attempt_id") or "")},
+        ), locator={**normalized, "artifact_id": artifact_id, "path": path,
+                    "binding": {**value, "row": row}})
 
     for skill in parsed.selected_skill_bundle.skills:
         registry.register(InspectionRef(
@@ -625,6 +687,15 @@ class RecoveryLocalToolDispatcher:
             for key in ("task_revision", "task_semantic_hash"):
                 if current.get(key) != expected.get(key):
                     raise RecoveryToolError("ARTIFACT_AUTHORITY_STALE", key)
+            version = entry.scope.get("artifact_version_id")
+            if version:
+                provenance = fresh.get("provenance_state") or {}
+                record = (provenance.get("artifacts") or {}).get(version)
+                expected_record = (locator.get("binding") or {}).get("row") or {}
+                if (version not in (provenance.get("artifact_heads") or {}).values()
+                        or not record or any(record.get(k) != expected_record.get(k) for k in
+                            ("path", "producer_attempt_id", "status", "validation_status", "sha256"))):
+                    raise RecoveryToolError("ARTIFACT_AUTHORITY_STALE", "artifact_version")
         if locator.get("locator_error"):
             raise RecoveryToolError(str(locator["locator_error"]), entry.ref_id)
         raw_path = str(locator.get("path") or "")

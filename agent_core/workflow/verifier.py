@@ -370,6 +370,12 @@ class TypedSupervisor:
             ])),
         )
         update: dict[str, Any] = {"verification_outcome": outcome.to_dict()}
+        from agent_core.cli_display import emit
+        emit("activity_check", "正式核验：" + outcome_type + "；Commit 尚未确认。",
+             task_id=task_id, node="supervisor", execution_attempt_id=attempt_id,
+             activity_id="execution:" + attempt_id,
+             event_id="verification:" + validation.validation_id + ":" + outcome_type,
+             status="returned" if outcome_type in {"verified", "verified_with_warnings"} else "failed")
         if outcome_type == "user_information_required":
             update["pending_human_question"] = {
                 "question_id": str(payload.get("question_id") or "semantic-question"),

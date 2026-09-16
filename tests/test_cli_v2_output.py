@@ -41,7 +41,8 @@ def test_v2_details_never_enter_approval_or_feedback(mode, answer):
                 # Only the explicitly requested complete detail is written here.
                 assert text.count('合成测试')==2000
                 assert owner.review.body == original
-                assert '需查看完整代码' in owner.review.summary and payload['hash'] in owner.review.summary
+                assert '需查看完整代码' in owner.review.summary and payload['hash'][:12] in owner.review.summary
+                assert payload['hash'] not in owner.review.summary
                 assert '只读' not in text
         finally:bind_terminal(previous);owner.close()
     asyncio.run(scenario())
@@ -106,7 +107,8 @@ def test_v2_recovery_checkpoint_does_not_count_budget_projection_as_success(tmp_
         agent._schema2_recovery_event_sink('recovery_tool_observation_committed',payload)
     assert payload==original and len(saved)==1
     assert events[-1][1]['status']=='partial' and events[-1][1]['tool_category']=='search'
-    assert 'RECOVERY_OBSERVATION_BUDGET_EXCEEDED' in events[-1][0][1]
+    assert '观测预算已达上限' in events[-1][0][1]
+    assert any(args[0] == 'details' and 'RECOVERY_OBSERVATION_BUDGET_EXCEEDED' in args[1] for args, _ in events)
 
 
 def test_v2_one_second_approval_timeout_is_never_rounded_to_unbounded():

@@ -1066,6 +1066,11 @@ class RecoveryAgentLoop:
                     "estimator_version": budget.estimator_version,
                     "exact_or_estimated": budget.exact_or_estimated,
                 }
+                from agent_core.workflow.recovery_runtime import RECOVERY_POLICY_RECEIPT
+                policy_receipt = deepcopy(RECOVERY_POLICY_RECEIPT.get() or {
+                    "enabled": RECOVERY_RESOURCES.get() is not None, "source": "direct_loop",
+                    "scope": "causal_incident", "thresholds": {}})
+                request_record["effective_resource_policy"] = policy_receipt
                 call_context = {
                     "task_id": seed.failure_packet.task_id,
                     "plan_id": seed.plan_spec_ref.plan_id,
@@ -1082,6 +1087,7 @@ class RecoveryAgentLoop:
                     "wire_fingerprint": request_record["wire_fingerprint"],
                     "reception_protocol": PROTOCOL,
                     "provider_message_count": len(wire),
+                    "effective_resource_policy": policy_receipt,
                 }
                 await self._emit_event(
                     "recovery_model_turn_started",
@@ -1168,6 +1174,11 @@ class RecoveryAgentLoop:
             # JSON. SDK normalized args may already have collapsed duplicate
             # keys. The command decoder and subsequent feedback see raw args.
             raw_calls = list((assistant.additional_kwargs or {}).get("tool_calls") or ())
+            # Only original strings can rule out duplicate keys; serializing
+            # an SDK's already-normalized mapping does not restore that proof.
+            native_raw_arguments_verified = bool(raw_calls) and all(
+                isinstance(c, Mapping) and isinstance(c.get("function"), Mapping)
+                and isinstance(c["function"].get("arguments"), str) for c in raw_calls)
             if not raw_calls and assistant.invalid_tool_calls:
                 raw_calls = [{"id": c["id"], "type": "function", "function": {
                     "name": c["name"], "arguments": c["args"]}}
@@ -1288,6 +1299,12 @@ class RecoveryAgentLoop:
                         if has_explicit_text_submission(content):
                             raise ReceptionError("RECOVERY_SUBMISSION_AMBIGUOUS", "Native submission and explicit text envelope cannot coexist")
                         raw = submissions[0]["args"]
+                        from agent_core.workflow.recovery_reception import adapt_native_version
+                        raw, adaptation = adapt_native_version(raw,
+                            complete=finish_reason in {"stop", "tool_calls", "function_call"},
+                            raw_arguments_verified=native_raw_arguments_verified)
+                        if adaptation:
+                            receipt["adaptation"] = adaptation
                         extra_explanation = ""
                         receipt["transport"] = "native_tool"
                     else:
@@ -1670,11 +1687,13 @@ class RecoveryAgentLoop:
                             ),
                         },
                     )
-                signature = hashlib.sha256(_canonical({
-                    "source_ref": envelope["source_ref"],
-                    "content_sha256": envelope["content_sha256"],
-                }).encode("utf-8")).hexdigest()
-                if not envelope["error"] and signature not in known_progress:
+                from agent_core.workflow.recovery_runtime import meaningful_inspection_facts
+                progress_facts = meaningful_inspection_facts([{
+                    "source_ref": envelope["source_ref"], "tool": dotted_tool,
+                    "result": envelope.get("result"), "error": envelope.get("error"),
+                }])
+                signature = hashlib.sha256(_canonical(progress_facts).encode("utf-8")).hexdigest()
+                if progress_facts and signature not in known_progress:
                     known_progress.add(signature)
                     round_progress = True
                 if not envelope["error"] and str(envelope["source_ref"]):

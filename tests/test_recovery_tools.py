@@ -258,7 +258,7 @@ class RecoveryToolsTests(unittest.TestCase):
             scope={"access": "current_step"},
         ), locator={"artifact_id": "binary", "path": str(binary)})
         with self.assertRaisesRegex(
-            RecoveryToolError, "ARTIFACT_BINARY_READ_FORBIDDEN"
+            RecoveryToolError, "READ_REPRESENTATION_UNSUPPORTED"
         ):
             self.dispatcher.dispatch(
                 "artifact.read", {"ref_id": "artifact:binary"}
@@ -301,16 +301,14 @@ class RecoveryToolsTests(unittest.TestCase):
             "skill_id": "genomics/selected",
             "resource_path": "references/guide.txt",
         })
+        original_resource = self.resource_path.read_text(encoding="utf-8")
         self.resource_path.write_text("changed resource v2\n", encoding="utf-8")
-        second = self.dispatcher.dispatch("skill.resource", {
-            "skill_id": "genomics/selected",
-            "resource_path": "references/guide.txt",
-        })
-        self.assertEqual(
-            first["results"][0]["resource_content_hash"],
-            second["results"][0]["resource_content_hash"],
-        )
-        self.assertIn("pinned resource v1", second["results"][0]["exact_text"])
+        from agent_core.skill_access import SkillAccessError
+        with self.assertRaisesRegex(SkillAccessError, "SKILL_RESOURCE_CHANGED"):
+            self.dispatcher.dispatch("skill.resource", {
+                "skill_id": "genomics/selected", "resource_path": "references/guide.txt"})
+        # Restore the original fixture bytes before checking its pinned excerpt.
+        self.resource_path.write_text(original_resource, encoding="utf-8")
         with self.assertRaisesRegex(
             RecoveryToolError, "RECOVERY_SKILL_NOT_SELECTED"
         ):

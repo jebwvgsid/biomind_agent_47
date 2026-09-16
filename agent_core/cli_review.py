@@ -20,7 +20,7 @@ def review_display(title, content, *, language='', risk='', plan_id='', step_cou
         fields.append(f'计划 {plan_id} · 步骤数 {step_count if step_count is not None else "UNKNOWN"}')
     if language:
         fields.append(f'语言 {language} · 风险检查 {risk or "UNKNOWN"}')
-    fields.append('审批显示正文 SHA-256: ' + identity)
+    fields.append('显示标识 ' + identity[:12] + ' · 完整 SHA-256 见详情')
     if kind == 'plan':
         fields.append('下方为当前冻结计划的完整正文；可滚动查看后明确确认。')
     else:

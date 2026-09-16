@@ -899,21 +899,8 @@ def validate_concrete_action_artifacts(
             and value == str(validated.get("code") or "")
         )
 
-    raw_source_references: List[Tuple[str, str, str]] = []
     for field_path, value in scalar_rows:
         if not authoritative_scalar(field_path, value):
-            if field_path == "$.code":
-                for match in _UNRESOLVED_ARTIFACT_REFERENCE_RE.finditer(value):
-                    direction = match.group("direction")
-                    identity = match.group("identity")
-                    semantic_handle = (
-                        f"{direction}.{identity}"
-                        if direction in {"input", "output"}
-                        else f"artifact.{identity}"
-                    )
-                    raw_source_references.append(
-                        (semantic_handle, match.group(0), field_path)
-                    )
             continue
         for match in _UNRESOLVED_ARTIFACT_REFERENCE_RE.finditer(value):
             direction = match.group("direction")
@@ -943,16 +930,9 @@ def validate_concrete_action_artifacts(
                 offending_placeholders=(match.group(0),),
             ))
 
-    # Only executable fields count as proof that Generate used a concrete path.
-    executable_projection = {
-        key: deepcopy(validated.get(key))
-        for key in (
-            "argv", "env", "code", "command", "script", "executable",
-            "working_directory", "cwd",
-        )
-        if validated.get(key) not in (None, "", [], {})
-    }
-    executable_text = [value for _, value in walk(executable_projection, "$")]
+    # Lexical presence is not evidence of consumption: variables can construct
+    # a path, and a comment/unused env can contain one. Keep actual resource
+    # availability and structured-reference checks; execution owns observations.
     used_handles: List[str] = []
     for handle, binding in sorted(bindings.items()):
         if not binding.required:
@@ -973,55 +953,7 @@ def validate_concrete_action_artifacts(
                     failure_stage="pre_action_contract",
                 ))
                 continue
-        if path and any(path in value for value in executable_text):
-            used_handles.append(handle)
-            continue
-        violations.append(_violation(
-            code="ACTION_ARTIFACT_PATH_NOT_REFERENCED",
-            owner="GENERATED_ACTION",
-            route="generate",
-            message=(
-                f"Executable action does not reference the concrete path for "
-                f"{binding.semantic_handle}."
-            ),
-            binding=binding,
-            field_path="$.code/argv/env",
-            failure_stage="pre_action_contract",
-            repair_hint={
-                "strategy": "use_supplied_concrete_path",
-                "artifact_identity": binding.semantic_handle,
-                "concrete_path": path,
-            },
-        ))
-
-    # A lexical token in an opaque script body is not independently
-    # authoritative when that same binding is already referenced by its
-    # concrete path.  If the concrete binding is absent, retain the hard
-    # pre-action rejection so a placeholder cannot stand in for the required
-    # executable value.
-    for semantic_handle, token, field_path in raw_source_references:
-        if semantic_handle in used_handles:
-            continue
-        binding = bindings.get(semantic_handle)
-        violations.append(_violation(
-            code="UNRESOLVED_ARTIFACT_REFERENCE",
-            owner="GENERATED_ACTION",
-            route="generate",
-            message=(
-                "Executable action contains an unresolved artifact reference; "
-                "Generate must emit the supplied concrete path."
-            ),
-            binding=binding,
-            artifact_handle=semantic_handle,
-            proposed=token,
-            field_path=field_path,
-            failure_stage="pre_action_contract",
-            repair_hint={
-                "strategy": "replace_with_concrete_path",
-                "artifact_identity": semantic_handle,
-            },
-            offending_placeholders=(token,),
-        ))
+        used_handles.append(handle)  # Declared bindings, not proof of use.
 
     referenced_outputs = sorted(
         handle for handle in used_handles

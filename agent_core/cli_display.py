@@ -48,7 +48,8 @@ _last_public = ContextVar('biomind_display_public_ticket', default=None)
 _sequence = count(1)
 _SCOPE_FIELDS = ('task_id', 'node', 'call_id', 'provider_attempt_id', 'provider_attempt',
                  'execution_attempt_id', 'execution_attempt', 'action_id', 'pid',
-                 'source_message_id', 'epoch', 'tool_request_id', 'tool_call_id', 'stream')
+                 'source_message_id', 'epoch', 'tool_request_id', 'tool_call_id', 'stream',
+                 'step_id', 'seed_id', 'activity_id', 'stop_id')
 _CRITICAL = {'model_public', 'message', 'error', 'result', 'cancel', 'approval',
              'tool_start', 'tool_end'}
 _REQUIRED = {'model_public', 'error', 'result', 'cancel', 'approval'}
@@ -204,6 +205,150 @@ class DisplayModel:
         self.priority = ''
         self.pending_tool_group = None
         self.tool_receipts = set()
+        self.activities = {}
+        self.activity_details = {}
+        self.public_messages = {}
+        self.terminals = {}
+        self.completed_steps = {}
+        self.run_state = 'idle'
+
+    def _lifecycle(self, kind, text, data, scope):
+        """Update display identities only; all original events stay in details."""
+        now = time.monotonic()
+        if kind == 'details' and data.get('activity_id'):
+            identity = (str(data.get('task_id') or ''), str(data['activity_id']))
+            self.activity_details.setdefault(identity, []).append(text)
+        def ticket(label, body, identity):
+            return DisplayTicket(identity, data.get('source', 'runtime_fact'), label, body,
+                                 scope, {'ready': now, 'enqueued': now})
+        def append(row):
+            row.presentation = 'history'
+            self.items.append(row)
+            self.history.append(row.text)
+            return row
+        if kind in {'terminal_state', 'cancel', 'result'}:
+            for pending in self.public_messages.values():
+                item = pending.get('ticket')
+                if not pending['complete'] and item is not None:
+                    item.text = pending['text'] + '\n[公开消息未完整结束；以上为已接收部分]'
+                    item.kind, item.presentation = 'model_public', 'history'
+                    pending['complete'] = True
+                    self.history[pending['history_index']] = item.text
+        if kind == 'step_committed':
+            identity = (data.get('task_id'), data.get('commit_id') or data.get('item_id'))
+            if identity in self.completed_steps:
+                return True, None
+            row = ticket('message', text, identity)
+            self.completed_steps[identity] = row
+            if not self.priority:
+                self.active = text
+            return True, append(row)
+        if kind == 'terminal_state':
+            from .cli_lifecycle import terminal_text, delivery_text, delivery_identity
+            facts = data.get('terminal_facts') or {}
+            identity = (data.get('task_id'), facts.get('stop_id') or data.get('stop_id') or 'terminal')
+            status = data.get('status') or 'unknown'
+            self.run_state = status
+            self.active = '任务已停止' if status != 'completed' else '任务正式完成'
+            self.priority = 'terminal'
+            self.tool_tail = ''
+            self.details.append(safe_document(__import__('json').dumps(facts, ensure_ascii=False, indent=2)))
+            body = safe_document(terminal_text(status, facts))
+            delivery = delivery_identity(facts)
+            prior = self.terminals.get(identity)
+            if prior:
+                prior['ticket'].text = body
+                self.history[prior['history_index']] = body
+                if delivery == prior['delivery']:
+                    return True, None
+                prior['delivery'] = delivery
+                return True, append(ticket('terminal_delivery_update', '交付更新：' + delivery_text(facts), identity))
+            row = ticket('result', body, identity)
+            self.terminals[identity] = {'ticket': row, 'delivery': delivery, 'history_index': len(self.history)}
+            return True, append(row)
+        message_id = data.get('source_message_id') or data.get('item_id')
+        if kind in {'model_delta', 'model_public'} and message_id and data.get('source') == 'model_public':
+            identity = tuple(str(data.get(k) or '') for k in ('task_id', 'node', 'call_id', 'provider_attempt_id')) + (str(message_id),)
+            row = self.public_messages.setdefault(identity, {'text': '', 'complete': False})
+            self._may_activate(kind, data)
+            if row['complete']:
+                if kind == 'model_public' and row['text'] != text:
+                    self.details.append('同一消息出现不同完成正文；原始回执保留，已完成显示不重放。\n' + text)
+                return True, None
+            if kind == 'model_delta':
+                row['text'] += text
+                if 'ticket' not in row:
+                    self.finalize_tools()
+                    row['ticket'] = ticket('model_delta', row['text'], identity)
+                    row['ticket'].presentation = 'pending'
+                    row['history_index'] = len(self.history)
+                    self.items.append(row['ticket'])
+                    self.history.append(row['text'])
+                row['ticket'].text = row['text']
+                self.history[row['history_index']] = row['text']
+                return True, row['ticket']
+            if row['text'] and row['text'] != text:
+                self.details.append('流式预览与完成正文不同；以下最终显示采用 completed。\n' + row['text'])
+            row.update(text=text, complete=True)
+            self.finalize_tools()
+            if 'ticket' in row:
+                complete = row['ticket']
+                complete.text, complete.kind, complete.presentation = text, 'model_public', 'history'
+                self.history[row['history_index']] = text
+                return True, complete
+            return True, append(ticket('model_public', text, identity))
+        activity_id = data.get('activity_id')
+        if kind in {'tool_start', 'tool_tail', 'tool_end', 'activity_check'} and activity_id:
+            identity = (str(data.get('task_id') or ''), str(activity_id))
+            row = self.activities.get(identity)
+            if row is None:
+                row = {'ticket': ticket(kind, text, identity), 'started': False, 'ended': False,
+                       'history_index': None, 'events': []}
+                self.activities[identity] = row
+            row['events'].append({'kind': kind, 'text': text, 'status': data.get('status'), 'event_id': data.get('event_id') or data.get('item_id')})
+            self.details.append(text)
+            if kind == 'tool_start':
+                row['started'] = True
+                if row['ended']:
+                    return True, None  # A late/replayed start never reopens a finished activity.
+            if kind == 'tool_tail':
+                row['output'] = text
+                stream = tuple(str(data.get(k, '')) for k in ('task_id', 'action_id', 'execution_attempt_id',
+                    'execution_attempt', 'pid', 'tool_request_id', 'tool_call_id', 'stream'))
+                self.tool_tails[stream] = text[-4096:]
+                if len(self.tool_tails) > 32:
+                    del self.tool_tails[next(iter(self.tool_tails))]
+                if not row['ended'] and self._may_activate(kind, data):
+                    self.tool_tail = text[-4096:]
+                tail = ticket(kind, text, identity)
+                tail.presentation = 'status'
+                return True, tail
+            entry = row['ticket']
+            previous_status = entry.status
+            entry.text, entry.status, entry.kind = text, str(data.get('status') or ''), kind
+            if self._may_activate(kind, data):
+                self.active = text
+                self.last_activity = now
+                if not self.priority:
+                    self.run_state = 'running'
+            if kind in {'tool_end', 'activity_check'}:
+                row['ended'] = True
+                if row['history_index'] is None:
+                    row['history_index'] = len(self.history)
+                    return True, append(entry)
+                self.history[row['history_index']] = text
+                # Append-only scrollback may already contain rc0. Surface a
+                # newly failed formal check once while keeping one activity.
+                if entry.status == 'failed' and previous_status != 'failed' and entry.times.get('write'):
+                    update = ticket('activity_check', text, identity)
+                    update.status = 'failed'
+                    return True, append(update)
+                return True, None
+            start = ticket('tool_start', text, identity)
+            start.presentation = 'status'
+            self.items.append(start)  # Immutable start receipt; one mutable activity above.
+            return True, start
+        return False, None
 
     @staticmethod
     def _group_scope(data):
@@ -254,7 +399,9 @@ class DisplayModel:
         if scope in self.fenced_scopes:
             return False
         new_task = bool(scope[0]) and self.active_scope and bool(self.active_scope[0]) and scope[0] != self.active_scope[0]
-        if self.priority and not new_task and kind in {'stage', 'activity', 'tool_start', 'tool_end', 'tool_tail'}:
+        if self.priority in {'terminal', 'cancel'} and not new_task and kind in {'model_public', 'model_delta'}:
+            return False
+        if self.priority and not new_task and kind in {'stage', 'activity', 'tool_start', 'tool_end', 'tool_tail', 'activity_check'}:
             return False
         execution = tuple(str(data.get(key, '')) for key in
                           ('task_id', 'action_id', 'execution_attempt_id', 'execution_attempt',
@@ -289,11 +436,24 @@ class DisplayModel:
                 source = 'diagnostic'
             scope = {key: data[key] for key in _SCOPE_FIELDS if data.get(key) is not None}
             identity = data.get('item_id') or data.get('key') or None
-            key = (tuple((k, str(v)) for k, v in scope.items()), str(identity)) if identity is not None else None
+            event_identity = data.get('event_id') or identity
+            key = (tuple((k, str(v)) for k, v in scope.items()), kind, str(event_identity)) if event_identity is not None else None
+            if kind in {'model_delta', 'terminal_state', 'activity_check'} and not data.get('event_id'):
+                key = None
             if key and key in self.seen:
                 return None
             if key:
                 self.seen.add(key)
+            handled, lifecycle_ticket = self._lifecycle(kind, text, data, scope)
+            if handled:
+                return lifecycle_ticket
+            if kind == 'activity' and data.get('event') == 'recovery_started' and not self.priority:
+                self.run_state = 'recovering'
+            if kind == 'cancel':
+                self.run_state = 'cancelling'
+            if kind == 'result' and data.get('status'):
+                self.run_state = str(data['status'])
+                self.tool_tail = ''
             receipt = self._receipt_identity(data) if kind == 'tool_end' else None
             ticket = DisplayTicket(identity if identity is not None else next(_sequence),
                                    source, kind, text, scope,
@@ -402,6 +562,17 @@ class DisplayModel:
     def release_priority(self):
         with self.lock:
             self.priority = ''
+
+    def details_text(self):
+        """Complete activity copies remain available after telemetry rotates."""
+        with self.lock:
+            rows = list(self.details)
+            for identity, activity in self.activities.items():
+                rows.append('活动 ' + str(identity) + '\n' + '\n'.join(
+                    event['kind'] + ': ' + event['text'] for event in activity['events']))
+            for identity, details in self.activity_details.items():
+                rows.append('活动详情 ' + str(identity) + '\n' + '\n'.join(details))
+            return '\n\n'.join(rows)
 
     def status(self):
         with self.lock:

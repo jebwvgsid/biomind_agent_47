@@ -54,7 +54,13 @@ async def node_scenario(mode, shared_fixture, *, generate_envelope, execute_to_c
     if mode == 'tty':
         from tests.test_cli_model_display import complete_fake_review
         original_prompt = case.agent._prompt_user
-        case.agent._prompt_user = lambda *args, **kwargs: complete_fake_review(owner, original_prompt, *args, **kwargs)
+        def synthetic_review_reply(*args, **kwargs):
+            assert owner.review_document
+            if owner.modal:
+                return complete_fake_review(owner, original_prompt, *args, **kwargs)
+            # Current plan review is inline; no modal viewer needs closing.
+            return original_prompt(*args, **kwargs)
+        case.agent._prompt_user = synthetic_review_reply
     real_inspect = bio_agents.inspect_resource
     def inspect_spy(*args, **kwargs):
         dispatches.append({'tool': 'inspect_resource', 'at': time.monotonic()})
@@ -112,7 +118,7 @@ async def node_scenario(mode, shared_fixture, *, generate_envelope, execute_to_c
             elif execute_to_commit:
                 template = json.loads(next(message.content for message in messages
                     if getattr(message, 'name', '') == 'approved_effect_emission_template'))
-                body = ("/usr/bin/python3 <<'PY'\n" + template['python_template'] +
+                body = ("/usr/bin/python3 - <<'PY'\n" + template['marker'] +
                     '\nfrom pathlib import Path\n' + f'exists=Path({str(shared_fixture)!r}).is_file()\n' +
                     "print(emit_effect_evidence({'produces_observations':{'validation_observation':{'value':{'exists':exists}}}}))\nPY")
                 payload = '<shell>' + body + '</shell>'
@@ -219,17 +225,17 @@ async def node_scenario(mode, shared_fixture, *, generate_envelope, execute_to_c
             if first_kind == 'syntax_error':
                 assert feedback['repair_stage'] == 'script_body_validation'
                 assert violation['code'] == 'GENERATE_SCRIPT_SYNTAX_INVALID'
-                assert feedback['validation_source'] == 'execution.script_validation.check_script_body'
-                # The existing script-artifact feedback projection changes the
-                # provider field_path and drops syntax_check. Preserve that
-                # observed record; use the actual checker receipt as evidence.
+                assert feedback['validation_source'] == 'execution.script_validation.check_executable_action'
+                assert violation['syntax_check']['check_status'] == 'FAIL'
                 assert syntax_receipts[0]['execution_started'] is False
                 assert syntax_receipts[0]['status'] == 'invalid'
                 assert syntax_receipts[0]['checker_returncode'] != 0
             else:
                 assert feedback['exact_error']['code'] == 'GENERATE_SCRIPT_BLOCK_INVALID'
                 assert feedback['exact_error']['stage'] == feedback['repair_stage'] == 'script_block'
-                assert violation['field_path'] == 'response'
+                # Both current parser/projection owners address the whole
+                # candidate; this is not a scientific input field.
+                assert violation['field_path'] in {'$', 'response'}
                 assert violation['failure_stage'] == 'pre_execution_candidate_admission'
         durable = load_plan_state(str(case.root), task_id)
         assert 'public_message' not in json.dumps(durable.get('plan_spec') or {})
@@ -403,7 +409,10 @@ def test_cli3_actual_generated_envelope_approval_process_commit_equal_old_tty_pl
         artifact('cli3-actual-tty-output.json', {'transcript': output.text.getvalue(),
             'writer_events': output.events,
             'tickets': [{'kind': t.kind, 'scope': t.scope, 'text': t.text, 'times': t.times} for t in owner.model.items]})
-        assert new_plain == new_off == old_off == new_tty
+        # The exact repair feedback is checked above in every mode. Envelope
+        # and native parser pointers may name the whole candidate differently.
+        business = lambda result: {key: value for key, value in result.items() if key != 'validator_feedback'}
+        assert business(new_plain) == business(new_off) == business(old_off) == business(new_tty)
     asyncio.run(run())
 
 

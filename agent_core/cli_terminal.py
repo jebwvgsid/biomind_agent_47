@@ -77,6 +77,7 @@ class Terminal:
         self.review_title = ''
         self.review_prompt = ''
         self.review_kind = ''
+        self.review_hash = ''
         self.cancel_requested = False
         self.cancel_callback = None
         self.force_callback = None
@@ -159,7 +160,7 @@ class Terminal:
             Window(FormattedTextControl(self.input_hint), height=1, wrap_lines=False),
         ])
         self.app = Application(layout=Layout(layout, self.input_control), key_bindings=keys,
-                               full_screen=False, min_redraw_interval=0.1,
+                               full_screen=False, min_redraw_interval=0.1, erase_when_done=True,
                                mouse_support=True,
                                after_render=lambda app: self._rendered())
 
@@ -266,7 +267,7 @@ class Terminal:
         from prompt_toolkit.styles import DEFAULT_ATTRS
         normal = DEFAULT_ATTRS
         marker = None
-        if item.kind == 'error' or (item.kind == 'tool_end' and item.status == 'failed'):
+        if item.kind == 'error' or (item.kind in {'tool_end', 'activity_check'} and item.status == 'failed'):
             marker = ('× ', normal._replace(color='ansired', bold=True))
         elif item.kind == 'cancel' or (item.kind == 'tool_end' and item.status in {'cancelled', 'partial', 'unknown', 'not_dispatched'}):
             marker = ('! ', normal._replace(color='ansiyellow', bold=True))
@@ -303,6 +304,10 @@ class Terminal:
         if self.plain_owner is not None:
             return self.plain_owner.receive(kind, text, **data)
         ticket = self.model.receive(kind, text, **data)
+        if kind in {'terminal_state', 'result', 'cancel'} and self.pending is None:
+            self.prompt_text = ('正在取消；等待清理与状态回执' if kind == 'cancel' else
+                                '任务已完成；等待输入接口' if data.get('status') == 'completed' else
+                                '任务已停止；等待输入接口')
         if ticket is None:
             return None
         if self.closed or self.sink_broken:
@@ -322,7 +327,8 @@ class Terminal:
         if self.modal and not self.fallback:
             self.app.invalidate()
             return
-        if len(self.model.items) > self.history_cursor and self.history_flush is None:
+        if (len(self.model.items) > self.history_cursor and self.history_flush is None
+                and self.model.items[self.history_cursor].presentation != 'pending'):
             self.history_flush = self.loop.create_task(self._flush_history())
             return
         if not self.fallback:
@@ -340,6 +346,8 @@ class Terminal:
             with self.model.lock:
                 first_index = self.history_cursor
                 end = len(self.model.items) if until is None else min(until, len(self.model.items))
+                end = next((i for i in range(self.history_cursor, end)
+                            if self.model.items[i].presentation == 'pending'), end)
                 items = self.model.items[self.history_cursor:end]
                 self.history_cursor = end
             if items:
@@ -534,7 +542,19 @@ class Terminal:
             if self.context[1] == 'interactive_prompt':
                 self.buffer.append_to_history()
             self.buffer.reset()
-            self.prompt_text = '运行中可编辑本地草稿；尚未提交'
+            # Display prediction only; return the unchanged input to the
+            # existing command classifier, which retains all authority.
+            command = str(text).replace('\r\n', '\n').replace('\r', '\n').strip().lower()
+            if command in {'/exit', '/quit', 'exit', 'quit', 'q'}:
+                self.model.run_state = 'exiting'
+                self.model.active = '正在退出'
+                self.prompt_text = '正在退出；等待清理回执'
+            elif cancelling:
+                self.model.run_state = 'cancelling'
+                self.prompt_text = '正在取消；等待清理与状态回执'
+            else:
+                self.model.run_state = 'running'
+                self.prompt_text = '运行中可编辑本地草稿；尚未提交'
             future.set_result(text)
 
     def submit(self):
@@ -620,19 +640,22 @@ class Terminal:
                 raise HumanInputUnavailable('cannot replace a pending approval detail')
             if document != self.review_document:
                 self.review_prompt = ''
+                self.review_hash = ''
             self.review_document = document
             self.review_title = safe_text(title)
             text = document + ('\n\n当前输入提示：\n' + self.review_prompt if self.review_prompt else '')
         else:
             with self.model.lock:
                 tails = '\n\n'.join(str(group) + '\n' + tail for group, tail in self.model.tool_tails.items())
-                text = '\n\n'.join(self.model.details) + '\n\n工具显示尾部：\n' + tails
+                text = self.model.details_text() + '\n\n工具显示尾部：\n' + tails
             if self.review_document:
                 prompt = '\n\n当前输入提示：\n' + self.review_prompt if self.review_prompt else ''
                 text = self.review_document + prompt + '\n\n最近诊断：\n' + text
                 title = self.review_title or title
             if self.context[1] != 'interactive_prompt':
                 text += '\n\n当前待输入对象（完整显示副本；后端仍核对授权）：\n' + json.dumps(self.context[2], ensure_ascii=False, indent=2)
+        if self.review_document and self.review_hash:
+            text += '\n\n审批显示正文 SHA-256: ' + self.review_hash
         self._open_details(str(text), title)
 
     def show_history(self):
@@ -821,6 +844,10 @@ async def run_terminal(runtime):
             done.result()
     finally:
         owner.closed = True
+        owner.prompt_text = ''
+        owner.model.active = ''
+        owner.model.tool_tail = ''
+        owner.model.run_state = 'closed'
         owner.loop.set_exception_handler(previous_handler)
         owner.cancel_read()
         if owner.plain_owner is not None:

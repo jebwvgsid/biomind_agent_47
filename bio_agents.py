@@ -2213,6 +2213,7 @@ class InteractiveRunResult:
     reason: str = ""
     result_path: str = ""
     trace_path: str = ""
+    display_facts: Dict[str, Any] = field(default_factory=dict)
 
 
 # ════════════════════════════════════════════════════════════════
@@ -2416,6 +2417,20 @@ class OutputRouter:
         """Render one atomic terminal block; return whether it was emitted."""
         if str(result.status or "") == "waiting_user":
             return False
+        if result.display_facts:
+            if emit_display("terminal_state", source="runtime_fact", task_id=result.task_id,
+                    status=result.status, terminal_facts=deepcopy(result.display_facts)):
+                return True
+            from agent_core.cli_lifecycle import terminal_text, delivery_identity, delivery_text
+            identity = ("terminal", result.task_id, result.display_facts.get("stop_id"))
+            delivery = (identity, delivery_identity(result.display_facts))
+            if delivery in self._seen:
+                return False
+            text = ("交付更新：" + delivery_text(result.display_facts) if identity in self._seen else
+                    terminal_text(result.status, result.display_facts))
+            self._seen.update((identity, delivery))
+            display_print(text)
+            return True
         key = f"terminal_result:{result.task_id}:{result.status}:{result.failure_code}"
         with self._console_lock:
             if key in self._seen:
@@ -2437,7 +2452,9 @@ class OutputRouter:
                 f"  Result path: {result.result_path or '-'}",
                 f"  Trace path: {result.trace_path or '-'}",
             ]
-            if not emit_display("result", f"运行结果：{result.status or 'unknown'}\n" + "\n".join(lines)):
+            emit_display("details", "\n".join(lines), purpose="details", task_id=result.task_id)
+            if not emit_display("result", f"运行结果：{result.status or 'unknown'}\n" + result.reason,
+                                task_id=result.task_id, status=result.status):
                 display_print(f"\n{color}" + "\n".join(lines) + Style.RESET_ALL, flush=True)
             return True
 
@@ -2463,13 +2480,14 @@ class OutputRouter:
                 clean,
                 flags=re.IGNORECASE | re.DOTALL,
             )
-        clean = re.sub(r"</?[^>]+>", "", clean).strip()
-        clean = re.sub(r"```.*?```", "[code block]", clean, flags=re.DOTALL)
+        clean = clean.strip()
         if clean:
             if item_id:
-                if item_id in self._seen:
+                identity = (source, item_id, tuple(str(scope.get(k) or '') for k in
+                    ('task_id', 'node', 'call_id', 'provider_attempt_id', 'source_message_id')))
+                if identity in self._seen:
                     return
-                self._seen.add(item_id)
+                self._seen.add(identity)
             if source == "model_public":
                 if active_terminal() is None:
                     display_print(clean)
@@ -2480,15 +2498,17 @@ class OutputRouter:
 
     def print_observation(self, content: str, *, item_id: str = "", summary: str = "", failed: bool = False, **scope):
         """Keep the full observation in details; never echo machine evidence."""
-        if item_id and item_id in self._seen:
+        identity = ("observation", item_id, tuple(str(scope.get(k) or '') for k in
+            ('task_id', 'activity_id', 'execution_attempt_id', 'call_id')))
+        if item_id and identity in self._seen:
             return
         if item_id:
-            self._seen.add(item_id)
+            self._seen.add(identity)
         emit_display("details", str(content), source="runtime_fact", purpose="details", **scope)
         # Do not infer success from text, checkmarks, or the model's prose.
         if summary:
-            if not emit_display("error" if failed else "message", summary,
-                                source="runtime_fact", **scope):
+            if not emit_display("activity_check" if scope.get("activity_id") else "error" if failed else "message", summary,
+                                source="runtime_fact", status="failed" if failed else "returned", **scope):
                 display_print(summary)
         elif active_terminal() is None:
             display_print("执行输出已返回；完整结果见原执行记录。")
@@ -3478,6 +3498,9 @@ class BioAnalystAgent:
             "provider_attempt_id": str(bounded.get("provider_attempt_id") or ""),
             "epoch": str(bounded.get("context_epoch_id") or ""),
             "tool_request_id": str(bounded.get("tool_request_id") or "")}
+        display_scope["seed_id"] = str(bounded.get("seed_id") or "")
+        if display_scope["tool_request_id"]:
+            display_scope["activity_id"] = "recovery:" + display_scope["seed_id"] + ":" + display_scope["epoch"] + ":" + display_scope["tool_request_id"]
         if event == "recovery_tool_observation_committed":
             observation = bounded.get("observation") or {}
             result = observation.get("result") or {}
@@ -3486,11 +3509,13 @@ class BioAnalystAgent:
             status = ("failed" if bounded.get("status") == "failed" or observation.get("error") else
                       "partial" if bounded.get("truncated") or result_status in {"REQUIRES_NARROWING", "RECOVERY_OBSERVATION_BUDGET_EXCEEDED"} else
                       "empty" if result_status == "NO_MATCH" else "returned")
-            suffix = {"failed": "失败", "partial": "仅返回部分结果：" + (result_status or "truncated"),
-                      "empty": "未找到结果", "returned": "已返回"}[status]
+            from agent_core.cli_lifecycle import tool_result_text
+            description, status = tool_result_text(tool, observation)
+            emit_display("details", json.dumps(observation, ensure_ascii=False, indent=2),
+                         source="runtime_fact", purpose="details", **display_scope)
             if status == "failed" and display_scope["tool_request_id"]:
                 display_scope["item_id"] = f"recovery-tool-failed:{display_scope['tool_request_id']}"
-            emit_display("tool_end", f"{tool} {suffix}", source="runtime_fact",
+            emit_display("tool_end", description, source="runtime_fact",
                 status=status, tool_category="search" if tool in {"evidence.glob", "skill.search"} else "read", **display_scope)
             return
         if event == "recovery_directive_admitted":
@@ -42209,6 +42234,11 @@ question. Never guess a scientific or database identity.
                     generate_plan_state,
                     messages=messages,
                 )
+                if str(generate_step.get("operation") or "") == "finalize_outputs":
+                    from agent_core.reproduction import accepted_execution_materials
+                    capability_instructions += "\n<accepted_execution_sources>" + json.dumps(
+                        accepted_execution_materials(generate_plan_state, self.data_path),
+                        ensure_ascii=False, sort_keys=True) + "</accepted_execution_sources>\n"
                 generate_skill_context_exact = self._skill_context_projection(
                     generate_plan_state,
                     caller_node=(
@@ -42888,7 +42918,7 @@ question. Never guess a scientific or database identity.
                         "attempted": True,
                         "primary_failure": first_failure,
                     }
-                    return await _generate_impl(rebuild_state)
+                    return await _generate_impl(rebuild_state, invocation_audit)
 
                 if rebuild_lifecycle:
                     primary_failure = dict(
@@ -50036,7 +50066,8 @@ question. Never guess a scientific or database identity.
                          "进程已退出；正式核验与提交尚未确认" if effective_success else
                          "进程执行失败；等待后端恢复处理"),
                 failed=bool(runtime_missing or validation_failed or not effective_success),
-                task_id=task_id, node="execute", execution_attempt_id=attempt_id)
+                task_id=task_id, node="execute", execution_attempt_id=attempt_id,
+                activity_id=f"execution:{attempt_id}")
             if runtime_install_blocked:
                 final_res = self._runtime_block_message(
                     runtime_install_redirect,
@@ -53849,6 +53880,7 @@ question. Never guess a scientific or database identity.
             reason=reason,
             result_path=result_path,
             trace_path=str(trace_path) if trace_path.exists() else "",
+            display_facts=deepcopy(common.get("terminal_diagnostic") or {}) if status in {"blocked", "failed"} else {},
         )
 
     async def go(
@@ -54067,6 +54099,9 @@ question. Never guess a scientific or database identity.
         if not hasattr(self, "_managed_terminal_results"):
             self._managed_terminal_results = {}
         self._managed_terminal_results[task_id] = result
+        if result.get("terminal_diagnostic"):
+            emit_display("terminal_state", source="runtime_fact", task_id=task_id,
+                status=result.get("status"), terminal_facts=deepcopy(result["terminal_diagnostic"]))
         return result
 
     def _finish_managed_terminal_result(self, task_id, status, snapshot, terminal, *, exception=None):

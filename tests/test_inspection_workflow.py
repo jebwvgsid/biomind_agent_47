@@ -324,7 +324,9 @@ def test_inspection_reopen_revalidate_commit_once(tmp_path):
         assert recovery_model.bodies["step_attempt"]["execution_record"] == fixture.execution
         accepted = fixture.supervisor_updates[1]["verification_outcome"]["payload"]
         assert accepted["semantic_decision"]["scope"]["attempt_id"] == fixture.execution["attempt_id"]
-        assert accepted["semantic_decision"]["reviewed_report_id"] == fixture.reviewer.reports[1]["report_id"]
+        # The existing typed boundary rebinds the accepted advisory to its final
+        # report after attaching the real causal read receipts.
+        assert accepted["semantic_decision"]["reviewed_report_id"] == accepted["completion_report"]["report_id"]
         committed = commits[0]
         assert committed["commit_step_outcome"]["payload"]["successor_step_id"] == "step.next"
         before = fixture.reload()
@@ -400,6 +402,9 @@ def test_inspection_old_report_decision_cannot_partially_commit(tmp_path):
         fixture = make_inspection_fixture(tmp_path)
         fixture.reviewer = OldReportReviewer()
         await fixture.inspect_handoff()
+        recovery = await Schema2RecoveryNode(data_path=str(tmp_path), model=ReadThenRevalidateModel()).run(fixture.state)
+        assert recovery['recovery_outcome']['type'] == 'revalidation_required'
+        fixture.state.update(recovery)
         update = await fixture.new_supervisor()(deepcopy(fixture.state))
         fixture.state.update(update)
         assert fixture.reviewer.reports[0]["report_id"] != fixture.reviewer.reports[1]["report_id"]

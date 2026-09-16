@@ -232,8 +232,8 @@ metadata:
         operation: build_database
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
         optional_runtime_binding_ids: []
-        required_artifact_binding_ids: [artifact.reference_fasta, artifact.annotation_gtf, artifact.snpeff_config, artifact.snpeff_data_dir]
-        consumes_artifacts: [artifact.reference_fasta, artifact.annotation_gtf, artifact.snpeff_config]
+        required_artifact_binding_ids: [artifact.snpeff_config, artifact.snpeff_data_dir]
+        consumes_artifacts: [artifact.snpeff_config, artifact.snpeff_data_dir]
         produces_artifacts: []
         produces_bindings: []
         produces_observations: [snpeff_database_ready]
@@ -255,8 +255,11 @@ metadata:
         explicit_side_effects: []
         execution_guidance:
           - Build only the approved task-local custom database.
+          - Build reads the prepared workspace and separate config. Raw FASTA/GTF belong to the prepare step's lineage; do not add dummy reads to this step.
+          - For this capability's declared layout, snpeff_db is the workspace root, dataDir is snpeff_db/data, and predictor is dataDir/genome_version/snpEffectPredictor.bin. Use the same config, dataDir and genome_version for build, dump, ann and filesystem checks; do not append data twice or infer config inside snpeff_db.
           - Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths.
           - Preserve the actual command argv and inner returncode. Write build.log beside the approved predictor target (data/<genome_version>/build.log); the runtime can publish its attester-matched snapshot for Recovery evidence.read. An outer Python rc0 is not inner build success.
+          - A Total Errors statistics row is a scientific quality observation, not a nonzero exit or fatal signal. Preserve its count/percentage and CDS/START/STOP warnings and skipped checks separately. Do not sum overlapping categories or call their complement accuracy. Apply only quality thresholds actually approved in the Plan. The optional pure scripts/snpeff_checks.py build_facts helper keeps process, predictor size, load receipt, fatal lines and quality lines separate; it does not decide scientific acceptance.
       - capability_id: genomics.snpeff_annotation.annotate_variants
         operation: annotate_variants
         required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
@@ -270,6 +273,7 @@ metadata:
         explicit_side_effects: []
         execution_guidance:
           - Annotate the approved VCF with the approved database identity.
+          - Use the same recorded workspace/data directory, standalone config and genome_version for dump preflight, predictor self-check and ann. Put the operation immediately after the launcher/JAR, before its options. A failed load preflight must prevent ann; it is not itself proof that build must be rerun.
           - Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths.
       - capability_id: genomics.snpeff_annotation.summarize_ann
         operation: summarize_ann
@@ -284,6 +288,7 @@ metadata:
         explicit_side_effects: []
         execution_guidance:
           - Summarize ANN records without invoking the annotation runtime.
+          - For a new Plan using this operation, use snpeff-ann-marginals-v1 as documented below; if an approved Plan specifies another format, honor it or request the existing revision process.
       - capability_id: genomics.snpeff_annotation.finalize_outputs
         operation: finalize_outputs
         required_runtime_binding_ids: []
@@ -298,6 +303,9 @@ metadata:
         execution_guidance:
           - Write the requested report, reproduction script, and stage-status table from verified task evidence.
           - Do not claim scientific completion for outputs that were not actually produced and verified.
+          - Read and structurally validate the actual summary sections and counts. A string search for Annotation_Impact cannot establish the table contract. If only the checker is wrong, recheck the same unchanged artifact before proposing another scientific run. Finalize receives accepted_execution_sources from current Commit and attempt records. Preserve approved and executed script bodies separately, exact argv/cwd and nonsecret parameters; include prepare/config/helper dependencies or explicitly declared prerequisites. Never label source/grammar checks as independent replay.
+          - Build reproduction from the supplied accepted execution sources, preserving successful original code, argv, cwd, config, helper bodies and non-sensitive environment dependencies. Do not rewrite commands from memory or copy a failed attempt. Include prepare/config/build/ann/statistics when independent reconstruction is required; label workspace-only replay explicitly.
+          - A stage-status table written before this step's Commit is a pre-Commit snapshot. Preserve upstream Commit facts and mark this step pending; never self-certify completed. Late terminal receipts belong to the existing report lifecycle, not edits to accepted artifacts.
     required_bindings:
       - {name: variant_vcf, required: true, required_for_execution: true, owner: user, user_input_required: true, aliases: [vcf, variant_file]}
       - {name: database_source, required: true, required_for_execution: true, owner: user, user_input_required: true}
@@ -527,6 +535,24 @@ Retain the inner returncode, missing predictor and log facts separately from the
 Read `references/snpeff_config_templates.md` before creating a custom database config or adding any `--config-line`. It gives the supported layouts, a minimal project config, and the cases that require user confirmation.
 
 ## ANN Interpretation
+
+### Marginal summary contract for new Plans
+
+The optional standalone `scripts/ann_summary.py` reads or validates small text
+without routing work. Resolve it through the existing selected Skill resource
+binding; do not guess its installation path. Generate still owns its program.
+The TSV has exactly three ordered sections, separated by blank lines:
+`metric/value`, `annotation_impact/count`, `sequence_ontology_effect/count`.
+The first section records `variants_total`, `variants_with_ann`,
+`ann_records_total`, `header_has_snpeff_version`, and `header_has_ann_info`.
+Counts are nonnegative integers; header flags are literal true/false.
+Variants count VCF data records, not ALT alleles. Each ANN entry contributes
+once to each marginal; a compound SO field such as `splice_region_variant&intron_variant`
+stays one category. Each marginal sums to ANN entries, not VCF records.
+Missing sections, duplicate keys, malformed numbers or contradictory totals
+fail this format check. A valid summary only establishes its internal
+consistency; it does not independently rescan the VCF or establish biological
+quality. Header flags and quality limitations must still reach the reviewer.
 
 - snpEff writes functional annotations to the VCF INFO `ANN` field by default.
 - A single variant may have multiple ANN records because it can affect multiple transcripts, genes, or ALT alleles.

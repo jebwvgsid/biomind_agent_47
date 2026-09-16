@@ -313,12 +313,16 @@ def _short_check_cleanup_facts(pid):
 
 def _execution_display_scope(context: Mapping[str, Any] | None) -> Dict[str, Any]:
     """Copy only runtime identity fields; never expose execution arguments."""
-    return {
+    scope = {
         key: value for key, value in dict(context or {}).items()
         if key in {"task_id", "node", "call_id", "action_id", "execution_attempt_id",
-                   "execution_attempt", "pid", "tool_request_id", "tool_call_id"}
+                   "execution_attempt", "pid", "tool_request_id", "tool_call_id", "step_id", "display_target"}
         and isinstance(value, (str, int)) and not isinstance(value, bool)
     }
+    attempt = scope.get("execution_attempt_id") or scope.get("execution_attempt")
+    if attempt:
+        scope["activity_id"] = "execution:" + str(attempt)
+    return scope
 
 
 def _stream_display_copy(name: str, context: Mapping[str, Any] | None):
@@ -346,15 +350,19 @@ async def _notify_lifecycle(
     if payload.get("pid") is not None:
         scope["pid"] = payload["pid"]
     emit_display("details", f"工具事件 {event}", source="runtime_fact", **scope)
+    target = str(scope.get("display_target") or "")
+    target_label = (" · " + Path(target).name) if target else ""
     if event == "RUNNING":
-        emit_display("tool_start", "工具进程已启动；等待执行结果", source="runtime_fact", tool_category="process", **scope)
+        if target:
+            emit_display("details", "执行目标脚本：" + target, source="runtime_fact", **scope)
+        emit_display("tool_start", "工具进程已启动" + target_label + "；等待执行结果", source="runtime_fact", tool_category="process", **scope)
     elif event == "PROCESS_EXITED":
         returncode = payload.get("returncode")
         text = ("命令 rc=0，等待正式核验" if returncode == 0 else
                 f"命令退出 rc={returncode}；等待后端处理")
         if payload.get("pid") is None:
             text = "命令未启动；等待后端处理"
-        emit_display("tool_end", text, source="runtime_fact", returncode=returncode,
+        emit_display("tool_end", text + target_label, source="runtime_fact", returncode=returncode,
                      command_started=payload.get("pid") is not None, tool_category="process",
                      status="returned" if returncode == 0 else "unknown" if returncode is None else "failed", **scope)
     elif event == "PROCESS_CANCELLED":
@@ -920,7 +928,7 @@ async def run_script_path(
         env=env,
         max_output_bytes=max_output_bytes,
         managed_log_paths=managed_log_paths,
-        display_context=display_context,
+        display_context={**dict(display_context or {}), "display_target": str(path)},
     )
     metadata = dict(get_last_execution_metadata())
     metadata.update({

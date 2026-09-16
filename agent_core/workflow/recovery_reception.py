@@ -1,6 +1,7 @@
 """Bounded transport decoding, never an alternative Recovery authority."""
 from __future__ import annotations
 
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -108,6 +109,19 @@ def validate_candidate(raw):
         return RecoveryDirective.from_mapping(raw)
     except StageContractError as exc:
         raise ReceptionError(exc.code, exc.detail, stage="recovery.schema") from exc
+
+
+def adapt_native_version(raw, *, complete, raw_arguments_verified):
+    """A missing unique transport constant only; the validator still owns admission."""
+    candidate = deepcopy(raw)
+    versions = directive_schema()["properties"]["schema_version"]["enum"]
+    if (complete and raw_arguments_verified and isinstance(candidate, dict)
+            and "schema_version" not in candidate and len(versions) == 1):
+        candidate["schema_version"] = versions[0]
+        return candidate, {"kind": "missing_protocol_constant", "field": "schema_version",
+                           "value": versions[0], "original_arguments": deepcopy(raw),
+                           "adapted_arguments": deepcopy(candidate)}
+    return candidate, None
 
 
 def decode_text(content):

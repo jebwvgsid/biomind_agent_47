@@ -344,7 +344,17 @@ def build_managed_stop(task_id, values, durable, boundary):
         return _build_planning_stop(task_id, durable, boundary, planning)
     _ref, record, packet = _active_packet(durable)
     observed = _mapping(outcome.get("scope"))
+    if not packet and boundary["node"] == "recovery":
+        # A formally admitted blocked directive already consumed its packet.
+        # Resolve that exact receipt, never the latest same-name failure.
+        fingerprint = (_mapping(payload.get("budget_receipt")).get("source_fingerprint")
+                       or _mapping(_mapping(payload.get("inspection_stop")).get("scope")).get("episode_id"))
+        if fingerprint and all(str(observed.get(k) or "") == str(durable.get(k) or "")
+                               for k in ("task_id", "plan_id", "plan_version")):
+            _ref, record, packet = _terminal_packet(durable, {"episode_id": fingerprint})
     fixed_scope = _scope(durable)
+    if packet and not fixed_scope["episode_id"]:
+        fixed_scope["episode_id"] = str(record.get("source_fingerprint") or "")
     causal_scope = deepcopy(fixed_scope)
     no_execution = (boundary["node"] == "generate" or (
         boundary["node"] == "execute" and payload.get("command_started") is False))
@@ -436,6 +446,26 @@ def build_managed_stop(task_id, values, durable, boundary):
     value["inspection_failures"] = value.get("inspection_failures",[])[-20:]
     value["inspection_count_scope"] = {"local_tool_calls":value["stop_reason"].get("tool_calls",0),
         "known_causal_errors":len(value["inspection_failures"]),"history_coverage":"bounded_admitted_causal_chain"}
+    task_receipts = _mapping(_mapping(durable.get("task_state")).get("typed_recovery_receipts"))
+    progress = _mapping(_mapping(_mapping(durable.get("task_state")).get("typed_recovery_progress")).get(packet.get("incident_id")))
+    episodes = [row for row in task_receipts.values()
+                if packet.get("incident_id") and row.get("incident_id") == packet["incident_id"]
+                and isinstance(row.get("business_resume_state"), dict)]
+    last_receipt = task_receipts.get(progress.get("directive_id"))
+    if last_receipt in episodes:
+        episodes = [last_receipt]
+    value["recovery_usage"] = {"scope": "unknown"}
+    if len(episodes) == 1:
+        business = episodes[0]["business_resume_state"]
+        value["recovery_usage"] = {"scope": "last_admitted_episode", "incident_id": packet["incident_id"],
+            "source_fingerprint": episodes[0].get("source_fingerprint"),
+            **{k: business[k] for k in ("turn_count", "tool_call_count", "format_correction_count") if k in business}}
+    elif (type(value["stop_reason"].get("model_turns")) is int
+          and value["stop_reason"]["model_turns"] > 0
+          and type(value["stop_reason"].get("tool_calls")) is int):
+        value["recovery_usage"] = {"scope": "current_episode",
+            "turn_count": value["stop_reason"]["model_turns"],
+            "tool_call_count": value["stop_reason"]["tool_calls"]}
     value["primary_cause"] = deepcopy(primary or value["origin"])
     value["latest_failure"] = deepcopy(latest or value.get("latest_failure") or ((value.get("inspection_failures") or [{}])[-1]))
     if value["stop_reason"].get("error_code") == "RECOVERY_PROVIDER_TRANSPORT_FAILED":
@@ -610,6 +640,7 @@ def projection(stop):
          "reason": explanation(stop), "detail": explanation(stop), "stop_id": stop["stop_id"], "origin": stop["origin"],
          "primary_cause": stop.get("primary_cause", {}), "latest_failure": stop.get("latest_failure", {}),
          "prior_completed_work": stop.get("prior_completed_work", []),
+         "recovery_usage": deepcopy(stop.get("recovery_usage") or {}),
          "execution": stop["execution"], "causal_execution":stop.get("causal_execution",{}),
          "current_candidate":stop.get("current_candidate",{}), "inspection_count_scope":stop.get("inspection_count_scope",{}), "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
          "internal_diagnostic_delivery":deepcopy(stop.get("internal_diagnostic_delivery") or {}),

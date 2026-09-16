@@ -73,6 +73,17 @@ def configured_recovery_policy():
 
 
 RECOVERY_RESOURCES = ContextVar("biomind_recovery_resources", default=None)
+RECOVERY_POLICY_RECEIPT = ContextVar("biomind_recovery_policy_receipt", default=None)
+
+
+def recovery_policy_receipt(policy, *, explicit=False):
+    return {"enabled": policy is not None,
+            "name": policy.name if policy else "disabled",
+            "thresholds": asdict(policy) if policy else {},
+            "source": "node_argument" if explicit else (
+                "environment_after_configuration_merge" if "BIOMIND_RECOVERY_RESOURCE_POLICY" in os.environ else "default"),
+            "upstream_environment_origin": "NOT_RECORDED" if not explicit and "BIOMIND_RECOVERY_RESOURCE_POLICY" in os.environ else "not_applicable",
+            "scope": "causal_incident", "accounting": "processing_tokens_not_invoice"}
 
 
 class RecoveryResourceLimit(ValueError):
@@ -382,7 +393,46 @@ def revalidation_fingerprint(projection: Any) -> str:
         "validation_digest": report["validation_digest"],
         "gate": payload.get("completion_gate"),
         "disposition": report.get("effective_disposition"),
+        "inspection_facts": meaningful_inspection_facts(
+            (report.get("effect_presence") or {}).get("revalidation_inspection_facts") or []),
     })
+
+
+def meaningful_inspection_facts(rows):
+    """Scoped observations, ignoring receipt identities and repeated failures.
+
+    Callers supply the existing scope-checked projection, never free-form model
+    claims. A changed factual/coverage result can advance a local check only.
+    """
+    volatile = {"event_id", "receipt_id", "request_id", "tool_call_id", "message_id",
+                "observation_id", "timestamp", "created_at", "updated_at", "duration_seconds",
+                "content_sha256", "observation_ref", "source_message_id", "decision_ref",
+                "receipt_sha256", "archive_ref", "result_chars", "max_result_chars"}
+    def facts(value):
+        if isinstance(value, Mapping):
+            return {k: facts(v) for k, v in value.items() if k not in volatile}
+        if isinstance(value, (list, tuple)):
+            return [facts(v) for v in value]
+        return value
+    result = set()
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        observation = row.get("observation", row)
+        if not isinstance(observation, Mapping) or observation.get("error"):
+            continue
+        body = observation.get("result", observation)
+        if not isinstance(body, Mapping) or body.get("status") in {
+            "failed", "error", "not_dispatched", "REQUIRES_NARROWING",
+            "NO_MATCH", "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
+            "body_not_projected_budget_requires_targeted_read"}:
+            continue
+        if "content" in body and not str(body["content"] or "").strip():
+            continue  # A new empty range is not new evidence.
+        if not set(body) - volatile - {"status", "start_line", "end_line", "cursor", "truncated"}:
+            continue  # Coverage labels without returned facts do not advance.
+        result.add(_canonical(facts(observation)))
+    return sorted(result)
 
 
 def revalidation_stop_reason(projection: Any, durable: Mapping[str, Any], limit: int) -> str:

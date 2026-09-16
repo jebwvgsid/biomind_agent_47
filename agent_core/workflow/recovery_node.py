@@ -829,6 +829,8 @@ class Schema2RecoveryNode:
         self.runtime_recovery = runtime_recovery
         from agent_core.workflow.recovery_runtime import configured_recovery_policy
         self.resource_policy = resource_policy if resource_policy is not None else configured_recovery_policy()
+        from agent_core.workflow.recovery_runtime import recovery_policy_receipt
+        self.resource_policy_receipt = recovery_policy_receipt(self.resource_policy, explicit=resource_policy is not None)
         self.inherited_materials_factory = inherited_materials_factory
         self.compactor = compactor
         self.context_budget_policy = context_budget_policy or ContextBudgetPolicy()
@@ -1658,6 +1660,18 @@ class Schema2RecoveryNode:
         }
 
     async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
+        from agent_core.workflow.recovery_runtime import RECOVERY_POLICY_RECEIPT
+        token = RECOVERY_POLICY_RECEIPT.set(self.resource_policy_receipt)
+        try:
+            if state.get("task_id"):
+                await self._emit_event("recovery_policy_selected", {
+                    "task_id": str(state["task_id"]),
+                    "effective_resource_policy": deepcopy(self.resource_policy_receipt)})
+            return await self._run_with_resources(state)
+        finally:
+            RECOVERY_POLICY_RECEIPT.reset(token)
+
+    async def _run_with_resources(self, state: Mapping[str, Any]) -> dict[str, Any]:
         from agent_core.context_lineage import ContextLineageStore
         from agent_core.workflow.recovery_runtime import (
             recovery_resource_begin, recovery_resource_end, recovery_seconds_remaining,

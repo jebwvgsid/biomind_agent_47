@@ -76,6 +76,10 @@ class PlainTerminal:
             ticket = self.model.receive(kind, text, **data)
             if ticket is None:
                 return None
+            if kind == 'tool_start' and data.get('activity_id'):
+                # Plain output is append-only: preserve the observed start
+                # before its result. Later checks update the same activity.
+                ticket.presentation = 'history'
             if kind == 'activity' and data.get('purpose') == 'preflight_progress':
                 # Plain has no live status area. Each actual item boundary is
                 # a compact line, still fenced by any pending human approval.
@@ -103,8 +107,10 @@ class PlainTerminal:
 
     def _queue_history(self):
         with self.model.lock:
-            items = self.model.items[self.history_cursor:]
-            self.history_cursor = len(self.model.items)
+            end = next((i for i in range(self.history_cursor, len(self.model.items))
+                        if self.model.items[i].presentation == 'pending'), len(self.model.items))
+            items = self.model.items[self.history_cursor:end]
+            self.history_cursor = end
             for ticket in items:
                 if ticket.presentation != 'history':
                     continue
@@ -200,6 +206,7 @@ class PlainTerminal:
             if details or view.kind == 'plan' or self.model.verbosity == 'verbose':
                 parts.extend([safe_text(view.title), safe_document(view.body)])
             if details:
+                parts.append('审批显示正文 SHA-256: ' + hashlib.sha256(view.body.encode('utf-8')).hexdigest())
                 parts.append('详情结束；仍待审批。查看详情不构成批准。')
             else:
                 parts.append('/details 查看完整对象；查看详情不构成批准。')
@@ -220,7 +227,7 @@ class PlainTerminal:
                     body = (safe_document((title + '\n' if title else '') + str(text))
                             + '\n仍待审批；查看详情不构成批准。\n' + request['prompt'])
                 return self._control(request, body, phase='details')
-        body = text if text is not None else '\n\n'.join(self.model.details)
+        body = text if text is not None else self.model.details_text()
         return self.receive('message', (title + '\n' if title else '') + body,
                             purpose='review_view')
 
@@ -402,5 +409,8 @@ class PlainTerminal:
         self.finish_tools()
         with self.model.lock:
             self.closed = True
+            self.model.active = ''
+            self.model.tool_tail = ''
+            self.model.run_state = 'closed'
             self._closed_input.set()
             self.queue.put_nowait(None)
