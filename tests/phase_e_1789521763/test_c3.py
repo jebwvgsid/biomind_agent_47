@@ -249,6 +249,15 @@ def test_v14_node_cancel_without_epoch_restores_budget(tmp_path):
     asyncio.run(scenario())
 
 
+def _parent_compaction_fixture_policy():
+    # Codepoint fixture only: the new safety prompt adds 1,346 serialized
+    # characters. Its selector grew from 38,548 to 39,896, exceeding the old
+    # 39,800 safe capacity. Leave explicit headroom for the parent-ledger/CAS
+    # scenarios; the original 40k policy is still checked as a negative case.
+    # This changes neither the shared fixture nor any production token policy.
+    return replace(_low_policy(), application_context_limit_tokens=42_000)
+
+
 def test_v14_compaction_and_business_share_physical_parent(tmp_path):
     async def scenario():
         durable,_,state=_fixture();store=_Store(durable)
@@ -256,18 +265,52 @@ def test_v14_compaction_and_business_share_physical_parent(tmp_path):
         compactor=CompactionProviderLeaf(usage={"input_tokens":250,"output_tokens":20,"total_tokens":270})
         node=Schema2RecoveryNode(data_path=str(tmp_path),model=model,loader=store.load,saver=store.save,
             inherited_materials_factory=_selected_materials,compactor=compactor,
-            context_budget_policy=_low_policy(),token_estimator=_CodepointEstimator(),
+            context_budget_policy=_parent_compaction_fixture_policy(),token_estimator=_CodepointEstimator(),
             resource_policy=RecoveryResourcePolicy())
         result=await node.run(state)
         assert result['recovery_outcome']['type']=='candidate_repair_required',result
         assert any('SUMMARY ENTERS NEXT REQUEST' in str(m.content) for m in model.requests[-1])
+        assert [call['operation'] for call in compactor.calls]==[
+            'map_source_segment','map_source_segment','final']
         ledger=next((tmp_path/'task_outputs'/state['task_id']/'context_trace'/'recovery_transport').glob('resources-*.json'))
         row=json.loads(ledger.read_text());calls=list(row['attempts'].values())
         assert len(calls)==len(model.requests)+len(compactor.calls)
         assert sum(sum(c['usage'].values()) for c in calls if c['stage']=='context_compaction')==270*len(compactor.calls)
         _record('e-compaction-parent',{'ledger':row,'model_calls':len(model.requests),'maintenance_calls':len(compactor.calls),
             'wire_chars':[sum(len(str(m.content)) for m in req) for req in model.requests],
+            'compactor_calls':compactor.calls,
             'summary_next_request':True})
+    asyncio.run(scenario())
+
+
+def test_v14_original_fixture_capacity_rejects_unsafe_selector(tmp_path):
+    async def scenario():
+        durable,_,state=_fixture();store=_Store(durable)
+        model=_ToolThenDirectiveModel()
+        compactor=CompactionProviderLeaf(usage={'input_tokens':250,'output_tokens':20,'total_tokens':270})
+        result=await Schema2RecoveryNode(data_path=str(tmp_path),model=model,
+            loader=store.load,saver=store.save,inherited_materials_factory=_selected_materials,
+            compactor=compactor,context_budget_policy=_low_policy(),
+            token_estimator=_CodepointEstimator(),resource_policy=RecoveryResourcePolicy()).run(state)
+        assert result['recovery_outcome']['type']=='candidate_repair_required',result
+        assert not store.value['task_state'].get('recovery_context_compaction')
+        assert not any('SUMMARY ENTERS NEXT REQUEST' in str(m.content) for m in model.requests[-1])
+        assert [call['operation'] for call in compactor.calls]==['map_source_segment','map_source_segment']
+        receipt=store.value['task_state']['typed_recovery_receipts']['directive-compacted-recovery']
+        archive=PhaseArchiveStore(tmp_path).read(receipt['recovery_archive_ref'])
+        failures=archive.summary['context_compaction_failures']
+        rejected=[attempt for failure in failures for attempt in failure['attempts']]
+        assert len(rejected)==2
+        for attempt in rejected:
+            feedback=attempt['capacity_feedback']
+            assert attempt['error_code']=='COMPACTOR_PROVIDER_INPUT_UNSAFE'
+            assert feedback['operation']=='hierarchical_original_unit_selector'
+            assert feedback['estimated_input_tokens']>feedback['compressor_safe_input_tokens']==39_800
+        row=json.loads(next((tmp_path/'task_outputs').glob('*/context_trace/recovery_transport/resources-*.json')).read_text())
+        assert len(row['attempts'])==len(model.requests)+len(compactor.calls)==4
+        _record('e-compaction-original-capacity',{'rejected':rejected,'ledger':row,
+            'selector_physical_calls':0,'summary_applied':False,
+            'estimator':'codepoints, not real model tokens'})
     asyncio.run(scenario())
 
 
@@ -388,7 +431,7 @@ def test_v14_cancel_after_compaction_cas_restores_epoch_and_unknown_fence(tmp_pa
         model=Cancel();compactor=CompactionProviderLeaf(usage={'input_tokens':250,'output_tokens':20,'total_tokens':270})
         def node(leaf):return Schema2RecoveryNode(data_path=str(tmp_path),model=leaf,loader=store.load,saver=store.save,
             inherited_materials_factory=_selected_materials,compactor=compactor,
-            context_budget_policy=_low_policy(),token_estimator=_CodepointEstimator())
+            context_budget_policy=_parent_compaction_fixture_policy(),token_estimator=_CodepointEstimator())
         task=asyncio.create_task(node(model).run(state));await asyncio.wait_for(model.waiting.wait(),10)
         task.cancel()
         with pytest.raises(asyncio.CancelledError):await task
@@ -400,6 +443,7 @@ def test_v14_cancel_after_compaction_cas_restores_epoch_and_unknown_fence(tmp_pa
         row=json.loads(next((tmp_path/'task_outputs').glob('*/context_trace/recovery_transport/resources-*.json')).read_text())
         assert len(row['attempts'])==2+n and row['business']['tool_call_count']==1
         _record('e-cas-resume-unknown',{'ledger':row,'activation':active,'summary_in_actual_next_request':True,
+            'compactor_calls':compactor.calls,
             'physical_calls_on_resume':0,'maintenance_calls_on_resume':0,'outcome':result})
     asyncio.run(scenario())
 

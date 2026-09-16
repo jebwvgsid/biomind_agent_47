@@ -84,6 +84,54 @@ def _required(value: Any, field_name: str) -> str:
     return text
 
 
+def _unpublished_output_diagnostic(durable, seed, record, aliases, approved_path):
+    """Authorize a read of an executed attempt's output location, never its result.
+
+    An expected head carries no publication proof. Its current bytes may predate
+    the attempt, so even a successful read remains source-uncertain diagnostic
+    evidence. Recompute this receipt at the read boundary to detect stale scope.
+    """
+    packet = seed.failure_packet
+    scope = {"task_id": packet.task_id, "plan_id": seed.plan_spec_ref.plan_id,
+             "plan_version": seed.plan_spec_ref.plan_version, "step_id": packet.step_id,
+             "attempt_id": packet.attempt_ref}
+    provenance = durable.get("provenance_state") or {}
+    attempt = (provenance.get("attempts") or {}).get(packet.attempt_ref) or {}
+    approved, executed = attempt.get("approved_script") or {}, attempt.get("executed_script") or {}
+    if (any(str(durable.get(k) or "") != str(scope[k]) for k in ("task_id", "plan_id", "plan_version"))
+            or durable.get("current_step_id") != packet.step_id
+            or any(str(attempt.get(k) or "") != str(scope[k]) for k in ("plan_id", "plan_version", "step_id", "attempt_id"))
+            or (attempt.get("task_id") and attempt["task_id"] != packet.task_id)
+            or record.get("producer_step_id") != packet.step_id
+            or record.get("status") != "expected" or record.get("producer_attempt_id")
+            or record.get("artifact_version_id") not in (provenance.get("artifact_heads") or {}).values()
+            or any(record.get(k) and record[k] != scope[k] for k in ("task_id", "plan_id", "plan_version"))
+            or not attempt.get("execution_record_id") or not attempt.get("started_at")
+            or not attempt.get("finished_at") or type(attempt.get("returncode")) is not int
+            or not all(row.get("path") and row.get("sha256") for row in (approved, executed))):
+        raise RecoveryToolError("ARTIFACT_UNPUBLISHED_DIAGNOSTIC_UNAVAILABLE", packet.attempt_ref)
+    contracts = [r for r in attempt.get("managed_output_contracts", ()) if isinstance(r, Mapping)
+                 and {str(r.get("artifact_id") or ""), str(r.get("semantic_handle") or "")} & set(aliases)]
+    current = build_managed_artifact_bindings(canonical_task_spec_for_state(durable), plan_state=durable,
+        approved_plan_snapshot=dict((durable.get("current_plan") or {}).get("plan_spec") or {}),
+        current_step_id=packet.step_id)
+    paths = {b.canonical_path for b in current.values()
+             if b.direction == "output" and {b.artifact_id, b.semantic_handle} & set(aliases)}
+    if (len(contracts) != 1 or paths != {approved_path}
+            or approved_resource_locator({"canonical_path": contracts[0].get("expected_path")})["path"] != approved_path
+            or approved_resource_locator(record)["path"] != approved_path):
+        raise RecoveryToolError("ARTIFACT_UNPUBLISHED_OUTPUT_SCOPE_MISMATCH", packet.attempt_ref)
+    before = (attempt.get("managed_output_snapshot_before") or {}).get(approved_path) or {}
+    authority = {"scope": scope, "head": record, "contract": contracts[0],
+                 "active_failure_packet_ref": (durable.get("task_state") or {}).get("active_failure_packet_ref"),
+                 "execution": {k: attempt.get(k) for k in ("action_id", "action_hash", "execution_record_id",
+                    "started_at", "finished_at", "returncode", "approved_script", "executed_script")}}
+    return {"diagnostic_only": True, "source_uncertain": True, "formal_consumption_allowed": False,
+            "production_by_current_attempt": "NOT_ESTABLISHED", "scope": scope,
+            "existed_before_attempt": before.get("exists", "UNKNOWN"),
+            "authority_digest": _digest(authority)}
+
+
 def _scope_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
     return MappingProxyType(deepcopy(dict(value or {})))
 
@@ -368,6 +416,7 @@ def build_recovery_inspection_registry(
     for artifact_id, value in sorted(visible.items()):
         row = dict(value.get("row") or {})
         direction = value.get("direction")
+        diagnostic = {}
         try:
             aliases = {artifact_id, *value.get("aliases", ())}
             matches = [b for b in bindings.values() if b.artifact_id in aliases or b.semantic_handle in aliases]
@@ -413,6 +462,11 @@ def build_recovery_inspection_registry(
                                        and (not consumers or packet.step_id in consumers))
                     if valid_scope:
                         eligible.append(record)
+                if (not eligible and len(selected) == 1 and direction == "output"
+                        and selected[0].get("status") == "expected" and not selected[0].get("producer_attempt_id")):
+                    diagnostic = _unpublished_output_diagnostic(
+                        durable, parsed, selected[0], aliases, str(row.get("canonical_path") or ""))
+                    eligible = selected
                 if len(eligible) != 1:
                     raise RecoveryToolError("ARTIFACT_VERSION_SCOPE_MISMATCH", artifact_id)
                 row.update(eligible[0])
@@ -435,8 +489,11 @@ def build_recovery_inspection_registry(
                    "readable": bool(path) and not normalized.get("locator_error"),
                    "filesystem_readability": "NOT_CHECKED",
                    "artifact_version_id": str(row.get("artifact_version_id") or ""),
-                   "producer_attempt_id": str(row.get("producer_attempt_id") or "")},
+                   "producer_attempt_id": str(row.get("producer_attempt_id") or ""),
+                   **({"diagnostic_only": True, "source_uncertain": True,
+                       "formal_consumption_allowed": False} if diagnostic else {})},
         ), locator={**normalized, "artifact_id": artifact_id, "path": path,
+                    **({"diagnostic_read": diagnostic, "diagnostic_aliases": sorted(aliases)} if diagnostic else {}),
                     "binding": {**value, "row": row}})
 
     for skill in parsed.selected_skill_bundle.skills:
@@ -665,6 +722,7 @@ class RecoveryLocalToolDispatcher:
         )
         if any(key in args for key in ("path", "canonical_path", "resolved_path", "root", "task_id", "revision")):
             raise RecoveryToolError("ARTIFACT_AUTHORITY_ARGUMENT_FORBIDDEN", entry.ref_id)
+        fresh = self.durable
         if self._artifact_authority_path is not None:
             # Production managed readers recheck the current durable resource
             # authority. Legacy in-memory dispatchers retain registry scope.
@@ -699,6 +757,16 @@ class RecoveryLocalToolDispatcher:
         if locator.get("locator_error"):
             raise RecoveryToolError(str(locator["locator_error"]), entry.ref_id)
         raw_path = str(locator.get("path") or "")
+        if locator.get("diagnostic_read"):
+            try:
+                record = ((fresh.get("provenance_state") or {}).get("artifacts") or {}).get(
+                    entry.scope.get("artifact_version_id")) or {}
+                actual = _unpublished_output_diagnostic(fresh, self.seed, record,
+                    locator.get("diagnostic_aliases") or (), raw_path)
+            except (RecoveryToolError, ResourceLocatorError, ValueError, TypeError, KeyError) as exc:
+                raise RecoveryToolError("ARTIFACT_AUTHORITY_STALE", "unpublished_output_attempt") from exc
+            if actual != dict(locator["diagnostic_read"]):
+                raise RecoveryToolError("ARTIFACT_AUTHORITY_STALE", "unpublished_output_attempt")
         try:
             # Validate again at the read boundary; a link may have appeared
             # since this invocation's manifest was built.
@@ -767,10 +835,13 @@ class RecoveryLocalToolDispatcher:
             "declared_hash": str(row.get("sha256") or ""),
             "validation_status": row.get("validation_status"),
             "expected_vs_observed": deepcopy(dict(row.get("expected_vs_observed") or {})),
+            **({"diagnostic_read": deepcopy(dict(locator["diagnostic_read"])),
+                "diagnostic_only": True, "source_uncertain": True,
+                "formal_consumption_allowed": False} if locator.get("diagnostic_read") else {}),
         }
 
     def _artifact_read(self, args: Mapping[str, Any]) -> dict[str, Any]:
-        entry, _locator, path = self._artifact_locator(args)
+        entry, locator, path = self._artifact_locator(args)
         if not path.is_file():
             raise RecoveryToolError("ARTIFACT_CONTENT_UNAVAILABLE", entry.ref_id)
         binary_policy = str(args.get("binary_policy") or "deny").lower()
@@ -826,6 +897,9 @@ class RecoveryLocalToolDispatcher:
             "byte_limit": max_bytes, "char_limit": max_chars,
             "line_limit": MAX_ARTIFACT_READ_LINES, "binary_policy": binary_policy,
             "inspection": observation,
+            **({"diagnostic_read": deepcopy(dict(locator["diagnostic_read"])),
+                "diagnostic_only": True, "source_uncertain": True,
+                "formal_consumption_allowed": False} if locator.get("diagnostic_read") else {}),
         }
 
     def _skill_call(self, skill_id: str, request: Mapping[str, Any]) -> dict[str, Any]:

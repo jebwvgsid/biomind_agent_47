@@ -22,6 +22,7 @@ untyped, empty effect at their legacy execution boundary.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import inspect
 import io
@@ -3470,10 +3471,10 @@ def _single_shell_command(prefix: str) -> bool:
     return not quote and not escaped
 
 
-def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
+def _assert_helper_scope(body: str, language: str, marker_index: int) -> tuple[str, int]:
     if language in {"python", "py"}:
         _assert_python_helper_comment(body, marker_index)
-        return
+        return body, 0
     if language not in {"bash", "shell", "sh"}:
         raise ValueError("EFFECT_HELPER_REQUIRES_PYTHON_SCOPE")
     # The existing public Bash form is a single quoted Python heredoc. Only
@@ -3494,8 +3495,9 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> None:
         closing = next((j for j in range(i + 1, len(lines)) if lines[j] == match[2]), None)
         if (re.fullmatch(r"(?:python|pypy)(?:\d+(?:\.\d+)*)?", executable)
                 and _python_stdin_selector(args) and closing is not None and i < marker_index < closing):
-            _assert_python_helper_comment("\n".join(lines[i + 1:closing]) + "\n", marker_index - i - 1)
-            return
+            source = "\n".join(lines[i + 1:closing]) + "\n"
+            _assert_python_helper_comment(source, marker_index - i - 1)
+            return source, i + 1
         break
     raise ValueError("EFFECT_HELPER_REQUIRES_SINGLE_QUOTED_PYTHON_HEREDOC")
 
@@ -3528,7 +3530,7 @@ def _helper_diagnostic(body, template, language, *, carrier_source="code"):
         "template_sha256": template.get("template_sha256", "UNKNOWN")}
 
 
-def materialize_effect_template(body: str, template: Mapping[str, Any], *, language: str = "python") -> str:
+def materialize_effect_template(body: str, template: Mapping[str, Any], *, language: str = "python", carrier_source: str = "code") -> str:
     """Expand one exact marker BEFORE validation, candidate identity and approval.
 
     This is a byte substitution of the already frozen standalone helper, not
@@ -3558,6 +3560,7 @@ def materialize_effect_template(body: str, template: Mapping[str, Any], *, langu
         raise ValueError("EFFECT_HELPER_TEMPLATE_DIGEST_MISMATCH")
     if code.rstrip() in body:
         raise ValueError("EFFECT_HELPER_ALREADY_EXPANDED_WITH_MARKER")
+    _check_literal_effect_identities(body, template, language=language, source=carrier_source)
     lines[markers[0]] = code.rstrip() + "\n"
     return "".join(lines)
 
@@ -3579,6 +3582,91 @@ def executable_carrier(action: Mapping[str, Any]) -> Dict[str, Any]:
         "language": carrier[1] if carrier else declared_language or ("bash" if not argv else ""),
         "source": "argv[" + str(carrier[0]) + "]" if carrier else "code" if not argv else "external_argv",
         "script_available": bool(carrier or (code and not argv))}
+
+
+def _check_literal_effect_identities(body: str, template: Mapping[str, Any], *, language: str, source: str) -> None:
+    """Check literal keys at a supported helper call; never run candidate code.
+
+    Only straight-line literal assignments and a zero-argument function's sole,
+    final literal return are followed. Dynamic construction, mutation and other
+    control flow remain the responsibility of the unchanged runtime serializer.
+    This is a rejection of provable extra keys, not proof of valid execution.
+    """
+    markers = [i for i, line in enumerate(body.splitlines()) if line == EFFECT_HELPER_MARKER]
+    if len(markers) != 1:
+        return
+    python_source, offset = _assert_helper_scope(body, language, markers[0])
+    try:
+        tree = ast.parse(python_source)
+    except SyntaxError:
+        return  # The existing syntax boundary owns syntax errors.
+    bindings: Dict[str, ast.AST] = {}
+
+    def literal(value):
+        if isinstance(value, ast.Name):
+            return bindings.get(value.id)
+        if isinstance(value, ast.Dict):
+            return value
+        if isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and not value.args and not value.keywords:
+            function = bindings.get(value.func.id)
+            if (isinstance(function, ast.FunctionDef) and not function.decorator_list
+                    and not (function.args.posonlyargs or function.args.args or function.args.kwonlyargs
+                             or function.args.vararg or function.args.kwarg)
+                    and function.body and isinstance(function.body[-1], ast.Return)
+                    and isinstance(function.body[-1].value, ast.Dict)
+                    and all(isinstance(value, ast.Dict) for value in function.body[-1].value.values)
+                    and not any(isinstance(node, (ast.Yield, ast.YieldFrom)) for node in ast.walk(function))
+                    and sum(isinstance(node, ast.Return) for node in ast.walk(function)) == 1):
+                return function.body[-1].value
+        return None
+
+    def dictionary(value):
+        if isinstance(value, ast.Dict) and all(isinstance(key, ast.Constant) and isinstance(key.value, str) for key in value.keys):
+            # Python keeps the last value for a repeated literal key.
+            return {key.value: item for key, item in zip(value.keys, value.values)}
+        return None
+
+    def check_call(call):
+        if (isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == "print"
+                and len(call.args) == 1 and not call.keywords):
+            call = call.args[0]
+        if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Name)
+                and call.func.id == "emit_effect_evidence" and len(call.args) == 1 and not call.keywords):
+            return
+        facts = dictionary(literal(call.args[0]))
+        for field, rows in (template.get("declarations") or {}).items():
+            value = literal(facts.get(field)) if facts is not None else None
+            values = dictionary(value)
+            expected = [row["identity"] for row in rows]
+            if values is None or not (set(values) - set(expected)):
+                continue
+            unexpected = next(key for key in values if key not in expected)
+            key_node = next(key for key in value.keys if key.value == unexpected)
+            error = EffectHelperError("EFFECT_FACT_IDENTITIES_MISMATCH",
+                actual=sorted(values), expected=expected,
+                reason="Literal fact identities include undeclared keys. Use only the published emission identities; artifact access references are not additional emission identities.")
+            error.diagnostic.update(field_path="$.facts." + field,
+                location={"source": source, "line": key_node.lineno + offset, "column": key_node.col_offset + 1})
+            raise error
+
+    for statement in tree.body:
+        expression = (statement.value if isinstance(statement, (ast.Expr, ast.Assign, ast.AnnAssign)) else None)
+        if expression is not None and "emit_effect_evidence" not in bindings:
+            check_call(expression)
+        resolved = literal(expression) if expression is not None else None
+        # Do not carry a mutable dictionary across unmodeled calls/control flow.
+        if not isinstance(statement, (ast.FunctionDef, ast.Import, ast.ImportFrom, ast.Pass)) and (
+                expression is None or any(isinstance(node, ast.Call) for node in ast.walk(expression))
+                or isinstance(statement, (ast.Assign, ast.AnnAssign)) and not all(
+                    isinstance(target, ast.Name) for target in (statement.targets if isinstance(statement, ast.Assign) else [statement.target]))):
+            bindings = {name: value for name, value in bindings.items() if name == "emit_effect_evidence"}
+        if isinstance(statement, ast.FunctionDef):
+            bindings[statement.name] = statement
+        elif isinstance(statement, (ast.Assign, ast.AnnAssign)):
+            for target in statement.targets if isinstance(statement, ast.Assign) else [statement.target]:
+                if isinstance(target, ast.Name):
+                    bindings.pop(target.id, None)
+                    bindings[target.id] = resolved if resolved is not None else expression
 
 
 def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, Any]) -> Dict[str, Any]:
@@ -3616,9 +3704,10 @@ def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, 
     body = argv[carrier[0]] if carrier else code
     language = carrier[1] if carrier else str(result.get("language") or "bash").lower()
     try:
-        expanded = materialize_effect_template(body, template, language=language)
+        expanded = materialize_effect_template(body, template, language=language, carrier_source=source)
     except EffectHelperError as exc:
-        exc.diagnostic["actual"] = actual
+        if "location" not in exc.diagnostic:
+            exc.diagnostic["actual"] = actual
         raise
     if carrier:
         argv[carrier[0]] = expanded
@@ -3663,6 +3752,7 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
                     "Call print(emit_effect_evidence(actual_facts)) with a native Python data object. Pass paths/labels as argv, not Python source interpolation; avoid nested python -c / json.dumps / command substitution / json.loads.",
                     "Supply categorized actual_facts, for example {'produces_observations': {'an exact declared identity': {'value': actual_value}}}, only after performing the real checks or operations. A flat identity map is invalid. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.",
                     "Publication accepts a subset of the approved declarations. Omit artifacts that were not produced; do not create a path or placeholder to publish blocked facts. Omission itself asserts nothing. All supplied identities and required fields remain checked.",
+                    "Each fact key must be exactly one identity listed in declarations. Access references (for example output.ann_summary or artifact:ann_summary) locate resources; they are not extra emission identities. If declarations lists ann_summary, publish ann_summary once, never also output.ann_summary.",
                     "Artifact facts require the actual path. Side-effect and observation facts require every declared field; observations carry the actual value, including failure or unknown. Declarations alone are not evidence.",
                     "Historical failed scripts/stdout are diagnostic evidence; their failed machine emission must not be reused. This current template takes precedence.",
                     "No emission or rc=0 alone grants completion; Execute, verification and CommitStep remain authoritative.",

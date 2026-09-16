@@ -10,10 +10,22 @@ from langchain_core.messages import AIMessage,HumanMessage
 from agent_core.plan_tracker import load_plan_state,commit_runtime_evidence_state
 from agent_core.runtime_evidence import make_runtime_evidence
 from agent_core.workflow.recovery_runtime import RecoveryResourcePolicy
-from tests.a1_unified_fix.test_f6_graph import F6Graph,SID,save
+from tests.a1_unified_fix.test_f6_graph import F6Graph,SID,save,digest
 
 async def drive(f, skill_id=SID):
     import bio_agents
+    # These fixtures intentionally repair prior output bytes. Exercise the new
+    # explicit human decision through the real interrupt/middleware; ordinary
+    # approval remains insufficient. F6's older recorder counts only approve.
+    review = f.agent.middleware.review_code
+    f.output_write_choices = []
+    def record_explicit_output_approval(code, *args, **kwargs):
+        result = review(code, *args, **kwargs)
+        if result[0] == 'approve_backup_replace':
+            f.approvals.append({'code': code, 'sha256': digest(code),
+                'operation': f.current_operation(), 'decision': result[0]})
+        return result
+    f.agent.middleware.review_code = record_explicit_output_approval
     runner=f.case._runner_state(f.task);runner.update(workflow_routing_schema_version=2,messages=[HumanMessage(content=f.goal)])
     scope=f.agent._runtime_evidence_scope(skill_id)
     evidence=make_runtime_evidence({'skill_id':skill_id,'checked_env':scope['environment_id'],'status':'ready',
@@ -33,7 +45,14 @@ async def drive(f, skill_id=SID):
             snap=app.get_state(config)
             if not snap.next:break
             assert snap.tasks and snap.tasks[0].interrupts
-            incoming=bio_agents.Command(resume='y')
+            payload = snap.tasks[0].interrupts[0].value
+            conflicts = payload.get('output_conflicts') or [] if isinstance(payload, dict) else []
+            answer = 'backup' if isinstance(payload, dict) and payload.get('type') == 'code_review' and conflicts else 'y'
+            if answer == 'backup':
+                f.output_write_choices.append({'answer': answer,
+                    'guard_hash': payload['provenance']['output_write_guard']['guard_hash'],
+                    'conflicts': deepcopy(conflicts)})
+            incoming=bio_agents.Command(resume=answer)
         else:raise AssertionError('GRAPH_NOT_BOUNDED')
     snapshot=app.get_state(config)
     f.values=snapshot.values
@@ -75,8 +94,15 @@ def test_chain2_missing_file_first_cause_new_approval_and_commit():
             attempts=[e for e in f.executions if e['operation']=='prepare_database']
             assert attempts[0]['attempt_id']!=attempts[1]['attempt_id']
             assert attempts[0]['approved_sha256']!=attempts[1]['approved_sha256']
+            assert len(f.output_write_choices) == 1 and f.output_write_choices[0]['answer'] == 'backup'
+            backup_receipts = [json.loads(p.read_text()) for p in (f.root/'task_outputs'/f.task/'attempts').glob('*/output_write_approval.json')]
+            preserved = [r for r in backup_receipts if r.get('backups')]
+            assert len(preserved) == 1 and preserved[0]['attempt_id'] == attempts[1]['attempt_id']
+            assert preserved[0]['guard_hash'] == f.output_write_choices[0]['guard_hash']
+            assert all(Path(r['backup_path']).is_file() and r['sha256'] for r in preserved[0]['backups'])
             save('e-chain2',{'calls':f.counts,'approvals':len(f.approvals),'executions':len(f.executions),'commits':len(f.commits),
-                'first_request':wire,'prepare_attempts':attempts,'production_overrides':[]})
+                'first_request':wire,'prepare_attempts':attempts,'output_write_choices':f.output_write_choices,
+                'backup_receipts':preserved,'production_overrides':[]})
         finally:await f.close()
     asyncio.run(scenario())
 

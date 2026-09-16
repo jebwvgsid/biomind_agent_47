@@ -1,0 +1,104 @@
+{
+  "measurement": "offline message characters and actual intercepted calls, not provider tokens or cache",
+  "shared_file_policy_characters": 2336,
+  "consult_plan_generate": "Shared policy is in the actual system request; exact requests retained in evidence",
+  "recovery_system_character_comparison": {
+    "before": 9999,
+    "after": 11345,
+    "increase": 1346
+  },
+  "generate_chains": {
+    "native": {
+      "stage_calls": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2
+      },
+      "approval_count": 1,
+      "execution_count": 1,
+      "recovery_calls": 0,
+      "actual_request_characters": [
+        {
+          "stage": "consultant",
+          "ordinal": 1,
+          "message_count": 2,
+          "content_characters": 28945
+        },
+        {
+          "stage": "planner",
+          "ordinal": 1,
+          "message_count": 3,
+          "content_characters": 58284
+        },
+        {
+          "stage": "generate",
+          "ordinal": 1,
+          "message_count": 4,
+          "content_characters": 44839
+        },
+        {
+          "stage": "generate",
+          "ordinal": 2,
+          "message_count": 6,
+          "content_characters": 53429
+        }
+      ]
+    },
+    "script": {
+      "stage_calls": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2
+      },
+      "approval_count": 1,
+      "execution_count": 1,
+      "recovery_calls": 0,
+      "actual_request_characters": [
+        {
+          "stage": "consultant",
+          "ordinal": 1,
+          "message_count": 2,
+          "content_characters": 28945
+        },
+        {
+          "stage": "planner",
+          "ordinal": 1,
+          "message_count": 3,
+          "content_characters": 40173
+        },
+        {
+          "stage": "generate",
+          "ordinal": 1,
+          "message_count": 4,
+          "content_characters": 36491
+        },
+        {
+          "stage": "generate",
+          "ordinal": 2,
+          "message_count": 6,
+          "content_characters": 42773
+        }
+      ]
+    }
+  },
+  "compaction_fixture": {
+    "same_selector_codepoints_before": 38548,
+    "after": 39896,
+    "old_safe_capacity": 39800,
+    "two_test_cases_capacity": 42000,
+    "production_policy_changed": false,
+    "positive_calls": {
+      "business": 2,
+      "map": 2,
+      "selector": 1
+    },
+    "original_capacity_negative": {
+      "map": 2,
+      "selector": 0,
+      "summary_applied": false
+    },
+    "cas_resume_new_calls": 0
+  },
+  "real_usage": "NOT_RUN",
+  "real_cache": "NOT_RUN"
+}

@@ -1,0 +1,50 @@
+{
+  "scope": "test-only adaptation of deterministic no-progress summary policy",
+  "modified_test_files": {
+    "tests/test_common_finalization_workflow.py": {
+      "sha256": "4edb22be4f18e938249c42eee88d0a60a9c2c07dfdfac36e29ea13936d94d43c",
+      "current_equals_tested": true
+    },
+    "tests/test_common_finalization_faults.py": {
+      "sha256": "9da1db05ce9808152098d0edafc7e4c89aa83d56aa331aa63ce737da3e52ca19",
+      "current_equals_tested": true
+    },
+    "tests/test_reliability_stop_consumption.py": {
+      "sha256": "3ba8110f42e789fd31ac9902803c5cb569d947c9172bea4875a91fcc777c687c",
+      "current_equals_tested": true
+    }
+  },
+  "production_changes_this_followup": false,
+  "results": {
+    "distinct_test_nodeids": 48,
+    "passed_distinct": 41,
+    "failed_distinct": 7,
+    "additional_passed_subtests": 11,
+    "call_records": 59,
+    "pytest_exit_code": 1,
+    "source_unchanged": true
+  },
+  "expected_baseline_failures": [
+    "tests/test_common_finalization_workflow.py::test_execution_stop_real_outer_provider_and_reports[ok]",
+    "tests/test_common_finalization_workflow.py::test_execution_stop_real_outer_provider_and_reports[connection]",
+    "tests/test_common_finalization_workflow.py::test_execution_stop_real_outer_provider_and_reports[timeout]",
+    "tests/test_common_finalization_workflow.py::test_execution_stop_real_outer_provider_and_reports[empty]",
+    "tests/test_common_finalization_workflow.py::test_execution_stop_real_outer_provider_and_reports[tool]",
+    "tests/test_common_finalization_workflow.py::test_execution_stop_real_outer_provider_and_reports[forged]",
+    "tests/test_common_finalization_faults.py::test_secondary_faults_preserve_outer_base[writer_one]"
+  ],
+  "baseline_evidence": {
+    "workflow_six": "/tmp/biomind_output_safety_stop_baseline_results/pytest-results.json",
+    "writer_one": "/tmp/biomind_fullchain_cli_candidate_20260916/docs/audits/fullchain_cli_20260916/baseline_regressions.json"
+  },
+  "fixture_change": {
+    "deterministic_no_progress": "RECOVERY_NO_PROGRESS_LIMIT; zero summary calls; default three Recovery calls and read-2 preserved",
+    "summary_feature_cases": "Two original evidence rounds, then synthetic Recovery transport exception at actual model leaf; real loop emits RECOVERY_PROVIDER_TRANSPORT_FAILED; third Recovery call includes real inspect-2 observations; summary provider/parser/fact consumer still exercised",
+    "budget_and_retry_changes": false
+  },
+  "not_run": [
+    "real model/API",
+    "scientific tools",
+    "historical task resume"
+  ]
+}

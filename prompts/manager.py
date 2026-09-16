@@ -19,6 +19,38 @@ from agent_core.diagnostics import DiagnosticContext
 logger = logging.getLogger("BioMind.PromptManager")
 
 
+FILE_PRESERVATION_POLICY = """Existing-file protection (mandatory):
+禁止未经明确授权直接替换、覆盖、删除或原地修改已有输入文件和结果文件。
+Do not use mv/cp with replacement, shell > redirection, sed -i, open(...,'w'),
+os.replace, unlink+recreate, or an equivalent operation to overwrite an existing
+original. Writing a new temporary file does not authorize replacing its target.
+Keep the user's required basename and exact delivery location distinct from the
+artifact identity. A required filename is not overwrite consent. Never silently
+rename a required delivery, reuse an unrelated old file, or weaken required outputs.
+Consultant: before handing off a plan, use existing inspect_resource/glob_resources
+for the exact proposed output paths or a bounded output directory. Carry the
+observed conflicts and provenance uncertainty into the handoff. If a fixed target
+exists and no clear decision is available, ask whether to preserve it and change
+the location, or explicitly approve backup before replacement. Do not ask again
+for an already applicable user decision; do not infer one from a filename alone.
+Planner: preserve TaskSpec requirements and record the chosen output policy in the
+existing constraints/step instructions. If only the basename is fixed, a new task
+directory can preserve that basename; a user-fixed full path cannot be changed
+without a user decision. Directory existence alone is not a file conflict.
+Generate: use current scoped paths, create new files without clobbering existing
+ones, and keep intermediate results separate. A reviewed backup-and-replace
+operation is permitted only for the exact listed targets after the executor has
+preserved their old bytes. Never emit an overwrite authorization or forge a backup
+receipt. Keep approved workspace mutations within their existing explicit scope.
+A missing file first requires evidence: distinguish locator failure, unregistered
+output and actual non-production. Repair locally and retain upstream Commit facts.
+Only optional outputs with no required downstream dependency, or approved valid
+alternatives, may be skipped. Changing a required deliverable needs an explicit user
+scope decision and the existing TaskSpec/Plan revision path. Never report skipped
+or unverified work as completed. Repeated unchanged failure must stop within the
+existing budget with a short factual explanation, not trigger unlimited reruns."""
+
+
 PUBLIC_MESSAGE_POLICY = """Optional public display field:
 You may add one top-level public_message string to the JSON response, including
 typed Skill decisions. In one to three natural sentences, explain the
@@ -2119,6 +2151,7 @@ revision, identity, status, reference, and shape invariants."""
         return (
             base_prompt
             + "\n\n" + PUBLIC_MESSAGE_POLICY
+            + "\n\n" + FILE_PRESERVATION_POLICY
             + "\n\n"
             + INHERITED_SKILL_MATERIAL_POLICY_V1
             + "\n\n"
@@ -2232,6 +2265,8 @@ revision, identity, status, reference, and shape invariants."""
 {INHERITED_SKILL_MATERIAL_POLICY_V1}
 
 {PUBLIC_MESSAGE_POLICY}
+
+{FILE_PRESERVATION_POLICY}
 
 Reason from the user goal, conversation, observations, Skill evidence, resource
 evidence, and the TaskSpec when one exists. Choose exactly one most useful local
@@ -2491,6 +2526,8 @@ for each deliverable and never mint Renderer-specific aliases.
 {INHERITED_SKILL_MATERIAL_POLICY_V1}
 
 {PUBLIC_MESSAGE_POLICY}
+
+{FILE_PRESERVATION_POLICY}
 
 This is a narrow reasoning invocation. Solve only canonical skill routing from
 the supplied discovery evidence. Do not reconstruct the full session, rewrite
@@ -2758,6 +2795,8 @@ repair attempt.
 
 {PUBLIC_MESSAGE_POLICY}
 
+{FILE_PRESERVATION_POLICY}
+
 Return exactly one of these three alternatives:
 1. One complete raw JSON display envelope:
 {{"response_type":"biomind_generate_display_v1","public_message":"候选已形成，接下来先检查，再提交原有审批。","payload":"<shell>\\nprintf 'fixture\\\\n'\\n</shell>"}}
@@ -2882,6 +2921,8 @@ StepEffect.
         return f"""You are BioMind Generate. Propose one action or one typed Skill decision for the current step.
 
 {PUBLIC_MESSAGE_POLICY}
+
+{FILE_PRESERVATION_POLICY}
 
 Return exactly one raw JSON object and no Markdown or prose. It must be either a
 supported semantic action object or one typed Skill decision defined below.

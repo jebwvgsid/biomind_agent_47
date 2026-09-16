@@ -12,7 +12,7 @@ class ReviewDisplay:
     kind: str = ""
 
 
-def review_display(title, content, *, language='', risk='', plan_id='', step_count=None, kind=''):
+def review_display(title, content, *, language='', risk='', plan_id='', step_count=None, kind='', output_conflicts=()):
     body = str(content)
     identity = hashlib.sha256(body.encode('utf-8')).hexdigest()
     fields = [str(title)]
@@ -20,6 +20,11 @@ def review_display(title, content, *, language='', risk='', plan_id='', step_cou
         fields.append(f'计划 {plan_id} · 步骤数 {step_count if step_count is not None else "UNKNOWN"}')
     if language:
         fields.append(f'语言 {language} · 风险检查 {risk or "UNKNOWN"}')
+    for row in output_conflicts:
+        fields.append('已有文件：' + str(row['path']))
+        fields.append('批准后先备份至：' + str(row['backup_path']))
+    if output_conflicts:
+        fields.append('输入 backup 批准备份后替换；y/Enter 不授权覆盖。')
     fields.append('显示标识 ' + identity[:12] + ' · 完整 SHA-256 见详情')
     if kind == 'plan':
         fields.append('下方为当前冻结计划的完整正文；可滚动查看后明确确认。')

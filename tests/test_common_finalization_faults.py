@@ -60,10 +60,12 @@ def test_summary_partial_or_cleanup_unknown_keeps_complete_base(tmp_path,mode):
             agent.terminal_summary_policy['timeout_seconds']=0.05
             agent.llm_cancel_cleanup_timeout_seconds=0.005
         try:
-            f,a,g,c,r,m,result,_=await run_execution_case(tmp_path,inject=inject)
+            # A real Recovery transport failure permits summary; a bounded
+            # no-progress stop now intentionally makes no summary request.
+            f,a,g,c,r,m,result,_=await run_execution_case(tmp_path,inject=inject,recovery_transport_failure=True)
             stop=managed_stop.current_managed_stop(f.reload())
             assert model.calls==1 and stop['summary_status']=='FAILED'
-            assert 'RECOVERY_NO_PROGRESS_LIMIT' in result.reason and 'read-2' in result.reason
+            assert 'RECOVERY_PROVIDER_TRANSPORT_FAILED' in result.reason and 'inspect-2' in result.reason
             assert not stop.get('summary_text')
             assert stop.get('summary_cleanup')
         finally:

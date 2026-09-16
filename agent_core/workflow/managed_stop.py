@@ -640,6 +640,7 @@ def projection(stop):
          "reason": explanation(stop), "detail": explanation(stop), "stop_id": stop["stop_id"], "origin": stop["origin"],
          "primary_cause": stop.get("primary_cause", {}), "latest_failure": stop.get("latest_failure", {}),
          "prior_completed_work": stop.get("prior_completed_work", []),
+         "stages": deepcopy(stop.get("stages") or []),
          "recovery_usage": deepcopy(stop.get("recovery_usage") or {}),
          "execution": stop["execution"], "causal_execution":stop.get("causal_execution",{}),
          "current_candidate":stop.get("current_candidate",{}), "inspection_count_scope":stop.get("inspection_count_scope",{}), "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
@@ -795,7 +796,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     transport = getattr(agent, "terminal_summary_llm", None)
     skip = ""
     if policy.get("enabled", True) is not True: skip = "CONFIG_DISABLED"
-    elif value["stop_reason"].get("error_code") in {"RECOVERY_NO_PROGRESS", "RECOVERY_BUDGET_EXHAUSTED", "RECOVERY_RESOURCE_LIMIT"}: skip = "RECOVERY_STOP_NO_MODEL"
+    elif value["stop_reason"].get("error_code") in {"RECOVERY_NO_PROGRESS", "RECOVERY_NO_PROGRESS_LIMIT", "RECOVERY_BUDGET_EXHAUSTED", "RECOVERY_RESOURCE_LIMIT"}: skip = "RECOVERY_STOP_NO_MODEL"
     elif value.get("summary_attempted"): skip = "ALREADY_ATTEMPTED"
     elif transport is None: skip = "NO_AUTHORIZED_PROVIDER"
     elif policy.get("provider_available", True) is not True: skip = "PROVIDER_UNAVAILABLE"

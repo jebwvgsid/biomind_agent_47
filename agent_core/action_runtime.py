@@ -12,6 +12,8 @@ import hashlib
 import json
 import os
 import re
+import stat
+import uuid
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
@@ -918,6 +920,7 @@ def build_execution_policy_manifest(
     policy: Optional[Mapping[str, Any]] = None,
     skill_resources: Sequence[Mapping[str, Any]] = (),
     evidence_root: str = "",
+    output_write_guard: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     policy_value = {
         "stdin": "devnull",
@@ -938,6 +941,8 @@ def build_execution_policy_manifest(
         "scope": "current_action",
         "policy": policy_value,
     }
+    if output_write_guard is not None:
+        manifest["output_write_guard"] = deepcopy(dict(output_write_guard))
     if evidence_root and any(row.get("handle") in {
         "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
         "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
@@ -949,6 +954,138 @@ def build_execution_policy_manifest(
             "creator": "helper", "purpose": "internal_execution_evidence"}
     manifest["manifest_hash"] = _manifest_hash(manifest)
     return manifest
+
+
+def _output_path_state(path: Path) -> Dict[str, Any]:
+    """Metadata only; do not read scientific files to prepare an approval."""
+    parents = []
+    for parent in reversed(path.parents):
+        try:
+            info = parent.lstat()
+        except FileNotFoundError:
+            continue
+        if not stat.S_ISDIR(info.st_mode):
+            raise ActionRuntimeContractError("OUTPUT_PARENT_UNSAFE", path=str(parent))
+        parents.append([str(parent), info.st_dev, info.st_ino])
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return {"exists": False, "parents": parents}
+    if not stat.S_ISREG(info.st_mode):
+        raise ActionRuntimeContractError("OUTPUT_TARGET_NOT_REGULAR", path=str(path))
+    return {"exists": True, "parents": parents, "device": info.st_dev,
+            "inode": info.st_ino, "size": info.st_size, "mtime_ns": info.st_mtime_ns,
+            "ctime_ns": info.st_ctime_ns, "mode": info.st_mode}
+
+
+def capture_output_write_guard(contracts: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
+    """Freeze declared file targets before candidate persistence and review.
+
+    Workspace directory mutations retain their existing attestation contract.
+    This guards declared outputs; it is not an OS sandbox for arbitrary code.
+    """
+    rows = []
+    seen = set()
+    for contract in contracts:
+        if str(contract.get("artifact_kind") or "file") == "directory":
+            continue
+        raw = str(contract.get("expected_path") or "")
+        path = Path(os.path.abspath(raw))
+        if not raw or not Path(raw).is_absolute():
+            raise ActionRuntimeContractError("OUTPUT_TARGET_PATH_NOT_CONCRETE", path=raw)
+        if str(path) in seen:
+            continue
+        seen.add(str(path))
+        before = _output_path_state(path)
+        rows.append({"path": str(path), "artifact_id": str(contract.get("artifact_id") or ""),
+                     "before": before, "backup_path": str(path.parent / (".biomind-backup-" + uuid.uuid4().hex))
+                     if before["exists"] else ""})
+    value = {"schema_version": 1, "policy": "preserve_existing_files", "targets": rows}
+    value["guard_hash"] = stable_digest(value)
+    return value
+
+
+def validate_output_write_guard(guard: Mapping[str, Any], contracts=None) -> None:
+    payload = {k: v for k, v in guard.items() if k != "guard_hash"}
+    if not guard.get("guard_hash") or stable_digest(payload) != guard["guard_hash"]:
+        raise ActionRuntimeContractError("OUTPUT_WRITE_GUARD_INVALID")
+    if contracts is not None:
+        expected = {os.path.abspath(str(c.get("expected_path") or "")) for c in contracts
+                    if str(c.get("artifact_kind") or "file") != "directory"}
+        if expected != {r["path"] for r in guard["targets"]}:
+            raise ActionRuntimeContractError("OUTPUT_WRITE_SCOPE_CHANGED")
+    for row in guard["targets"]:
+        backup = str(row.get("backup_path") or "")
+        if row["before"]["exists"] and (
+                Path(backup).parent != Path(row["path"]).parent
+                or not re.fullmatch(r"\.biomind-backup-[0-9a-f]{32}", Path(backup).name)):
+            raise ActionRuntimeContractError("OUTPUT_BACKUP_PATH_INVALID", path=backup)
+        if _output_path_state(Path(row["path"])) != row["before"]:
+            raise ActionRuntimeContractError("OUTPUT_TARGET_CHANGED_SINCE_REVIEW", path=row["path"],
+                required_action="inspect_current_target_and_request_fresh_approval")
+
+
+def _reviewed_parent_fd(row):
+    """Walk reviewed directory identities without following symlinks."""
+    expected = {path: (device, inode) for path, device, inode in row["before"]["parents"]}
+    descriptor = os.open("/", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    current = Path("/")
+    try:
+        for name in Path(row["path"]).parent.parts[1:]:
+            info = os.fstat(descriptor)
+            if expected.get(str(current)) != (info.st_dev, info.st_ino):
+                raise ActionRuntimeContractError("OUTPUT_PARENT_CHANGED", path=str(current))
+            child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+            os.close(descriptor); descriptor = child; current /= name
+        info = os.fstat(descriptor)
+        if expected.get(str(current)) != (info.st_dev, info.st_ino):
+            raise ActionRuntimeContractError("OUTPUT_PARENT_CHANGED", path=str(current))
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def preserve_approved_output_files(guard: Mapping[str, Any], *, decision: str,
+                                   approval_identity: Mapping[str, Any]) -> Dict[str, Any]:
+    """Copy the exact reviewed old bytes exclusively; never rename/delete them.
+
+    Called only after human approval, then rechecked immediately before launch.
+    If copy or validation fails the scientific command is not dispatched.
+    """
+    validate_output_write_guard(guard)
+    existing = [r for r in guard["targets"] if r["before"]["exists"]]
+    if existing and decision != "approve_backup_replace":
+        raise ActionRuntimeContractError("OUTPUT_REPLACEMENT_NOT_APPROVED",
+            paths=[r["path"] for r in existing])
+    receipt = {"schema_version": 1, "guard_hash": guard["guard_hash"], "decision": decision,
+               "approval_identity_hash": approval_identity.get("approval_identity_hash", ""),
+               "backups": []}
+    for row in existing:
+        digest = hashlib.sha256()
+        parent_fd = _reviewed_parent_fd(row)
+        try:
+            fd = os.open(Path(row["path"]).name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=parent_fd)
+            with os.fdopen(fd, "rb") as source:
+                before = os.fstat(source.fileno())
+                if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) != tuple(
+                        row["before"][k] for k in ("device", "inode", "size", "mtime_ns", "ctime_ns")):
+                    raise ActionRuntimeContractError("OUTPUT_TARGET_CHANGED_SINCE_REVIEW", path=row["path"])
+                backup_fd = os.open(Path(row["backup_path"]).name,
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent_fd)
+                with os.fdopen(backup_fd, "wb") as backup:
+                    for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                        backup.write(chunk)
+                        digest.update(chunk)
+                    backup.flush()
+                    os.fsync(backup.fileno())
+                os.fsync(parent_fd)
+        finally:
+            os.close(parent_fd)
+        validate_output_write_guard(guard)
+        receipt["backups"].append({"original_path": row["path"], "backup_path": row["backup_path"],
+                                   "size": row["before"]["size"], "sha256": digest.hexdigest()})
+    return receipt
 
 
 def resolve_preflight_evidence_binding(manifest, *, approved_root, attempt_id, action_environment):

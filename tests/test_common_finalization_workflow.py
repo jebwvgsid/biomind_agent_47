@@ -42,14 +42,19 @@ class SummaryModel:
         return AIMessage(content=json.dumps({"explanation":"自动恢复已停止；脚本断言仍需可靠复核，后续步骤尚未执行。", "fact_ids":["origin","stop_reason"]},ensure_ascii=False))
 
 class RecoveryModel:
-    def __init__(self, fixture, *, readable=False):
+    def __init__(self, fixture, *, readable=False, transport_failure=False):
         self.fixture, self.readable = fixture, readable
+        self.transport_failure = transport_failure
         self.requests, self.results = [], []
     async def ainvoke(self, messages, **kwargs):
         self.requests.append(list(messages))
         seed = _tag_json(list(messages), "recovery_seed")
         manifest = seed["inspection_manifest"]
         self.results = [json.loads(m.content) for m in messages if m.type == "tool"]
+        if self.transport_failure and len(self.requests) >= 3:
+            # Fail after actual evidence reads and inspections, before the
+            # default no-progress bound. Existing transport retry policy stays.
+            raise ConnectionError('synthetic Recovery transport failed after recorded reads')
         if len(self.requests) == 1:
             calls=[{"id":"failure", "name":"failure_inspect", "args":{"ref_id":seed["failure_packet"]["source_outcome_ref"]}, "type":"tool_call"},
                    {"id":"undeclared", "name":"step_inspect", "args":{"ref_id":seed["invocation_scope"]["step_id"]}, "type":"tool_call"}]
@@ -96,15 +101,17 @@ class RecoveryModel:
                 "evidence_refs":[seed["failure_packet"]["source_outcome_ref"]]}))
         return AIMessage(content="", tool_calls=calls)
 
-async def run_execution_case(tmp_path, summary_mode="ok", *, readable=False, summary_policy=None, inject=None):
+async def run_execution_case(tmp_path, summary_mode="ok", *, readable=False, summary_policy=None, inject=None,
+                             recovery_transport_failure=False):
     fixture=make_inspection_fixture(tmp_path, execution_returncode=1, claimed_value=False)
     fixture.execution.update(code=BAD_SCRIPT, raw_stderr="CONTIG_MISMATCH_REASON=VCF contigs missing in FASTA/GTF")
     # Synthetic adapter input: the already launched failed attempt is not replayed.
     async def recorded_execute(_state): return {"execution_evidence":deepcopy(fixture.execution)}
     execute=bind_causal_failure_node(TypedExecute(executor=recorded_execute,data_path=str(tmp_path)).run,
         binder=CausalFailurePacketBinder(data_path=str(tmp_path)),outcome_field="execute_outcome")
-    recovery_model=RecoveryModel(fixture, readable=readable)
-    recovery=Schema2RecoveryNode(data_path=str(tmp_path),model=recovery_model,phase_store=PhaseArchiveStore(str(tmp_path)))
+    recovery_model=RecoveryModel(fixture, readable=readable, transport_failure=recovery_transport_failure)
+    recovery=Schema2RecoveryNode(data_path=str(tmp_path),model=recovery_model,
+        phase_store=PhaseArchiveStore(str(tmp_path)))
     generates=[]
     async def generate(state):
         generates.append(deepcopy(state))
@@ -144,15 +151,15 @@ def test_execution_stop_real_outer_provider_and_reports(tmp_path,capsys,mode):
         assert stop["stop_reason"]["error_code"]=="RECOVERY_NO_PROGRESS_LIMIT"
         assert len(stop["inspection_failures"])==7
         assert {x['tool_call_id'] for x in stop['inspection_failures']} >= {'read-0','read-1','read-2'}
-        assert len(r.requests)==3 and len(m.requests)==1
-        assert stop['summary_status']==('COMPLETED' if mode in {'ok', 'forged'} else 'FAILED')
-        if mode == 'forged':
-            # Only grounded fact selection is adopted; free prose is archived.
-            assert stop['summary_consumption_status'] == 'GROUNDED_FACT_SELECTION'
-            assert stop['summary_unverified_prose'] == '任务已完成'
-            assert '任务已完成' not in stop.get('summary_text', '')
-            assert '任务已完成' not in result.reason
-        assert stop['summary_llm_calls']==1
+        # This deterministic Recovery stop now always skips terminal narration,
+        # including when the configured model would fail or invent success.
+        assert len(r.requests)==3 and not m.requests
+        assert stop['summary_status']=='SKIPPED'
+        assert stop['summary_skip_reason']=='RECOVERY_STOP_NO_MODEL'
+        assert stop['summary_llm_calls']==0
+        assert not stop.get('summary_attempted')
+        assert not stop.get('summary_text') and not stop.get('summary_unverified_prose')
+        assert '任务已完成' not in result.reason
         assert result.failure_code=='RECOVERY_NO_PROGRESS_LIMIT' and result.stage=='recovery'
         assert 'CONTIG_MISMATCH_REASON' in result.reason and '未经独立复核' in result.reason
         assert '确定性检查：通过' not in result.reason
@@ -163,12 +170,18 @@ def test_execution_stop_real_outer_provider_and_reports(tmp_path,capsys,mode):
         assert 'read-2' in report and 'returncode=1' in report
         metrics=json.loads((tmp_path/'task_outputs'/f.task_id/'run_metrics.json').read_text())
         assert metrics['final_result']['terminal_diagnostic']['stop_id']==stop['stop_id']
+        assert metrics['final_result']['terminal_diagnostic']['summary_llm_calls']==0
+        commitments=deepcopy(f.reload()['task_state'].get('typed_step_commit_receipts') or {})
+        protected_reports={path:Path(path).read_bytes() for path in stop['report_paths'].values()}
         assert OutputRouter().render_terminal_result(result)
-        assert 'Failure code: RECOVERY_NO_PROGRESS_LIMIT' in capsys.readouterr().out
-        # Repeated finalization + persisted receipt: no second provider or command.
-        before=len(m.requests)
+        output=capsys.readouterr().out
+        assert 'RECOVERY_NO_PROGRESS_LIMIT' in output and '模型总结未运行' in output
+        # Reentry preserves persisted diagnosis, formal commitments and reports.
         await a._finalize_managed_terminal(f.task_id,g.get_state(c))
-        assert len(m.requests)==before
+        assert not m.requests and len(r.requests)==3
+        assert current_managed_stop(f.reload())['stop_id']==stop['stop_id']
+        assert (f.reload()['task_state'].get('typed_step_commit_receipts') or {})==commitments
+        assert all(Path(path).read_bytes()==body for path,body in protected_reports.items())
     asyncio.run(scenario())
 
 def test_canonical_inputs_content_reaches_next_request_and_correction(tmp_path):
@@ -181,7 +194,7 @@ def test_canonical_inputs_content_reaches_next_request_and_correction(tmp_path):
         assert not f.reload()['task_state'].get('typed_step_commit_receipts')
     asyncio.run(scenario())
 
-@pytest.mark.parametrize('policy,reason', [({'enabled':False},'CONFIG_DISABLED'),({'remaining_tokens':0},'GLOBAL_TOKEN_BUDGET_INSUFFICIENT'),({'provider_available':False},'PROVIDER_UNAVAILABLE')])
+@pytest.mark.parametrize('policy,reason', [({'enabled':False},'CONFIG_DISABLED'),({'remaining_tokens':0},'RECOVERY_STOP_NO_MODEL'),({'provider_available':False},'RECOVERY_STOP_NO_MODEL')])
 def test_summary_legal_skips_use_base(tmp_path,policy,reason):
     async def scenario():
         f,a,g,c,r,m,result,_=await run_execution_case(tmp_path,summary_policy=policy)

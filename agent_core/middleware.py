@@ -164,6 +164,14 @@ def build_code_review_provenance(
 
 def render_code_review_provenance(value: Mapping[str, Any]) -> str:
     rendered: List[str] = []
+    guard = value.get("output_write_guard") or {}
+    if guard.get("targets"):
+        rendered.append("文件写入保护（本次审批范围）")
+        for row in guard["targets"]:
+            rendered.append(("已存在：" if row["before"]["exists"] else "新建：") + row["path"])
+            if row.get("backup_path"):
+                rendered.append("明确批准后先备份至：" + row["backup_path"])
+        rendered.append("不得直接覆盖原文件；已有文件仅在明确批准备份后替换时允许写入。")
     for raw in value.get("sections", []) or []:
         if not isinstance(raw, Mapping):
             continue
@@ -1197,6 +1205,8 @@ class HITLMiddleware:
         3. 如果是风险操作 -> 触发 interrupt (支持审批/修改/拒绝)
         """
         
+        conflicts = [row for row in (dict(provenance or {}).get("output_write_guard") or {}).get("targets", [])
+                     if row.get("before", {}).get("exists")]
         # --- A. 移植您的动态风险分析逻辑 (包含异常处理) ---
         try:
             risk_analysis = (
@@ -1217,7 +1227,7 @@ class HITLMiddleware:
 
         # --- B. 自动放行判断 (保留原有优势) ---
         # 如果配置了自动放行，且风险等级为 SAFE，直接通过，不打扰用户
-        if self.auto_approve_safe and risk_analysis['risk_level'] == RiskLevel.SAFE:
+        if not conflicts and self.auto_approve_safe and risk_analysis['risk_level'] == RiskLevel.SAFE:
             logger.info(f"✅ Auto-approved safe code: {code[:30]}...")
             profiler = get_current_profiler()
             task_id = get_current_task_id()
@@ -1267,12 +1277,32 @@ class HITLMiddleware:
             "options": ["(y)es", "(n)o", "(e)dit"],
             "instructions": "Plain text is feedback, not executable code. Replacement code must start with e:, edit:, or code:."
         }
+        if conflicts:
+            payload["msg"] = ("目标文件已存在。输入 backup 明确批准先保留旧版本、再执行替换；"
+                              "n 拒绝，或输入新位置等反馈。y/Enter 不授权覆盖。")
+            payload["options"] = ["backup：备份后替换", "n：保留并拒绝", "文字：修改方案"]
+            payload["instructions"] = payload["msg"]
+            payload["output_conflicts"] = deepcopy(conflicts)
 
         # --- D. 触发中断 ---
-        user_response = interrupt(payload)
+        while True:
+            user_response = interrupt(payload)
+            if conflicts:
+                if isinstance(user_response, str) and user_response.strip().lower() == "backup":
+                    return "approve_backup_replace", code
+                decision, _ = self._parse_code_response(user_response, original_code=code)
+                if decision == "approve":
+                    # Keep this same approval pending. A mistaken Enter/y is
+                    # neither overwrite consent nor a reason to call Generate.
+                    payload = {**payload, "msg": "尚未授权替换。输入 backup 批准备份后替换，n 拒绝，或输入修改方案。"}
+                    continue
+            break
 
         # --- E. 解析用户反馈 (支持编辑) ---
-        return self._parse_code_response(user_response, original_code=code)
+        decision, content = self._parse_code_response(user_response, original_code=code)
+        if conflicts and decision == "approve":
+            return "reject", "普通批准不授权覆盖已有文件；需要明确选择备份后替换或修改输出位置。"
+        return decision, content
 
     def _parse_code_response(self, response: Any, original_code: str) -> Tuple[str, str]:
         """解析用户输入：支持带理由的拒绝"""

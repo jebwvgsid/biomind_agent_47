@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "classification": "test-only codepoint selector-capacity coupling, not previously failing baseline; old-capacity safe refusal retained",
+  "production_changed_for_resolution": false,
+  "shared_fixture_changed": false,
+  "test_file": "tests/phase_e_1789521763/test_c3.py",
+  "observed_counts_unit": "synthetic fixture serialized Unicode codepoints, NOT real model tokens",
+  "system": {
+    "baseline": 9999,
+    "current": 11345,
+    "increase": 1346
+  },
+  "selector": {
+    "baseline_estimated_input": 38548,
+    "current_estimated_input": 39896,
+    "increase": 1348,
+    "original_safe_capacity": 39800,
+    "original_over_by": 96,
+    "feedback_attempt_estimated_input": 40208,
+    "local_calibrated_capacity": 42000,
+    "local_calibrated_safe_capacity": 41800
+  },
+  "controls": {
+    "baseline_c3_compaction": {
+      "receipt": "/tmp/biomind_output_safety_20260916/baseline_c3_compaction/pytest-results.json",
+      "cases": [
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_compaction_and_business_share_physical_parent",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_cancel_after_compaction_cas_restores_epoch_and_unknown_fence",
+          "outcome": "passed"
+        }
+      ]
+    },
+    "candidate_c3_compaction_isolated": {
+      "receipt": "/tmp/biomind_output_safety_20260916/candidate_c3_compaction_isolated/pytest-results.json",
+      "cases": [
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_compaction_and_business_share_physical_parent",
+          "outcome": "failed"
+        },
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_cancel_after_compaction_cas_restores_epoch_and_unknown_fence",
+          "outcome": "failed"
+        }
+      ]
+    },
+    "c3_prompt_counterfactual": {
+      "receipt": "/tmp/biomind_output_safety_20260916/c3_prompt_counterfactual/pytest-results.json",
+      "cases": [
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_compaction_and_business_share_physical_parent",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_cancel_after_compaction_cas_restores_epoch_and_unknown_fence",
+          "outcome": "passed"
+        }
+      ]
+    },
+    "c3_calibrated_final": {
+      "receipt": "/tmp/biomind_output_safety_20260916/c3_calibrated_final/pytest-results.json",
+      "cases": [
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_compaction_and_business_share_physical_parent",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_cancel_after_compaction_cas_restores_epoch_and_unknown_fence",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/phase_e_1789521763/test_c3.py::test_v14_original_fixture_capacity_rejects_unsafe_selector",
+          "outcome": "passed"
+        }
+      ]
+    }
+  },
+  "activation": {
+    "path": "/tmp/biomind_output_safety_20260916/c3_calibrated_final/scratch/pytest-of-liusiqi/pytest-0/test_v14_compaction_and_busine0/phase_archive/objects/70/70995c4e9c64a8d9122d626fab5759b2549b393124d3feeb1037a9a7c001abe7.json",
+    "selector": {
+      "elapsed_seconds": 0.01074139028787613,
+      "estimated_input_tokens": 39896,
+      "request_id": "cmp-f149d3516901985c985bf1a7",
+      "reserved_tokens": 39996,
+      "status": "returned",
+      "total_tokens": 270,
+      "usage_status": "known",
+      "wire_sha256": "4bfae6cbffe76360c9a4ed516a1c6c4086b50edad8c7c0472b19acfd89d7bce0"
+    },
+    "budget": {
+      "application_context_limit_tokens": 42000,
+      "cached_input_tokens": null,
+      "cached_tokens_count_toward_input": true,
+      "component_token_counts": {
+        "frozen_inputs": 3933,
+        "inherited_materials": 464,
+        "local_messages": 0,
+        "pending_results": 2,
+        "provider_wrappers": 2,
+        "system": 11345,
+        "tool_schema": 5382
+      },
+      "compressor_prompt_overhead_tokens": 0,
+      "compressor_safe_input_tokens": null,
+      "effective_context_limit_tokens": 42000,
+      "estimated_input_tokens": 21128,
+      "estimation_margin_tokens": 100,
+      "estimator_name": "recovery_fixture_codepoints",
+      "estimator_version": "1",
+      "exact_or_estimated": "exact",
+      "hard_block": false,
+      "known_provider_context_limit_tokens": null,
+      "output_reserve_tokens": 100,
+      "overhead_max_tokens": 0,
+      "overhead_min_tokens": 0,
+      "policy_version": "schema2-context-budget-v1",
+      "remaining_safe_tokens": 20672,
+      "safe_input_tokens": 41800,
+      "safety_headroom_tokens": 100,
+      "schema_version": 1,
+      "should_compact": true,
+      "target_ratio": 0.25,
+      "target_tokens": 10500,
+      "trigger_ratio": 0.3,
+      "trigger_tokens": 12600,
+      "uncertainty_tokens": 0
+    }
+  },
+  "calibrated_parent": {
+    "model_calls": 2,
+    "maintenance_calls": 3,
+    "operations": [
+      "map_source_segment",
+      "map_source_segment",
+      "final"
+    ],
+    "summary_enters_actual_next_model_request": true,
+    "witness": "/tmp/biomind_output_safety_20260916/c3_calibrated_final/d3_budget_witnesses/e-compaction-parent.json"
+  },
+  "cancel_resume": {
+    "business_physical_calls_on_resume": 0,
+    "maintenance_calls_on_resume": 0,
+    "summary_enters_actual_next_model_request": true,
+    "same_epoch_assertion_passed": true,
+    "witness": "/tmp/biomind_output_safety_20260916/c3_calibrated_final/d3_budget_witnesses/e-cas-resume-unknown.json"
+  },
+  "original_capacity_negative": {
+    "selector_physical_calls": 0,
+    "summary_applied": false,
+    "witness": "/tmp/biomind_output_safety_20260916/c3_calibrated_final/d3_budget_witnesses/e-compaction-original-capacity.json"
+  },
+  "production_source_drift_since_export": [],
+  "real_model_canary": "NOT_RUN",
+  "real_cache_retest": "NOT_RUN",
+  "scientific_E2E": "NOT_RUN"
+}

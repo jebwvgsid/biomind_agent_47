@@ -845,6 +845,15 @@ def concrete_artifact_provider_view(
     return rows
 
 
+def _output_write_contracts(bindings: Mapping[str, ManagedArtifactBinding]) -> List[Dict[str, Any]]:
+    # Optionality governs completion, not permission to replace an old file.
+    # Only already materialized, current-scope targets have path authority.
+    return [{"artifact_id": row.artifact_id, "expected_path": row.canonical_path,
+             "artifact_kind": row.artifact_kind or "file", "required": row.required}
+            for _, row in sorted(bindings.items())
+            if row.direction == "output" and row.canonical_path]
+
+
 def validate_concrete_action_artifacts(
     action: Mapping[str, Any],
     bindings: Mapping[str, ManagedArtifactBinding],
@@ -967,6 +976,7 @@ def validate_concrete_action_artifacts(
         if handle in bindings
     }
     validated["concrete_artifact_bindings"] = concrete_artifact_provider_view(bindings)
+    validated["output_guard_contracts"] = _output_write_contracts(bindings)
     validated["controller_output_bindings"] = [
         {
             "artifact_id": bindings[handle].artifact_id,
@@ -1595,6 +1605,7 @@ def materialize_managed_action(
         }
         for handle in referenced_output_handles
     ]
+    materialized["output_guard_contracts"] = _output_write_contracts(bindings)
     materialized["materialized_operations"] = {
         handle: managed_operations[handle]
         for handle in sorted(set(used_operations))

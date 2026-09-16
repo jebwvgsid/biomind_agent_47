@@ -5,6 +5,9 @@ The imported integration harness was reviewed at HEAD
 replaced here; Recovery, causal publication, readers, typed routing, durable
 claims, the actual summary caller, and report writers remain production code.
 All process/evidence fixtures and artifacts are confined to pytest tmp_path.
+The no-progress case now verifies zero summary requests. Summary consumption
+cases use the real Recovery transport-failure path after the same recorded
+reads, preserving their provider/parse/fact-selection coverage.
 """
 from __future__ import annotations
 
@@ -50,8 +53,8 @@ class SummaryResponseModel:
         self.frozen_facts.append(facts)
         assert facts["origin"]["failure_type"] == "execution_failed"
         assert facts["execution"]["returncode"] == 1
-        assert facts["stop_reason"]["error_code"] == "RECOVERY_NO_PROGRESS_LIMIT"
-        assert any(row["tool_call_id"] == "read-2" for row in facts["inspection_failures"])
+        assert facts["stop_reason"]["error_code"] == "RECOVERY_PROVIDER_TRANSPORT_FAILED"
+        assert any(row["tool_call_id"] == "inspect-2" for row in facts["inspection_failures"])
         if self.mode == "provider_failure":
             raise ConnectionError("synthetic summary connection failure")
         if self.mode == "parse_failure":
@@ -70,35 +73,43 @@ class SummaryResponseModel:
         return AIMessage(content=self.response_content)
 
 
-async def _run(tmp_path: Path, mode: str):
+async def _run(tmp_path: Path, mode: str, *, no_progress=False):
     model = SummaryResponseModel(mode)
 
     def inject(agent, _fixture):
         agent.terminal_summary_llm = model
 
     fixture, agent, graph, config, recovery, unused_summary, result, generates = (
-        await run_execution_case(tmp_path, inject=inject)
+        await run_execution_case(tmp_path, inject=inject, recovery_transport_failure=not no_progress)
     )
     assert not unused_summary.requests
     stop = current_managed_stop(fixture.reload())
     assert stop, result
-    assert len(model.requests) == 1
-    assert stop["summary_llm_calls"] == 1
-    assert stop["summary_attempted"] is True
+    expected_calls = 0 if no_progress else 1
+    assert len(model.requests) == expected_calls
+    assert stop["summary_llm_calls"] == expected_calls
+    if no_progress:
+        assert stop['summary_status'] == 'SKIPPED'
+        assert stop['summary_skip_reason'] == 'RECOVERY_STOP_NO_MODEL'
+        assert not stop.get('summary_attempted')
+    else:
+        assert stop["summary_attempted"] is True
     assert stop["origin"]["failure_type"] == "execution_failed"
     assert stop["execution"]["returncode"] == 1
     assert not stop["execution"]["committed"]
-    assert stop["stop_reason"]["error_code"] == "RECOVERY_NO_PROGRESS_LIMIT"
-    assert stop["stop_reason"]["no_progress_rounds"] == 2
+    expected_code = 'RECOVERY_NO_PROGRESS_LIMIT' if no_progress else 'RECOVERY_PROVIDER_TRANSPORT_FAILED'
+    assert stop["stop_reason"]["error_code"] == expected_code
+    assert stop["stop_reason"]["no_progress_rounds"] == (2 if no_progress else 1)
     assert len(recovery.requests) == 3
     assert len(generates) == 1
     assert not fixture.reload()["task_state"].get("typed_step_commit_receipts")
-    assert stop["inspection_failures"][-1]["tool_call_id"] == "read-2"
+    last_read = 'read-2' if no_progress else 'inspect-2'
+    assert stop["inspection_failures"][-1]["tool_call_id"] == last_read
     assert "CONTIG_MISMATCH_REASON" in result.reason
-    assert "read-2" in result.reason
-    assert result.failure_code == "RECOVERY_NO_PROGRESS_LIMIT"
+    assert last_read in result.reason
+    assert result.failure_code == expected_code
     report = Path(stop["report_paths"]["report.md"]).read_text()
-    assert "read-2" in report and "returncode=1" in report
+    assert last_read in report and "returncode=1" in report
     assert set(stop["report_paths"]) == {"report.md", "stage_status.tsv", "reproduce.sh"}
     for filename, path in stop["report_paths"].items():
         receipt = stop["report_receipts"][filename]
@@ -107,14 +118,14 @@ async def _run(tmp_path: Path, mode: str):
         assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == receipt["sha256"]
     # Reenter the real outer finalizer with the same completed graph checkpoint.
     await agent._finalize_managed_terminal(fixture.task_id, graph.get_state(config))
-    assert len(model.requests) == 1
+    assert len(model.requests) == expected_calls
     assert current_managed_stop(fixture.reload())["stop_id"] == stop["stop_id"]
     return fixture, graph, config, result, stop, report, model
 
 
 def test_no_progress_is_typed_unresolved_stop_not_internal_protocol_error(tmp_path):
     async def scenario():
-        fixture, graph, config, result, stop, _report, _model = await _run(tmp_path, "negation")
+        fixture, graph, config, result, stop, _report, _model = await _run(tmp_path, "negation", no_progress=True)
         outcome = graph.get_state(config).values["recovery_outcome"]
         assert outcome["type"] == "blocked", outcome
         assert outcome["payload"]["reason_code"] == "RECOVERY_NO_PROGRESS_LIMIT"
@@ -188,8 +199,8 @@ def test_summary_failure_keeps_its_actual_consumption_stage(tmp_path, mode, stag
         assert errors[0]["error_code"] == code
         assert errors[0].get("exception_type")
         assert errors[0].get("detail"), errors
-        assert stop["stop_reason"]["error_code"] == "RECOVERY_NO_PROGRESS_LIMIT"
-        assert "read-2" in result.reason and "read-2" in report
+        assert stop["stop_reason"]["error_code"] == "RECOVERY_PROVIDER_TRANSPORT_FAILED"
+        assert "inspect-2" in result.reason and "inspect-2" in report
         assert not stop.get("summary_text")
 
     asyncio.run(scenario())

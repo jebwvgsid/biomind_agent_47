@@ -195,6 +195,8 @@ class Terminal:
                 'Enter 提交 · Ctrl+J 换行 · F2 详情 · Ctrl+O 历史 · Ctrl+C 取消')
         if not self.modal and self.pending is not None and self.context[1] in {'plan_review', 'code_review'}:
             text = 'Enter/y 批准 · n 拒绝 · q 退出 · F2 详情'
+            if self.context[2].get('output_conflicts'):
+                text = 'backup 备份后替换 · n 拒绝 · q 退出 · F2 详情；Enter 不批准'
             if self._plan_body_visible():
                 text = 'PgUp/PgDn 计划正文 · ' + text
         return self.fit_columns(text, self.app.output.get_size().columns)

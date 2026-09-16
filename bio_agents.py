@@ -12944,7 +12944,13 @@ class BioAnalystAgent:
                     runtime_resolution.get("capability_contract_hash") or ""
                 ),
             )
+            from agent_core.action_runtime import capture_output_write_guard
+            # Never accept a model-supplied protection/overwrite authorization.
+            guard_contracts = bound.get("output_guard_contracts", bound.get("controller_output_bindings") or [])
+            bound["output_guard_contracts"] = deepcopy(guard_contracts)
+            bound["output_write_guard"] = capture_output_write_guard(guard_contracts)
             policy_manifest = build_execution_policy_manifest(
+                output_write_guard=bound["output_write_guard"],
                 action_identity=action_identity,
                 working_directory=os.getcwd(),
                 language=action_language,
@@ -13334,6 +13340,7 @@ class BioAnalystAgent:
             "renderer_id": str(renderer.get("renderer_id") or ""),
             "manifest_path": manifest_path,
             "expected_outputs": [manifest_path],
+            "output_guard_contracts": [{"artifact_id": "renderer_manifest", "expected_path": manifest_path, "artifact_kind": "file"}],
             "success_checks": ["renderer_exit_zero", "manifest_v3_valid", "manifest_provenance_matches"],
             "renderer_invocation_contract": invocation_contract,
         }
@@ -13479,6 +13486,10 @@ class BioAnalystAgent:
             "manifest_action_id": str(action.get("id") or ""),
             "manifest_script_hash": manifest_script_hash,
             "expected_outputs": expected_outputs,
+            "output_guard_contracts": [{"artifact_id": str(identity),
+                "expected_path": str(artifact_by_id[identity].get("path") or ""),
+                "artifact_kind": str(artifact_by_id[identity].get("artifact_kind") or "file")}
+                for identity in action.get("expected_artifact_ids", []) if identity in artifact_by_id],
             "success_checks": list(action.get("success_checks") or []),
         }, state, task_id, plan_state=plan_state)
         return {
@@ -47910,6 +47921,7 @@ question. Never guess a scientific or database identity.
                         ),
                     )
                     current_policy_manifest = build_execution_policy_manifest(
+                        output_write_guard=pending_action.get("output_write_guard"),
                         action_identity={
                             "action_id": str(pending_action.get("action_id") or ""),
                             "plan_id": str(pending_action.get("plan_id") or ""),
@@ -48320,6 +48332,19 @@ question. Never guess a scientific or database identity.
                     repair_stage="script_body_validation", validation_source="execution.script_validation.check_script_body",
                     evidence={"syntax_check": syntax_receipt, "command_started": False})
 
+            from agent_core.action_runtime import validate_output_write_guard, preserve_approved_output_files
+            output_guard = dict(pending_action.get("output_write_guard") or {})
+            try:
+                if output_guard:
+                    validate_output_write_guard(output_guard, pending_action.get("output_guard_contracts") or pending_action.get("controller_output_bindings") or [])
+                elif pending_action.get("output_guard_contracts") or pending_action.get("controller_output_bindings"):
+                    raise ActionRuntimeContractError("OUTPUT_WRITE_GUARD_REQUIRES_REGENERATION")
+            except ActionRuntimeContractError as exc:
+                return reject_execute_candidate(pending_action, violation_code=exc.code,
+                    feedback="输出目标发生变化或缺少保护快照。保留原文件，重新检查冲突并提交新审批；不要改写用户指定名称。",
+                    repair_stage="output_write_review", validation_source="agent_core.action_runtime.validate_output_write_guard",
+                    evidence=exc.to_diagnostic())
+
             # Review the four provenance owners without concatenating their
             # content into one executable string.
             code_review_provenance = build_code_review_provenance(
@@ -48333,6 +48358,7 @@ question. Never guess a scientific or database identity.
                 runtime_env_manifest=current_runtime_manifest,
                 execution_policy_manifest=current_policy_manifest,
             )
+            code_review_provenance["output_write_guard"] = deepcopy(output_guard)
             advance_preparation_boundary(
                 "human_code_review",
                 "execution.confirmation.review_code",
@@ -48346,6 +48372,12 @@ question. Never guess a scientific or database identity.
                 "post_review_validation",
                 "BioAnalystAgent.execute_logic_impl.post_review_validation",
             )
+            output_write_decision = action
+            if (any(row["before"]["exists"] for row in output_guard.get("targets", []))
+                    and action == "approve"):
+                action, final_code = "reject", "目标已存在：普通批准不授权替换。请选择保留旧文件并改输出位置，或明确批准备份后替换。"
+            if action == "approve_backup_replace":
+                action = "approve"
             user_edited_code = False
             if action == "reject":
                 rejection_reason = str(final_code or "User rejected generated code.")
@@ -48722,6 +48754,7 @@ question. Never guess a scientific or database identity.
 
             if managed_mode:
                 current_policy_manifest = build_execution_policy_manifest(
+                        output_write_guard=pending_action.get("output_write_guard"),
                     action_identity={
                         "action_id": str(pending_action.get("action_id") or ""),
                         "plan_id": str(pending_action.get("plan_id") or ""),
@@ -48810,6 +48843,15 @@ question. Never guess a scientific or database identity.
                     return reject_internal_prelaunch(pending_action,
                         error_code=str(getattr(exc, "code", None) or "SKILL_BINDING_UNREADABLE"),
                         stage="execute.skill_resource_prelaunch", detail=str(exc))
+
+            try:
+                if output_guard:
+                    validate_output_write_guard(output_guard, pending_action.get("output_guard_contracts") or pending_action.get("controller_output_bindings") or [])
+            except ActionRuntimeContractError as exc:
+                return reject_execute_candidate(pending_action, violation_code=exc.code,
+                    feedback="审批后目标已变化，本次命令未启动；重新检查并审批当前目标。",
+                    repair_stage="output_write_prelaunch", validation_source="agent_core.action_runtime.validate_output_write_guard",
+                    evidence=exc.to_diagnostic())
 
             advance_preparation_boundary(
                 "execution_budget_accounting",
@@ -49503,6 +49545,20 @@ question. Never guess a scientific or database identity.
                     error_code="APPROVED_SCRIPT_HASH_DRIFT",
                     stage="execute.approved_script_reload",
                     detail="Frozen script bytes changed after approval; no command was launched.")
+            try:
+                if output_guard:
+                    output_write_receipt = preserve_approved_output_files(output_guard,
+                        decision=output_write_decision, approval_identity=current_approval_identity)
+                    receipt_path = attempt_dir / "output_write_approval.json"
+                    # The receipt is scoped to this exact approval and attempt.
+                    with receipt_path.open("x", encoding="utf-8") as receipt_file:
+                        json.dump({**output_write_receipt, "attempt_id": attempt_id}, receipt_file,
+                                  ensure_ascii=False, sort_keys=True)
+                    validate_output_write_guard(output_guard)
+            except (ActionRuntimeContractError, OSError) as exc:
+                return reject_internal_prelaunch(pending_action,
+                    error_code=getattr(exc, "code", "OUTPUT_BACKUP_OR_RECEIPT_FAILED"),
+                    stage="execute.output_preservation", detail=str(exc))
             try:
                 advance_preparation_boundary(
                     "command_launch",
@@ -54211,12 +54267,15 @@ question. Never guess a scientific or database identity.
                 wait_started = time.perf_counter()
                 wait_started_at = timestamp_now()
                 output.prepare_review("代码审批", payload.get("content", ""),
-                    language=str(payload.get("language") or "UNKNOWN"), risk=str(risk))
+                    language=str(payload.get("language") or "UNKNOWN"), risk=str(risk),
+                    output_conflicts=payload.get("output_conflicts") or ())
                 try:
                     user_response = await self._aprompt_user(
                         task_id,
                         "code_review",
-                        f"{Fore.YELLOW}[y/Enter=run, n=reject, q=quit, e:<code>=edit, text=feedback] > {Style.RESET_ALL}",
+                        ("[backup=备份后替换, n=拒绝, q=退出, 文字=修改方案；Enter不批准] > "
+                         if payload.get("output_conflicts") else
+                         f"{Fore.YELLOW}[y/Enter=run, n=reject, q=quit, e:<code>=edit, text=feedback] > {Style.RESET_ALL}"),
                         payload=payload,
                         started_at=wait_started_at,
                     )
