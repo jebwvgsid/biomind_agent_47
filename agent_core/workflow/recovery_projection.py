@@ -670,9 +670,9 @@ def _producer_failure_index(payload: Mapping[str, Any]) -> dict[str, Any]:
     def add(raw, pointer, *, code="", stage="validation"):
         raw = dict(raw) if isinstance(raw, Mapping) else {"message": str(raw)}
         rows.append({"source_pointer": pointer, "stage": stage,
-            "code": str(raw.get("code") or raw.get("error_code") or code or raw.get("message") or "UNKNOWN")[:1200],
+            "code": str(raw.get("code") or raw.get("error_code") or raw.get("reason_code") or code or raw.get("message") or "UNKNOWN")[:1200],
             **{("detail" if k == "message" else k): _bounded_fact_value(raw[k]) for k in
-                ("message", "status", "reason", "formal_target_path", "relative_path", "expected", "actual", "observed_state", "failed_invariant", "evidence_refs") if k in raw},
+                ("message", "status", "reason", "formal_target_path", "relative_path", "expected", "actual", "observed_state", "failed_invariant", "evidence_refs", "expected_state_generation", "current_state_generation", "no_partial_mutation") if k in raw},
             "observation_status": "recorded" if any(k in raw for k in ("observed_state", "actual")) else "unknown"})
     # Explicit rejection lists take priority over process rc/status/background.
     for container, pointer in ((execution.get("validation"), "/execution_record/validation"),
@@ -684,12 +684,24 @@ def _producer_failure_index(payload: Mapping[str, Any]) -> dict[str, Any]:
     for key in ("contract_violations", "missing_evidence", "missing_facts"):
         for i, error in enumerate(payload.get(key) or []):
             add(error, f"/{key}/{i}")
-    for i, receipt in enumerate(execution.get("workspace_mutations") or []):
+    effect = execution.get("effect_evidence") or {}
+    if isinstance(effect, Mapping):
+        parser = effect.get("parser_receipt") or {}
+        if isinstance(parser, Mapping):
+            for i, issue in enumerate(parser.get("issues") or []):
+                add(issue, f"/execution_record/effect_evidence/parser_receipt/issues/{i}", stage="execution.effect_parser")
+    journal = execution.get("workspace_mutation_attestation") or {}
+    mutation_rows = journal.get("receipts", []) if isinstance(journal, Mapping) else []
+    pointer = "/execution_record/workspace_mutation_attestation/receipts"
+    if not mutation_rows:
+        mutation_rows = execution.get("workspace_mutations") or []
+        pointer = "/execution_record/workspace_mutations"
+    for i, receipt in enumerate(mutation_rows):
         if not isinstance(receipt, Mapping):
             continue
         for j, check in enumerate(receipt.get("postcondition_results") or []):
             if isinstance(check, Mapping) and check.get("status") != "satisfied":
-                add(check, f"/execution_record/workspace_mutations/{i}/postcondition_results/{j}",
+                add(check, f"{pointer}/{i}/postcondition_results/{j}",
                     code="WORKSPACE_POSTCONDITION_UNSATISFIED", stage="execution.attestation")
     for key in ("runtime_output_reconciliation", "completion_report", "completion_gate"):
         container = execution.get(key) if key == "runtime_output_reconciliation" else payload.get(key)
@@ -697,8 +709,9 @@ def _producer_failure_index(payload: Mapping[str, Any]) -> dict[str, Any]:
             continue
         for field in ("violations", "findings", "binding_and_receipt_findings"):
             for i, check in enumerate(container.get(field) or []):
-                if isinstance(check, Mapping) and check.get("status") not in {"passed", "satisfied"}:
-                    add(check, f"/{key}/{field}/{i}", stage=key)
+                if isinstance(check, Mapping) and check.get("status") not in {"passed", "satisfied"} and check.get("severity") != "warning":
+                    prefix = "/execution_record" if key == "runtime_output_reconciliation" else ""
+                    add(check, f"{prefix}/{key}/{field}/{i}", stage=key)
     evidence = payload.get("evidence") or {}
     if isinstance(evidence, Mapping):
         for i, health in enumerate(evidence.get("runtime_status") or []):
@@ -707,16 +720,20 @@ def _producer_failure_index(payload: Mapping[str, Any]) -> dict[str, Any]:
                     f"/evidence/runtime_status/{i}", code="RUNTIME_HEALTHCHECK_FAILED", stage="installation")
     if payload.get("error_code") or payload.get("failed_invariant"):
         add(payload, "/", code=payload.get("error_code", ""), stage="producer")
+    if "expected_state_generation" in payload and "current_state_generation" in payload:
+        add(payload, "/", code="COMMIT_CAS_CONFLICT", stage="commit.cas")
     if not rows:
         return {}
     rc = payload.get("return_code", execution.get("returncode"))
+    validation = payload.get("validation_evidence") or execution.get("validation") or payload.get("validation") or {}
     return {"schema_version": 1, "checks": rows[:12], "total_rejecting_checks": len(rows),
         "unexpanded_index_range": [12, len(rows)] if len(rows) > 12 else [],
         "unexpanded_pointers": [r["source_pointer"] for r in rows[12:28]],
         "pointer_index_omitted": max(0, len(rows) - 28),
-        "process": {"return_code": rc, "started": bool(execution.get("attempt_id")) if execution else payload.get("command_started", "unknown")},
+        "process": {"return_code": rc, "started": execution.get("command_started", True if rc is not None else "unknown") if execution else payload.get("command_started", "unknown")},
         "scope": {k: execution[k] for k in ("task_id", "step_id", "action_id", "attempt_id") if k in execution},
-        "validation_acceptance": "rejected_or_incomplete", "commit_acceptance": "not_established"}
+        "validation_acceptance": validation.get("status", validation.get("passed", "unknown")) if isinstance(validation, Mapping) else "unknown",
+        "commit_acceptance": "not_established"}
 
 
 def _runtime_payload(payload: Mapping[str, Any]) -> dict[str, Any]:

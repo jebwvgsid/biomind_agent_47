@@ -3366,6 +3366,8 @@ def generate_output_examples(step: Mapping[str, Any], *, script_protocol: bool,
         "top_level": ("Return one supported executable block/display envelope or the complete blocked JSON."
             if script_protocol else "Return exactly one raw JSON object with action_type; no prose, Markdown, action_json wrapper or multiple actions."),
         "action_example": example,
+        "binding_value_policies": {name: deepcopy(row["value_policy"])
+            for name, row in (requirements.get("produced_bindings") or {}).items() if row.get("value_policy")},
         "derived_field_policy": "Normally omit binding_env: approved binding rules derive its source mapping and effective values before approval. Keep genuine values in produced_bindings. Explicit source overrides remain strictly validated. operation is the explicit execution operation and must match the published approved capability, never infer it from step_id.",
         "facts_example": facts, "blocked_example": blocked,
         "facts_example_scope": "Non-executable shape template only. Placeholder values are not measured facts and must not be published.",

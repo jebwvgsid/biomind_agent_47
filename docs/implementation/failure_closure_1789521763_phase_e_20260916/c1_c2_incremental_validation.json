@@ -1,0 +1,505 @@
+{
+  "source_signature": "f41d29341e4f562180817751c745557c5d3d3b793f365ce645c4ace760afab5d",
+  "passed": 70,
+  "results": [
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0017044935375452042,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0015122424811124802,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-$ASSEMBLY-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0016451738774776459,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001476856879889965,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014119241386651993,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-${RELEASE}-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0015090517699718475,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014096666127443314,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014466596767306328,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[code-prefix-${SET}-suffix-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014498820528388023,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001453367993235588,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014790212735533714,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-$ASSEMBLY-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0016827061772346497,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014724889770150185,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001454661600291729,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-${RELEASE}-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014563445001840591,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014674942940473557,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014712503179907799,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[argv-prefix-${SET}-suffix-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001459469087421894,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014669951051473618,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014616288244724274,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-$ASSEMBLY-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001579485833644867,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014675911515951157,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014741765335202217,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-${RELEASE}-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014741197228431702,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-dataset_label]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0014736680313944817,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-catalog_tag]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001499035395681858,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v01_concrete_role_rejected_before_execution[both-prefix-${SET}-suffix-reference_release]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0015830080956220627,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[None]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004095287993550301,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v02_literal_rule_preserves_reserved_text[literal]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004002350382506847,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_v03_frozen_path_and_environment_use_same_value",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004575900733470917,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[release_2026.09]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003917494788765907,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[\\u4e2d\\u6587 \\u7248\\u672c]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004047001712024212,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[cost$5]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003919634036719799,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal{braces}]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004090908914804459,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[prefix-dollar$]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004007890820503235,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[literal${DOC_ONLY}]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.003950536251068115,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_legitimate_literal_semantics_and_injected_environment_are_preserved[${LITERAL_TEXT}]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0038942061364650726,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[BUNDLE_HANDLE]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0022612689062952995,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_nested_artifact_handle_is_an_exact_reference_not_an_expression[FOREIGN_RESOURCE]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0021079638972878456,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_json_nested_text_is_opaque_not_a_runtime_binding_resolver",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001942180097103119,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_consumed_ref_does_not_resolve_from_a_shell_variable",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0021564094349741936,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[../escape]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001759515143930912,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested/name]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.001958022825419903,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[nested\\\\name]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0017796317115426064,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_existing_workspace_segment_and_containment_guard_survives[]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0017750123515725136,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_id-newer-action]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004505184479057789,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[action_digest-newer-digest]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004489400424063206,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[attempt_id-newer-attempt]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004497438669204712,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[binding_revision-77]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004701286554336548,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[plan_revision-99]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004488429985940456,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c1.py::test_old_receipt_cannot_attest_new_action_binding_or_scope[formal_concrete_path-/tmp/other-isolated-path]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004462560638785362,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[WORKSPACE_MUTATION_NOT_ATTESTED]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.3002541698515415,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[UNRECOGNIZED_VALIDATOR_CODE_93]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.2923153517767787,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[concern]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5326932454481721,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[missing_attempt]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.11723875999450684,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[malformed_effect]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5584185421466827,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[commit_rejection]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.305095836520195,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v07_v08_rejection_index_priority_unknown_and_omitted_ranges",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0012896517291665077,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v06_formal_producer_to_first_request[validator_exception]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.32665508426725864,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v06_formal_producer_to_first_request[commit_cas]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5402433983981609,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v06_formal_producer_to_first_request[install_failure]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.2987525388598442,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v06_formal_producer_to_first_request[preexecution]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.2800627201795578,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v06_formal_producer_to_first_request[diagnostic]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.285982858389616,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_formal_supervisor_variants_and_alias_first_wire[rejected]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.8262620205059648,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_formal_supervisor_variants_and_alias_first_wire[correction_required]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5155066084116697,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_formal_supervisor_variants_and_alias_first_wire[assessment_pending]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5279204566031694,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_formal_supervisor_variants_and_alias_first_wire[incomplete_evidence]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.396443959325552,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_formal_triage_resume_keeps_causal_first_request",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5315880533307791,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v07_long_background_and_multiple_errors_in_actual_first_wire",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5120578035712242,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_formal_diagnostic_validation_receipt_consumer",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.3000900438055396,
+      "failure": ""
+    }
+  ],
+  "source_hashes": {
+    "agent_core/plan_bindings.py": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f",
+    "agent_core/step_effects.py": "4c4bc7b734b3fbab9677c89034075ec9f20afcbfc7d99375625389dd3f90a184",
+    "agent_core/workflow/recovery_projection.py": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+    "tests/phase_e_1789521763/test_c1.py": "9a11a190a4895aebd945bdc45b40f6e7c32a2ecd7fe1b7f6736d14cdd8c34290",
+    "tests/phase_e_1789521763/test_c2.py": "78482a16226cc3261ea2abdaf3cbe866b738375266ca1c54c760eb886061ab0c"
+  },
+  "real_external_calls": "NOT_RUN",
+  "prior_D_witnesses": "UNCHANGED"
+}

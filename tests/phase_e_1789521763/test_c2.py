@@ -204,3 +204,144 @@ def test_v07_v08_rejection_index_priority_unknown_and_omitted_ranges():
     facts = _diagnostic_facts("execute_outcome", {"payload": payload})
     assert facts[0]["kind"] == "producer_failure_index"
     assert "irrelevant background" not in json.dumps(facts, default=dict)
+
+
+@pytest.mark.parametrize('kind',['validator_exception','commit_cas','install_failure','preexecution','diagnostic'])
+def test_v06_formal_producer_to_first_request(tmp_path,kind):
+    async def scenario():
+        from tests.test_inspection_workflow import InspectionReviewer
+        from agent_core.workflow.early_nodes import TypedInstallSubagent
+        from agent_core.workflow.verifier import TypedSupervisor
+        from supervisor import SupervisorNode
+        from agent_core.plan_contract import StateCASConflict
+        f=make_inspection_fixture(tmp_path)
+        field='verification_outcome'
+        if kind=='validator_exception':
+            verifier=SupervisorNode(f.reviewer,output_dir=str(tmp_path/'task_outputs'))
+            node=bind_causal_failure_node(TypedSupervisor(data_path=str(tmp_path),verifier=verifier.run).run,
+                binder=CausalFailurePacketBinder(data_path=str(tmp_path)),outcome_field=field)
+            with patch('supervisor.RuleEngine.run',side_effect=ValueError('SYNTHETIC_VALIDATOR_FAULT_73')):
+                update=await node(deepcopy(f.state))
+            expected='SYNTHETIC_VALIDATOR_FAULT_73'
+            assert update[field]['type']=='verification_error'
+        elif kind=='commit_cas':
+            f.reviewer=InspectionReviewer(accept_first=True)
+            accepted=await f.new_supervisor()(deepcopy(f.state));f.state.update(accepted)
+            assert accepted[field]['type']=='verified'
+            field='commit_step_outcome'
+            async def reject_cas(state):
+                with patch('agent_core.workflow.commit_step.save_plan_state',side_effect=StateCASConflict('new competing writer')):
+                    return await CommitStep(data_path=str(tmp_path)).run(state)
+            node=bind_causal_failure_node(reject_cas,binder=CausalFailurePacketBinder(data_path=str(tmp_path)),outcome_field=field)
+            update=await node(deepcopy(f.state));expected='expected_state_generation'
+            assert update[field]['type']=='commit_conflict'
+        elif kind=='install_failure':
+            field='install_subagent_outcome'
+            async def health(_state):return {'runtime_status':{'synthetic':{'ok':False,'error_code':'HEALTH_FAIL_73','message':'bounded fixture health receipt'}}}
+            node=bind_causal_failure_node(TypedInstallSubagent(data_path=str(tmp_path),source=health).run,
+                binder=CausalFailurePacketBinder(data_path=str(tmp_path)),outcome_field=field)
+            update=await node(deepcopy(f.state));expected='HEALTH_FAIL_73'
+            assert update[field]['type']=='installation_failed'
+        else:
+            field='execute_outcome'
+            async def execution_leaf(_state):
+                if kind=='preexecution':return {'pre_execution_rejection':{'violation_owner':'VERIFICATION','violation_code':'DEPENDENCY_NOT_ATTESTED_73'}}
+                return {'execution_evidence':{**f.execution,'command_role':'diagnostic','returncode':7}}
+            node=bind_causal_failure_node(TypedExecute(executor=execution_leaf,data_path=str(tmp_path)).run,
+                binder=CausalFailurePacketBinder(data_path=str(tmp_path)),outcome_field=field)
+            update=await node(deepcopy(f.state));expected='DEPENDENCY_NOT_ATTESTED_73' if kind=='preexecution' else 'diagnostic_completed'
+        result,wire=await capture(f,update)
+        assert expected in json.dumps(wire),wire
+        receipt('e-owner-'+kind,{'producer_outcome':update[field],'first_request':wire,'model_calls':1,'new_execute_calls':0})
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('kind',['rejected','correction_required','assessment_pending','incomplete_evidence'])
+def test_formal_supervisor_variants_and_alias_first_wire(tmp_path,kind):
+    async def scenario():
+        from agent_core.workflow.verifier import TypedSupervisor
+        from tests.test_inspection_workflow import InspectionReviewer
+        f=make_inspection_fixture(tmp_path,execution_returncode=7 if kind=='rejected' else 0)
+        if kind in {'correction_required','assessment_pending'}:
+            class Reviewer(InspectionReviewer):
+                async def ainvoke(self,messages,**kwargs):
+                    reply=await super().ainvoke(messages,**kwargs);value=json.loads(reply.content)
+                    value.update(assessment='CONCERN' if kind=='correction_required' else 'UNKNOWN',disposition=kind)
+                    value['issue_dispositions'][0]['disposition']=kind
+                    value['concerns']=['FORMAL_REVIEW_73: bounded fixture concern']
+                    return AIMessage(content=json.dumps(value))
+            f.reviewer=Reviewer()
+        if kind=='incomplete_evidence':
+            # Invalid *input* revalidation claim is rejected by the real owner;
+            # no outcome or stored approval/acceptance is prefilled.
+            f.state['recovery_outcome']={'type':'revalidation_required','payload':{'decision_id':'never-admitted'}}
+        update=await f.new_supervisor()(deepcopy(f.state))
+        assert update['verification_outcome']['type']==kind,update
+        assert route_verification_outcome(update)=='recovery'
+        result,wire=await capture(f,update)
+        expected='REVALIDATION_ORIGINAL_SCOPE_MISMATCH' if kind=='incomplete_evidence' else 'FORMAL_REVIEW_73' if kind!='rejected' else 'return_code'
+        assert expected in json.dumps(wire),wire
+        # A gate alias is only a source name; it does not rerun either owner.
+        receipt('e-supervisor-'+kind,{'source':update,'first_provider_messages':wire,
+            'review_calls':len(f.reviewer.requests),'model_calls':1,'new_execute_calls':0,'final_consumer':result})
+    asyncio.run(scenario())
+
+
+def test_formal_triage_resume_keeps_causal_first_request(tmp_path):
+    async def scenario():
+        from agent_core.workflow.early_nodes import TypedTriage
+        from agent_core.workflow.outcomes import ResumeState
+        from agent_core.workflow.runtime_graph import route_triage_outcome
+        f=make_inspection_fixture(tmp_path);await f.inspect_handoff()
+        async def unused(_state):raise AssertionError('resume must not rerun source')
+        resume=ResumeState(schema_version=1,type='recovery_pending',summary='existing cause',
+            scope={'task_id':f.task_id},payload={'reason_code':'current_causal_failure'}).to_dict()
+        state={**f.state,'resume_state':resume}
+        update=await TypedTriage(data_path=str(tmp_path),source=unused).run(state)
+        assert route_triage_outcome(update)=='recovery'
+        result,wire=await capture(f,update)
+        assert 'method requirement' in json.dumps(wire)
+        receipt('e-triage-resume',{'triage':update,'first_provider_messages':wire,'new_execute_calls':0,'result':result})
+    asyncio.run(scenario())
+
+
+def test_v07_long_background_and_multiple_errors_in_actual_first_wire(tmp_path):
+    async def scenario():
+        f=make_inspection_fixture(tmp_path)
+        errors=['UNREGISTERED_REJECTION_73']+['FAIL_'+str(i) for i in reversed(range(40))]
+        async def source(_state):return {'execution_evidence':{**deepcopy(f.execution),
+            'stdout':'successful background line\n'*15000,'validation':{'passed':False,'errors':errors}}}
+        owner=bind_causal_failure_node(TypedExecute(executor=source,data_path=str(tmp_path)).run,
+            binder=CausalFailurePacketBinder(data_path=str(tmp_path)),outcome_field='execute_outcome')
+        update=await owner(deepcopy(f.state));result,wire=await capture(f,update)
+        text=json.dumps(wire)
+        assert 'UNREGISTERED_REJECTION_73' in text and 'unexpanded_index_range' in text
+        assert text.index('UNREGISTERED_REJECTION_73')<text.index('successful background line')
+        receipt('e-long-first-wire',{'first_request':wire,'raw_error_count':41,'raw_stdout_chars':len('successful background line\n')*15000,
+            'source_field':'/execution_record/validation/errors','observed':'unknown','result':result})
+    asyncio.run(scenario())
+
+
+def test_formal_diagnostic_validation_receipt_consumer(tmp_path):
+    async def scenario():
+        from agent_core.recovery import ValidationEvidence
+        from agent_core.workflow.verifier import TypedSupervisor
+        f=make_inspection_fixture(tmp_path)
+        execution={**deepcopy(f.execution),'action_id':'synthetic-diagnostic-action',
+            'attempt_id':'synthetic-diagnostic-attempt','command_role':'diagnostic','returncode':7}
+        f.state['execution_evidence']=execution
+        value=ValidationEvidence.from_mapping({'task_id':f.task_id,'step_id':f.reload()['current_step_id'],
+            'action_id':execution['action_id'],'attempt_id':execution['attempt_id'],
+            'status':'INVALID','command_role':'diagnostic','errors':['DIAGNOSTIC_RECEIPT_FAILURE_73'],
+            'returncode_check':{'passed':False,'returncode':7}}).to_dict()
+        async def validation_leaf(_state):return {'validation_evidence':value}
+        owner=bind_causal_failure_node(TypedSupervisor(data_path=str(tmp_path),verifier=validation_leaf).run,
+            binder=CausalFailurePacketBinder(data_path=str(tmp_path)),outcome_field='verification_outcome')
+        update=await owner(deepcopy(f.state))
+        assert update['verification_outcome']['type']=='diagnostic_evidence_recorded'
+        result,wire=await capture(f,update)
+        assert 'DIAGNOSTIC_RECEIPT_FAILURE_73' in json.dumps(wire)
+        assert not f.reload()['task_state'].get('typed_step_commit_receipts')
+        receipt('e-diagnostic-consumer',{'level':'formal adapter consuming isolated ValidationEvidence; no external worker deployed',
+            'source':update,'first_request':wire,'result':result,'new_execute_calls':0,'commits':0})
+    asyncio.run(scenario())

@@ -128,6 +128,10 @@ def test_v01_concrete_role_rejected_before_execution(tmp_path, name, scalar, car
     req = public_binding_requirements(case["frozen"], operation="prepare_bundle", workspace_bindings=case["rows"])
     assert "produced_bindings." + name not in binding_input_progress_facts(case["raw"], req)
     assert req["produced_bindings"][name]["value_policy"]["reserved_forms"] == ["$NAME", "${NAME}"]
+    from agent_core.step_effects import generate_output_examples
+    examples=generate_output_examples({},script_protocol=False,binding_requirements=req)
+    assert examples['binding_value_policies'][name]==req['produced_bindings'][name]['value_policy']
+    assert examples['action_example']['action_type']=='blocked'
 
 @pytest.mark.parametrize("role", [None, "literal"])
 def test_v02_literal_rule_preserves_reserved_text(tmp_path, role):
@@ -248,5 +252,4 @@ def test_v04_scalar_local_correction_reaches_commit():
             fixture.mode = "e1-scalar-repair"
             await fixture.close()
     asyncio.run(scenario())
-
 

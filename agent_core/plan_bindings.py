@@ -26,6 +26,8 @@ _CONCRETE_ROLES = {"concrete_identifier", "concrete_path_segment"}
 
 
 def binding_value_policy(role):
+    if role is not None and not isinstance(role, str):
+        raise PlanBindingError("BINDING_VALUE_ROLE_INVALID", role=role)
     if role not in (None, "", "literal") and role not in _CONCRETE_ROLES:
         raise PlanBindingError("BINDING_VALUE_ROLE_INVALID", role=role)
     return {"role": role or "literal", "policy_version": 1,
@@ -1060,6 +1062,8 @@ def _validate_binding_value_contract(
             "disposition": "REPAIR_REQUIRED",
         }]
     raw_types = declared_rule.get("binding_types") or {}
+    if not isinstance(raw_types, Mapping):
+        return [{"error_code": "BINDING_SUBCONTRACT_VALUE_SCHEMA_INVALID", "disposition": "PROTOCOL_INVALID"}]
     roles = declared_rule.get("binding_value_roles") or {}
     if not isinstance(roles, Mapping):
         return [{"error_code": "BINDING_VALUE_ROLE_INVALID", "disposition": "PROTOCOL_INVALID"}]
