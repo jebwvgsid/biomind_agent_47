@@ -1,0 +1,210 @@
+{
+  "run": "/tmp/bm_phase_e_c2_03",
+  "calls_passed": 8,
+  "results": [
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[WORKSPACE_MUTATION_NOT_ATTESTED]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[WORKSPACE_MUTATION_NOT_ATTESTED]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.07670069951564074,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[WORKSPACE_MUTATION_NOT_ATTESTED]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.4819340370595455,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[WORKSPACE_MUTATION_NOT_ATTESTED]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00021792761981487274,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[UNRECOGNIZED_VALIDATOR_CODE_93]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[UNRECOGNIZED_VALIDATOR_CODE_93]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0007952852174639702,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[UNRECOGNIZED_VALIDATOR_CODE_93]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.2911415910348296,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v05_nested_execute_validation_in_first_provider_request[UNRECOGNIZED_VALIDATOR_CODE_93]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00020446907728910446,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[concern]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[concern]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006407424807548523,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[concern]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5483021261170506,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[concern]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00019112322479486465,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[missing_attempt]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[missing_attempt]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006774421781301498,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[missing_attempt]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.11894779652357101,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[missing_attempt]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.000180157832801342,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[malformed_effect]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[malformed_effect]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006580967456102371,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[malformed_effect]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.5384015217423439,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[malformed_effect]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00019954517483711243,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[commit_rejection]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[commit_rejection]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0006716763600707054,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[commit_rejection]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.30848569981753826,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_other_producers_to_first_provider_messages[commit_rejection]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00021095573902130127,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_graph_rc0_postcondition_failure_enters_recovery_before_supervisor",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_graph_rc0_postcondition_failure_enters_recovery_before_supervisor",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00012665800750255585,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_graph_rc0_postcondition_failure_enters_recovery_before_supervisor",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 45.66575639229268,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_real_graph_rc0_postcondition_failure_enters_recovery_before_supervisor",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0008142758160829544,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v07_v08_rejection_index_priority_unknown_and_omitted_ranges",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v07_v08_rejection_index_priority_unknown_and_omitted_ranges",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00014627724885940552,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v07_v08_rejection_index_priority_unknown_and_omitted_ranges",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0013421960175037384,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/phase_e_1789521763/test_c2.py::test_v07_v08_rejection_index_priority_unknown_and_omitted_ranges",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001722937449812889,
+      "failure": ""
+    }
+  ],
+  "prior_failures": [
+    "c2_01: message key violates stage schema, fixed detail alias",
+    "c2_02: frozen mapping fixture JSON encoding fixed; two inherited inspection test assertions remain to reconcile in final acceptance"
+  ]
+}

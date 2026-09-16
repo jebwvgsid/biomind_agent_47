@@ -658,12 +658,76 @@ def _compact_completion_gate(value: Any) -> dict[str, Any]:
     return result
 
 
+def _producer_failure_index(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Project only registered producer structures, before background truncation.
+
+    A pointer is relative to the immutable outcome payload, not a new authority.
+    Unknown observations stay unknown; no search of arbitrary nested JSON/logs.
+    """
+    execution = payload.get("execution_record") or {}
+    execution = execution if isinstance(execution, Mapping) else {}
+    rows = []
+    def add(raw, pointer, *, code="", stage="validation"):
+        raw = dict(raw) if isinstance(raw, Mapping) else {"message": str(raw)}
+        rows.append({"source_pointer": pointer, "stage": stage,
+            "code": str(raw.get("code") or raw.get("error_code") or code or raw.get("message") or "UNKNOWN")[:1200],
+            **{("detail" if k == "message" else k): _bounded_fact_value(raw[k]) for k in
+                ("message", "status", "reason", "formal_target_path", "relative_path", "expected", "actual", "observed_state", "failed_invariant", "evidence_refs") if k in raw},
+            "observation_status": "recorded" if any(k in raw for k in ("observed_state", "actual")) else "unknown"})
+    # Explicit rejection lists take priority over process rc/status/background.
+    for container, pointer in ((execution.get("validation"), "/execution_record/validation"),
+            (payload.get("validation_evidence"), "/validation_evidence"),
+            (payload.get("validation"), "/validation")):
+        if isinstance(container, Mapping):
+            for i, error in enumerate(container.get("errors") or []):
+                add(error, pointer + f"/errors/{i}")
+    for key in ("contract_violations", "missing_evidence", "missing_facts"):
+        for i, error in enumerate(payload.get(key) or []):
+            add(error, f"/{key}/{i}")
+    for i, receipt in enumerate(execution.get("workspace_mutations") or []):
+        if not isinstance(receipt, Mapping):
+            continue
+        for j, check in enumerate(receipt.get("postcondition_results") or []):
+            if isinstance(check, Mapping) and check.get("status") != "satisfied":
+                add(check, f"/execution_record/workspace_mutations/{i}/postcondition_results/{j}",
+                    code="WORKSPACE_POSTCONDITION_UNSATISFIED", stage="execution.attestation")
+    for key in ("runtime_output_reconciliation", "completion_report", "completion_gate"):
+        container = execution.get(key) if key == "runtime_output_reconciliation" else payload.get(key)
+        if not isinstance(container, Mapping):
+            continue
+        for field in ("violations", "findings", "binding_and_receipt_findings"):
+            for i, check in enumerate(container.get(field) or []):
+                if isinstance(check, Mapping) and check.get("status") not in {"passed", "satisfied"}:
+                    add(check, f"/{key}/{field}/{i}", stage=key)
+    evidence = payload.get("evidence") or {}
+    if isinstance(evidence, Mapping):
+        for i, health in enumerate(evidence.get("runtime_status") or []):
+            if isinstance(health, Mapping) and health.get("ok") is False:
+                add({k: health[k] for k in ("error_code", "code", "message", "reason", "status") if k in health},
+                    f"/evidence/runtime_status/{i}", code="RUNTIME_HEALTHCHECK_FAILED", stage="installation")
+    if payload.get("error_code") or payload.get("failed_invariant"):
+        add(payload, "/", code=payload.get("error_code", ""), stage="producer")
+    if not rows:
+        return {}
+    rc = payload.get("return_code", execution.get("returncode"))
+    return {"schema_version": 1, "checks": rows[:12], "total_rejecting_checks": len(rows),
+        "unexpanded_index_range": [12, len(rows)] if len(rows) > 12 else [],
+        "unexpanded_pointers": [r["source_pointer"] for r in rows[12:28]],
+        "pointer_index_omitted": max(0, len(rows) - 28),
+        "process": {"return_code": rc, "started": bool(execution.get("attempt_id")) if execution else payload.get("command_started", "unknown")},
+        "scope": {k: execution[k] for k in ("task_id", "step_id", "action_id", "attempt_id") if k in execution},
+        "validation_acceptance": "rejected_or_incomplete", "commit_acceptance": "not_established"}
+
+
 def _runtime_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
     result = {
         key: deepcopy(payload[key])
         for key in _COMMON_RUNTIME_PAYLOAD_FIELDS
         if key in payload and payload[key] not in (None, "", [], {})
     }
+    index = _producer_failure_index(payload)
+    if index:
+        result["producer_failure_index"] = index
     for key in ("contract_violations", "missing_facts", "new_evidence_refs"):
         if payload.get(key) not in (None, "", [], {}):
             result[key] = deepcopy(payload[key])
@@ -1270,6 +1334,12 @@ def _diagnostic_facts(
             row["evidence_ref"] = str(refs[0])
         facts.append(row)
 
+    index = _producer_failure_index(payload)
+    if index:
+        # Keep the compact owner-produced index intact; generic metadata
+        # whitelisting must not erase the first cause again.
+        facts.append({"fact_id": "producer-rejecting-checks", "kind": "producer_failure_index",
+            "summary": index["checks"][0]["code"], "metadata": index})
     if return_code is not None:
         add_fact(
             fact_id="failure-return-code",
