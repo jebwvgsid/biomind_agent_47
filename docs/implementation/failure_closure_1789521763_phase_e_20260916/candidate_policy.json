@@ -1,0 +1,29 @@
+{
+  "status": "MECHANISM_READY / DEFAULT_NOT_ACTIVATED",
+  "entry": "BIOMIND_RECOVERY_RESOURCE_POLICY",
+  "explicit_candidate_value": "phase_e_candidate_v2",
+  "default": "disabled",
+  "soft_tokens": 300000,
+  "hard_tokens": 450000,
+  "soft_seconds": 120,
+  "hard_seconds": 180,
+  "recovery_max_tokens": 8192,
+  "receive_char_limit": 131072,
+  "public_char_limit": 1200,
+  "decision_seconds": 30,
+  "compaction_output": "own configured limit, otherwise existing 16000 reserve; not 8192",
+  "larger_user_limit": "scoped min(candidate, user max_tokens); conflicting parameter names fail closed",
+  "calibration": {
+    "policy": "phase_e_candidate_v2",
+    "legal_wire_chars": 128000,
+    "estimated_output_tokens": 72744,
+    "candidate_cap": 8192,
+    "largest_legal_message_fit": false,
+    "parser_unchanged": true,
+    "consequence": "remote length -> incomplete -> zero directive/tool admission; needs canary/calibration before activation"
+  },
+  "remote_enforcement": "NOT_RUN",
+  "cache_remeasurement": "NOT_RUN",
+  "scientific_E2E": "NOT_RUN",
+  "remote_cancel_billing": "UNKNOWN"
+}

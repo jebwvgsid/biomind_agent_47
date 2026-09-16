@@ -1,0 +1,60 @@
+{
+  "BASE": "332d91b6307fde96a6f64b434722fe4067cdc164",
+  "branch": "refactor/consultant-controller-authority",
+  "FINAL_PRODUCTION": "c6ea92c1940d5cda50683442a51162f7014e5cdd",
+  "commits": [
+    {
+      "hash": "0013eeb3d85c33bcb6fafcb6782c874d356e25da",
+      "subject": "fix(bindings): reject unresolved concrete values in local Generate admission",
+      "files": [
+        "agent_core/plan_bindings.py",
+        "agent_core/workspace_attestation.py",
+        "docs/implementation/failure_closure_1789521763_phase_e_20260916/c1_validation.json",
+        "docs/implementation/failure_closure_1789521763_phase_e_20260916/protection_before.json",
+        "skills/genomics/snpeff-annotation/SKILL.md",
+        "tests/phase_e_1789521763/test_c1.py"
+      ]
+    },
+    {
+      "hash": "cf77c53a9eb62d81f8377de850dda3b82d06b368",
+      "subject": "fix(recovery): put trusted rejecting checks into the first request",
+      "files": [
+        "agent_core/workflow/recovery_projection.py",
+        "docs/implementation/failure_closure_1789521763_phase_e_20260916/c2_validation.json",
+        "tests/phase_e_1789521763/test_c2.py"
+      ]
+    },
+    {
+      "hash": "01eea17373f65bea46136132dd76d30500b9534d",
+      "subject": "fix(contracts): align binding examples and Recovery producer facts",
+      "files": [
+        "agent_core/plan_bindings.py",
+        "agent_core/step_effects.py",
+        "agent_core/workflow/recovery_projection.py",
+        "docs/implementation/failure_closure_1789521763_phase_e_20260916/c1_c2_incremental_validation.json",
+        "tests/phase_e_1789521763/test_c1.py",
+        "tests/phase_e_1789521763/test_c2.py"
+      ]
+    },
+    {
+      "hash": "c6ea92c1940d5cda50683442a51162f7014e5cdd",
+      "subject": "fix(recovery): persist causal resource bounds and isolate public output",
+      "files": [
+        "agent_core/context_lineage.py",
+        "agent_core/provider_attempt.py",
+        "agent_core/workflow/context_compaction.py",
+        "agent_core/workflow/inspection_stop.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/workflow/recovery_agent.py",
+        "agent_core/workflow/recovery_node.py",
+        "agent_core/workflow/recovery_runtime.py",
+        "bio_agents.py",
+        "docs/implementation/failure_closure_1789521763_phase_e_20260916/c3_c4_validation.json",
+        "tests/phase_e_1789521763/test_c3.py",
+        "tests/phase_e_1789521763/test_c4.py"
+      ]
+    }
+  ],
+  "artifact_commit": "The subsequent artifact-only commit containing this file; full hash in final delivery.",
+  "push": "NOT_PERFORMED"
+}

@@ -1,0 +1,157 @@
+{
+  "historical_audit_commit": "332d91b6307fde96a6f64b434722fe4067cdc164",
+  "basis": "Same synthetic scenario class and semantic behavior; E adds explicit candidate policy and success response leaves. Historical runs stop at their original boundary; missing later counts UNKNOWN, never inferred.",
+  "before": {
+    "binding_local_correction_graph": {
+      "generate": 7,
+      "reviewer": 6,
+      "recovery": 0,
+      "approval": 6,
+      "execute": 6,
+      "commit": 6
+    },
+    "unresolved_binding_graph": {
+      "generate": 2,
+      "reviewer": 1,
+      "recovery": 0,
+      "execute": 1,
+      "commit": 1,
+      "bad_candidate_execute": 0,
+      "stop": "second real approval interrupt"
+    },
+    "rc0_postcondition_graph": {
+      "generate": 2,
+      "reviewer": 1,
+      "recovery": 1,
+      "execute": 2,
+      "commit": 1,
+      "prepare_commit": 0
+    },
+    "continuous_pages": {
+      "model_calls": 12,
+      "tool_calls": 12,
+      "reported_synthetic_tokens": 1202400,
+      "stop": "RECOVERY_LLM_TURN_LIMIT"
+    },
+    "compaction": {
+      "business_calls": 2,
+      "maintenance_calls": 3,
+      "reported_synthetic_maintenance_tokens": 810,
+      "summary_in_next_wire": true
+    }
+  },
+  "after": {
+    "chain1": {
+      "classification": "FIXED_AND_VERIFIED",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 7,
+        "reviewer": 6,
+        "recovery": 0
+      },
+      "approval_count": 6,
+      "execution_count": 6,
+      "commit_count": 6,
+      "scope": "unresolved scalar -> Generate local repair -> new approval -> Commit"
+    },
+    "chain2": {
+      "calls": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 7,
+        "reviewer": 6,
+        "recovery": 1
+      },
+      "approvals": 7,
+      "executions": 7,
+      "commits": 6,
+      "prepare_attempts": [
+        {
+          "operation": "prepare_database",
+          "attempt_id": "attempt_4a2721600f35caf1e999",
+          "rc": 0,
+          "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"plan-artifact-f888eccfbc4d2390f88ad57c\",\"path\":\"/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/plan_artifacts/plan-artifact-f888eccfbc4d2390f88ad57c\"}],\"produces_observations\":[{\"identity\":\"database_layout_prepared\",\"value\":true}]}\n",
+          "stderr": "",
+          "approved_sha256": "7cfaaf3c420e2b4be40efe4067a02a55cefb4f460ef317287bb129ff3376b017",
+          "executed_sha256": "fe3000b86c1f996d69c1b27d9484c60ba622feffd568a60e398775679007f903",
+          "approved_code": "/bin/bash --noprofile --norc -c 'set -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'\"'\"'PY'\"'\"'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('\"'\"'{\"produces_artifacts\": [{\"identity\": \"plan-artifact-f888eccfbc4d2390f88ad57c\", \"required_fields\": []}], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"database_layout_prepared\", \"required_fields\": []}]}'\"'\"')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, '\"'\"'BIOMIND_EFFECT_EVIDENCE_JSON='\"'\"', publication=True)\nfrom pathlib import Path\nimport os\ndb=Path(os.environ[\"SNPEFF_DB\"]); genome=os.environ[\"GENOME_VERSION\"]\n(db/\"data\"/\"genomes\").mkdir(parents=True,exist_ok=True); (db/\"data\"/genome).mkdir(exist_ok=True)\n(db/\"data\"/\"genomes\"/(genome+\".fa\")).write_bytes(Path('\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/E 新布局 中文/输入 新构造/新参考.fa'\"'\"').read_bytes())\n(db/\"data\"/genome/\"genes.gtf\").write_bytes(Path('\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/E 新布局 中文/输入 新构造/新注释.gtf'\"'\"').read_bytes())\nout=Path('\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/plan_artifacts/plan-artifact-f888eccfbc4d2390f88ad57c'\"'\"');out.parent.mkdir(parents=True,exist_ok=True);out.write_text(genome+\".genome : synthetic fixture\\n\")\nvalue=out.is_file() and (db/\"data\"/genome/\"genes.gtf\").stat().st_size>0\n(db/\"data\"/genome/\"genes.gtf\").unlink()\nprint(emit_effect_evidence({'\"'\"'produces_artifacts'\"'\"': {'\"'\"'plan-artifact-f888eccfbc4d2390f88ad57c'\"'\"': {'\"'\"'path'\"'\"': '\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/plan_artifacts/plan-artifact-f888eccfbc4d2390f88ad57c'\"'\"'}}, '\"'\"'produces_observations'\"'\"': {'\"'\"'database_layout_prepared'\"'\"': {'\"'\"'value'\"'\"': value}}}))\nPY\n'",
+          "wrapper": "#!/bin/bash\nset +e\n: > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/stdout.log\n: > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/stderr.log\nprintf 'runner=%s script=%s\\n' '/usr/bin/bash -o pipefail' /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/approved.sh > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/command_trace.log\n/usr/bin/bash -o pipefail /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/approved.sh > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/stdout.log 2> /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/stderr.log\nrc=$?\nprintf 'returncode=%s\\n' \"$rc\" >> /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/command_trace.log\nfinished_at=$(date -Iseconds 2>/dev/null || date)\nprintf '{\"attempt_id\":\"attempt_4a2721600f35caf1e999\",\"returncode\":%s,\"finished_at\":\"%s\"}\\n' \"$rc\" \"$finished_at\" > '/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/exit_status.json.tmp.$$'\nmv '/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/exit_status.json.tmp.$$' /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_4a2721600f35caf1e999/exit_status.json\nexit \"$rc\"\n",
+          "actual_workspace_before": {},
+          "actual_workspace_after": {
+            "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+          }
+        },
+        {
+          "operation": "prepare_database",
+          "attempt_id": "attempt_36dabaa6bd96297a4b31",
+          "rc": 0,
+          "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_artifacts\":[{\"identity\":\"plan-artifact-f888eccfbc4d2390f88ad57c\",\"path\":\"/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/plan_artifacts/plan-artifact-f888eccfbc4d2390f88ad57c\"}],\"produces_observations\":[{\"identity\":\"database_layout_prepared\",\"value\":true}]}\n",
+          "stderr": "",
+          "approved_sha256": "daee0bd9e7b8b7a82c9ddd9358016f4b30d7ebfc4cc1157464510df4c67b9fde",
+          "executed_sha256": "a4bbce0cc117897f493a2883516973126a19fb8210295ae658972cc47cd03a7f",
+          "approved_code": "/bin/bash --noprofile --norc -c 'set -euo pipefail\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python -I -S - <<'\"'\"'PY'\"'\"'\nimport json\n\ndef _emit_declared_rows(declarations, facts, prefix, *, publication=False):\n    \"\"\"Standalone serializer kernel: no filesystem, inference or execution.\"\"\"\n    def reject(code, path, actual, expected):\n        raise ValueError(json.dumps({\"code\": code, \"field_path\": path,\n                                     \"actual\": actual, \"expected\": expected}, sort_keys=True))\n\n    if not isinstance(facts, dict):\n        reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts\", type(facts).__name__, \"object\")\n    unknown = sorted(set(facts) - set(declarations))\n    if unknown:\n        reject(\"EFFECT_FIELD_UNDECLARED\", \"$.facts\", unknown, sorted(declarations))\n    payload = {\"schema_version\": 1}\n    for field, rows in declarations.items():\n        supplied = facts.get(field, {})\n        if not isinstance(supplied, dict):\n            reject(\"EFFECT_FACTS_REQUIRED\", \"$.facts.\" + field, type(supplied).__name__, \"identity-keyed object\")\n        expected = [row[\"identity\"] for row in rows]\n        if (set(supplied) - set(expected)) or (not publication and set(supplied) != set(expected)):\n            reject(\"EFFECT_FACT_IDENTITIES_MISMATCH\", \"$.facts.\" + field, sorted(supplied), expected)\n        emitted = []\n        for row in rows:\n            identity = row[\"identity\"]\n            if identity not in supplied:\n                continue  # No observed fact; never infer absence or success.\n            value = supplied[identity]\n            path = \"$.facts.\" + field + \".\" + identity\n            if not isinstance(value, dict) or not value:\n                reject(\"EFFECT_FACTS_REQUIRED\", path, value, \"nonempty actual fact object\")\n            if any(key in value for key in (\"identity\", \"artifact_id\", \"effect_id\", \"kind\", \"effect_kind\")):\n                reject(\"EFFECT_IDENTITY_OVERRIDE_FORBIDDEN\", path, sorted(value), \"facts without identity overrides\")\n            missing = [key for key in row[\"required_fields\"] if value.get(key) is None]\n            if field == \"produces_artifacts\" and not (isinstance(value.get(\"path\"), str) and value[\"path\"].strip()):\n                missing.append(\"path\")\n            if missing:\n                reject(\"EFFECT_FACT_FIELDS_MISSING\", path, sorted(value), sorted(set(missing)))\n            emitted.append({\"identity\": identity, **value})\n        if emitted:\n            payload[field] = emitted\n    if len(payload) == 1:\n        return \"\"  # no supported declaration: fabricate nothing\n    return prefix + json.dumps(payload, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False)\n\n_DECLARED_EFFECT_ROWS = json.loads('\"'\"'{\"produces_artifacts\": [{\"identity\": \"plan-artifact-f888eccfbc4d2390f88ad57c\", \"required_fields\": []}], \"explicit_side_effects\": [], \"produces_observations\": [{\"identity\": \"database_layout_prepared\", \"required_fields\": []}]}'\"'\"')\n\ndef emit_effect_evidence(actual_facts):\n    return _emit_declared_rows(_DECLARED_EFFECT_ROWS, actual_facts, '\"'\"'BIOMIND_EFFECT_EVIDENCE_JSON='\"'\"', publication=True)\nfrom pathlib import Path\nimport os\ndb=Path(os.environ[\"SNPEFF_DB\"]); genome=os.environ[\"GENOME_VERSION\"]\n(db/\"data\"/\"genomes\").mkdir(parents=True,exist_ok=True); (db/\"data\"/genome).mkdir(exist_ok=True)\n(db/\"data\"/\"genomes\"/(genome+\".fa\")).write_bytes(Path('\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/E 新布局 中文/输入 新构造/新参考.fa'\"'\"').read_bytes())\n(db/\"data\"/genome/\"genes.gtf\").write_bytes(Path('\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/E 新布局 中文/输入 新构造/新注释.gtf'\"'\"').read_bytes())\nout=Path('\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/plan_artifacts/plan-artifact-f888eccfbc4d2390f88ad57c'\"'\"');out.parent.mkdir(parents=True,exist_ok=True);out.write_text(genome+\".genome : synthetic fixture\\n\")\nvalue=out.is_file() and (db/\"data\"/genome/\"genes.gtf\").stat().st_size>0\nprint(emit_effect_evidence({'\"'\"'produces_artifacts'\"'\"': {'\"'\"'plan-artifact-f888eccfbc4d2390f88ad57c'\"'\"': {'\"'\"'path'\"'\"': '\"'\"'/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/plan_artifacts/plan-artifact-f888eccfbc4d2390f88ad57c'\"'\"'}}, '\"'\"'produces_observations'\"'\"': {'\"'\"'database_layout_prepared'\"'\"': {'\"'\"'value'\"'\"': value}}}))\nPY\n'",
+          "wrapper": "#!/bin/bash\nset +e\n: > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/stdout.log\n: > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/stderr.log\nprintf 'runner=%s script=%s\\n' '/usr/bin/bash -o pipefail' /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/approved.sh > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/command_trace.log\n/usr/bin/bash -o pipefail /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/approved.sh > /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/stdout.log 2> /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/stderr.log\nrc=$?\nprintf 'returncode=%s\\n' \"$rc\" >> /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/command_trace.log\nfinished_at=$(date -Iseconds 2>/dev/null || date)\nprintf '{\"attempt_id\":\"attempt_36dabaa6bd96297a4b31\",\"returncode\":%s,\"finished_at\":\"%s\"}\\n' \"$rc\" \"$finished_at\" > '/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/exit_status.json.tmp.$$'\nmv '/tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/exit_status.json.tmp.$$' /tmp/bm_phase_e_final_03/graphs_a/scratch/biomind-plan-local-graph-efi_2aew/task_outputs/fix-f6-e-missing-repair/attempts/attempt_36dabaa6bd96297a4b31/exit_status.json\nexit \"$rc\"\n",
+          "actual_workspace_before": {
+            "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+          },
+          "actual_workspace_after": {
+            "data/new_fixture_v2/genes.gtf": "140ae8e9dc9477f37d7ea8a30ad2a9aaf35e6ee4368d499ee539d4bdaf6e2d8b",
+            "data/genomes/new_fixture_v2.fa": "544fbf4c3824865d9b5054bdaef6704ba63c66129031003f3ff39d3ccdd07d8a"
+          }
+        }
+      ],
+      "production_overrides": []
+    },
+    "chain3": {
+      "policy": {
+        "decision_seconds": 30,
+        "hard_seconds": 180,
+        "hard_tokens": 450000,
+        "max_output_tokens": 8192,
+        "name": "phase_e_candidate_v2",
+        "public_char_limit": 1200,
+        "receive_char_limit": 131072,
+        "soft_seconds": 120,
+        "soft_tokens": 300000
+      },
+      "recovery_calls": 5,
+      "tools": 11,
+      "execute_calls": 0,
+      "commits": 1,
+      "original_attempt": "attempt_9ef2dc8b905fa90511e1",
+      "replay_additional_commits": 0
+    },
+    "chain4": {
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2,
+        "reviewer": 1,
+        "recovery": 4
+      },
+      "executions": 2,
+      "approvals": 2,
+      "commits": 1,
+      "summary_calls": 0,
+      "terminal_status": "blocked"
+    },
+    "continuous_pages": {
+      "model_calls": 4,
+      "tool_calls": 3,
+      "synthetic_tokens": 400800,
+      "extra_summary_model_calls": 0
+    },
+    "compaction": {
+      "model_calls": 2,
+      "maintenance_calls": 3,
+      "wire_chars": [
+        13938,
+        14077
+      ],
+      "summary_next_request": true
+    }
+  },
+  "all_science": "synthetic tiny-process leaves only; not scientific E2E",
+  "tokens": "Synthetic returned usage or explicitly estimated reservations; not real consumption/cost/cache savings"
+}

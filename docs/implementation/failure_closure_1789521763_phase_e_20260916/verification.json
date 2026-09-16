@@ -1,0 +1,35 @@
+{
+  "document_id": "BM-FAILURE-CLOSURE-1789521763-PHASE-E-V2",
+  "BASE": "332d91b6307fde96a6f64b434722fe4067cdc164",
+  "FINAL_PRODUCTION": "c6ea92c1940d5cda50683442a51162f7014e5cdd",
+  "branch": "refactor/consultant-controller-authority",
+  "phase": "E",
+  "status": "OFFLINE_IMPLEMENTATION_AND_ACCEPTANCE_COMPLETE",
+  "policy_status": "MECHANISM_READY / DEFAULT_NOT_ACTIVATED",
+  "phase_e_passed_unique": 149,
+  "preservation_passed_unique": 78,
+  "legacy_exploratory_failures": "PRESERVED_IN_failure_ledger.json; no all-suite-green claim",
+  "V01_V20": "ALL_HAVE_FINAL_CURRENT_TEST_BYTE_PASS",
+  "production_signature": "e5bb4292c06c008bead5afa5758323dac6f7936a1ebd099d1eed503d6886ac8d",
+  "all_final_production_bytes_identical": true,
+  "protected_overlay_files_unchanged": 58,
+  "clean_commit_alone_deployment_verified": false,
+  "evidence_archive_sha256": "4e4da5a359b09adccd8b0ddee25b332c859329bc03dd67830c46bf0cfce04cab",
+  "NOT_RUN": [
+    "real_model_canary",
+    "real_cache_remeasurement",
+    "scientific_E2E",
+    "real_external_step_worker_backend"
+  ],
+  "UNKNOWN": [
+    "remote_cancellation_and_billing_stop"
+  ],
+  "safety": {
+    "credentials_and_startup_scripts": "NOT_READ_OR_EXECUTED",
+    "model_API_calls": 0,
+    "real_scientific_analysis": 0,
+    "installation": 0,
+    "historical_task_resumed": false,
+    "push": false
+  }
+}

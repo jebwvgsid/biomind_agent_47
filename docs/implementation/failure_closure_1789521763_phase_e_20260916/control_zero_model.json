@@ -1,0 +1,300 @@
+{
+  "actual_interactive_mode": true,
+  "cases": [
+    {
+      "input": "\n /exit\n\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "\n /exit\n\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "QUIT\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "quit",
+        "raw_input": "QUIT\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "```text\n/exit\n```",
+      "standalone_control": false,
+      "dispatches": [
+        "```text\n/exit\n```"
+      ],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "q\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "q",
+        "raw_input": "q\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "Explain /exit in this text",
+      "standalone_control": false,
+      "dispatches": [
+        "Explain /exit in this text"
+      ],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "first line\n/exit\nlast line",
+      "standalone_control": false,
+      "dispatches": [
+        "first line\n/exit\nlast line"
+      ],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": " \t/exit \r\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": " \t/exit \r\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "/exit",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "/exit\nplease continue",
+      "standalone_control": false,
+      "dispatches": [
+        "/exit\nplease continue"
+      ],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "/exit\r\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit\r\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "exit\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "exit",
+        "raw_input": "exit\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "/exit\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/exit",
+        "raw_input": "/exit\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    },
+    {
+      "input": "/quit\r\n",
+      "standalone_control": true,
+      "dispatches": [],
+      "model_calls": 0,
+      "execute_calls": 0,
+      "provider_initialized": false,
+      "receipt": {
+        "schema_version": 1,
+        "command": "/quit",
+        "raw_input": "/quit\r\n",
+        "source": "interactive_prompt",
+        "action": "exit",
+        "model_calls": 0,
+        "task_dispatched": false,
+        "loop_exit": "requested",
+        "recorded_at": "2026-09-16T13:22:13+08:00",
+        "process_exit": "not_observed_by_loop",
+        "remote_cleanup": "not_asserted"
+      },
+      "isolation": "actual interactive loop in existing guarded process; no nested process"
+    }
+  ],
+  "note": "Embedded text uses an explicit zero-model task leaf; standalone controls never dispatch. No provider initialization."
+}
