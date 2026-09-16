@@ -797,6 +797,57 @@ def _observation_envelope(
     }
 
 
+def recovery_public_text(text: str, limit: int | None = None) -> str:
+    """Bounded public copy only; raw protocol/trace is never edited.
+
+    Buffering the response before publication handles split/unclosed tags.
+    Backtick runs and Markdown fences delimit literal code examples.
+    """
+    if limit is None:
+        from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES
+        scope = RECOVERY_RESOURCES.get()
+        limit = scope["policy"].public_char_limit if scope else 1200
+    result, index, code_ticks, hidden, tilde_fence = [], 0, 0, 0, 0
+    text = text[:131072]
+    while index < len(text) and len(result) < limit:
+        if text[index] == "~" and not text[text.rfind("\n", 0, index)+1:index].strip() and not code_ticks and not hidden:
+            end = index
+            while end < len(text) and text[end] == "~":
+                end += 1
+            count = end-index
+            if count >= 3:
+                tilde_fence = 0 if tilde_fence and count >= tilde_fence else tilde_fence or count
+                result.extend(text[index:end][:limit-len(result)])
+                index = end
+                continue
+        if text[index] == "`" and not tilde_fence:
+            end = index
+            while end < len(text) and text[end] == "`":
+                end += 1
+            count = end - index
+            if not hidden:
+                code_ticks = 0 if code_ticks == count else count if not code_ticks else code_ticks
+                result.extend(text[index:end][:limit-len(result)])
+            index = end
+            continue
+        if not code_ticks and not tilde_fence:
+            lowered = text[index:index+12].lower()
+            if lowered.startswith("<analysis>"):
+                hidden += 1
+                index += 10
+                continue
+            if lowered.startswith("</analysis>"):
+                hidden = max(0, hidden-1)
+                index += 11
+                continue
+            if text[index] == "<" and "<analysis>".startswith(text[index:].lower()):
+                break
+        if not hidden:
+            result.append(text[index])
+        index += 1
+    return "".join(result).strip()
+
+
 def _current_public_explanation(
     explanations: Sequence[Mapping[str, Any]],
     source_message_id: str,
@@ -820,7 +871,7 @@ def _current_public_explanation(
             value = record.get("text") if assistant_public_text is None else assistant_public_text
         else:
             continue
-        return value if isinstance(value, str) and value.strip() else ""
+        return recovery_public_text(value) if isinstance(value, str) and value.strip() else ""
     return ""
 
 
@@ -896,9 +947,8 @@ class RecoveryAgentLoop:
             call = self.model
         if call is None:
             raise RecoveryAgentError("RECOVERY_PROVIDER_INVALID")
-        response = call(messages)
-        if inspect.isawaitable(response):
-            response = await response
+        from agent_core.workflow.recovery_runtime import recovery_direct_invoke
+        response = await recovery_direct_invoke(call, messages, stage="recovery", call_context=call_context)
         if not isinstance(response, AIMessage):
             raise RecoveryAgentError(
                 "RECOVERY_PROVIDER_RESPONSE_INVALID", type(response).__name__
@@ -909,17 +959,21 @@ class RecoveryAgentLoop:
         config = self.config
 
         async def call_model(state: _RecoveryLoopState) -> dict[str, Any]:
+            from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES, recovery_replay_wire
             turns = int(state.get("turn_count") or 0)
-            if int(state.get("no_progress_rounds") or 0) >= config.max_consecutive_no_progress_rounds:
+            wire = build_provider_messages(state)
+            replay = recovery_replay_wire(wire, context_epoch_id=str(state.get("context_epoch_id") or ""))
+            if replay is not None:
+                wire = replay
+            if replay is None and int(state.get("no_progress_rounds") or 0) >= config.max_consecutive_no_progress_rounds:
                 return {"terminal_error": {"code": "RECOVERY_NO_PROGRESS_LIMIT", "detail": str(config.max_consecutive_no_progress_rounds)}}
-            if int(state.get("tool_call_count") or 0) >= config.max_total_tool_calls:
+            if int(state.get("tool_call_count") or 0) >= config.max_total_tool_calls and RECOVERY_RESOURCES.get() is None:
                 return {"terminal_error": {"code": "RECOVERY_TOOL_CALL_LIMIT", "detail": str(config.max_total_tool_calls)}}
-            if turns >= config.max_llm_turns:
+            if replay is None and turns >= config.max_llm_turns:
                 return {"terminal_error": {
                     "code": "RECOVERY_LLM_TURN_LIMIT",
                     "detail": str(config.max_llm_turns),
                 }}
-            wire = build_provider_messages(state)
             context_chars = _message_chars(wire)
             budget = _context_budget_snapshot(
                 state,
@@ -946,7 +1000,8 @@ class RecoveryAgentLoop:
                 state.get("compaction_bypass_remaining") or 0
             )
             if (
-                budget.should_compact
+                replay is None
+                and budget.should_compact
                 and compactable
                 and compaction_bypass <= 0
             ):
@@ -962,7 +1017,7 @@ class RecoveryAgentLoop:
                         "wire_fingerprint": _wire_fingerprint(wire),
                     },
                 }
-            if budget.hard_block:
+            if replay is None and budget.hard_block:
                 return {
                     "context_budget_checks": budget_checks,
                     "terminal_error": {
@@ -983,7 +1038,15 @@ class RecoveryAgentLoop:
                 for item in state.get("provider_usage") or ()
                 if isinstance(item, Mapping)
             ]
-            ordinal = turns + 1
+            from agent_core.workflow.recovery_runtime import (
+                recovery_closure_wire, recovery_resource_update, RECOVERY_RESOURCES, RecoveryResourceLimit,
+            )
+            if replay is None:
+                wire = recovery_closure_wire(wire, turns=turns, tools=int(state.get("tool_call_count") or 0),
+                    max_turns=config.max_llm_turns, max_tools=config.max_total_tool_calls)
+            ordinal = turns + (replay is None)
+            if RECOVERY_RESOURCES.get() is not None and replay is None:
+                recovery_resource_update(lambda row: row["business"].update(turn_count=ordinal))
             attempts = 0
             while True:
                 attempts += 1
@@ -1012,9 +1075,10 @@ class RecoveryAgentLoop:
                     "incident_id": seed.failure_packet.incident_id,
                     "context_epoch_id": str(state.get("context_epoch_id") or ""),
                     "overflow_epoch": int(state.get("overflow_epoch") or 0),
-                    "turn_ordinal": turns + 1,
+                    "turn_ordinal": ordinal,
                     "request_ordinal": request_ordinal,
                     "transport_attempt_ordinal": attempts,
+                    "maximum_transport_attempts": config.max_transport_attempts,
                     "wire_fingerprint": request_record["wire_fingerprint"],
                     "reception_protocol": PROTOCOL,
                     "provider_message_count": len(wire),
@@ -1052,6 +1116,8 @@ class RecoveryAgentLoop:
                     )
                     raise
                 except Exception as exc:
+                    if isinstance(exc, RecoveryResourceLimit):
+                        raise
                     request_record.update({
                         "status": "transport_failed",
                         "error_type": type(exc).__name__,
@@ -1295,7 +1361,7 @@ class RecoveryAgentLoop:
                 public_field = field if field in directive_schema().get("properties", {}) else ""
                 public_status = "恢复提案尚未接纳：" + code + ("（" + public_field + "）" if public_field else "") + "。"
             elif receipt.get("status") == "candidate_validated" and receipt.get("transport") == "native_tool":
-                current_explanation = str((update.get("directive") or {}).get("summary") or "")
+                current_explanation = recovery_public_text(str((update.get("directive") or {}).get("summary") or ""))
                 public_status = "恢复提案格式校验通过，尚待接纳。"
             await self._emit_event("recovery_response_received", {
                 **call_context, "event_id": f"{assistant.id}:reception", **receipt,
@@ -1345,11 +1411,24 @@ class RecoveryAgentLoop:
             return update
 
         async def run_tools(state: _RecoveryLoopState) -> dict[str, Any]:
+            from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES, recovery_resource_update, recovery_seconds_remaining, recovery_dispatch_seconds, RecoveryResourceLimit
+            scope = RECOVERY_RESOURCES.get()
+            if scope is not None and (scope["row"].get("closing") or recovery_seconds_remaining() <= 0):
+                raise RecoveryResourceLimit("Decision-only turn requested further investigation")
             calls = list(state.get("pending_tool_calls") or ())
             counts = dict(state.get("tool_request_counts") or {})
             known_progress = set(state.get("progress_signatures") or ())
             inspected_refs = set(state.get("inspected_refs") or ())
             total = int(state.get("tool_call_count") or 0)
+            if scope is not None and len(calls) > config.max_total_tool_calls-total:
+                # Close the complete native tool bundle without dispatching
+                # beyond its budget or leaving dangling tool-call IDs.
+                recovery_resource_update(lambda row: row.update(closing=True))
+                return {"pending_tool_calls": [], "messages": [ToolMessage(
+                    content=_canonical({"status": "not_dispatched", "error": {
+                        "code": "RECOVERY_TOOL_BUDGET_RESERVED", "detail": "Submit a decision using current evidence."}}),
+                    tool_call_id=str(call["id"]), name=str(call["name"]),
+                    id=f"{seed.seed_id}:tool-budget:{call['id']}") for call in calls]}
             observation_chars = int(state.get("observation_chars") or 0)
             observation_receipts = [
                 deepcopy(dict(item))
@@ -1386,6 +1465,8 @@ class RecoveryAgentLoop:
                     break
                 counts[request_key] = prior_count + 1
                 total += 1
+                if scope is not None:
+                    recovery_resource_update(lambda row: row["business"].update(tool_call_count=total, tool_request_counts=deepcopy(counts)))
                 error: dict[str, Any] = {}
                 tool_context = {
                     "task_id": seed.failure_packet.task_id,
@@ -1420,7 +1501,17 @@ class RecoveryAgentLoop:
                         dispatch = self.dispatcher.dispatch
                     raw_result = dispatch(dotted_tool, arguments)
                     if inspect.isawaitable(raw_result):
-                        raw_result = await raw_result
+                        if scope is None:
+                            raw_result = await raw_result
+                        else:
+                            # Leave the decision interval plus bounded local
+                            # serialization time within the same hard deadline.
+                            try:
+                                raw_result = await asyncio.wait_for(raw_result,
+                                    timeout=max(.001, recovery_dispatch_seconds() - min(1, scope["policy"].decision_seconds * .1)))
+                            except TimeoutError:
+                                recovery_resource_update(lambda row: row.update(closing=True))
+                                raise RecoveryAgentError("RECOVERY_TOOL_TIME_LIMIT", "Read-only investigation tool exceeded its decision reservation")
                     if not isinstance(raw_result, Mapping):
                         raise RecoveryAgentError(
                             "RECOVERY_TOOL_RESULT_INVALID", type(raw_result).__name__

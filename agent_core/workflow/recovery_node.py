@@ -57,7 +57,7 @@ from agent_core.workflow.recovery_context import (
     archive_recovery_episode,
 )
 from agent_core.workflow.recovery_projection import project_recovery_seed
-from agent_core.workflow.recovery_runtime import RecoveryRuntime
+from agent_core.workflow.recovery_runtime import RecoveryRuntime, RecoveryResourceLimit
 from agent_core.workflow.recovery_tools import (
     RecoveryLocalToolDispatcher,
     build_recovery_inspection_registry,
@@ -810,6 +810,7 @@ class Schema2RecoveryNode:
         provider_invoke: Callable[..., Any] | None = None,
         event_sink: Callable[[str, Mapping[str, Any]], Any] | None = None,
         runtime_recovery: Callable | None = None,
+        resource_policy: Any = None,
     ) -> None:
         self.data_path = str(data_path)
         self.model = model
@@ -826,6 +827,8 @@ class Schema2RecoveryNode:
         )
         self.loop_config = loop_config or RecoveryAgentLoopConfig()
         self.runtime_recovery = runtime_recovery
+        from agent_core.workflow.recovery_runtime import configured_recovery_policy
+        self.resource_policy = resource_policy if resource_policy is not None else configured_recovery_policy()
         self.inherited_materials_factory = inherited_materials_factory
         self.compactor = compactor
         self.context_budget_policy = context_budget_policy or ContextBudgetPolicy()
@@ -846,6 +849,8 @@ class Schema2RecoveryNode:
             if inspect.isawaitable(result):
                 await result
         except (asyncio.CancelledError, KeyboardInterrupt):
+            raise
+        except RecoveryResourceLimit:
             raise
         except Exception as exc:
             logger.warning("Recovery observation sink failed: event=%s error=%s", event, type(exc).__name__)
@@ -886,6 +891,8 @@ class Schema2RecoveryNode:
             raise asyncio.CancelledError()
         try:
             projection = project_recovery_seed(parent_state, durable)
+        except RecoveryResourceLimit:
+            raise
         except Exception as exc:
             raise ContextEpochCASConflict(
                 "RECOVERY_CONTEXT_IDENTITY_STALE",
@@ -1485,9 +1492,12 @@ class Schema2RecoveryNode:
                         }
                 except (TypeError, ValueError):
                     call_kwargs = {}
-            response = call(messages, **call_kwargs)
-            if inspect.isawaitable(response):
-                response = await response
+            if getattr(self.compactor, "__self__", None) is not None and hasattr(self.compactor.__self__, "_ainvoke_llm"):
+                response = await call(messages, **call_kwargs)
+            else:
+                from agent_core.workflow.recovery_runtime import recovery_direct_invoke
+                response = await recovery_direct_invoke(call, messages, stage="context_compaction",
+                    call_context=event_context, call_kwargs=call_kwargs)
         except (asyncio.CancelledError, KeyboardInterrupt):
             record["status"] = "cancelled"
             record["elapsed_seconds"] = time.monotonic() - request_started
@@ -1501,6 +1511,8 @@ class Schema2RecoveryNode:
                     "elapsed_seconds": record["elapsed_seconds"],
                 },
             )
+            raise
+        except RecoveryResourceLimit:
             raise
         except Exception as exc:
             record.update({
@@ -1632,7 +1644,7 @@ class Schema2RecoveryNode:
                 "RECOVERY_TOOL_REQUEST_REPEAT_LIMIT", "RECOVERY_FIXED_CONTEXT_TOKEN_LIMIT",
                 "RECOVERY_OBSERVATION_BUDGET_EXCEEDED", "RECOVERY_OVERFLOW_EPOCH_LIMIT",
                 "RECOVERY_BUDGET_EXHAUSTED", "RECOVERY_NO_PROGRESS",
-                "RECOVERY_PROVIDER_TRANSPORT_FAILED",
+                "RECOVERY_PROVIDER_TRANSPORT_FAILED", "RECOVERY_RESOURCE_LIMIT",
             }
         if technical_error:
             result = self._internal(task_id=stop["scope"]["task_id"], durable=durable,
@@ -1646,6 +1658,49 @@ class Schema2RecoveryNode:
         }
 
     async def run(self, state: Mapping[str, Any]) -> dict[str, Any]:
+        from agent_core.context_lineage import ContextLineageStore
+        from agent_core.workflow.recovery_runtime import (
+            recovery_resource_begin, recovery_resource_end, recovery_seconds_remaining,
+            recovery_resource_update, recovery_token_occupancy, RecoveryResourceLimit,
+        )
+        if self.resource_policy is None or state.get("pending_runtime_evidence_request"):
+            return await self._run_investigation(state)
+        task_id = str(state.get("task_id") or "")
+        durable = self.loader(self.data_path, task_id)
+        projection = project_recovery_seed(state, durable)
+        if projection is None:
+            return await self._run_investigation(state)
+        try:
+            scope, token = recovery_resource_begin(ContextLineageStore(self.data_path, task_id),
+                projection.recovery_seed.failure_packet.incident_id, self.resource_policy)
+        except RecoveryResourceLimit as exc:
+            return self._inspection_stop_result(projection=projection, durable=durable,
+                episode={"terminal_error": {"code": "RECOVERY_RESOURCE_LIMIT", "detail": str(exc)},
+                    "resource_receipt": {"historical_usage": "UNKNOWN", "new_physical_attempts": 0}},
+                technical_error=False)
+        try:
+            if recovery_seconds_remaining() <= 0:
+                raise RecoveryResourceLimit("Interrupted investigation consumed its time reservation")
+            async with asyncio.timeout(recovery_seconds_remaining()):
+                return await self._run_investigation(state)
+        except (RecoveryResourceLimit, TimeoutError) as exc:
+            recovery_resource_update(lambda row: row.update(terminal_reason="RECOVERY_RESOURCE_LIMIT"))
+            row = scope["row"]
+            return self._inspection_stop_result(projection=projection,
+                durable=self.loader(self.data_path, task_id),
+                episode={"terminal_error": {"code": "RECOVERY_RESOURCE_LIMIT", "detail": str(exc)},
+                    "audit": row["business"], "resource_receipt": {
+                        "incident_id": scope["incident"], "policy": row["policy"]["name"],
+                        "occupied_tokens": recovery_token_occupancy(row),
+                        "physical_attempts": len(row["attempts"]),
+                        "unknown_usage_attempts": sum(a["status"] != "settled" for a in row["attempts"].values()),
+                        "elapsed_seconds": self.resource_policy.hard_seconds - recovery_seconds_remaining(),
+                        "ledger_directory": "context_trace/recovery_transport",
+                    }}, technical_error=False)
+        finally:
+            recovery_resource_end(scope, token)
+
+    async def _run_investigation(self, state: Mapping[str, Any]) -> dict[str, Any]:
         task_id = str(state.get("task_id") or "")
         if not task_id:
             raise ValueError("SCHEMA2_RECOVERY_TASK_ID_REQUIRED")
@@ -1742,6 +1797,8 @@ class Schema2RecoveryNode:
             return fail(
                 task_id=task_id, durable=durable, code=exc.code, detail=exc.detail
             )
+        except RecoveryResourceLimit:
+            raise
         except Exception as exc:
             return fail(
                 task_id=task_id,
@@ -1792,6 +1849,8 @@ class Schema2RecoveryNode:
             )
         except (asyncio.CancelledError, GraphBubbleUp):
             raise
+        except RecoveryResourceLimit:
+            raise
         except Exception as exc:
             return fail(
                 task_id=task_id, durable=durable,
@@ -1800,6 +1859,9 @@ class Schema2RecoveryNode:
                 recovery_archive_ref=linked_previous_archive_ref,
             )
         archive = None
+        from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES, recovery_resource_update, recovery_business_checkpoint
+        if RECOVERY_RESOURCES.get() is not None:
+            budget_state.update(deepcopy(recovery_resource_update().get("business", {})))
         maintenance = deepcopy(dict(budget_state.get("compaction_maintenance") or {}))
 
         while True:
@@ -1832,6 +1894,8 @@ class Schema2RecoveryNode:
                     detail=exc.detail,
                     recovery_archive_ref=linked_previous_archive_ref,
                 )
+            except RecoveryResourceLimit:
+                raise
             except Exception as exc:
                 logger.exception(
                     "Recovery agent phase failed closed: task=%s seed=%s",
@@ -1850,6 +1914,8 @@ class Schema2RecoveryNode:
                 )
 
             episode.setdefault("_resume_state", {})["compaction_maintenance"] = deepcopy(maintenance)
+            if RECOVERY_RESOURCES.get() is not None:
+                recovery_business_checkpoint(episode["_resume_state"])
             try:
                 archive = archive_recovery_episode(
                     phase_store=self.phase_store,
@@ -1858,6 +1924,8 @@ class Schema2RecoveryNode:
                     overflow_epoch=overflow_epoch,
                     linked_previous_archive_ref=linked_previous_archive_ref,
                 )
+            except RecoveryResourceLimit:
+                raise
             except Exception as exc:
                 return fail(
                     task_id=task_id,
@@ -2073,6 +2141,8 @@ class Schema2RecoveryNode:
                         material_residency=material_residency,
                     )
                 )
+            except RecoveryResourceLimit:
+                raise
             except Exception as exc:
                 if isinstance(exc, ContextEpochCASConflict):
                     return fail(
@@ -2214,6 +2284,8 @@ class Schema2RecoveryNode:
             applied = await self.runtime.run(admitted_state)
         except (asyncio.CancelledError, GraphBubbleUp):
             raise
+        except RecoveryResourceLimit:
+            raise
         except Exception as exc:
             return fail(
                 task_id=task_id, durable=durable,
@@ -2240,6 +2312,8 @@ class Schema2RecoveryNode:
                     },
                 )
             except (asyncio.CancelledError, GraphBubbleUp):
+                raise
+            except RecoveryResourceLimit:
                 raise
             except Exception as exc:
                 return fail(

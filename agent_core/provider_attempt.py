@@ -448,6 +448,7 @@ class ProviderStreamObserver(BaseCallbackHandler):
         self._reasoning = 0
         self._content = 0
         self._tool_calls = 0
+        self._tool_argument_chars = 0
         self._observed_payload_callbacks = 0
         self._reasoning_chars = 0
         self._content_chars = 0
@@ -563,6 +564,9 @@ class ProviderStreamObserver(BaseCallbackHandler):
                 self._last_event_type = "content"
             if tool_count:
                 self._tool_calls += tool_count
+                message = self._chunk_message(kwargs.get("chunk"))
+                fragments = getattr(message, "tool_call_chunks", None) or (getattr(message, "additional_kwargs", {}) or {}).get("tool_calls") or getattr(message, "tool_calls", None) or []
+                self._tool_argument_chars += len(self._text(fragments))
                 self._last_event_type = "tool_call"
             if finish_reason:
                 self._finish_reason = finish_reason
@@ -620,6 +624,7 @@ class ProviderStreamObserver(BaseCallbackHandler):
                 "reasoning_chunk_count": self._reasoning,
                 "content_chunk_count": self._content,
                 "tool_call_fragment_count": self._tool_calls,
+                "tool_argument_chars": self._tool_argument_chars,
                 "observed_payload_callback_count": self._observed_payload_callbacks,
                 "reasoning_char_count": self._reasoning_chars,
                 "content_char_count": self._content_chars,
@@ -1111,7 +1116,13 @@ async def _cancel_and_drain(
         record.cleanup_result = CLEANUP_TIMEOUT
         return CLEANUP_TIMEOUT
     try:
-        task.result()
+        late_response = task.result()
+        # Late usage is accounting evidence only. Never return the late
+        # response or reopen the observer/parser after cancellation.
+        usage_status, usage = _response_provider_usage(late_response)
+        if usage_status != "UNKNOWN":
+            record.usage_status, record.provider_usage = usage_status, usage
+            record.usage_reported_at = utc_now()
     except BaseException:
         pass
     record.cancel_completed_at = utc_now()
@@ -1175,6 +1186,21 @@ async def run_provider_attempt(
         await asyncio.sleep(0)
         while True:
             state = observer.snapshot()
+            receive_limit = int(envelope.output_policy.get("receive_char_limit") or 0)
+            if receive_limit and state["reasoning_char_count"] + state["content_char_count"] + state["tool_argument_chars"] > receive_limit:
+                _apply_observer(record, observer, started_monotonic=started_monotonic)
+                record.failure_type = "PROVIDER_OUTPUT_LIMIT"
+                record.finish_reason = "length"
+                record.state = "FAILED_TERMINAL"
+                record.partial_payload_disposition = "discarded_before_parse"
+                cleanup = await _cancel_and_drain(invoke_task, observer, record, policy.cleanup_seconds)
+                record.state = "FAILED_TERMINAL" if cleanup == CLEANUP_CONFIRMED else "OUTCOME_UNKNOWN"
+                if cleanup != CLEANUP_CONFIRMED:
+                    record.failure_type = PROVIDER_OUTCOME_UNKNOWN
+                record.attempt_completed_at = utc_now()
+                _emit(progress_callback, "attempt_failed", record)
+                raise ProviderAttemptFailure(record.failure_type, "Provider receive limit exceeded",
+                    record=record, retryable=False)
             total_remaining = policy.total_seconds - (time.monotonic() - started_monotonic)
             last_activity = state["last_activity_monotonic"]
             if last_activity is None:
@@ -1334,6 +1360,19 @@ async def run_provider_attempt(
                 )
                 if record.usage_status != "UNKNOWN":
                     record.usage_reported_at = utc_now()
+                received_chars = (len(str(getattr(response, "content", "")))
+                    + len(str(getattr(response, "tool_calls", "")))
+                    + len(str(getattr(response, "additional_kwargs", ""))))
+                if receive_limit and received_chars > receive_limit:
+                    record.failure_type = "PROVIDER_OUTPUT_LIMIT"
+                    record.finish_reason = "length"
+                    record.state = "FAILED_TERMINAL"
+                    record.partial_payload_disposition = "discarded_before_parse"
+                    record.cleanup_result = CLEANUP_NOT_REQUIRED
+                    record.attempt_completed_at = utc_now()
+                    _emit(progress_callback, "attempt_failed", record)
+                    raise ProviderAttemptFailure("PROVIDER_OUTPUT_LIMIT", "Complete response exceeds receive limit",
+                        record=record, retryable=False)
                 record.state = "COMPLETED"
                 record.stream_completed = True
                 record.cleanup_result = CLEANUP_NOT_REQUIRED

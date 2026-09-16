@@ -699,7 +699,36 @@ class ContextLineageStore:
         finally:
             os.close(fd)
 
-    def recovery_transport_claim(self, invocation_id, request_hash, attempt_id, *, maximum, total_seconds):
+    def recovery_transport_read(self, invocation_id):
+        path = self.root / "recovery_transport" / (_safe_id(invocation_id) + ".json")
+        return json.loads(path.read_text()) if path.exists() else {}
+
+    def recovery_unaccounted_attempts(self):
+        """Unknown historical sends cannot initialize a free parent budget."""
+        root = self.root / "recovery_transport"
+        accounted = {aid for p in root.glob("resources-*.json")
+            for aid in json.loads(p.read_text()).get("attempts", {})}
+        return any(a["attempt_id"] not in accounted for p in root.glob("*.json")
+            if not p.name.startswith("resources-") for a in json.loads(p.read_text()).get("attempts", []))
+
+    def recovery_resource_update(self, incident_id, update, *, locked=False):
+        """Use the existing trace lock/journal for one causal investigation.
+
+        Reservation precedes the transport claim write. A crash between them
+        leaves a conservative orphan reservation, never an uncharged send.
+        """
+        path = self.root / "recovery_transport" / ("resources-" + _safe_id(incident_id) + ".json")
+        def apply():
+            row = json.loads(path.read_text()) if path.exists() else {}
+            update(row)
+            _atomic_replace_json(path, row)
+            return row
+        if locked:
+            return apply()
+        with self._finalize_claim_lock():
+            return apply()
+
+    def recovery_transport_claim(self, invocation_id, request_hash, attempt_id, *, maximum, total_seconds, reserve=None):
         """Claim an outbound send using the existing atomic trace store.
 
         In-flight claims survive crashes as UNKNOWN; they are never reset to a
@@ -725,6 +754,8 @@ class ContextLineageStore:
                 raise SnapshotConflictError("RECOVERY_TRANSPORT_DEADLINE_EXCEEDED")
             if row.get("retry_not_before", 0) > time.time():
                 return {**row, "status": "backoff"}
+            if reserve is not None:
+                reserve(attempt_id, locked=True)
             row["attempts"].append({"attempt_id": attempt_id, "status": "dispatched_unknown"})
             row["status"] = "in_flight"
             _atomic_replace_json(path, row)

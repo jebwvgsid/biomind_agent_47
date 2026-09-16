@@ -11,6 +11,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import time
+import uuid
+import asyncio
+import inspect
+from contextvars import ContextVar
+from dataclasses import asdict, dataclass
 from copy import deepcopy
 from typing import Any, Callable, Mapping
 
@@ -34,6 +41,313 @@ from agent_core.workflow.stage_contracts import (
 
 Loader = Callable[[str, str], dict[str, Any]]
 Saver = Callable[[str, str, dict[str, Any]], Any]
+
+
+@dataclass(frozen=True)
+class RecoveryResourcePolicy:
+    """Explicit candidate, disabled unless selected at the production entry."""
+    name: str = "phase_e_candidate_v2"
+    soft_tokens: int = 300_000
+    hard_tokens: int = 450_000
+    soft_seconds: float = 120
+    hard_seconds: float = 180
+    max_output_tokens: int = 8192
+    receive_char_limit: int = 131072
+    public_char_limit: int = 1200
+    decision_seconds: float = 30
+
+    def __post_init__(self):
+        if not (0 < self.soft_tokens < self.hard_tokens and 0 < self.soft_seconds < self.hard_seconds
+                and 0 < self.decision_seconds <= self.hard_seconds and self.max_output_tokens > 0
+                and self.receive_char_limit > 0 and self.public_char_limit > 0):
+            raise ValueError("RECOVERY_RESOURCE_POLICY_INVALID")
+
+
+def configured_recovery_policy():
+    name = os.environ.get("BIOMIND_RECOVERY_RESOURCE_POLICY", "disabled")
+    if name == "disabled":
+        return None
+    if name != "phase_e_candidate_v2":
+        raise ValueError("RECOVERY_RESOURCE_POLICY_UNKNOWN")
+    return RecoveryResourcePolicy()
+
+
+RECOVERY_RESOURCES = ContextVar("biomind_recovery_resources", default=None)
+
+
+class RecoveryResourceLimit(ValueError):
+    code = "RECOVERY_RESOURCE_LIMIT"
+
+
+def recovery_resource_begin(store, incident_id, policy):
+    owner = uuid.uuid4().hex
+    lease = "recovery-resources-" + incident_id
+    store.acquire_finalize_provider_lease(lease)
+    def begin(row):
+        if not row and store.recovery_unaccounted_attempts():
+            raise RecoveryResourceLimit("Prior transport usage has no parent ledger; no fresh budget is inferred")
+        if row and row.get("policy") != asdict(policy):
+            raise RecoveryResourceLimit("Existing causal ledger uses a different policy")
+        row.setdefault("policy", asdict(policy))
+        row.setdefault("attempts", {})
+        row.setdefault("business", {})
+        row.setdefault("elapsed_seconds", 0.0)
+        if row.get("active"):
+            # A prior process interval cannot be measured with our monotonic
+            # clock. Retain its bounded outstanding reservation, not downtime.
+            row["elapsed_seconds"] += row["active"]["reserved_seconds"]
+            row["interrupted_time_unknown"] = True
+        row["active"] = {"owner": owner, "reserved_seconds": max(0, policy.hard_seconds - row["elapsed_seconds"])}
+    try:
+        row = store.recovery_resource_update(incident_id, begin)
+    except BaseException:
+        store.release_finalize_provider_lease(lease)
+        raise
+    scope = {"store": store, "incident": incident_id, "policy": policy, "owner": owner,
+             "started": time.monotonic(), "base_seconds": row["elapsed_seconds"], "row": row, "lease": lease}
+    return scope, RECOVERY_RESOURCES.set(scope)
+
+
+def recovery_resource_update(update=lambda row: None, *, locked=False):
+    scope = RECOVERY_RESOURCES.get()
+    if scope is None:
+        return {}
+    row = scope["store"].recovery_resource_update(scope["incident"], update, locked=locked)
+    scope["row"] = row
+    return row
+
+
+def recovery_business_checkpoint(values):
+    # Resource persistence contains counters/identities only. Full observations
+    # remain in the existing phase archive; this is not another history store.
+    values = {key: value for key, value in values.items() if key in {
+        "turn_count", "tool_call_count", "transport_attempt_count", "format_correction_count",
+        "no_progress_rounds", "tool_request_counts", "progress_signatures", "observation_chars",
+        "compaction_maintenance", "compaction_bypass_remaining", "compaction_failures"}}
+    def checkpoint(row):
+        prior = row["business"]
+        counters = {key: max(int(prior.get(key) or 0), int(values.get(key) or 0))
+                    for key in ("turn_count", "tool_call_count", "transport_attempt_count", "format_correction_count")}
+        prior.update(deepcopy(values))
+        prior.update(counters)
+    return recovery_resource_update(checkpoint)
+
+
+def recovery_resource_end(scope, token):
+    def finish(row):
+        if (row.get("active") or {}).get("owner") != scope["owner"]:
+            return
+        row["elapsed_seconds"] = scope["base_seconds"] + time.monotonic() - scope["started"]
+        row["active"] = None
+    try:
+        recovery_resource_update(finish)
+    finally:
+        RECOVERY_RESOURCES.reset(token)
+        scope["store"].release_finalize_provider_lease(scope["lease"])
+
+
+def recovery_seconds_remaining():
+    scope = RECOVERY_RESOURCES.get()
+    if scope is None:
+        return float("inf")
+    return max(0.0, scope["policy"].hard_seconds - scope["base_seconds"] - (time.monotonic() - scope["started"]))
+
+
+def recovery_dispatch_seconds():
+    scope = RECOVERY_RESOURCES.get()
+    remaining = recovery_seconds_remaining()
+    if scope is not None and not scope["row"].get("closing"):
+        remaining = max(0.0, remaining - scope["policy"].decision_seconds)
+    return remaining
+
+
+def recovery_token_occupancy(row):
+    return sum(sum(attempt.get("usage", {}).get(k, estimate) for k, estimate in attempt["reservation"].items())
+               for attempt in row.get("attempts", {}).values())
+
+
+def recovery_request_estimate(messages, *, tools=()):
+    from agent_core.workflow.context_compaction import ReferenceTokenEstimator
+    body = json.dumps({"messages": [m if isinstance(m, Mapping) else m.model_dump() for m in messages],
+                       "tools": list(tools)}, ensure_ascii=False, default=str)
+    estimate = ReferenceTokenEstimator().estimate(body)
+    return estimate.tokens + estimate.uncertainty_tokens + 2048
+
+
+async def recovery_direct_invoke(call, messages, *, stage, call_context=None, call_kwargs=None):
+    """Standalone adapter uses the same physical journal as the production SDK.
+
+    The production compactor already calls _ainvoke_llm; its caller must not
+    charge this adapter as well. No child aggregate is charged here.
+    """
+    scope = RECOVERY_RESOURCES.get()
+    kwargs = dict(call_kwargs or {})
+    if scope is None:
+        result = call(messages, **kwargs)
+        return await result if inspect.isawaitable(result) else result
+    from agent_core.provider_attempt import ProviderAttemptEnvelope, ProviderTimeoutPolicy, run_provider_attempt
+    from langchain_core.messages import message_to_dict, messages_from_dict
+    from agent_core.workflow.recovery_agent import recovery_tool_schemas
+    policy = scope["policy"]
+    context = dict(call_context or {})
+    from agent_core.workflow.recovery_agent import _wire_fingerprint
+    wire_hash = _wire_fingerprint(messages)
+    epoch = str(context.get("context_epoch_id") or "")
+    invocation = "recovery-direct-" + hashlib.sha256((scope["incident"]+stage+epoch+wire_hash).encode()).hexdigest()[:24]
+    attempt_id = invocation + "-" + uuid.uuid4().hex[:8]
+    estimate = recovery_request_estimate(messages, tools=recovery_tool_schemas() if stage == "recovery" else ())
+    output = policy.max_output_tokens if stage == "recovery" else 16000
+    reserve = lambda aid, locked=False: recovery_reserve(aid, input_tokens=estimate,
+        output_tokens=output, stage=stage, locked=locked, invocation_id=invocation,
+        wire_fingerprint=wire_hash, context_epoch_id=epoch)
+    claim = scope["store"].recovery_transport_claim(invocation, wire_hash, attempt_id,
+        maximum=int(context.get("maximum_transport_attempts") or 1), total_seconds=recovery_seconds_remaining(), reserve=reserve)
+    if claim["status"] == "completed":
+        recovery_replay_account(claim, input_tokens=estimate, output_tokens=output, stage=stage)
+        return messages_from_dict([claim["response"]])[0]
+    seconds = recovery_dispatch_seconds()
+    envelope = ProviderAttemptEnvelope(node_name=stage, step_id=str(context.get("step_id") or ""),
+        semantic_invocation_id=invocation, attempt_id=attempt_id, attempt_ordinal=1,
+        parent_attempt_id="", call_id=attempt_id, node_context_hash="", request_hash=wire_hash,
+        provider="standalone", model="explicit_adapter", thinking_policy={},
+        timeout_policy=ProviderTimeoutPolicy(seconds, seconds, seconds, min(1, seconds)),
+        retry_budget_before=0, retry_budget_after=0, sdk_max_retries=0,
+        output_policy={"receive_char_limit": policy.receive_char_limit} if stage == "recovery" else {})
+    async def invoke(observer):
+        options = dict(kwargs)
+        signature = inspect.signature(call)
+        flexible = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values())
+        if "config" in signature.parameters or flexible:
+            options["config"] = {"callbacks": [observer]}
+        if stage == "recovery" and ("max_tokens" in signature.parameters or flexible):
+            options["max_tokens"] = policy.max_output_tokens
+        response = call(messages, **options)
+        return await response if inspect.isawaitable(response) else response
+    try:
+        response, record = await run_provider_attempt(invoke, envelope)
+    except BaseException as exc:
+        record = getattr(exc, "record", None) or getattr(exc, "provider_attempt_record", None)
+        recovery_settle(attempt_id, getattr(record, "provider_usage", {}))
+        # Cancel/unknown remains fenced by the existing in-flight journal.
+        if not isinstance(exc, asyncio.CancelledError):
+            scope["store"].recovery_transport_finish(invocation, attempt_id,
+                failure={"code": str(getattr(exc, "error_code", type(exc).__name__))},
+                retry=bool(getattr(exc, "retryable", False)))
+        raise
+    recovery_settle(attempt_id, record.provider_usage)
+    scope["store"].recovery_transport_finish(invocation, attempt_id, response=message_to_dict(response))
+    return response
+
+
+def recovery_reserve(attempt_id, *, input_tokens, output_tokens, stage, locked=False, invocation_id="", wire_fingerprint="", context_epoch_id=""):
+    scope = RECOVERY_RESOURCES.get()
+    if scope is None:
+        return
+    def reserve(row):
+        if attempt_id in row["attempts"]:
+            return
+        if row.get("terminal_reason") or recovery_seconds_remaining() <= 0:
+            raise RecoveryResourceLimit("Causal investigation is closed or out of time")
+        if recovery_token_occupancy(row) + input_tokens + output_tokens > scope["policy"].hard_tokens:
+            raise RecoveryResourceLimit("Full physical request exceeds remaining causal tokens")
+        row["attempts"][attempt_id] = {"stage": stage, "ordinal": len(row["attempts"])+1, "status": "reserved_unknown",
+            "invocation_id": invocation_id, "wire_fingerprint": wire_fingerprint, "context_epoch_id": context_epoch_id,
+            "reservation": {"input_tokens": input_tokens, "output_tokens": output_tokens}, "usage": {}}
+    recovery_resource_update(reserve, locked=locked)
+
+
+def recovery_settle(attempt_id, usage=None, *, not_dispatched=False):
+    """Idempotent physical accounting, including late usage; never admits output."""
+    if RECOVERY_RESOURCES.get() is None:
+        return
+    usage = dict(usage or {})
+    def settle(row):
+        attempt = row["attempts"].get(attempt_id)
+        if not attempt:
+            raise RecoveryResourceLimit("Physical receipt has no durable reservation")
+        if not_dispatched:
+            attempt.update(status="not_dispatched", reservation={"input_tokens": 0, "output_tokens": 0})
+            return
+        for name, alias in (("input_tokens", "prompt_tokens"), ("output_tokens", "completion_tokens")):
+            value = usage.get(name, usage.get(alias))
+            if type(value) is int and value >= 0:
+                attempt["usage"][name] = value
+        attempt["status"] = "settled" if len(attempt["usage"]) == 2 else "usage_unknown"
+        if recovery_token_occupancy(row) > row["policy"]["hard_tokens"]:
+            row["overreported_usage"] = True
+    recovery_resource_update(settle)
+
+
+def recovery_replay_account(claim, *, input_tokens, output_tokens, stage):
+    """Adopt a historical transport receipt without issuing or charging a replay.
+
+    Missing prior usage remains reserved UNKNOWN; it is never silently zero.
+    """
+    from langchain_core.messages import messages_from_dict
+    response = messages_from_dict([claim["response"]])[0]
+    def adopt(row):
+        for attempt in claim["attempts"]:
+            row["attempts"].setdefault(attempt["attempt_id"], {"stage": stage, "ordinal": len(row["attempts"])+1,
+                "status": "historical_usage_unknown", "usage": {},
+                "reservation": {"input_tokens": input_tokens, "output_tokens": output_tokens}})
+    recovery_resource_update(adopt)
+    recovery_settle(claim["attempts"][-1]["attempt_id"], getattr(response, "usage_metadata", None)
+        or (getattr(response, "response_metadata", {}) or {}).get("token_usage"))
+
+
+def _decision_wire(wire):
+    from langchain_core.messages import HumanMessage
+    return [*wire, HumanMessage(content="<recovery_resource_closure>调查预算接近边界。仅用当前证据提交一个合法决定；不再调用调查工具。无法解决时提交 blocked，明确尚未解决的事实。</recovery_resource_closure>")]
+
+
+def recovery_replay_wire(wire, *, context_epoch_id=""):
+    """Defer completed/UNKNOWN consumption to the existing transport owner.
+
+    Only a recorded immutable wire can bypass a *new dispatch* budget check.
+    No response/directive is admitted here, including after late cancellation.
+    """
+    from agent_core.workflow.recovery_agent import _wire_fingerprint
+    scope = RECOVERY_RESOURCES.get()
+    if scope is None:
+        return None
+    for candidate in (wire, _decision_wire(wire)):
+        fingerprint = _wire_fingerprint(candidate)
+        for attempt in scope["row"]["attempts"].values():
+            if (attempt.get("stage") == "recovery" and attempt.get("context_epoch_id", "") == context_epoch_id
+                    and attempt.get("invocation_id") and attempt.get("wire_fingerprint") == fingerprint):
+                claim = scope["store"].recovery_transport_read(attempt["invocation_id"])
+                if claim.get("status") in {"completed", "in_flight", "terminal"}:
+                    return candidate
+    return None
+
+
+def recovery_closure_wire(wire, *, turns, tools, max_turns, max_tools):
+    from agent_core.workflow.recovery_agent import recovery_tool_schemas
+    scope = RECOVERY_RESOURCES.get()
+    if scope is None:
+        return wire
+    row = recovery_resource_update()
+    policy = scope["policy"]
+    decision = _decision_wire(wire)
+    cost = recovery_request_estimate(decision, tools=recovery_tool_schemas()) + policy.max_output_tokens
+    remaining = recovery_seconds_remaining()
+    occupied = recovery_token_occupancy(row)
+    if row.get("terminal_reason") or remaining < policy.decision_seconds or occupied + cost > policy.hard_tokens:
+        raise RecoveryResourceLimit("No room for a complete decision request")
+    close = (row.get("closing") or occupied >= policy.soft_tokens
+        or remaining <= policy.hard_seconds - policy.soft_seconds
+        or occupied + cost * 2 + policy.max_output_tokens > policy.hard_tokens
+        or remaining < 2 * policy.decision_seconds or turns >= max_turns - 1 or tools >= max_tools - 1)
+    if close:
+        def mark(row):
+            if row.get("decision_sent"):
+                raise RecoveryResourceLimit("The single reserved decision turn did not resolve the investigation")
+            row.update(closing=True, decision_sent=True,
+                decision_reservation={"estimated_input_tokens": cost-policy.max_output_tokens,
+                    "output_tokens": policy.max_output_tokens, "seconds": min(remaining, policy.decision_seconds), "turns": 1})
+        recovery_resource_update(mark)
+        return decision
+    return wire
 
 
 def _canonical(value: Any) -> str:

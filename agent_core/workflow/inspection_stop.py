@@ -268,6 +268,7 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             for row in receipts if isinstance(row, Mapping) and not row.get("error")],
         "task_summary": _safe(task_spec.get("goal") or task_spec.get("question") or task_spec.get("objective") or task_spec.get("user_request"), 1800),
         "stop_reason": {"error_code": reason, "detail": _safe(error.get("detail")),
+            **({"resource_receipt": deepcopy(episode["resource_receipt"])} if episode.get("resource_receipt") else {}),
             "transport_receipt": deepcopy(_mapping(error.get("transport_receipt"))),
             "failure_stage": _code(error.get("failure_stage")),
             "no_progress_rounds": int(audit.get("no_progress_rounds") or 0),

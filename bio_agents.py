@@ -3567,6 +3567,11 @@ class BioAnalystAgent:
                 "wire_fingerprint",
             )
         }
+        from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES
+        if RECOVERY_RESOURCES.get() is not None:
+            # Durable counters may advance on reentry. They cannot turn the
+            # same immutable wire into permission to resend an UNKNOWN claim.
+            semantic_basis.pop("turn_ordinal", None)
         semantic_invocation_id = "recovery-" + hashlib.sha256(
             json.dumps(
                 semantic_basis,
@@ -18145,6 +18150,24 @@ class BioAnalystAgent:
         trace_store = ContextLineageStore(trace_data_path, task_id) if task_id and trace_data_path else None
         invocation_llm = llm_override or (
             getattr(self, "planner_llm", self.llm) if stage in {"planner", "planner_repair"} else self.llm)
+        from agent_core.workflow.recovery_runtime import (
+            RECOVERY_RESOURCES, recovery_seconds_remaining, recovery_dispatch_seconds, recovery_request_estimate,
+            recovery_reserve, recovery_settle, recovery_replay_account,
+        )
+        resources = RECOVERY_RESOURCES.get() if stage in {"recovery", "context_compaction"} else None
+        resource_output = 0
+        if resources:
+            from agent_core.provider_attempt import output_policy_projection
+            resolved = output_policy_projection(invocation_llm)
+            if resolved["configuration_ambiguity"] or resolved["client_parameter"] not in {"UNKNOWN", "max_tokens"}:
+                raise ValueError("RECOVERY_OUTPUT_PARAMETER_CONFLICT")
+            resource_output = (resources["policy"].max_output_tokens if stage == "recovery"
+                else resolved["client_resolved_output_limit"] if type(resolved["client_resolved_output_limit"]) is int else 16000)
+            if type(resolved["client_resolved_output_limit"]) is int and resolved["client_resolved_output_limit"] > 0:
+                resource_output = min(resource_output, resolved["client_resolved_output_limit"])
+            invocation_llm = invocation_llm.bind(max_tokens=resource_output) if hasattr(invocation_llm, "bind") else invocation_llm
+            provider_policy["max_tokens"] = resource_output
+            trace_metadata["recovery_resource_policy"] = resources["row"]["policy"]
         if planner_output_policy:
             base_compactor = getattr(self, "_schema2_phase_compactor", None)
             base_budget = getattr(base_compactor, "policy", None) or ContextBudgetPolicy()
@@ -18169,6 +18192,8 @@ class BioAnalystAgent:
             float(legacy_timeout),
             float(getattr(self, "llm_total_timeout_seconds", legacy_timeout)),
         )
+        if resources:
+            total_timeout = min(total_timeout, recovery_dispatch_seconds())
         if stage == "terminal_summary":
             total_timeout = min(total_timeout, float(provider_policy.get("total_timeout_seconds", 30)))
         elif stage == "recovery":
@@ -18339,20 +18364,31 @@ class BioAnalystAgent:
                     f"provider-attempt-{semantic_invocation_id[-12:]}-"
                     f"{attempt_ordinal}-{uuid.uuid4().hex[:8]}"
                 )
-                if stage == "recovery":
+                if stage == "recovery" or resources:
                     if trace_store is None:
                         raise RuntimeError("RECOVERY_TRANSPORT_DURABLE_STORE_REQUIRED")
                     from langchain_core.messages import messages_from_dict
                     transport_hash = hashlib.sha256((prompt_hash + model_parameter_hash + str(trace_metadata.get("wire_fingerprint", ""))).encode()).hexdigest()
+                    reserve = None
+                    if resources:
+                        from agent_core.workflow.recovery_agent import recovery_tool_schemas, _wire_fingerprint
+                        resource_input = recovery_request_estimate(messages,
+                            tools=recovery_tool_schemas() if stage == "recovery" else ())
+                        reserve = lambda aid, locked=False: recovery_reserve(aid,
+                            input_tokens=resource_input, output_tokens=resource_output, stage=stage, locked=locked,
+                            invocation_id=semantic_invocation_id, wire_fingerprint=_wire_fingerprint(messages),
+                            context_epoch_id=str(trace_metadata.get("context_epoch_id") or ""))
                     claim = trace_store.recovery_transport_claim(
                         semantic_invocation_id, transport_hash, attempt_id,
-                        maximum=max_attempts, total_seconds=max(0.0, total_timeout - (time.monotonic() - started)))
+                        maximum=max_attempts, total_seconds=max(0.0, total_timeout - (time.monotonic() - started)), reserve=reserve)
                     if claim["status"] == "backoff":
                         remaining_wait = min(claim["deadline"] - time.time(), total_timeout - (time.monotonic() - started))
                         await asyncio.wait_for(asyncio.sleep(max(0.0, claim["retry_not_before"] - time.time())), timeout=max(0.001, remaining_wait))
                         claim = trace_store.recovery_transport_claim(semantic_invocation_id, transport_hash, attempt_id,
-                            maximum=max_attempts, total_seconds=max(0.0, remaining_wait))
+                            maximum=max_attempts, total_seconds=max(0.0, remaining_wait), reserve=reserve)
                     if claim["status"] == "completed":
+                        if resources:
+                            recovery_replay_account(claim, input_tokens=resource_input, output_tokens=resource_output, stage=stage)
                         return messages_from_dict([claim["response"]])[0]
                     attempt_ordinal = len(claim["attempts"])
                     parent_attempt_id = (claim["attempts"][-2]["attempt_id"] if attempt_ordinal > 1 else "")
@@ -18450,7 +18486,8 @@ class BioAnalystAgent:
                     sdk_max_retries=sdk_max_retries,
                     prompt_hash=prompt_hash,
                     model_parameter_hash=model_parameter_hash,
-                    output_policy=deepcopy(dict(metadata.get("generate_output_policy") or {})),
+                    output_policy=({"max_tokens": resource_output, "receive_char_limit": resources["policy"].receive_char_limit}
+                        if resources and stage == "recovery" else deepcopy(dict(metadata.get("generate_output_policy") or {}))),
                 )
 
                 async def invoke(observer: ProviderStreamObserver) -> Any:
@@ -18468,13 +18505,16 @@ class BioAnalystAgent:
                         },
                     }
                     if supports_config(invocation_llm):
-                        return await invocation_llm.ainvoke(messages, config=config)
+                        return await invocation_llm.ainvoke(messages, config=config,
+                            **({"max_tokens": resource_output} if resources and not hasattr(invocation_llm, "bind") else {}))
                     return await invocation_llm.ainvoke(messages)
 
                 try:
-                    if stage == "recovery":
+                    if stage == "recovery" or resources:
                         from dataclasses import replace
                         remaining = min(claim["deadline"] - time.time(), total_timeout - (time.monotonic() - started))
+                        if resources:
+                            remaining = min(remaining, recovery_dispatch_seconds())
                         if remaining <= 0:
                             trace_store.recovery_transport_finish(semantic_invocation_id, attempt_id,
                                 failure={"code": "RECOVERY_TRANSPORT_DEADLINE_EXCEEDED", "send_started": False})
@@ -18512,6 +18552,8 @@ class BioAnalystAgent:
                             retryable=True,
                         )
                 except asyncio.CancelledError as exc:
+                    if resources:
+                        recovery_settle(attempt_id, getattr(getattr(exc, "provider_attempt_record", None), "provider_usage", {}))
                     cancelled_record = getattr(
                         exc,
                         "provider_attempt_record",
@@ -18555,6 +18597,9 @@ class BioAnalystAgent:
                     raise
                 except ProviderAttemptFailure as exc:
                     attempt_record = exc.record
+                    if resources:
+                        recovery_settle(attempt_id, attempt_record.provider_usage,
+                            not_dispatched=attempt_record.failure_type == "PROVIDER_ATTEMPT_START_PERSISTENCE_FAILED")
                     can_retry = (
                         stage in {"generate", "recovery"}
                         and exc.retryable
@@ -18656,6 +18701,8 @@ class BioAnalystAgent:
                         trace_store.recovery_transport_finish(
                             semantic_invocation_id, attempt_id, failure=attempt_record.to_dict(), retry=can_retry,
                             retry_delay=float(attempt_record.retry_delay_seconds or 0.0))
+                    elif resources:
+                        trace_store.recovery_transport_finish(semantic_invocation_id, attempt_id, failure=attempt_record.to_dict())
                     latest_error = terminal_error
                     history.setdefault(task_id or "-", []).append(attempt_record.to_dict())
                     history[task_id or "-"] = history[task_id or "-"][-20:]
@@ -18718,7 +18765,9 @@ class BioAnalystAgent:
                         raise terminal_error from exc
                     raise
                 else:
-                    if stage == "recovery":
+                    if resources:
+                        recovery_settle(attempt_id, attempt_record.provider_usage)
+                    if stage == "recovery" or resources:
                         from langchain_core.messages import message_to_dict
                         trace_store.recovery_transport_finish(
                             semantic_invocation_id, attempt_id, response=message_to_dict(response))

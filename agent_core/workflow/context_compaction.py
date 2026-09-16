@@ -2469,6 +2469,9 @@ async def _invoke_hierarchical_operation(
             ))
             continue
         except Exception as exc:
+            from agent_core.workflow.recovery_runtime import RecoveryResourceLimit
+            if isinstance(exc, RecoveryResourceLimit):
+                raise
             feedback = {
                 "previous_attempt": ordinal,
                 "error_code": "COMPACTOR_CALL_FAILED",
@@ -2968,6 +2971,9 @@ async def prepare_compaction(
             ))
             continue
         except Exception as exc:  # provider timeout/transport/adapter failure
+            from agent_core.workflow.recovery_runtime import RecoveryResourceLimit
+            if isinstance(exc, RecoveryResourceLimit):
+                raise
             feedback = {
                 "previous_attempt": ordinal,
                 "error_code": "COMPACTOR_CALL_FAILED",
