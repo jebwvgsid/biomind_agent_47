@@ -1,0 +1,128 @@
+{
+  "document_id": "BM-FAILURE-CLOSURE-1789521763-V1",
+  "stage": "D",
+  "stage_E": "NOT_AUTHORIZED_NOT_IMPLEMENTED",
+  "created_utc": "2026-09-16T02:40:23.400741+00:00",
+  "BASE": "118b28e5f320e5d150a5db3eca163a2417218f08",
+  "FINAL_production_baseline": "118b28e5f320e5d150a5db3eca163a2417218f08",
+  "audit_commit": "Full artifact commit hash supplied in Git history and final delivery; no self-referential hash.",
+  "branch": "refactor/consultant-controller-authority",
+  "production_modified": false,
+  "original_tests_modified": false,
+  "protected_safe_source_files": 554,
+  "protected_byte_drift": [],
+  "original_index_unchanged_before_staging": true,
+  "configuration_protection": "Metadata only; no secret/config-content hash claim.",
+  "current_worktree_not_bare_HEAD_deployment": true,
+  "offline_new_unique": {
+    "passed": 73,
+    "failed": 0,
+    "meaning": "Current-behavior witnesses, including DEFECT_PRESENT; not production FIX PASS"
+  },
+  "offline_existing_warning_stop_unique": {
+    "passed": 11,
+    "failed": 0
+  },
+  "development_runs": [
+    {
+      "run": "run01/results",
+      "call_outcomes": {
+        "passed": 5,
+        "failed": 1
+      },
+      "result": "TEST_WATCHDOG_360_SECONDS"
+    },
+    {
+      "run": "run02/results",
+      "call_outcomes": {
+        "passed": 64,
+        "failed": 9
+      },
+      "result": "FIXTURE_FAILURES_RETAINED"
+    },
+    {
+      "run": "run02/loops",
+      "call_outcomes": {
+        "failed": 2,
+        "passed": 40
+      },
+      "result": "FIXTURE_FAILURES_RETAINED"
+    },
+    {
+      "run": "run03/results",
+      "call_outcomes": {
+        "passed": 41
+      },
+      "result": "PASS"
+    }
+  ],
+  "real_calls": {
+    "model_api": 0,
+    "scientific_tools": 0,
+    "original_task_execute": 0
+  },
+  "synthetic_call_evidence": {
+    "binding_local_correction_graph": {
+      "generate": 7,
+      "reviewer": 6,
+      "recovery": 0,
+      "approval": 6,
+      "execute": 6,
+      "commit": 6
+    },
+    "unresolved_binding_graph": {
+      "generate": 2,
+      "reviewer": 1,
+      "recovery": 0,
+      "execute": 1,
+      "commit": 1,
+      "bad_candidate_execute": 0,
+      "stop": "second real approval interrupt"
+    },
+    "rc0_postcondition_graph": {
+      "generate": 2,
+      "reviewer": 1,
+      "recovery": 1,
+      "execute": 2,
+      "commit": 1,
+      "prepare_commit": 0
+    },
+    "continuous_pages": {
+      "model_calls": 12,
+      "tool_calls": 12,
+      "reported_synthetic_tokens": 1202400,
+      "stop": "RECOVERY_LLM_TURN_LIMIT"
+    },
+    "compaction": {
+      "business_calls": 2,
+      "maintenance_calls": 3,
+      "reported_synthetic_maintenance_tokens": 810,
+      "summary_in_next_wire": true
+    }
+  },
+  "history_usage": {
+    "recovery_input": 496449,
+    "recovery_output": 14836,
+    "recovery_known_total": 511285,
+    "cancelled_request_usage": "UNKNOWN"
+  },
+  "unknown_or_not_run": {
+    "real_model_canary": "NOT_RUN",
+    "real_cache_remeasurement": "NOT_RUN",
+    "science_e2e": "NOT_RUN",
+    "remote_cancel_or_billing_stop": "UNKNOWN",
+    "historical_OS_exit_code": "UNKNOWN",
+    "all_V19_interleavings": "NOT_RUN; mapping retained for E",
+    "all_reachable_failure_variants_dynamic": "NOT_RUN; source/UNKNOWN rows explicitly mapped"
+  },
+  "commit_scope": "docs/implementation/a1_unified_fix_20260914/failure_closure_1789521763_phase_d_20260916/",
+  "safety": {
+    "original_session": "NOT_RESUMED",
+    "credentials_startup_scientific_inputs": "NOT_READ",
+    "installation": "NOT_PERFORMED",
+    "push": "NOT_PERFORMED"
+  },
+  "test_commands_and_raw_results": "offline_witnesses/guarded_results.tar.gz: */invocation.json, */stdout.txt, */pytest-results.json",
+  "loaded_source_receipts": "offline_witnesses/loaded_sources.json",
+  "result_index": "offline_witnesses/results_index.json"
+}
