@@ -1,0 +1,190 @@
+{
+  "scope": "No science, subprocess, API or config imports. Current production action_runtime/runtime_evidence functions, real Skill frontmatter and archived facts; synthetic optional contracts only in memory.",
+  "python": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "source_sha256": {
+    "skills/genomics/wgs-short-read-mapping/SKILL.md": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+    "agent_core/action_runtime.py": "53ff91ce91ea502b4fb46d63e374ee3e3ad27596a7aea924227cc672b95c3071",
+    "agent_core/runtime_evidence.py": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424"
+  },
+  "historical_projection_time": "2026-09-17T07:10:39+00:00",
+  "historical_wgs_evidence": {
+    "scope": {
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "skill_document_digest": "sha256:5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "skill_contract_digest": "sha256:c8c464a7c10fcb761f0828ad7d5180088408efb647cb7e1fe93f92307d624e52",
+      "environment_id": "bio_wgs",
+      "environment_fingerprint": "sha256:9aadad2c1500c4399efb8fbe98ebb26fa521f545ed76a6a0613c1df60ae1d1cf",
+      "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+      "inspection_contract_digest": "sha256:ac22db4d62370724d9666ca2195e4d188ca47f88736e48774aa8684df978425c"
+    },
+    "observed_at": "2026-09-17T07:03:59.000000+00:00",
+    "expires_at": "2026-09-17T08:03:59.000000+00:00",
+    "facts": {
+      "runtime.environment.prefix": {
+        "availability": "AVAILABLE",
+        "output_name": "RESOLVED_ENV_PREFIX",
+        "reason_code": "",
+        "value_kind": "directory_path",
+        "conclusion_complete": true
+      }
+    },
+    "resolved_runtime_paths": {
+      "RESOLVED_ENV_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs"
+    }
+  },
+  "historical_ready_registry_ids": [
+    "runtime.environment.prefix"
+  ],
+  "current_real_contract": {
+    "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+    "operation": "prepare_reference",
+    "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+    "contract_revision": "wgs-short-read-mapping-effects-v1",
+    "required_runtime_binding_ids": [],
+    "optional_runtime_binding_ids": [],
+    "required_artifact_binding_ids": [],
+    "produces_artifacts": [
+      {
+        "artifact_id": "reference_indexes",
+        "resource_kind": "immutable_artifact"
+      }
+    ],
+    "produces_bindings": [],
+    "produces_observations": [],
+    "workspace_mutations": [],
+    "explicit_side_effects": [
+      {
+        "effect_id": "create_reference_indexes",
+        "evidence_contract": {
+          "required_fields": [
+            "reference_resource_ref",
+            "index_artifacts"
+          ]
+        }
+      }
+    ],
+    "execution_guidance": [
+      "Declare the reference index files or index bundle in step.outputs and the exact source reference in step.inputs. Keep the approved input immutable and place new index products only at approved output locations.",
+      "Report create_reference_indexes with reference_resource_ref and index_artifacts identifying the actual products. Planning is a promise; execution, artifact validation, and approval still must establish completion.",
+      "If no index was produced, publish only the observed create_reference_indexes side fact with index_artifacts=[] and status=blocked; omit the artifact row. Do not create an empty bundle to satisfy publication. This never completes the step."
+    ]
+  },
+  "current_resolution": {
+    "capability_contract": {
+      "schema_version": 1,
+      "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+      "selected_skill_id": "genomics/wgs-short-read-mapping",
+      "required_runtime_binding_ids": [],
+      "optional_runtime_binding_ids": [],
+      "required_artifact_binding_ids": [],
+      "execution_guidance": [
+        "Declare the reference index files or index bundle in step.outputs and the exact source reference in step.inputs. Keep the approved input immutable and place new index products only at approved output locations.",
+        "Report create_reference_indexes with reference_resource_ref and index_artifacts identifying the actual products. Planning is a promise; execution, artifact validation, and approval still must establish completion.",
+        "If no index was produced, publish only the observed create_reference_indexes side fact with index_artifacts=[] and status=blocked; omit the artifact row. Do not create an empty bundle to satisfy publication. This never completes the step."
+      ],
+      "operation": "prepare_reference",
+      "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+      "contract_revision": "wgs-short-read-mapping-effects-v1",
+      "produces_artifacts": [
+        {
+          "artifact_id": "reference_indexes",
+          "resource_kind": "immutable_artifact"
+        }
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "workspace_mutations": [],
+      "explicit_side_effects": [
+        {
+          "effect_id": "create_reference_indexes",
+          "evidence_contract": {
+            "required_fields": [
+              "reference_resource_ref",
+              "index_artifacts"
+            ]
+          }
+        }
+      ]
+    },
+    "capability_contract_hash": "sha256:4c4d8a9e807acd81f86e8478f2ba82661045ebd973f457baa5d69142c8e7a018",
+    "effective_runtime_bindings": {},
+    "runtime_binding_records": [],
+    "runtime_binding_manifest": {
+      "schema_version": 1,
+      "action_id": "isolated-audit",
+      "plan_id": "audit",
+      "step_id": "prepare_reference",
+      "selected_skill_id": "genomics/wgs-short-read-mapping",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+      "capability_contract_hash": "sha256:4c4d8a9e807acd81f86e8478f2ba82661045ebd973f457baa5d69142c8e7a018",
+      "scope": "current_action",
+      "bindings": [],
+      "manifest_hash": "sha256:3b9528f20b0e9acfd704ae4b1667a597e0ca5a4510fc950b87d15de32ad438d9"
+    },
+    "runtime_binding_manifest_hash": "sha256:3b9528f20b0e9acfd704ae4b1667a597e0ca5a4510fc950b87d15de32ad438d9"
+  },
+  "synthetic_optional_default_resolution": {},
+  "synthetic_optional_explicit_resolution": {
+    "PICARD_BIN": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/picard"
+  },
+  "exact_environment_no_action_env": {
+    "PATH": "/isolated/ambient/bin",
+    "JAVA_HOME": "/isolated/ambient/java"
+  },
+  "exact_environment_explicit_action_env": {
+    "PATH": "/isolated/ambient/bin",
+    "JAVA_HOME": "/isolated/ambient/java",
+    "PICARD_BIN": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/picard"
+  },
+  "required_missing_diagnostics": {
+    "no_entry": {
+      "code": "REQUIRED_RUNTIME_BINDING_UNAVAILABLE",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+      "selected_skill_id": "genomics/wgs-short-read-mapping",
+      "binding_id": "runtime.picard.bin",
+      "required": true,
+      "failure_scope": "runtime_fact",
+      "availability": "UNKNOWN",
+      "available_runtime_binding_ids": []
+    },
+    "unavailable": {
+      "code": "REQUIRED_RUNTIME_BINDING_UNAVAILABLE",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+      "selected_skill_id": "genomics/wgs-short-read-mapping",
+      "binding_id": "runtime.picard.bin",
+      "required": true,
+      "failure_scope": "runtime_fact",
+      "availability": "UNAVAILABLE",
+      "available_runtime_binding_ids": []
+    },
+    "conflict": {
+      "code": "REQUIRED_RUNTIME_BINDING_UNAVAILABLE",
+      "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+      "selected_skill_id": "genomics/wgs-short-read-mapping",
+      "binding_id": "runtime.picard.bin",
+      "required": true,
+      "failure_scope": "runtime_fact",
+      "availability": "AMBIGUOUS",
+      "available_runtime_binding_ids": []
+    }
+  },
+  "expired_evidence": {
+    "runtime.environment.prefix": {
+      "availability": "UNKNOWN",
+      "reason_code": "evidence_expired_or_future",
+      "evidence_ids": [],
+      "inspection_statuses": []
+    }
+  },
+  "current_picard": {
+    "entry": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/picard",
+    "resolved_wrapper": "/public/home/liusiqi/anaconda3/envs/bio_wgs/share/picard-2.20.4-0/picard",
+    "wrapper_sha256": "ab1ca9e7ef5c51693d8cf029c3476ae61a185056c236a40b94d43a5719049956",
+    "default_java": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+    "jar": "/public/home/liusiqi/anaconda3/envs/bio_wgs/share/picard-2.20.4-0/picard.jar",
+    "java_exists": true,
+    "jar_exists": true,
+    "valid_JAVA_HOME_overrides_default": true
+  },
+  "result": "PASS: assertions distinguish current observed deficiency and valid empty helper runtime; no fix asserted."
+}

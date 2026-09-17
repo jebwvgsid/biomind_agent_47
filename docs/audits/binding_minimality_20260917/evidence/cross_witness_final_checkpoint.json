@@ -1,0 +1,721 @@
+{
+  "scope": "Current production component witness. No agent startup, API, science, or session writes.\n\nUses complete historical candidates and current pure production functions.\nThe acceptance gate is supplied synthetic execution/validation records: this is\nNOT a substitute for CommitStep integration or scientific E2E evidence.\n",
+  "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "python_version": "3.12.12 | packaged by conda-forge | (main, Oct 22 2025, 23:25:55) [GCC 14.3.0]",
+  "config_or_dotenv_loaded": false,
+  "source_hashes": {
+    "agent_core/plan_bindings.py": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f",
+    "agent_core/plan_tracker.py": "724f098ea3b41ed6e78ff629a2f014a8e5121fbb19cd2ab631cc03da8d2628c2",
+    "agent_core/workspace_attestation.py": "cca7537f7641f3388970395484618b0b4e1922af35655f90f2788afebf2d3f67",
+    "agent_core/step_effects.py": "565d06037d3f68b7818f3fced964066109c3836be3e2420abf5bf6445ee3cfa2",
+    "execution/script_validation.py": "030d46ef3df2800c2c0838837dae2ba1281cc8cd02c3b3d7d73276626af13ccf",
+    "agent_core/workflow/candidate_repair.py": "88df1ad82e1d7ed0a22f097c6afabab1f410e251a3933d709f6b04d54e450239",
+    "agent_core/recovery.py": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f"
+  },
+  "results": {
+    "legal_omission": {
+      "passed": true,
+      "raw_binding_fragment": {
+        "operation": "prepare_database",
+        "produced_bindings": {
+          "genome_version": {
+            "type": "string",
+            "value": "arabidopsis_thaliana_custom"
+          },
+          "snpeff_db": {
+            "type": "artifact_ref",
+            "value": {
+              "handle": "plan-artifact-320098ac0415075787a63b28"
+            }
+          }
+        }
+      },
+      "derived_binding_env": {
+        "GENOME_VERSION": {
+          "source": "produced_binding",
+          "name": "genome_version"
+        },
+        "SNPEFF_DB": {
+          "source": "produced_binding",
+          "name": "snpeff_db"
+        }
+      }
+    },
+    "legal_explicit": {
+      "passed": true,
+      "binding_fragment": {
+        "operation": "prepare_database",
+        "produced_bindings": {
+          "genome_version": {
+            "type": "string",
+            "value": "arabidopsis_thaliana_custom"
+          },
+          "snpeff_db": {
+            "type": "artifact_ref",
+            "value": {
+              "handle": "plan-artifact-320098ac0415075787a63b28"
+            }
+          }
+        },
+        "binding_env": {
+          "GENOME_VERSION": {
+            "source": "produced_binding",
+            "name": "genome_version"
+          },
+          "SNPEFF_DB": {
+            "source": "produced_binding",
+            "name": "snpeff_db"
+          }
+        }
+      },
+      "provenance": "isolated explicit variant of genuine historical candidate, not a claim that this raw variant was emitted historically"
+    },
+    "wrong_source_map": {
+      "expected": "BINDING_ENV_CONTRACT_MISMATCH",
+      "actual_error": {
+        "code": "BINDING_ENV_CONTRACT_MISMATCH",
+        "field_path": "binding_env",
+        "actual": {
+          "GENOME_VERSION": "arabidopsis_thaliana_custom"
+        },
+        "expected": {
+          "GENOME_VERSION": {
+            "source": "produced_binding",
+            "name": "genome_version"
+          },
+          "SNPEFF_DB": {
+            "source": "produced_binding",
+            "name": "snpeff_db"
+          }
+        },
+        "detail": "Delete optional binding_env for system derivation, or supply the exact source objects. Actual values belong in produced_bindings."
+      },
+      "passed": true
+    },
+    "unknown_handle": {
+      "expected": "BINDING_HANDLE_UNKNOWN",
+      "actual_error": {
+        "code": "BINDING_HANDLE_UNKNOWN",
+        "field_path": "produced_bindings.snpeff_db.value.handle",
+        "binding_name": "snpeff_db",
+        "handle": "unknown-from-old-candidate"
+      },
+      "passed": true
+    },
+    "cross_operation_handle": {
+      "expected": "BINDING_HANDLE_UNKNOWN",
+      "actual_error": {
+        "code": "BINDING_HANDLE_UNKNOWN",
+        "field_path": "produced_bindings.snpeff_db.value.handle",
+        "binding_name": "snpeff_db",
+        "handle": "plan-artifact-320098ac0415075787a63b28"
+      },
+      "passed": true
+    },
+    "corrected_candidate_no_old_handle": {
+      "passed": true,
+      "scope": "pure normalizer; integration cache not simulated"
+    },
+    "unconfirmed_unavailable": {
+      "expected": "PLAN_BINDING_UNAVAILABLE",
+      "actual_error": {
+        "code": "PLAN_BINDING_UNAVAILABLE",
+        "binding_name": "genome_version"
+      },
+      "passed": true
+    },
+    "acceptance_and_consumption": {
+      "passed": true,
+      "accepted": [
+        {
+          "binding_id": "plan-binding-29150687cb32e47b1d43",
+          "name": "genome_version",
+          "value": "arabidopsis_thaliana_custom",
+          "value_type": "string",
+          "producer_plan_id": "plan_b04e85d6d4435f041bdd",
+          "producer_plan_version": "plan_v1",
+          "producer_plan_revision": 1,
+          "producer_step_id": "prepare_database",
+          "producer_action_id": "isolated-action",
+          "producer_execution_attempt_id": "isolated-attempt",
+          "status": "accepted",
+          "revision": 1,
+          "value_hash": "44b145f05032eb11391f775c75cafd48a6e4eb07d1fb8891f45e5fa1572e7ce6",
+          "accepted_at": "2026-09-17T09:09:14+00:00"
+        },
+        {
+          "binding_id": "plan-binding-c4b7ef35d06a910e4cac",
+          "name": "snpeff_db",
+          "value": {
+            "canonical_resource_id": "plan-artifact-320098ac0415075787a63b28",
+            "resource_kind": "mutable_workspace",
+            "binding_revision": 1,
+            "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+            "binding_id": "plan-resource-binding-301ad47b80719e37cd14"
+          },
+          "value_type": "artifact_ref",
+          "producer_plan_id": "plan_b04e85d6d4435f041bdd",
+          "producer_plan_version": "plan_v1",
+          "producer_plan_revision": 1,
+          "producer_step_id": "prepare_database",
+          "producer_action_id": "isolated-action",
+          "producer_execution_attempt_id": "isolated-attempt",
+          "status": "accepted",
+          "revision": 1,
+          "value_hash": "d8f599c81f5a262694bd841819731d243717e90e99f42fbfb009401ef72fc62a",
+          "accepted_at": "2026-09-17T09:09:14+00:00"
+        }
+      ],
+      "consumer": {
+        "operation": "build_database",
+        "consumed_bindings": {
+          "genome_version": {
+            "ref": "plan_binding:genome_version"
+          },
+          "snpeff_db": {
+            "ref": "plan_binding:snpeff_db"
+          }
+        },
+        "binding_env": {
+          "GENOME_VERSION": {
+            "source": "accepted_binding",
+            "name": "genome_version"
+          },
+          "SNPEFF_DB": {
+            "source": "accepted_binding",
+            "name": "snpeff_db"
+          }
+        },
+        "formal_workspace_bindings": [
+          {
+            "schema_version": 1,
+            "workspace_ref": "artifact.snpeff_data_dir",
+            "canonical_resource_id": "plan-artifact-320098ac0415075787a63b28",
+            "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+            "binding_id": "plan-resource-binding-301ad47b80719e37cd14",
+            "binding_revision": 1,
+            "resource_kind": "mutable_workspace",
+            "formal_concrete_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff",
+            "access_scope": "read_write",
+            "operation_scope": {
+              "operation": "prepare_database",
+              "mutation": "prepare_database"
+            },
+            "requires_available": false,
+            "requires_state": "",
+            "available_after_success": true,
+            "establishes_state": "database_layout_prepared",
+            "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+            "contract_revision": "snpeff-workspace-transition-v1",
+            "evidence_contract": {
+              "schema_version": 1,
+              "collector": "bounded_filesystem_snapshot_v1",
+              "allow_idempotent_revalidation": true,
+              "postconditions": [
+                {
+                  "kind": "directory_exists",
+                  "relative_path": "data"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/genomes/{binding:genome_version}.fa"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/{binding:genome_version}/genes.gtf"
+                }
+              ]
+            },
+            "binding_value_roles": {
+              "genome_version": "concrete_path_segment"
+            },
+            "current_state": {
+              "exists": false,
+              "kind": "missing",
+              "symlink": false
+            },
+            "resolved_derived_layout": {
+              "annotation_gtf": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/<genome_version>/genes.gtf",
+              "data_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data",
+              "genome_fasta": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/genomes/<genome_version>.fa",
+              "predictor": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/<genome_version>/snpEffectPredictor.bin"
+            },
+            "binding_digest": "sha256:2170c205e423ab4277607fb6c96e9d005d61fe257ed0c9df679ebbe1f8141aae"
+          }
+        ]
+      },
+      "resolved": {
+        "environment": {
+          "GENOME_VERSION": "arabidopsis_thaliana_custom",
+          "SNPEFF_DB": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff"
+        },
+        "records": [
+          {
+            "env_name": "GENOME_VERSION",
+            "binding_name": "genome_version",
+            "binding_id": "plan-binding-29150687cb32e47b1d43",
+            "value_type": "string",
+            "value_hash": "44b145f05032eb11391f775c75cafd48a6e4eb07d1fb8891f45e5fa1572e7ce6"
+          },
+          {
+            "env_name": "SNPEFF_DB",
+            "binding_name": "snpeff_db",
+            "binding_id": "plan-binding-c4b7ef35d06a910e4cac",
+            "value_type": "artifact_ref",
+            "value_hash": "d8f599c81f5a262694bd841819731d243717e90e99f42fbfb009401ef72fc62a"
+          }
+        ]
+      },
+      "limitation": "synthetic gate inputs; true historical CommitStep separately verified"
+    },
+    "stale_resource_revision": {
+      "expected": "ARTIFACT_BACKED_BINDING_REF_STALE",
+      "actual_error": {
+        "code": "ARTIFACT_BACKED_BINDING_REF_STALE",
+        "canonical_resource_id": "plan-artifact-320098ac0415075787a63b28",
+        "binding_revision": 1,
+        "matching_binding_count": 0
+      },
+      "passed": true
+    },
+    "stale_plan_revision": {
+      "expected": "PLAN_BINDING_UNAVAILABLE",
+      "actual_error": {
+        "code": "PLAN_BINDING_UNAVAILABLE",
+        "binding_name": "genome_version"
+      },
+      "passed": true
+    },
+    "hash_tamper": {
+      "expected": "PLAN_BINDING_VALUE_HASH_MISMATCH",
+      "actual_error": {
+        "code": "PLAN_BINDING_VALUE_HASH_MISMATCH",
+        "binding_id": "plan-binding-29150687cb32e47b1d43"
+      },
+      "passed": true
+    },
+    "accepted_value_immutable": {
+      "expected": "PLAN_BINDING_IMMUTABLE",
+      "actual_error": {
+        "code": "PLAN_BINDING_IMMUTABLE",
+        "binding_name": "genome_version",
+        "accepted_binding_id": "plan-binding-29150687cb32e47b1d43"
+      },
+      "passed": true
+    },
+    "invalidated_producer_unavailable": {
+      "expected": "PLAN_BINDING_UNAVAILABLE",
+      "actual_error": {
+        "code": "PLAN_BINDING_UNAVAILABLE",
+        "binding_name": "genome_version"
+      },
+      "passed": true
+    },
+    "literal_and_observation": {
+      "passed": true,
+      "literal_preserved": "/tmp/looks-like-a-file/$UNEXPANDED",
+      "concrete_role_source": "explicit rule; no path/string guessing",
+      "observation_requires_no_binding": true
+    },
+    "rollback_descendant_binding_defect": {
+      "passed": true,
+      "meaning": "DEFECT REPRODUCED; not a fix pass",
+      "rollback_result": {
+        "current_step_id": "a",
+        "current_stage_id": "",
+        "affected_step_ids": [
+          "a",
+          "b",
+          "c"
+        ],
+        "affected_stage_ids": [],
+        "invalidated_artifact_ids": [],
+        "rollback_target": "a"
+      },
+      "state_after": {
+        "plan_id": "isolated-rollback",
+        "plan_version": "v1",
+        "plan_revision": 1,
+        "steps": [
+          {
+            "step_id": "a",
+            "status": "retry_pending",
+            "depends_on": [],
+            "title": "Step 1",
+            "action": "",
+            "tool": "",
+            "execution_capability_id": "",
+            "operation": "",
+            "capability_contract_hash": "",
+            "skill_ids": [],
+            "skills_declared": false,
+            "workflow_stage_ids": [],
+            "batch_id": "",
+            "purpose": "analysis",
+            "inputs": [],
+            "outputs": [],
+            "produces_bindings": [],
+            "produces_observations": [],
+            "explicit_side_effects": [],
+            "workspace_mutations": [],
+            "dependencies": [],
+            "step_type": "atomic",
+            "renderer_id": "",
+            "semantic_claims": [],
+            "semantic_constraint_ids": [],
+            "semantic_claims_validation": {
+              "valid": true,
+              "errors": []
+            },
+            "input_artifact_ids": [],
+            "output_artifact_ids": [],
+            "dependency_sources": {},
+            "success_criteria": [],
+            "risk_level": "unspecified",
+            "artifacts": [],
+            "artifact_contract_revision": 0,
+            "artifact_reconciliation_history": [],
+            "renderer_execution": {},
+            "input_contracts": [],
+            "output_contracts": [],
+            "evidence": [
+              {
+                "event": "rollback_target",
+                "detail": "upstream rollback",
+                "at": "2026-09-17T17:09:14"
+              }
+            ],
+            "updated_at": "2026-09-17T17:09:14"
+          },
+          {
+            "step_id": "b",
+            "status": "invalidated",
+            "depends_on": [
+              "a"
+            ],
+            "title": "Step 2",
+            "action": "",
+            "tool": "",
+            "execution_capability_id": "",
+            "operation": "",
+            "capability_contract_hash": "",
+            "skill_ids": [],
+            "skills_declared": false,
+            "workflow_stage_ids": [],
+            "batch_id": "",
+            "purpose": "analysis",
+            "inputs": [],
+            "outputs": [],
+            "produces_bindings": [],
+            "produces_observations": [],
+            "explicit_side_effects": [],
+            "workspace_mutations": [],
+            "dependencies": [
+              "a"
+            ],
+            "step_type": "atomic",
+            "renderer_id": "",
+            "semantic_claims": [],
+            "semantic_constraint_ids": [],
+            "semantic_claims_validation": {
+              "valid": true,
+              "errors": []
+            },
+            "input_artifact_ids": [],
+            "output_artifact_ids": [],
+            "dependency_sources": {
+              "a": "planner_declared"
+            },
+            "success_criteria": [],
+            "risk_level": "unspecified",
+            "artifacts": [],
+            "artifact_contract_revision": 0,
+            "artifact_reconciliation_history": [],
+            "renderer_execution": {},
+            "input_contracts": [],
+            "output_contracts": [],
+            "evidence": [
+              {
+                "event": "invalidated_by_upstream",
+                "detail": "a",
+                "at": "2026-09-17T17:09:14"
+              }
+            ],
+            "updated_at": "2026-09-17T17:09:14"
+          },
+          {
+            "step_id": "c",
+            "status": "waiting_upstream",
+            "depends_on": [
+              "b"
+            ],
+            "title": "Step 3",
+            "action": "",
+            "tool": "",
+            "execution_capability_id": "",
+            "operation": "",
+            "capability_contract_hash": "",
+            "skill_ids": [],
+            "skills_declared": false,
+            "workflow_stage_ids": [],
+            "batch_id": "",
+            "purpose": "analysis",
+            "inputs": [],
+            "outputs": [],
+            "produces_bindings": [],
+            "produces_observations": [],
+            "explicit_side_effects": [],
+            "workspace_mutations": [],
+            "dependencies": [
+              "b"
+            ],
+            "step_type": "atomic",
+            "renderer_id": "",
+            "semantic_claims": [],
+            "semantic_constraint_ids": [],
+            "semantic_claims_validation": {
+              "valid": true,
+              "errors": []
+            },
+            "input_artifact_ids": [],
+            "output_artifact_ids": [],
+            "dependency_sources": {
+              "b": "planner_declared"
+            },
+            "success_criteria": [],
+            "risk_level": "unspecified",
+            "artifacts": [],
+            "artifact_contract_revision": 0,
+            "artifact_reconciliation_history": [],
+            "renderer_execution": {},
+            "input_contracts": [],
+            "output_contracts": [],
+            "evidence": [
+              {
+                "event": "invalidated_by_upstream",
+                "detail": "a",
+                "at": "2026-09-17T17:09:14"
+              }
+            ],
+            "updated_at": "2026-09-17T17:09:14"
+          }
+        ],
+        "task_state": {
+          "plan_binding_history": [
+            {
+              "binding_id": "plan-binding-2755567453ba533bc370",
+              "name": "a",
+              "value": "a-old",
+              "value_type": "string",
+              "producer_plan_id": "isolated-rollback",
+              "producer_plan_version": "v1",
+              "producer_plan_revision": 1,
+              "producer_step_id": "a",
+              "producer_action_id": "a",
+              "producer_execution_attempt_id": "a",
+              "status": "stale",
+              "revision": 1,
+              "value_hash": "1f70c6d248eb6188076385459133c884ae4e57897e476bb4fba6491fc7ffff70",
+              "accepted_at": "2026-09-17T09:09:14+00:00",
+              "stale_reason": "upstream producer superseded by Recovery rollback",
+              "stale_at": "2026-09-17T09:09:14+00:00"
+            },
+            {
+              "binding_id": "plan-binding-2aacc5576b4065111798",
+              "name": "b",
+              "value": "b-old",
+              "value_type": "string",
+              "producer_plan_id": "isolated-rollback",
+              "producer_plan_version": "v1",
+              "producer_plan_revision": 1,
+              "producer_step_id": "b",
+              "producer_action_id": "b",
+              "producer_execution_attempt_id": "b",
+              "status": "accepted",
+              "revision": 1,
+              "value_hash": "148c772dc5f979d0e6da158e644c072eaf26fd3f747fbaebe43b24559ac95f41",
+              "accepted_at": "2026-09-17T09:09:14+00:00"
+            }
+          ],
+          "accepted_plan_bindings": {
+            "b": "plan-binding-2aacc5576b4065111798"
+          },
+          "status": "repairing",
+          "status_reason": "rollback to a",
+          "status_updated_at": "2026-09-17T17:09:14"
+        },
+        "provenance_state": {
+          "schema_version": 1,
+          "task_id": "default",
+          "actions": {},
+          "attempts": {},
+          "artifacts": {},
+          "artifact_heads": {},
+          "manifests": {},
+          "stages": {},
+          "validations": {},
+          "attempt_counters": {},
+          "migration_log": [],
+          "updated_at": "2026-09-17T17:09:14"
+        },
+        "current_step_id": "a",
+        "current_stage_id": "",
+        "updated_at": "2026-09-17T17:09:14"
+      },
+      "stale_descendant_still_readable": {
+        "binding_id": "plan-binding-2aacc5576b4065111798",
+        "name": "b",
+        "value": "b-old",
+        "value_type": "string",
+        "producer_plan_id": "isolated-rollback",
+        "producer_plan_version": "v1",
+        "producer_plan_revision": 1,
+        "producer_step_id": "b",
+        "producer_action_id": "b",
+        "producer_execution_attempt_id": "b",
+        "status": "accepted",
+        "revision": 1,
+        "value_hash": "148c772dc5f979d0e6da158e644c072eaf26fd3f747fbaebe43b24559ac95f41",
+        "accepted_at": "2026-09-17T09:09:14+00:00"
+      }
+    },
+    "rollback_descendant_new_value_blocked": {
+      "expected": "PLAN_BINDING_IMMUTABLE",
+      "actual_error": {
+        "code": "PLAN_BINDING_IMMUTABLE",
+        "binding_name": "b",
+        "accepted_binding_id": "plan-binding-2aacc5576b4065111798"
+      },
+      "passed": true
+    },
+    "historical_argv_only_regression_current": {
+      "passed": true,
+      "a_syntax": {
+        "schema_version": 1,
+        "check_id": "executable_syntax",
+        "rule": "bounded_static_syntax_v1",
+        "source": "argv[2]",
+        "language": "python",
+        "execution_started": false,
+        "required": true,
+        "body_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+        "check_status": "PASS",
+        "result": {
+          "schema_version": 1,
+          "body_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+          "execution_started": false,
+          "execution_attempt_id": "",
+          "status": "valid",
+          "language": "python",
+          "fragment_id": "whole_python",
+          "fragment_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+          "source_start_line": 1,
+          "checker": "bounded_python_compile",
+          "code": ""
+        },
+        "code": "",
+        "detail": ""
+      },
+      "b_syntax": {
+        "schema_version": 1,
+        "check_id": "executable_syntax",
+        "rule": "bounded_static_syntax_v1",
+        "source": "argv[2]",
+        "language": "python",
+        "execution_started": false,
+        "required": true,
+        "body_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+        "check_status": "PASS",
+        "result": {
+          "schema_version": 1,
+          "body_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+          "execution_started": false,
+          "execution_attempt_id": "",
+          "status": "valid",
+          "language": "python",
+          "fragment_id": "whole_python",
+          "fragment_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+          "source_start_line": 1,
+          "checker": "bounded_python_compile",
+          "code": ""
+        },
+        "code": "",
+        "detail": ""
+      },
+      "progress": {
+        "schema_version": 2,
+        "producer": "biomind.generate_candidate_admission.v1",
+        "repeat_proven": false,
+        "stop_authority": "proven_recurrence_only; progress_proven is diagnostic",
+        "check_records": {
+          "executable_syntax": {
+            "schema_version": 1,
+            "check_id": "executable_syntax",
+            "rule": "bounded_static_syntax_v1",
+            "source": "argv[2]",
+            "language": "python",
+            "execution_started": false,
+            "required": true,
+            "body_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+            "check_status": "PASS",
+            "result": {
+              "schema_version": 1,
+              "body_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+              "execution_started": false,
+              "execution_attempt_id": "",
+              "status": "valid",
+              "language": "python",
+              "fragment_id": "whole_python",
+              "fragment_sha256": "a2650838d82546de47ad03a54693bb3ac7882df90f9f7e4188383edfd2c7dd71",
+              "source_start_line": 1,
+              "checker": "bounded_python_compile",
+              "code": ""
+            },
+            "code": "",
+            "detail": ""
+          }
+        },
+        "unknown_targets": [],
+        "failed_checks": [],
+        "new_failure_targets": [],
+        "progress_proven": true,
+        "basis": "validated_binding_target",
+        "comparison_fingerprint": "dcec3687e1a87d2fb53bc49a0d96884476a6fd44884666b0f770ad435952c026",
+        "validation_signature": "2d8442f3219e36f6b5d6b9ddcc0af99eafea5f5a400f1da4d8d794b6a11cd596",
+        "comparison_context_fingerprint": "b0ae2f64d8cb9e92ab5d12adc1483d0fa8ac7c515eb6df85829eca7ec34d5573",
+        "representation_targets": [
+          "json_object"
+        ],
+        "binding_facts": [
+          "operation"
+        ],
+        "binding_axis": "evaluated",
+        "newly_satisfied_targets": [
+          "operation"
+        ],
+        "resolved_targets": [],
+        "pending_targets": [
+          "binding_env"
+        ],
+        "scientific_success": "not_assessed"
+      },
+      "decision": "not invoked; graph/policy route is outside this component witness",
+      "execution_started": false
+    }
+  },
+  "final_checkpoint": {
+    "original_result_unchanged_sha256": "b728eff6aa5138c7738cd369332e6c30fe33281252b441e66adf6bcf9436363f",
+    "output_redirect": "runpy of unchanged cross_witness.py; Path.write_text redirected ONLY original result path to cross_witness_final_checkpoint.json",
+    "source_hashes_before_and_after_identical": true,
+    "current_source_hashes": {
+      "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_bindings.py": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_tracker.py": "724f098ea3b41ed6e78ff629a2f014a8e5121fbb19cd2ab631cc03da8d2628c2",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/semantic_completion.py": "8dc3af63d3dc0f60a79c864be5fc32487fadbbb47e28770882cbee313a458cc7",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/step_effects.py": "565d06037d3f68b7818f3fced964066109c3836be3e2420abf5bf6445ee3cfa2",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workspace_attestation.py": "cca7537f7641f3388970395484618b0b4e1922af35655f90f2788afebf2d3f67",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workspace_revalidation.py": "b020a6556583aa8c5b105ed93b6a3f17dca17652f826c1567422127f7e81ff3e",
+      "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883"
+    },
+    "assessment": "All 17 prior assertions still reproduce; includes 2 current rollback defect assertions, not a fix pass. New workspace reuse controller/hash paths were read but not executed by this component witness."
+  }
+}

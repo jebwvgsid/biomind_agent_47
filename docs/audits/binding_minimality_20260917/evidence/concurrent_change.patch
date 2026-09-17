@@ -1,0 +1,44 @@
+--- /tmp/skill-invocation-validation-nm1jgfjk/candidate/bio_agents.py
++++ /public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py
+@@ -834,6 +834,7 @@
+     validate_runtime_mutation_receipt,
+     validate_workspace_action_admission,
+ )
++from agent_core.workspace_revalidation import collect_controller_workspace_revalidation
+ from agent_core.state_contract_store import StateContractStore
+ from agent_core.evidence_projection import artifact_effect_evidence
+ from agent_core.execution_authority import is_approved_step_execution, is_recovery_diagnostic_execution
+@@ -44515,6 +44516,10 @@
+                         or {}
+                     ),
+                     workspace_bindings=generate_workspace_bindings,
++                    approved_step=next((
++                        row for row in generate_approved_snapshot.get("steps", [])
++                        if row.get("step_id") == current_step_id
++                    ), {}),
+                 )
+                 if workspace_admission.status in {
+                     "candidate_rejected", "contract_error"
+@@ -47493,6 +47498,7 @@
+                                 pending_action.get("capability_contract") or {}
+                             ),
+                             workspace_bindings=current_workspace_bindings,
++                            approved_step=fixed_step,
+                         )
+                     )
+                     if execute_workspace_admission.status not in {
+@@ -49932,9 +49938,14 @@
+             mutation_receipt_validations: List[Dict[str, Any]] = []
+             workspace_mutation_receipts: List[Dict[str, Any]] = []
+             try:
++                controller_revalidation_evidence = collect_controller_workspace_revalidation(
++                    mutation_attestation_journal,
++                    process_exit_code=int(returncode),
++                )
+                 mutation_attestation_journal = finalize_mutation_attestation(
+                     mutation_attestation_journal,
+                     process_exit_code=int(returncode),
++                    controller_revalidation_evidence=controller_revalidation_evidence,
+                 )
+                 persist_mutation_journal(
+                     mutation_journal_path,

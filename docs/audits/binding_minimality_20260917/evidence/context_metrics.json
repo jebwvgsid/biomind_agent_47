@@ -1,0 +1,662 @@
+{
+  "scope": "UTF-8 source and decoded message content; no token estimate",
+  "python": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "tiktoken_installed": true,
+  "tokenizer_used": null,
+  "tokenizer_reason": "no encoding initialized or downloaded; byte/character metrics only",
+  "skill_file": {
+    "chars": 23842,
+    "utf8_bytes": 23918,
+    "lines": 428,
+    "sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673"
+  },
+  "frontmatter_with_delimiters": {
+    "chars": 8476,
+    "utf8_bytes": 8494,
+    "lines": 133,
+    "sha256": "0ad857fdef77874cb08f8791681aaad86f6b7741cfaaa33752f8abaca79948fc"
+  },
+  "body": {
+    "chars": 15366,
+    "utf8_bytes": 15424,
+    "lines": 295,
+    "sha256": "3b7458656be796f2501ae00c569bfa568d2aeab015d56d57cda9887cd4793669"
+  },
+  "legacy_load_skill_result": {
+    "chars": 16777,
+    "utf8_bytes": 16873,
+    "lines": 319,
+    "sha256": "94e48804137591b611febc0606313b5891d644af2bb3bad95a81493776f5c538"
+  },
+  "schema2_snapshot_exact_text": {
+    "chars": 23842,
+    "utf8_bytes": 23918,
+    "lines": 428,
+    "sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673"
+  },
+  "references": [],
+  "catalog_current": {
+    "chars": 6967,
+    "utf8_bytes": 7047,
+    "lines": 1,
+    "sha256": "e37e7e4f0e99fb53796c66f2f3caf1ec1e3bf776fac322b9612ca6371299bd80"
+  },
+  "catalog_draft": {
+    "chars": 3180,
+    "utf8_bytes": 3196,
+    "lines": 1,
+    "sha256": "d8c7155767c1a5602784383a890292f6658ee87fefb25ba360bc54642dcaa261"
+  },
+  "interpreter_identity_repetitions": 4,
+  "catalog_current_leaf_count": 135,
+  "requests": [
+    {
+      "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/consultant-0005-8bd6051e498b/request.json",
+      "file_bytes": 114860,
+      "source_sha256": "1226f0221c7e7d4146f11df2a29e7ab7cb11366a01d4721a937c877d307cb732",
+      "message_contents": {
+        "chars": 104970,
+        "utf8_bytes": 109022,
+        "lines": 1856,
+        "sha256": "8bd33791fd13720de4f41b540069b7977b04eff00cbf1646573e5bc037734ca6"
+      },
+      "keyword_occurrences": {
+        "binding_env": 0,
+        "produced_bindings": 0,
+        "consumed_bindings": 0,
+        "required_runtime_binding_ids": 5,
+        "binding_digest": 0,
+        "interpreter_identity": 0,
+        "invocation": 6,
+        "Normally OMIT binding_env": 0,
+        "Normally omit binding_env": 0,
+        "selected_skill_script_bindings": 0
+      },
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": "",
+          "chars": 22820,
+          "utf8_bytes": 22938,
+          "lines": 299,
+          "sha256": "051d7285c8b21cd99830a2db0c6e1499f289a73611615a5f5d388d97a6994ad0",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": "",
+          "chars": 11804,
+          "utf8_bytes": 13242,
+          "lines": 180,
+          "sha256": "257abeb7e8ea1bd063314f52e7cad0d3ccdccb96b454c9fc06c7034eb906deef",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 2,
+          "role": "assistant",
+          "name": "",
+          "chars": 526,
+          "utf8_bytes": 526,
+          "lines": 1,
+          "sha256": "c70a665d9caedd961a06f5b9cae9921d2c7b673fdbddb323f408bb14bbbc6115",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "runtime_observation",
+          "chars": 14724,
+          "utf8_bytes": 14852,
+          "lines": 448,
+          "sha256": "9c77c94d8ff2d88efe639f36c40c2b0d0ed2e303d6400223c071005d9ed30f98",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 4,
+          "role": "assistant",
+          "name": "",
+          "chars": 334,
+          "utf8_bytes": 334,
+          "lines": 1,
+          "sha256": "869559cb85861c2edba70cb9413965e0d26081597ee4ac10b275ad5c16bf6366",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": "runtime_observation",
+          "chars": 47010,
+          "utf8_bytes": 47300,
+          "lines": 924,
+          "sha256": "08f8f3adbd690465b565849a9576b9341a57a79098e27d3f8e526d2a9b52d02f",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 6,
+          "role": "assistant",
+          "name": "",
+          "chars": 7524,
+          "utf8_bytes": 9602,
+          "lines": 1,
+          "sha256": "ba33757251e8f0f9e8efdd27b172b78a71eaa63f9da904ebe82d126133ca6a69",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 7,
+          "role": "human",
+          "name": "runtime_observation",
+          "chars": 221,
+          "utf8_bytes": 221,
+          "lines": 1,
+          "sha256": "0e599b2208867ae491ce7b629c4fbf78f89fef1d73fb6bbb7fdb644268bcaf89",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        }
+      ]
+    },
+    {
+      "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/planner_initial-0008-d5e9808aca76/request.json",
+      "file_bytes": 215444,
+      "source_sha256": "0b5e9d5968529040f380ec2606e6ec6bba4f053bbaef3cf4e528abbb7a94fc95",
+      "message_contents": {
+        "chars": 190261,
+        "utf8_bytes": 201099,
+        "lines": 4094,
+        "sha256": "d6d198122c79312669f9e59defd3d76c76ba3ac3f95ec56d01104729d1380e74"
+      },
+      "keyword_occurrences": {
+        "binding_env": 0,
+        "produced_bindings": 0,
+        "consumed_bindings": 0,
+        "required_runtime_binding_ids": 5,
+        "binding_digest": 0,
+        "interpreter_identity": 0,
+        "invocation": 2,
+        "Normally OMIT binding_env": 0,
+        "Normally omit binding_env": 0,
+        "selected_skill_script_bindings": 0
+      },
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": "",
+          "chars": 32440,
+          "utf8_bytes": 32558,
+          "lines": 437,
+          "sha256": "80bcc86d2554ff424bb152bc329b4bb62bc7478b810de4698125591095e0a9cf",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": "",
+          "chars": 31445,
+          "utf8_bytes": 34687,
+          "lines": 694,
+          "sha256": "9f2170860a47a0bf1e9f1b75bd764470fe667be9588fc315aa1d4bebdd5e5fbc",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 13933,
+          "utf8_bytes": 13997,
+          "lines": 266,
+          "sha256": "da50391932d46ddfdd9c3b2f4f17b65c6f00597daf20a574f0b61e64856f7168",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 20751,
+          "utf8_bytes": 20827,
+          "lines": 356,
+          "sha256": "36b727f695744b45be3b75378a1457e4704c3ed30ec70c0ac19922225ae869ec",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 4,
+          "role": "assistant",
+          "name": "",
+          "chars": 34816,
+          "utf8_bytes": 38494,
+          "lines": 1197,
+          "sha256": "e2be7e5b5aea6e860d51c2c752c7b82d9cbc6db6612e3a8cb62d89e1954b5e14",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": "runtime_observation",
+          "chars": 11695,
+          "utf8_bytes": 11695,
+          "lines": 1,
+          "sha256": "0217bcdc0ae2d47da98fc21d43ab5e1d628ff5801a576461ef28905c0eabeded",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 6,
+          "role": "assistant",
+          "name": "",
+          "chars": 33076,
+          "utf8_bytes": 36736,
+          "lines": 1141,
+          "sha256": "6b97426ecbb83b357b5255134af8bf8ba1df5e0fbc85292b9a8e4c4ab90bbf3b",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 7,
+          "role": "human",
+          "name": "runtime_observation",
+          "chars": 11688,
+          "utf8_bytes": 11688,
+          "lines": 1,
+          "sha256": "bb0777d79eabff5b30b135a711090d25b388db3555bd56bc2c0f58c15d7f99c3",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 8,
+          "role": "system",
+          "name": "",
+          "chars": 409,
+          "utf8_bytes": 409,
+          "lines": 1,
+          "sha256": "2369ea4c93291f51ecf1d19ffc404530f9bd553a7c96a938d16edb904955ef06",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        }
+      ]
+    },
+    {
+      "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0009-7e7691897098/request.json",
+      "file_bytes": 140597,
+      "source_sha256": "de5eb9d74a1767e9e1c321835667ad4dd610d62215cee30bc2ba638f9e145828",
+      "message_contents": {
+        "chars": 126478,
+        "utf8_bytes": 131708,
+        "lines": 2782,
+        "sha256": "040e59b3b0426891a33b8f161d7e26dc085d39950a95ee35d816d0861105fd9d"
+      },
+      "keyword_occurrences": {
+        "binding_env": 2,
+        "produced_bindings": 2,
+        "consumed_bindings": 0,
+        "required_runtime_binding_ids": 5,
+        "binding_digest": 0,
+        "interpreter_identity": 0,
+        "invocation": 2,
+        "Normally OMIT binding_env": 0,
+        "Normally omit binding_env": 2,
+        "selected_skill_script_bindings": 2
+      },
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": "",
+          "chars": 777,
+          "utf8_bytes": 777,
+          "lines": 10,
+          "sha256": "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": "",
+          "chars": 84076,
+          "utf8_bytes": 89068,
+          "lines": 2147,
+          "sha256": "37f1b4cff7b8cb7b68695b4f714ef06e50906863cdfe9d347adf2938ca40102c",
+          "binding_related_tag_counts": {
+            "preflight_evidence_binding": 1,
+            "selected_skill_script_bindings": 1
+          },
+          "binding_related_tag_chars": 2878
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "approved_effect_emission_template",
+          "chars": 2777,
+          "utf8_bytes": 2777,
+          "lines": 1,
+          "sha256": "f2e5df074773d7fbc81bc558d7b77e22392102535f634de82901e692e9732268",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "current_generate_output_protocol",
+          "chars": 4159,
+          "utf8_bytes": 4257,
+          "lines": 1,
+          "sha256": "38da6e824dc789efe9a712cecccfa205b5d7c6752967a3f9bd7d47e0ae948409",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 4,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 13933,
+          "utf8_bytes": 13997,
+          "lines": 266,
+          "sha256": "da50391932d46ddfdd9c3b2f4f17b65c6f00597daf20a574f0b61e64856f7168",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 20751,
+          "utf8_bytes": 20827,
+          "lines": 356,
+          "sha256": "36b727f695744b45be3b75378a1457e4704c3ed30ec70c0ac19922225ae869ec",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        }
+      ]
+    },
+    {
+      "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0016-d4f379d86176/request.json",
+      "file_bytes": 148967,
+      "source_sha256": "4a01f89a8933e39dff822eeddab02d429df6888ae69b0656c0a23e0efd4d03a8",
+      "message_contents": {
+        "chars": 134306,
+        "utf8_bytes": 139532,
+        "lines": 3000,
+        "sha256": "ab218e4107299b02b4931fc5fcae717a510ed2c7f58454d520178ce2dc1b5c41"
+      },
+      "keyword_occurrences": {
+        "binding_env": 2,
+        "produced_bindings": 2,
+        "consumed_bindings": 0,
+        "required_runtime_binding_ids": 5,
+        "binding_digest": 0,
+        "interpreter_identity": 0,
+        "invocation": 2,
+        "Normally OMIT binding_env": 0,
+        "Normally omit binding_env": 2,
+        "selected_skill_script_bindings": 2
+      },
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": "",
+          "chars": 777,
+          "utf8_bytes": 777,
+          "lines": 10,
+          "sha256": "ab0558c5258ef08975959e7145d87f1bf6eff347665edc487bac8f73fb66b5f0",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": "",
+          "chars": 92058,
+          "utf8_bytes": 97098,
+          "lines": 2365,
+          "sha256": "6a627ca312844be2bd5aef410e1b0b87b47f66af0b6bb9fbbbe051e004a1f11e",
+          "binding_related_tag_counts": {
+            "preflight_evidence_binding": 1,
+            "selected_skill_script_bindings": 1
+          },
+          "binding_related_tag_chars": 2878
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "approved_effect_emission_template",
+          "chars": 2898,
+          "utf8_bytes": 2898,
+          "lines": 1,
+          "sha256": "bc73bb5549651b05b7c2525fe2c0f8178696df7fcbaf30c7b64400d8b184ba2a",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "current_generate_output_protocol",
+          "chars": 3884,
+          "utf8_bytes": 3930,
+          "lines": 1,
+          "sha256": "0daefecc0bfcd9dee43eef0c943722b981b7188b2eaf004c9d953ff63a57f1a4",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 4,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 13933,
+          "utf8_bytes": 13997,
+          "lines": 266,
+          "sha256": "da50391932d46ddfdd9c3b2f4f17b65c6f00597daf20a574f0b61e64856f7168",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 20751,
+          "utf8_bytes": 20827,
+          "lines": 356,
+          "sha256": "36b727f695744b45be3b75378a1457e4704c3ed30ec70c0ac19922225ae869ec",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        }
+      ]
+    },
+    {
+      "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0017-21dad96cd7b4/request.json",
+      "file_bytes": 337762,
+      "source_sha256": "8805c55b4113cc15265e5c066362ba839f53017217f40ba79e8a7171352eff6b",
+      "message_contents": {
+        "chars": 304595,
+        "utf8_bytes": 310447,
+        "lines": 740,
+        "sha256": "3abe6c357367b0cfa41ef9095bc9c318b558e54db2db43cca845b1a5b0c5e071"
+      },
+      "keyword_occurrences": {
+        "binding_env": 0,
+        "produced_bindings": 0,
+        "consumed_bindings": 0,
+        "required_runtime_binding_ids": 5,
+        "binding_digest": 2,
+        "interpreter_identity": 0,
+        "invocation": 2,
+        "Normally OMIT binding_env": 0,
+        "Normally omit binding_env": 0,
+        "selected_skill_script_bindings": 0
+      },
+      "messages": [
+        {
+          "index": 0,
+          "role": "system",
+          "name": "",
+          "chars": 11250,
+          "utf8_bytes": 11250,
+          "lines": 52,
+          "sha256": "36cb8396e97b70646b39ddae71326de450c351512522abf4a99ada6e64363b4b",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 1,
+          "role": "human",
+          "name": "",
+          "chars": 20716,
+          "utf8_bytes": 21504,
+          "lines": 3,
+          "sha256": "1a33afafb16bf0e00be63ea8c91c42fd889f84c6500a9098e4375788c496f262",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 2,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 13933,
+          "utf8_bytes": 13997,
+          "lines": 266,
+          "sha256": "da50391932d46ddfdd9c3b2f4f17b65c6f00597daf20a574f0b61e64856f7168",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 3,
+          "role": "human",
+          "name": "inherited_skill_material",
+          "chars": 20751,
+          "utf8_bytes": 20827,
+          "lines": 356,
+          "sha256": "36b727f695744b45be3b75378a1457e4704c3ed30ec70c0ac19922225ae869ec",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 4,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 827,
+          "utf8_bytes": 827,
+          "lines": 9,
+          "sha256": "0246c643582701facf270df6ca170d35b3472e7f621a5a9cd1f69558982ca178",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 5,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 834,
+          "utf8_bytes": 834,
+          "lines": 9,
+          "sha256": "9beae4bc206144cfa150abbe6bba02cf719fb54d0e843fd2797433c23344b6b6",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 6,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 834,
+          "utf8_bytes": 834,
+          "lines": 9,
+          "sha256": "7fcb9f0084777a31f28de8c58b44bbdafbc28f9fc448f0d66b5274fefdc466ff",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 7,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 8415,
+          "utf8_bytes": 8461,
+          "lines": 6,
+          "sha256": "7613aca778eac41f49084d3ff26e7f52f98fee813bfa70d795a961334b9d4714",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 8,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 18716,
+          "utf8_bytes": 18824,
+          "lines": 6,
+          "sha256": "97b3edadbdcafed8c3117307b7ed6e70082e0976c6b244f043b6c214bdeca4eb",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 9,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 2155,
+          "utf8_bytes": 2159,
+          "lines": 6,
+          "sha256": "0f5ec1b69e7f867e95e8b744a38271b231f1f83e1b4794ef6cec0aed1c5c8d6f",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 10,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 20744,
+          "utf8_bytes": 21842,
+          "lines": 6,
+          "sha256": "fe96f250232113c578df2785c5775bda36965d9fad24bd19de58c20e5447b627",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 11,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 183445,
+          "utf8_bytes": 187113,
+          "lines": 6,
+          "sha256": "cfd0670898c176078b68af06fc56ede8e1275f2aab397e2bba56584de4349a00",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        },
+        {
+          "index": 12,
+          "role": "human",
+          "name": "inherited_recovery_evidence",
+          "chars": 1963,
+          "utf8_bytes": 1963,
+          "lines": 6,
+          "sha256": "d976d6c3524bdccd0b013444de4190e8546dac863998291ce4d8d8b400c88746",
+          "binding_related_tag_counts": {},
+          "binding_related_tag_chars": 0
+        }
+      ]
+    }
+  ],
+  "catalog_draft_leaf_count": 63,
+  "source_slices": {
+    "helper_machine_contract_lines_12_53": {
+      "chars": 1719,
+      "utf8_bytes": 1719,
+      "lines": 42,
+      "sha256": "9f8842273f850ba3713ba961752096835ec1bdb1037466c0e360d5f370f9177c"
+    },
+    "helper_body_lines_211_310": {
+      "chars": 6594,
+      "utf8_bytes": 6598,
+      "lines": 100,
+      "sha256": "7cce803222f53b343e17fd971a24299d9c126f9b48178bde2bdea006ccb372c3"
+    }
+  }
+}

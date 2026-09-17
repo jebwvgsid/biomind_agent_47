@@ -1,0 +1,632 @@
+{
+  "scope": "current production function construction, not a live provider request",
+  "python": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "config_stub": "six skill-reader limits only, no environment config imported",
+  "catalog": [
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "relative_path": "scripts/inspect_fasta_header.py",
+      "environment_variable": "BIOMIND_SKILL_4BBEBEE4916B4D2D",
+      "availability": "AVAILABLE",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py'",
+        "arguments": {
+          "--path": {
+            "nargs": 1,
+            "required": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--header-bytes": {
+            "nargs": 1
+          },
+          "--input-bytes": {
+            "nargs": 1
+          },
+          "--seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [],
+        "carrier": "simple_shell_or_direct_argv",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      }
+    },
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "relative_path": "scripts/inspect_fastq.py",
+      "environment_variable": "BIOMIND_SKILL_65E610938C636F7D",
+      "availability": "AVAILABLE",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py'",
+        "arguments": {
+          "--path": {
+            "nargs": 1,
+            "required": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--records": {
+            "nargs": 1
+          },
+          "--input-bytes": {
+            "nargs": 1
+          },
+          "--decoded-bytes": {
+            "nargs": 1
+          },
+          "--seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [],
+        "carrier": "simple_shell_or_direct_argv",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      }
+    },
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "relative_path": "scripts/inspect_fastq_batch.py",
+      "environment_variable": "BIOMIND_SKILL_ECD588FCA5ADDFE0",
+      "availability": "AVAILABLE",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py'",
+        "arguments": {
+          "--item": {
+            "nargs": 2,
+            "required": true,
+            "repeatable": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--evidence-dir": {
+            "nargs": 1,
+            "required": true,
+            "runtime_environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR"
+          },
+          "--item-timeout-seconds": {
+            "nargs": 1
+          },
+          "--records": {
+            "nargs": 1
+          },
+          "--input-bytes": {
+            "nargs": 1
+          },
+          "--decoded-bytes": {
+            "nargs": 1
+          },
+          "--seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [
+          "scripts/inspect_fastq.py"
+        ],
+        "carrier": "simple_shell",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      }
+    },
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "relative_path": "scripts/inspect_wgs_inputs.py",
+      "environment_variable": "BIOMIND_SKILL_A363F1D9157F7CFC",
+      "availability": "AVAILABLE",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py'",
+        "arguments": {
+          "--fastq": {
+            "nargs": 2,
+            "required": true,
+            "repeatable": true
+          },
+          "--reference": {
+            "nargs": 2,
+            "required": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--evidence-dir": {
+            "nargs": 1,
+            "required": true,
+            "runtime_environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR"
+          },
+          "--item-timeout-seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [
+          "scripts/inspect_fastq.py",
+          "scripts/inspect_fasta_header.py",
+          "scripts/inspect_fastq_batch.py"
+        ],
+        "carrier": "simple_shell",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "schema_version": 1,
+      "source": "selected_skill_registry",
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "snapshot_id": "skill-snapshot-a17e38b1893b6a8e6b0a",
+      "skill_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "relative_path": "scripts/inspect_fasta_header.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+      "content_hash": "1cbfb2a45bf0dcd3d06784fade31d7822bf3d374a81c80545493e168bbc1eced",
+      "resource_snapshot_id": "skill-resource-1cbfb2a45bf0dcd3",
+      "environment_variable": "BIOMIND_SKILL_4BBEBEE4916B4D2D",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "step_id": "input_check",
+      "readable": true,
+      "executable_bit_required": false,
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py'",
+        "arguments": {
+          "--path": {
+            "nargs": 1,
+            "required": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--header-bytes": {
+            "nargs": 1
+          },
+          "--input-bytes": {
+            "nargs": 1
+          },
+          "--seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [],
+        "carrier": "simple_shell_or_direct_argv",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      },
+      "binding_digest": "c066862c32e72983a3335a446f75a1df164fe3616584da07895f74255b564446"
+    },
+    {
+      "schema_version": 1,
+      "source": "selected_skill_registry",
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "snapshot_id": "skill-snapshot-a17e38b1893b6a8e6b0a",
+      "skill_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "relative_path": "scripts/inspect_fastq.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+      "content_hash": "6c74374f6daad34daa911c45f9fadd8e763603939f88d9993f9748a3d53c1dc6",
+      "resource_snapshot_id": "skill-resource-6c74374f6daad34d",
+      "environment_variable": "BIOMIND_SKILL_65E610938C636F7D",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "step_id": "input_check",
+      "readable": true,
+      "executable_bit_required": false,
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py'",
+        "arguments": {
+          "--path": {
+            "nargs": 1,
+            "required": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--records": {
+            "nargs": 1
+          },
+          "--input-bytes": {
+            "nargs": 1
+          },
+          "--decoded-bytes": {
+            "nargs": 1
+          },
+          "--seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [],
+        "carrier": "simple_shell_or_direct_argv",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      },
+      "binding_digest": "fa1457722bfb802ba361b4eb2225582872d14f9bc75de44edbdb5b5443e11764"
+    },
+    {
+      "schema_version": 1,
+      "source": "selected_skill_registry",
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "snapshot_id": "skill-snapshot-a17e38b1893b6a8e6b0a",
+      "skill_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "relative_path": "scripts/inspect_fastq_batch.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+      "content_hash": "a3fb0858570e7dbd925c008b747581c9b6393091c9ac2f52d099e84cc5e442ec",
+      "resource_snapshot_id": "skill-resource-a3fb0858570e7dbd",
+      "environment_variable": "BIOMIND_SKILL_ECD588FCA5ADDFE0",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "step_id": "input_check",
+      "readable": true,
+      "executable_bit_required": false,
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py'",
+        "arguments": {
+          "--item": {
+            "nargs": 2,
+            "required": true,
+            "repeatable": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--evidence-dir": {
+            "nargs": 1,
+            "required": true,
+            "runtime_environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR"
+          },
+          "--item-timeout-seconds": {
+            "nargs": 1
+          },
+          "--records": {
+            "nargs": 1
+          },
+          "--input-bytes": {
+            "nargs": 1
+          },
+          "--decoded-bytes": {
+            "nargs": 1
+          },
+          "--seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [
+          "scripts/inspect_fastq.py"
+        ],
+        "carrier": "simple_shell",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      },
+      "binding_digest": "8259ac468e6c9be5111dc6b7a6766c8aef95920f49706596b4de45f58c803fc7"
+    },
+    {
+      "schema_version": 1,
+      "source": "selected_skill_registry",
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "snapshot_id": "skill-snapshot-a17e38b1893b6a8e6b0a",
+      "skill_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "relative_path": "scripts/inspect_wgs_inputs.py",
+      "registered_root": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping",
+      "canonical_path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py",
+      "content_hash": "171bc36e21edcf073c47f8c0a96faaa9fe6723e01a73aaf0b5578463de16a02a",
+      "resource_snapshot_id": "skill-resource-171bc36e21edcf07",
+      "environment_variable": "BIOMIND_SKILL_A363F1D9157F7CFC",
+      "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1",
+      "namespace": "local",
+      "step_id": "input_check",
+      "readable": true,
+      "executable_bit_required": false,
+      "invocation": {
+        "schema_version": 1,
+        "runtime": "controller_python",
+        "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "interpreter_identity": {
+          "real_path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+          "device": 49,
+          "inode": 23794415410,
+          "size": 31448728,
+          "mtime_ns": 1781334205000000000,
+          "ctime_ns": 1781334205000000000
+        },
+        "argv_prefix": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py"
+        ],
+        "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py'",
+        "arguments": {
+          "--fastq": {
+            "nargs": 2,
+            "required": true,
+            "repeatable": true
+          },
+          "--reference": {
+            "nargs": 2,
+            "required": true
+          },
+          "--observation-id": {
+            "nargs": 1,
+            "required": true
+          },
+          "--evidence-dir": {
+            "nargs": 1,
+            "required": true,
+            "runtime_environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR"
+          },
+          "--item-timeout-seconds": {
+            "nargs": 1
+          }
+        },
+        "delegates": [
+          "scripts/inspect_fastq.py",
+          "scripts/inspect_fasta_header.py",
+          "scripts/inspect_fastq_batch.py"
+        ],
+        "carrier": "simple_shell",
+        "scope": "registered utility; does not activate the Skill scientific environment"
+      },
+      "binding_digest": "4c84c23fdbab203591d50a11c0cef4e0857fce50f30cfb91e4cfa705aff3ca3e"
+    }
+  ],
+  "draft_not_implemented": [
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py",
+      "status": "available_verified_at_candidate_build",
+      "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py'",
+      "arguments": {
+        "--path": {
+          "nargs": 1,
+          "required": true
+        },
+        "--observation-id": {
+          "nargs": 1,
+          "required": true
+        },
+        "--header-bytes": {
+          "nargs": 1
+        },
+        "--input-bytes": {
+          "nargs": 1
+        },
+        "--seconds": {
+          "nargs": 1
+        }
+      },
+      "carrier": "simple_shell_or_direct_argv",
+      "dependencies": "program derives declared delegate closure before approval",
+      "scope": "registered utility; does not activate the Skill scientific environment"
+    },
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+      "status": "available_verified_at_candidate_build",
+      "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py'",
+      "arguments": {
+        "--path": {
+          "nargs": 1,
+          "required": true
+        },
+        "--observation-id": {
+          "nargs": 1,
+          "required": true
+        },
+        "--records": {
+          "nargs": 1
+        },
+        "--input-bytes": {
+          "nargs": 1
+        },
+        "--decoded-bytes": {
+          "nargs": 1
+        },
+        "--seconds": {
+          "nargs": 1
+        }
+      },
+      "carrier": "simple_shell_or_direct_argv",
+      "dependencies": "program derives declared delegate closure before approval",
+      "scope": "registered utility; does not activate the Skill scientific environment"
+    },
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+      "status": "available_verified_at_candidate_build",
+      "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py'",
+      "arguments": {
+        "--item": {
+          "nargs": 2,
+          "required": true,
+          "repeatable": true
+        },
+        "--observation-id": {
+          "nargs": 1,
+          "required": true
+        },
+        "--evidence-dir": {
+          "nargs": 1,
+          "required": true,
+          "runtime_environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR"
+        },
+        "--item-timeout-seconds": {
+          "nargs": 1
+        },
+        "--records": {
+          "nargs": 1
+        },
+        "--input-bytes": {
+          "nargs": 1
+        },
+        "--decoded-bytes": {
+          "nargs": 1
+        },
+        "--seconds": {
+          "nargs": 1
+        }
+      },
+      "carrier": "simple_shell",
+      "dependencies": "program derives declared delegate closure before approval",
+      "scope": "registered utility; does not activate the Skill scientific environment"
+    },
+    {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+      "status": "available_verified_at_candidate_build",
+      "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py'",
+      "arguments": {
+        "--fastq": {
+          "nargs": 2,
+          "required": true,
+          "repeatable": true
+        },
+        "--reference": {
+          "nargs": 2,
+          "required": true
+        },
+        "--observation-id": {
+          "nargs": 1,
+          "required": true
+        },
+        "--evidence-dir": {
+          "nargs": 1,
+          "required": true,
+          "runtime_environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR"
+        },
+        "--item-timeout-seconds": {
+          "nargs": 1
+        }
+      },
+      "carrier": "simple_shell",
+      "dependencies": "program derives declared delegate closure before approval",
+      "scope": "registered utility; does not activate the Skill scientific environment"
+    }
+  ]
+}

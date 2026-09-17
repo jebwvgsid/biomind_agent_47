@@ -1,0 +1,444 @@
+{
+  "status": "proposal only",
+  "measurement": "Canonical compact JSON; binding projection only, not full request or tokens. Actual historical binding_env is already omitted and gets zero new savings.",
+  "drafts": [
+    {
+      "source_candidate": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/context_trace/generate-0013-250adceda996/response.json",
+      "operation": "prepare_database",
+      "before_input_binding_projection": {
+        "current_action_workspace_bindings": [
+          {
+            "workspace_ref": "artifact.snpeff_data_dir",
+            "canonical_resource_id": "plan-artifact-320098ac0415075787a63b28",
+            "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+            "binding_revision": 1,
+            "resource_kind": "mutable_workspace",
+            "formal_concrete_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff",
+            "access_scope": "read_write",
+            "operation_scope": {
+              "operation": "prepare_database",
+              "mutation": "prepare_database"
+            },
+            "requires_available": false,
+            "available_after_success": true,
+            "establishes_state": "database_layout_prepared",
+            "contract_source": "genomics.snpeff_annotation.prepare_database.workspace_mutations",
+            "contract_revision": "snpeff-workspace-transition-v1",
+            "evidence_contract": {
+              "schema_version": 1,
+              "collector": "bounded_filesystem_snapshot_v1",
+              "allow_idempotent_revalidation": true,
+              "postconditions": [
+                {
+                  "kind": "directory_exists",
+                  "relative_path": "data"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/genomes/{binding:genome_version}.fa"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/{binding:genome_version}/genes.gtf"
+                }
+              ]
+            },
+            "binding_value_roles": {
+              "genome_version": "concrete_path_segment"
+            },
+            "current_state": {
+              "exists": false,
+              "kind": "missing",
+              "symlink": false
+            },
+            "resolved_derived_layout": {
+              "annotation_gtf": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/<genome_version>/genes.gtf",
+              "data_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data",
+              "genome_fasta": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/genomes/<genome_version>.fa",
+              "predictor": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        ],
+        "binding_input_requirements": {
+          "protocol": "public_handle_v2",
+          "operation": "prepare_database",
+          "produced_bindings": {
+            "genome_version": {
+              "type": "string",
+              "value_policy": {
+                "role": "concrete_path_segment",
+                "policy_version": 1,
+                "reserved_forms": [
+                  "$NAME",
+                  "${NAME}"
+                ],
+                "expansion": "never"
+              },
+              "value": "model semantic value"
+            },
+            "snpeff_db": {
+              "type": "artifact_ref",
+              "value_policy": {
+                "role": "literal",
+                "policy_version": 1,
+                "expansion": "never"
+              },
+              "value": {
+                "handle": "one exact allowed handle"
+              },
+              "allowed_handles": [
+                "plan-artifact-320098ac0415075787a63b28"
+              ]
+            }
+          },
+          "binding_env": {
+            "owner": "system",
+            "declared_mapping": {
+              "GENOME_VERSION": {
+                "name": "genome_version"
+              },
+              "SNPEFF_DB": {
+                "name": "snpeff_db"
+              }
+            },
+            "default": "Omit binding_env. The system derives it from this approved rule before approval; put actual values only in produced_bindings.",
+            "compatibility": "Optional legacy source declaration only. If supplied, every mapping must equal this declaration; never put an actual environment value here."
+          },
+          "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+        }
+      },
+      "after_input_binding_projection_DRAFT": {
+        "operation": "prepare_database",
+        "resources": [
+          {
+            "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+            "resource_kind": "mutable_workspace",
+            "formal_concrete_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff",
+            "evidence_contract": {
+              "schema_version": 1,
+              "collector": "bounded_filesystem_snapshot_v1",
+              "allow_idempotent_revalidation": true,
+              "postconditions": [
+                {
+                  "kind": "directory_exists",
+                  "relative_path": "data"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/genomes/{binding:genome_version}.fa"
+                },
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/{binding:genome_version}/genes.gtf"
+                }
+              ]
+            },
+            "status": "current approved resource"
+          }
+        ],
+        "binding_choices": {
+          "genome_version": {
+            "type": "string",
+            "value_policy": {
+              "role": "concrete_path_segment",
+              "policy_version": 1,
+              "reserved_forms": [
+                "$NAME",
+                "${NAME}"
+              ],
+              "expansion": "never"
+            }
+          },
+          "snpeff_db": {
+            "type": "artifact_ref",
+            "value_policy": {
+              "role": "literal",
+              "policy_version": 1,
+              "expansion": "never"
+            },
+            "allowed_handles": [
+              "plan-artifact-320098ac0415075787a63b28"
+            ]
+          }
+        },
+        "accepted_values": [],
+        "process_variables": {
+          "GENOME_VERSION": "genome_version",
+          "SNPEFF_DB": "snpeff_db"
+        },
+        "rule": "Supply only semantic values or chosen handles. Types, consumed refs and source mapping come from this approved operation. Values become downstream facts only after execution, validation and CommitStep."
+      },
+      "before_full_public_candidate": {
+        "action_type": "execute",
+        "operation": "prepare_database",
+        "language": "bash",
+        "code": "set -euo pipefail\n\n# Concrete paths supplied for this action\nFASTA=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta\"\nGTF=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf\"\nCONFIG=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/snpEff.config\"\nDATA_DIR=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff\"\nGENOME_VERSION=\"arabidopsis_thaliana_custom\"\n\n# Fail fast if the approved inputs are not readable\nfor f in \"$FASTA\" \"$GTF\"; do\n  if [ ! -s \"$f\" ]; then\n    echo \"ERROR: required input missing or empty: $f\" >&2\n    exit 1\n  fi\ndone\n\n# Create the task-local snpEff layout under the approved mutable workspace\nmkdir -p \"$DATA_DIR/data/genomes\"\nmkdir -p \"$DATA_DIR/data/$GENOME_VERSION\"\n\n# Stage the reference FASTA and GTF at snpEff's expected locations\ncp -f \"$FASTA\" \"$DATA_DIR/data/genomes/$GENOME_VERSION.fa\"\ncp -f \"$GTF\"   \"$DATA_DIR/data/$GENOME_VERSION/genes.gtf\"\n\n# Write the immutable snpEff config artifact (separate cross-step output)\nmkdir -p \"$(dirname \"$CONFIG\")\"\ncat > \"$CONFIG\" <<EOF\n# Task-local snpEff config for the custom Arabidopsis thaliana reference\n# genome_version key chosen from the exact reference/annotation release,\n# not from a taxonomy label.\ndata.dir = $DATA_DIR/data\n$GENOME_VERSION.genome : Arabidopsis thaliana custom reference\nEOF\n\n# Verify the declared postconditions before reporting success\nfor p in \\\n  \"$DATA_DIR/data\" \\\n  \"$DATA_DIR/data/genomes/$GENOME_VERSION.fa\" \\\n  \"$DATA_DIR/data/$GENOME_VERSION/genes.gtf\" \\\n  \"$CONFIG\"; do\n  if [ ! -s \"$p\" ]; then\n    echo \"ERROR: prepare_database postcondition not satisfied: $p\" >&2\n    exit 1\n  fi\ndone\n\necho \"prepare_database layout ready under $DATA_DIR\"\necho \"genome_version=$GENOME_VERSION\"\necho \"config=$CONFIG\"\n",
+        "produced_bindings": {
+          "genome_version": {
+            "type": "string",
+            "value": "arabidopsis_thaliana_custom"
+          },
+          "snpeff_db": {
+            "type": "artifact_ref",
+            "value": {
+              "handle": "plan-artifact-320098ac0415075787a63b28"
+            }
+          }
+        },
+        "public_message": "已修正上一版遗漏的 operation 字段（现为 prepare_database），其余内容保持不变：在批准的 snpEff 工作区中建立 data/genomes/<genome_version>.fa、data/<genome_version>/genes.gtf 布局并写出 snpEff.config。genome_version 仍为任务本地键名 arabidopsis_thaliana_custom，未从分类标签推断官方数据库。"
+      },
+      "after_full_public_candidate_DRAFT": {
+        "action_type": "execute",
+        "operation": "prepare_database",
+        "language": "bash",
+        "code": "set -euo pipefail\n\n# Concrete paths supplied for this action\nFASTA=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta\"\nGTF=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf\"\nCONFIG=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/snpEff.config\"\nDATA_DIR=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff\"\nGENOME_VERSION=\"arabidopsis_thaliana_custom\"\n\n# Fail fast if the approved inputs are not readable\nfor f in \"$FASTA\" \"$GTF\"; do\n  if [ ! -s \"$f\" ]; then\n    echo \"ERROR: required input missing or empty: $f\" >&2\n    exit 1\n  fi\ndone\n\n# Create the task-local snpEff layout under the approved mutable workspace\nmkdir -p \"$DATA_DIR/data/genomes\"\nmkdir -p \"$DATA_DIR/data/$GENOME_VERSION\"\n\n# Stage the reference FASTA and GTF at snpEff's expected locations\ncp -f \"$FASTA\" \"$DATA_DIR/data/genomes/$GENOME_VERSION.fa\"\ncp -f \"$GTF\"   \"$DATA_DIR/data/$GENOME_VERSION/genes.gtf\"\n\n# Write the immutable snpEff config artifact (separate cross-step output)\nmkdir -p \"$(dirname \"$CONFIG\")\"\ncat > \"$CONFIG\" <<EOF\n# Task-local snpEff config for the custom Arabidopsis thaliana reference\n# genome_version key chosen from the exact reference/annotation release,\n# not from a taxonomy label.\ndata.dir = $DATA_DIR/data\n$GENOME_VERSION.genome : Arabidopsis thaliana custom reference\nEOF\n\n# Verify the declared postconditions before reporting success\nfor p in \\\n  \"$DATA_DIR/data\" \\\n  \"$DATA_DIR/data/genomes/$GENOME_VERSION.fa\" \\\n  \"$DATA_DIR/data/$GENOME_VERSION/genes.gtf\" \\\n  \"$CONFIG\"; do\n  if [ ! -s \"$p\" ]; then\n    echo \"ERROR: prepare_database postcondition not satisfied: $p\" >&2\n    exit 1\n  fi\ndone\n\necho \"prepare_database layout ready under $DATA_DIR\"\necho \"genome_version=$GENOME_VERSION\"\necho \"config=$CONFIG\"\n",
+        "produced_bindings": {
+          "genome_version": {
+            "value": "arabidopsis_thaliana_custom"
+          },
+          "snpeff_db": {
+            "value": {
+              "handle": "plan-artifact-320098ac0415075787a63b28"
+            }
+          }
+        },
+        "public_message": "已修正上一版遗漏的 operation 字段（现为 prepare_database），其余内容保持不变：在批准的 snpEff 工作区中建立 data/genomes/<genome_version>.fa、data/<genome_version>/genes.gtf 布局并写出 snpEff.config。genome_version 仍为任务本地键名 arabidopsis_thaliana_custom，未从分类标签推断官方数据库。"
+      },
+      "input_projection_metrics": {
+        "before": {
+          "chars": 3046,
+          "utf8_bytes": 3066
+        },
+        "draft": {
+          "chars": 1343,
+          "utf8_bytes": 1347
+        }
+      },
+      "output_binding_fragment_metrics": {
+        "before": {
+          "chars": 192,
+          "utf8_bytes": 192
+        },
+        "draft": {
+          "chars": 154,
+          "utf8_bytes": 154
+        }
+      },
+      "mechanical_leaf_values_to_fill": {
+        "before": 2,
+        "draft": 0,
+        "definition": "producer: two declared type strings; consumer: two fixed plan_binding refs; operation and substantive script excluded"
+      },
+      "binding_env_new_savings": 0,
+      "compatibility": "DRAFT requires versioned public requirements/schema plus normalizer deriving missing known types and exact consumed refs before full admission; existing explicit fields remain validated, legacy_full_v1 remains strict. Current validators reject this reduced producer shape; no production change made."
+    },
+    {
+      "source_candidate": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/context_trace/generate-0016-19e9e7fc7501/response.json",
+      "operation": "build_database",
+      "before_input_binding_projection": {
+        "current_action_workspace_bindings": [
+          {
+            "workspace_ref": "artifact.snpeff_data_dir",
+            "canonical_resource_id": "plan-artifact-320098ac0415075787a63b28",
+            "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+            "binding_revision": 1,
+            "resource_kind": "mutable_workspace",
+            "formal_concrete_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff",
+            "access_scope": "read_write",
+            "operation_scope": {
+              "operation": "build_database",
+              "mutation": "build_database"
+            },
+            "requires_available": true,
+            "requires_state": "database_layout_prepared",
+            "available_after_success": true,
+            "establishes_state": "snpeff_database_ready",
+            "contract_source": "genomics.snpeff_annotation.build_database.workspace_mutations",
+            "contract_revision": "snpeff-workspace-transition-v1",
+            "evidence_contract": {
+              "schema_version": 1,
+              "collector": "bounded_filesystem_snapshot_v1",
+              "allow_idempotent_revalidation": true,
+              "postconditions": [
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+                }
+              ]
+            },
+            "binding_value_roles": {
+              "genome_version": "concrete_path_segment"
+            },
+            "current_state": {
+              "exists": true,
+              "kind": "directory",
+              "symlink": false,
+              "size": 8192,
+              "mtime_ns": 1789564013000000000,
+              "inode": 30638344449
+            },
+            "resolved_derived_layout": {
+              "annotation_gtf": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/<genome_version>/genes.gtf",
+              "data_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data",
+              "genome_fasta": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/genomes/<genome_version>.fa",
+              "predictor": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/data/<genome_version>/snpEffectPredictor.bin"
+            }
+          }
+        ],
+        "binding_input_requirements": {
+          "protocol": "public_handle_v2",
+          "operation": "build_database",
+          "consumed_bindings": {
+            "genome_version": {
+              "ref": "plan_binding:genome_version"
+            },
+            "snpeff_db": {
+              "ref": "plan_binding:snpeff_db"
+            }
+          },
+          "binding_env": {
+            "owner": "system",
+            "declared_mapping": {
+              "GENOME_VERSION": {
+                "name": "genome_version"
+              },
+              "SNPEFF_DB": {
+                "name": "snpeff_db"
+              }
+            },
+            "default": "Omit binding_env. The system derives it from this approved rule before approval; put actual values only in produced_bindings.",
+            "compatibility": "Optional legacy source declaration only. If supplied, every mapping must equal this declaration; never put an actual environment value here."
+          },
+          "legacy_full_v1": "Complete formal objects remain strict; identity/kind/revision and binding_env must already be correct. Do not mix handle and formal values."
+        },
+        "accepted_plan_bindings": [
+          {
+            "name": "genome_version",
+            "value": "arabidopsis_thaliana_custom",
+            "value_type": "string",
+            "producer_step": "prepare_database",
+            "instruction": "Reuse this accepted value exactly through a declared binding reference."
+          },
+          {
+            "name": "snpeff_db",
+            "value": {
+              "canonical_resource_id": "plan-artifact-320098ac0415075787a63b28",
+              "resource_kind": "mutable_workspace",
+              "binding_revision": 1,
+              "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+              "binding_id": "plan-resource-binding-301ad47b80719e37cd14"
+            },
+            "value_type": "artifact_ref",
+            "producer_step": "prepare_database",
+            "instruction": "Reuse this accepted value exactly through a declared binding reference."
+          }
+        ]
+      },
+      "after_input_binding_projection_DRAFT": {
+        "operation": "build_database",
+        "resources": [
+          {
+            "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+            "resource_kind": "mutable_workspace",
+            "formal_concrete_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff",
+            "evidence_contract": {
+              "schema_version": 1,
+              "collector": "bounded_filesystem_snapshot_v1",
+              "allow_idempotent_revalidation": true,
+              "postconditions": [
+                {
+                  "kind": "file_nonempty",
+                  "relative_path": "data/{binding:genome_version}/snpEffectPredictor.bin"
+                }
+              ]
+            },
+            "status": "current approved resource"
+          }
+        ],
+        "binding_choices": {},
+        "accepted_values": [
+          {
+            "name": "genome_version",
+            "value": "arabidopsis_thaliana_custom",
+            "value_type": "string",
+            "producer_step": "prepare_database"
+          },
+          {
+            "name": "snpeff_db",
+            "value": {
+              "canonical_resource_id": "plan-artifact-320098ac0415075787a63b28",
+              "resource_kind": "mutable_workspace",
+              "binding_revision": 1,
+              "plan_handle": "plan-artifact-320098ac0415075787a63b28",
+              "binding_id": "plan-resource-binding-301ad47b80719e37cd14"
+            },
+            "value_type": "artifact_ref",
+            "producer_step": "prepare_database"
+          }
+        ],
+        "process_variables": {
+          "GENOME_VERSION": "genome_version",
+          "SNPEFF_DB": "snpeff_db"
+        },
+        "rule": "Supply only semantic values or chosen handles. Types, consumed refs and source mapping come from this approved operation. Values become downstream facts only after execution, validation and CommitStep."
+      },
+      "before_full_public_candidate": {
+        "action_type": "execute",
+        "language": "bash",
+        "env": {},
+        "outputs": [],
+        "operation": "build_database",
+        "binding_input_protocol": "public_handle_v2",
+        "consumed_bindings": {
+          "genome_version": {
+            "ref": "plan_binding:genome_version"
+          },
+          "snpeff_db": {
+            "ref": "plan_binding:snpeff_db"
+          }
+        },
+        "produced_bindings": {},
+        "code": "set -euo pipefail\n\nINPUT_GTF=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf\"\nINPUT_FASTA=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta\"\nINPUT_CONFIG=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/snpEff.config\"\n\nWORKSPACE=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff\"\nJAVA_BIN=\"/public/home/liusiqi/03.毕设/source_tools/temurin-21/bin/java\"\nSNPEFF_JAR=\"/public/home/liusiqi/anaconda3/envs/bio_gatk/share/snpeff-5.3.0a-0/snpEff.jar\"\nCONFIG=\"$INPUT_CONFIG\"\nDATA_DIR=\"$WORKSPACE/data\"\nGENOME_VERSION=\"arabidopsis_thaliana_custom\"\nGENOME_FASTA=\"$DATA_DIR/genomes/${GENOME_VERSION}.fa\"\nGENES_GTF=\"$DATA_DIR/${GENOME_VERSION}/genes.gtf\"\nPREDICTOR=\"$DATA_DIR/${GENOME_VERSION}/snpEffectPredictor.bin\"\nBUILD_LOG=\"$DATA_DIR/${GENOME_VERSION}/build.log\"\n\nfor p in \"$JAVA_BIN\" \"$SNPEFF_JAR\" \"$CONFIG\" \"$GENOME_FASTA\" \"$GENES_GTF\"; do\n  if [ ! -s \"$p\" ]; then\n    echo \"missing required input: $p\" >&2\n    exit 3\n  fi\ndone\n\n# Approved read-only inputs for this step (staged layout already validated by prepare_database).\nfor p in \"$INPUT_GTF\" \"$INPUT_FASTA\"; do\n  if [ ! -s \"$p\" ]; then\n    echo \"missing approved step input: $p\" >&2\n    exit 3\n  fi\ndone\n\nmkdir -p \"$DATA_DIR/${GENOME_VERSION}\"\n\nBUILD_RC=0\n\"$JAVA_BIN\" -jar \"$SNPEFF_JAR\" build -gtf22 -v -c \"$CONFIG\" -dataDir \"$DATA_DIR\" -noCheckCds -noCheckProtein \"$GENOME_VERSION\" > \"$BUILD_LOG\" 2>&1 || BUILD_RC=$?\n\necho \"BUILD_INNER_RC=$BUILD_RC\"\necho \"--- build.log tail ---\"\ntail -n 40 \"$BUILD_LOG\" || true\necho \"--- end build.log tail ---\"\n\nPREDICTOR_EXISTS=false\nPREDICTOR_SIZE=0\nif [ -s \"$PREDICTOR\" ]; then\n  PREDICTOR_EXISTS=true\n  PREDICTOR_SIZE=$(stat -c %s \"$PREDICTOR\")\nfi\n\nFATAL_MARKER=false\nif grep -q \"Database check failed\" \"$BUILD_LOG\"; then\n  FATAL_MARKER=true\nfi\n\nREADY=false\nif [ \"$BUILD_RC\" -eq 0 ] && [ \"$PREDICTOR_EXISTS\" = true ] && [ \"$FATAL_MARKER\" = false ]; then\n  READY=true\nfi\n\necho \"PREDICTOR_EXISTS=$PREDICTOR_EXISTS PREDICTOR_SIZE=$PREDICTOR_SIZE FATAL_MARKER=$FATAL_MARKER READY=$READY\"\n\nexport BIOMIND_BUILD_RC=\"$BUILD_RC\"\nexport BIOMIND_PREDICTOR_EXISTS=\"$PREDICTOR_EXISTS\"\nexport BIOMIND_PREDICTOR_SIZE=\"$PREDICTOR_SIZE\"\nexport BIOMIND_FATAL_MARKER=\"$FATAL_MARKER\"\nexport BIOMIND_READY=\"$READY\"\nexport BIOMIND_BUILD_LOG=\"$BUILD_LOG\"\nexport BIOMIND_PREDICTOR=\"$PREDICTOR\"\nexport BIOMIND_GENOME_VERSION=\"$GENOME_VERSION\"\nexport BIOMIND_INPUT_GTF=\"$INPUT_GTF\"\nexport BIOMIND_INPUT_FASTA=\"$INPUT_FASTA\"\nexport BIOMIND_INPUT_CONFIG=\"$CONFIG\"\n\npython3 - <<'PY'\nimport json, os\n\nbuild_rc = int(os.environ[\"BIOMIND_BUILD_RC\"])\npredictor_exists = os.environ[\"BIOMIND_PREDICTOR_EXISTS\"] == \"true\"\npredictor_size = int(os.environ[\"BIOMIND_PREDICTOR_SIZE\"])\nfatal_marker = os.environ[\"BIOMIND_FATAL_MARKER\"] == \"true\"\nready = os.environ[\"BIOMIND_READY\"] == \"true\"\n\nfacts = {\n    \"produces_observations\": {\n        \"snpeff_database_ready\": {\n            \"value\": ready,\n            \"genome_version\": os.environ[\"BIOMIND_GENOME_VERSION\"],\n            \"build_inner_returncode\": build_rc,\n            \"predictor_path\": os.environ[\"BIOMIND_PREDICTOR\"],\n            \"predictor_exists\": predictor_exists,\n            \"predictor_size_bytes\": predictor_size,\n            \"database_check_failed_marker\": fatal_marker,\n            \"build_log_path\": os.environ[\"BIOMIND_BUILD_LOG\"],\n            \"annotation_gtf_path\": os.environ[\"BIOMIND_INPUT_GTF\"],\n            \"reference_fasta_path\": os.environ[\"BIOMIND_INPUT_FASTA\"],\n            \"snpeff_config_path\": os.environ[\"BIOMIND_INPUT_CONFIG\"],\n            \"optional_validation_skipped\": [\"cds_check\", \"protein_check\"],\n        }\n    }\n}\nprint(\"BIOMIND_EFFECT_EVIDENCE_JSON=\" + json.dumps(facts, ensure_ascii=False))\nPY\n\nif [ \"$READY\" != \"true\" ]; then\n  echo \"database build did not satisfy acceptance criteria\" >&2\n  exit 4\nfi\n",
+        "public_message": "已按校验反馈修正：动作现在显式引用三个已批准输入的具体路径（genome.gtf、genome.fasta 与 snpEff.config），其余构建与验收逻辑保持不变。随后以 bio_gatk 的 snpEff.jar 和 temurin-21 Java 执行 build -gtf22，并以 snpEffectPredictor.bin 非空且日志无 Database check failed 作为就绪判据。"
+      },
+      "after_full_public_candidate_DRAFT": {
+        "action_type": "execute",
+        "language": "bash",
+        "env": {},
+        "outputs": [],
+        "operation": "build_database",
+        "binding_input_protocol": "public_handle_v2",
+        "produced_bindings": {},
+        "code": "set -euo pipefail\n\nINPUT_GTF=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.gtf\"\nINPUT_FASTA=\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part2.vairant_annotation/data/genome.fasta\"\nINPUT_CONFIG=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff/snpEff.config\"\n\nWORKSPACE=\"/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789563666/plan_artifacts/snpeff\"\nJAVA_BIN=\"/public/home/liusiqi/03.毕设/source_tools/temurin-21/bin/java\"\nSNPEFF_JAR=\"/public/home/liusiqi/anaconda3/envs/bio_gatk/share/snpeff-5.3.0a-0/snpEff.jar\"\nCONFIG=\"$INPUT_CONFIG\"\nDATA_DIR=\"$WORKSPACE/data\"\nGENOME_VERSION=\"arabidopsis_thaliana_custom\"\nGENOME_FASTA=\"$DATA_DIR/genomes/${GENOME_VERSION}.fa\"\nGENES_GTF=\"$DATA_DIR/${GENOME_VERSION}/genes.gtf\"\nPREDICTOR=\"$DATA_DIR/${GENOME_VERSION}/snpEffectPredictor.bin\"\nBUILD_LOG=\"$DATA_DIR/${GENOME_VERSION}/build.log\"\n\nfor p in \"$JAVA_BIN\" \"$SNPEFF_JAR\" \"$CONFIG\" \"$GENOME_FASTA\" \"$GENES_GTF\"; do\n  if [ ! -s \"$p\" ]; then\n    echo \"missing required input: $p\" >&2\n    exit 3\n  fi\ndone\n\n# Approved read-only inputs for this step (staged layout already validated by prepare_database).\nfor p in \"$INPUT_GTF\" \"$INPUT_FASTA\"; do\n  if [ ! -s \"$p\" ]; then\n    echo \"missing approved step input: $p\" >&2\n    exit 3\n  fi\ndone\n\nmkdir -p \"$DATA_DIR/${GENOME_VERSION}\"\n\nBUILD_RC=0\n\"$JAVA_BIN\" -jar \"$SNPEFF_JAR\" build -gtf22 -v -c \"$CONFIG\" -dataDir \"$DATA_DIR\" -noCheckCds -noCheckProtein \"$GENOME_VERSION\" > \"$BUILD_LOG\" 2>&1 || BUILD_RC=$?\n\necho \"BUILD_INNER_RC=$BUILD_RC\"\necho \"--- build.log tail ---\"\ntail -n 40 \"$BUILD_LOG\" || true\necho \"--- end build.log tail ---\"\n\nPREDICTOR_EXISTS=false\nPREDICTOR_SIZE=0\nif [ -s \"$PREDICTOR\" ]; then\n  PREDICTOR_EXISTS=true\n  PREDICTOR_SIZE=$(stat -c %s \"$PREDICTOR\")\nfi\n\nFATAL_MARKER=false\nif grep -q \"Database check failed\" \"$BUILD_LOG\"; then\n  FATAL_MARKER=true\nfi\n\nREADY=false\nif [ \"$BUILD_RC\" -eq 0 ] && [ \"$PREDICTOR_EXISTS\" = true ] && [ \"$FATAL_MARKER\" = false ]; then\n  READY=true\nfi\n\necho \"PREDICTOR_EXISTS=$PREDICTOR_EXISTS PREDICTOR_SIZE=$PREDICTOR_SIZE FATAL_MARKER=$FATAL_MARKER READY=$READY\"\n\nexport BIOMIND_BUILD_RC=\"$BUILD_RC\"\nexport BIOMIND_PREDICTOR_EXISTS=\"$PREDICTOR_EXISTS\"\nexport BIOMIND_PREDICTOR_SIZE=\"$PREDICTOR_SIZE\"\nexport BIOMIND_FATAL_MARKER=\"$FATAL_MARKER\"\nexport BIOMIND_READY=\"$READY\"\nexport BIOMIND_BUILD_LOG=\"$BUILD_LOG\"\nexport BIOMIND_PREDICTOR=\"$PREDICTOR\"\nexport BIOMIND_GENOME_VERSION=\"$GENOME_VERSION\"\nexport BIOMIND_INPUT_GTF=\"$INPUT_GTF\"\nexport BIOMIND_INPUT_FASTA=\"$INPUT_FASTA\"\nexport BIOMIND_INPUT_CONFIG=\"$CONFIG\"\n\npython3 - <<'PY'\nimport json, os\n\nbuild_rc = int(os.environ[\"BIOMIND_BUILD_RC\"])\npredictor_exists = os.environ[\"BIOMIND_PREDICTOR_EXISTS\"] == \"true\"\npredictor_size = int(os.environ[\"BIOMIND_PREDICTOR_SIZE\"])\nfatal_marker = os.environ[\"BIOMIND_FATAL_MARKER\"] == \"true\"\nready = os.environ[\"BIOMIND_READY\"] == \"true\"\n\nfacts = {\n    \"produces_observations\": {\n        \"snpeff_database_ready\": {\n            \"value\": ready,\n            \"genome_version\": os.environ[\"BIOMIND_GENOME_VERSION\"],\n            \"build_inner_returncode\": build_rc,\n            \"predictor_path\": os.environ[\"BIOMIND_PREDICTOR\"],\n            \"predictor_exists\": predictor_exists,\n            \"predictor_size_bytes\": predictor_size,\n            \"database_check_failed_marker\": fatal_marker,\n            \"build_log_path\": os.environ[\"BIOMIND_BUILD_LOG\"],\n            \"annotation_gtf_path\": os.environ[\"BIOMIND_INPUT_GTF\"],\n            \"reference_fasta_path\": os.environ[\"BIOMIND_INPUT_FASTA\"],\n            \"snpeff_config_path\": os.environ[\"BIOMIND_INPUT_CONFIG\"],\n            \"optional_validation_skipped\": [\"cds_check\", \"protein_check\"],\n        }\n    }\n}\nprint(\"BIOMIND_EFFECT_EVIDENCE_JSON=\" + json.dumps(facts, ensure_ascii=False))\nPY\n\nif [ \"$READY\" != \"true\" ]; then\n  echo \"database build did not satisfy acceptance criteria\" >&2\n  exit 4\nfi\n",
+        "public_message": "已按校验反馈修正：动作现在显式引用三个已批准输入的具体路径（genome.gtf、genome.fasta 与 snpEff.config），其余构建与验收逻辑保持不变。随后以 bio_gatk 的 snpEff.jar 和 temurin-21 Java 执行 build -gtf22，并以 snpEffectPredictor.bin 非空且日志无 Database check failed 作为就绪判据。"
+      },
+      "input_projection_metrics": {
+        "before": {
+          "chars": 3367,
+          "utf8_bytes": 3387
+        },
+        "draft": {
+          "chars": 1340,
+          "utf8_bytes": 1344
+        }
+      },
+      "output_binding_fragment_metrics": {
+        "before": {
+          "chars": 146,
+          "utf8_bytes": 146
+        },
+        "draft": {
+          "chars": 24,
+          "utf8_bytes": 24
+        }
+      },
+      "mechanical_leaf_values_to_fill": {
+        "before": 2,
+        "draft": 0,
+        "definition": "producer: two declared type strings; consumer: two fixed plan_binding refs; operation and substantive script excluded"
+      },
+      "binding_env_new_savings": 0,
+      "compatibility": "DRAFT requires versioned public requirements/schema plus normalizer deriving missing known types and exact consumed refs before full admission; existing explicit fields remain validated, legacy_full_v1 remains strict. Current validators reject this reduced producer shape; no production change made."
+    }
+  ]
+}

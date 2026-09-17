@@ -1,0 +1,282 @@
+{
+  "historical_manifest": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0009-7e7691897098/manifest.json",
+  "historical_object": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/objects/122ea5a38552cb3c56fa5660442485eb476e35e92859ee836bb57df17a263eca.json",
+  "runtime_identity": {
+    "dependencies": {
+      "PyYAML": "6.0.3",
+      "langchain-core": "1.2.7",
+      "langgraph": "1.0.7",
+      "pydantic": "2.11.7"
+    },
+    "loaded_code_identity": "9340ab9ef3dcdf30a0bf489f3b66aa9890d2e0c25df3e01980831760b25dc429",
+    "object_ref": "object:sha256:122ea5a38552cb3c56fa5660442485eb476e35e92859ee836bb57df17a263eca",
+    "revision": {
+      "disk_head_at_capture": "4ea823511328ed4035ec2a99ddf09a3419bb288a",
+      "loaded_revision": "UNKNOWN",
+      "meaning": "disk_at_capture and loaded callable identities are separate; no historical revision is inferred",
+      "related_dirty_paths": [
+        "agent_core/workflow/managed_stop.py",
+        "prompts/manager.py"
+      ],
+      "related_untracked_paths": [],
+      "status": "CAPTURED"
+    },
+    "schema_version": 1,
+    "skill_versions": {
+      "genomics/wgs-short-read-mapping": "1.1.3"
+    },
+    "source_identity": "df4da931f71021e1a684e87a0ffc19c8f4fe0f519391503a8f0167db6e51bfcc",
+    "stage": "generate",
+    "status": "CAPTURED",
+    "task_id": "session_1789628497"
+  },
+  "loaded_modules": {
+    "agent_core.approved_resource_locator": {
+      "callable_code_digest": "c9970af8603aaf374aadc11044038f771ca608c5700433275df5db9b3e43fa65",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/approved_resource_locator.py"
+    },
+    "agent_core.plan_bindings": {
+      "callable_code_digest": "fb952607525da77e6d2ec9d8be2c1755fbf39d323a98446000e808e4e6f33b8a",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_bindings.py"
+    },
+    "agent_core.plan_contract": {
+      "callable_code_digest": "b861ffb97f9747a0b11b8598db0a0029c215fa7712df47b9f73fd38dfa805985",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_contract.py"
+    },
+    "agent_core.plan_tracker": {
+      "callable_code_digest": "4e1f7c7b5e57713320360f485cd4e82845a32270065f05dd8cc420fbfccd10da",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_tracker.py"
+    },
+    "agent_core.recovery": {
+      "callable_code_digest": "9a81e6b75335772be5ea3dce3386407f796b077fa15c0325691e47ba2b765b40",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/recovery.py"
+    },
+    "agent_core.runtime_identity": {
+      "callable_code_digest": "71e5fd06f3512a3a4779566a8af45e1406c126f02e9956142f96af6f87c47d5a",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/runtime_identity.py"
+    },
+    "agent_core.skill_access": {
+      "callable_code_digest": "5bd277cbb7c8c00de4896980ac2ba6dcf17e445f2aab49cdc38ec47afb562140",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_access.py"
+    },
+    "agent_core.state_contract_store": {
+      "callable_code_digest": "0623d7379bc5e9b8631a600cf47cfa9b1fc76fd94d8c0212da16758bbbef17a1",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/state_contract_store.py"
+    },
+    "agent_core.step_effects": {
+      "callable_code_digest": "23018b3714acad51158bfcd2172ce0163bb86f379050520cbf8c698c797ea078",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/step_effects.py"
+    },
+    "agent_core.workflow.commit_step": {
+      "callable_code_digest": "a2d7240485f50a0229b1cca8841a11b155f3ef454e90d26013563322f4f1b09d",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/commit_step.py"
+    },
+    "agent_core.workflow.diagnostic_admission": {
+      "callable_code_digest": "bd06c0afcd7dfe25afaf367db844e3fabdbadbde28124f2112e784e9c0dc82e5",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/diagnostic_admission.py"
+    },
+    "agent_core.workflow.execution": {
+      "callable_code_digest": "3f9916303b1b081da760618ea322ea99cc230993214b0552a7f3967e65042c4a",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/execution.py"
+    },
+    "agent_core.workflow.inspection_evidence": {
+      "callable_code_digest": "afeaa9b3f49872d49b7f8823368c7e67c1c5fca9771f3ff4f89e0adb3422b1f0",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/inspection_evidence.py"
+    },
+    "agent_core.workflow.managed_stop": {
+      "callable_code_digest": "0fa0a6206c6aab53910c40dea5248577b59076543114f68cdeb04eeda1e80d2d",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/managed_stop.py"
+    },
+    "agent_core.workflow.outcomes": {
+      "callable_code_digest": "b0930e4c6bbd7025f713cedbddc004b1edd12db89fd7de68b38bfaff0212d5c6",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/outcomes.py"
+    },
+    "agent_core.workflow.recovery_agent": {
+      "callable_code_digest": "49cee1e6cf7b12377c4c74c721a9024bb8ca94cdb2acf5236eb8031826e39143",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_agent.py"
+    },
+    "agent_core.workflow.recovery_node": {
+      "callable_code_digest": "5cf90b7dccc410b06a9c07c2c75bafd2937a6fec2c14b3d9ebf95a00370b623a",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_node.py"
+    },
+    "agent_core.workflow.recovery_projection": {
+      "callable_code_digest": "ac346c5c67969ea481e7e4111655dc7b5e3400f2c2f1b480df6ac617668ad5d9",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_projection.py"
+    },
+    "agent_core.workflow.recovery_runtime": {
+      "callable_code_digest": "c1acf266f2bcbb46d87b942b484e499d3d936889cfe657ec2569557a233fab14",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_runtime.py"
+    },
+    "agent_core.workflow.recovery_tools": {
+      "callable_code_digest": "017447784127854e170362b1e56408878f93de302b758719f56a616cea55bd81",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_tools.py"
+    },
+    "agent_core.workflow.runtime_graph": {
+      "callable_code_digest": "bd89b72e7b97c894f9ce03b34692db097c0d345673e3a824d24750820f8aa068",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/runtime_graph.py"
+    },
+    "agent_core.workflow.stage_contracts": {
+      "callable_code_digest": "6b2b6f06fee52dde6dc8de576c9b9b09073882b2cd8b5f60d9e179fa09ce8479",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/stage_contracts.py"
+    },
+    "agent_core.workflow.verifier": {
+      "callable_code_digest": "cacebce2201c54760ad66f05b391b4c67df02c7b4daa3cf973aaa53152c0b12f",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/verifier.py"
+    },
+    "execution.executor": {
+      "callable_code_digest": "54e808b2990ff06931d9aa6362e52f1d8dea93228c2be9a4ea2825e5edd30723",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/execution/executor.py"
+    },
+    "prompts.manager": {
+      "callable_code_digest": "5ff2d6a73cde80d13106f8a20cde2d5444cd6888d46495eb2f0b85b35913e637",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/prompts/manager.py"
+    },
+    "supervisor": {
+      "callable_code_digest": "8f0d712df58766837ec0095d1395d4e31616be2f134982de2c933c6cbbb5ac9d",
+      "location": "/public/home/liusiqi/03.毕设/Biomind_v1/supervisor.py"
+    }
+  },
+  "source_comparison": [
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/approved_resource_locator.py",
+      "historical_disk_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+      "current_disk_sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/inspection_readers.py",
+      "historical_disk_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+      "current_disk_sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_bindings.py",
+      "historical_disk_sha256": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f",
+      "current_disk_sha256": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_contract.py",
+      "historical_disk_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+      "current_disk_sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_tracker.py",
+      "historical_disk_sha256": "890caaacdc07adc8af3c986dd01ab1e73fe321636f4b4c4b623587e0e9fa5630",
+      "current_disk_sha256": "890caaacdc07adc8af3c986dd01ab1e73fe321636f4b4c4b623587e0e9fa5630"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/recovery.py",
+      "historical_disk_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+      "current_disk_sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/runtime_identity.py",
+      "historical_disk_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+      "current_disk_sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_access.py",
+      "historical_disk_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+      "current_disk_sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/state_contract_store.py",
+      "historical_disk_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+      "current_disk_sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/step_effects.py",
+      "historical_disk_sha256": "8040375f2fdb8eb00c5b75977bac036a7e00db4781b3533a7e09f5f1bdfc633d",
+      "current_disk_sha256": "8040375f2fdb8eb00c5b75977bac036a7e00db4781b3533a7e09f5f1bdfc633d"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/commit_step.py",
+      "historical_disk_sha256": "5f7eae758fc308447d3b013d8cd28debc87d72a28fd6788f551fcb676ec8a1e5",
+      "current_disk_sha256": "5f7eae758fc308447d3b013d8cd28debc87d72a28fd6788f551fcb676ec8a1e5"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/diagnostic_admission.py",
+      "historical_disk_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+      "current_disk_sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/execution.py",
+      "historical_disk_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+      "current_disk_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/inspection_evidence.py",
+      "historical_disk_sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84",
+      "current_disk_sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/managed_stop.py",
+      "historical_disk_sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa",
+      "current_disk_sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/outcomes.py",
+      "historical_disk_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+      "current_disk_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_agent.py",
+      "historical_disk_sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6",
+      "current_disk_sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_node.py",
+      "historical_disk_sha256": "368729d753c29123a3081d29a39fe9962d4dd8305c083bc8380181114fe02328",
+      "current_disk_sha256": "368729d753c29123a3081d29a39fe9962d4dd8305c083bc8380181114fe02328"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_projection.py",
+      "historical_disk_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+      "current_disk_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_runtime.py",
+      "historical_disk_sha256": "9b0b4f08cf902c370631d0c3a79c019444203bf57c9da29da4cdeb2d1d657825",
+      "current_disk_sha256": "9b0b4f08cf902c370631d0c3a79c019444203bf57c9da29da4cdeb2d1d657825"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_tools.py",
+      "historical_disk_sha256": "ba16dae96997112ef488f8a90d89ba9fd219e8f7a9859d8a6d0e4a021c81fb5f",
+      "current_disk_sha256": "ba16dae96997112ef488f8a90d89ba9fd219e8f7a9859d8a6d0e4a021c81fb5f"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/runtime_graph.py",
+      "historical_disk_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+      "current_disk_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/stage_contracts.py",
+      "historical_disk_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+      "current_disk_sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/verifier.py",
+      "historical_disk_sha256": "6bb3459a9933dd294eb16109af226ed5a296d4bd626065054f5cff6d981df9ab",
+      "current_disk_sha256": "6bb3459a9933dd294eb16109af226ed5a296d4bd626065054f5cff6d981df9ab"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+      "historical_disk_sha256": "bda921b967e46a8a43bc6e474a496a1c98d93dcf96dec1c66c3e92537a5c4037",
+      "current_disk_sha256": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/execution/executor.py",
+      "historical_disk_sha256": "b83a08f98b96b8c64175ae21f321af43a72541b64178905af73fe4da6ff6d756",
+      "current_disk_sha256": "b83a08f98b96b8c64175ae21f321af43a72541b64178905af73fe4da6ff6d756"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/prompts/manager.py",
+      "historical_disk_sha256": "021f3b5e4e5b741e207a17a1da1801047bf8dd5e4770876b86214b1917b266b5",
+      "current_disk_sha256": "021f3b5e4e5b741e207a17a1da1801047bf8dd5e4770876b86214b1917b266b5"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/supervisor.py",
+      "historical_disk_sha256": "fb06664eddb552c6ff9bb018c4d88da7afdd07241f31bf6d78435340106efb42",
+      "current_disk_sha256": "fb06664eddb552c6ff9bb018c4d88da7afdd07241f31bf6d78435340106efb42"
+    }
+  ],
+  "limitation": "Archived loaded callable identities do not establish a loaded Git revision. skill_script_invocation.py and action_runtime.py are outside that archive source allowlist."
+}

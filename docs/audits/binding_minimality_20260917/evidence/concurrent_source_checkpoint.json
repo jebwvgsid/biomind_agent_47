@@ -1,0 +1,42 @@
+{
+  "captured_at": "2026-09-17T17:08:41.878372+08:00",
+  "six_contract_files": [
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_script_invocation.py",
+      "audit_start_sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "final_checkpoint_sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "unchanged": true
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_resource_binding.py",
+      "audit_start_sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "final_checkpoint_sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "unchanged": true
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+      "audit_start_sha256": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32",
+      "final_checkpoint_sha256": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+      "unchanged": false
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "audit_start_sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "final_checkpoint_sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "unchanged": true
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/tests/test_skill_script_invocation.py",
+      "audit_start_sha256": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "final_checkpoint_sha256": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "unchanged": true
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/Biomind_v1/tests/test_preflight_mapping_commit.py",
+      "audit_start_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "final_checkpoint_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "unchanged": true
+    }
+  ],
+  "note": "Observed concurrent workspace changes, not authored by this audit. Original witnesses preserve their own source hashes."
+}

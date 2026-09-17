@@ -1,0 +1,522 @@
+ M agent_core/node_context.py
+ M agent_core/planner_context.py
+ M agent_core/provider_message_safety.py
+ M agent_core/skill_resource_binding.py
+ M agent_core/workflow/managed_stop.py
+ M bio_agents.py
+ M config/__init__.py
+ M config/config.py
+ M config/logger.py
+ M config/settings.py
+ M config/startup.py
+ D docs/audits/architecture/RECOVERY_CONTEXT_CURRENT.md
+ D docs/audits/architecture/RECOVERY_PHASE_CONTEXT_CURRENT.md
+ D docs/audits/architecture/context_memory_and_compression_contract.md
+ D docs/audits/architecture/controller_front_half_retirement_20260903.md
+ D docs/audits/architecture/controller_runtime_migration_20260903.md
+ D docs/audits/architecture/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md
+ D docs/audits/architecture/global_prompt_context_lifecycle.md
+ D docs/audits/architecture/managed_artifact_preexecution_boundary_audit_20260825.md
+ D docs/audits/architecture/node_prompt_payload_matrix.tsv
+ D docs/audits/architecture/node_provider_context_matrix_20260820.tsv
+ D docs/audits/architecture/open_world_highlighted_requirements_migration_report_20260819.md
+ D docs/audits/architecture/pi_migration_rpc_poc_20260903.md
+ D docs/audits/architecture/pi_migration_stepworker_boundary_20260903.md
+ D docs/audits/architecture/planner_constraint_provenance_projection_audit_20260818.md
+ D docs/audits/architecture/planner_context_reentry_prompt_regression_audit_20260820.md
+ D docs/audits/architecture/planner_pending_snapshot_reentry_fix_report_20260819.md
+ D docs/audits/architecture/planner_request_component_inventory_20260820.tsv
+ D docs/audits/architecture/progressive_skill_access_search_and_replan_implementation_report_20260827.md
+ D docs/audits/architecture/provider_attempt_session_archive_phase3_implementation_20260826.md
+ D docs/audits/architecture/provider_cache_inventory.tsv
+ D docs/audits/architecture/provider_stream_session_archive_boundary_audit_20260825.md
+ D docs/audits/architecture/recovery_context_component_matrix_20260903.tsv
+ D docs/audits/architecture/recovery_context_disclosure_matrix.tsv
+ D docs/audits/architecture/recovery_context_engineering_audit_20260903.md
+ D docs/audits/architecture/recovery_context_engineering_delta_20260903.md
+ D docs/audits/architecture/recovery_progressive_disclosure_contract.md
+ D docs/audits/architecture/recovery_progressive_disclosure_history.md
+ D docs/audits/architecture/runtime_and_recovery_context_contract.md
+ D docs/audits/architecture/schema2_adapter_semantic_coverage_20260903.md
+ D docs/audits/architecture/schema2_consultant_agent_loop_20260903.md
+ D docs/audits/architecture/semantic_history_authority_matrix.tsv
+ D docs/audits/architecture/skill_planning_contract_retirement_audit_20260819.md
+ D docs/audits/architecture/skill_planning_contract_retirement_report_20260819.md
+ M prompts/manager.py
+ M skills/genomics/snpeff-annotation/SKILL.md
+ D skills/genomics/snpeff-annotation/tests/demo.gff3
+ D skills/genomics/snpeff-annotation/tests/demo.vcf
+ D skills/genomics/snpeff-annotation/tests/demo_ref.fa
+ M skills/genomics/wgs-short-read-mapping/SKILL.md
+ M tests/planner_fix_acceptance/test_planner_recorded_workflow.py
+ M tests/test_bio_agents_memory.py
+ M tests/test_consultant_first_graph_integration_v21.py
+ M tests/test_execution_provenance.py
+ M tests/test_generate_capability_scoped_prompt.py
+ M tests/test_generate_only_output_contract_v2.py
+ M tests/test_generate_provider_payload_safety.py
+ M tests/test_node_context_semantic_continuity.py
+ M tests/test_output_router.py
+ M tests/test_plan_contract_convergence_v2.py
+ M tests/test_plan_lifecycle.py
+ M tests/test_plan_local_preaction_convergence_v2.py
+ M tests/test_preflight_mapping_commit.py
+ M tests/test_recovery_agent_loop.py
+ M tests/test_recovery_agent_seed.py
+ M tests/test_recovery_context_bounds.py
+ M tests/test_recovery_context_p0.py
+ M tests/test_recovery_progressive_skill_access.py
+ M tests/test_recovery_schema2_node.py
+ M tests/test_recovery_tools.py
+ M tests/test_renderer_controller.py
+ M tests/test_renderer_plan_ownership.py
+ M tests/test_run_profiler.py
+ M tests/test_runtime_preflight.py
+ M tests/test_schema2_adapter_semantic_coverage.py
+ M tests/test_supervisor_validation_evidence.py
+ M tests/test_typed_outcomes.py
+?? agent_core/skill_script_invocation.py
+?? benchmarks/biomind_agent_benchmark/v3/benchmark_oracle_overlay_v3.yaml
+?? benchmarks/biomind_agent_benchmark/v3/canonical_ask_responses_v3.yaml
+?? benchmarks/biomind_agent_benchmark/v3/closure/ab_commit_isolation_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v3/closure/ask_continuation_execution_audit.md
+?? benchmarks/biomind_agent_benchmark/v3/closure/benchmark_execution_readiness_v4.md
+?? benchmarks/biomind_agent_benchmark/v3/closure/environment_freeze_policy.md
+?? benchmarks/biomind_agent_benchmark/v3/closure/oracle_inference_review.tsv
+?? benchmarks/biomind_agent_benchmark/v3/closure/oracle_provenance_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v3/closure/phase0_smoke_manifest_v4.yaml
+?? benchmarks/biomind_agent_benchmark/v3/closure/resume_ab_microbenchmark_plan_v4.md
+?? benchmarks/biomind_agent_benchmark/v3/closure/revised_agent_product_resume_bullets_v3.md
+?? benchmarks/biomind_agent_benchmark/v3/closure/revised_ai_quality_operations_resume_bullets_v3.md
+?? benchmarks/biomind_agent_benchmark/v3/closure/revised_ai_workflow_resume_bullets_v3.md
+?? benchmarks/biomind_agent_benchmark/v3/controls/evaluator_control_gate_receipt.json
+?? benchmarks/biomind_agent_benchmark/v3/controls/evaluator_control_test_report.md
+?? benchmarks/biomind_agent_benchmark/v3/controls/evaluator_negative_controls.tsv
+?? benchmarks/biomind_agent_benchmark/v3/controls/evaluator_positive_controls.tsv
+?? benchmarks/biomind_agent_benchmark/v3/oracle_policy_seed_v3.yaml
+?? benchmarks/biomind_agent_benchmark/v3/review/high_risk_oracle_review.tsv
+?? benchmarks/biomind_agent_benchmark/v3/review/oracle_change_proposals.tsv
+?? benchmarks/biomind_agent_benchmark/v3/review/oracle_high_risk_review.md
+?? benchmarks/biomind_agent_benchmark/v3/review/oracle_human_review_pack.md
+?? benchmarks/biomind_agent_benchmark/v3/review/oracle_review_checklist.tsv
+?? benchmarks/biomind_agent_benchmark/v3/review/recovery_human_review_pack.md
+?? benchmarks/biomind_agent_benchmark/v3/scripts/evaluate_benchmark_v3.py
+?? benchmarks/biomind_agent_benchmark/v3/scripts/generate_closure_audit_v4.py
+?? benchmarks/biomind_agent_benchmark/v3/scripts/generate_evaluator_controls_v3.py
+?? benchmarks/biomind_agent_benchmark/v3/scripts/generate_oracle_overlay_v3.py
+?? benchmarks/biomind_agent_benchmark/v3/scripts/run_benchmark_v3.py
+?? benchmarks/biomind_agent_benchmark/v5/benchmark_execution_readiness_v5.md
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-BALANCE-VAGUE-003.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-BOUNDARY-VAGUE-012.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-COMP-VAGUE-015.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-DIFFCOMP-VAGUE-018.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-DIFFTAD-VAGUE-009.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-LOOP-VAGUE-021.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-TAD-VAGUE-006.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-WF-EXPLORATORY-025.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-WF-VAGUE-024.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-ANNOT-007__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-APOREC-016__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-ASSEMBLY-017__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-GS-009__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-GWAS-011__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-GXE-PAN-012__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-MARKER-POPGEN-014__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-RNASEQ-013__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-STRATEGY-018__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-DB-004__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-ENRICH-019__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-EPI-MODKIT-015__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-GWAS-008__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-001__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-002__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-ENRICH-023__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-H5-020__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-TRAJ-022__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-TUTORIAL-021__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SEQ-003__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SV-CNV-006__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-WGS-005__vague.txt
+?? benchmarks/biomind_agent_benchmark/v5/blind_payload_leakage_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5/blind_product_eval_pack_v5.yaml
+?? benchmarks/biomind_agent_benchmark/v5/immutable_upstream_fixture_manifest.tsv
+?? benchmarks/biomind_agent_benchmark/v5/oracle_branch_validation.tsv
+?? benchmarks/biomind_agent_benchmark/v5/oracle_case_review_checklist_v5.tsv
+?? benchmarks/biomind_agent_benchmark/v5/oracle_human_review_pack_v5.md
+?? benchmarks/biomind_agent_benchmark/v5/oracle_overlay_v5.yaml
+?? benchmarks/biomind_agent_benchmark/v5/oracle_runtime_vocabulary_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5/payload_leakage_test_report.md
+?? benchmarks/biomind_agent_benchmark/v5/recovery_human_review_pack_v5.md
+?? benchmarks/biomind_agent_benchmark/v5/recovery_oracle_v5.yaml
+?? benchmarks/biomind_agent_benchmark/v5/resume_core_eval_manifest_v5.yaml
+?? benchmarks/biomind_agent_benchmark/v5/scaffolded_integration_eval_pack_v5.yaml
+?? benchmarks/biomind_agent_benchmark/v5/scenario_dependency_dag.yaml
+?? benchmarks/biomind_agent_benchmark/v5/scripts/generate_v5_review_assets.py
+?? benchmarks/biomind_agent_benchmark/v5/skill_reference_audit_v5.tsv
+?? benchmarks/biomind_agent_benchmark/v5/structured_artifact_contracts_v5.yaml
+?? benchmarks/biomind_agent_benchmark/v5/upstream_artifact_dependency_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/artifact_contract_lint.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/artifact_contract_lint_report.md
+?? benchmarks/biomind_agent_benchmark/v5_1/benchmark_execution_readiness_v5_1.md
+?? benchmarks/biomind_agent_benchmark/v5_1/blind_input_visibility_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/blind_product_eval_pack_v5_1.yaml
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/consultant.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/generate.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/planner.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/recovery.json
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_leakage_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/full_envelope_leakage_report.md
+?? benchmarks/biomind_agent_benchmark/v5_1/oracle_branch_scope_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/oracle_overlay_v5_1.yaml
+?? benchmarks/biomind_agent_benchmark/v5_1/oracle_runtime_vocabulary_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/recovery_human_review_pack_v5_1.md
+?? benchmarks/biomind_agent_benchmark/v5_1/recovery_metric_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/recovery_oracle_v5_1.yaml
+?? benchmarks/biomind_agent_benchmark/v5_1/resume_core_eval_manifest_v5_1.yaml
+?? benchmarks/biomind_agent_benchmark/v5_1/resume_core_oracle_review_pack_v5_1.md
+?? benchmarks/biomind_agent_benchmark/v5_1/resume_core_review_checklist_v5_1.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/same_run_binding_audit.tsv
+?? benchmarks/biomind_agent_benchmark/v5_1/scaffolded_integration_eval_pack_v5_1.yaml
+?? benchmarks/biomind_agent_benchmark/v5_1/scenario_dependency_dag_v5_1.yaml
+?? benchmarks/biomind_agent_benchmark/v5_1/scripts/generate_v5_1_review_assets.py
+?? benchmarks/biomind_agent_benchmark/v5_1/structured_artifact_contracts_v5_1.yaml
+?? docs/audits/architecture/README.md
+?? docs/audits/architecture/artifacts/2026-08-25/managed_artifact_preexecution_boundary_audit_20260825.md
+?? docs/audits/architecture/authority/semantic/2026-08-18/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md
+?? docs/audits/architecture/authority/semantic/2026-08-19/open_world_highlighted_requirements_migration_report_20260819.md
+?? docs/audits/architecture/authority/semantic/2026-08-19/semantic_history_authority_matrix.tsv
+?? docs/audits/architecture/authority/semantic/2026-09-05/SEMANTIC_AUTHORITY_CURRENT.md
+?? docs/audits/architecture/authority/semantic/2026-09-05/semantic_authority_matrix.tsv
+?? docs/audits/architecture/context/compression/2026-08-19/context_memory_and_compression_contract.md
+?? docs/audits/architecture/context/compression/2026-09-03/CONTEXT_COMPRESSION_SKILL_CURRENT.md
+?? docs/audits/architecture/context/compression/2026-09-03/context_compression_skill_cache_audit_20260903.md
+?? docs/audits/architecture/context/compression/2026-09-03/context_compression_transition_matrix_20260903.tsv
+?? docs/audits/architecture/context/compression/2026-09-03/provider_request_lcp_compression_matrix_20260903.tsv
+?? docs/audits/architecture/context/phase-and-migration/2026-08-19/global_prompt_context_lifecycle.md
+?? docs/audits/architecture/context/phase-and-migration/2026-09-03/context_layer_and_consumer_matrix_20260903.tsv
+?? docs/audits/architecture/context/phase-and-migration/2026-09-03/pi_migration_rpc_poc_20260903.md
+?? docs/audits/architecture/context/phase-and-migration/2026-09-03/pi_migration_stepworker_boundary_20260903.md
+?? docs/audits/architecture/context/phase-and-migration/2026-09-05/PHASE_CONTEXT_ENGINEERING_CURRENT.md
+?? docs/audits/architecture/context/phase-and-migration/2026-09-05/PI_AGENT_CONTEXT_MIGRATION_CURRENT.md
+?? docs/audits/architecture/context/phase-and-migration/2026-09-05/context_prefix_diff_examples.md
+?? docs/audits/architecture/context/phase-and-migration/2026-09-05/historical_context_migration_matrix.tsv
+?? docs/audits/architecture/context/phase-and-migration/2026-09-05/phase_context_matrix.tsv
+?? docs/audits/architecture/context/provider-payload/2026-08-18/node_prompt_payload_matrix.tsv
+?? docs/audits/architecture/context/provider-payload/2026-08-18/provider_cache_inventory.tsv
+?? docs/audits/architecture/context/provider-payload/2026-08-20/node_provider_context_matrix_20260820.tsv
+?? docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/CONTEXT_COMPRESSION_RUNTIME_CURRENT.md
+?? docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/README.md
+?? docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/SKILL_CONTEXT_HANDOFF_CURRENT.md
+?? docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/context_compression_runtime_matrix.tsv
+?? docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/skill_material_visibility_matrix.tsv
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_authority_live_matrix_20260903.tsv
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_front_half_retirement_20260903.md
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_removal_current_20260903.md
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_removal_migration_matrix_20260903.tsv
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_route_authority_matrix_20260903.tsv
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_runtime_migration_20260903.md
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/schema2_adapter_semantic_coverage_20260903.md
+?? docs/audits/architecture/controller/authority-and-migration/2026-09-03/single_control_plane_phase0_phase1_audit_20260903.md
+?? docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/README.md
+?? docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/implementation_report.md
+?? docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/regression_matrix.tsv
+?? docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/reproduce.sh
+?? docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/stage_status.tsv
+?? docs/audits/architecture/nodes/consultant/2026-09-01/consultant_finish_requirement_provenance_20260901.tsv
+?? docs/audits/architecture/nodes/consultant/2026-09-01/consultant_finish_runtime_evidence_closure_audit_20260901.md
+?? docs/audits/architecture/nodes/consultant/2026-09-01/consultant_finish_runtime_regression_matrix_20260901.tsv
+?? docs/audits/architecture/nodes/consultant/2026-09-01/consultant_turn_state_diff_20260901.tsv
+?? docs/audits/architecture/nodes/consultant/2026-09-03/schema2_consultant_agent_loop_20260903.md
+?? docs/audits/architecture/nodes/planner/2026-08-18/planner_constraint_provenance_projection_audit_20260818.md
+?? docs/audits/architecture/nodes/planner/2026-08-19/planner_pending_snapshot_reentry_fix_report_20260819.md
+?? docs/audits/architecture/nodes/planner/2026-08-20/planner_context_reentry_prompt_regression_audit_20260820.md
+?? docs/audits/architecture/nodes/planner/2026-08-20/planner_request_component_inventory_20260820.tsv
+?? docs/audits/architecture/nodes/planner/2026-09-04/schema2_planner_agent_loop_20260904.md
+?? docs/audits/architecture/nodes/recovery/2026-08-17/recovery_progressive_disclosure_contract.md
+?? docs/audits/architecture/nodes/recovery/2026-08-17/recovery_progressive_disclosure_history.md
+?? docs/audits/architecture/nodes/recovery/2026-08-17/runtime_and_recovery_context_contract.md
+?? docs/audits/architecture/nodes/recovery/2026-08-19/recovery_context_disclosure_matrix.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-02/recovery_authority_matrix_20260902.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-02/recovery_design_vs_effective_implementation_20260902.md
+?? docs/audits/architecture/nodes/recovery/2026-09-02/recovery_effective_call_chain_20260902.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-02/recovery_hypothesis_authority_audit_20260902.md
+?? docs/audits/architecture/nodes/recovery/2026-09-02/recovery_hypothesis_capability_matrix_20260902.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-02/session_1788316042_recovery_timeline_20260902.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-03/RECOVERY_CONTEXT_CURRENT.md
+?? docs/audits/architecture/nodes/recovery/2026-09-03/recovery_context_component_matrix_20260903.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-03/recovery_context_engineering_audit_20260903.md
+?? docs/audits/architecture/nodes/recovery/2026-09-03/recovery_context_engineering_delta_20260903.md
+?? docs/audits/architecture/nodes/recovery/2026-09-03/recovery_identity_lifecycle_matrix_20260903.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-03/recovery_identity_scope_atomicity_audit_20260903.md
+?? docs/audits/architecture/nodes/recovery/2026-09-03/recovery_identity_scope_fix_spec_draft_20260903.md
+?? docs/audits/architecture/nodes/recovery/2026-09-03/recovery_scope_authority_matrix_20260903.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-03/session_1788401254_recovery_timeline_20260903.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-04/RECOVERY_PHASE_CONTEXT_CURRENT.md
+?? docs/audits/architecture/nodes/recovery/2026-09-04/recovery_context_reuse_matrix_20260904.tsv
+?? docs/audits/architecture/nodes/recovery/2026-09-04/recovery_phase_context_reuse_audit_20260904.md
+?? docs/audits/architecture/provider-and-archive/2026-08-25/provider_stream_session_archive_boundary_audit_20260825.md
+?? docs/audits/architecture/provider-and-archive/2026-08-26/provider_attempt_session_archive_phase3_implementation_20260826.md
+?? docs/audits/architecture/skills/2026-08-19/skill_planning_contract_retirement_audit_20260819.md
+?? docs/audits/architecture/skills/2026-08-19/skill_planning_contract_retirement_report_20260819.md
+?? docs/audits/architecture/skills/2026-08-27/progressive_skill_access_search_and_replan_implementation_report_20260827.md
+?? docs/audits/architecture/skills/2026-09-03/selected_skill_visibility_access_matrix_20260903.tsv
+?? docs/audits/session_1789456793_review_20260915/README.md
+?? docs/audits/session_1789456793_review_20260915/execution_stop/evidence.json
+?? docs/audits/session_1789456793_review_20260915/execution_stop/extract.py
+?? docs/audits/session_1789456793_review_20260915/execution_stop/findings.md
+?? docs/audits/session_1789456793_review_20260915/execution_stop/read_ledger.json
+?? docs/audits/session_1789456793_review_20260915/execution_stop/source_slices.json
+?? docs/audits/session_1789456793_review_20260915/helper/_assert_helper_scope.source.txt
+?? docs/audits/session_1789456793_review_20260915/helper/_assert_python_helper_comment.source.txt
+?? docs/audits/session_1789456793_review_20260915/helper/_python_stdin_selector.source.txt
+?? docs/audits/session_1789456793_review_20260915/helper/_single_shell_command.source.txt
+?? docs/audits/session_1789456793_review_20260915/helper/_structured_action_from_object_result.source.txt
+?? docs/audits/session_1789456793_review_20260915/helper/approved_helper_correspondence.json
+?? docs/audits/session_1789456793_review_20260915/helper/build_executed_vs_recovery.diff
+?? docs/audits/session_1789456793_review_20260915/helper/build_first_vs_recovery.diff
+?? docs/audits/session_1789456793_review_20260915/helper/build_local_fix.diff
+?? docs/audits/session_1789456793_review_20260915/helper/evidence_index.json
+?? docs/audits/session_1789456793_review_20260915/helper/files.json
+?? docs/audits/session_1789456793_review_20260915/helper/findings.md
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/approved_effect_emission_template.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/carrier.txt
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/current_generate_output_protocol.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/response_business.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/approved_effect_emission_template.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/carrier.txt
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/current_generate_output_protocol.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/response_business.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/actual_feedback.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/approved_effect_emission_template.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/carrier.txt
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/current_generate_output_protocol.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/response_business.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/approved_effect_emission_template.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/carrier.txt
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/current_generate_output_protocol.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/response_business.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/actual_feedback.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/approved_effect_emission_template.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/carrier.txt
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/current_generate_output_protocol.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/response_business.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/approved_effect_emission_template.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/carrier.txt
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/current_generate_output_protocol.json
+?? docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/response_business.json
+?? docs/audits/session_1789456793_review_20260915/helper/helper_static_replay.json
+?? docs/audits/session_1789456793_review_20260915/helper/helper_static_replay.py
+?? docs/audits/session_1789456793_review_20260915/helper/materialize_effect_action.source.txt
+?? docs/audits/session_1789456793_review_20260915/helper/materialize_effect_template.source.txt
+?? docs/audits/session_1789456793_review_20260915/helper/prepare_local_fix.diff
+?? docs/audits/session_1789456793_review_20260915/helper/py312/helper_static_replay.json
+?? docs/audits/session_1789456793_review_20260915/helper/py312/helper_static_replay.py
+?? docs/audits/session_1789456793_review_20260915/plan_admission_review.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/actual_recovery_manifest.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__candidate_repair_policy.py.source.txt
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__workflow__candidate_repair.py.source.txt
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__workflow__inspection_evidence.py.source.txt
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__workflow__recovery_tools.py.source.txt
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/artifact_manifest.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/bio_agents.py.source.txt
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/decision_input_1.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/decision_input_2.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/extract.py
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/findings.md
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/generate-0014_to_generate-0021.diff
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/generate-0015_to_generate-0021.diff
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/inspection_evidence.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/progress_evidence.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/recovery_generate_request_collision.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/source_index.json
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/tool_result_16_content.txt
+?? docs/audits/session_1789456793_review_20260915/progress_inspection/tool_result_18_content.txt
+?? docs/audits/session_1789456793_review_20260915/review_boundary.json
+?? docs/audits/session_1789456793_review_20260915/runtime_identity_review.json
+?? docs/fixes/biomind_context_continuity_compaction_20260906.md
+?? docs/fixes/biomind_context_continuity_compaction_coverage_20260906.tsv
+?? docs/fixes/generate_admission_typed_repair_20260906.md
+?? docs/fixes/hash_prompt_policy_20260911.md
+?? docs/fixes/hash_prompt_policy_20260911_results.json
+?? docs/fixes/implementation_boundary_map_20260906.md
+?? docs/fixes/planner_feedback_metadata_boundary_20260911.md
+?? docs/fixes/recovery_execution_contract_fix_20260902.md
+?? docs/fixes/skill_script_invocation_contract_20260917.md
+?? docs/fixes/skill_script_invocation_contract_20260917_results.json
+?? docs/implementation/inspection_evidence_terminal_20260907/acceptance_matrix.md
+?? docs/implementation/inspection_evidence_terminal_20260907/e2ea_tests.md
+?? docs/implementation/inspection_evidence_terminal_20260907/git_result.json
+?? docs/implementation/inspection_evidence_terminal_20260907/implementation_report.md
+?? docs/implementation/inspection_evidence_terminal_20260907/insp_review.md
+?? docs/implementation/inspection_evidence_terminal_20260907/patch_manifest.json
+?? docs/implementation/inspection_evidence_terminal_20260907/stage0_dependencies.md
+?? docs/implementation/inspection_evidence_terminal_20260907/terminal_integration_review.md
+?? docs/implementation/inspection_evidence_terminal_20260907/test_results.json
+?? docs/implementation/recovery_common_finalization_20260907/acceptance_matrix.md
+?? docs/implementation/recovery_common_finalization_20260907/candidate_source_identity.json
+?? docs/implementation/recovery_common_finalization_20260907/context_chain_proof.json
+?? docs/implementation/recovery_common_finalization_20260907/git-after.txt
+?? docs/implementation/recovery_common_finalization_20260907/git-before.txt
+?? docs/implementation/recovery_common_finalization_20260907/historical-context.json
+?? docs/implementation/recovery_common_finalization_20260907/historical-requests.json
+?? docs/implementation/recovery_common_finalization_20260907/implementation_report.md
+?? docs/implementation/recovery_common_finalization_20260907/imported_module_sources.json
+?? docs/implementation/recovery_common_finalization_20260907/intermediate_validation_failures.json
+?? docs/implementation/recovery_common_finalization_20260907/live-match.json
+?? docs/implementation/recovery_common_finalization_20260907/loc-authority-staged.patch
+?? docs/implementation/recovery_common_finalization_20260907/loc-staged.patch
+?? docs/implementation/recovery_common_finalization_20260907/patch_manifest.json
+?? docs/implementation/recovery_common_finalization_20260907/remaining_git_status.json
+?? docs/implementation/recovery_common_finalization_20260907/report_examples.json
+?? docs/implementation/recovery_common_finalization_20260907/task_delta.patch
+?? docs/implementation/recovery_common_finalization_20260907/terminal_route_inventory.md
+?? docs/implementation/recovery_common_finalization_20260907/test_invocations.json
+?? docs/implementation/recovery_common_finalization_20260907/test_results.json
+?? tests/test_benchmark_v3_harness.py
+?? tests/test_benchmark_v5_1_semantic_lint.py
+?? tests/test_benchmark_v5_review_assets.py
+?? tests/test_common_runtime_stop.py
+?? tests/test_failure_packet_incident_lineage.py
+?? tests/test_generate_admission_typed_repair.py
+?? tests/test_generate_context_episode.py
+?? tests/test_hash_prompt_policy.py
+?? tests/test_inspection_node_failures.py
+?? tests/test_inspection_terminal_workflow.py
+?? tests/test_mutation_provenance_integration_fix.py
+?? tests/test_phase_context_activation_persistence.py
+?? tests/test_phase_context_compaction_runtime.py
+?? tests/test_phase_provider_prefix_active.py
+?? tests/test_planner_agent_loop.py
+?? tests/test_planner_feedback_boundary.py
+?? tests/test_recovery_compaction_production.py
+?? tests/test_schema2_context_compaction.py
+?? tests/test_schema2_generate_skill_routing.py
+?? tests/test_schema2_integration_a_production.py
+?? tests/test_semantic_completion.py
+?? tests/test_semantic_completion_workflow.py
+?? tests/test_skill_material_continuity.py
+?? tests/test_skill_script_invocation.py
+?? tests/test_step_effect_runtime.py
+?? tests/test_step_effect_schema2_graph.py
+?? tests/test_supervisor_context_continuity.py
+?? tests/test_workspace_mutation_provenance.py

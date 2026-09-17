@@ -1,0 +1,58 @@
+{
+  "status": "NOT IMPLEMENTED / NOT SUBMITTED / NOT EXECUTED",
+  "basis": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0009-7e7691897098/response.json",
+  "input": {
+    "step_id": "input_check",
+    "outputs": [],
+    "expected_observation": "validation_observation",
+    "helper": {
+      "handle": "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+      "status": "available_verified_at_candidate_build",
+      "shell_prefix": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py'",
+      "arguments": {
+        "--fastq": {
+          "nargs": 2,
+          "required": true,
+          "repeatable": true
+        },
+        "--reference": {
+          "nargs": 2,
+          "required": true
+        },
+        "--observation-id": {
+          "nargs": 1,
+          "required": true
+        },
+        "--evidence-dir": {
+          "nargs": 1,
+          "required": true,
+          "runtime_environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR"
+        },
+        "--item-timeout-seconds": {
+          "nargs": 1
+        }
+      },
+      "carrier": "simple_shell",
+      "dependencies": "program derives declared delegate closure before approval",
+      "scope": "registered utility; does not activate the Skill scientific environment"
+    },
+    "input_paths": {
+      "S1_1.fq.gz": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz",
+      "S1_2.fq.gz": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz",
+      "S2_1.fq.gz": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz",
+      "S2_2.fq.gz": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz",
+      "genome.fasta": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta"
+    },
+    "evidence_directory": "current attempt deferred variable; helper creates leaf",
+    "verification_scope": "prefix/header only; preserve adverse/incomplete; no full-file integrity claim"
+  },
+  "output": {
+    "response_type": "biomind_generate_display_v1",
+    "public_message": "候选将进行已批准范围内的 FASTQ 前缀与 FASTA 头检查，结果尚未执行或确认。",
+    "payload": "<shell skill_resources=\"genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py\">\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python '/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py' \\\n  --observation-id validation_observation \\\n  --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" \\\n  --fastq S1_R1 '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz' \\\n  --fastq S1_R2 '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz' \\\n  --fastq S2_R1 '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz' \\\n  --fastq S2_R2 '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz' \\\n  --reference genome '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta'\n</shell>"
+  },
+  "required_code_change": "derive frontmatter delegates in bind_action_skill_resources BEFORE approval; current production rejects omitted delegates",
+  "unchanged_business_values": "Labels, paths, observation ID and evidence variable come from the same historical candidate",
+  "before_model_copied_handles": 4,
+  "after_model_copied_handles": 1
+}

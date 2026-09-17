@@ -1,0 +1,2008 @@
+{
+  "scope": "real binding functions on explicit isolated source export; no subprocess/model/API/science; literal synthetic config; historical graph evidence reused, not rerun",
+  "scratch": "/tmp/binding-helper-audit-5pps3s6_",
+  "python": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "source_sha256": {
+    "agent_core/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "agent_core/skill_access.py": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+    "agent_core/skill_manager.py": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+    "agent_core/action_runtime.py": "53ff91ce91ea502b4fb46d63e374ee3e3ad27596a7aea924227cc672b95c3071",
+    "agent_core/skill_resource_binding.py": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+    "agent_core/skill_script_invocation.py": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+    "agent_core/approved_resource_locator.py": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+    "agent_core/managed_artifacts.py": "d2b489a0ffa5c3fb9332ca085d34d97e12c1d262a786d4b9e2d67e49c61213e8",
+    "agent_core/step_effects.py": "8040375f2fdb8eb00c5b75977bac036a7e00db4781b3533a7e09f5f1bdfc633d"
+  },
+  "loaded_modules": {
+    "agent_core.skill_access": "/tmp/binding-helper-audit-5pps3s6_/agent_core/skill_access.py",
+    "agent_core.action_runtime": "/tmp/binding-helper-audit-5pps3s6_/agent_core/action_runtime.py",
+    "agent_core.skill_manager": "/tmp/binding-helper-audit-5pps3s6_/agent_core/skill_manager.py",
+    "agent_core.skill_resource_binding": "/tmp/binding-helper-audit-5pps3s6_/agent_core/skill_resource_binding.py",
+    "agent_core.skill_script_invocation": "/tmp/binding-helper-audit-5pps3s6_/agent_core/skill_script_invocation.py",
+    "agent_core.step_effects": "/tmp/binding-helper-audit-5pps3s6_/agent_core/step_effects.py",
+    "agent_core.managed_artifacts": "/tmp/binding-helper-audit-5pps3s6_/agent_core/managed_artifacts.py",
+    "agent_core.approved_resource_locator": "/tmp/binding-helper-audit-5pps3s6_/agent_core/approved_resource_locator.py"
+  },
+  "witnesses": [
+    {
+      "name": "direct_argv",
+      "expected": "PASS",
+      "actual": "PASS",
+      "detail": "",
+      "action": {
+        "type": "execute",
+        "argv": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+          "--path",
+          "/synthetic/input.fastq",
+          "--observation-id",
+          "validation_observation"
+        ],
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+          "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+          "--path",
+          "/synthetic/input.fastq",
+          "--observation-id",
+          "validation_observation"
+        ],
+        "code": "",
+        "inline": null,
+        "declared_language": "",
+        "body": "",
+        "language": "",
+        "source": "external_argv",
+        "script_available": false
+      }
+    },
+    {
+      "name": "code_plus_argv_uses_actual_argv",
+      "expected": "PASS",
+      "actual": "PASS",
+      "detail": "",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "not the executed body",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ],
+        "argv": [
+          "bash",
+          "-lc",
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [
+          "bash",
+          "-lc",
+          "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation"
+        ],
+        "code": "not the executed body",
+        "inline": [
+          2,
+          "bash"
+        ],
+        "declared_language": "bash",
+        "body": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "language": "bash",
+        "source": "argv[2]",
+        "script_available": true
+      }
+    },
+    {
+      "name": "quoted_bound_variable",
+      "expected": "PASS",
+      "actual": "PASS",
+      "detail": "",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_65E610938C636F7D\" --path /synthetic/input.fastq --observation-id validation_observation",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_65E610938C636F7D\" --path /synthetic/input.fastq --observation-id validation_observation",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_65E610938C636F7D\" --path /synthetic/input.fastq --observation-id validation_observation",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "two_newline_direct_calls",
+      "expected": "PASS",
+      "actual": "PASS",
+      "detail": "",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "safe_echo_plus_helper_is_unverifiable",
+      "expected": "SKILL_INVOCATION_UNVERIFIABLE",
+      "actual": "SKILL_INVOCATION_UNVERIFIABLE",
+      "detail": "INTERNAL_PROTOCOL / SKILL_INVOCATION_UNVERIFIABLE: Only declared direct utility calls and optional set/exec are verified; use the published shell_prefix",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "echo starting\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "echo starting\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "echo starting\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "wrapper_is_unverifiable",
+      "expected": "SKILL_INVOCATION_UNVERIFIABLE",
+      "actual": "SKILL_INVOCATION_UNVERIFIABLE",
+      "detail": "INTERNAL_PROTOCOL / SKILL_INVOCATION_UNVERIFIABLE: Only declared direct utility calls and optional set/exec are verified; use the published shell_prefix",
+      "action": {
+        "type": "execute",
+        "argv": [
+          "bash",
+          "/synthetic/wrapper.sh"
+        ],
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [
+          "bash",
+          "/synthetic/wrapper.sh"
+        ],
+        "code": "",
+        "inline": null,
+        "declared_language": "",
+        "body": "",
+        "language": "",
+        "source": "external_argv",
+        "script_available": false
+      }
+    },
+    {
+      "name": "local_assignment_is_unverifiable",
+      "expected": "SKILL_INVOCATION_UNVERIFIABLE",
+      "actual": "SKILL_INVOCATION_UNVERIFIABLE",
+      "detail": "INTERNAL_PROTOCOL / SKILL_INVOCATION_UNVERIFIABLE: Environment variable P has no approved binding",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "P=/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$P\" --path /synthetic/input.fastq --observation-id validation_observation",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "P=/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$P\" --path /synthetic/input.fastq --observation-id validation_observation",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "P=/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$P\" --path /synthetic/input.fastq --observation-id validation_observation",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "arbitrary_free_script_without_refs",
+      "expected": "PASS",
+      "actual": "PASS",
+      "detail": "",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "P=foo\necho \"$P\" | cat"
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "P=foo\necho \"$P\" | cat",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "P=foo\necho \"$P\" | cat",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "direct_source_lacks_interpreter",
+      "expected": "SKILL_INVOCATION_INTERPRETER_REQUIRED",
+      "actual": "SKILL_INVOCATION_INTERPRETER_REQUIRED",
+      "detail": "INTERNAL_PROTOCOL / SKILL_INVOCATION_INTERPRETER_REQUIRED: Skill source files are not executables; use the published interpreter + script argv_prefix",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "unknown_resource",
+      "expected": "SKILL_RESOURCE_OUT_OF_SCOPE",
+      "actual": "SKILL_RESOURCE_OUT_OF_SCOPE",
+      "detail": "INTERNAL_PROTOCOL / SKILL_RESOURCE_OUT_OF_SCOPE: genomics/wgs-short-read-mapping#scripts/no_such.py",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/no_such.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py --path /synthetic/input.fastq --observation-id validation_observation",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "missing_delegate",
+      "expected": "SKILL_INVOCATION_DEPENDENCY_UNBOUND",
+      "actual": "SKILL_INVOCATION_DEPENDENCY_UNBOUND",
+      "detail": "INTERNAL_PROTOCOL / SKILL_INVOCATION_DEPENDENCY_UNBOUND: Declare delegated resources: genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py, genomics/wgs-short-read-mapping#scripts/inspect_fastq.py, genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py --fastq S /synthetic/a.fq --reference R /synthetic/r.fa --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\"",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py --fastq S /synthetic/a.fq --reference R /synthetic/r.fa --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\"",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py --fastq S /synthetic/a.fq --reference R /synthetic/r.fa --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\"",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "declared_delegate_closure",
+      "expected": "PASS",
+      "actual": "PASS",
+      "detail": "",
+      "action": {
+        "type": "execute",
+        "language": "bash",
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py --fastq S /synthetic/a.fq --reference R /synthetic/r.fa --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\"",
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+          "genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py",
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py"
+        ]
+      },
+      "selected_carrier": {
+        "argv": [],
+        "code": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py --fastq S /synthetic/a.fq --reference R /synthetic/r.fa --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\"",
+        "inline": null,
+        "declared_language": "bash",
+        "body": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py --fastq S /synthetic/a.fq --reference R /synthetic/r.fa --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\"",
+        "language": "bash",
+        "source": "code",
+        "script_available": true
+      }
+    },
+    {
+      "name": "same_bytes_interpreter_timestamp_change",
+      "expected": "SKILL_BINDING_DRIFT",
+      "actual": "SKILL_BINDING_DRIFT",
+      "detail": "INTERNAL_PROTOCOL / SKILL_BINDING_DRIFT: Declared resources no longer match their frozen binding",
+      "action": {
+        "type": "execute",
+        "argv": [
+          "/tmp/binding-helper-audit-5pps3s6_/synthetic-python",
+          "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+          "--path",
+          "/synthetic/input.fastq",
+          "--observation-id",
+          "validation_observation"
+        ],
+        "skill_resource_refs": [
+          "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py"
+        ],
+        "env": {
+          "BIOMIND_SKILL_65E610938C636F7D": "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py"
+        },
+        "formal_skill_resources": [
+          {
+            "schema_version": 1,
+            "source": "selected_skill_registry",
+            "handle": "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+            "skill_id": "genomics/wgs-short-read-mapping",
+            "snapshot_id": "skill-snapshot-5915b557ca9b4ee631d6",
+            "skill_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+            "relative_path": "scripts/inspect_fastq.py",
+            "registered_root": "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping",
+            "canonical_path": "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+            "content_hash": "6c74374f6daad34daa911c45f9fadd8e763603939f88d9993f9748a3d53c1dc6",
+            "resource_snapshot_id": "skill-resource-6c74374f6daad34d",
+            "environment_variable": "BIOMIND_SKILL_65E610938C636F7D",
+            "cwd": "/tmp/binding-helper-audit-5pps3s6_",
+            "namespace": "local",
+            "step_id": "inspect",
+            "readable": true,
+            "executable_bit_required": false,
+            "invocation": {
+              "schema_version": 1,
+              "runtime": "controller_python",
+              "interpreter": "/tmp/binding-helper-audit-5pps3s6_/synthetic-python",
+              "interpreter_identity": {
+                "real_path": "/tmp/binding-helper-audit-5pps3s6_/synthetic-python",
+                "device": 2051,
+                "inode": 11567994,
+                "size": 27,
+                "mtime_ns": 1789634943099125981,
+                "ctime_ns": 1789634943099125981
+              },
+              "argv_prefix": [
+                "/tmp/binding-helper-audit-5pps3s6_/synthetic-python",
+                "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py"
+              ],
+              "shell_prefix": "/tmp/binding-helper-audit-5pps3s6_/synthetic-python /tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+              "arguments": {
+                "--path": {
+                  "nargs": 1,
+                  "required": true
+                },
+                "--observation-id": {
+                  "nargs": 1,
+                  "required": true
+                },
+                "--records": {
+                  "nargs": 1
+                },
+                "--input-bytes": {
+                  "nargs": 1
+                },
+                "--decoded-bytes": {
+                  "nargs": 1
+                },
+                "--seconds": {
+                  "nargs": 1
+                }
+              },
+              "delegates": [],
+              "carrier": "simple_shell_or_direct_argv",
+              "scope": "registered utility; does not activate the Skill scientific environment"
+            },
+            "binding_digest": "83eb35dcac2545a293dda3352b91540fa1b2576a00dffb4014cd229c463bece4"
+          }
+        ]
+      },
+      "selected_carrier": {
+        "argv": [
+          "/tmp/binding-helper-audit-5pps3s6_/synthetic-python",
+          "/tmp/binding-helper-audit-5pps3s6_/skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+          "--path",
+          "/synthetic/input.fastq",
+          "--observation-id",
+          "validation_observation"
+        ],
+        "code": "",
+        "inline": null,
+        "declared_language": "",
+        "body": "",
+        "language": "",
+        "source": "external_argv",
+        "script_available": false
+      }
+    }
+  ],
+  "same_bytes_interpreter_sha256": "5c568edf642e49015df19d9f247fbd8f208ffe502fa8e5689b14b09fba678da6",
+  "call_counts": {
+    "generate_catalog_four_resources": {
+      "verified_snapshot": 9,
+      "resource_snapshot": 4
+    },
+    "bind_four_resources_once": {
+      "verified_snapshot": 5,
+      "resource_snapshot": 4
+    },
+    "prelaunch_four_resources_once": {
+      "verified_snapshot": 5,
+      "resource_snapshot": 4
+    }
+  },
+  "prior_six_file_hash_verification": [
+    {
+      "path": "agent_core/skill_script_invocation.py",
+      "receipt_sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "current_sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "old_export_sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "all_match": true
+    },
+    {
+      "path": "agent_core/skill_resource_binding.py",
+      "receipt_sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "current_sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "old_export_sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "all_match": true
+    },
+    {
+      "path": "bio_agents.py",
+      "receipt_sha256": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32",
+      "current_sha256": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32",
+      "old_export_sha256": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32",
+      "all_match": true
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "receipt_sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "current_sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "old_export_sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "all_match": true
+    },
+    {
+      "path": "tests/test_skill_script_invocation.py",
+      "receipt_sha256": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "current_sha256": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "old_export_sha256": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "all_match": true
+    },
+    {
+      "path": "tests/test_preflight_mapping_commit.py",
+      "receipt_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "current_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "old_export_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "all_match": true
+    }
+  ],
+  "prior_69_tests": {
+    "report_path": "/tmp/skill-invocation-validation-nm1jgfjk/integration-results.json",
+    "report_sha256": "8d2762a02fdf245bd9d8ebb4a010d2ea451187b96f48d4590a9d7a8690efde00",
+    "call_count": 69,
+    "outcomes": {
+      "passed": 69
+    },
+    "nodeids": [
+      "tests/test_skill_script_invocation.py::test_receipt_exposes_explicit_controller_invocation_and_exact_contract",
+      "tests/test_skill_script_invocation.py::test_controller_interpreter_retains_virtualenv_launcher_path",
+      "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[installed]",
+      "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[\\u4e2d\\u6587 \\u5b89\\u88c5]",
+      "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[dollar$literal`text`]",
+      "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[literal]",
+      "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[env]",
+      "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[exec_continuation]",
+      "tests/test_skill_script_invocation.py::test_direct_argv_has_same_contract_without_shell_reparsing",
+      "tests/test_skill_script_invocation.py::test_validation_checks_the_argv_carrier_actually_executed",
+      "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[None]",
+      "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[python]",
+      "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[/bin/sh]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments0]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments1]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments2]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments3]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments4]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments5]",
+      "tests/test_skill_script_invocation.py::test_repeated_multi_value_argument_preserves_distinct_label_path_arguments",
+      "tests/test_skill_script_invocation.py::test_single_quoted_env_variable_is_not_mistaken_for_resource_expansion",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[comment_only]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[echo_only]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[conditional]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[eval]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[heredoc]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[env_assignment]",
+      "tests/test_skill_script_invocation.py::test_delegate_is_pinned_without_requiring_direct_invocation",
+      "tests/test_skill_script_invocation.py::test_missing_delegate_is_rejected_instead_of_resolved_implicitly",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[document]",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[interpreter]",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[env]",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[script]",
+      "tests/test_skill_script_invocation.py::test_uncontracted_skill_resource_preserves_existing_binding_behavior",
+      "tests/test_skill_script_invocation.py::test_user_owned_script_has_no_new_skill_invocation_gate",
+      "tests/test_skill_script_invocation.py::test_frontmatter_delimiters_and_metadata_generate_are_preserved",
+      "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[invalid]",
+      "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate1]",
+      "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate2]",
+      "tests/test_skill_script_invocation.py::test_deferred_argument_keeps_runtime_identity_and_does_not_claim_direct_argv",
+      "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[relocated installation]",
+      "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[\\u4e2d\\u6587 \\u6839]",
+      "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[external-install-root]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[script]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[document]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[cwd]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[namespace]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[env]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[scope]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[missing]",
+      "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[symlink_escape]",
+      "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[other/skill#scripts/call_tads.py]",
+      "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#../call_tads.py]",
+      "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#/etc/passwd]",
+      "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[call_tads.py]",
+      "tests/test_skill_resource_binding.py::test_same_basename_is_resolved_by_skill_identity",
+      "tests/test_skill_resource_binding.py::test_undeclared_user_script_does_not_gain_a_global_skill_gate",
+      "tests/test_skill_resource_binding.py::test_unreadable_declared_script_is_permission_failure",
+      "tests/test_preflight_directory.py::test_attempt_paths_and_policy_authority",
+      "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_wgs_inputs.py]",
+      "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[inspect_fasta_header.py]",
+      "tests/test_preflight_directory.py::test_mapping_bound_resource_drift[SKILL.md]",
+      "tests/test_preflight_directory.py::test_real_helper_rejects_wrong_or_existing_leaf",
+      "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[off]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_invocation_repair_precedes_approval_and_execution[missing_interpreter]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_invocation_repair_precedes_approval_and_execution[argument_arity]",
+      "tests/test_preflight_mapping_commit.py::test_mapping_recovery_and_generate_correction",
+      "tests/test_preflight_mapping_commit.py::test_mapping_adverse_reader_return_zero_cannot_commit"
+    ]
+  },
+  "prior_graph_scenarios": [
+    {
+      "source": "/tmp/skill-invocation-validation-nm1jgfjk/artifacts/new-mapping-preflight-compact-missing_interpreter-result.json",
+      "sha256": "26ef0228fa03c195743c3cc429b06ec5d0bb6778c0b71588ded6ee97bd7903fd",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "commits": 1,
+      "approval_array_recorded": true,
+      "approvals": [
+        {
+          "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+          "code": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/参考 长行.fasta'\n"
+        }
+      ],
+      "executions": [
+        {
+          "returncode": 0,
+          "approved_sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+          "wrapper_sha256": "1364fb404a9cfca3f1f1b24b45a13fc61539509fb75e52c49885f10c44a62e78",
+          "binding": {
+            "action_id": "action_e11f508a162f8fa5",
+            "approved_root": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts",
+            "attempt_id": "attempt_2870b6f0616a059bffc4",
+            "canonical_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:031510518555a4c3138232e03e4da5c7dda299994a95521d00647ed737caea2d",
+            "purpose": "internal_execution_evidence"
+          }
+        }
+      ],
+      "duplicate_deliveries": [
+        {
+          "ordinal": 1,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-compact-missing_interpreter",
+              "plan_id": "plan_e2f51b0c6900512d6d7d",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_2870b6f0616a059bffc4",
+                "attempt_id": "attempt_2870b6f0616a059bffc4",
+                "action_id": "action_e11f508a162f8fa5",
+                "plan_id": "plan_e2f51b0c6900512d6d7d",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3863 chars]...\ne,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521240.047749328}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521240.050824674,\"pid\":66}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521240.135632042,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521240.135710608}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521240.136611871,\"pid\":68}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\n...[truncated 846 chars]...\notal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521240.547252933,\"pid\":72}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521240.627896298,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521240.628006166}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521240.628949998,\"pid\":74}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521240.71887348,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521240.718939357,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/scripts/plan_e2f51b0c6900512d6d7d/plan_v1/step-00-input-preflight/action_e11f508a162f8fa5/generated.sh",
+                  "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:48"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/approved.sh",
+                  "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/scripts/plan_e2f51b0c6900512d6d7d/plan_v1/step-00-input-preflight/action_e11f508a162f8fa5/generated.sh",
+                    "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:48"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:48"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/executed.sh",
+                  "sha256": "1364fb404a9cfca3f1f1b24b45a13fc61539509fb75e52c49885f10c44a62e78",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/approved.sh",
+                    "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/scripts/plan_e2f51b0c6900512d6d7d/plan_v1/step-00-input-preflight/action_e11f508a162f8fa5/generated.sh",
+                      "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:48"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:48"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:48"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/executed.sh",
+                "finished_at": "2026-09-17T16:08:51+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_2870b6f0616a059bffc4",
+                  "finished_at": "2026-09-17T08:08:51.277+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:2e4819810c919252eb47661b6e46f3d6f414b7ccfc005f91d157fb600d947326",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:48.798+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/mutation_intent.json",
+                  "journal_digest": "sha256:2e4819810c919252eb47661b6e46f3d6f414b7ccfc005f91d157fb600d947326",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_e11f508a162f8fa5",
+              "attempt_id": "attempt_2870b6f0616a059bffc4",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        },
+        {
+          "ordinal": 2,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-compact-missing_interpreter",
+              "plan_id": "plan_e2f51b0c6900512d6d7d",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_2870b6f0616a059bffc4",
+                "attempt_id": "attempt_2870b6f0616a059bffc4",
+                "action_id": "action_e11f508a162f8fa5",
+                "plan_id": "plan_e2f51b0c6900512d6d7d",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3863 chars]...\ne,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521240.047749328}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521240.050824674,\"pid\":66}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521240.135632042,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521240.135710608}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521240.136611871,\"pid\":68}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\n...[truncated 846 chars]...\notal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521240.547252933,\"pid\":72}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521240.627896298,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521240.628006166}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521240.628949998,\"pid\":74}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521240.71887348,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521240.718939357,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/scripts/plan_e2f51b0c6900512d6d7d/plan_v1/step-00-input-preflight/action_e11f508a162f8fa5/generated.sh",
+                  "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:48"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/approved.sh",
+                  "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/scripts/plan_e2f51b0c6900512d6d7d/plan_v1/step-00-input-preflight/action_e11f508a162f8fa5/generated.sh",
+                    "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:48"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:48"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/executed.sh",
+                  "sha256": "1364fb404a9cfca3f1f1b24b45a13fc61539509fb75e52c49885f10c44a62e78",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/approved.sh",
+                    "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/scripts/plan_e2f51b0c6900512d6d7d/plan_v1/step-00-input-preflight/action_e11f508a162f8fa5/generated.sh",
+                      "sha256": "24a2f4606910ae822acd22b812e40d856dfc2f9a23e7925812d9a3c0c909ddd9",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:48"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:48"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:48"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/executed.sh",
+                "finished_at": "2026-09-17T16:08:51+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_2870b6f0616a059bffc4",
+                  "finished_at": "2026-09-17T08:08:51.277+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:2e4819810c919252eb47661b6e46f3d6f414b7ccfc005f91d157fb600d947326",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:48.798+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/task_outputs/new-mapping-preflight-compact-missing_interpreter/attempts/attempt_2870b6f0616a059bffc4/mutation_intent.json",
+                  "journal_digest": "sha256:2e4819810c919252eb47661b6e46f3d6f414b7ccfc005f91d157fb600d947326",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_e11f508a162f8fa5",
+              "attempt_id": "attempt_2870b6f0616a059bffc4",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        }
+      ],
+      "recovery_calls": 0,
+      "rejections": [
+        {
+          "scope": {
+            "task_id": "new-mapping-preflight-compact-missing_interpreter",
+            "task_revision": 1,
+            "plan_id": "plan_e2f51b0c6900512d6d7d",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-00-input-preflight",
+            "attempt_id": ""
+          },
+          "candidate_fingerprint": "a4fb63d90f8af1304eaf9ce45f97a79a622490b37d600f34b04c58dda36d8965",
+          "feedback": "Generated action failed deterministic candidate admission.",
+          "repairable": true,
+          "repair_context": {
+            "repair_stage": "public_binding_normalization",
+            "validation_source": "agent_core.plan_bindings.normalize_public_action_bindings",
+            "repair_domain": "generated_semantic",
+            "repair_ordinal": 1,
+            "failure_stage": "pre_execution_candidate_admission",
+            "execution_status": "not_started",
+            "exact_violations": [
+              {
+                "code": "SKILL_INVOCATION_INTERPRETER_REQUIRED",
+                "detail": "INTERNAL_PROTOCOL / SKILL_INVOCATION_INTERPRETER_REQUIRED: Skill source files are not executables; use the published interpreter + script argv_prefix",
+                "owner": "GENERATED_ACTION",
+                "message": "Generated action failed deterministic candidate admission."
+              }
+            ],
+            "protocol_error": {
+              "stage": "public_binding_normalization",
+              "code": "SKILL_INVOCATION_INTERPRETER_REQUIRED",
+              "message": "Generated action failed deterministic candidate admission."
+            }
+          },
+          "previous_candidate": {
+            "type": "execute",
+            "code": "\n\"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/参考 长行.fasta'\n",
+            "argv": [
+              "bash",
+              "-lc",
+              "\n\"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-yq6rsjhs/参考 长行.fasta'\n"
+            ],
+            "env": {},
+            "skill_resource_refs": [
+              "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+              "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+              "genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py",
+              "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py"
+            ],
+            "binding_env": null,
+            "produced_bindings": null
+          },
+          "budget": {
+            "unit": "additional_candidate_calls",
+            "category": "candidate_contract",
+            "correction_authorized": true,
+            "ordinal": 1,
+            "remaining": 3
+          }
+        }
+      ]
+    },
+    {
+      "source": "/tmp/skill-invocation-validation-nm1jgfjk/artifacts/new-mapping-preflight-compact-argument_arity-result.json",
+      "sha256": "2d5d413ac059ab0a4c16ef971accaf0f6e7b03d0d9d9c17eccc8f2aaed5ec27c",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 2
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "commits": 1,
+      "approval_array_recorded": true,
+      "approvals": [
+        {
+          "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+          "code": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/参考 长行.fasta'\n"
+        }
+      ],
+      "executions": [
+        {
+          "returncode": 0,
+          "approved_sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+          "wrapper_sha256": "8e1cc762e0c5704713d082cbe17ea1dffd44faa08667659db86aee6dc2e46f0a",
+          "binding": {
+            "action_id": "action_d4c64f3bfccde7e4",
+            "approved_root": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts",
+            "attempt_id": "attempt_db8f0adbd289a52c93c9",
+            "canonical_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:c658be0a5cd16aa033889d5ecea6509eb2eada722f1a7568a7788acd67c55dda",
+            "purpose": "internal_execution_evidence"
+          }
+        }
+      ],
+      "duplicate_deliveries": [
+        {
+          "ordinal": 1,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-compact-argument_arity",
+              "plan_id": "plan_4c2be065792d554aa384",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_db8f0adbd289a52c93c9",
+                "attempt_id": "attempt_db8f0adbd289a52c93c9",
+                "action_id": "action_d4c64f3bfccde7e4",
+                "plan_id": "plan_4c2be065792d554aa384",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3813 chars]...\nassed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521248.375575568}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521248.381563472,\"pid\":88}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521248.489303344,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521248.489396295}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521248.490284407,\"pid\":90}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\n...[truncated 848 chars]...\ntal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521248.666469476,\"pid\":94}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521248.743724251,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521248.743823958}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521248.744680763,\"pid\":96}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521248.823859459,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521248.823925772,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/scripts/plan_4c2be065792d554aa384/plan_v1/step-00-input-preflight/action_d4c64f3bfccde7e4/generated.sh",
+                  "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:55"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/approved.sh",
+                  "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/scripts/plan_4c2be065792d554aa384/plan_v1/step-00-input-preflight/action_d4c64f3bfccde7e4/generated.sh",
+                    "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:55"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:56"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/executed.sh",
+                  "sha256": "8e1cc762e0c5704713d082cbe17ea1dffd44faa08667659db86aee6dc2e46f0a",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/approved.sh",
+                    "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/scripts/plan_4c2be065792d554aa384/plan_v1/step-00-input-preflight/action_d4c64f3bfccde7e4/generated.sh",
+                      "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:55"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:56"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:56"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/executed.sh",
+                "finished_at": "2026-09-17T16:08:59+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_db8f0adbd289a52c93c9",
+                  "finished_at": "2026-09-17T08:08:59.467+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:495a3bd880544ecc20005f1c88cee99b9fbc198ac7bee1f7fa344c185d8ae42b",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:56.775+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/mutation_intent.json",
+                  "journal_digest": "sha256:495a3bd880544ecc20005f1c88cee99b9fbc198ac7bee1f7fa344c185d8ae42b",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_d4c64f3bfccde7e4",
+              "attempt_id": "attempt_db8f0adbd289a52c93c9",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        },
+        {
+          "ordinal": 2,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-compact-argument_arity",
+              "plan_id": "plan_4c2be065792d554aa384",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_db8f0adbd289a52c93c9",
+                "attempt_id": "attempt_db8f0adbd289a52c93c9",
+                "action_id": "action_d4c64f3bfccde7e4",
+                "plan_id": "plan_4c2be065792d554aa384",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3813 chars]...\nassed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521248.375575568}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521248.381563472,\"pid\":88}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521248.489303344,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521248.489396295}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521248.490284407,\"pid\":90}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\n...[truncated 848 chars]...\ntal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521248.666469476,\"pid\":94}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521248.743724251,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521248.743823958}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521248.744680763,\"pid\":96}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521248.823859459,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521248.823925772,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/scripts/plan_4c2be065792d554aa384/plan_v1/step-00-input-preflight/action_d4c64f3bfccde7e4/generated.sh",
+                  "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:55"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/approved.sh",
+                  "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/scripts/plan_4c2be065792d554aa384/plan_v1/step-00-input-preflight/action_d4c64f3bfccde7e4/generated.sh",
+                    "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:55"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:56"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/executed.sh",
+                  "sha256": "8e1cc762e0c5704713d082cbe17ea1dffd44faa08667659db86aee6dc2e46f0a",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/approved.sh",
+                    "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/scripts/plan_4c2be065792d554aa384/plan_v1/step-00-input-preflight/action_d4c64f3bfccde7e4/generated.sh",
+                      "sha256": "e2d0c90fc5dc4120f491a02388006e5a514a666bb7d68713f8bc24135fead822",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:55"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:56"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:56"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/executed.sh",
+                "finished_at": "2026-09-17T16:08:59+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_db8f0adbd289a52c93c9",
+                  "finished_at": "2026-09-17T08:08:59.467+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:495a3bd880544ecc20005f1c88cee99b9fbc198ac7bee1f7fa344c185d8ae42b",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:56.775+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/task_outputs/new-mapping-preflight-compact-argument_arity/attempts/attempt_db8f0adbd289a52c93c9/mutation_intent.json",
+                  "journal_digest": "sha256:495a3bd880544ecc20005f1c88cee99b9fbc198ac7bee1f7fa344c185d8ae42b",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_d4c64f3bfccde7e4",
+              "attempt_id": "attempt_db8f0adbd289a52c93c9",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        }
+      ],
+      "recovery_calls": 0,
+      "rejections": [
+        {
+          "scope": {
+            "task_id": "new-mapping-preflight-compact-argument_arity",
+            "task_revision": 1,
+            "plan_id": "plan_4c2be065792d554aa384",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-00-input-preflight",
+            "attempt_id": ""
+          },
+          "candidate_fingerprint": "5b249ca80a9fd02c9d83e16ab029d503819cf6e2a50d6a6cb947053ea43bfa79",
+          "feedback": "Generated action failed deterministic candidate admission.",
+          "repairable": true,
+          "repair_context": {
+            "repair_stage": "public_binding_normalization",
+            "validation_source": "agent_core.plan_bindings.normalize_public_action_bindings",
+            "repair_domain": "generated_semantic",
+            "repair_ordinal": 1,
+            "failure_stage": "pre_execution_candidate_admission",
+            "execution_status": "not_started",
+            "exact_violations": [
+              {
+                "code": "SKILL_INVOCATION_ARGUMENT_INVALID",
+                "detail": "INTERNAL_PROTOCOL / SKILL_INVOCATION_ARGUMENT_INVALID: --fastq needs 2 separate nonempty values",
+                "owner": "GENERATED_ACTION",
+                "message": "Generated action failed deterministic candidate admission."
+              }
+            ],
+            "protocol_error": {
+              "stage": "public_binding_normalization",
+              "code": "SKILL_INVOCATION_ARGUMENT_INVALID",
+              "message": "Generated action failed deterministic candidate admission."
+            }
+          },
+          "previous_candidate": {
+            "type": "execute",
+            "code": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq 'S0 /tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/参考 长行.fasta'\n",
+            "argv": [
+              "bash",
+              "-lc",
+              "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq 'S0 /tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-j6wh5_9z/参考 长行.fasta'\n"
+            ],
+            "env": {},
+            "skill_resource_refs": [
+              "genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py",
+              "genomics/wgs-short-read-mapping#scripts/inspect_fastq.py",
+              "genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py",
+              "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py"
+            ],
+            "binding_env": null,
+            "produced_bindings": null
+          },
+          "budget": {
+            "unit": "additional_candidate_calls",
+            "category": "candidate_contract",
+            "correction_authorized": true,
+            "ordinal": 1,
+            "remaining": 3
+          }
+        }
+      ]
+    },
+    {
+      "source": "/tmp/skill-invocation-validation-nm1jgfjk/artifacts/new-mapping-preflight-compact-retry-result.json",
+      "sha256": "debb8355eb277d9e12607532947dadfea5cb3121b20e018e65cb9291c821499e",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 3
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute",
+        "recovery",
+        "generate",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "commits": 1,
+      "approval_array_recorded": true,
+      "approvals": [
+        {
+          "sha256": "a93e7458daffe2a3db9452acc26aebcbee6cb8dee224c05aee8115fc9b43748c",
+          "code": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/参考 长行.fasta' --item-timeout-seconds invalid-timeout\n"
+        },
+        {
+          "sha256": "41b85936195b8452e2a260c5252178f7d8672a07439dfcefe3cb1b348dd2ec87",
+          "code": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/参考 长行.fasta'\n"
+        }
+      ],
+      "executions": [
+        {
+          "returncode": 2,
+          "approved_sha256": "a93e7458daffe2a3db9452acc26aebcbee6cb8dee224c05aee8115fc9b43748c",
+          "wrapper_sha256": "11e461cbb2e0ab015490280d99611cccd7c2fe78852e051cd3dbc09bf7a0e0a0",
+          "binding": {
+            "action_id": "action_8576fb046b0062e3",
+            "approved_root": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/task_outputs/new-mapping-preflight-compact-retry/attempts",
+            "attempt_id": "attempt_e0a1bb46c65ebcf34def",
+            "canonical_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_e0a1bb46c65ebcf34def/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:5c813ea84f7fe44702dc923d7b31c7ccf83ef4f73b071d8b8c44d80bf5963feb",
+            "purpose": "internal_execution_evidence"
+          }
+        },
+        {
+          "returncode": 0,
+          "approved_sha256": "41b85936195b8452e2a260c5252178f7d8672a07439dfcefe3cb1b348dd2ec87",
+          "wrapper_sha256": "0c6db19caaaa748d8a0e8d20f6f2b26e73a523ecb4060c55a2a5ab833abfc141",
+          "binding": {
+            "action_id": "recovery_action_4d8f4550a5f19a5d",
+            "approved_root": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/task_outputs/new-mapping-preflight-compact-retry/attempts",
+            "attempt_id": "attempt_1be58c45e9df1fc08a40",
+            "canonical_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/task_outputs/new-mapping-preflight-compact-retry/attempts/attempt_1be58c45e9df1fc08a40/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:9ce0e49a4743e28ada7af985eead6ad88eca348723a21f769148ffd092c9b42d",
+            "purpose": "internal_execution_evidence"
+          }
+        }
+      ],
+      "duplicate_deliveries": [],
+      "recovery_calls": 2,
+      "rejections": [
+        {
+          "scope": {
+            "task_id": "new-mapping-preflight-compact-retry",
+            "task_revision": 1,
+            "plan_id": "plan_d15bb273bbad105b452c",
+            "plan_version": "plan_v1",
+            "plan_revision": 1,
+            "step_id": "step-00-input-preflight",
+            "attempt_id": ""
+          },
+          "candidate_fingerprint": "4cc06266af2516505a12eba9c9ac9dd685dfd4bdf2f50ada0da4c8c7fb06703c",
+          "feedback": "GENERATE_SCRIPT_BLOCK_INVALID: prose outside the executable block is not allowed",
+          "repairable": true,
+          "repair_context": {
+            "repair_stage": "script_block",
+            "validation_source": "BioAnalystAgent._extract_structured_action_result",
+            "repair_domain": "representation",
+            "repair_ordinal": 1,
+            "failure_stage": "pre_execution_candidate_admission",
+            "execution_status": "not_started",
+            "exact_violations": [
+              {
+                "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+                "owner": "GENERATED_ACTION",
+                "message": "GENERATE_SCRIPT_BLOCK_INVALID: prose outside the executable block is not allowed",
+                "field_path": "$",
+                "observed": "Synthetic formatting mistake outside block.\n<shell skill_resources=\"genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py;genomics/wgs-short-read-mapping#scripts/inspect_fastq.py;genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py;genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py\">\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-dvd2p54q/参考 长行.fasta'\n</shell>",
+                "expected": "one supported structured action",
+                "actual": "unrecognized response",
+                "protocol_error": {
+                  "stage": "script_block",
+                  "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+                  "field_path": "$",
+                  "expected": "one supported structured action",
+                  "actual": "unrecognized response",
+                  "message": "GENERATE_SCRIPT_BLOCK_INVALID: prose outside the executable block is not allowed"
+                },
+                "failure_stage": "pre_execution_candidate_admission"
+              }
+            ],
+            "protocol_error": {
+              "stage": "script_block",
+              "code": "GENERATE_SCRIPT_BLOCK_INVALID",
+              "message": "GENERATE_SCRIPT_BLOCK_INVALID: prose outside the executable block is not allowed"
+            }
+          },
+          "previous_candidate": {
+            "type": null,
+            "code": null,
+            "argv": null,
+            "env": null,
+            "skill_resource_refs": null,
+            "binding_env": null,
+            "produced_bindings": null
+          },
+          "budget": {
+            "unit": "additional_candidate_calls",
+            "category": "representation",
+            "correction_authorized": true,
+            "ordinal": 1,
+            "remaining": 3
+          }
+        }
+      ]
+    },
+    {
+      "source": "/tmp/skill-invocation-validation-nm1jgfjk/artifacts/new-mapping-preflight-compact-adverse-result.json",
+      "sha256": "bf9a24c8d491625ed7b8c890225fe45acab5710c48b35289f75c4f2bac35d4d2",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute"
+      ],
+      "commits": 0,
+      "approval_array_recorded": false,
+      "approvals": [],
+      "executions": [
+        {
+          "returncode": 2,
+          "approved_sha256": "e7b7078c573844d9836036990e240716c4a0ee67f250b33a7bf7ec7bdfbededb",
+          "wrapper_sha256": "a68cf6e16eabe5a68b59b0e8fa018c321aa1a728ad3cd9d5e8f01f0fdf71dab7",
+          "binding": {
+            "action_id": "action_c0881aa297687523",
+            "approved_root": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-gwmlia7u/task_outputs/new-mapping-preflight-compact-adverse/attempts",
+            "attempt_id": "attempt_e4ee6649e2f5b5fd4d33",
+            "canonical_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-gwmlia7u/task_outputs/new-mapping-preflight-compact-adverse/attempts/attempt_e4ee6649e2f5b5fd4d33/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:2a54ac0b6f743c0e1144e0c17249eb9cf7bd7676c06d110f1364c859132220a4",
+            "purpose": "internal_execution_evidence"
+          }
+        }
+      ],
+      "duplicate_deliveries": null,
+      "recovery_calls": null,
+      "rejections": []
+    },
+    {
+      "source": "/tmp/skill-invocation-validation-nm1jgfjk/artifacts/new-mapping-preflight-compact-result.json",
+      "sha256": "b3885b58a2fa7a54539d9ed7ef7d3b6559791fbf516e73c1024c73809f450ec0",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "commits": 1,
+      "approval_array_recorded": true,
+      "approvals": [
+        {
+          "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+          "code": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/参考 长行.fasta'\n"
+        }
+      ],
+      "executions": [
+        {
+          "returncode": 0,
+          "approved_sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+          "wrapper_sha256": "9691f79bbb709039ec0cdcf654bcd6071950d86c077404cf8c311e35f4f7df10",
+          "binding": {
+            "action_id": "action_dcd2e9d57b028634",
+            "approved_root": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts",
+            "attempt_id": "attempt_42c9cce14fe79032e8e2",
+            "canonical_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:bc1dddc2e3612b75e0190fa350c7be801c68cbc5f6e753ad96409bcc64db033e",
+            "purpose": "internal_execution_evidence"
+          }
+        }
+      ],
+      "duplicate_deliveries": [
+        {
+          "ordinal": 1,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-compact",
+              "plan_id": "plan_16bbd46238d5a0851fa5",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_42c9cce14fe79032e8e2",
+                "attempt_id": "attempt_42c9cce14fe79032e8e2",
+                "action_id": "action_dcd2e9d57b028634",
+                "plan_id": "plan_16bbd46238d5a0851fa5",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3663 chars]...\nt_sequence_byte\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521226.020114522}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521226.039285571,\"pid\":23}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521226.138625272,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521226.138714614}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521226.139567134,\"pid\":25}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\n...[truncated 845 chars]...\ntotal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521226.299520434,\"pid\":29}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521226.377038995,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521226.37712326}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521226.377947157,\"pid\":31}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521226.46465509,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521226.464703216,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/scripts/plan_16bbd46238d5a0851fa5/plan_v1/step-00-input-preflight/action_dcd2e9d57b028634/generated.sh",
+                  "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:33"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/approved.sh",
+                  "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/scripts/plan_16bbd46238d5a0851fa5/plan_v1/step-00-input-preflight/action_dcd2e9d57b028634/generated.sh",
+                    "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:33"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:34"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/executed.sh",
+                  "sha256": "9691f79bbb709039ec0cdcf654bcd6071950d86c077404cf8c311e35f4f7df10",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/approved.sh",
+                    "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/scripts/plan_16bbd46238d5a0851fa5/plan_v1/step-00-input-preflight/action_dcd2e9d57b028634/generated.sh",
+                      "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:33"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:34"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:34"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/executed.sh",
+                "finished_at": "2026-09-17T16:08:36+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_42c9cce14fe79032e8e2",
+                  "finished_at": "2026-09-17T08:08:37.289+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:6b8a4ab704c163e8c9f98144ab3a8cd7aa6fc0ec36bb55c4e38d8cb7a56a7a0d",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:33.998+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/mutation_intent.json",
+                  "journal_digest": "sha256:6b8a4ab704c163e8c9f98144ab3a8cd7aa6fc0ec36bb55c4e38d8cb7a56a7a0d",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_dcd2e9d57b028634",
+              "attempt_id": "attempt_42c9cce14fe79032e8e2",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        },
+        {
+          "ordinal": 2,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-compact",
+              "plan_id": "plan_16bbd46238d5a0851fa5",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_42c9cce14fe79032e8e2",
+                "attempt_id": "attempt_42c9cce14fe79032e8e2",
+                "action_id": "action_dcd2e9d57b028634",
+                "plan_id": "plan_16bbd46238d5a0851fa5",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3663 chars]...\nt_sequence_byte\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521226.020114522}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521226.039285571,\"pid\":23}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521226.138625272,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521226.138714614}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521226.139567134,\"pid\":25}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\n...[truncated 845 chars]...\ntotal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521226.299520434,\"pid\":29}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521226.377038995,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521226.37712326}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521226.377947157,\"pid\":31}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521226.46465509,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521226.464703216,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/scripts/plan_16bbd46238d5a0851fa5/plan_v1/step-00-input-preflight/action_dcd2e9d57b028634/generated.sh",
+                  "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:33"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/approved.sh",
+                  "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/scripts/plan_16bbd46238d5a0851fa5/plan_v1/step-00-input-preflight/action_dcd2e9d57b028634/generated.sh",
+                    "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:33"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:34"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/executed.sh",
+                  "sha256": "9691f79bbb709039ec0cdcf654bcd6071950d86c077404cf8c311e35f4f7df10",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/approved.sh",
+                    "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/scripts/plan_16bbd46238d5a0851fa5/plan_v1/step-00-input-preflight/action_dcd2e9d57b028634/generated.sh",
+                      "sha256": "494d298f3820f38fd45ccfe06628def6d3fe25f4c7069992a5b5997d039fbd1f",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:33"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:34"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:34"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/executed.sh",
+                "finished_at": "2026-09-17T16:08:36+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_42c9cce14fe79032e8e2",
+                  "finished_at": "2026-09-17T08:08:37.289+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:6b8a4ab704c163e8c9f98144ab3a8cd7aa6fc0ec36bb55c4e38d8cb7a56a7a0d",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:33.998+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-f2smwt6u/task_outputs/new-mapping-preflight-compact/attempts/attempt_42c9cce14fe79032e8e2/mutation_intent.json",
+                  "journal_digest": "sha256:6b8a4ab704c163e8c9f98144ab3a8cd7aa6fc0ec36bb55c4e38d8cb7a56a7a0d",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_dcd2e9d57b028634",
+              "attempt_id": "attempt_42c9cce14fe79032e8e2",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        }
+      ],
+      "recovery_calls": 0,
+      "rejections": []
+    },
+    {
+      "source": "/tmp/skill-invocation-validation-nm1jgfjk/artifacts/new-mapping-preflight-off-result.json",
+      "sha256": "9f62ee1cf01ba3681ebfb78195730ad195d2ca36421096f22c2c94af388b5234",
+      "counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review",
+        "generate",
+        "execute",
+        "supervisor",
+        "commit_step"
+      ],
+      "commits": 1,
+      "approval_array_recorded": true,
+      "approvals": [
+        {
+          "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+          "code": "\n/public/home/liusiqi/anaconda3/envs/biomind/bin/python \"$BIOMIND_SKILL_A363F1D9157F7CFC\" --observation-id validation_observation --evidence-dir \"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\" --fastq S0 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/新 输入 0.fq.gz' --fastq S1 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/新 输入 1.fq.gz' --fastq S2 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/新 输入 2.fq.gz' --fastq S3 '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/新 输入 3.fq.gz' --reference reference '/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/参考 长行.fasta'\n"
+        }
+      ],
+      "executions": [
+        {
+          "returncode": 0,
+          "approved_sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+          "wrapper_sha256": "7fa57956b445d08a41b5dc26f173e76b9f3522652921d3cffec433d200aa9383",
+          "binding": {
+            "action_id": "action_37f92f1d50d204f6",
+            "approved_root": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts",
+            "attempt_id": "attempt_c7a14c8503c5edfdbaaa",
+            "canonical_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/preflight",
+            "creator": "helper",
+            "environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+            "leaf_rule": "current_attempt/preflight",
+            "policy_manifest_hash": "sha256:cc0ed4f4b22a6fc4f9bf8fa50ef069d106ff6c4de408faa114db7aaf588f947e",
+            "purpose": "internal_execution_evidence"
+          }
+        }
+      ],
+      "duplicate_deliveries": [
+        {
+          "ordinal": 1,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-off",
+              "plan_id": "plan_6d1831a37b4df27c6afc",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_c7a14c8503c5edfdbaaa",
+                "attempt_id": "attempt_c7a14c8503c5edfdbaaa",
+                "action_id": "action_37f92f1d50d204f6",
+                "plan_id": "plan_6d1831a37b4df27c6afc",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3623 chars]...\nand_first_sequence_byte\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521232.808951427}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521232.810369155,\"pid\":44}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521232.90380714,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521232.903892884}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521232.904706905,\"pid\":46}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\"\n...[truncated 846 chars]...\notal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521233.108501452,\"pid\":50}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521233.184409175,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521233.184507873}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521233.185468847,\"pid\":52}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521233.262597971,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521233.26264648,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/scripts/plan_6d1831a37b4df27c6afc/plan_v1/step-00-input-preflight/action_37f92f1d50d204f6/generated.sh",
+                  "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:40"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/approved.sh",
+                  "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/scripts/plan_6d1831a37b4df27c6afc/plan_v1/step-00-input-preflight/action_37f92f1d50d204f6/generated.sh",
+                    "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:40"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:41"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/executed.sh",
+                  "sha256": "7fa57956b445d08a41b5dc26f173e76b9f3522652921d3cffec433d200aa9383",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/approved.sh",
+                    "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/scripts/plan_6d1831a37b4df27c6afc/plan_v1/step-00-input-preflight/action_37f92f1d50d204f6/generated.sh",
+                      "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:40"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:41"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:41"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/executed.sh",
+                "finished_at": "2026-09-17T16:08:43+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_c7a14c8503c5edfdbaaa",
+                  "finished_at": "2026-09-17T08:08:43.952+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:7bd50e99bd565b2aadbd812e43b27d6e83a7ca4f6cbe7e2551138833f79ed218",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:41.523+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/mutation_intent.json",
+                  "journal_digest": "sha256:7bd50e99bd565b2aadbd812e43b27d6e83a7ca4f6cbe7e2551138833f79ed218",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_37f92f1d50d204f6",
+              "attempt_id": "attempt_c7a14c8503c5edfdbaaa",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        },
+        {
+          "ordinal": 2,
+          "node_outcome": {
+            "schema_version": 1,
+            "type": "execution_succeeded",
+            "summary": "The command completed and immutable execution evidence was recorded.",
+            "scope": {
+              "task_id": "new-mapping-preflight-off",
+              "plan_id": "plan_6d1831a37b4df27c6afc",
+              "plan_version": "plan_v1",
+              "step_id": "step-00-input-preflight"
+            },
+            "payload": {
+              "execution_record": {
+                "execution_id": "exec-attempt_c7a14c8503c5edfdbaaa",
+                "attempt_id": "attempt_c7a14c8503c5edfdbaaa",
+                "action_id": "action_37f92f1d50d204f6",
+                "plan_id": "plan_6d1831a37b4df27c6afc",
+                "plan_version": "plan_v1",
+                "step_id": "step-00-input-preflight",
+                "stage_id": "",
+                "command_role": "required_validation",
+                "action_source": "generate",
+                "execution_status": "succeeded",
+                "returncode": 0,
+                "stdout_summary": "BIOMIND_EFFECT_EVIDENCE_JSON={\"schema_version\":1,\"produces_observations\":[{\"identity\":\"validation_observation\",\"value\":{\"status\":\"returned\",\"total\":5,\"returned\":5,\"passed\":5,\"unstarted\":0,\"scope\":\"fastq_prefix_and_fasta_header\",\"full_file_validated\":false,\"checks\":[{\"label\":\"S0\",\"status\":\"returned\",\"passed\":true,\"scope\":\"fastq_prefix_only\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fastq_prefix\",\"status\":\"observed\",\"error\":null,\"representation\":\"gzip\",\"content_sha256\":\"68a66f3139c9ffc1501055fa1ee080f8c969fb779510a166492c5ea7fed275d5\",\"checked_records\":1,\"returned_lines\":4,\"scanned_input_bytes\":35,\"decoded_bytes\":17,\"stop_reason\":\"eof\",\"eof\":true,\"full_compression_verified\":true,\"full_scientific_validation\":false,\"prefix_valid\":true,\"limits\":{\"input_bytes\":1048576,\"decoded_bytes\":65536,\"line_bytes\":16384,\"records\":32,\"lines\":120,\"seconds\":2.0}},\"scope\":\"fastq_prefix_only\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-\n...[truncated 3623 chars]...\nand_first_sequence_byte\",\"finding\":{\"passed\":true,\"value\":{\"schema_version\":1,\"operation\":\"fasta_header\",\"representation\":\"plain\",\"status\":\"observed\",\"error\":null,\"scope\":\"fasta_header_and_first_sequence_byte\",\"prefix_valid\":true,\"full_file_validated\":false,\"checked_headers\":1,\"header_bytes\":4,\"sequence_bytes\":1,\"scanned_input_bytes\":6,\"stop_reason\":\"header_and_first_sequence_byte\",\"limits\":{\"input_bytes\":8192,\"header_bytes\":4096,\"decoded_bytes\":65536,\"seconds\":2.0}},\"scope\":\"fasta_header_and_first_sequence_byte\"},\"raw\":{\"stdout\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/preflight/item-005.stdout.log\",\"stderr\":\"/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/preflight/item-005.stderr.log\"},\"returncode\":0}],\"unstarted_checks\":[],\"all_checks_passed\":true}}]}\n",
+                "stderr_summary": "BIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521232.808951427}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":0,\"passed\":0,\"at_monotonic\":4521232.810369155,\"pid\":44}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S0\",\"index\":1,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521232.90380714,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521232.903892884}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":1,\"passed\":1,\"at_monotonic\":4521232.904706905,\"pid\":46}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S1\",\"index\":2,\"total\":5,\"completed\":2,\"passed\":2,\"at_monotonic\"\n...[truncated 846 chars]...\notal\":5,\"completed\":3,\"passed\":3,\"at_monotonic\":4521233.108501452,\"pid\":50}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"S3\",\"index\":4,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521233.184409175,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521233.184507873}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"process_started\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":4,\"passed\":4,\"at_monotonic\":4521233.185468847,\"pid\":52}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"item_returned\",\"item\":\"reference\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521233.262597971,\"returncode\":0,\"check_status\":\"returned\"}\nBIOMIND_PREFLIGHT_PROGRESS_JSON={\"version\":1,\"event\":\"summary\",\"item\":\"\",\"index\":5,\"total\":5,\"completed\":5,\"passed\":5,\"at_monotonic\":4521233.26264648,\"status\":\"returned\"}\n",
+                "stdout_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/stdout.log",
+                "stderr_log": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/stderr.log",
+                "exit_status_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/exit_status.json",
+                "generated_script": {
+                  "version": "generated",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/scripts/plan_6d1831a37b4df27c6afc/plan_v1/step-00-input-preflight/action_37f92f1d50d204f6/generated.sh",
+                  "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                  "producer": "generate",
+                  "parent_script_ref": {},
+                  "mutation_reason": "model_generation",
+                  "created_at": "2026-09-17T16:08:40"
+                },
+                "approved_script": {
+                  "version": "approved",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/approved.sh",
+                  "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                  "producer": "hitl_approval",
+                  "parent_script_ref": {
+                    "version": "generated",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/scripts/plan_6d1831a37b4df27c6afc/plan_v1/step-00-input-preflight/action_37f92f1d50d204f6/generated.sh",
+                    "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                    "producer": "generate",
+                    "parent_script_ref": {},
+                    "mutation_reason": "model_generation",
+                    "created_at": "2026-09-17T16:08:40"
+                  },
+                  "mutation_reason": "user_approval_or_edit",
+                  "created_at": "2026-09-17T16:08:41"
+                },
+                "executed_script": {
+                  "version": "executed",
+                  "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/executed.sh",
+                  "sha256": "7fa57956b445d08a41b5dc26f173e76b9f3522652921d3cffec433d200aa9383",
+                  "producer": "executor_wrapper",
+                  "parent_script_ref": {
+                    "version": "approved",
+                    "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/approved.sh",
+                    "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                    "producer": "hitl_approval",
+                    "parent_script_ref": {
+                      "version": "generated",
+                      "path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/scripts/plan_6d1831a37b4df27c6afc/plan_v1/step-00-input-preflight/action_37f92f1d50d204f6/generated.sh",
+                      "sha256": "f038354e8284e816b5d4f3d759ccbb7eb8979d44c7abd0eefc5ad0fdb85c1c56",
+                      "producer": "generate",
+                      "parent_script_ref": {},
+                      "mutation_reason": "model_generation",
+                      "created_at": "2026-09-17T16:08:40"
+                    },
+                    "mutation_reason": "user_approval_or_edit",
+                    "created_at": "2026-09-17T16:08:41"
+                  },
+                  "mutation_reason": "durable_execution_wrapper",
+                  "created_at": "2026-09-17T16:08:41"
+                },
+                "script_file": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/executed.sh",
+                "finished_at": "2026-09-17T16:08:43+08:00",
+                "resumed_after_crash": true,
+                "workspace_mutation_attestation": {
+                  "attempt_id": "attempt_c7a14c8503c5edfdbaaa",
+                  "finished_at": "2026-09-17T08:08:43.952+00:00",
+                  "intents": [],
+                  "journal_digest": "sha256:7bd50e99bd565b2aadbd812e43b27d6e83a7ca4f6cbe7e2551138833f79ed218",
+                  "producer": "biomind.runtime_attester.v1",
+                  "receipts": [],
+                  "schema_version": 1,
+                  "started_at": "2026-09-17T08:08:41.523+00:00",
+                  "status": "completed"
+                },
+                "workspace_mutation_reconciliation": {
+                  "journal_path": "/tmp/skill-invocation-validation-nm1jgfjk/scratch/biomind-plan-local-graph-alaruejo/task_outputs/new-mapping-preflight-off/attempts/attempt_c7a14c8503c5edfdbaaa/mutation_intent.json",
+                  "journal_digest": "sha256:7bd50e99bd565b2aadbd812e43b27d6e83a7ca4f6cbe7e2551138833f79ed218",
+                  "status": "completed",
+                  "reason": "controller_crash_recovery",
+                  "replayed_action": false
+                }
+              },
+              "action_id": "action_37f92f1d50d204f6",
+              "attempt_id": "attempt_c7a14c8503c5edfdbaaa",
+              "return_code": 0,
+              "validation": {
+                "passed": true
+              }
+            },
+            "evidence_refs": []
+          },
+          "new_processes": 0,
+          "new_approvals": 0
+        }
+      ],
+      "recovery_calls": 0,
+      "rejections": []
+    }
+  ]
+}

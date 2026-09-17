@@ -1,0 +1,25 @@
+{
+  "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0009-7e7691897098/response.json",
+  "before": {
+    "content": "{\"response_type\":\"biomind_generate_display_v1\",\"public_message\":\"候选已形成：将用 inspect_wgs_inputs.py 组合只读检查四个 FASTQ 与 genome.fasta，并输出一条 validation_observation；随后等待检查与原有审批，脚本本身尚未运行。\",\"payload\":\"<shell skill_resources=\\\"genomics/wgs-short-read-mapping#scripts/inspect_wgs_inputs.py;genomics/wgs-short-read-mapping#scripts/inspect_fastq.py;genomics/wgs-short-read-mapping#scripts/inspect_fasta_header.py;genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py\\\">\\nset -euo pipefail\\n\\n\\\"$BIOMIND_SKILL_A363F1D9157F7CFC\\\" \\\\\\n  --observation-id validation_observation \\\\\\n  --evidence-dir \\\"$BIOMIND_PREFLIGHT_EVIDENCE_DIR\\\" \\\\\\n  --fastq S1_R1 \\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_1.fq.gz\\\" \\\\\\n  --fastq S1_R2 \\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S1_2.fq.gz\\\" \\\\\\n  --fastq S2_R1 \\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_1.fq.gz\\\" \\\\\\n  --fastq S2_R2 \\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/S2_2.fq.gz\\\" \\\\\\n  --reference genome \\\"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data/genome.fasta\\\"\\n</shell>\"}",
+    "id": "lc_run--01a0ae30-12dc-73a1-bb57-b3fc77724298",
+    "role": "assistant"
+  },
+  "draft_status": "proposal only; regenerate using current interpreter prefix; never mutate approved historical action",
+  "proposal": "Keep the existing payload/script interface. Model declares only the chosen root helper handle; binder derives the verified frontmatter delegates before approval. For this existing historical bad candidate, replace direct source execution by the published interpreter+script prefix in the NEW candidate.",
+  "mechanical_handles_before": 4,
+  "mechanical_handles_after": 1,
+  "internal_receipts_remain": 4,
+  "business_parameters_preserved": [
+    "four FASTQ label/path pairs",
+    "reference label/path",
+    "observation id",
+    "deferred evidence dir"
+  ],
+  "constraints_preserved": [
+    "prefix/header scope only",
+    "adverse or incomplete observations",
+    "immutable inputs",
+    "current attempt evidence leaf"
+  ]
+}
