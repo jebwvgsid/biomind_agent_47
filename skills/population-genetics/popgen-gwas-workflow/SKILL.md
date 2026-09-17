@@ -1,7 +1,7 @@
 ---
 name: popgen-gwas-workflow
 description: Route and supervise population genetics GWAS workflows from resequencing VCFs, phenotype tables, Q/PCA covariates, kinship, and gene annotations. Use when the user asks for SNP/InDel/SV GWAS, EMMAX, TASSEL GLM/MLM, Manhattan/QQ plots, significant loci, candidate genes, LDblock visualization, or population-structure-aware association planning. Do not use as the execution skill for crop-specific GEMMA/GAPIT/rMVP wrappers.
-version: "1.0.0"
+version: "1.1.0"
 tags: [GWAS, population-genetics, EMMAX, TASSEL, GLM, MLM, Manhattan, QQ, LDblock, candidate-genes]
 legacy_ids: [gwas-popgen, population-gwas, popgen-gwas, GWAS群体遗传分析]
 task_types: [gwas_population_genetics]
@@ -54,6 +54,25 @@ Default marker filters are starting points only:
 | InDel | `0.01` | `0.5` |
 | SV | `0.01` | `0.5` |
 
+## 初检与科学前置
+
+Use the input-prep Skill's phase-local `inspect_inputs` (standard-library,
+observation-only) or `inspect_vcf_samples` (verified bcftools) capability for the
+actual initial operation. Do not require all later association/plotting packages
+before that phase. A local successful probe is not whole-workflow readiness.
+Consume the accepted `gwas_input_structure` observation from the explicit Plan
+predecessor, retaining source hashes/read scope, phenotype header and columns,
+ID set/order comparison, and Q mapping status.
+
+No-header phenotype data are data from row one; use explicit column indexes.
+A numeric 215-by-3 Q and 215 VCF samples establish count agreement only.
+Without recorded row-to-sample correspondence, initial inspection/status may
+complete, but Q covariate preparation and association_using_q must stop. Do not
+invent a mapping, silently drop Q, or claim the requested MLM has completed.
+A later change to a scientifically justified model belongs to the existing
+scientific decision and Plan revision flow. Read the input-prep Skill's
+`references/input-identity.md` before resolving identity or selecting helper flags.
+
 ## 输出结果
 
 The router should produce:
@@ -84,7 +103,8 @@ outdir/
 | Problem | Meaning | Fix |
 |---|---|---|
 | phenotype sample IDs do not match VCF | association invalid | stop and reconcile IDs |
-| Q/PCA matrix order differs from genotype | covariates assigned to wrong samples | sort to TFAM/VCF sample order |
+| Q/PCA has known IDs in a different order | covariates need deterministic alignment | validate complete unique IDs and reorder to TFAM/VCF |
+| numeric Q has no sample IDs | row correspondence remains unknown | obtain version-locked explicit row assignments or verifiable generating provenance; do not infer from counts |
 | missing phenotype encoded as `0` | false phenotype value | encode as missing and report excluded samples |
 | user asks "all GWAS methods" | unclear compute/model target | run a planned subset or ask for model priority |
 | crop-specific GEMMA/GAPIT/rMVP requested | better local wrapper exists | route to `crop-breeding/crop-gwas-pipeline` |
