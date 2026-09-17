@@ -16,14 +16,21 @@ def inspect_inputs(vcf, phenotype, q_matrix=None, *, gff3=None, header_mode="aut
     phenotype_info = table(phenotype, header_mode=header_mode, sample_column=sample_column)
     comparison = compare_ids(vcf_info["sample_ids"], phenotype_info["ids"])
     observation = {"schema_version": 1, "producer": "gwas_input_structure_v1", "status": "observed",
-        "vcf": vcf_info, "phenotype": {key: phenotype_info[key] for key in ("source", "header", "header_present", "sample_column", "row_count", "column_count", "ids")},
+        # File bytes/read scope are business observations. The generic context
+        # projector reserves "source" for control provenance and removes it.
+        # Keep the parser's internal source contract, but publish file_identity
+        # so accepted observations retain their exact file version to consumers.
+        "vcf": {**{key: value for key, value in vcf_info.items() if key != "source"}, "file_identity": vcf_info["source"]},
+        "phenotype": {**{key: phenotype_info[key] for key in ("header", "header_present", "sample_column", "row_count", "column_count", "ids")},
+            "file_identity": phenotype_info["source"]},
         "vcf_phenotype_alignment": comparison, "q_mapping": {"status": "not_supplied"}, "blocked_operations": [],
         "scientific_completion": False}
     if not comparison["same_ids"]:
         observation["blocked_operations"].extend(["phenotype_preparation", "association"])
     if q_matrix:
         q = table(q_matrix, require_ids=False)
-        observation["q_matrix"] = {key: q[key] for key in ("source", "header", "header_present", "sample_column", "row_count", "column_count")}
+        observation["q_matrix"] = {**{key: q[key] for key in ("header", "header_present", "sample_column", "row_count", "column_count")},
+            "file_identity": q["source"]}
         mapping = {"status": "unknown", "reason_code": "Q_SAMPLE_MAPPING_UNKNOWN",
             "reason": "Q rows have no IDs; equal row counts do not establish sample correspondence or order"}
         if row_map:

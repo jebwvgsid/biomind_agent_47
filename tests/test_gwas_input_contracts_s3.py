@@ -162,6 +162,10 @@ class InputContracts(unittest.TestCase):
         self.assertEqual(result['blocked_operations'], ['q_covariate_preparation', 'association_using_q'])
         self.assertFalse(result['scientific_completion'])
         self.assertEqual(result['phenotype']['ids'][0], 'S1')
+        self.assertEqual(result['phenotype']['file_identity']['sha256'], digest(self.phenotype))
+        self.assertEqual(result['q_matrix']['file_identity']['sha256'], digest(self.q))
+        self.assertEqual(result['vcf']['file_identity']['identity_scope'], 'header_only')
+        self.assertEqual(result['phenotype']['file_identity']['identity_scope'], 'full_file')
         self.assertFalse(self.out.exists())
 
     def test_unknown_q_blocks_output_and_preserves_old_bytes(self):

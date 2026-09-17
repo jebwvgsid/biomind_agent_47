@@ -9,7 +9,11 @@ alternative `extract_vcf_samples` uses the same phase-local binding and the
 existing generated-artifact mechanism when the Plan explicitly requires a
 sample-list file. This separate capability selection keeps files optional for
 initial inspection without changing the compiler's required-artifact semantics. The
-single structured observation can satisfy an observation-only input-check
+single structured observation publishes VCF/phenotype/Q file versions and read
+scope under each item's `file_identity` business field. These identities must
+remain attached to the accepted observation in the next provider request;
+internal parser `source` fields are not control provenance or a substitute for
+that semantic delivery. The single observation can satisfy an observation-only input-check
 Plan; it does not replace a nonempty sample file that the Plan explicitly
 requires. Keep adverse and unknown findings in the accepted observation.
 
