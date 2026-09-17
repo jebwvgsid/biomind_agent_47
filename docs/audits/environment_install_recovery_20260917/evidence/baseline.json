@@ -1,0 +1,4171 @@
+{
+  "captured_utc": "2026-09-17T08:51:53.684907+00:00",
+  "repo": "/public/home/liusiqi/03.毕设/Biomind_v1",
+  "branch": "refactor/consultant-controller-authority",
+  "BASE": "4ea823511328ed4035ec2a99ddf09a3419bb288a",
+  "HEAD_at_start": "4ea823511328ed4035ec2a99ddf09a3419bb288a",
+  "index_tree": "96733ed328604465dced40c0a4d0bc3080f5af5a",
+  "staged_names": [],
+  "dirty_entries": [
+    {
+      "status": " M",
+      "path": "agent_core/node_context.py",
+      "sha256": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff"
+    },
+    {
+      "status": " M",
+      "path": "agent_core/planner_context.py",
+      "sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a"
+    },
+    {
+      "status": " M",
+      "path": "agent_core/provider_message_safety.py",
+      "sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+    },
+    {
+      "status": " M",
+      "path": "agent_core/skill_resource_binding.py",
+      "sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445"
+    },
+    {
+      "status": " M",
+      "path": "agent_core/workflow/managed_stop.py",
+      "sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa"
+    },
+    {
+      "status": " M",
+      "path": "bio_agents.py",
+      "sha256": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32"
+    },
+    {
+      "status": " M",
+      "path": "config/__init__.py",
+      "sha256": "bba896c13436a1c4eacec68b946e43676ba03b9c895d90c9dafc8a2ce52115f0"
+    },
+    {
+      "status": " M",
+      "path": "config/config.py",
+      "sha256": "ec7d04be7c225a60835fc3a2afea4bc72dcc2c9540cc9de0a3a865a28203caa5"
+    },
+    {
+      "status": " M",
+      "path": "config/logger.py",
+      "sha256": "42657408667fce07c0d36869cfdcf1efedf45279c35604de6a046f1cd75e25a0"
+    },
+    {
+      "status": " M",
+      "path": "config/settings.py",
+      "sha256": "9f0a0227cdf57672dcc0d0888438c16b6d35d258611fba44a1bd44b977cf0310"
+    },
+    {
+      "status": " M",
+      "path": "config/startup.py",
+      "sha256": "fb0e1920dd327ba5f73196aac561b8b4637177def0134b9302b0091aa033578c"
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/RECOVERY_CONTEXT_CURRENT.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/RECOVERY_PHASE_CONTEXT_CURRENT.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/context_memory_and_compression_contract.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/controller_front_half_retirement_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/controller_runtime_migration_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/global_prompt_context_lifecycle.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/managed_artifact_preexecution_boundary_audit_20260825.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/node_prompt_payload_matrix.tsv",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/node_provider_context_matrix_20260820.tsv",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/open_world_highlighted_requirements_migration_report_20260819.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/pi_migration_rpc_poc_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/pi_migration_stepworker_boundary_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/planner_constraint_provenance_projection_audit_20260818.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/planner_context_reentry_prompt_regression_audit_20260820.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/planner_pending_snapshot_reentry_fix_report_20260819.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/planner_request_component_inventory_20260820.tsv",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/progressive_skill_access_search_and_replan_implementation_report_20260827.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/provider_attempt_session_archive_phase3_implementation_20260826.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/provider_cache_inventory.tsv",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/provider_stream_session_archive_boundary_audit_20260825.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/recovery_context_component_matrix_20260903.tsv",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/recovery_context_disclosure_matrix.tsv",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/recovery_context_engineering_audit_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/recovery_context_engineering_delta_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/recovery_progressive_disclosure_contract.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/recovery_progressive_disclosure_history.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/runtime_and_recovery_context_contract.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/schema2_adapter_semantic_coverage_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/schema2_consultant_agent_loop_20260903.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/semantic_history_authority_matrix.tsv",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/skill_planning_contract_retirement_audit_20260819.md",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "docs/audits/architecture/skill_planning_contract_retirement_report_20260819.md",
+      "sha256": null
+    },
+    {
+      "status": " M",
+      "path": "prompts/manager.py",
+      "sha256": "021f3b5e4e5b741e207a17a1da1801047bf8dd5e4770876b86214b1917b266b5"
+    },
+    {
+      "status": " M",
+      "path": "skills/genomics/snpeff-annotation/SKILL.md",
+      "sha256": "a47c305477c9a1c8e592e0d0187af200b079001bc709e1e6d84983ef2615f43e"
+    },
+    {
+      "status": " D",
+      "path": "skills/genomics/snpeff-annotation/tests/demo.gff3",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "skills/genomics/snpeff-annotation/tests/demo.vcf",
+      "sha256": null
+    },
+    {
+      "status": " D",
+      "path": "skills/genomics/snpeff-annotation/tests/demo_ref.fa",
+      "sha256": null
+    },
+    {
+      "status": " M",
+      "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673"
+    },
+    {
+      "status": " M",
+      "path": "tests/planner_fix_acceptance/test_planner_recorded_workflow.py",
+      "sha256": "519a8d8812a2ecbd148e4a8957bd641de2fc3cc4861115bda0aa1d2c059e1d20"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_bio_agents_memory.py",
+      "sha256": "cd4a10615295b846f8670a3dc71860aa8024db1b9d59c2fa87fe9c06963e877e"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_consultant_first_graph_integration_v21.py",
+      "sha256": "f5ebf6a8db47b0aaf21a0be05442c1804ee71f5bff0c7b910fb6b390be6b355d"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_execution_provenance.py",
+      "sha256": "42f20d9e5a5672373fe220561cd53760035ec13f004a01044a65abae11308437"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_generate_capability_scoped_prompt.py",
+      "sha256": "d293cce90fec82920a28810897a316bf0954ca0a1df8e85f4053232624067e46"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_generate_only_output_contract_v2.py",
+      "sha256": "7beca200b3ca83503586113e06add4664192bf291bc8ae161f7fddcd0ed9257f"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_generate_provider_payload_safety.py",
+      "sha256": "54fdc14b15f94be24ed89f053bd4274a8843abaa98a2cc9935d7004e98bffb88"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_node_context_semantic_continuity.py",
+      "sha256": "b22c1c92e55696107df3196813d8f936a2ae41073ff8730094625f278d0c86ab"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_output_router.py",
+      "sha256": "007429e5626094beb8befa7ac7f06d177b3ef9dcda8566454aef8a2cb78fcb17"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_plan_contract_convergence_v2.py",
+      "sha256": "8a102e123013fd3755ee0bf2ed2170dd3ab9a6993a73ac4f1fb578f7e0511348"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_plan_lifecycle.py",
+      "sha256": "50ff1c57697bb7e69fa40af593c637468ea881ac18c6a094b34dd0038b9431fd"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_plan_local_preaction_convergence_v2.py",
+      "sha256": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_preflight_mapping_commit.py",
+      "sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_recovery_agent_loop.py",
+      "sha256": "18391b5528afba7cbf4aa9b2989908d784752f6da61c0f2419c2e9ef17d76aed"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_recovery_agent_seed.py",
+      "sha256": "283836f56080d9122fb8842f8391e5140a1b856ac10c425e7b9988c6d841dc34"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_recovery_context_bounds.py",
+      "sha256": "1f2e8d9a20b3cb19ae0d2ccaba1ffec9876a96ba75f842a61aaad64ce8d74ba5"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_recovery_context_p0.py",
+      "sha256": "9a0e780290bfc84fd3ffabe5d56806c117d472de28c926c7e9486592865dcced"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_recovery_progressive_skill_access.py",
+      "sha256": "0a0cfa5d33890cf5731c94d477fc63b9088514e89e3bfcd54a6a30a67125a400"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_recovery_schema2_node.py",
+      "sha256": "4fbbc298140707b3702ef44134b521f050a44343434d551819b43c83df5f5a97"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_recovery_tools.py",
+      "sha256": "3b3089abb9189bd095c881b71f13ce6ed9be3f1ffd12bd2251d43181b4b58c87"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_renderer_controller.py",
+      "sha256": "1383f5d8fae706b9ecef880721e788643543841d466234c238942ae87b55b7a2"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_renderer_plan_ownership.py",
+      "sha256": "197ef88033ba1986948f4c7cfc4b7aa3f1c6b6a8710b62023654e1fc052e8bb1"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_run_profiler.py",
+      "sha256": "dca4c590d42dbbeacbfddf9b863f53669476162beb0e8897a750fd4cdf41c846"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_runtime_preflight.py",
+      "sha256": "a533b4e680c3a31005fc70b8fa15570bd1e9e18a53e36fb1a1c7c01b4dccfebb"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_schema2_adapter_semantic_coverage.py",
+      "sha256": "00a0979349c9a9c6703caf512c39f7bd60c3c240b83765ff6c6109733b72afab"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_supervisor_validation_evidence.py",
+      "sha256": "9fb7d36cc692b67a13bfb367056b29f84ea5286e0135a19a3fc2e4da1cf96fab"
+    },
+    {
+      "status": " M",
+      "path": "tests/test_typed_outcomes.py",
+      "sha256": "b8004ce72a7964f8470796a37181ff7c4fceea9430b406c065f6d760d8c32d17"
+    },
+    {
+      "status": "??",
+      "path": "agent_core/skill_script_invocation.py",
+      "sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/benchmark_oracle_overlay_v3.yaml",
+      "sha256": "eec774417c0c61e99f404794c90bcee2d3f920be5fbc188d40f7744479d4549d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/canonical_ask_responses_v3.yaml",
+      "sha256": "5e197c8ec695da139ea4bf6f09b64745698683612a8f22650d876d19220bed8f"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/ab_commit_isolation_audit.tsv",
+      "sha256": "919102db1e6be2082de9a4a6012cfbeeb1974736de9398ee7a11fa6802e046e8"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/ask_continuation_execution_audit.md",
+      "sha256": "496520a20e7691dfb280090e18c2df9eeba790440ddc59715c6e8717f85e6943"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/benchmark_execution_readiness_v4.md",
+      "sha256": "b772e75f9ea8c906eb87e20119e0da19db0d5fb0c474c9af4dc431bc71b4fef8"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/environment_freeze_policy.md",
+      "sha256": "fce53b8d2786de37fa6d44b3db5ed39889e9ae4b5019e94f556cc75719a4fa7f"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/oracle_inference_review.tsv",
+      "sha256": "b5bf45473a48a0d72def2e703933c28f102163260cc66452b1081f89a2c4daf1"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/oracle_provenance_audit.tsv",
+      "sha256": "d8b52760fdf59fa1cf705316c8ad60b34641e356fd0670a07301a420b4f8db1d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/phase0_smoke_manifest_v4.yaml",
+      "sha256": "9cd7724ecfda900ee2ed78fd0dddd4ddcb1ada07a9ed8dbd8680faf3e5bc8f8e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/resume_ab_microbenchmark_plan_v4.md",
+      "sha256": "c203ef3369ad3aa64ff51c8b4beac1706e25f68ba9fe05b8a4ce177dd9c23774"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/revised_agent_product_resume_bullets_v3.md",
+      "sha256": "c61082b0c8c3decc8e1861bb80ce274d816c717c246fd845f3dc4fd183796ee3"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/revised_ai_quality_operations_resume_bullets_v3.md",
+      "sha256": "2dafe2171a33f9ba7fc84a61f1f89911034f245734021f86df544a3e06a9b795"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/closure/revised_ai_workflow_resume_bullets_v3.md",
+      "sha256": "3a40821f7c1af9c4ba11974adf6fc4ef6bacbbb73be4dd680c4fd3ba31fe71ed"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/controls/evaluator_control_gate_receipt.json",
+      "sha256": "ea823ad272df62b7583572df04e6ff42e89876d469ae57d39c649ddf866d77da"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/controls/evaluator_control_test_report.md",
+      "sha256": "a0a2923b4f9593b54c1fbbebefff1cb8bac583d8218525b62ff8173d059bcb25"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/controls/evaluator_negative_controls.tsv",
+      "sha256": "9552d5625ba1a3e5adc20f6fc405a947e67b0e7377dee67d2291b089c363cf81"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/controls/evaluator_positive_controls.tsv",
+      "sha256": "308f6c9a81aabd4684f256ca503161d917412ecdcce580073910ee5fad13c649"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/oracle_policy_seed_v3.yaml",
+      "sha256": "d13988fa43f59add90824c716d4b54ace9de08c6bdff55e7e198d1c5847a1f19"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/review/high_risk_oracle_review.tsv",
+      "sha256": "aeb4ca54a3bb1bbdd8f526adbcc8757be12bceff254ef70b0b6bdfac21a9407b"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/review/oracle_change_proposals.tsv",
+      "sha256": "c4ea0a8eb354a67e63a6a01a7aa462685f38b43093feddab6ff712f9b65b37a7"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/review/oracle_high_risk_review.md",
+      "sha256": "85a73cd2ee004d1e587c6558c7b5e51fbb4d1f5692fd88771d551bb60b16449c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/review/oracle_human_review_pack.md",
+      "sha256": "0c494c73a4a2dd92a4049c13f12fee25787c85d52e20720b5a4d46eb0723f463"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/review/oracle_review_checklist.tsv",
+      "sha256": "05e46a4003ddc1b5f5fba0ce133987c59683b4ed314b84d8724687b3af22d68e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/review/recovery_human_review_pack.md",
+      "sha256": "423e773a1275b3b2f2b9af32e2d2743862cfb110d1d3bd77cbfd2aaa1be68c4d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/scripts/evaluate_benchmark_v3.py",
+      "sha256": "8f9b3acb7bb8e19e58aa0707a4534b5c654399ed9ae841975e8485c582bde1b0"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/scripts/generate_closure_audit_v4.py",
+      "sha256": "80e11c5f73e0b4a251f0c18df7c6ad3d09ebf66ceffaeb60e8e19e8ae3383f51"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/scripts/generate_evaluator_controls_v3.py",
+      "sha256": "ad521d8e96f9cf34a545a11c1e358fdf7610184317c94dd85a2127037088de60"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/scripts/generate_oracle_overlay_v3.py",
+      "sha256": "56a040ef16c1bb5398b56b2eaee69fce9593226e0be6c0bf28052d667addcb84"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v3/scripts/run_benchmark_v3.py",
+      "sha256": "3b9bb45ee3381ba9efd6dfad2f9aa3ccc3606a0f212803d9d06e0e7de4f9dee6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/benchmark_execution_readiness_v5.md",
+      "sha256": "5c33c47f9b10a8fc67a510b3d3781f4014ebfe1a8658904594f3e4f078e43d73"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-BALANCE-VAGUE-003.txt",
+      "sha256": "7eb968b9689c19fc24c0cda06c69690816f117e3dd84de8e4242f8420d6d9f5a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-BOUNDARY-VAGUE-012.txt",
+      "sha256": "e1c27cfe097a113462ac8226e099acd1a646da0aff654617cbe23abbe51af42e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-COMP-VAGUE-015.txt",
+      "sha256": "e8eb36c6674c012c05ad3ad35b5cb781e9ed27d0b89952c738d68a645dd8c2ec"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-DIFFCOMP-VAGUE-018.txt",
+      "sha256": "9ba281f52a599468ae05b628da6e15fdb5589f8dff846e36bb40724f34f79c1b"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-DIFFTAD-VAGUE-009.txt",
+      "sha256": "fbc24fcecf877396556a7467dcd85a463c20c51278956920c930bfbdd9711de9"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-LOOP-VAGUE-021.txt",
+      "sha256": "a88c04f1d64bcb8ac368e650ea6d61a049df3b25faf866e67a6eefab11cb6b48"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-TAD-VAGUE-006.txt",
+      "sha256": "a03600a1d9174a47ce26ad08d7049f477fd85a65fc8dca641d8ff90a2114bc41"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-WF-EXPLORATORY-025.txt",
+      "sha256": "65ab3c56884ec5c8c492ea8da4102121aa5548e4f943a3532d4b3fdc73e8d01b"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-3DDNA-WF-VAGUE-024.txt",
+      "sha256": "cfb22c1a672d78daa291916d87908416fd8b10d455f588e9efa714e9fb12e8bb"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-ANNOT-007__vague.txt",
+      "sha256": "3c756ed4801b0df195064c007a4c08a0ce0cd67226daf8f13eaf882dad96ec4b"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-APOREC-016__vague.txt",
+      "sha256": "ac1d1b2ad0eeb8a3deecae22f3301cd74dc42f2b208b4f322f6b664bda0e8d26"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-ASSEMBLY-017__vague.txt",
+      "sha256": "f3739413cac6f00de5c394d4ec8abd7b5e826abcb0292b54b1b66b01f37db9e9"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-GS-009__vague.txt",
+      "sha256": "c73acc3834e428ae97f83690817008b31baeeb26f51613752204d3a2df513b7e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-GWAS-011__vague.txt",
+      "sha256": "e915baf57fa9a3d6780f4f1278f2771d77ccf806ab0f5d5e5e3a33ae8c6c741c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-GXE-PAN-012__vague.txt",
+      "sha256": "8d1c6d867440dadd586ec765719a3b38c831979fada99418570f3b4efee1ae64"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-MARKER-POPGEN-014__vague.txt",
+      "sha256": "b56a5e8da267da9fd65de3bfad006f01430df4e0f0aeadbe30a64c3a50ae886d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-RNASEQ-013__vague.txt",
+      "sha256": "93e212d398a55fce4b2ec1986f6822df63cc0d18854c5053b8f3b04711145730"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-CROP-STRATEGY-018__vague.txt",
+      "sha256": "6e48cb82a2f086755c255adf0eaffe8a18893372943f117faa8deeff8b536067"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-DB-004__vague.txt",
+      "sha256": "e19fc02a8e1fa69568bbc6ececa28821f8b8d8c7cd05551c8bd46a80d7fea605"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-ENRICH-019__vague.txt",
+      "sha256": "a225f62e6dbbf92f6b5fc6f4b671795ea590aee3b0da575fbd059649c8518968"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-EPI-MODKIT-015__vague.txt",
+      "sha256": "ec24821f2ff41ea3f1f6f78d8aa30d4a925af07a29f0c8da092a766a333789b8"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-GWAS-008__vague.txt",
+      "sha256": "6c131643c3b322614d41327e69378582c978fc3cb424ce49b7951dcebd0ddcdb"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-001__vague.txt",
+      "sha256": "4dc43fb797bc50d79fe8a275aeb29ed553a9c414da8a7256bc4692221143e5b4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-002__vague.txt",
+      "sha256": "51645d5a6e39278bd491b91fbbc51b1c6e3d88a53bbfdc69e524f00d7ab4b8a6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-ENRICH-023__vague.txt",
+      "sha256": "f27bc7e03c1e19adbf528eab7868769e0f88e32c0b5738ddda538b1b1e557b7e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-H5-020__vague.txt",
+      "sha256": "82206446ca5e81dbda7d3bc1335140cbf83db7536f95219b83c8c48424160268"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-TRAJ-022__vague.txt",
+      "sha256": "c73c2c276b3a686834d98879d9175971cd07b7c4c9fd6ed3e4cf08abbbba27bd"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SCRNA-TUTORIAL-021__vague.txt",
+      "sha256": "648a9304bf7c6782280b3601ba4ca79542f1104987ba51f7079b16832732f970"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SEQ-003__vague.txt",
+      "sha256": "7c0702eac55fb50eba463dec5b9545445e512b17c5e6b82e12b5d9168c6be236"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-SV-CNV-006__vague.txt",
+      "sha256": "4008b3819791e3e485b45e5401c5d5aa80391c56411547d41c3242f243430e45"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_effective_prompt_samples/BM-REMAIN-WGS-005__vague.txt",
+      "sha256": "016cefa2af2a979bb1bf96ce5fc1b1eac30c6f6162492c590d3e2ff271224057"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_payload_leakage_audit.tsv",
+      "sha256": "09920aae9406c826d398123afa12e41be7800230690567241aa1cc75a4f31dcd"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/blind_product_eval_pack_v5.yaml",
+      "sha256": "8d9834df6ba1ae8293c0160fa68902660776a1cb0409d5680d321ac6bbf20c76"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/immutable_upstream_fixture_manifest.tsv",
+      "sha256": "643a96ddbec038f786d139fb5919c9095927ae67d89eab0fc4c97d9e4e66fb5a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/oracle_branch_validation.tsv",
+      "sha256": "76959f63592608703a844e969d070e9186124fb4daebfc5fefcc9170448121b4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/oracle_case_review_checklist_v5.tsv",
+      "sha256": "e3b7669d1d3b3566554d14b7c53a884185f51b037fd799906669795d40f5e73e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/oracle_human_review_pack_v5.md",
+      "sha256": "a85fc2f3577208a830e5d9c24b0ae313147889aa4e497df94c0c5d0da3e743d2"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/oracle_overlay_v5.yaml",
+      "sha256": "168b5b18b80888b462c26a331d0453fc85597270bb16d3ba6ced944a5bdcb9ef"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/oracle_runtime_vocabulary_audit.tsv",
+      "sha256": "8fd0b321a29bc0688a3f1bf63259cc0cd2921f470b50322cebbe66dae58fb950"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/payload_leakage_test_report.md",
+      "sha256": "3b1f694827377e0404d86e7f20db4b83ae7146c9d212573b41b4bf9fb40c39f4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/recovery_human_review_pack_v5.md",
+      "sha256": "83456c3000913de0399f5fe2a2ceb712d67cf68cfaf82abf2a6707623824b83a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/recovery_oracle_v5.yaml",
+      "sha256": "c5abdb6bdaff7740fcd3b96778160feeae025578fe186e70cbc581c01898d25b"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/resume_core_eval_manifest_v5.yaml",
+      "sha256": "ba6d938b008b43940e4fb787ec1b145ee7c5476191091ebe1e1603efa8cbd24a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/scaffolded_integration_eval_pack_v5.yaml",
+      "sha256": "84d3c8e5d6af4861914acc1f65cc130681a6e8f316259cb4116b5ac5900e891a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/scenario_dependency_dag.yaml",
+      "sha256": "d534b69380ed2881f8a8fcff4e6da0e3c51e281aef8c6b5a22fd1a70b681ba9a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/scripts/generate_v5_review_assets.py",
+      "sha256": "c593e4a08fc60c8802c8058deb7bbf6fb22b44d65d426b7c29181180540d944c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/skill_reference_audit_v5.tsv",
+      "sha256": "c06a47dacb5b9488d0443457ea1fc2bcc1998c03452d133e7caf0af257b00437"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/structured_artifact_contracts_v5.yaml",
+      "sha256": "29a5a750b05cba4ee7ada3be85bc2e2a1581903a91b31616f9d7428d0d2e57b6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5/upstream_artifact_dependency_audit.tsv",
+      "sha256": "6da5ea230498265a1ab5bf4a5e0b97e59ac28efa892cd2a410da4b881e4201cf"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/artifact_contract_lint.tsv",
+      "sha256": "825e3e925b77eb30ab8ac0ea52dbc19e7179e6ac35d4fc36ad2f2102d92fcd44"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/artifact_contract_lint_report.md",
+      "sha256": "d643b836a03df1f70be11271c3bad81f8342d01a7e0d903df7390d4ad8fa5063"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/benchmark_execution_readiness_v5_1.md",
+      "sha256": "c7dd3968b8777b4845be9c0f8a9084de5df5ade285e04e8b2b253a3056d09a6a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/blind_input_visibility_audit.tsv",
+      "sha256": "dc7899d11a6a75b885d756675c9e3bd7b5e49c3ca3acf56ff147de4bd2c9fa20"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/blind_product_eval_pack_v5_1.yaml",
+      "sha256": "f2a8f9065a0791aad4219cb4beddcae121993151c71b208464f4c8ccc3235d33"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/consultant.json",
+      "sha256": "9e6ef56868a614d3f4c730fb0fdc677dac3ab349d90cb397b527b077185b2e1e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/generate.json",
+      "sha256": "aa74d10f068fd40e5c5a3117ce69c7f278814033499ac48e17b075034dfbc411"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/planner.json",
+      "sha256": "56dfea0c76f1a909c719825cb67261334be43658b6a98e4c3a24eacd25c6927c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BALANCE-VAGUE-003/recovery.json",
+      "sha256": "e39e8f2b8e4cf1d1d1f5a8c23b20285d6faf88fab054eb80b0fb0f768a52dd86"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/consultant.json",
+      "sha256": "8f3cd53148cefb880748c3da7f8b6aad4f8964b40069a31001e9a8b45b6e1a9a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/generate.json",
+      "sha256": "209c1dceabdb1db8c9e2cc915865cbb699d74023941063988075faf44c0f13b0"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/planner.json",
+      "sha256": "72b219af562b0db0565bcd02eade357ed3d111a9efbdc83d172a6400d5cfdcca"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-BOUNDARY-VAGUE-012/recovery.json",
+      "sha256": "28028dec09ed3ef6f3be46242e670ef20aab09389543ed227568f43da54d58af"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/consultant.json",
+      "sha256": "ff76c1373b35f497a8a08de0f1acab133fa4a6b5338c2810bfc7246a1aca2e9d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/generate.json",
+      "sha256": "e919c86760a82d78d5d973e418548fad49b30baddaabe56d19786832cf63139e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/planner.json",
+      "sha256": "8f7fb07ee786b134d9a3507630bd587316563d0b25153832a9d8cb4d2b198b01"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-COMP-VAGUE-015/recovery.json",
+      "sha256": "b699180f57d3c1d64e768349c62b30a337ce8148ebabe366b638ed5ce6a4ca93"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/consultant.json",
+      "sha256": "e74f84c90447640ae3be629d8c4920af6ed9305013891506f8624f724b52fe7a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/generate.json",
+      "sha256": "b91c6c126e221af680482d7897aab177a9cea7ef1f71fa641a7fb425588ddb75"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/planner.json",
+      "sha256": "d7bb71bacdb0bb8a06151bd2381af1ed310d32f1dd8018408dd128706ad0fae4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFCOMP-VAGUE-018/recovery.json",
+      "sha256": "e642f8829acf551dc5a57146046d411e715f016d989fb95e4ba56dc24604ec81"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/consultant.json",
+      "sha256": "a064d4a34e6909429cae2cff1eb7e0fb03b9a713f0662bf5321a590fc3067df6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/generate.json",
+      "sha256": "03d02e0a2dd4e69fcc7e5c56f499ec26ff722995c1862fe509805c04f78e0ca9"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/planner.json",
+      "sha256": "4b94ae086f29f026e47dd15afd93f805b38a2a497195ce08f3bbe82c2bcb2d20"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-DIFFTAD-VAGUE-009/recovery.json",
+      "sha256": "e9da8136672788fa7c251298a49545b6fab8c7624f14e9373eab5d6539eea982"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/consultant.json",
+      "sha256": "b6bb00698bf3ec8beae049d969bc2801bec6a51873ed3db6ba1c75e627fcd255"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/generate.json",
+      "sha256": "3fbf538d73b868e81480e941b49e7195622aa0648c2b6b53f7a508f1fe0fc365"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/planner.json",
+      "sha256": "a1aeff33de3b7fa668ee1f9fc6810fb459eb7e491f800c61813b14af400a34d4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-LOOP-VAGUE-021/recovery.json",
+      "sha256": "909555a9c1e8abc17a4b2addb0c0cc923d0862b58f1161e6118106ad260c34d6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/consultant.json",
+      "sha256": "1f3f8369f80d4026d5edd01cd644f43e87885679206a6576f72b1b0ffc4b4798"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/generate.json",
+      "sha256": "c8e6bc98dc4ed4a71a0e2911313acce38571b77adeb545eb9e76f9cd5313ddb3"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/planner.json",
+      "sha256": "1120e0f8e0a026720e27d7e2292bfb0d808c5bbdd40edabb155d6c7ae591c196"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-TAD-VAGUE-006/recovery.json",
+      "sha256": "c211d37e6e8ecd132a537690025286b1bbadecacc7ebb192db5e765e866de424"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/consultant.json",
+      "sha256": "fb7b1f96f913ba965e87996218911a8c3f3d5f852b7dd41ade626c825cf923bd"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/generate.json",
+      "sha256": "ea261ebadfadc34f4b27b27df4de3db7173f5b2c9080a60d5a97413ef761aab4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/planner.json",
+      "sha256": "b84c20991ccecec3704f697e089bf05c721efc47f2364058ee95597fa1007517"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-EXPLORATORY-025/recovery.json",
+      "sha256": "91953c24b2d7018918f9b77ca9106c496d1c9770e15de153b7d6cb2215689f7e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/consultant.json",
+      "sha256": "0f7126c70cfeb6e7df19259d32616971e391d01fe02fba6e4604457a4ad50365"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/generate.json",
+      "sha256": "5aae3d394c58658297d402a832843bc398e6d784b079fc4e148192ef7aa372e4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/planner.json",
+      "sha256": "ca7d0b4a0f347196178cc2b610c0172dfb4ee92888de309647e25e5f9ad79a6b"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-3DDNA-WF-VAGUE-024/recovery.json",
+      "sha256": "befae1bea21cee81760e8b8e1393df8db3fe9424babb9d8d6809a2fb66726498"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/consultant.json",
+      "sha256": "4a9809cd7b89e493e05079c4a263218c9bcf27e6a95fa0fda1c90ca228e8a0cb"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/generate.json",
+      "sha256": "cde065d46d679b6d728bdae6be056584be0c93b46591a247bbc5ee8b325a7428"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/planner.json",
+      "sha256": "881be01becde7c283905d74411a25a0f6dbe0c3692063fc417e3f8f2b00eb907"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ANNOT-007__vague/recovery.json",
+      "sha256": "85e11cdf0080df7046f74de50be2eba7f0362630f10fde81355e6458e469ecc0"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/consultant.json",
+      "sha256": "a4f2f10b1c58ac69c82b7c16d60ba5d1512f38b8634e93287adf0a916398a43c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/generate.json",
+      "sha256": "7a61b7c89080d0e82861bb90cf73ff90bcfb0182a0b1e8b11ae8eefbcb420100"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/planner.json",
+      "sha256": "17b66fbe1ae3316d05b568d93a0d358eba27ab3a614346a3f8b655879b96d18f"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-APOREC-016__vague/recovery.json",
+      "sha256": "3927fd6e623b51970bab0b6ae43adc7be7229bf6a8d9cbe7bc49fe479c79048e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/consultant.json",
+      "sha256": "c2de5a7a0dd212e264ca293dd9e827d63f1469d97a2cb4705d57131a9cc7f083"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/generate.json",
+      "sha256": "dee2bdfc35dfcaf4f0e59175d118409454350d2e329002aaf6c4fd0b7f7c95fb"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/planner.json",
+      "sha256": "4c21e54643097955ebf1712b1c6c1dce48608a74f1204c91aeee8bc78f018d61"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ASSEMBLY-017__vague/recovery.json",
+      "sha256": "f2157321d7ad1b12ae74b9b95aa8bcf37b431114533253ff311d8c4a14cd024a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/consultant.json",
+      "sha256": "c84fc0cf87c497bd0e37003aa7e546ccc5dd103b1394ea9dc9fbf104f12bf6a9"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/generate.json",
+      "sha256": "6123b32b0146da38d70d081cec67cc1f052a251ce184357a5c2daee101708f8c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/planner.json",
+      "sha256": "31180e04fa24816231809743dcc2486ff9b5f342691b2bc9c31b7d4338d2ead7"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GS-009__vague/recovery.json",
+      "sha256": "1a6a55194d5cfd89cfa502ccfc1b6883d6a44ea226c476fa6cd379449aff7ee4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/consultant.json",
+      "sha256": "908d48856c0a6244944b76fcd0f2196574f98cb957fa07d792834382d1524a2d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/generate.json",
+      "sha256": "581aeb04ed79aec5c0739fefcad6dbc50a20814afdb84c80427ee69b162d4a64"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/planner.json",
+      "sha256": "7d0e52e1dc99549de0c1fee4cadafb10364025721c1ebf58301197325b3be31a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GWAS-011__vague/recovery.json",
+      "sha256": "05b6f3f8e68e2f1392a9db540f2725b68afdc2f40ffa37b47b56d6c188f20396"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/consultant.json",
+      "sha256": "4b87a61f0bc1afc3e1b2eae3ca6a1cb1b2ee0e534eaed72bae50c4dfc0942223"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/generate.json",
+      "sha256": "1acb7eccf2306da5125f06a948dcaa817f9077fd4cbeab7e7d0394da62ae6afc"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/planner.json",
+      "sha256": "80c85404e17219ba593937f0a29f0bf804a9d4255d52a9b41da88a0336196cf5"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-GXE-PAN-012__vague/recovery.json",
+      "sha256": "2cba084a7a546ef1e65dc92cf9108131b520bb1f77fb23cde80dd08acf4341f8"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/consultant.json",
+      "sha256": "6b9806cd3192058e7b9838bd3c70652e5a76aa071a6f8ee57579664cf94cf6b2"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/generate.json",
+      "sha256": "3c8e09415ea2f58c8378bc594b65eb860eff46805c134eca1045d5772c830b85"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/planner.json",
+      "sha256": "86a9deeca19fa112957dd199289f3b9a6c17db3b24132f0877efbfae286f21fd"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-MARKER-POPGEN-014__vague/recovery.json",
+      "sha256": "093d25087a79a4b951db246f694c7937e8032295e0b5226d91f044c31f5fffae"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/consultant.json",
+      "sha256": "cca2e1dbd09abb1840752f48cadf4256ad9a922a7c70d17914729136e7bbb8cc"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/generate.json",
+      "sha256": "f8080e61224a76753d7a06b27f0b9c3e99ff0d823f264dd9d4f7ed7dd73e74d6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/planner.json",
+      "sha256": "bc556697b5ef1ba0f1dcff34a9444caa244926f9a8cc251751592ee0803dd316"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-RNASEQ-013__vague/recovery.json",
+      "sha256": "c2e61b64ebe5761d324b137938623cd0b1916a926add6a136dc0f4f9d42e3cce"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/consultant.json",
+      "sha256": "8c6cd1cdba55526e6c5d78daf27e2fd002b2ca6908b3211a98d6378cd217b943"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/generate.json",
+      "sha256": "833228db087dbf875e0bf05461b5ff786ceb84fd7c2c359a59ca98e6960fe358"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/planner.json",
+      "sha256": "e90de7c2a9b81cc6e2f20f2a38d3012235040a480b83bc7f59a67bcde74833fa"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-CROP-STRATEGY-018__vague/recovery.json",
+      "sha256": "b3c0e45eb3c0c455ac6905bc961201c591c3d9cca05c506954d23b232d62d122"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/consultant.json",
+      "sha256": "6ef129216e45a77da4708f54dd1b59be472068085499cfee20a89d1d3744197d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/generate.json",
+      "sha256": "86f0da72a1c7886b4d78bce21d6279403e5b268d08c1ac266c50fee623f292ad"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/planner.json",
+      "sha256": "ac906409f81420cd82c51f8f00871f209a85ee2c743c42e05aa97034b6126800"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-DB-004__vague/recovery.json",
+      "sha256": "96508f2610ddae0092c103ca5b42739289bcea6b6859558ff8f2ba0431e27bea"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/consultant.json",
+      "sha256": "f065044bbdc66b3058dd111d573c325c907602da69180d55d4d34ca94250ea34"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/generate.json",
+      "sha256": "3f5997ef8d5ce741c1b21b2db35e6b41404f8195eac8875cf4210659e18dfd5d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/planner.json",
+      "sha256": "70e61fa04d38f41c3a6fa965fdce2eded7760248edbdaa4338b4bb7c54b23507"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-ENRICH-019__vague/recovery.json",
+      "sha256": "49c8467f527034131fb98ed33b9484e967e6709554bb766abe76720432cad257"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/consultant.json",
+      "sha256": "048fe4d6819a679f0f6c830b765e23c2364d15f3ee4ad2f7f941622af205b923"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/generate.json",
+      "sha256": "910bae0b68963c538ec857c6158ee1a7a1ab4fbd13c5f4c231e2b5ab42a7628a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/planner.json",
+      "sha256": "3f079f69781e433d7fcc87717f770155290f624cfa09ccc2f45507bcce8dc558"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-EPI-MODKIT-015__vague/recovery.json",
+      "sha256": "d472797d4786baae2e1ff37ed974bcd35f96c3f8012206993ba03d6844793002"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/consultant.json",
+      "sha256": "1524e66baf34b7df5f557bb16566148971c617b74b9c429d4691a485d80e60f3"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/generate.json",
+      "sha256": "e89d4efe3468b1e7c8b5f74e826c4a35b11eb6706a65fe64037657ac290d4e77"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/planner.json",
+      "sha256": "98852eca639319a6c7fd82b003fb01df4fe6f5ff02ceb14682697a0251c58c36"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-GWAS-008__vague/recovery.json",
+      "sha256": "f155d9d2fc3744027138fc335af29d7cdd767afe43356d2a95edb197368fae50"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/consultant.json",
+      "sha256": "b2a3e94c6156a7320d76eac4f43fd440398ed6c21c2b8b0fae7458f41b7ccd5a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/generate.json",
+      "sha256": "4e686d3bf38906fa1d11590009ed9bb8c217004506b376f32b37685ec43e68d6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/planner.json",
+      "sha256": "eaf153634d5bcda156ab0c129eaadbaf2c6809120ddd9b9d5445410bdb2c6138"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-001__vague/recovery.json",
+      "sha256": "4051b4456662e1053925ecd09f9b027a03f67ddde7ff0063bad0b3181a719750"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/consultant.json",
+      "sha256": "801e03d3d0ca0f1c737aba6ee5a658d8c3af4310dbd7918088441bcb4c51f778"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/generate.json",
+      "sha256": "304c597f66d10c127554ab382974a4505e4199b6c9756a1fc2194eedeb99880b"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/planner.json",
+      "sha256": "289c6c6a1aac87bf57984fd7dcfc09b7234245904476f0c15a4c4bd2c52d7da9"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-002__vague/recovery.json",
+      "sha256": "864ef7f41b2ab5608fac2e5d496cb0f3bfbe840777e54274102b57790fd084b2"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/consultant.json",
+      "sha256": "c5f2bcf5636e3baffa38bf3c50259fe4270911749c4b682109db72d9aa74e2df"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/generate.json",
+      "sha256": "93a62eeff6f639573e4800a16b8cd2f0c5e337b7ce175db09866e6bf3b7b0b49"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/planner.json",
+      "sha256": "cf0cfb3f1f4b386bd3932271f62478589d8815b1485e7ce2fb4558704a0d2f37"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-ENRICH-023__vague/recovery.json",
+      "sha256": "d25b3c7745d8ecdb346b1dcc8b901cf856fbc93e860159f04ba0041befd0823c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/consultant.json",
+      "sha256": "bb51d3f8d6817b581a03d958f047679884774f0aed1e01cceab18bf8dcb6e3b1"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/generate.json",
+      "sha256": "f232062a57ea452df7b31270acd5e579d390689d5647fea826830264241ca127"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/planner.json",
+      "sha256": "099e23823493adae669e131d01bdfdeed8ffe366b4010e869413ab460b87e2d4"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-H5-020__vague/recovery.json",
+      "sha256": "563efa67a4f38e38de118c01e3756cc7ce834c57fcb8a544166d05dd1298d29a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/consultant.json",
+      "sha256": "bbb416a31179c13a2b05d01178f32c5d36d50b3e98bd4c4411643b9c59fd6043"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/generate.json",
+      "sha256": "26498fd7e6b258cbde9b6d177c327037a45734ebdb80c1246e3ea079281bfa53"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/planner.json",
+      "sha256": "1c282ab0a8520e008c021094c91850784917ae7997245a562dc17dddac2415cf"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TRAJ-022__vague/recovery.json",
+      "sha256": "f86e0910d4212e2386b7054fee9668c00b7f92ef8313966a6f4aefbff9558c63"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/consultant.json",
+      "sha256": "a2494f034de0e7d5fe37f6c877659c5c5693f55b68af3958996cc90d8de1c63e"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/generate.json",
+      "sha256": "737740418df2e9ceba8a6cdef739933c0144dcd83f162715b0f660536c897ddf"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/planner.json",
+      "sha256": "bdead5da6d88ccb6e0d6373708628e7a0c3fb0ebf6e05c5dc38b948a799861f0"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SCRNA-TUTORIAL-021__vague/recovery.json",
+      "sha256": "43f85b2e77c83bf565904236dd662a1f8f1db9af01e8eab79ab64af4113f5157"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/consultant.json",
+      "sha256": "1d82f32ef114ec687f9819afcc5fce46785300f390f08e29e81ff1509a3829f7"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/generate.json",
+      "sha256": "08729ca03c73ddd6628f439fa05e2136432f4847dc8e3e82e16322c06ad053a0"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/planner.json",
+      "sha256": "65b65c604fd9083101aca9cdf747b71a7b061f5e84209b3d217a995a07759642"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SEQ-003__vague/recovery.json",
+      "sha256": "36aeb32f941a92a328030359a57531dbf997bf8f04571c44e122255f9b1c7ddb"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/consultant.json",
+      "sha256": "41d327bf34819bec85ac7706d41ee410450f3005e5f2b331547cf37f9b8799de"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/generate.json",
+      "sha256": "d46856927fff6ef88ad005c1ff14b9fe280677e4dc00eaedc014c1fd9a8bc40a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/planner.json",
+      "sha256": "83f10008215512287b738a01898f49e36513a8e994776cb95cda736205c2cddf"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-SV-CNV-006__vague/recovery.json",
+      "sha256": "7c3eb9a8dd5cea59890ebda66c5a2932e4f1657477954d8b6ece0007d9947bc1"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/consultant.json",
+      "sha256": "fd1c8085c47b338852e93ba81e8084afa2a3d935e83b5b493d67650571e7c87a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/generate.json",
+      "sha256": "f7ad1938b1bddd104d456e181db08bd5d6c6dcf416697ca69d8b6a565a8c1059"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/planner.json",
+      "sha256": "0c9208518dd717225e1dbaeab87bd7380006a755424ed742ba4173baced2feca"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_captures/BM-REMAIN-WGS-005__vague/recovery.json",
+      "sha256": "1378c39361d3d42322dceb945eba74835012d5db61152f2ce0149e53ee62c405"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_leakage_audit.tsv",
+      "sha256": "601d995d40bcdd5a2f70a8ad8782fcd8e0d74c8c4490fa091ac2553ab1203703"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/full_envelope_leakage_report.md",
+      "sha256": "48b0473192d7f4632c07d8a93a957293a61aeacf39bf0758970adc7b4490422d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/oracle_branch_scope_audit.tsv",
+      "sha256": "855d349eb831281b21588b25e6ecc62880c4ffa97b25e6e368b56b5973fb2685"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/oracle_overlay_v5_1.yaml",
+      "sha256": "5ca40dbfbf8a4602657a7dda411663c92ac814406fcdff91205c05680693f7ae"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/oracle_runtime_vocabulary_audit.tsv",
+      "sha256": "6727d986a5f8dad8a970dd997027b38e09671683f49063d2e54de755c46e1e9a"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/recovery_human_review_pack_v5_1.md",
+      "sha256": "b8327b9f1dc255511279df9d5d9fd1e314a88909f255a846499e0ef638928356"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/recovery_metric_audit.tsv",
+      "sha256": "0328020f671d7793b7fa0560bf9307df9a249bedd9b8ab8de3ed91a4936c2a3f"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/recovery_oracle_v5_1.yaml",
+      "sha256": "4738409f73f4c331148f6815d21624f684ea59b4069c10c857867c7d6de0b523"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/resume_core_eval_manifest_v5_1.yaml",
+      "sha256": "f433524d33eb912e9a44806a976a46165a5372c50b0f75cd0e417f1a35dfbae6"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/resume_core_oracle_review_pack_v5_1.md",
+      "sha256": "fdd4eba52504f1b9f3118f1d163bd53d02fb17abaca54bcbda5f5bba86196bb0"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/resume_core_review_checklist_v5_1.tsv",
+      "sha256": "fde4ee04535e8943b100b8e2a951543ae13451e97290b546e7c0374bd1ba952d"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/same_run_binding_audit.tsv",
+      "sha256": "490f24d7bb158b3bbf76dc655a067db2173a30b092634e0755f33120c03f804c"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/scaffolded_integration_eval_pack_v5_1.yaml",
+      "sha256": "dd192474efab7afd79c3aa0d81736d912798df1bb1d4bef930a49b5a409bb26f"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/scenario_dependency_dag_v5_1.yaml",
+      "sha256": "fc9f1e9d4701d0dd92d007ac9ec25d96e0563e7c348153e15fec0baff65d4e38"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/scripts/generate_v5_1_review_assets.py",
+      "sha256": "264fe9896bffa5cae9d1e219e84423f507696da23d08d61145eb781edba045d5"
+    },
+    {
+      "status": "??",
+      "path": "benchmarks/biomind_agent_benchmark/v5_1/structured_artifact_contracts_v5_1.yaml",
+      "sha256": "4b2d317c742fbbc22633d9414ea5be29220012a7ea43d77ffcdae67df13338c1"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/README.md",
+      "sha256": "870374c03dcadd80094c6ff5e83197194f7928044aa1a6fb8b7a68226d795319"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/artifacts/2026-08-25/managed_artifact_preexecution_boundary_audit_20260825.md",
+      "sha256": "ab61d1c51641998fa1517a7576d7e74443b31d4a867166121ac1b01de22a726b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/authority/semantic/2026-08-18/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md",
+      "sha256": "6a7f8cf05ab6600692a28e254db827dd89fe249fd62c1ff8acfc1f4c16caf1c0"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/authority/semantic/2026-08-19/open_world_highlighted_requirements_migration_report_20260819.md",
+      "sha256": "f1978ddc966487aec4deec966592008a260ffa2ba41e089a9388601308909ed6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/authority/semantic/2026-08-19/semantic_history_authority_matrix.tsv",
+      "sha256": "2730319ba3df5e93bd65be8df2eb07c1a06026a187ecdef8326952f4f1689939"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/authority/semantic/2026-09-05/SEMANTIC_AUTHORITY_CURRENT.md",
+      "sha256": "0b5220b435f2a362b6f4402ef8f868150930c863d6538a22036310f308e768d8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/authority/semantic/2026-09-05/semantic_authority_matrix.tsv",
+      "sha256": "3c003285139a09e3d2fabf24ba5002dc9b5f59ded0a408e13ac493436eab992a"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/compression/2026-08-19/context_memory_and_compression_contract.md",
+      "sha256": "9caaf8f70787c3d37e210297850990bfbc23b1c3e3021796db364cd2373ab0a7"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/compression/2026-09-03/CONTEXT_COMPRESSION_SKILL_CURRENT.md",
+      "sha256": "240b46b799c39c5816b1df560d21b0d7e287e1f19042d6c41eab9abe7fdadeb8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/compression/2026-09-03/context_compression_skill_cache_audit_20260903.md",
+      "sha256": "c46cb4c16ad8c360ff0db86231d1ed4b20d8014c6baca15457fb18b1207c3e27"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/compression/2026-09-03/context_compression_transition_matrix_20260903.tsv",
+      "sha256": "72aab04f5df60938c81f139044a33aad4c9106c83e12fed4fc58c33017e5041b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/compression/2026-09-03/provider_request_lcp_compression_matrix_20260903.tsv",
+      "sha256": "5eabc96d1a98042d8bd0cb57cecd297b80ed5503f63ce3d9e756adf52718e16c"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-08-19/global_prompt_context_lifecycle.md",
+      "sha256": "8eba7885abd2858fd53c946b8fb6449fd3d70553a6c658eaf41739c046bf316a"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-03/context_layer_and_consumer_matrix_20260903.tsv",
+      "sha256": "6ec9ce53aad7d1ba565443b14a26ea1adb3790a913afb9889d496a8237f9dfca"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-03/pi_migration_rpc_poc_20260903.md",
+      "sha256": "cf8e02fe085ced98fa557916094a57d48de8d2ea757e5fc70a954aa2cb9712ad"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-03/pi_migration_stepworker_boundary_20260903.md",
+      "sha256": "76169329a1a7c8b4c7eddc99b67ec17aba7da079b7eb599b31287054be922f0a"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-05/PHASE_CONTEXT_ENGINEERING_CURRENT.md",
+      "sha256": "e9df505c448351d9a92ef742f0eb71c16ee872478d876e04f47947c335554b2a"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-05/PI_AGENT_CONTEXT_MIGRATION_CURRENT.md",
+      "sha256": "3e30fe5ac1c6a10260ca2e6ba09b3a7e2d83417c4479d2c6d9d32c1385cc0f50"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-05/context_prefix_diff_examples.md",
+      "sha256": "48a7fced8ee3781c0935e24ddd7dd7132fa6af883f73baee59071b0ae70749b1"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-05/historical_context_migration_matrix.tsv",
+      "sha256": "4f6dd4aa599bba1f3102d15389d917fadcf536dbc0b8bbc718915bd3bbecc1a3"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/phase-and-migration/2026-09-05/phase_context_matrix.tsv",
+      "sha256": "a5fb7189e591ad565d43004c50642412f8722c333f16cd55dcb984f72cf3392e"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/provider-payload/2026-08-18/node_prompt_payload_matrix.tsv",
+      "sha256": "8807568862092343e8d43374f1a91fefee5ba50e8b37ece81468de5f17486c59"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/provider-payload/2026-08-18/provider_cache_inventory.tsv",
+      "sha256": "fb4da1fb19d8753e435eb854ce447a95616a9d07e214a0eab3820e1dc42391cc"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/provider-payload/2026-08-20/node_provider_context_matrix_20260820.tsv",
+      "sha256": "86e77d21027633969502083d9ac7f9dde9efdb90a73cab6b4d126aa2c753b1d2"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/CONTEXT_COMPRESSION_RUNTIME_CURRENT.md",
+      "sha256": "f3257272c82da3aefad6c1df041d06df7d875a8ba0a7e7825b60cb3eb4717212"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/README.md",
+      "sha256": "acad8eb1a9a878710d75601e34cb3eddd044ead65c2616d9911c94ff7103d4ae"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/SKILL_CONTEXT_HANDOFF_CURRENT.md",
+      "sha256": "013b8419a8f3c01bb5c4da321225a663478ea96b3d1a5aa13f019038d5a7f936"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/context_compression_runtime_matrix.tsv",
+      "sha256": "3ff1e613a9ac26763c6524b94e822eff35d27d441f95d0af33a36564fad77ddc"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/context/skill-handoff-and-compression/2026-09-06/skill_material_visibility_matrix.tsv",
+      "sha256": "e4f463b296ffff243742b3635e0873b1c72ca95bca8ca24b20d69fde4e93dd77"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_authority_live_matrix_20260903.tsv",
+      "sha256": "65930ce876b0df7d383c5241b65af5869e53a391fa9c72aec02efebb6f654359"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_front_half_retirement_20260903.md",
+      "sha256": "a55a66a9ec1e5b0daa7727e09f4544d5194bf96fb30aec7baa5f8d8e075d7063"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_removal_current_20260903.md",
+      "sha256": "a6d521291712e960f557652d6eff25b1eed75ffb37be71c2971a4f0065dd9b37"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_removal_migration_matrix_20260903.tsv",
+      "sha256": "b4b334e216009b237b56c8ce5413b4bbe016f03e35983e9ce34481f10c0aa552"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_route_authority_matrix_20260903.tsv",
+      "sha256": "b2e02767da8c057e98d4072e17c9fa86c107bbc2c7787c6a44c3d2845e14c3f1"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/controller_runtime_migration_20260903.md",
+      "sha256": "8d38daa0b067be0371df53956387d4c745adfdd694a98295b697935a8ff99ebf"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/schema2_adapter_semantic_coverage_20260903.md",
+      "sha256": "35e2453f9de08db091cebf8cbdebc1c53fd08401e2cd263a0ce737441cd8c72b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/authority-and-migration/2026-09-03/single_control_plane_phase0_phase1_audit_20260903.md",
+      "sha256": "73f85f54b81278e3abd593f3be7267bf3add77cc1b35c06e1d98bf115eadd752"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/README.md",
+      "sha256": "7ecccebaf48dcae6fef90b5fe1859c16003c401aa146bf330d9560276742145b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/implementation_report.md",
+      "sha256": "5ffc2f8ab6fc825bb1baa35a5f4605f063e02daeaeccf223ced720cc5f3eca08"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/regression_matrix.tsv",
+      "sha256": "525f14384e67c1c861d12188c1feb9059ca9825c2401f8b38223677f13d3b83f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/reproduce.sh",
+      "sha256": "59de3337dae0a96dbc2d709fcaabbe7108bc14dce25326b505bfe32486dc60d1"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/controller/completion-workspace-recovery/2026-09-07/stage_status.tsv",
+      "sha256": "a72bc9575dc80de3425794a17debd991c374d86dfd6d31b9e497bfd2f76ba124"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/consultant/2026-09-01/consultant_finish_requirement_provenance_20260901.tsv",
+      "sha256": "a49f46594505411168f280bf8369d82e6eab438973b5643e75d1cea32377d5f3"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/consultant/2026-09-01/consultant_finish_runtime_evidence_closure_audit_20260901.md",
+      "sha256": "6ee549fc79013a884dd746b0f5024c9739f1a7eabeedf0263229f9cf33bfaa7f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/consultant/2026-09-01/consultant_finish_runtime_regression_matrix_20260901.tsv",
+      "sha256": "b6678c10bf07469ba356dd46f7bdf14e3e076ce413ba5176d91780b210cdfcef"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/consultant/2026-09-01/consultant_turn_state_diff_20260901.tsv",
+      "sha256": "7548dfbd73fa814b3693e9f6b81a933d3d6c276f7bcc5869176a8155aa41cffe"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/consultant/2026-09-03/schema2_consultant_agent_loop_20260903.md",
+      "sha256": "1958933400e07b060ade796fa9475b6ca163a4eba805ccb5e9dd1ba0fa0ad9b8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/planner/2026-08-18/planner_constraint_provenance_projection_audit_20260818.md",
+      "sha256": "1229262495fca766cf4b286ecab8b14af220fbb0e5e97bcdb02832fd82a4fb19"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/planner/2026-08-19/planner_pending_snapshot_reentry_fix_report_20260819.md",
+      "sha256": "331152aca1309672171020c42042ca72480f389c7b22ba670e4830e914bd9865"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/planner/2026-08-20/planner_context_reentry_prompt_regression_audit_20260820.md",
+      "sha256": "e01a8d4c05ab5d4c48506d3f8b35861db01e41070d63122acbd8102b6235b858"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/planner/2026-08-20/planner_request_component_inventory_20260820.tsv",
+      "sha256": "2a266a9a4d210988ddc47299fc3cc52e5f9a3397951d64c4843391a38319a8bf"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/planner/2026-09-04/schema2_planner_agent_loop_20260904.md",
+      "sha256": "c6c2a871fd50dff181f21edb397ff314f317dede2f588976a518b4172fafeeec"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-08-17/recovery_progressive_disclosure_contract.md",
+      "sha256": "7faa4a7d1918217e2aac00a50453a0d02ccc01a64d3c03c259d44a22f71bbcea"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-08-17/recovery_progressive_disclosure_history.md",
+      "sha256": "12cc165ee2dfe17d37504069a2b6f3b717253da09afe091c974c5f7878f84d9b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-08-17/runtime_and_recovery_context_contract.md",
+      "sha256": "7aece3caf133cf7c538e3da85f3b2b5c069b11149cf458fdf32ff1ad620e875b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-08-19/recovery_context_disclosure_matrix.tsv",
+      "sha256": "24592c6a08cd8cbb2606aab7ee3238164d4f93f4e74c0b5a7360aaec3e26f605"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-02/recovery_authority_matrix_20260902.tsv",
+      "sha256": "5acd61a228272f768570066ae8d3ccb1ca20c5212e660eb1b8ae208146feb92b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-02/recovery_design_vs_effective_implementation_20260902.md",
+      "sha256": "cb0e4e5a13a938c632e3710a241aaf74b6eaea7942079b09fb9f3dfffdbfe632"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-02/recovery_effective_call_chain_20260902.tsv",
+      "sha256": "87a87e38ebaa59618d41021aecd96fdd4ad9c42b828a3f9ec2fbfc7ec9050c57"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-02/recovery_hypothesis_authority_audit_20260902.md",
+      "sha256": "e1565a3e7a02fe940f2c8fae6a4d86c114998772d42337f9e7ff3d6c1e5a18e6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-02/recovery_hypothesis_capability_matrix_20260902.tsv",
+      "sha256": "07dee2185362b93ebabb35df2ab8cc0d0029236926b49e70de2c730db4522043"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-02/session_1788316042_recovery_timeline_20260902.tsv",
+      "sha256": "c80708664e76172a05349b8fa394f61433aa0d8d586a24ab3cc149654c9cae3d"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/RECOVERY_CONTEXT_CURRENT.md",
+      "sha256": "c9b78a95a6121a0652453e4949da0492106298f4ce29ced65d3b46b22e5dba56"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/recovery_context_component_matrix_20260903.tsv",
+      "sha256": "6df04659b65ef2c8730ff258a15f186a607a2cd67b6c8247999145bc41068551"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/recovery_context_engineering_audit_20260903.md",
+      "sha256": "15a16e102777b587c5533786912e589a114c37b0983bcad2a5169ab3b98b6dce"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/recovery_context_engineering_delta_20260903.md",
+      "sha256": "ca801a346f673736251996e36e3029bd680ea73e0ce0d1b51bc1c94b19a60d17"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/recovery_identity_lifecycle_matrix_20260903.tsv",
+      "sha256": "5b607550213d1319cf782ffd8269bb6f3ef47a1a6b18ac3f51a85737f3dfe7a6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/recovery_identity_scope_atomicity_audit_20260903.md",
+      "sha256": "92d57ca60566b329e1753efcf774ba16a85e89250c87b95e1536e7608bc70318"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/recovery_identity_scope_fix_spec_draft_20260903.md",
+      "sha256": "d3fbb2f517a4f5adc46ec15c8d8bccc8faa21b4857398dcc1f6e8777552227db"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/recovery_scope_authority_matrix_20260903.tsv",
+      "sha256": "2aebb808698fd9eff7167ed335f03265be50b1bc3799715476c12beecb33de4b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-03/session_1788401254_recovery_timeline_20260903.tsv",
+      "sha256": "15bbec309d1e315e91f1ce58db37c98dcd433a3819437759c7f55cc14aa1cd1f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-04/RECOVERY_PHASE_CONTEXT_CURRENT.md",
+      "sha256": "8d2b759940c198e270297494ad4ce2fc49d606ed090ee60526dcc7e10c2a2ca4"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-04/recovery_context_reuse_matrix_20260904.tsv",
+      "sha256": "ace575797032aa6c06672076b4da1171b4b116625fdd32fd022359c24bfe109d"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/nodes/recovery/2026-09-04/recovery_phase_context_reuse_audit_20260904.md",
+      "sha256": "5f9690327ea37d770d41494252936df4171063286fa9975da9ba433d1e02f128"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/provider-and-archive/2026-08-25/provider_stream_session_archive_boundary_audit_20260825.md",
+      "sha256": "1ef2c853d5669fb5c0f853798410f8871b3f915ace0a31020514dbbfc39b4066"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/provider-and-archive/2026-08-26/provider_attempt_session_archive_phase3_implementation_20260826.md",
+      "sha256": "165856914c604be656e123f5224e0599b1f274072964cb3a0fda069e5dc9c4fd"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/skills/2026-08-19/skill_planning_contract_retirement_audit_20260819.md",
+      "sha256": "6d7b219d9dfee21dbc8f059b4a2bf9abddfedba15cf9342ab72875b530b68268"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/skills/2026-08-19/skill_planning_contract_retirement_report_20260819.md",
+      "sha256": "166df3a3fc5038c9701bdbd79c6ae777c8efa6c32e83f93a8abbe53e101fd543"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/skills/2026-08-27/progressive_skill_access_search_and_replan_implementation_report_20260827.md",
+      "sha256": "eb0bed8c54b7aa76cb1f3b3da6c449325935cccaa769a56471c4b4b96eb26446"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/architecture/skills/2026-09-03/selected_skill_visibility_access_matrix_20260903.tsv",
+      "sha256": "18113fa04e0821dd182f85ca84400fe24002772d0cacca4b6d131aa1b0090d12"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/baseline.json",
+      "sha256": "57b73e4dbea6d46b1550ae144b5f819dabe5fa4eeac2ea08c75ae45b3783d220"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/context_audit.py",
+      "sha256": "9fb68f3f956d69cd601fefce7b04162eedd44eff94f28ac5d0826b6b752e616d"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/context_current_catalog.json",
+      "sha256": "0966e990d45e56663e60d0354858383b7ad3c34526c36ed78eea9bfb811cf940"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/context_helper_concrete_draft.json",
+      "sha256": "3d9d30e8fa0d04ada0ec56aa070daf0e58fd134a190cb5e1174ed0effb00d78f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/context_helper_output_draft.json",
+      "sha256": "fca19827a3a859915f3ab118af6a2245f7cb1a4bd540249f565ae8a1439ecfcf"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/context_historical_helper_sample.json",
+      "sha256": "d6a147667d80c1faac2365c6ffb553ec2d47eb79ef73f600060859def8f8cd72"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/context_metrics.json",
+      "sha256": "c1bc8796afb29b3fa1af0e1a3269f96dceefa115d6ac1da90de778b316960ec4"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/context_versions.json",
+      "sha256": "ac3058c5109a799b0a3ae7baf2f7a2431ba5a7bce2f000a2e16f735966b4e084"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/cross_extract.py",
+      "sha256": "d82befe972daffee000c00cd004a6f00b796393e5eec58d9264210ae799ea480"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/cross_samples.json",
+      "sha256": "8b69c0778d04c06a1450c1e568795b38739234e099fd401d1d10d0db05631fc8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/cross_witness.py",
+      "sha256": "244d24d9fa9bc9085afae1eb31511fa6c4a54ec962e325e69ba9398dded444f8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/cross_witness_results.json",
+      "sha256": "e4d149ed6d1a6288949be657ba986dde43a7a93de0b3e587ab48a416dfc933c8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/helper_witness.py",
+      "sha256": "cadacab0b71ccaffbf2303c690781cd238a167f2e4101a683ea67777285218d6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/helper_witness_results.json",
+      "sha256": "49e0144a53adfe1f1daf39ebdded2ed809da9598c77cba99dff39f1ae4180596"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/initial_status.txt",
+      "sha256": "409a49cea56b0bf9b3c70835e6504f81bd31a871b56a661c3cccedd327bac808"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/runtime_history.json",
+      "sha256": "68085241b0800c0bb976afe062344d053b7236f771efb12a7c3ca8fb08455d4e"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/runtime_witness.json",
+      "sha256": "fddcc33a3dcb9e56e0994c5c5c13bbbbb0ce29432a17e7d5f5b0b6f0a1a08915"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/evidence/runtime_witness.py",
+      "sha256": "c60f1c67c4383f586701f7fa97898ab444448a92fa2eef119e4e10dc1673f76e"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/binding_minimality_20260917/notes/runtime_picard.md",
+      "sha256": "659e2f9f32ecbf4b1e22a012f162f32ce9c959ddd82b07e6e0dfddebb7583e03"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/README.md",
+      "sha256": "d9f0e66695f99369a8c276287ff575010b69dadf9220ca4ffdca597d904c1f11"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/execution_stop/evidence.json",
+      "sha256": "26f164ee2e9c0abf105bb6e1d5853ab0f10d4fc93b7c019de4400bd8ac2b0cdf"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/execution_stop/extract.py",
+      "sha256": "7b03353173fa6b65d1ef32b64e1fa9f49f9adfa309b3412a6c8e0c4cd521e710"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/execution_stop/findings.md",
+      "sha256": "3b03dc44ca445975ac10f408266be91bc45a85a999015ab3c7e57333c50ba6e3"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/execution_stop/read_ledger.json",
+      "sha256": "ccff854fce36a4cdf7d7f37d00b41e3a67fa7fc160b2a82192cc31434bdd1077"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/execution_stop/source_slices.json",
+      "sha256": "5fd8fc3a7ec59012c9d9cbbf0b7469c3e1b7275284eeb359c094b08b4fc9e886"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/_assert_helper_scope.source.txt",
+      "sha256": "0d8c34a6d2737a0b404ac4905c4cdd8ff6cf82002c6f56725339309eeb1832e0"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/_assert_python_helper_comment.source.txt",
+      "sha256": "1543749b2cfaae478ac47110bfb8270d7227c6297d9b1215b99843aa5176de79"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/_python_stdin_selector.source.txt",
+      "sha256": "8e42c895a808a30a84480d581fb8625878f4ac4ca706916d54186ff092dd8a3f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/_single_shell_command.source.txt",
+      "sha256": "b98a0b93421795d4cd29ec91c8e91baf12b1c4db6e71c3def798f6787a726b84"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/_structured_action_from_object_result.source.txt",
+      "sha256": "3e43f688e4de4b0ec5e56cc9ee689a7159ce463a0ee41c9338892ff740afe7fa"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/approved_helper_correspondence.json",
+      "sha256": "780041a3bc0f7299083dab90124d71a69aa92068acbe44845d76fc2f343618c6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/build_executed_vs_recovery.diff",
+      "sha256": "5165e16bd0b9efb57f42f31d5b2bbd380ad853548e827b325abae638e853faec"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/build_first_vs_recovery.diff",
+      "sha256": "583c1d5e8cf1681d3fae17c2d39d8a8d10eaba13cfe28ca830d0a809fb7ac93f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/build_local_fix.diff",
+      "sha256": "052503dc8b6282822f27dbefc61e6f9d7892b5add6e96d0e467f88d070b9b601"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/evidence_index.json",
+      "sha256": "4853c22994dcb8d460551297e8845f39f3941cef10abbf09ac49612033d0c063"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/files.json",
+      "sha256": "278d2cff24aabc0fbdf4136e651004b4b092e8c97f6ff9ce7c69bbb1ac578f89"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/findings.md",
+      "sha256": "82a639645b1c94d05faa7ae3e18f35cc248d4a822e4f43f36bac25f39dbf29fa"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/approved_effect_emission_template.json",
+      "sha256": "7ad1da793af20327dfe8fb645fc97abc82485af088822e2897248d5b7e2c7abe"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/carrier.txt",
+      "sha256": "9b38b9665b387ab2059fa3aaf9d0063be0e55037a44de79bb9acfeaf81063f70"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/current_generate_output_protocol.json",
+      "sha256": "15645a16486f3747dd85eb33361b2e1366d7a0976f7761fbd5c522cad88c3e12"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0009-14d8efacca46/response_business.json",
+      "sha256": "8bfd1baab6c8815519b576dd2867a818d9fade7c8bd346c5f02ef74a180257e6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/approved_effect_emission_template.json",
+      "sha256": "c53e7c72abc9458138cd849584895251bf8fc6361b1913876ffe5f540b063aec"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/carrier.txt",
+      "sha256": "9cc66bfba60c28fe230f4c1a7361bd9e8943d9927a127974e35cbf91b1941628"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/current_generate_output_protocol.json",
+      "sha256": "155d799a5ab70b9a68ef0340d5dedd6852a1147f288585c991035b4263df8351"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0011-4db91b20b079/response_business.json",
+      "sha256": "b6bee4e5c605d88b126194d0d69948aa2ac6df6bba64d4536d5f64482515a121"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/actual_feedback.json",
+      "sha256": "e737cd8be26675707bd28b1f0a0f95a6698f24edca02712f6a473f1a7e3c4af8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/approved_effect_emission_template.json",
+      "sha256": "c53e7c72abc9458138cd849584895251bf8fc6361b1913876ffe5f540b063aec"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/carrier.txt",
+      "sha256": "bd831eafa804bb751d6a1a1129975cf6b410b28b8d1961928a73df9d83b4ee41"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/current_generate_output_protocol.json",
+      "sha256": "155d799a5ab70b9a68ef0340d5dedd6852a1147f288585c991035b4263df8351"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0012-9a6e83d4332f/response_business.json",
+      "sha256": "b05c2d707f1cb0a01abc91f011fd6eab64e2ecf52882d4c69843f06b763b42d3"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/approved_effect_emission_template.json",
+      "sha256": "802666650782b63fa9a931a9a214c99b8bfad5b6513c72b48489c7e16f9a6f35"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/carrier.txt",
+      "sha256": "0921fa6a5e574b91ab6fd468a3108b3692a4037497ab3c8715f6a831be4c8184"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/current_generate_output_protocol.json",
+      "sha256": "a96274eb5b2c0d330f60609e6456c234a8557e5f90ba18190345132894efc70d"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0014-a08602cabb4e/response_business.json",
+      "sha256": "b9e8eb886a22730a2faa70adc81740221be45afc6fe8cc5be184e20b9e916164"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/actual_feedback.json",
+      "sha256": "6e0a0199f9a4131eb652b9d7da671cec8225f5cebe883f69a1195b5f5e47008e"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/approved_effect_emission_template.json",
+      "sha256": "802666650782b63fa9a931a9a214c99b8bfad5b6513c72b48489c7e16f9a6f35"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/carrier.txt",
+      "sha256": "409df255703134df31667711f8e060012a5363b29bad591fb25a902a5f3829f8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/current_generate_output_protocol.json",
+      "sha256": "a96274eb5b2c0d330f60609e6456c234a8557e5f90ba18190345132894efc70d"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0015-45cf419bbbea/response_business.json",
+      "sha256": "c626dfcde6617a3edf780696427f84b043ffb15360e94df6266a7fcdbda83036"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/approved_effect_emission_template.json",
+      "sha256": "802666650782b63fa9a931a9a214c99b8bfad5b6513c72b48489c7e16f9a6f35"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/carrier.txt",
+      "sha256": "5353b7c2ddbd0764311c5246df1d0fa0f9411598e86559e33499a72bb9503383"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/current_generate_output_protocol.json",
+      "sha256": "a96274eb5b2c0d330f60609e6456c234a8557e5f90ba18190345132894efc70d"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/generate-0021-fe7d5a102be0/response_business.json",
+      "sha256": "5e0510944a5983e7fbd31484642bd28f765cf38a9fa6d8bc6fbb0e46eff1ccfb"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/helper_static_replay.json",
+      "sha256": "74765ea99785f1cf9ba37c1fdd440ce48661526a01a77ea592f5abf8ac68cbac"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/helper_static_replay.py",
+      "sha256": "f314d1710e981ff91f2292168928e71ee5b1ef3215635a4814b9e7c1d65821c2"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/materialize_effect_action.source.txt",
+      "sha256": "d79b695277e166217cb34d4300c00bf4a89b7ec2319a501ae203b1c3cf860dad"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/materialize_effect_template.source.txt",
+      "sha256": "08a6934a5eadbf6820f95e31b7a4361f9de1c962399109871f209c96504a434a"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/prepare_local_fix.diff",
+      "sha256": "5bb91e9f48a632cc811d08f0cf7da0759974aaf0ab1fca83177945c23bff61d8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/py312/helper_static_replay.json",
+      "sha256": "cfe507717c4cf067805af64600836e405d8f6adef4981838bc25be5e156bc761"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/helper/py312/helper_static_replay.py",
+      "sha256": "f314d1710e981ff91f2292168928e71ee5b1ef3215635a4814b9e7c1d65821c2"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/plan_admission_review.json",
+      "sha256": "41d37a634073c96c69754a926e894890d9cec54145c9209a97f5ecce679813a1"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/actual_recovery_manifest.json",
+      "sha256": "6e91ce8cb2514ec74d9e9ae0a6c4572c06290cb22833446f90ec7a1587a1cfc3"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__candidate_repair_policy.py.source.txt",
+      "sha256": "991532d3effc3159b208b5fe8423d9d8e1918305f7c474055a85ba9a54c391bc"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__workflow__candidate_repair.py.source.txt",
+      "sha256": "ca0edca6e48a2239a34b6a0ae12fc9a7020b381db3a8488b35b99ae61367bca7"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__workflow__inspection_evidence.py.source.txt",
+      "sha256": "9992c384fd0417ece533994abef6d7ebceadc2a12d384da59400d79d974c774b"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/agent_core__workflow__recovery_tools.py.source.txt",
+      "sha256": "3971b386751c95836f7a1161a860edd7ada87e98f10cb027804abdd3419443b2"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/artifact_manifest.json",
+      "sha256": "e5d9b0fb9c553b9c011d3cf87c8d26561d4b2d38e698a8c56cb0e1672d95a6b0"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/bio_agents.py.source.txt",
+      "sha256": "fac076fc5b5fef27a3f1429d5b73b31d6c83b0981d3c16a1e7fe3093f23e8db6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/decision_input_1.json",
+      "sha256": "4bec721432be5d9c198451d139ac3f89ee7ce24cecf0f8461e84b1c08f4294dd"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/decision_input_2.json",
+      "sha256": "a60e67cd305c51d2280ce1f1bb58f44f7d9e21869ce66499c7ac4f9b3f320d8f"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/extract.py",
+      "sha256": "790267c902a9ad8514190886905c8766ee6e98fb9ad2f6dbb9eddadefe86ca35"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/findings.md",
+      "sha256": "2089e5db63b204d1b2dc0f63adb5afa90a1ebace39d446ac66cc902e96979cc8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/generate-0014_to_generate-0021.diff",
+      "sha256": "f282fa7d32491b2a426d4fa0e1e0d71bd339e5fed52078d194ec25f19bdb7ff9"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/generate-0015_to_generate-0021.diff",
+      "sha256": "74d2050a8b9599719b5968add969804c2fc82178b858a3a95674ab1d2eaffc02"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/inspection_evidence.json",
+      "sha256": "65a04d2e903889c92cd5054fb6d125edab43382e3887c79347e94c5d65724bd8"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/progress_evidence.json",
+      "sha256": "81244b290401b6abc730a4d38ad8fa9533cd3b8c1e54f48b5d4acfb40f161072"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/recovery_generate_request_collision.json",
+      "sha256": "3f526cc679f3d3e70303b255d29d65a7e1298b4721b2f3381ef1dff57ddce8e6"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/source_index.json",
+      "sha256": "d7f6faf5088639b106919bdeaa44c6a8d4a22d24222dfc62f6ff6970773090f9"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/tool_result_16_content.txt",
+      "sha256": "7f1d2fe4fd20dac16f17bdff3470a0a1a564f770678c0497edeb913533330444"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/progress_inspection/tool_result_18_content.txt",
+      "sha256": "8532ccfe1c9d41963b37e632aaee1544cbc24295cbaf01d0c212db0c9193e714"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/review_boundary.json",
+      "sha256": "1e7b3695c66e542535f534b1522702f98b4a5a1f196f1ac03d2a3b4f9f0a5238"
+    },
+    {
+      "status": "??",
+      "path": "docs/audits/session_1789456793_review_20260915/runtime_identity_review.json",
+      "sha256": "43ace5f2adc71473611a91975f5b79bf99ed47c78d75f3ca292a1996799e8270"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/biomind_context_continuity_compaction_20260906.md",
+      "sha256": "ae826032b5a87c3e20c46368d1f390f56e6e6a3b437f8cce66fdd5b88fb45b39"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/biomind_context_continuity_compaction_coverage_20260906.tsv",
+      "sha256": "8e7f72e51edc9fd1b911bfa3705c931a2cb9fe3af677062f33ca200476205a78"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/generate_admission_typed_repair_20260906.md",
+      "sha256": "6e4ed3cf01ded5389e796f2c138515eceaa4ec562919d27caf211916f6661da8"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/hash_prompt_policy_20260911.md",
+      "sha256": "562f85283801ad1d923b684672004600967f4d4f4e3a9e8f623376cf85068698"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/hash_prompt_policy_20260911_results.json",
+      "sha256": "121e89b75c457dd736d2a446b80c0a0a1bcdcae120f506003dc9df10c23072b6"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/implementation_boundary_map_20260906.md",
+      "sha256": "1f2ba2b94038ee67ab1ca55b37c4e91a33d0efcc61d803dfff47ed394c28a7e1"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/planner_feedback_metadata_boundary_20260911.md",
+      "sha256": "a7acc495d2dbe38195136730feab7033de04beb380cc53cdf69dd465e8c0c30e"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/recovery_execution_contract_fix_20260902.md",
+      "sha256": "1af876474b30f9d95cdfde5b62ab0aeef48774d2c790255ee3e357a497515b26"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/skill_script_invocation_contract_20260917.md",
+      "sha256": "3361986e06a2a669a399b467741cf54776177816879101a22b82853ff969f0ef"
+    },
+    {
+      "status": "??",
+      "path": "docs/fixes/skill_script_invocation_contract_20260917_results.json",
+      "sha256": "483fcc3449f72ccedfeef7731e3eba544b5ce27f0707cc44d71f193a8a38d16a"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/acceptance_matrix.md",
+      "sha256": "0dc9babf2b17e40b30e3d1578250beac36d91dcc68ec2caeadbdbe7912b818de"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/e2ea_tests.md",
+      "sha256": "58abb95d5c39cec3e7c2afbcacf7f00356c704018afb695e9d97a2162ea4a446"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/git_result.json",
+      "sha256": "e2234d39996c4aad92a4baed1375fd7642ea0dc51eea34b17442f626f014894c"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/implementation_report.md",
+      "sha256": "125fbfa252c1ebd2f6d04db39c40fd98cf610f815cea9e6d21f91321e23336b6"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/insp_review.md",
+      "sha256": "df9d1be1f1a1f3f9c97cd8c0802cb4f90c6b5ded4aaaa0d643af7d06d1ccff3d"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/patch_manifest.json",
+      "sha256": "e150e9debe4caac21be8013aa9ad63c31cd2fda160fe557a5a7ee4efcecd5a40"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/stage0_dependencies.md",
+      "sha256": "b1528ba6e6e1a1fd7b69060ac494b1d32e8d4c588dd37abe24ccbd8b4557977e"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/terminal_integration_review.md",
+      "sha256": "9a908f6e647d27be8caadfde82face47edd50099f3dd9b19a51b6f1b06d507ed"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/inspection_evidence_terminal_20260907/test_results.json",
+      "sha256": "e55509037e2b8d1e4b3e2c1ba2bee2a881ccf6087470f4810766edfe0a44c362"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/acceptance_matrix.md",
+      "sha256": "069f6b66115cfd1558aa47d23a4688f0595504e702f7779ddcf6caf5d7d181ba"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/candidate_source_identity.json",
+      "sha256": "129cbf5e1f751cb128f6775a18d01561ff0d44752bb5e6178928a20cfc52ec33"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/context_chain_proof.json",
+      "sha256": "6c35647ecc3f285bfa6b897f1a672d9c76416121ebb39cee2ac999080cad319a"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/git-after.txt",
+      "sha256": "2a2d336dfd6da4cc56e199798fc383a0fdba0e0835b24ff03f0731cc52714ca1"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/git-before.txt",
+      "sha256": "7ce24ee09e4427ad78fc67357fa760894faa483b07b6045fc942f6844ec0cd18"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/historical-context.json",
+      "sha256": "6196d179426580101aac2d5b623e4dab5b5209e936a97640128abdd93932280d"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/historical-requests.json",
+      "sha256": "3ea163ab799e9298febad0dbd646c65de94cc5b315a04934695839ac4a4a6a27"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/implementation_report.md",
+      "sha256": "51f4747aeecad7aa8e1d3ec65fc159d40ae21ad2032d41a5f09362370f127661"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/imported_module_sources.json",
+      "sha256": "2337cfe9c0a520ec852e9a26b7af3c3b3255ef9790cd268c77de384b5a54a9e2"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/intermediate_validation_failures.json",
+      "sha256": "8990627de00a8ef4d91fcceec6c5db55e1cb27d3de5a65ac92ed010000e7c47a"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/live-match.json",
+      "sha256": "fc80f9ef0c385df2f7c47bf7013c8bba7bb7689007d099aa98dfe8eb4bcde627"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/loc-authority-staged.patch",
+      "sha256": "0fb7eea9b94cea7a63abc4e0c8694266f1c3bdd6ea922bf0dfd71dbccdae2379"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/loc-staged.patch",
+      "sha256": "faf24266f80c2b9b14689937d762e7e8ddf19d4a62ee21b55b8649a46f70e1fd"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/patch_manifest.json",
+      "sha256": "414cbb71b8c831b1112e742ef44074e9e5542e9c0d53f2fcda6ee0af9f0ffcb5"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/remaining_git_status.json",
+      "sha256": "01cd9cfca0af536066626edaa3e2441edc5c8c5b2e42606d301208a7cae1a43c"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/report_examples.json",
+      "sha256": "5e5eb6fd6a2b703370b6ba9589a992e64ef42c447e4285b2fe9eed1a50362c4d"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/task_delta.patch",
+      "sha256": "c6bdd54262f060896d57134e658b5b8f10cd5c10a7184272212935ae14b8f7d2"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/terminal_route_inventory.md",
+      "sha256": "0d7f79ffb345a6142a2aeda99a50cb994e4c0219889c2358660e43821c8a7a30"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/test_invocations.json",
+      "sha256": "3746c3ed9a23034b9b25e52bb727a2be8d9c64271a12efb5bc8a69e6168aad3a"
+    },
+    {
+      "status": "??",
+      "path": "docs/implementation/recovery_common_finalization_20260907/test_results.json",
+      "sha256": "9c83d3507f9fc8b89d8cfd25a3d942d1b7a642830b4c8722858ad7938aa79424"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_benchmark_v3_harness.py",
+      "sha256": "74f153d51248385a9396dd9ae002dbad32b661a1ebc01a225c78f1c668dc3f39"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_benchmark_v5_1_semantic_lint.py",
+      "sha256": "d9f94ae9e132877b8a2af91328f0d0f08ab5d3c86d75ac0a24393cc527284819"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_benchmark_v5_review_assets.py",
+      "sha256": "dc772cf2551b449e73b718d7dc40f3ed773c2f2b1f394663c2c584e0dcc813ae"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_common_runtime_stop.py",
+      "sha256": "92bcdc25c459e13cfc5f5984a02f3e7bbf2fad82710da07b36db81a1b41203be"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_failure_packet_incident_lineage.py",
+      "sha256": "5e69b4b7179f8d5ca764b842cb76e3085e59bf4fce3882b0a46e7440143e605e"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_generate_admission_typed_repair.py",
+      "sha256": "7d6fcb8571e04aa122c98ea4f16eba70dd27f20537d121be9a9f4174aa321163"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_generate_context_episode.py",
+      "sha256": "e2653c5db675fb986260e34ef8cdd6550cacf8309303ab4403fe9e2fcf744f80"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_hash_prompt_policy.py",
+      "sha256": "963bc2758ebc51bc52a66571e185188f67299f71a64182c64ea94b8e27f96b82"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_inspection_node_failures.py",
+      "sha256": "01d78758addc14095dbf3fae65f228ee06bada1f0483567e48fb603fd4df7e9a"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_inspection_terminal_workflow.py",
+      "sha256": "0812c0bba699063b21a219366cdc106ee7242269269acbfc03ba8abde40fc947"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_mutation_provenance_integration_fix.py",
+      "sha256": "97e47b8aea720503445ead3e219e3c181b8c4402b1e219aebea8f821dcd27947"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_phase_context_activation_persistence.py",
+      "sha256": "e3f8f610fab71b3ba98b23b5b84e9e3463075b412be63ff05935724baaf07a34"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_phase_context_compaction_runtime.py",
+      "sha256": "aa7d16a1743f145cccc14bccfe26a68f0c5918b52eff7b5597bc2d52617ce73c"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_phase_provider_prefix_active.py",
+      "sha256": "fa147961c03e23850c0fcd04b12edfb27b63afe472845d9216e42ce60b2bf127"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_planner_agent_loop.py",
+      "sha256": "bd2bcb6b6af3c32fd2cd9acb61c8a138e92b88d2e5d20d23a39d07cd9a7e26bc"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_planner_feedback_boundary.py",
+      "sha256": "7aeecf2d7895c1e8439068d90982ca9066b2b7792f744c184397cc8d80fb1e02"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_recovery_compaction_production.py",
+      "sha256": "dc9d78c30d77a4b623aea64af189190105d204929a978b00dc6a3f0806b2a766"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_schema2_context_compaction.py",
+      "sha256": "866495411cf3004853d4706b353993f7fbb4fd16407050213a3f694b96cc9596"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_schema2_generate_skill_routing.py",
+      "sha256": "1f1511d5165c40b486db9098e5ee1a2f9aeddab87b64d02e3b68edab3b7ca86d"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_schema2_integration_a_production.py",
+      "sha256": "279fdcf5528cfc0a90a0edac3cdd4b84aa002048c61c6b3a1df391f6efc90c69"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_semantic_completion.py",
+      "sha256": "ac9760003739930821c06bb1472fbc798e48d17f38a50973afd21afc55d72303"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_semantic_completion_workflow.py",
+      "sha256": "06198eb2f7c56aced45dc5aa5935a6aa824deed0c3d8a832f658a04818bbe1ca"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_skill_material_continuity.py",
+      "sha256": "ce1dae9d85c0e32d5d7221d5635e9c2df8f86b528cab78345fcd173d8248d565"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_skill_script_invocation.py",
+      "sha256": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_step_effect_runtime.py",
+      "sha256": "d59b7ac56c55fb2d5f69f27f3f9951056db9d6c4ef4f3dc6e282fe596ef0cc3a"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_step_effect_schema2_graph.py",
+      "sha256": "597b9e003a0be1e49ed31d8146332726797a08deb3f10aa02a12a215fd2000e2"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_supervisor_context_continuity.py",
+      "sha256": "b24531d765e8b8750883099a2c22aea8c42167517ae52ac108bff076025ce70b"
+    },
+    {
+      "status": "??",
+      "path": "tests/test_workspace_mutation_provenance.py",
+      "sha256": "833a14c8cd5f0fcaea9a5d650c90708de50e92c5204898098212f0aaa2380935"
+    }
+  ],
+  "current_source_manifest": [
+    {
+      "path": "agent_core/installer.py",
+      "sha256": "1c4b40eb49944d14c45591993aaa501de489769298b7e7438f1459487d287891"
+    },
+    {
+      "path": "agent_core/plan_tracker.py",
+      "sha256": "890caaacdc07adc8af3c986dd01ab1e73fe321636f4b4c4b623587e0e9fa5630"
+    },
+    {
+      "path": "agent_core/router.py",
+      "sha256": "aaf2b7889f4a183961da99ed6dcb7230fdaaa9b6b44642eecb79138d3dc07760"
+    },
+    {
+      "path": "agent_core/workflow_manager.py",
+      "sha256": "2c250c2f86d5aea2da7e450ccd90cc98c0d583812aa22b005768ff9dae9fdc19"
+    },
+    {
+      "path": "agent_core/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "agent_core/completion_gate.py",
+      "sha256": "aaa7287807d27f1da83570c37025569f3ea995d97a6437b0d4ededd21b25189d"
+    },
+    {
+      "path": "agent_core/recovery.py",
+      "sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f"
+    },
+    {
+      "path": "agent_core/diagnostics.py",
+      "sha256": "3be6dcf23934f0ce44de2aaa4577861b48b35919c9dd634876eeef4f7e80b029"
+    },
+    {
+      "path": "agent_core/knowledge_conflicts.py",
+      "sha256": "b4c14042cac8219f65c80aa5095357ab8cf9578ae3abd4a0965d71d6514aa46b"
+    },
+    {
+      "path": "agent_core/task_spec.py",
+      "sha256": "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059"
+    },
+    {
+      "path": "agent_core/context_budget.py",
+      "sha256": "181bebc8844b393a2ee715f51af88ab3139272452e54b895d597d117568caea0"
+    },
+    {
+      "path": "agent_core/consultant_finalize.py",
+      "sha256": "95622ed70f84e107a3d11d6095df6f0d1d3819975ca90953e7f076640a1e1b17"
+    },
+    {
+      "path": "agent_core/wiki_lifecycle.py",
+      "sha256": "36ad90e542ddf86d45b4173301c8dd422e9a21441529e6d4c678321916be4c3b"
+    },
+    {
+      "path": "agent_core/managed_artifacts.py",
+      "sha256": "d2b489a0ffa5c3fb9332ca085d34d97e12c1d262a786d4b9e2d67e49c61213e8"
+    },
+    {
+      "path": "agent_core/state_contract_store.py",
+      "sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28"
+    },
+    {
+      "path": "agent_core/skill_discovery.py",
+      "sha256": "8552c165a255b962d5be9fe5aa3d0e8ebd21ebe9bc02d051ad595f6fbc980b82"
+    },
+    {
+      "path": "agent_core/provider_attempt.py",
+      "sha256": "eab697938a26396f22bd930d7b6b60e022ba15397f20dafbdf5272d9a0d58f24"
+    },
+    {
+      "path": "agent_core/consultant_binding.py",
+      "sha256": "d359659fb23000de7228df34aab446fb1b253bb53dd34569289bd6313bea0637"
+    },
+    {
+      "path": "agent_core/active_state.py",
+      "sha256": "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105"
+    },
+    {
+      "path": "agent_core/provider_message_safety.py",
+      "sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38"
+    },
+    {
+      "path": "agent_core/recovery_provider.py",
+      "sha256": "8fc7bcc76f25609149c92c47aed7797939440feb961aa756a66389ed5d9d215e"
+    },
+    {
+      "path": "agent_core/plan_bindings.py",
+      "sha256": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f"
+    },
+    {
+      "path": "agent_core/planner_loop.py",
+      "sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649"
+    },
+    {
+      "path": "agent_core/step_effects.py",
+      "sha256": "8040375f2fdb8eb00c5b75977bac036a7e00db4781b3533a7e09f5f1bdfc633d"
+    },
+    {
+      "path": "agent_core/genomics_contig_parser.py",
+      "sha256": "2c5a3521736ee808598a5c0a9252a2227611f90441d6537e0424b424e98c3423"
+    },
+    {
+      "path": "agent_core/workspace_attestation.py",
+      "sha256": "b87c1c615d6d417d2540abec90fbe3a8b4d8f10c5b97200768ef1bcc23471326"
+    },
+    {
+      "path": "agent_core/approved_resource_locator.py",
+      "sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852"
+    },
+    {
+      "path": "agent_core/runtime_identity.py",
+      "sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8"
+    },
+    {
+      "path": "agent_core/phase_timing.py",
+      "sha256": "59b69c848c2f05a8db568a6fe420b69771292d8173d0b4420db1aee3750b984d"
+    },
+    {
+      "path": "agent_core/cli_logging.py",
+      "sha256": "981e05b7c29d30ec536bf53e7b81291409ebd587ca9b17663765204f52a86f82"
+    },
+    {
+      "path": "agent_core/cli_terminal.py",
+      "sha256": "524166fcc8586e9d19fa0afe960e6441e241c5d95a558110c2ef59cab4143b1d"
+    },
+    {
+      "path": "agent_core/cli_activity.py",
+      "sha256": "32dc70a5f66375c72ec17a927e074cfc9d911c253c0a32cf1149fa95c258a188"
+    },
+    {
+      "path": "agent_core/public_response.py",
+      "sha256": "260f6c77c1271c52e4f014a8eef07dd9bbbb219522dcadfd5f970de36dacd692"
+    },
+    {
+      "path": "agent_core/planner_revision.py",
+      "sha256": "97d01a83695b0b41cbf90e046a43205c91e3fc11fc92b0f5a12256f77e5dd44e"
+    },
+    {
+      "path": "agent_core/execution_authority.py",
+      "sha256": "2ab26ebe38dae92011956d653a896bfc0f0f7ad55dcce7b4bd7a92a08c31239d"
+    },
+    {
+      "path": "agent_core/reproduction.py",
+      "sha256": "799f88bb4af5fbd87ed2a2b7ca35fd9e1ca514ed8dbe1fa0de50339fdf2b1472"
+    },
+    {
+      "path": "agent_core/cli_lifecycle.py",
+      "sha256": "68eaa26ecd32e32d270d802ae6c54902013b7594644c0832b094a917b529b28c"
+    },
+    {
+      "path": "agent_core/skill_script_invocation.py",
+      "sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97"
+    },
+    {
+      "path": "agent_core/human_io.py",
+      "sha256": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2"
+    },
+    {
+      "path": "agent_core/llm_safety.py",
+      "sha256": "ee97e68b5ec55c72ff08cf01bea2ddfd563aec6211ed2a20ba19a7d27835ec94"
+    },
+    {
+      "path": "agent_core/middleware.py",
+      "sha256": "25e1f5b83d2d4df03093ed5fe42979e0ba75f3587b98149feae5f99fa405ba56"
+    },
+    {
+      "path": "agent_core/retriever.py",
+      "sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9"
+    },
+    {
+      "path": "agent_core/skill_manager.py",
+      "sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92"
+    },
+    {
+      "path": "agent_core/state.py",
+      "sha256": "af4f504c0b61267659d3d554b27f9a9eec92a48b35143fbe838e4450ac8c4565"
+    },
+    {
+      "path": "agent_core/formal_artifact_resolver.py",
+      "sha256": "3f6c2e0c9a3d84c05fa26202b5875a1a37bd8cb5b8abbbcb86488fe32adff1ba"
+    },
+    {
+      "path": "agent_core/root_cause.py",
+      "sha256": "fa3291f87291777cc51ea2537c171ffcc981ae408836ce0769e69c1d592e9a23"
+    },
+    {
+      "path": "agent_core/context_lineage.py",
+      "sha256": "5e66bc3ca1b6275dabdcc153281640167ac351cfc871e6e95fbef713813adef8"
+    },
+    {
+      "path": "agent_core/consultation_state.py",
+      "sha256": "2dcd0daa49783aab020d91282db5056803ab1b48ab515c27add6f64d46444b2c"
+    },
+    {
+      "path": "agent_core/node_context.py",
+      "sha256": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff"
+    },
+    {
+      "path": "agent_core/plan_contract.py",
+      "sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde"
+    },
+    {
+      "path": "agent_core/controller_audit.py",
+      "sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3"
+    },
+    {
+      "path": "agent_core/recovery_evidence.py",
+      "sha256": "febe265f9d000477d87511010e2b807de70d1d585814717ae330b4e82c3b2846"
+    },
+    {
+      "path": "agent_core/consultant_continuation.py",
+      "sha256": "dbf65f17015470d316bc34b7076973480c181b3a44440924b53df40732dd1544"
+    },
+    {
+      "path": "agent_core/deepseek_stream.py",
+      "sha256": "2da1f92d742d1b249f8beb35114317189db7a7f413c1805a8d1c5c8625bd4f94"
+    },
+    {
+      "path": "agent_core/recovery_contract.py",
+      "sha256": "34a7cd4631ce4f3f68cd342006ed6c7dc5e4349922915d821b991467dfc0a13e"
+    },
+    {
+      "path": "agent_core/skill_access.py",
+      "sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341"
+    },
+    {
+      "path": "agent_core/action_runtime.py",
+      "sha256": "53ff91ce91ea502b4fb46d63e374ee3e3ad27596a7aea924227cc672b95c3071"
+    },
+    {
+      "path": "agent_core/semantic_completion.py",
+      "sha256": "abf7ba2dfd42cb8d91e79e5e93c298a780ba0b169267acf6e95f6b4d714326d3"
+    },
+    {
+      "path": "agent_core/runtime_evidence.py",
+      "sha256": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424"
+    },
+    {
+      "path": "agent_core/runtime_inspection.py",
+      "sha256": "485229946948afa1bada3494b81f3c70c24d01e9faf9547c773971c7a94045ee"
+    },
+    {
+      "path": "agent_core/candidate_repair_policy.py",
+      "sha256": "45bb6ee3aff8c2135ece783981c33493921226aec96a30a98b739bbac9502af3"
+    },
+    {
+      "path": "agent_core/planner_context.py",
+      "sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a"
+    },
+    {
+      "path": "agent_core/planner_output_policy.py",
+      "sha256": "9d937db3705bbda6f18b5e4344a125ab226870c1e7af7b283c925b5f1a5871e2"
+    },
+    {
+      "path": "agent_core/planner_recovery.py",
+      "sha256": "09f311dd02997260a62af1d7477e94b6805cb69ba7244022775f26e56c38bebd"
+    },
+    {
+      "path": "agent_core/inspection_readers.py",
+      "sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d"
+    },
+    {
+      "path": "agent_core/skill_resource_binding.py",
+      "sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445"
+    },
+    {
+      "path": "agent_core/cli_display.py",
+      "sha256": "59ef61857b3c8a23479e45e0023c2afe8c8f970b211b31a71b027a597c1ff15d"
+    },
+    {
+      "path": "agent_core/cli_review.py",
+      "sha256": "ef2efe1a5a02f044ecf7c42907f9be856da1bed193c53053fca2351ae11744d6"
+    },
+    {
+      "path": "agent_core/evidence_projection.py",
+      "sha256": "abae8a30477826ece6b4583e256e5e202176016b3384236018205e00f59bc6ba"
+    },
+    {
+      "path": "agent_core/committed_observations.py",
+      "sha256": "17a02c12d0323f5bc1e74f97ff90362866e1bfe68e5935693c0382816a138884"
+    },
+    {
+      "path": "agent_core/cli_plain.py",
+      "sha256": "4132898b02b0d9b3c67f099b61a04aff711b9c3056a7d17cb1d89f24d0bf8daa"
+    },
+    {
+      "path": "agent_core/workflow/verifier.py",
+      "sha256": "6bb3459a9933dd294eb16109af226ed5a296d4bd626065054f5cff6d981df9ab"
+    },
+    {
+      "path": "agent_core/workflow/commit_step.py",
+      "sha256": "5f7eae758fc308447d3b013d8cd28debc87d72a28fd6788f551fcb676ec8a1e5"
+    },
+    {
+      "path": "agent_core/workflow/recovery_runtime.py",
+      "sha256": "9b0b4f08cf902c370631d0c3a79c019444203bf57c9da29da4cdeb2d1d657825"
+    },
+    {
+      "path": "agent_core/workflow/early_nodes.py",
+      "sha256": "cabf181201849b0fe2c4e6fd7ed0caeb441cefde23f54ca57d7a0277e98b55c9"
+    },
+    {
+      "path": "agent_core/workflow/scoped_context.py",
+      "sha256": "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4"
+    },
+    {
+      "path": "agent_core/workflow/stage_contracts.py",
+      "sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248"
+    },
+    {
+      "path": "agent_core/workflow/phase_subgraph.py",
+      "sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392"
+    },
+    {
+      "path": "agent_core/workflow/recovery_tools.py",
+      "sha256": "ba16dae96997112ef488f8a90d89ba9fd219e8f7a9859d8a6d0e4a021c81fb5f"
+    },
+    {
+      "path": "agent_core/workflow/recovery_agent.py",
+      "sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6"
+    },
+    {
+      "path": "agent_core/workflow/generate_handoff.py",
+      "sha256": "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc"
+    },
+    {
+      "path": "agent_core/workflow/context_activation.py",
+      "sha256": "5025aab95377469cdbcf3903258581caf521b79b775f1e52a86699bb834d2704"
+    },
+    {
+      "path": "agent_core/workflow/candidate_repair.py",
+      "sha256": "88df1ad82e1d7ed0a22f097c6afabab1f410e251a3933d709f6b04d54e450239"
+    },
+    {
+      "path": "agent_core/workflow/inspection_stop.py",
+      "sha256": "726e7a399ad8e40b7a9000df8e97650435f1c675b09eb40ef16edc436ba7a512"
+    },
+    {
+      "path": "agent_core/workflow/recovery_reception.py",
+      "sha256": "d8f6d69a934534579c32163e29e1960a701376e2792859d4c85fb15cd0a03eb0"
+    },
+    {
+      "path": "agent_core/workflow/result_resolution.py",
+      "sha256": "dc5e037b54a9f51462defd5cd3dbc43fb98d57b20cfc1e2acff49ff09de602b5"
+    },
+    {
+      "path": "agent_core/workflow/consultant_resume.py",
+      "sha256": "e07641d873d4563f985f4873bacb952a45a7e52a62db7978d4717e52ec100baf"
+    },
+    {
+      "path": "agent_core/workflow/__init__.py",
+      "sha256": "53c2997ceadcc125740b6e42ff4dc9380cdccafc0c337882d4e843909976e585"
+    },
+    {
+      "path": "agent_core/workflow/step_worker.py",
+      "sha256": "ce816aceee63691beaa56d2a4463679ab815d4dadc63d45f145fab2fb0e8478d"
+    },
+    {
+      "path": "agent_core/workflow/pi_rpc.py",
+      "sha256": "14747444e33ef98d1db433c8f21567f736c439b62406afcd92026a91cca13e88"
+    },
+    {
+      "path": "agent_core/workflow/outcomes.py",
+      "sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76"
+    },
+    {
+      "path": "agent_core/workflow/typed_node.py",
+      "sha256": "41a87dee3256ecb4f1dfc7bca05b91279413e32ea548882db82b38b67f57b1c2"
+    },
+    {
+      "path": "agent_core/workflow/runtime_graph.py",
+      "sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2"
+    },
+    {
+      "path": "agent_core/workflow/execution.py",
+      "sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29"
+    },
+    {
+      "path": "agent_core/workflow/final_audit.py",
+      "sha256": "05f7564381653aaebb73051b1d91ac6e7c14850fbf778a5559c431fe1fd0717b"
+    },
+    {
+      "path": "agent_core/workflow/phase_archive.py",
+      "sha256": "7a3587589f52db7f51435e277928204120cf55c1bccdf51be7ab577be3c538e0"
+    },
+    {
+      "path": "agent_core/workflow/phase_inspection.py",
+      "sha256": "f8be1e09d038f02a2d59cfca20d6e997425549434641b53beb53d90bd4b84eab"
+    },
+    {
+      "path": "agent_core/workflow/recovery_projection.py",
+      "sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94"
+    },
+    {
+      "path": "agent_core/workflow/recovery_node.py",
+      "sha256": "368729d753c29123a3081d29a39fe9962d4dd8305c083bc8380181114fe02328"
+    },
+    {
+      "path": "agent_core/workflow/recovery_context.py",
+      "sha256": "2b870bc3034c9654506dcffe2dfe4b74d41a97a38670332434fcbd9d258c3aa4"
+    },
+    {
+      "path": "agent_core/workflow/context_compaction.py",
+      "sha256": "8ac0c9b67bbb6c054c0b58965e983f6900855fa178f369dc2fb7f082c3070392"
+    },
+    {
+      "path": "agent_core/workflow/phase_compaction.py",
+      "sha256": "f73a7fac6a9b5d78d8520d079a8f424981fda680a69abfac5596e8a279515640"
+    },
+    {
+      "path": "agent_core/workflow/runtime_evidence_recovery.py",
+      "sha256": "80e7b63f6a06ea1409b4b3e3ca7e8ee08dc93a6f1ba29243aed33b67eb782e44"
+    },
+    {
+      "path": "agent_core/workflow/runtime_recovery_reporting.py",
+      "sha256": "d35947cbf386f4a934ca4a34fd071bb290e469c260617bb0c49aebfb9945e969"
+    },
+    {
+      "path": "agent_core/workflow/inspection_evidence.py",
+      "sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84"
+    },
+    {
+      "path": "agent_core/workflow/managed_stop.py",
+      "sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa"
+    },
+    {
+      "path": "agent_core/workflow/diagnostic_admission.py",
+      "sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a"
+    },
+    {
+      "path": "config/logger.py",
+      "sha256": "42657408667fce07c0d36869cfdcf1efedf45279c35604de6a046f1cd75e25a0"
+    },
+    {
+      "path": "config/startup.py",
+      "sha256": "fb0e1920dd327ba5f73196aac561b8b4637177def0134b9302b0091aa033578c"
+    },
+    {
+      "path": "config/__init__.py",
+      "sha256": "bba896c13436a1c4eacec68b946e43676ba03b9c895d90c9dafc8a2ce52115f0"
+    },
+    {
+      "path": "config/reliability.py",
+      "sha256": "cccba67a7def8603ad013bcd38563d8c7532f18c6e652e055a1e2dee68fd40cb"
+    },
+    {
+      "path": "config/config.py",
+      "sha256": "ec7d04be7c225a60835fc3a2afea4bc72dcc2c9540cc9de0a3a865a28203caa5"
+    },
+    {
+      "path": "config/settings.py",
+      "sha256": "9f0a0227cdf57672dcc0d0888438c16b6d35d258611fba44a1bd44b977cf0310"
+    },
+    {
+      "path": "prompts/templates.py",
+      "sha256": "c8af0020f47de9b28439156bffaffd44d678872c17cc9f970a0b832b7016431d"
+    },
+    {
+      "path": "prompts/__init__.py",
+      "sha256": "71fc9379314f2bd1a0dd5f7829192657e7ddbadd4d30b9c04b8728792f760fc0"
+    },
+    {
+      "path": "prompts/context_compaction.py",
+      "sha256": "9c6624c844b5a078175aad00fe472a443cdf601773e5e239f40d0d0f78d48839"
+    },
+    {
+      "path": "prompts/manager.py",
+      "sha256": "021f3b5e4e5b741e207a17a1da1801047bf8dd5e4770876b86214b1917b266b5"
+    },
+    {
+      "path": "skills/SKILL_TEMPLATE.md",
+      "sha256": "0b7ee888403b7dc60a76536bb618d06e1914b40912dc0c59c352c5fd6a6cdcea"
+    },
+    {
+      "path": "skills/.skill_runtime_registry.json",
+      "sha256": "b4838062bc3f312e4cdf6757f3f2c59768bae1903461fadd5c65b481dbeffeae"
+    },
+    {
+      "path": "skills/genomics/assembly/SKILL.md",
+      "sha256": "78e45367a610a558ea1858d8dcd9b57c07b76d8a67771e8eaf4bb0559b528cdb"
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/SKILL.md",
+      "sha256": "74a1e0abd8bc082a33b68197a416c0dd7f340df76bb8b185a8a038a999fdbefe"
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/agents/openai.yaml",
+      "sha256": "8986d4e79612603299b4803231a3bce7d79dbea54b0fbb594e923d567804bfcb"
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/references/wgs_gatk_notes.md",
+      "sha256": "7dd5e20eb51d7e1596485eec5566d7351ab39c29cb7febd155f0944e0de26c3a"
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py",
+      "sha256": "9ea0960236b7827be05063f7e32c65b70692a3efa338350b618a369dba4a5e12"
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/scripts/make_gatk_interval_plan.py",
+      "sha256": "971bccea668bab1719cd15d99ba988b7cd4aade1fefe4670a0d29a35911e1d21"
+    },
+    {
+      "path": "skills/genomics/rnaseq-variant-calling/SKILL.md",
+      "sha256": "979f8ea4f364b1ebad298705c137537403304732c0dff52adfcc2b5d0bc20089"
+    },
+    {
+      "path": "skills/genomics/assembly-variant-syri/SKILL.md",
+      "sha256": "a4e9ea41d20f8f067dbed1bc4a1d00c2081e91927f289994c22f55d651f70cf1"
+    },
+    {
+      "path": "skills/genomics/long-read-sv-sniffles2/SKILL.md",
+      "sha256": "55b1392d46a0cbc382dd4a80cdaf8aa5a8d0778c40fdbb24e4d4a1e9a64f32d3"
+    },
+    {
+      "path": "skills/genomics/long-read-sv-cutesv/SKILL.md",
+      "sha256": "1037419fa7b31bec9889847bbd083883d919f301ab0fa341eb63d105a67d7446"
+    },
+    {
+      "path": "skills/genomics/pacbio-sv-pbsv/SKILL.md",
+      "sha256": "b4bec2e06eb82d20743ba4826b101afb34fefeb358d0f104057f0b02715cbf81"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/SKILL.md",
+      "sha256": "a47c305477c9a1c8e592e0d0187af200b079001bc709e1e6d84983ef2615f43e"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/agents/openai.yaml",
+      "sha256": "0761e520aa52c155168debe101054f97e803e6c7537febfe841b917224655d83"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/references/snpeff_notes.md",
+      "sha256": "126cfeee7e8f92d9abb450357ea3b36b01bea6b31b527ff9a196b796388d6fb5"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/references/snpeff_config_templates.md",
+      "sha256": "1dd82f6a94bb300593ae9d4266454add4c9313a3939794833b9b4c26dec3d5e5"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py",
+      "sha256": "b057cd7fc30ad923ffddb7ee48b1221b687464464bd68037f18a56006fc9763f"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/scripts/snpeff_checks.py",
+      "sha256": "22f36e5540c378abf4876c3c091544a27de0dc44daab30ab164f4153b1e00f46"
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/scripts/ann_summary.py",
+      "sha256": "8b06004830dbf14eae7a3a6017651a3acf25533fce59897b4d2aeb19d3b46b26"
+    },
+    {
+      "path": "skills/genomics/reseq-variant-workflow/SKILL.md",
+      "sha256": "b9bcafbdc29eed5d38696c8f0f8268aa81b6586d7c6930b4e6104250b38376cb"
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673"
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+      "sha256": "6c74374f6daad34daa911c45f9fadd8e763603939f88d9993f9748a3d53c1dc6"
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py",
+      "sha256": "171bc36e21edcf073c47f8c0a96faaa9fe6723e01a73aaf0b5578463de16a02a"
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+      "sha256": "a3fb0858570e7dbd925c008b747581c9b6393091c9ac2f52d099e84cc5e442ec"
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+      "sha256": "1cbfb2a45bf0dcd3d06784fade31d7822bf3d374a81c80545493e168bbc1eced"
+    },
+    {
+      "path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+      "sha256": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad"
+    },
+    {
+      "path": "skills/genomics/wgs-bcftools-snp-indel/SKILL.md",
+      "sha256": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665"
+    },
+    {
+      "path": "skills/genomics/wgs-lumpy-sv/SKILL.md",
+      "sha256": "e02ddf4463bccf1a3271771d186cfcb9c7677d23de877b9f8169786b21b04e07"
+    },
+    {
+      "path": "skills/genomics/wgs-cnvnator-cnv/SKILL.md",
+      "sha256": "7756fc0be129d77334c7e2058f35b146d582975a3293e40dd49be6d61c58c297"
+    },
+    {
+      "path": "skills/genomics/long-read-sv-sniffles-survivor/SKILL.md",
+      "sha256": "26fdc68f44718f6cd874d850eced995c63ce2a7690bd8afc057819087525d488"
+    },
+    {
+      "path": "skills/genomics/wgs-manta-sv/SKILL.md",
+      "sha256": "38428f8312c2a5e1fdc43ec18abec6bab5f97db9713c42d6ec8306946136a206"
+    },
+    {
+      "path": "skills/genomics/assembly-variant-assemblytics/SKILL.md",
+      "sha256": "f2659cca7131f21b37d6ffdab2875c59a178d0bdb061fe5a7fc80894358bff60"
+    },
+    {
+      "path": "skills/genomics/assembly-variant-svim-asm/SKILL.md",
+      "sha256": "4c23a3e1289383a4c93fe13cd3ac69e41d3e6fe349095ceb973f5f70d43c9537"
+    },
+    {
+      "path": "skills/open-chromatin/modkit-cpu/SKILL.md",
+      "sha256": "6aadbfce01a03c6f03e04ff8d2d1c5d66fb53ed53ca09b79c155a5fd82030530"
+    },
+    {
+      "path": "skills/sequence/search/local-blast/SKILL.md",
+      "sha256": "aa8f25fa26f175d6ef800c4f23fc7bb02aa314a3541a50b57640663c5f9c8a00"
+    },
+    {
+      "path": "skills/sequence/search/sequence-similarity/SKILL.md",
+      "sha256": "e366ff9d836349c794f744d3f7c2532eae106135f2fb4a1158fdfbdf6ed5ba64"
+    },
+    {
+      "path": "skills/sequence/search/remote-blast/SKILL.md",
+      "sha256": "cc1586f3d617a2778be39dcbdd639a7b5afbdbd233f52933632d8583f6dfdcba"
+    },
+    {
+      "path": "skills/enrichment-analysis/SKILL.md",
+      "sha256": "981e62066150e8b65e0ca328d54014aa25e8eeb2a0160d103a5218a6e304e94f"
+    },
+    {
+      "path": "skills/enrichment-analysis/scripts/check_enrichment_inputs.py",
+      "sha256": "9a274f47b75a72917346f0128be82e45a593f881359caf191264f4b69b721290"
+    },
+    {
+      "path": "skills/enrichment-analysis/scripts/build_term2gene_from_annotation.py",
+      "sha256": "9862a439fd49a0f47a01d38111c0dba76ee1263c08cf561c7108a18719ee92cb"
+    },
+    {
+      "path": "skills/enrichment-analysis/references/database_decision.md",
+      "sha256": "2f7b4aaf47a42c99a4c3bf2a2a83ba5c9139b1538c780b36dc0c65b845d280f3"
+    },
+    {
+      "path": "skills/enrichment-analysis/references/input_qc_and_background.md",
+      "sha256": "91098c9e1daddee21b90cdee3f1c7caf6284c735981fa5e9128bd95d55b9b8f2"
+    },
+    {
+      "path": "skills/enrichment-analysis/references/reporting_standard.md",
+      "sha256": "d7b14316dc1aaf53152cf6e55cab4440c5a0d32f3c4858b62e517f10984342ba"
+    },
+    {
+      "path": "skills/enrichment-analysis/agents/openai.yaml",
+      "sha256": "a1fb94d29f9e91b6e1c6ac2d3c5147aa84e7972d99d73afb9946f330fe8221eb"
+    },
+    {
+      "path": "skills/3d-dna/loop-calling/SKILL.md",
+      "sha256": "32848673bf2a2ddb08c3af743c84829426821964fd5750b559d3aa3a4ab02147"
+    },
+    {
+      "path": "skills/3d-dna/loop-calling/scripts/run_mustache_loops.py",
+      "sha256": "96cf688e76d0f01a7634212168d842965e1cfcba2f35cef4e881e364b4191053"
+    },
+    {
+      "path": "skills/3d-dna/tad-boundary-change/SKILL.md",
+      "sha256": "3ca6c14559169177b584598313d160e67d04ae0b6de15d0f284ca04bca801ce2"
+    },
+    {
+      "path": "skills/3d-dna/tad-boundary-change/references/output_schema.md",
+      "sha256": "16b04fc49e353d69ba97a3f6f47a67d30a7fd4afd305c8c93b82f8397700d9ff"
+    },
+    {
+      "path": "skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py",
+      "sha256": "fea0f62a68dcb5ee63179fcf09cdab46c5b57e3d06c71ad205ab5c4254fbe6ca"
+    },
+    {
+      "path": "skills/3d-dna/calder2-subcompartment/SKILL.md",
+      "sha256": "9b8539230a67687f36e3e9dc0d8edbdceb48a3c812f12cc395f211cc33e325f9"
+    },
+    {
+      "path": "skills/3d-dna/calder2-subcompartment/scripts/run_calder_compartments.py",
+      "sha256": "2307e12ad92f5032e4831c43f79286b4cb3fae891b4d923f11434c98ec517e65"
+    },
+    {
+      "path": "skills/3d-dna/3d-dna-analysis/SKILL.md",
+      "sha256": "6bc65b604642f2c25ab43ea36448e5d1eca1a007d039559fae32b7a52fa8e56d"
+    },
+    {
+      "path": "skills/3d-dna/compartment-calling/SKILL.md",
+      "sha256": "df81351dae9d9d2a55f04c4ba869c776c3e0b1fc8b9764cb679de72162b29dfa"
+    },
+    {
+      "path": "skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py",
+      "sha256": "417be50734a016dc74063f202b542aafb196257b48eae753b1554b4e820c3b7b"
+    },
+    {
+      "path": "skills/3d-dna/compartment-calling/scripts/run_calder_compartments.py",
+      "sha256": "8fadd9cdf112020cd4fcdac75242cc91822c9778137ad1688f0118e41a120de8"
+    },
+    {
+      "path": "skills/3d-dna/differential-compartment/SKILL.md",
+      "sha256": "a01c8ad702ca80cf0594166ce238c46316aa37383f5b4c378b4b1ac4e38c6f0c"
+    },
+    {
+      "path": "skills/3d-dna/differential-compartment/scripts/summarize_differential_compartments.py",
+      "sha256": "3d3934cb6126d02c6991f2a00644c490a68524b56305baf7b72bee81f81d1493"
+    },
+    {
+      "path": "skills/3d-dna/differential-tad/SKILL.md",
+      "sha256": "9b53b9a4c675f1883f16272394f43da471a7aef4e8fb90655446699664973a57"
+    },
+    {
+      "path": "skills/3d-dna/differential-tad/scripts/run_differential_tads.py",
+      "sha256": "1bd7ccadd5a8e78575374996b0ac25e6cf8955054312c0feba5b60e026a0187a"
+    },
+    {
+      "path": "skills/3d-dna/loop-classification/SKILL.md",
+      "sha256": "623c19c935e74f97de5924c2c1b9db502e28cbb5879f2b2aa3d262461654bd7d"
+    },
+    {
+      "path": "skills/3d-dna/loop-classification/scripts/classify_loops_by_marks.py",
+      "sha256": "45780a6329b2969091475d0c438270f279a47f0b5d03a98689759686e6a169a3"
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/SKILL.md",
+      "sha256": "ce50823cbb1fddc4e46f2979079a8c343e5119c8a43b6279b77d1388fcae5c50"
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/references/hicfindtads_workflow.md",
+      "sha256": "259da30c26f78d42b23e647f36c5bd0612ef632e60db9ed72f1505d1224c7505"
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/references/output_schema.md",
+      "sha256": "4bd6db7bbf2803140c556da9d46ee6b5f21073a21a6dc03a288ae016f9db4702"
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/references/preflight_checks.md",
+      "sha256": "ba61c8fe990558bb787179530248de51c98a43be2609c5d7f59f9c1b5b165680"
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/scripts/call_tads.py",
+      "sha256": "0eb464676ff58a86c24098f276705a6c40177ce4b41a0af0bad0df4e0ffa932a"
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/scripts/check_mcool_balance.py",
+      "sha256": "081f080aa4569f03eae379d8d709bd98b0886bc4043b220147e7c44e5ed404e9"
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/scripts/check_cooler_resolution.py",
+      "sha256": "1811b95ba3cb5cc02656a2dc025386b83e9f996cc98952071473ab89b9adcbdf"
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/SKILL.md",
+      "sha256": "682a662e663d54b9ec6471cddfbcf90dd0c139edd3ac7321299efdc6b29537af"
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/agents/openai.yaml",
+      "sha256": "f3dc7cc9ea0805fb3572f2bcc71962a77e994c29e37321599879c002d11e77fe"
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/scripts/make_deg_report.py",
+      "sha256": "cda12f5aee90422b0382c63b2fed8c192e061e67655a7e44b3a670034ca34b44"
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/SKILL.md",
+      "sha256": "ce84f44193d12fdb55bd17f0c529e60a86e780d33e0fd17c5b852fffc697a4d2"
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/agents/openai.yaml",
+      "sha256": "fae40caa93d5eeb0e2bd1afb07a172746de4c960fc4bd450087f839f1c325653"
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/references/install-and-data.md",
+      "sha256": "a5b1d744643b0eb84bc3b8668dcd9cec556e4b1b96ccb1f0e2955891479343db"
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/references/source-notes.md",
+      "sha256": "2b2923193ae080afab515eca8c8aaf36d188e667857f57b4f47d349475c7f758"
+    },
+    {
+      "path": "skills/crop-breeding/crop-genomic-prediction/SKILL.md",
+      "sha256": "853f70c7738678e03210ed9202be26cf424ea1f62b479cb6348db77fe08f81eb"
+    },
+    {
+      "path": "skills/crop-breeding/crop-genomic-prediction/agents/openai.yaml",
+      "sha256": "4bc806a63318bae5bb528bf4f044e268603bb7e763dfeae6e6381fbf9aa22518"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-rrblup-gblup/SKILL.md",
+      "sha256": "40bdf12307ee3dee8a59b7674800d200b2bc8f390344aaa7c6677fa3ae0d4c8e"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-rrblup-gblup/agents/openai.yaml",
+      "sha256": "14d519f7dac56b422a7442a6953c93b55ab21c2f3d10ba7e16233d03f25ffb69"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gapit3-model-compare/SKILL.md",
+      "sha256": "ea12c005577533ae4db4b30eb7f3c07e027b8b1254aaecd1aac8e257dc84a605"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gapit3-model-compare/agents/openai.yaml",
+      "sha256": "0827691cb610c3d66a94f8ef0d5235ecdd92dcae981360e744784fd2b27263a2"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/SKILL.md",
+      "sha256": "2d66dc0f2d5cf8fe8faa3dabe253186f8d6b57f69a54d0fdf3dfcb15614dc1d7"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/parse_gwas_results.py",
+      "sha256": "839a26d185198fd8cdb9be49af20ea952d7b52aea52b34a0c667ed0380db0049"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/map_snp_to_gene.py",
+      "sha256": "976c41a7cf8b4f1bd87696308be41afc55a3504566ab9937f1e6cf3333424d30"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/agents/openai.yaml",
+      "sha256": "cdd94291854c3ce237eb8b57d081ce45e3c6973ac93f277ea5d1832065f99eac"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-rmvp-large-scale/SKILL.md",
+      "sha256": "a9e5b5329347c4527cf821311a0f24522222fb434f771818ccb0d426f0cbd351"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-rmvp-large-scale/agents/openai.yaml",
+      "sha256": "12b4b3039ae013577acf2bdeb7232890acb8ff7953784c69248920985f4329bf"
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/SKILL.md",
+      "sha256": "97baaad5af07de59bf723df03c54fa8e4c03a2800b6197c83f0bbb6af087ef5b"
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/agents/openai.yaml",
+      "sha256": "0be4c2952fe7950e9690ef0ec51cc83fced68ab45b378a86942d407c68cfe103"
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/scripts/apply_marker_effects.py",
+      "sha256": "99707962ae34e54d32dfedfe73f69c9f61a1af869b9ec3a3e7a48983a76721e2"
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/scripts/report_marker_score.py",
+      "sha256": "48abd4d7fe72c5ccdcda321d9923830d2b165623364d50c24b8bc319667ef08b"
+    },
+    {
+      "path": "skills/crop-breeding/_gwas_common/scripts/map_snp_to_gene.py",
+      "sha256": "6a5292b3553665d1974ff04419f6675b96deb9d17bd0ca65e2f860a525d3acf0"
+    },
+    {
+      "path": "skills/crop-breeding/_gwas_common/scripts/standardize_gwas_summary.py",
+      "sha256": "e6b3f21340f1da8ff78c3b7b1c25bf845502c4961bb5ca47785c0604f8dcf7f7"
+    },
+    {
+      "path": "skills/crop-breeding/_gwas_common/scripts/gwas_common.py",
+      "sha256": "9feabddefec20c7791789a556ad8ce111b851b69f942017ded5d332a87292539"
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/SKILL.md",
+      "sha256": "7609eb34f2fa1fae4db7c0c969b9234c9b7ba3dc5666aa91fe383f0e74ffc426"
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/agents/openai.yaml",
+      "sha256": "63006181731f5302e0f5406eb003248df0fdabc7cf876fe87aa73ecab0276249"
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/references/install-and-data.md",
+      "sha256": "43cc15d45a7a312a2ceb9b71871617c6937e465ff772e9e9ce7878a457b09ce9"
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/references/source-notes.md",
+      "sha256": "1b7719fd27cdc121712db2d343abcfcd33a213797719603878073b1f943a87ee"
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/SKILL.md",
+      "sha256": "b923abff675d8a9b5a04ea8dd014f4fc3344e08d66553fec04b495deb42605db"
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/references/install-and-data.md",
+      "sha256": "baa56fceac5080cc6e491864fd52a871741eac28d02a3b10ab9ccaa7abcf5426"
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/references/source-notes.md",
+      "sha256": "4e78c2ea4b9b0a6b7d33159e61073d38a0f3f8fbfe1e78190487098ba9aa632c"
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/agents/openai.yaml",
+      "sha256": "fb022d67ea7041d3ca4817f84ed52d9ea417dc8e87d60ee3e98191cf5b3897d7"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/SKILL.md",
+      "sha256": "9a56f1cb0b719ea627bd58315e603aa0d01c2e1c2532c25ecb174a04b5ca54de"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/agents/openai.yaml",
+      "sha256": "0b81d04762844fe1a51239aba0db2c83ffddc221a7c390458c08fbb26151b94c"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/references/source-notes.md",
+      "sha256": "e610c6e0149c837ffbd487107d1ac4f6fb7e3f0c45cb230477c048c6cc53a6b1"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/references/install-and-data.md",
+      "sha256": "f16dd882d51689b26dc8c0748f33826f9e3c0a759986d9106370e5ad17eeb3df"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-bglr-bayesian/SKILL.md",
+      "sha256": "3a6b51f8efdb56716323c3eb2131c08c98a858a9927695127b1a8827a5803b42"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-bglr-bayesian/agents/openai.yaml",
+      "sha256": "22df2e3b96217b776459eb0c004539b5a03826553c66145b279e65284b418cd1"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-sommer-multikernel-gxe/SKILL.md",
+      "sha256": "1274ef499445fa4b677b1661695ca4824fb1cd89c9c3dadec6ffd632969118d4"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-sommer-multikernel-gxe/agents/openai.yaml",
+      "sha256": "32cef15d30b5fa5df5b29dc9db015983d94c6083748f4fbccd786e6cd6369596"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gemma-lmm/SKILL.md",
+      "sha256": "120ebaebfb6d3d2763613f5d3e09248beb0162982241b2e5f927e02930abeba7"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gemma-lmm/agents/openai.yaml",
+      "sha256": "24a9ac08cdc758f981bf1d5ca1d6c71133eef1313d76afb7ae9209b00b05f094"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gemma-lmm/scripts/run_gemma_lmm.py",
+      "sha256": "b0691c0f28ed27794b775eb5e9f3254a797bb665dfd36743796c8441c15469c5"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pav-sv-pangenome/SKILL.md",
+      "sha256": "5ee508bc80af4793be95dab8c80b6a359183cc65dba01708ff82e793205451ec"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pav-sv-pangenome/agents/openai.yaml",
+      "sha256": "baa639292cf3bd49ca1c28c26730b85a2184c078702f280147e492d502f10c9d"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-qc-plink2-vcftools/SKILL.md",
+      "sha256": "b91e82122fb44915ebec934b2615949abce906a64042cdf3a78c9542ce781379"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-qc-plink2-vcftools/agents/openai.yaml",
+      "sha256": "8a311cc88a6c4f140438b3d72d0104da697dfed9099cca4a09219d2357a72ebd"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-qc-plink2-vcftools/scripts/run_crop_gwas_qc.py",
+      "sha256": "e42e85dd71d50b85c139eec2e23f086975bc7661147047df897b974546dc13cf"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/SKILL.md",
+      "sha256": "e4566ac9135559a48feff8cc7dbb3a3817fdd1abf7b88e732d5ea00fb1152e08"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/references/source-notes.md",
+      "sha256": "bd231d8c06d488fc5549fc3c723ca83cd92efa021ddf4241b84c7e0dc91ad062"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/references/install-and-data.md",
+      "sha256": "15dc58cba663c05c0e1f430e4545bc527ae4459e9b8efcf561a372de5312d7e1"
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/agents/openai.yaml",
+      "sha256": "b13025d63c2f756ef98b5fc0d730c8ef4f3056985c7b5c16b50adb4e5789fc5b"
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/SKILL.md",
+      "sha256": "121c840c4dc701624bd623438cdef3b27b9984dc72d7d561ec022239a025fb8b"
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/agents/openai.yaml",
+      "sha256": "9867a5b9c232fdb4d727727a4be4be02542ac1cb1045eb733d7f23ef09c95d84"
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/references/source-notes.md",
+      "sha256": "580cad238451ac8caafe35703505fb3b83a308d54f96a4121c8a8b1810ff876d"
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/references/install-and-data.md",
+      "sha256": "48fded0fe9a3b98ab0e424964eba9f9e5ec7adc9ba14f546aec4b204e44fad2c"
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/SKILL.md",
+      "sha256": "046d5aae4fa312b88bbacd32d3e928122e6671e436ef92c9a84d9c215136c6e1"
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/run_popgen_stats.py",
+      "sha256": "eb8941c9c250fd5c9c9fbcd128e582a216c08ad1e0a16d4c302cc2813d9b986d"
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/haplotype_network_input.py",
+      "sha256": "7209c2243dbf70ef709b4530ffd419cf07aaeb2b58b427683061b948bee308c5"
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/summarize_candidate_region.py",
+      "sha256": "ae956c719dc66f5a4873342b3e12481da0424f2b01bba3eac420f014e26d24f6"
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/vcf_to_fasta_alignment.py",
+      "sha256": "aead8f8046b7de701def4892339255ebd842c4b11f8f7869eec1ce57aabeff9e"
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/agents/openai.yaml",
+      "sha256": "a94a37a3f6cf1371da4f697d3bb4a07e677a15e231d2a619e28ba36bd34fa4ec"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/SKILL.md",
+      "sha256": "98fccc2cb2bcbbc9cbe96a3545e1caf6436be0dd2fb54e633a5de7f5bed361f3"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/agents/openai.yaml",
+      "sha256": "7dd1b4c029c1c30f7bf0f68940989b0257019636c252b5e0a22cb6447ed4d703"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/scripts/merge_annotation_expression.py",
+      "sha256": "4253f48e317c2330707c3204dc3c02398efc666b5e188f4d4232e16db6793742"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/scripts/run_tpm_fc_filter.py",
+      "sha256": "8edf17fea513c79bb4273c6d4e6b858475c3b804744f14ccd0d0913710438935"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/SKILL.md",
+      "sha256": "ab489042fef3fecd9aeff696da1cda9995de55968793c0766173f2ffaed31cba"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/agents/openai.yaml",
+      "sha256": "90aa69a64600bf09467a2576c384ac5e6f880baf3dd75a7428617b7ea1536cb6"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/scripts/parse_nfcore_outputs.py",
+      "sha256": "41edfe63f07255aff741f1b1bf7ee996dc863b6156096325a0e1cd6551016bf1"
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/scripts/build_samplesheet.py",
+      "sha256": "96beabfb1c65a55b8c1195695e70a5126c8a7c8fed8b841775dad1ac1710fc65"
+    },
+    {
+      "path": "skills/crop-breeding/crop-smart-breeding-strategy/SKILL.md",
+      "sha256": "c5b3090ed6e2386c980226cf692e60a0181ac647259a82a48603908bb80db739"
+    },
+    {
+      "path": "skills/crop-breeding/crop-smart-breeding-strategy/agents/openai.yaml",
+      "sha256": "14a279be53cc2bd666d00b99fa62cc828e6857078ce30f8bf53d2911c80a61e1"
+    },
+    {
+      "path": "skills/crop-breeding/crop-smart-breeding-strategy/references/source-notes.md",
+      "sha256": "c1957c989de6778de955fab4187222bfb7adf848abe3ff8a84355a6c6c6cae33"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/SKILL.md",
+      "sha256": "8fa8f2845feef3054064a96be7130403e5dc7c5ba9e3f6711cc78fd235369894"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/references/usage-guide.md",
+      "sha256": "ed695ff91c1e13845987400bb8632573e274f0ddaeb3bafa06adb0eb4ab780d4"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/references/usage-guide.zh.md",
+      "sha256": "d705fd44e8299f37d5cec275bb3fc803801bfd351e6d9563cecd0e902c19988b"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/examples/fetch_records.py",
+      "sha256": "6c683a64f5c03dffedf2db383c642fa1b5d618de9efd9e9005c29fad3f23943d"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/examples/fetch_pubmed.py",
+      "sha256": "566c8bbebd1165e3a2a223cf7124912d0bc7c55f101b2f26b85469adf18cb6a0"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/examples/fetch_summaries.py",
+      "sha256": "42cc3b9ab489daf386316864eb6b4d52b2e83f85d7a5600f463b4fe78cb9630e"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-link/SKILL.md",
+      "sha256": "461a521b370b68c71e889ef4b3af1ca8da1122eaf4e4c868598dc878b0c8a47f"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/SKILL.md",
+      "sha256": "78f32880e6513944011e8f5a4abadd47236f8e745f7542bc011f0ea5e3702f7a"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/examples/search_entrez.py",
+      "sha256": "b8a72f1f0a90f28e241f139d934771993c55a068dcb524e07ddce65073cf16cb"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/examples/global_query.py",
+      "sha256": "492be437cb20e4c930b4f33e27c2dbe6e97c1f829a09794da456cf3220cbb8c7"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/examples/database_info.py",
+      "sha256": "6135c9c36a260244e47c6be0a3aca696ceb10cc82827ce35b6b85d1b2d622a6e"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/references/usage-guide.md",
+      "sha256": "a758b966cb628d07fdceb2e4e90301e9f0d97b20e6b6584ad4eedfc9dfc72026"
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/references/usage-guide.zh.md",
+      "sha256": "5e1b02c83687375587516c6ab3816ecc69f4dc9c1a523a120293142b9ef7f3de"
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/SKILL.md",
+      "sha256": "a6893e686438e07597520c7d77cd213c423ac3b13d1465f6619f43941b0cb7d1"
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/references/usage-guide.md",
+      "sha256": "f22d1492ae7eb83414c619c8089233a0a53f345b7ac1e789e48a30a5889c5480"
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/references/usage-guide.zh.md",
+      "sha256": "9efa716aa2d97efaf39e6bba81b8a3bced52ca22935ec753294ba5e804fbe317"
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/examples/geo_to_sra.py",
+      "sha256": "1e8b7c38725152641aa0bc337dfa040bc02cbad8a9f5d24f10b64c7d82a054ae"
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/examples/geo_from_pubmed.py",
+      "sha256": "23ba3f8d5ea8adb66fee753d138e431478d572681ab527c5c37bf761e27f1eee"
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/examples/search_geo.py",
+      "sha256": "b0321f131f7bb51263953170ecb1ec76997affe2527c3055f16bddcd8a399b90"
+    },
+    {
+      "path": "skills/databases/ensembl/ensembl-database/SKILL.md",
+      "sha256": "390bcf058827160389202269b5a3866f36911e9b7a06802bbdec65dc913cee33"
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/SKILL.md",
+      "sha256": "47de8c171d38eb1a34f5659eb4f7fd506fd756d85246fc556704a7bfaac1bbb8"
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/references/workflow_guide.md",
+      "sha256": "bbdc6a1b9473975eb5a9705273981fa017c969b479a6034e819b05e507cfdcf5"
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/references/api_reference.md",
+      "sha256": "5f18fb77bc3a0f845667cefa429b01ab03660451189b53e917b1c2f257c301e7"
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/scripts/plot_methylation.py",
+      "sha256": "822fb203eba256eeb605cf9fdae0ff58bcd332820f2b00978a4f9296bf81dda8"
+    },
+    {
+      "path": "skills/epigenomics/methylation/modkit-dmr/SKILL.md",
+      "sha256": "e5fd27c55d1d3449b482a7043ba3a03176f3fa53cd563757806496264729c369"
+    },
+    {
+      "path": "skills/epigenomics/methylation/dorado-modbase-prep/SKILL.md",
+      "sha256": "595cf1c5455abc4e16a855c19c3b88a4792985eb7910d3e20697d767d44ec240"
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-porec-contact/SKILL.md",
+      "sha256": "e2acf0e3c4a1d15cfcd99250b7e1c8353fd31aee703b41bc76a1fe42d6f72354"
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-porec-contact/agents/openai.yaml",
+      "sha256": "af88524b77a4e152f46c70afa9e41b483fca941f9e597b801baa48c0677f35a6"
+    },
+    {
+      "path": "skills/epigenomics/methylation/modkit-pileup/SKILL.md",
+      "sha256": "39ed0cdce4a15dceea092136aefb19f8947e07caad851d4559a990a710e933a5"
+    },
+    {
+      "path": "skills/epigenomics/methylation/modkit-pileup/scripts/annotate_plant_context.py",
+      "sha256": "d723ccbc2fe06214912e9f5df42a3ba731ed58d62711b244e72de6e497526420"
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-methylation-workflow/SKILL.md",
+      "sha256": "52d08cd0d6244606a0c09e661170874882a880b5e55d7cb30cd18da6c820abbd"
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-methylation-workflow/agents/openai.yaml",
+      "sha256": "810cb3299e0e4f9fb0a4e3df4e7c4d6f8f65db039ff0e8ab2a08e9fcea483b0b"
+    },
+    {
+      "path": "skills/scrna/cluster/basic/SKILL.md",
+      "sha256": "3ef574690e2e565dcb952a67b7a10901821318d72cb03ae5840cc839caf008ae"
+    },
+    {
+      "path": "skills/scrna/de/contrast/SKILL.md",
+      "sha256": "b9375f3a866968e1c9203e5f16e4a89cd5858f14304c5d95c603e6244c0de84e"
+    },
+    {
+      "path": "skills/scrna/de/pseudobulk/SKILL.md",
+      "sha256": "0253f4a0bb95b947eebc849505b6a6b09981bc40a0320e5e023d67935f1fa176"
+    },
+    {
+      "path": "skills/scrna/env/bootstrap/SKILL.md",
+      "sha256": "33b77338b385ca411304380b2dd6f894640fed0885dff9016be515b34f67070f"
+    },
+    {
+      "path": "skills/scrna/markers/find/SKILL.md",
+      "sha256": "d42755bca29f62ebb5470cb4726c92d72c5e87da78a9752678307ae8f8a469e6"
+    },
+    {
+      "path": "skills/scrna/markers/conserved/SKILL.md",
+      "sha256": "cc2ce735edfd333c5bbeae6a7b9a786ce16803435f930b9ac8ed79202d84d798"
+    },
+    {
+      "path": "skills/scrna/integration/batch-correction/SKILL.md",
+      "sha256": "0ed2599d09b68b2ca7b9833f879241fdc2755992d2b90a1bb773c43372d0bdae"
+    },
+    {
+      "path": "skills/scrna/enrichment/marker-de/SKILL.md",
+      "sha256": "da296305c0f4bb6e90e96d2e644545f2db97be97b308674186ecefa0722154d9"
+    },
+    {
+      "path": "skills/scrna/annotate/basic/SKILL.md",
+      "sha256": "888f82a6806db31cc6b31f4981eea2989c02aeba90f79c73b506ba84532c7778"
+    },
+    {
+      "path": "skills/scrna/ingest/data-download/SKILL.md",
+      "sha256": "155a264c4a1c15012dc687f7f1487159abd9204553f06129296b271fb946cfaf"
+    },
+    {
+      "path": "skills/scrna/ingest/data-download/references/example_manifest.yaml",
+      "sha256": "87a1f689212fa2584f330005b25e6c57d9312c112eef44c959da836571f1b0e9"
+    },
+    {
+      "path": "skills/scrna/preprocess/basic/SKILL.md",
+      "sha256": "5e16ec856d6e381fef4e9cf3fb69f63f649aea2139032a5f4fdcfea9bb32ac0e"
+    },
+    {
+      "path": "skills/scrna/preprocess/sctransform/SKILL.md",
+      "sha256": "d1970f7891a9972499d86a17ee570628da98452da3014b8e21202c48c760ede1"
+    },
+    {
+      "path": "skills/scrna/qc/cell-cycle-doublet/SKILL.md",
+      "sha256": "5b730c1ffde40bd50472dadd0b623ac5ff23cb0743ace48a8068762223b58ba2"
+    },
+    {
+      "path": "skills/scrna/qc/filter/SKILL.md",
+      "sha256": "31ec10d4de1f095d8d87769160efdb0c49ca5dfbfd5e329ca515259e168e4624"
+    },
+    {
+      "path": "skills/scrna/workflows/ingest-qc/SKILL.md",
+      "sha256": "adc54a108ab140260d8c90436aa68dbb84bdc990778da27aa2d37812e0f7a38a"
+    },
+    {
+      "path": "skills/scrna/trajectory/pseudotime/SKILL.md",
+      "sha256": "7c81f54b59757668e0176536bf5470f01c7b94dc04acca3bedf630414b4c488a"
+    },
+    {
+      "path": "skills/scrna/report/summary/SKILL.md",
+      "sha256": "e2e3adf147401318ee0d83facb31c80d00a0b85dcbfdd9d79dbc7f7177a8ecf1"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+      "sha256": "45b89f4a6b2bbf3c78f2c65a9a111324146d96271352c4c564d4988184fffddb"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/sort_phenotype.py",
+      "sha256": "9a2e843b53c4e6a1dd6a4388608103e042996c0584426b09eea5c4be30b17a25"
+    },
+    {
+      "path": "skills/population-genetics/gwas-tassel-glm-mlm/SKILL.md",
+      "sha256": "cb3e8e63c2e89f62aa920937185e9837de2bd8ad05ecd4f4c836a7b8c0ed4d83"
+    },
+    {
+      "path": "skills/population-genetics/gwas-tassel-glm-mlm/scripts/tassel_to_manhattan.py",
+      "sha256": "7a11d628374867254e6ac130268dced5f9fe5677154498f2366914280092712d"
+    },
+    {
+      "path": "skills/population-genetics/gwas-manhattan-qq-plot/SKILL.md",
+      "sha256": "06fa564a66a4d24aae98d7964416c55f5abc8e6bd1b37520eb2bf12a64eeb1f0"
+    },
+    {
+      "path": "skills/population-genetics/gwas-ldblock-candidate-region/SKILL.md",
+      "sha256": "a076bbdd1a4a55b5c50f99f247c2bf16bb0ac67e1cc55fa8f5d1b714470e903d"
+    },
+    {
+      "path": "skills/population-genetics/gwas-ldblock-candidate-region/scripts/make_ldblock_jobs.py",
+      "sha256": "6f1d18297b5a015b9863e28b7c4b044fa1f58d285a48015f3ab4876a2dde582a"
+    },
+    {
+      "path": "skills/population-genetics/popgen-gwas-workflow/SKILL.md",
+      "sha256": "7125bc59e82cf291d76a7cce743fbc013c0f63772a4cac98efb48b84d44f2ab9"
+    },
+    {
+      "path": "skills/population-genetics/gwas-emmax-association/SKILL.md",
+      "sha256": "97d9741d2c6b2b283eb42d3267eacbfc013c691a25cf0e6b5dcdf9ccbf051b35"
+    },
+    {
+      "path": "skills/population-genetics/gwas-emmax-association/scripts/emmax_to_manhattan.py",
+      "sha256": "e138ff8db4cdd8f6a4595623e271557a2f8602396cb2c748c6921bada7a23427"
+    },
+    {
+      "path": "execution/monitoring.py",
+      "sha256": "c671ef9c84b89f488304e0f2c9ddf14c87f2e8d0a79aae89adcf1684431b9ebe"
+    },
+    {
+      "path": "execution/profiling.py",
+      "sha256": "d73e89dbc1c92bf51c905db447226992cebc9528d0b910791a2cf8ae1faafba5"
+    },
+    {
+      "path": "execution/validator.py",
+      "sha256": "9255efdf2276eadb5ca62eab3baed7a8a99a35e6c17287019392bce90add4dc9"
+    },
+    {
+      "path": "execution/__init__.py",
+      "sha256": "98d661dc77aae3bf23d0c2f70638eeb7cc99d9bcda6a6089c090a96e2ba9add5"
+    },
+    {
+      "path": "execution/preflight_progress.py",
+      "sha256": "dd4651f3062d6615673aa81338d240beb0b344454152dce1d61c217d033f5a67"
+    },
+    {
+      "path": "execution/preflight.py",
+      "sha256": "78ee0aa4b319a6d223c1214e0f13c0bee1eea0b4df3634efcde8ed5e9d83741e"
+    },
+    {
+      "path": "execution/confirmation.py",
+      "sha256": "4a94f445c1b2ac30247f37859d4b8aae113cca463596e71e24fec1b2e8659ae9"
+    },
+    {
+      "path": "execution/executor.py",
+      "sha256": "b83a08f98b96b8c64175ae21f321af43a72541b64178905af73fe4da6ff6d756"
+    },
+    {
+      "path": "execution/shell_safety.py",
+      "sha256": "7cdf784a7a4510b2667aff9b3fa596430694cc5e9fdf2c28d049dc751d34648a"
+    },
+    {
+      "path": "execution/runtime_contract.py",
+      "sha256": "fa410e2dfd8f59614c44e9de924e5e65c61a65217f989b57da6109efb1c083c2"
+    },
+    {
+      "path": "execution/script_validation.py",
+      "sha256": "030d46ef3df2800c2c0838837dae2ba1281cc8cd02c3b3d7d73276626af13ccf"
+    },
+    {
+      "path": "tools/plot_skills_circos.py",
+      "sha256": "5f80aa3836d839fcdf6a0537b201ad41dde58738f3b781b91e9a850a7a550171"
+    },
+    {
+      "path": "tools/plot_tested_skills_metrics.py",
+      "sha256": "b66594e1f1a3e5c586303253d8aedfbf06ccd19028d4100a331bdf32ca566d44"
+    },
+    {
+      "path": "tools/summarize_biomind_sessions.py",
+      "sha256": "52059d9079b29bf73833c2e849be4bfa6524ed2fc4653517e3ed67067f48e9b2"
+    },
+    {
+      "path": "apps/remote-workbench/package.json",
+      "sha256": "4e79502533106309e38cccdf78dd35f3b1f32bb5969c4d06dd85bedcd68e0f41"
+    },
+    {
+      "path": "apps/remote-workbench/THIRD_PARTY_NOTICES.md",
+      "sha256": "aa209a90295a8bb1f1a5837468469ea96a89c603a172fc892378f94a7552e216"
+    },
+    {
+      "path": "apps/remote-workbench/tsconfig.json",
+      "sha256": "9e3be4d3bc64fa94dd1dee32b1def90bcfe3f4a089822df0a491f71e3179090c"
+    },
+    {
+      "path": "apps/remote-workbench/README.md",
+      "sha256": "315d6c1233a63ac6791d47fea81b9e4541f327bb457b91e8708158510e1bc409"
+    },
+    {
+      "path": "apps/remote-workbench/src/types.ts",
+      "sha256": "772db986aaaebe2d53b34bfedaddeb88746f54cc2fbca2c4b02d0896a9d6941f"
+    },
+    {
+      "path": "apps/remote-workbench/src/main.ts",
+      "sha256": "bf8dcbd602861b87d9a388da81ba9e70bf2ede5bf882d483ab24a354f1cc5eeb"
+    },
+    {
+      "path": "apps/remote-workbench/src/ui/icons.ts",
+      "sha256": "00e811cf886a279cb71cfc6e5926cac7893b6df78eaca75cbf94cf08d8a7a57b"
+    },
+    {
+      "path": "apps/remote-workbench/src/ui/components.ts",
+      "sha256": "91bdc194a1d6629089c16fe626585c20e3c18d6149b23c5892331ce6ac00e8f4"
+    },
+    {
+      "path": "apps/remote-workbench/src/demo/data.ts",
+      "sha256": "9e24243d61dee54c15eef66a1dd42542e2d1c1d8174b3ed3a4afba693e1f81cc"
+    },
+    {
+      "path": "apps/remote-workbench/src/services/demo-service.ts",
+      "sha256": "6b01115522cb7afb5be5b6a4fb750042a297fc9474f8b55de2b45623ea5d9a57"
+    },
+    {
+      "path": "apps/remote-workbench/.build/package.json",
+      "sha256": "dbf8353f77358bc12169b7bb7301e1978d5b503e002ee927229a8993672818fc"
+    },
+    {
+      "path": "workflows/crop_genomic_prediction.yaml",
+      "sha256": "c3a52aa4a74278ae1589faa2dd0f44f7c0c7826fcbd086a0d411ececc151de46"
+    },
+    {
+      "path": "workflows/crop_gwas_analysis.yaml",
+      "sha256": "e5b13871d491d03a0853adcccabccf2a18eb976def044ea0aaf02ba46af05c55"
+    },
+    {
+      "path": "workflows/scrna_ingest_qc.yaml",
+      "sha256": "f7731aef92e4142f8cb3a2335d1303d029fad066a5d637e37b34c6404abe72b3"
+    },
+    {
+      "path": "workflows/scrna_standard_analysis.yaml",
+      "sha256": "e692bd17bfd4b4326879f142bdb968ce7ad8beee1b7de3c505250c94fe4f4b2b"
+    },
+    {
+      "path": "workflows/aporec_methylation_analysis.yaml",
+      "sha256": "c343ff1eb88583f31cf3f5e8ef17a2ea829e8dc4ca395686750711302cbbb2f5"
+    },
+    {
+      "path": "workflows/hic_tad_analysis.yaml",
+      "sha256": "fbcace953ee2356609a99465ee95d97d01ade52a418a21c082ae49621f121525"
+    },
+    {
+      "path": "workflows/scrna_tutorial_standard_analysis.yaml",
+      "sha256": "2a1d0c67f3d21bfba9ef474bfd4ef61915e2aa4e23aedb1edacaa6bf6a620518"
+    },
+    {
+      "path": "workflows/scrna_downstream_after_qc.yaml",
+      "sha256": "2713101cac845563a47f8fd30460e1a1a863b98bec26c375202d9e8dd0761e33"
+    },
+    {
+      "path": "integrations/pi_step_worker/tsconfig.json",
+      "sha256": "d8941c0889b71754e0928343fdf57803c296e9f7ad565aee3e5a0e8bf34c65f3"
+    },
+    {
+      "path": "integrations/pi_step_worker/biomind_pi_rpc_poc.ts",
+      "sha256": "3902d0d91217baaf3792d662709074c860d1df202ba318775f50bb678c2acc04"
+    },
+    {
+      "path": "integrations/pi_step_worker/package.json",
+      "sha256": "c6f255b46f0d9ee5d3678ff62b8b03339ac77311eda025687d136487bf5b5a4c"
+    },
+    {
+      "path": "bio_agents.py",
+      "sha256": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32"
+    },
+    {
+      "path": "package_manager.py",
+      "sha256": "9028f0fc2d80d57aed657bd18743722ca872a90fc321f1fe3065df3ec86c624d"
+    },
+    {
+      "path": "supervisor.py",
+      "sha256": "fb06664eddb552c6ff9bb018c4d88da7afdd07241f31bf6d78435340106efb42"
+    },
+    {
+      "path": "software_registry.json",
+      "sha256": "fdfa475d181f0a50f864bbda60d9b9477bf35fe2c422808c4781644d597c4a96"
+    }
+  ],
+  "auditor_environment": {
+    "BIO_SOFTWARE_ROOT": null,
+    "BIO_SOURCE_INSTALL_DIR": null,
+    "ANACONDA_ROOT": null,
+    "BIOMIND_SKILLS_DIR": null,
+    "PATH": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path:/public/home/liusiqi/.local/bin:/public/home/liusiqi/.local/bin:/opt/gridview/pmix/bin:/opt/gridview/pmix/sbin:/opt/gridview/slurm/bin:/opt/gridview/slurm/sbin:/opt/gridview/munge/bin:/opt/gridview/munge/sbin:/public/home/liusiqi/.codex/tmp/arg0/codex-arg09eQoky:/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path:/public/home/liusiqi/.local/bin:/public/home/liusiqi/.aspera/connect/bin:/public/home/liusiqi/02.software/01.assembly/modtools/bin:/public/home/liusiqi/02.software/01.assembly/dist_modkit_v0.6.1_481e3c9:/public/home/liusiqi/02.software/01.assembly/dorado-1.4.0-linux-x64/bin:/public/home/liusiqi/02.software/01.assembly/CPhasing/bin:/public/home/liusiqi/anaconda3/condabin:/public/home/liusiqi/.local/bin:/public/home/liusiqi/bin:/public/home/liusiqi/.local/bin:/opt/gridview/pmix/bin:/opt/gridview/pmix/sbin:/public/software/apps/module/bin:/opt/gridview/slurm/bin:/opt/gridview/slurm/sbin:/opt/gridview/munge/bin:/opt/gridview/munge/sbin:/public/home/liusiqi/.local/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/public/home/liusiqi/bin:/usr/lpp/mmfs/bin:/public/home/liusiqi/bin:/usr/lpp/mmfs/bin",
+    "CONDA_PREFIX": null,
+    "JAVA_HOME": null
+  }
+}

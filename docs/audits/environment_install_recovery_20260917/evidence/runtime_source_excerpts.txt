@@ -1,0 +1,1027 @@
+Captured 2026-09-17T09:08:30.535775+00:00
+Relevant source excerpts only; excludes dotenv values and credentials.
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/config/settings.py
+SHA256 9f0a0227cdf57672dcc0d0888438c16b6d35d258611fba44a1bd44b977cf0310
+60: class EnvironmentManager:
+61:     @staticmethod
+62:     def _load_env_file(env_path: Path):
+63:         values = dotenv_values(env_path)
+64:         for key, value in values.items():
+65:             if not key or value is None:
+66:                 continue
+67:             current = os.environ.get(key)
+68:             if value == "" and current:
+69:                 continue
+70:             os.environ[key] = value
+71: 
+72:     @staticmethod
+73:     def load_environment():
+74:         """加载环境变量 (.env)"""
+75:         if os.getenv("BIOMIND_DISABLE_DOTENV", "").strip().lower() in {
+76:             "1", "true", "yes", "on",
+77:         }:
+78:             return
+79:         # 这一步非常关键：它保证了后续 config.py 能读到 .env 里的值
+80:         env_paths = [
+81:             PathManager.SYSTEM_ROOT / ".env",   # 软件目录默认配置
+82:             PathManager.WORK_DIR / ".env",      # 当前目录优先级最高
+83:         ]
+84:         
+85:         for env_path in env_paths:
+86:             if env_path.exists():
+87:                 EnvironmentManager._load_env_file(env_path)
+88: 
+89: # 自动加载环境 (必须在 config.py 导入前执行)
+90: EnvironmentManager.load_environment()
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/config/config.py
+SHA256 ec7d04be7c225a60835fc3a2afea4bc72dcc2c9540cc9de0a3a865a28203caa5
+28: def _load_local_env_defaults() -> None:
+29:     if _OFFLINE_TEST_ISOLATION:
+30:         return
+31:     env_path = Path(__file__).resolve().parents[1] / ".env"
+32:     if not env_path.exists():
+33:         return
+34:     for key, value in dotenv_values(env_path).items():
+35:         if not key or value is None or os.getenv(key):
+36:             continue
+37:         os.environ[key] = value
+38: 
+39: 
+40: _load_local_env_defaults()
+51: # 软件与环境路径。真实路径放在 .env 中，不要硬编码到仓库。
+52: BIO_SOFTWARE_ROOT = os.getenv("BIO_SOFTWARE_ROOT", "")
+53: BIO_SOURCE_INSTALL_DIR = os.getenv("BIO_SOURCE_INSTALL_DIR", "")
+54: ANACONDA_ROOT = os.getenv("ANACONDA_ROOT", "")
+418: # skill 目录：优先使用当前项目自带 skills，避免加载到旧的硬编码目录。
+419: PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+420: LOCAL_SKILLS_DIR = os.path.join(PROJECT_ROOT, "skills")
+421: SKILLS_DIR = os.getenv(
+422:     "BIOMIND_SKILLS_DIR",
+423:     LOCAL_SKILLS_DIR if os.path.isdir(LOCAL_SKILLS_DIR) else "",
+424: )
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/package_manager.py
+SHA256 9028f0fc2d80d57aed657bd18743722ca872a90fc321f1fe3065df3ec86c624d
+65:     def __init__(self, work_dir: str = "./"):
+66:         # 1. work_dir 用于存放临时文件或项目特定数据
+67:         self.work_dir = Path(work_dir).absolute()
+68:         
+69:         # 2. 确定软件仓库根目录
+70:         if BIO_SOFTWARE_ROOT:
+71:             self.root_dir = Path(BIO_SOFTWARE_ROOT)
+72:         else:
+73:             self.root_dir = self.work_dir
+74:             
+75:         # 确保目录存在
+76:         try:
+77:             self.root_dir.mkdir(parents=True, exist_ok=True)
+78:         except: pass
+79:         
+80:         print(f"🏭 Software Repository: {self.root_dir}")
+81: 
+82:         # 3. 定义关键路径
+83:         self.registry_path = self.root_dir / "software_registry.json"
+84:         
+85:         self.shim_dir = self.root_dir / "bin_shims"
+86:         self.shim_dir.mkdir(parents=True, exist_ok=True)
+87:         
+88:         # [修改] 源码目录初始化逻辑
+89:         if BIO_SOURCE_INSTALL_DIR:
+90:             self.source_root = Path(BIO_SOURCE_INSTALL_DIR)
+91:             print(f"📂 Source Install Path (Config): {self.source_root}")
+92:         else:
+93:             self.source_root = self.root_dir / "source_tools"
+94:             print(f"📂 Source Install Path (Default): {self.source_root}")
+95:             
+96:         self.source_root.mkdir(parents=True, exist_ok=True)
+97: 
+98:         # 4. 初始化数据
+99:         self.conda_exe = self._detect_manager()
+100:         self.conda_root = self._get_conda_root()
+101:         self.registry = self._load_registry()
+102:         
+103:         # 5. 加载配置
+104:         self.load_from_yaml(self.root_dir / "tools_setup.yaml")
+105:         self.repair_registered_shims()
+112:     def _detect_manager(self):
+113:         """探测 Conda/Mamba"""
+114:         for executable in ("mamba", "conda"):
+115:             configured = self._configured_manager_path(executable)
+116:             if configured:
+117:                 return configured
+118:         if shutil.which("mamba"): return "mamba"
+119:         elif shutil.which("conda"): return "conda"
+120:         return None
+121: 
+122:     def _configured_manager_path(self, executable: str) -> Optional[str]:
+123:         if not ANACONDA_ROOT:
+124:             return None
+125:         root = Path(str(ANACONDA_ROOT)).expanduser()
+126:         candidates = [
+127:             root / "bin" / executable,
+128:             root / "Scripts" / f"{executable}.exe",
+129:             root / f"{executable}.exe",
+130:             root / executable,
+131:         ]
+132:         for candidate in candidates:
+133:             if candidate.exists():
+134:                 return str(candidate)
+135:         return None
+442:     def _direct_environment_healthcheck(self, env_name: str, command: str) -> tuple:
+443:         """Run a read-only healthcheck from an existing prefix without `conda run` startup."""
+444:         if not self.conda_root:
+445:             return str(command or ""), None
+446:         prefix = Path(self.conda_root) / "envs" / str(env_name or "")
+447:         bin_dir = prefix / ("Scripts" if os.name == "nt" else "bin")
+448:         if not prefix.is_dir() or not bin_dir.is_dir():
+449:             return str(command or ""), None
+450:         env_pattern = re.compile(
+451:             rf"(?<!\S)(?:(?:\S*/)?(?:conda|mamba|micromamba))\s+run\s+-n\s+{re.escape(str(env_name))}\s+"
+452:         )
+453:         direct_command = env_pattern.sub("", str(command or ""))
+454:         if direct_command == str(command or ""):
+455:             return direct_command, None
+456:         process_env = os.environ.copy()
+457:         process_env["CONDA_PREFIX"] = str(prefix)
+458:         process_env["CONDA_DEFAULT_ENV"] = str(env_name)
+459:         process_env["PATH"] = str(bin_dir) + os.pathsep + process_env.get("PATH", "")
+460:         return direct_command, process_env
+461: 
+462:     def recent_environment_healthcheck(
+463:         self,
+464:         env_name: str,
+465:         healthcheck: str,
+466:         max_age_seconds: float = 3600.0,
+467:     ) -> Optional[str]:
+468:         """Return persisted evidence only when the same healthcheck passed recently."""
+469:         record = self.get_environment(env_name)
+470:         if str(record.get("status") or "").lower() not in self.INSTALLED_STATUSES:
+471:             return None
+472:         recorded = str(record.get("last_healthcheck") or "").strip()
+473:         recorded, _recorded_env = self._direct_environment_healthcheck(env_name, recorded)
+474:         expected, _process_env = self._direct_environment_healthcheck(env_name, healthcheck)
+475:         normalize = lambda value: re.sub(r"\s+", " ", str(value or "")).strip()
+476:         if not recorded or normalize(recorded) != normalize(expected):
+477:             return None
+478:         verified_at = str(record.get("last_verified_at") or "").strip()
+479:         if not verified_at:
+480:             return None
+481:         try:
+482:             age = (datetime.now() - datetime.fromisoformat(verified_at)).total_seconds()
+483:         except (TypeError, ValueError):
+484:             return None
+485:         if age < 0 or age > max(0.0, float(max_age_seconds)):
+486:             return None
+487:         return str(record.get("notes") or "Cached runtime healthcheck passed.")
+667:     def verify_environment(self, env_name: str, language: str = "", healthcheck: str = "") -> tuple:
+668:         info = self.registry.setdefault("environments", {}).get(env_name)
+669:         if not info:
+670:             return False, f"Environment '{env_name}' is not registered."
+671: 
+672:         selected_language = str(language or info.get("language", "")).lower()
+673:         command = self.build_environment_healthcheck(
+674:             env_name=env_name,
+675:             language=selected_language,
+676:             packages=info.get("packages"),
+677:             healthcheck=healthcheck or info.get("healthcheck", ""),
+678:         )
+679:         info["healthcheck"] = command
+680:         run_command, process_env = self._direct_environment_healthcheck(env_name, command)
+681:         if process_env is None:
+682:             run_command = self._command_with_configured_manager(command)
+683:         try:
+684:             proc = subprocess.run(
+685:                 run_command,
+686:                 shell=True,
+687:                 capture_output=True,
+688:                 text=True,
+689:                 timeout=180,
+690:                 env=process_env,
+691:             )
+692:             ok = proc.returncode == 0
+693:             info["status"] = "verified" if ok else "broken"
+694:             info["last_verified_at"] = datetime.now().isoformat()
+695:             info["last_healthcheck"] = run_command
+696:             combined = "\n".join(part for part in [proc.stdout.strip(), proc.stderr.strip()] if part).strip()
+697:             if combined:
+698:                 info["notes"] = combined[:1000]
+699:             self._save_registry()
+700:             return ok, combined or ("OK" if ok else "Healthcheck failed.")
+701:         except Exception as e:
+702:             info["status"] = "broken"
+703:             info["last_verified_at"] = datetime.now().isoformat()
+704:             info["notes"] = str(e)
+705:             self._save_registry()
+706:             return False, str(e)
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_manager.py
+SHA256 ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92
+663:     def _wrap_runtime_healthcheck(self, env: str, command: str) -> str:
+664:         """Run declared healthchecks inside the skill's default conda env.
+665: 
+666:         Many bash-oriented skills naturally declare checks such as
+667:         `bash -lc "tool --version"` or `samtools --version && ...`. Those are
+668:         only valid after the runtime env is active. Keep explicit `conda run`
+669:         healthchecks unchanged, but wrap bare checks generically.
+670:         """
+671:         command = str(command or "").strip()
+672:         env = str(env or "").strip()
+673:         if not command or not env or self._healthcheck_already_enters_conda_env(command):
+674:             return command
+675:         bash_login = re.match(r"^bash\s+-lc\s+(.+)$", command, re.DOTALL)
+676:         if bash_login:
+677:             # `conda run ... bash -lc` can reset PATH on some HPC login shells and
+678:             # hide the conda env binaries. Keep the shell semantics, drop `-l`.
+679:             return f"conda run -n {shlex.quote(env)} bash -c {bash_login.group(1).strip()}"
+680:         if re.match(r"^(?:bash|sh|python|python\d+(?:\.\d+)?|Rscript|R)\b", command):
+681:             return f"conda run -n {shlex.quote(env)} {command}"
+682:         if self._healthcheck_needs_shell(command):
+683:             return f"conda run -n {shlex.quote(env)} bash -lc {shlex.quote(command)}"
+684:         return f"conda run -n {shlex.quote(env)} {command}"
+685: 
+686:     def build_runtime_healthcheck(self, env: str, runtime: Dict[str, Any], meta: Dict[str, Any] = None) -> str:
+687:         if not env:
+688:             return ""
+689:         runtime = runtime or {}
+690:         meta = meta or {}
+691:         healthcheck = str(runtime.get("healthcheck", "") or "")
+692:         if healthcheck:
+693:             normalized = self._normalize_runtime_healthcheck_paths(
+694:                 healthcheck.replace("{env}", env),
+695:                 meta,
+696:             )
+697:             return self._wrap_runtime_healthcheck(env, normalized)
+761:     def get_runtime_requirements(self, skill_id: str) -> Dict[str, Any]:
+762:         meta = self.get_skill_meta(skill_id)
+763:         runtime = meta.get("runtime") or {}
+764:         canonical_id = meta.get("_skill_id", skill_id)
+765:         record = self.get_runtime_record(canonical_id)
+766:         default_env = str(runtime.get("default_env", "") or "").strip()
+767:         env = default_env or self.get_runtime_env(canonical_id)
+768:         runtime_packages = self._runtime_packages(runtime)
+769:         packages = runtime_packages or self._ensure_list(record.get("packages"))
+770:         language = self._runtime_language(runtime)
+771:         if not language:
+772:             language = str(record.get("language", "") or "").lower()
+773:         runtime_capabilities = self._runtime_capabilities(runtime, meta)
+774:         capabilities = runtime_capabilities or self._ensure_list(record.get("capabilities"))
+775:         env_runner = str(runtime.get("env_runner", "") or record.get("env_runner") or "")
+776:         runtime_healthcheck = self.build_runtime_healthcheck(env or runtime.get("default_env", ""), runtime, meta)
+777:         healthcheck = runtime_healthcheck or record.get("healthcheck", "")
+778:         install_commands = self._runtime_install_commands(runtime, record)
+779:         install_command = install_commands[0] if install_commands else ""
+780:         install_policy = str(
+781:             runtime.get("install_policy")
+782:             or record.get("install_policy")
+783:             or ("prefer-declared" if install_commands or runtime.get("env_file") else "")
+784:         ).strip()
+785:         install_fallbacks = self._runtime_command_list(runtime.get("install_fallbacks")) or self._runtime_command_list(record.get("install_fallbacks"))
+786:         return {
+787:             "skill_id": canonical_id,
+788:             "default_env": runtime.get("default_env", ""),
+789:             "env": env,
+790:             "env_runner": env_runner,
+791:             "language": language,
+792:             "tools": self._runtime_tools(runtime, record),
+793:             "packages": packages,
+794:             "capabilities": capabilities,
+795:             "install_tool": record.get("install_tool") or runtime.get("install_tool", ""),
+796:             "install_command": install_command,
+797:             "install_commands": install_commands,
+798:             "install_fallbacks": install_fallbacks,
+799:             "install_policy": install_policy,
+800:             "env_file": self._runtime_asset_path(runtime, meta, "env_file"),
+801:             "healthcheck": healthcheck,
+802:             "mode_healthchecks": runtime.get("mode_healthchecks", {}) or record.get("mode_healthchecks", {}) or {},
+803:             "metadata_present": bool(runtime or record.get("metadata_present")),
+804:             "metadata_status": "present" if runtime or record.get("metadata_present") else "missing",
+805:         }
+2093:             declared_rows = (
+2094:                 [dict(item) for item in declared if isinstance(item, Mapping)]
+2095:                 if isinstance(declared, list)
+2096:                 else [
+2097:                     {"capability_id": str(key), **dict(value or {})}
+2098:                     for key, value in dict(declared or {}).items()
+2099:                     if isinstance(value, Mapping)
+2100:                 ]
+2101:             )
+2102:             if not declared_rows:
+2103:                 required_runtime: List[str] = []
+2104:                 required_artifacts: List[str] = []
+2105:                 for item in generate.get("required_bindings", []) or []:
+2106:                     if not isinstance(item, Mapping):
+2107:                         continue
+2108:                     owner = str(item.get("owner") or "artifact").strip().lower()
+2109:                     binding_id = self._declared_binding_id(
+2110:                         item.get("binding_id") or item.get("name"),
+2111:                         owner=owner,
+2112:                     )
+2113:                     if owner == "runtime":
+2114:                         required_runtime.append(binding_id)
+2115:                     else:
+2116:                         required_artifacts.append(binding_id)
+2117:                 declared_rows = [{
+2118:                     "capability_id": default_execution_capability_id(sid),
+2119:                     "required_runtime_binding_ids": required_runtime,
+2120:                     "optional_runtime_binding_ids": [],
+2121:                     "required_artifact_binding_ids": required_artifacts,
+2122:                     "execution_guidance": list(generate.get("execution_guidance") or []),
+2123:                 }]
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/action_runtime.py
+SHA256 53ff91ce91ea502b4fb46d63e374ee3e3ad27596a7aea924227cc672b95c3071
+475: def resolve_action_runtime_bindings(
+476:     *,
+477:     selected_skill_id: str,
+478:     execution_capability_id: str,
+479:     approved_capability_contract_hash: str,
+480:     capability_registry: Mapping[str, Mapping[str, Any]],
+481:     ready_runtime_binding_registry: Mapping[str, Mapping[str, Any]],
+482:     current_action_identity: Mapping[str, Any],
+483:     requested_optional_ids: Sequence[str] = (),
+534:     optional = _string_ids(requested_optional_ids)
+535:     allowed_optional = set(contract["optional_runtime_binding_ids"])
+536:     undeclared = sorted(set(optional) - allowed_optional)
+537:     if undeclared:
+538:         raise ActionRuntimeContractError(
+539:             "UNDECLARED_RUNTIME_BINDING",
+540:             execution_capability_id=capability_id,
+541:             selected_skill_id=str(selected_skill_id or ""),
+542:             received_binding_ids=undeclared,
+543:             available_optional_runtime_binding_ids=sorted(allowed_optional),
+544:         )
+545:     required = list(contract["required_runtime_binding_ids"])
+546:     resolved_ids = [*required, *[item for item in optional if item not in required]]
+547:     records: list[Dict[str, Any]] = []
+548:     effective: Dict[str, str] = {}
+549:     for binding_id in resolved_ids:
+550:         raw_record = ready_runtime_binding_registry.get(binding_id)
+551:         record = dict(raw_record) if isinstance(raw_record, Mapping) else {}
+552:         if str(record.get("status") or "") != "ready" or not str(record.get("value") or ""):
+553:             raise ActionRuntimeContractError(
+554:                 "REQUIRED_RUNTIME_BINDING_UNAVAILABLE",
+555:                 execution_capability_id=capability_id,
+556:                 selected_skill_id=str(selected_skill_id or ""),
+557:                 binding_id=binding_id,
+558:                 required=binding_id in required,
+559:                 failure_scope="runtime_fact",
+560:                 availability=("UNAVAILABLE" if record.get("status") == "unavailable" else
+561:                               "AMBIGUOUS" if record.get("status") == "ambiguous" else "UNKNOWN"),
+562:                 available_runtime_binding_ids=sorted(
+563:                     key for key, value in ready_runtime_binding_registry.items()
+564:                     if str((value or {}).get("status") or "") == "ready"
+565:                 ),
+566:             )
+567:         source_skill = str(record.get("source_skill_id") or "")
+568:         if source_skill and source_skill != str(selected_skill_id or ""):
+569:             raise ActionRuntimeContractError(
+570:                 "REQUIRED_RUNTIME_BINDING_UNAVAILABLE",
+571:                 execution_capability_id=capability_id,
+572:                 selected_skill_id=str(selected_skill_id or ""),
+573:                 binding_id=binding_id,
+574:                 source_skill_id=source_skill,
+575:                 reason="binding belongs to another Skill runtime audit",
+576:             )
+577:         env_name = str(record.get("env_name") or "")
+578:         if not _ENV_NAME_RE.fullmatch(env_name):
+579:             raise ActionRuntimeContractError(
+580:                 "RUNTIME_BINDING_MANIFEST_INVALID",
+581:                 binding_id=binding_id,
+582:                 invalid_env_name=env_name,
+583:             )
+584:         effective[env_name] = str(record["value"])
+585:         records.append({
+586:             key: deepcopy(record.get(key))
+587:             for key in (
+588:                 "binding_id", "env_name", "source", "source_runtime_audit_id",
+589:                 "source_skill_id", "value_kind", "sensitivity", "value_digest", "status",
+590:             )
+591:         })
+592:     identity = {str(key): deepcopy(value) for key, value in current_action_identity.items()}
+593:     manifest: Dict[str, Any] = {
+594:         "schema_version": RUNTIME_MANIFEST_SCHEMA_VERSION,
+595:         "action_id": str(identity.get("action_id") or ""),
+596:         "plan_id": str(identity.get("plan_id") or ""),
+597:         "step_id": str(identity.get("step_id") or ""),
+598:         "selected_skill_id": str(selected_skill_id or ""),
+599:         "execution_capability_id": capability_id,
+600:         "capability_contract_hash": observed_contract_hash,
+601:         "scope": "current_action",
+602:         "bindings": records,
+603:     }
+604:     manifest["manifest_hash"] = _manifest_hash(manifest)
+605:     return {
+606:         "capability_contract": contract,
+607:         "capability_contract_hash": observed_contract_hash,
+608:         "effective_runtime_bindings": dict(sorted(effective.items())),
+609:         "runtime_binding_records": records,
+610:         "runtime_binding_manifest": manifest,
+611:         "runtime_binding_manifest_hash": manifest["manifest_hash"],
+615: def validate_runtime_paths_prelaunch(resolution: Mapping[str, Any]) -> None:
+616:     """Recheck the accepted values without rebuilding approval or evidence."""
+617:     values = resolution.get("effective_runtime_bindings") or {}
+618:     for record in resolution.get("runtime_binding_records") or []:
+619:         value = str(values.get(str(record.get("env_name") or "")) or "")
+620:         kind = str(record.get("value_kind") or "path")
+621:         path = Path(value)
+622:         try:
+623:             valid = path.is_absolute() and path.exists() and os.access(path, os.R_OK)
+624:             if kind == "directory_path":
+625:                 valid = valid and path.is_dir() and os.access(path, os.X_OK)
+626:             elif kind == "executable_path":
+627:                 valid = valid and path.is_file() and os.access(path, os.X_OK)
+628:             elif kind in {"file_path", "jar_path"}:
+629:                 valid = valid and path.is_file() and path.stat().st_size > 0
+630:         except (OSError, ValueError):
+631:             valid = False
+632:         if not valid:
+633:             raise ActionRuntimeContractError(
+634:                 "RUNTIME_BINDING_PRELAUNCH_PATH_INVALID",
+635:                 binding_id=str(record.get("binding_id") or ""),
+636:                 value_kind=kind, execution_started=False,
+637:                 approved_value_digest=str(record.get("value_digest") or ""),
+638:             )
+786: def build_exact_action_environment(
+787:     base_environment: Mapping[str, Any],
+788:     *,
+789:     action_environment: Optional[Mapping[str, Any]] = None,
+790:     controller_identity: Optional[Mapping[str, Any]] = None,
+791: ) -> Dict[str, str]:
+792:     """Build the subprocess environment without runtime/artifact materialization.
+793: 
+794:     Ordinary ambient variables are preserved. Only environment entries already
+795:     present in the validated action and non-scientific Controller identity are
+796:     added. Capability registries and artifact bindings are intentionally not
+797:     accepted by this API, which prevents accidental reintroduction of the old
+798:     injection chain.
+799:     """
+800:     effective = {
+801:         str(key): str(value)
+802:         for key, value in base_environment.items()
+803:         if str(key)
+804:     }
+805:     for bindings in (action_environment or {}, controller_identity or {}):
+806:         for raw_name, raw_value in bindings.items():
+807:             name = str(raw_name or "").strip()
+808:             if _ENV_NAME_RE.fullmatch(name):
+809:                 effective[name] = str(raw_value)
+810:     return effective
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/node_context.py
+SHA256 a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff
+1561: def _compact_planner_runtime_projection(runtime: Mapping[str, Any]) -> Dict[str, Any]:
+1562:     """Project only current runtime facts needed to construct a Plan."""
+1563:     raw = dict(runtime or {})
+1564:     rows = [
+1565:         dict(item) for item in raw.get("input_audit", []) or []
+1566:         if isinstance(item, Mapping)
+1567:     ]
+1568:     candidates = [raw, *reversed(rows)]
+1569: 
+1570:     def first(*keys: str) -> Any:
+1571:         for candidate in candidates:
+1572:             for key in keys:
+1573:                 value = candidate.get(key)
+1574:                 if value not in (None, "", [], {}):
+1575:                     return deepcopy(value)
+1576:         return None
+1577: 
+1578:     status = first("runtime_ready", "decision", "status")
+1579:     projection: Dict[str, Any] = OrderedDict()
+1580:     if isinstance(status, bool):
+1581:         projection["runtime_ready"] = status
+1582:     elif status is not None:
+1583:         projection["runtime_ready"] = str(status).lower() in {
+1584:             "runtime_ready", "ready", "resolved", "success", "passed",
+1585:         }
+1586:     selected_environment = first(
+1587:         "selected_environment", "environment", "environment_name", "conda_env"
+1588:     )
+1589:     if selected_environment is not None:
+1590:         projection["selected_environment"] = selected_environment
+1591:     runner = first("runner", "execution_runner", "shell_runner")
+1592:     if runner is not None:
+1593:         projection["runner"] = runner
+1594:     resolved = first("resolved_executable", "resolved_executables", "executable")
+1595:     if resolved is not None:
+1596:         projection["resolved_executable"] = resolved
+1597:     constraints = first("critical_constraints", "runtime_constraints")
+1598:     if constraints is not None:
+1599:         projection["critical_constraints"] = constraints
+1600:     return _without_control_metadata(projection)
+2164:     if normalized_node == "generate":
+2165:         # Inject canonical facts here rather than copying prose into individual
+2166:         # prompts. Initial and Corrective Generate consume the same policy that
+2167:         # renders the Executor prologue. Recovery receives only semantic failure
+2168:         # evidence and must not receive this machine-owned contract projection.
+2169:         runtime["execution_runtime_contract"] = execution_runtime_contract()
+2170:         runtime["validation_scope_contract"] = validation_scope_contract()
+2171:     elif normalized_node == "recovery":
+2172:         # Fail closed at the common provider boundary: callers cannot smuggle
+2173:         # runtime snapshots, manifests, registries or revision data beside the
+2174:         # approved semantic Recovery projection.
+2175:         recovery_focus = runtime.get("recovery_focus")
+2176:         if isinstance(recovery_focus, Mapping):
+2177:             recovery_focus = deepcopy(dict(recovery_focus))
+2178:             # accepted_recovery_decisions below is the single authoritative
+2179:             # provider-facing history.  Keep the broader/legacy summary only
+2180:             # in durable RecoveryContext.
+2181:             recovery_focus.pop("previous_recovery", None)
+2182:             recovery_focus.pop("previous_recovery_summary", None)
+2183:         runtime = (
+2184:             {"recovery_focus": recovery_focus}
+2185:             if isinstance(recovery_focus, Mapping)
+2186:             else {}
+2187:         )
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/runtime_evidence.py
+SHA256 0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424
+379: def project_runtime_audits(task_state: Mapping[str, Any], *, task_id: str | None = None, skill_scope: Mapping[str, Any] | None = None, now: str | None = None) -> list[dict[str, Any]]:
+380:     """Compatibility view; unaccepted, stale, negative or conflicting facts fail closed."""
+381:     records = _accepted_records(task_state, task_id)
+382:     evaluations = evaluate_runtime_evidence(task_state, task_id=task_id, skill_scope=skill_scope, now=now)
+383:     projected = []
+384:     for record in records:
+385:         paths = {}
+386:         for binding_id, fact in record["facts"].items():
+387:             evaluation = evaluations.get(binding_id) or {}
+388:             if evaluation.get("availability") == "AVAILABLE" and record["evidence_id"] in evaluation.get("evidence_ids", []):
+389:                 paths[fact["output_name"]] = record["resolved_runtime_paths"][fact["output_name"]]
+390:         if paths:
+391:             projected.append({
+392:                 "runtime_audit_id": record["evidence_id"],
+393:                 "skill_id": record["scope"]["skill_id"], "skill": record["scope"]["skill_id"],
+394:                 "checked_env": record["scope"]["environment_id"], "env": record["scope"]["environment_id"],
+395:                 "status": "ready", "healthcheck_status": "passed",
+396:                 "resolved_runtime_paths": paths,
+397:                 "runtime_evidence_digest": record["content_digest"],
+398:                 "observed_at": record["observed_at"], "evidence_revision": record["acceptance"]["revision"],
+399:             })
+400:     return projected
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/runtime_inspection.py
+SHA256 485229946948afa1bada3494b81f3c70c24d01e9faf9547c773971c7a94045ee
+303:     def _specification(self, skill_id: str) -> dict[str, Any]:
+304:         subject = dict(self.scope_provider(skill_id))
+305:         if set(subject) != set(SCOPE_FIELDS) or not all(subject.values()) or subject["skill_id"] != skill_id:
+306:             raise InspectionPolicyError("RUNTIME_INSPECTION_SUBJECT_INCOMPLETE")
+307:         requirements = self.skills.get_runtime_requirements(skill_id)
+308:         environment = str(requirements.get("env") or requirements.get("default_env") or "")
+309:         if environment != subject["environment_id"] or not re.fullmatch(r"[A-Za-z0-9_.-]+", environment):
+310:             raise InspectionPolicyError("RUNTIME_INSPECTION_ENVIRONMENT_MISMATCH")
+311:         prefix = (Path(str(self.pm.conda_root)) / "envs" / environment).resolve(strict=True)
+312:         roots = _safe_roots([prefix, *self.allowed_runtime_roots(skill_id)])
+313:         skills_root = Path(self.skills.skills_root).resolve(strict=True)
+314:         if any(skills_root.is_relative_to(root) for root in roots):
+315:             raise InspectionPolicyError("RUNTIME_INSPECTION_ROOT_TOO_BROAD")
+316:         command = str(self.healthcheck_provider(requirements, environment) if self.healthcheck_provider else requirements.get("healthcheck") or "")
+317:         if digest(command) != subject["inspection_contract_digest"]:
+318:             raise InspectionPolicyError("RUNTIME_INSPECTION_METHOD_DRIFT")
+319:         argv = admitted_healthcheck(command, environment, set(requirements.get("tools") or []))
+320:         env = {"PATH": str(prefix / "bin") + ":/usr/bin:/bin", "CONDA_PREFIX": str(prefix), "CONDA_DEFAULT_ENV": environment, "LC_ALL": "C", "TMPDIR": "/tmp"}
+321:         for key, value in dict(self.envsafevars(skill_id)).items():
+322:             if key in env or not re.fullmatch(r"[A-Z][A-Z0-9_]*(?:_HOME|_ROOT|_DIR)", key) or _SENSITIVE.search(key) or _SENSITIVE.search(str(value)):
+323:                 raise InspectionPolicyError("RUNTIME_INSPECTION_ENVIRONMENT_UNSAFE")
+324:             path = Path(str(value)).resolve(strict=True)
+325:             if not _inside(path, roots):
+326:                 raise InspectionPolicyError("RUNTIME_INSPECTION_ENVIRONMENT_OUT_OF_SCOPE")
+327:             env[key] = str(path)
+328:         meta = self.skills.get_skill_meta(skill_id)
+329:         outputs = dict((meta.get("runtime") or {}).get("inspection_outputs") or {})
+330:         for name, contract in outputs.items():
+331:             if not _OUTPUT.fullmatch(name) or _SENSITIVE.search(name) or not isinstance(contract, Mapping) or contract.get("binding_id") != _runtime_binding_identity(name)[0]:
+332:                 raise InspectionPolicyError("RUNTIME_INSPECTION_OUTPUT_SCHEMA_INVALID")
+333:         # In a printf format a literal '\\n' ends with the word character n;
+334:         # a regex word boundary would silently lose every following output.
+335:         declared_names = set(re.findall(r"(?<![A-Z0-9_])((?:RESOLVED_)?[A-Z][A-Z0-9_]+)=", command))
+336:         declared_names = {name for name in declared_names if name.startswith("RESOLVED_")} | set(outputs)
+337:         if not declared_names:
+338:             raise InspectionPolicyError("RUNTIME_INSPECTION_PRODUCER_UNDECLARED")
+339:         contracts = self.skills.get_execution_capability_registry([skill_id])
+340:         required = sorted({binding for item in contracts.values() for binding in item.get("required_runtime_binding_ids", [])})
+341:         return {"skill_id": skill_id, "subject": subject, "argv": argv,
+342:                 "read_roots": [str(root) for root in roots], "environment": env,
+343:                 "output_names": sorted(declared_names), "output_contracts": outputs,
+344:                 "coverage_binding_ids": required, "timeout_seconds": 60.0,
+345:                 "output_limit_bytes": 65536, "method_digest": digest(command)}
+371:     async def inspect(self, request: Mapping[str, Any]) -> dict[str, Any]:
+372:         scope = dict(request.get("scope") or {})
+373:         skill_id = str(scope.get("selected_skill_id") or "")
+374:         current = self.describe(skill_id)
+375:         expected = request.get("inspection_contract") or {}
+376:         if not current["permitted"]:
+377:             return self._result("not_run", current["reason_code"])
+378:         if any(expected.get(key) != current.get(key) for key in ("contract_id", "contract_digest", "permitted", "safe_repeat", "coverage_binding_ids")):
+379:             return self._result("not_run", "RUNTIME_INSPECTION_CONTRACT_DRIFT")
+380:         try:
+381:             specification = self._specification(skill_id)
+382:         except (InspectionPolicyError, OSError, ValueError, TypeError, AttributeError) as exc:
+383:             return self._result("not_run", getattr(exc, "code", "RUNTIME_INSPECTION_SCOPE_DRIFT"))
+384:         if dict(scope.get("subject") or {}) != specification["subject"]:
+385:             return self._result("not_run", "RUNTIME_INSPECTION_SCOPE_DRIFT")
+386:         if not request.get("inspection_receipt_id") or request.get("operation") != "inspect":
+387:             return self._result("not_run", "RUNTIME_INSPECTION_REQUEST_INVALID")
+388:         requested = list(scope.get("required_binding_ids") or [])
+389:         if not requested or not set(requested).issubset(specification["coverage_binding_ids"]):
+390:             return self._result("not_run", "RUNTIME_INSPECTION_COVERAGE_UNDECLARED")
+391:         try:
+392:             requested_timeout = float(request.get("inspection_deadline_seconds", 60.0))
+393:         except (ValueError, TypeError):
+394:             return self._result("not_run", "RUNTIME_INSPECTION_REQUEST_INVALID")
+395:         specification["timeout_seconds"] = min(60.0, requested_timeout)
+396:         if not math.isfinite(requested_timeout) or specification["timeout_seconds"] <= 0:
+397:             return self._result("cancelled", "RUNTIME_INSPECTION_DEADLINE_EXHAUSTED")
+398:         try:
+399:             outcome = await self.probe.run(specification)
+400:         except asyncio.TimeoutError:
+401:             return self._result("timeout", "RUNTIME_INSPECTION_TIMEOUT", transient=True)
+402:         except asyncio.CancelledError:
+403:             return self._result("cancelled", "RUNTIME_INSPECTION_CANCELLED")
+404:         except PermissionError:
+405:             return self._result("permission_error", "RUNTIME_INSPECTION_PERMISSION_DENIED")
+406:         except (OSError, InspectionPolicyError) as exc:
+407:             return self._result("execution_error", getattr(exc, "code", "RUNTIME_INSPECTION_SANDBOX_ERROR"))
+408:         # Recheck the actual subject after the observation, before acceptance.
+409:         try:
+410:             observed_specification = self._specification(skill_id)
+411:         except (InspectionPolicyError, OSError, ValueError, TypeError, AttributeError):
+412:             return self._result("not_run", "RUNTIME_INSPECTION_SCOPE_DRIFT")
+413:         if observed_specification != {**specification, "timeout_seconds": 60.0}:
+414:             return self._result("not_run", "RUNTIME_INSPECTION_SCOPE_DRIFT")
+415:         if not isinstance(outcome, Mapping) or type(outcome.get("returncode")) is not int:
+416:             return self._result("output_invalid", "RUNTIME_INSPECTION_OUTPUT_INVALID")
+417:         if outcome.get("returncode") != 0:
+418:             result = self._result("execution_error", "RUNTIME_INSPECTION_NONZERO_EXIT")
+419:             result["inspection_error"] = {"exit_code": outcome.get("returncode")}
+420:             return result
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/recovery_runtime.py
+SHA256 9b0b4f08cf902c370631d0c3a79c019444203bf57c9da29da4cdeb2d1d657825
+717:         elif directive.action in {"retry_step", "run_diagnostic_probe", "organize_result"}:
+718:             outcome_type = "candidate_repair_required"
+719:             payload = {
+720:                 "diagnosis": directive.summary,
+721:                 "failure_owner": packet.failure_owner,
+722:                 "strategy": "semantic_directive:" + directive.action,
+723:                 "repair_instruction": directive.instruction,
+724:                 "source_scope": scope,
+725:                 "decision_id": decision_id,
+726:                 "incident_id": incident_id,
+727:                 "failure_fingerprint": failure_fingerprint,
+728:                 "budget_receipt": budget_receipt,
+729:             }
+730:         elif directive.action == "revise_plan":
+731:             outcome_type = "plan_revision_required"
+732:             payload = {
+733:                 "diagnosis": directive.summary,
+734:                 "contract_violations": [directive.instruction],
+735:                 "source_scope": scope,
+736:                 "decision_id": decision_id,
+737:                 "budget_receipt": budget_receipt,
+738:             }
+739:         elif directive.action == "reconsult":
+740:             outcome_type = "reconsultation_required"
+741:             payload = {
+742:                 "diagnosis": directive.summary,
+743:                 "missing_facts": [directive.instruction],
+744:                 "source_scope": scope,
+745:                 "decision_id": decision_id,
+746:             }
+747:         elif directive.action == "revalidate":
+748:             if not directive.evidence_refs:
+749:                 return self._internal(
+750:                     scope,
+751:                     "REVALIDATION_REQUIRES_NEW_EVIDENCE",
+752:                     {"directive_id": decision_id},
+753:                 )
+754:             outcome_type = "revalidation_required"
+755:             payload = {
+756:                 "diagnosis": directive.summary,
+757:                 "new_evidence_refs": list(directive.evidence_refs),
+758:                 "prior_validation_id": str(
+759:                     source_scope.get("validation_id")
+760:                     or source_payload.get("prior_validation_id")
+761:                     or ""
+762:                 ),
+763:                 "source_scope": scope,
+764:                 "decision_id": decision_id,
+765:             }
+766:         elif directive.action == "ask_user":
+767:             outcome_type = "user_input_required"
+768:             payload = {
+769:                 "diagnosis": directive.summary,
+770:                 "question_id": "question-" + _hash({
+771:                     "directive_id": decision_id,
+772:                     "slots": list(directive.requested_slots),
+773:                 }),
+774:                 "question": directive.question,
+775:                 "owner": "INPUT_DATA",
+776:                 "requires_user_input": True,
+777:                 "source_scope": scope,
+778:                 "decision_id": decision_id,
+779:             }
+780:         elif directive.action == "blocked":
+781:             outcome_type = "blocked"
+782:             payload = {
+783:                 "reason_code": directive.reason_code,
+784:                 "blocked_evidence": {
+785:                     "diagnosis": directive.summary,
+786:                     "unresolved_evidence": list(directive.evidence_refs),
+787:                 },
+788:                 "source_scope": scope,
+789:                 "budget_receipt": {**budget_receipt, "consumed": False},
+790:             }
+856:         if outcome_type == "plan_revision_required":
+857:             # Point to the existing admitted body; this is not a second Plan
+858:             # or a new semantic directive. Planner reads it until scope moves.
+859:             candidate_task["planner_revision_request"] = {
+860:                 "decision_id": decision_id,
+861:                 **{key: str(durable.get(key) or "") for key in
+862:                    ("task_id", "plan_id", "plan_version", "current_step_id")},
+863:             }
+864:         if outcome_type == "candidate_repair_required":
+865:             diagnostic_request = {}
+866:             if directive.action == "run_diagnostic_probe":
+867:                 from agent_core.workflow.diagnostic_admission import admit_diagnostic_request
+868:                 try:
+869:                     diagnostic_request = admit_diagnostic_request(seed=seed, durable=durable, directive=directive, data_path=self.data_path)
+870:                 except StageContractError as exc:
+871:                     if exc.code in {"ARTIFACT_PERMISSION_DENIED", "ARTIFACT_NOT_FOUND", "DIAGNOSTIC_OPERATION_UNSUPPORTED", "DIAGNOSTIC_INPUT_BUDGET_EXCEEDED"}:
+872:                         return self._result(RecoveryOutcome(schema_version=1, type="blocked", scope=scope,
+873:                             summary="The requested diagnostic could not be admitted: " + exc.detail,
+874:                             payload={"reason_code": exc.code, "source_scope": scope,
+875:                                 "blocked_evidence": {"decision_id": decision_id, "incident_id": incident_id,
+876:                                     "failure_fingerprint": failure_fingerprint},
+877:                                 "failure_stage": "recovery.diagnostic_admission",
+878:                                 "detail": exc.detail, "operation": directive.diagnostic_operation,
+879:                                 "requested_refs": list(directive.diagnostic_inputs), "command_started": False,
+880:                                 "budget_receipt": {**budget_receipt, "consumed": False}}))
+881:                     raise
+882:             from pathlib import Path
+883:             from agent_core.recovery import build_scoped_recovery_execution_envelope
+884:             envelope = build_scoped_recovery_execution_envelope(
+885:                 decision_id=decision_id, source_scope=scope,
+886:                 strategy="RUN_DIAGNOSTIC_PROBE" if directive.action == "run_diagnostic_probe" else "PATCH_SCRIPT",
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/runtime_evidence_recovery.py
+SHA256 80e7b63f6a06ea1409b4b3e3ca7e8ee08dc93a6f1ba29243aed33b67eb782e44
+160:     def _scope(self, durable: Mapping[str, Any], skill_id: str, contract: Mapping[str, Any]) -> dict[str, Any]:
+161:         if workflow_routing_schema_version(durable) != 2:
+162:             raise RuntimeRecoveryError("RUNTIME_RECOVERY_REQUIRES_SCHEMA2")
+163:         step = _current_step(durable)
+164:         step_id = str(step["step_id"])
+165:         if not _not_dispatched(durable, step_id):
+166:             raise RuntimeRecoveryError("RUNTIME_RECOVERY_EXECUTION_ALREADY_OWNED")
+255:     def create_request(self, state: Mapping[str, Any], *, selected_skill_id: str, capability_contract: Mapping[str, Any], missing_binding_ids: Sequence[str], original_error: Mapping[str, Any] | str, inspection_contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+256:         task_id = str(state.get("task_id") or "")
+257:         if not task_id:
+258:             raise RuntimeRecoveryError("RUNTIME_RECOVERY_TASK_REQUIRED")
+259:         durable = load_plan_state(self.data_path, task_id)
+260:         contract = normalize_capability_contract(capability_contract, selected_skill_id=selected_skill_id)
+261:         required = list(contract["required_runtime_binding_ids"])
+262:         if not required or not set(missing_binding_ids) <= set(required):
+263:             raise RuntimeRecoveryError("RUNTIME_RECOVERY_REQUIRED_FACT_SCOPE_INVALID")
+264:         scope = self._scope(durable, selected_skill_id, contract)
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py
+SHA256 c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883
+19394:             resolved_paths = self._verified_runtime_paths(
+19395:                 str(audit.get("declared_detail") or "")
+19396:             )
+19397:             checked_env = str(audit.get("checked_env") or declared_env).strip()
+19398:             conda_root = Path(str(getattr(self.pm, "conda_root", "") or ""))
+19399:             if checked_env and str(conda_root) not in {"", "."}:
+19400:                 env_prefix = conda_root / "envs" / checked_env
+19401:                 if env_prefix.is_dir():
+19402:                     resolved_paths.setdefault(
+19403:                         "RESOLVED_ENV_PREFIX",
+19404:                         str(env_prefix.resolve()),
+19405:                     )
+19406:             audit["resolved_runtime_paths"] = resolved_paths
+19519:         lines = [
+19520:             "[RUNTIME_AUDIT]",
+19521:             "- Consultant checked skill runtime declarations, registered environments, registered tool shims, and healthchecks before Planner handoff.",
+19522:             "- Do not use bare `which tool` in the current shell as proof that a skill runtime exists. Use declared healthcheck, registered env/shim evidence, or ask/register/install.",
+19523:             "- Use the declared env_runner for analysis commands. Never synthesize a Conda prefix from the project or benchmark root; resolve runtime paths inside the verified environment.",
+19524:             f"- controller_python: {sys.executable}",
+19611:         for sid in effective_runtime_ids:
+19612:             executable_check = getattr(
+19613:                 self.skill_manager, "is_executable_runtime_skill", None
+19614:             )
+19615:             if callable(executable_check) and not bool(executable_check(sid)):
+19616:                 continue
+19617:             requirements = self._skill_runtime_requirements(sid)
+19618:             env = str(requirements.get("env") or requirements.get("default_env") or "").strip()
+19619:             restored = self._runtime_audit_projection(task_id, [sid]) if require_scoped_evidence else []
+19620:             if restored:
+19621:                 audits.extend(restored)
+19622:                 rows.append(f"- {sid}: verified task evidence restored; env={env}")
+19623:                 continue
+19624:             observation_scope = self._runtime_evidence_scope(sid) if require_scoped_evidence else {}
+19625:             audit = (
+19626:                 self._runtime_audit_for_skill(sid, task_id, use_cache=False)
+19627:                 if require_scoped_evidence else self._runtime_audit_for_skill(sid, task_id)
+19628:             )
+19629:             if require_scoped_evidence:
+19630:                 audit["runtime_observation_scope"] = observation_scope
+19631:                 if observation_scope != self._runtime_evidence_scope(sid):
+19632:                     audit.update(status="unknown", declared_ok=False,
+19633:                                  availability_status="unknown", reason_code="RUNTIME_EVIDENCE_SCOPE_CHANGED")
+19634:             audits.append(audit)
+19635:             ok = bool(audit.get("declared_ok"))
+19636:             detail = str(audit.get("reason") or audit.get("declared_detail") or "")
+19637:             checked_env = str(audit.get("checked_env") or env)
+19638:             status = "passed" if ok else "failed"
+19866:     def _runtime_binding_source(self, state: Mapping[str, Any], skill_ids=None) -> Mapping[str, Any]:
+19867:         task_id = str(state.get("task_id") or state.get("session_id") or "")
+19868:         durable = load_plan_state(self.data_path, task_id)
+19869:         if workflow_routing_schema_version(durable, state) != WORKFLOW_ROUTING_SCHEMA_TYPED:
+19870:             return state
+19871:         task_state = dict(durable.get("task_state") or {})
+19872:         selected = list(skill_ids if skill_ids is not None else (
+19873:             task_state.get("selected_skills") or durable.get("selected_skill_ids") or []
+19874:         ))
+19875:         evaluations = {}
+19876:         for skill_id in selected:
+19877:             evaluations.update(evaluate_runtime_evidence(
+19878:                 task_state, task_id=task_id, skill_scope=self._runtime_evidence_scope(skill_id)
+19879:             ))
+19880:         return {"runtime_audit": self._runtime_audit_projection(task_id, selected),
+19881:                 "runtime_binding_evaluations": evaluations}
+38986:             planner_node_context = build_node_context(
+38987:                 node_type="planner",
+38988:                 task_spec=task_spec,
+38989:                 plan_state=planner_source_state,
+38990:                 state_generation=int(planner_source_state.get("state_generation") or 0),
+38991:                 current_step_id=str(
+38992:                     planner_source_state.get("current_step_id")
+38993:                     or (current_plan_step_with_index(planner_source_state)[1] or {}).get(
+38994:                         "step_id"
+38995:                     )
+38996:                     or ""
+38997:                 ),
+38998:                 authoritative_user_turn_revision=(
+38999:                     self._authoritative_user_turn_revision(planner_source_state)
+39000:                 ),
+39001:                 runtime={
+39002:                     "input_audit": runtime_audits,
+39003:                     "available_capabilities": list(selected_skills),
+39004:                     "capability_contract": planner_semantic_capabilities,
+39005:                 },
+42020:                 generate_runtime_resolution = resolve_action_runtime_bindings(
+42021:                     selected_skill_id=generate_selected_skill_id,
+42022:                     execution_capability_id=execution_capability_id,
+42023:                     approved_capability_contract_hash=str(
+42024:                         generate_step.get("capability_contract_hash") or ""
+42025:                     ),
+42026:                     capability_registry=capability_registry,
+42027:                     ready_runtime_binding_registry=build_runtime_binding_registry(self._runtime_binding_source(state, [generate_selected_skill_id])),
+42028:                     current_action_identity={
+42029:                         "plan_id": str(generate_plan_state.get("plan_id") or ""),
+42030:                         "step_id": current_step_id,
+42031:                     },
+42032:                 )
+42033:                 generate_runtime_audit_view = {
+42034:                     "status": "passed",
+42035:                     "bindings": dict(
+42036:                         generate_runtime_resolution.get(
+42037:                             "effective_runtime_bindings"
+42038:                         ) or {}
+42039:                     ),
+42040:                     "runtime_snapshot_digest": str(
+42041:                         generate_runtime_resolution.get(
+42042:                             "runtime_binding_manifest_hash"
+42043:                         ) or ""
+42044:                     ),
+42863:             except Exception as exc:
+42864:                 if (isinstance(exc, ActionRuntimeContractError)
+42865:                     and exc.code == "REQUIRED_RUNTIME_BINDING_UNAVAILABLE"
+42866:                     and exc.diagnostic.get("failure_scope") == "runtime_fact"
+42867:                     and exc.diagnostic.get("required") is True
+42868:                     and workflow_routing_schema_version(generate_plan_state, state) == WORKFLOW_ROUTING_SCHEMA_TYPED):
+42869:                     # A lookup miss owns a typed evidence episode, never a
+42870:                     # same-input prompt rebuild or an execution failure packet.
+42871:                     try:
+42872:                         request = self._runtime_evidence_service().create_request(
+42873:                             state, selected_skill_id=generate_selected_skill_id,
+42874:                             capability_contract=selected_contract,
+42875:                             missing_binding_ids=[exc.diagnostic["binding_id"]],
+42876:                             original_error=exc.to_diagnostic(),
+42877:                         )
+42878:                     except Exception as admission_error:
+42879:                         result = {"status": "internal_error",
+42880:                             "reason_code": str(getattr(admission_error, "code", "RUNTIME_RECOVERY_REQUEST_PERSISTENCE_FAILED")),
+42881:                             "request": {"scope": {"task_id": task_id,
+42882:                                 "plan_id": str(generate_plan_state.get("plan_id") or ""),
+42883:                                 "plan_version": str(generate_plan_state.get("plan_version") or ""),
+42884:                                 "step_id": str(generate_plan_state.get("current_step_id") or "")},
+42885:                                 "original_error_code": exc.code},
+42886:                             "explanation": {"execution_status": "not_started",
+42887:                                 "user_summary": "运行证据请求未能安全保存；当前步骤尚未执行，不能据此认定依赖不存在。"}}
+42888:                         return {**self._runtime_recovery_stop(state, result),
+42889:                                 "generate_exit_reason": "runtime_recovery_stopped"}
+42890:                     return {"pending_runtime_evidence_request": request,
+42891:                             "generate_exit_reason": "runtime_evidence_required",
+42892:                             "pending_action": {}, "runtime_recovery_result": {},
+42893:                             "execution_started": False}
+47878:                     current_runtime_resolution = resolve_action_runtime_bindings(
+47879:                         selected_skill_id=str(
+47880:                             pending_action.get("selected_skill_id") or ""
+47881:                         ),
+47882:                         execution_capability_id=str(
+47883:                             pending_action.get("execution_capability_id") or ""
+47884:                         ),
+47885:                         approved_capability_contract_hash=str(
+47886:                             pending_action.get("capability_contract_hash") or ""
+47887:                         ),
+47888:                         capability_registry=capability_registry,
+47889:                         ready_runtime_binding_registry=runtime_binding_registry,
+47890:                         current_action_identity={
+47891:                             "action_id": str(pending_action.get("action_id") or ""),
+47892:                             "plan_id": str(pending_action.get("plan_id") or ""),
+47893:                             "step_id": str(pending_action.get("step_id") or ""),
+47894:                         },
+47895:                     )
+47896:                     current_runtime_manifest = dict(
+47897:                         current_runtime_resolution.get(
+47898:                             "runtime_binding_manifest"
+47899:                         ) or {}
+47900:                     )
+47901:                     if str(current_runtime_manifest.get("manifest_hash") or "") != str(
+47902:                         pending_action.get("runtime_binding_manifest_hash") or ""
+47903:                     ):
+47904:                         raise ActionRuntimeContractError(
+47905:                             "RUNTIME_BINDING_SNAPSHOT_DRIFT",
+47906:                             action_id=str(pending_action.get("action_id") or ""),
+47907:                             approved_manifest_hash=str(
+47908:                                 pending_action.get("runtime_binding_manifest_hash") or ""
+47909:                             ),
+47910:                             observed_manifest_hash=str(
+47911:                                 current_runtime_manifest.get("manifest_hash") or ""
+47912:                             ),
+47913:                         )
+48183:             advance_preparation_boundary(
+48184:                 "command_preparation",
+48185:                 "BioAnalystAgent.execute_logic_impl.command_preparation",
+48186:             )
+48187:             effective_execution_env = build_exact_action_environment(
+48188:                 os.environ,
+48189:                 action_environment=declared_action_env,
+48190:                 controller_identity=controller_identity_env,
+48191:             )
+
+FILE /public/home/liusiqi/03.毕设/Biomind_v1/execution/executor.py
+SHA256 b83a08f98b96b8c64175ae21f321af43a72541b64178905af73fe4da6ff6d756
+560:         # 切断 stdin。遇到需要按 y/n 的地方直接报错，拒绝死等。
+561:         popen_kwargs: Dict[str, Any] = {}
+562:         if os.name != "nt":
+563:             popen_kwargs["start_new_session"] = True
+564:         process = await asyncio.create_subprocess_shell(
+565:             command,
+566:             stdin=asyncio.subprocess.DEVNULL,
+567:             stdout=asyncio.subprocess.PIPE,
+568:             stderr=asyncio.subprocess.PIPE,
+569:             env=(
+570:                 {str(key): str(value) for key, value in env.items()}
+571:                 if env is not None
+572:                 else None
+573:             ),
+574:             **popen_kwargs,
+575:         )
+894: async def run_script_path(
+895:     script_path: str | Path,
+896:     *,
+897:     expected_sha256: str,
+898:     interpreter: str = "",
+899:     timeout: int | None = None,
+900:     profile: bool = True,
+901:     lifecycle_callback: Optional[Callable[..., Any]] = None,
+902:     exit_status_path: str | Path | None = None,
+903:     env: Mapping[str, str] | None = None,
+904:     max_output_bytes: int | None = None,
+905:     managed_log_paths: Mapping[str, str] | None = None,
+906:     display_context: Mapping[str, Any] | None = None,
+907: ) -> Tuple[str, str, int]:
+908:     """Execute one immutable saved script; never materialize a second script."""
+909:     global _LAST_EXECUTION_METADATA
+910:     path = Path(script_path).expanduser().resolve()
+911:     if not path.is_file():
+912:         return "", f"EXECUTED_SCRIPT_MISSING: {path}", 126
+913:     actual_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+914:     if not expected_sha256 or actual_sha256 != str(expected_sha256):
+915:         return "", (
+916:             f"SCRIPT_HASH_MISMATCH: path={path} expected={expected_sha256 or '<missing>'} "
+917:             f"actual={actual_sha256}"
+918:         ), 126
+919:     runner = str(interpreter or "").strip()
+920:     if not runner:
+921:         runner = "python" if path.suffix.lower() == ".py" else "bash"
+922:     command = f"{shlex.quote(runner)} {shlex.quote(str(path))}"
+923:     stdout, stderr, returncode = await run_command(
+924:         command,
+925:         timeout=timeout,
+926:         profile=profile,
+927:         lifecycle_callback=lifecycle_callback,
+928:         env=env,

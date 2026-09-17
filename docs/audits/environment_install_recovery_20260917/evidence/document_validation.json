@@ -1,0 +1,13 @@
+{
+  "checked_utc": "2026-09-17T09:17:04.528546+00:00",
+  "counts": {
+    "json": 18,
+    "python_ast": 10,
+    "markdown_links": 150
+  },
+  "findings": 22,
+  "active_skills": 88,
+  "missing_links": [],
+  "scope": "Artifact integrity only; not a production/science test. Existing tests and current-behavior witnesses retain their separate reported outcomes.",
+  "result": "PASS"
+}

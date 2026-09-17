@@ -1,0 +1,241 @@
+{
+  "scope": "current resolver and runner, synthetic action/registry facts only",
+  "no_production_changes": true,
+  "results": [
+    {
+      "id": "declared_environment_and_picard_do_not_enlarge_empty_capability",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "contract": {
+        "schema_version": 1,
+        "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+        "selected_skill_id": "genomics/wgs-short-read-mapping",
+        "required_runtime_binding_ids": [],
+        "optional_runtime_binding_ids": [],
+        "required_artifact_binding_ids": [],
+        "execution_guidance": [
+          "Declare the reference index files or index bundle in step.outputs and the exact source reference in step.inputs. Keep the approved input immutable and place new index products only at approved output locations.",
+          "Report create_reference_indexes with reference_resource_ref and index_artifacts identifying the actual products. Planning is a promise; execution, artifact validation, and approval still must establish completion.",
+          "If no index was produced, publish only the observed create_reference_indexes side fact with index_artifacts=[] and status=blocked; omit the artifact row. Do not create an empty bundle to satisfy publication. This never completes the step."
+        ],
+        "operation": "prepare_reference",
+        "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+        "contract_revision": "wgs-short-read-mapping-effects-v1",
+        "produces_artifacts": [
+          {
+            "artifact_id": "reference_indexes",
+            "resource_kind": "immutable_artifact"
+          }
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": [
+          {
+            "effect_id": "create_reference_indexes",
+            "evidence_contract": {
+              "required_fields": [
+                "reference_resource_ref",
+                "index_artifacts"
+              ]
+            }
+          }
+        ]
+      },
+      "provided_candidate_fact_ids": [
+        "runtime.environment.prefix",
+        "runtime.picard.bin"
+      ],
+      "result": {
+        "capability_contract": {
+          "schema_version": 1,
+          "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+          "selected_skill_id": "genomics/wgs-short-read-mapping",
+          "required_runtime_binding_ids": [],
+          "optional_runtime_binding_ids": [],
+          "required_artifact_binding_ids": [],
+          "execution_guidance": [
+            "Declare the reference index files or index bundle in step.outputs and the exact source reference in step.inputs. Keep the approved input immutable and place new index products only at approved output locations.",
+            "Report create_reference_indexes with reference_resource_ref and index_artifacts identifying the actual products. Planning is a promise; execution, artifact validation, and approval still must establish completion.",
+            "If no index was produced, publish only the observed create_reference_indexes side fact with index_artifacts=[] and status=blocked; omit the artifact row. Do not create an empty bundle to satisfy publication. This never completes the step."
+          ],
+          "operation": "prepare_reference",
+          "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+          "contract_revision": "wgs-short-read-mapping-effects-v1",
+          "produces_artifacts": [
+            {
+              "artifact_id": "reference_indexes",
+              "resource_kind": "immutable_artifact"
+            }
+          ],
+          "produces_bindings": [],
+          "produces_observations": [],
+          "workspace_mutations": [],
+          "explicit_side_effects": [
+            {
+              "effect_id": "create_reference_indexes",
+              "evidence_contract": {
+                "required_fields": [
+                  "reference_resource_ref",
+                  "index_artifacts"
+                ]
+              }
+            }
+          ]
+        },
+        "capability_contract_hash": "sha256:4c4d8a9e807acd81f86e8478f2ba82661045ebd973f457baa5d69142c8e7a018",
+        "effective_runtime_bindings": {},
+        "runtime_binding_records": [],
+        "runtime_binding_manifest": {
+          "schema_version": 1,
+          "action_id": "audit",
+          "plan_id": "audit",
+          "step_id": "fixture",
+          "selected_skill_id": "genomics/wgs-short-read-mapping",
+          "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+          "capability_contract_hash": "sha256:4c4d8a9e807acd81f86e8478f2ba82661045ebd973f457baa5d69142c8e7a018",
+          "scope": "current_action",
+          "bindings": [],
+          "manifest_hash": "sha256:4f0309ddac3faf91a432a4956e131d79645c0283a86a393fec3deeae57f2fbe3"
+        },
+        "runtime_binding_manifest_hash": "sha256:4f0309ddac3faf91a432a4956e131d79645c0283a86a393fec3deeae57f2fbe3"
+      }
+    },
+    {
+      "id": "legitimate_generic_empty_binding",
+      "status": "PASS_CURRENT_STATE_WITNESS"
+    },
+    {
+      "id": "conflicting_candidates",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "diagnostic": {
+        "code": "REQUIRED_RUNTIME_BINDING_UNAVAILABLE",
+        "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+        "selected_skill_id": "genomics/wgs-short-read-mapping",
+        "binding_id": "runtime.picard.bin",
+        "required": true,
+        "failure_scope": "runtime_fact",
+        "availability": "AMBIGUOUS",
+        "available_runtime_binding_ids": [
+          "runtime.environment.prefix"
+        ]
+      }
+    },
+    {
+      "id": "stale_registered_path",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "diagnostic": {
+        "code": "RUNTIME_BINDING_PRELAUNCH_PATH_INVALID",
+        "binding_id": "runtime.picard.bin",
+        "value_kind": "executable_path",
+        "execution_started": false,
+        "approved_value_digest": "sha256:d0740655cb2cac02af3c5aa488d779db76be83d30bff300bd661240899b90d1a"
+      }
+    },
+    {
+      "id": "skill_healthcheck_wraps_and_pm_uses_declared_prefix",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "declared_env": "bio_wgs",
+      "healthcheck": "conda run -n bio_wgs bash -c \"samtools --version >/dev/null && (bwa 2>&1 | head -1 >/dev/null || bwa-mem2 version >/dev/null) && (command -v picard >/dev/null || command -v sambamba >/dev/null)\"",
+      "effective_command": "bash -c \"samtools --version >/dev/null && (bwa 2>&1 | head -1 >/dev/null || bwa-mem2 version >/dev/null) && (command -v picard >/dev/null || command -v sambamba >/dev/null)\"",
+      "subprocess_env_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path:/public/home/liusiqi/.codex/tmp/arg0/codex-arg09eQoky:/public/home/liusiqi/.local/bin:/public/home/liusiqi/.aspera/connect/bin:/public/home/liusiqi/02.software/01.assembly/modtools/bin:/public/home/liusiqi/02.software/01.assembly/dist_modkit_v0.6.1_481e3c9:/public/home/liusiqi/02.software/01.assembly/dorado-1.4.0-linux-x64/bin:/public/home/liusiqi/02.software/01.assembly/CPhasing/bin:/public/home/liusiqi/anaconda3/condabin:/public/home/liusiqi/.local/bin:/public/home/liusiqi/bin:/public/home/liusiqi/.local/bin:/opt/gridview/pmix/bin:/opt/gridview/pmix/sbin:/public/software/apps/module/bin:/opt/gridview/slurm/bin:/opt/gridview/slurm/sbin:/opt/gridview/munge/bin:/opt/gridview/munge/sbin:/public/home/liusiqi/.local/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/public/home/liusiqi/bin:/usr/lpp/mmfs/bin",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs",
+        "JAVA_HOME": null
+      }
+    },
+    {
+      "id": "existing_runtime_inspection_rejects_wgs_healthcheck_syntax",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "result": {
+        "contract_id": "skill-runtime-inspection:genomics/wgs-short-read-mapping",
+        "contract_digest": "sha256:5d11c5822629ec63f7b2973c80d84a32bf00193fdcb09ff159fff26d42eecc69",
+        "method_digest": "sha256:ac22db4d62370724d9666ca2195e4d188ca47f88736e48774aa8684df978425c",
+        "permitted": false,
+        "safe_repeat": true,
+        "coverage_binding_ids": [],
+        "cache_restore_permitted": false,
+        "deadline_seconds": 60.0,
+        "reason_code": "RUNTIME_INSPECTION_SYNTAX_UNSUPPORTED",
+        "needs_user_decision": false
+      },
+      "note": "Existing adapter.describe only; never executes a probe."
+    },
+    {
+      "id": "real_runner_empty_action_environment",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-runtime-witness-go6yw6j0"
+      },
+      "command": "command -v picard",
+      "timeout_seconds": 5,
+      "output_limit_bytes": 4096,
+      "returncode": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "id": "coarse_healthcheck_accepts_missing_bwa_pipeline",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "command": "bash -c \"samtools --version >/dev/null && (bwa 2>&1 | head -1 >/dev/null || bwa-mem2 version >/dev/null) && (command -v picard >/dev/null || command -v sambamba >/dev/null)\"",
+      "environment": {
+        "PATH": "/tmp/biomind-runtime-witness-go6yw6j0/healthcheck-bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-runtime-witness-go6yw6j0"
+      },
+      "tools_present": [
+        "bash",
+        "head",
+        "samtools",
+        "picard"
+      ],
+      "tools_absent": [
+        "bwa",
+        "bwa-mem2"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "",
+      "timeout_seconds": 5,
+      "output_limit_bytes": 4096
+    },
+    {
+      "id": "real_runner_action_java_a",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "environment": {
+        "PATH": "/tmp/biomind-runtime-witness-go6yw6j0/a:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-runtime-witness-go6yw6j0",
+        "JAVA_HOME": "/tmp/biomind-runtime-witness-go6yw6j0/a"
+      },
+      "command": "java",
+      "timeout_seconds": 5,
+      "output_limit_bytes": 4096,
+      "returncode": 0,
+      "stdout": "java-a\n",
+      "stderr": ""
+    },
+    {
+      "id": "real_runner_action_java_b",
+      "status": "PASS_CURRENT_STATE_WITNESS",
+      "environment": {
+        "PATH": "/tmp/biomind-runtime-witness-go6yw6j0/b:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-runtime-witness-go6yw6j0",
+        "JAVA_HOME": "/tmp/biomind-runtime-witness-go6yw6j0/b"
+      },
+      "command": "java",
+      "timeout_seconds": 5,
+      "output_limit_bytes": 4096,
+      "returncode": 0,
+      "stdout": "java-b\n",
+      "stderr": ""
+    },
+    {
+      "id": "parent_environment_unchanged",
+      "status": "PASS_CURRENT_STATE_WITNESS"
+    }
+  ]
+}

@@ -1,0 +1,1198 @@
+{
+  "scope": "Current-behavior witnesses only. No production repair, software installation, model/API call, real WGS or task resume.",
+  "historical_summary": {
+    "session_root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497",
+    "session_plan_sha256": "6c30cb92843e160560e4492b6b4bc9b52f5ac8caa32c7eca6fd06a71387fd73c",
+    "run_metrics_summary": {
+      "total_wall_seconds": 516.748,
+      "agent_active_seconds_excluding_human_wait": 419.651,
+      "human_confirmation_wait_seconds": 97.097,
+      "command_execution_seconds": 13.317,
+      "successful_command_execution_seconds": 10.789,
+      "llm_call_seconds": 218.917,
+      "install_or_repair_seconds_estimate": 0.0,
+      "analysis_planning_overhead_seconds": 406.334,
+      "llm_calls": 20,
+      "commands": 3,
+      "successful_commands": 1,
+      "failed_commands": 2,
+      "manual_confirmations": 4,
+      "auto_confirmations": 0,
+      "correction_count": 0,
+      "max_retry_count": 0,
+      "manual_feedback_or_rejection_count": 0,
+      "node_seconds": {
+        "triage": 2.292,
+        "consultant": 39.209,
+        "planner": 107.511,
+        "plan_review": 15.458,
+        "generate": 96.254,
+        "execute": 46.717,
+        "recovery": 87.032,
+        "supervisor": 9.334,
+        "commit_step": 1.207
+      },
+      "tokens": {
+        "prompt_tokens": 995593,
+        "completion_tokens": 40316,
+        "total_tokens": 1035909,
+        "reasoning_tokens": null,
+        "contains_estimates": false,
+        "prompt_cache_hit_tokens": 594560,
+        "prompt_cache_miss_tokens": 401033,
+        "prompt_cache_usage_reported_calls": 20,
+        "cache_metric_status": "reported",
+        "prompt_cache_hit_rate": 0.597192
+      }
+    },
+    "metrics_llm_event_nodes": {
+      "triage": 1,
+      "consultant": 4,
+      "planner": 3,
+      "generate": 5,
+      "recovery": 6,
+      "supervisor": 1
+    },
+    "unique_archived_request_count": 21,
+    "calls": [
+      {
+        "call_id": "consultant-0002-296b16c13b72",
+        "call_kind": "consultant",
+        "request_sha256": "f259a5f4de4b6c111ead41ff495adfd3a0243d4d78c2f5bab9f6d323eed50cfe",
+        "request_bytes": 37882,
+        "message_count": 2,
+        "content_characters": 34624,
+        "provider_request_id": "lc_run--01a0ae2d-85d1-7f73-829c-4663779652e8",
+        "provider_attempt_id": "provider-attempt-88ce9258f9b1-1-0ebe7860",
+        "provider_usage": {
+          "input_tokens": 8672,
+          "output_tokens": 127,
+          "total_tokens": 8799
+        },
+        "total_elapsed_seconds": 2.27092,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "consultant-0003-a1adba4e9f46",
+        "call_kind": "consultant",
+        "request_sha256": "9d02579f44d16c88fdcabc698087b290b0fc40bf27c9575a4cf192d9cafa281f",
+        "request_bytes": 54928,
+        "message_count": 4,
+        "content_characters": 49874,
+        "provider_request_id": "lc_run--01a0ae2d-9455-7ee2-aa03-e218150fa2bc",
+        "provider_attempt_id": "provider-attempt-448f7f4ba922-1-4103975c",
+        "provider_usage": {
+          "input_tokens": 12871,
+          "output_tokens": 94,
+          "total_tokens": 12965
+        },
+        "total_elapsed_seconds": 7.20899,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "consultant-0004-eaa66becf1f9",
+        "call_kind": "consultant",
+        "request_sha256": "d100afb17006f8ce60d6e12dbd482661fa24ab7c54695eebecb1d27e3718f9b3",
+        "request_bytes": 104078,
+        "message_count": 6,
+        "content_characters": 97218,
+        "provider_request_id": "lc_run--01a0ae2d-b93c-71f1-8a37-7bc4a91587fd",
+        "provider_attempt_id": "provider-attempt-c65ba48ccfbd-1-9d27fd07",
+        "provider_usage": {
+          "input_tokens": 25019,
+          "output_tokens": 2625,
+          "total_tokens": 27644
+        },
+        "total_elapsed_seconds": 11.267659,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "consultant-0005-8bd6051e498b",
+        "call_kind": "consultant",
+        "request_sha256": "1226f0221c7e7d4146f11df2a29e7ab7cb11366a01d4721a937c877d307cb732",
+        "request_bytes": 114860,
+        "message_count": 8,
+        "content_characters": 104963,
+        "provider_request_id": "lc_run--01a0ae2d-ffb1-7c33-9572-f8b112a6bf09",
+        "provider_attempt_id": "provider-attempt-e07900e89605-1-c60644b6",
+        "provider_usage": {
+          "input_tokens": 27697,
+          "output_tokens": 723,
+          "total_tokens": 28420
+        },
+        "total_elapsed_seconds": 4.163685,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "generate-0009-7e7691897098",
+        "call_kind": "generate",
+        "request_sha256": "de5eb9d74a1767e9e1c321835667ad4dd610d62215cee30bc2ba638f9e145828",
+        "request_bytes": 140597,
+        "message_count": 6,
+        "content_characters": 126473,
+        "provider_request_id": "lc_run--01a0ae30-12dc-73a1-bb57-b3fc77724298",
+        "provider_attempt_id": "provider-attempt-003f59e41491-1-f6833dcb",
+        "provider_usage": {
+          "input_tokens": 33765,
+          "output_tokens": 473,
+          "total_tokens": 34238
+        },
+        "total_elapsed_seconds": 4.720363,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "generate-0012-fefe90c44169",
+        "call_kind": "generate",
+        "request_sha256": "e0e8549a768a098f42dc6b1bcb972c82e034d63a7b69f82e9826e923b736d4df",
+        "request_bytes": 113470,
+        "message_count": 8,
+        "content_characters": 99622,
+        "provider_request_id": "lc_run--01a0ae30-eb79-7ca3-839d-0a2971cbc70f",
+        "provider_attempt_id": "provider-attempt-dfdcc284a8db-1-76d5839e",
+        "provider_usage": {
+          "input_tokens": 28809,
+          "output_tokens": 458,
+          "total_tokens": 29267
+        },
+        "total_elapsed_seconds": 3.484076,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "generate-0013-152ebb16a3d2",
+        "call_kind": "generate",
+        "request_sha256": "f4007b42351a28939eac1d7c74ee41851d5aaab2ded660b5dbce2becf524ffc1",
+        "request_bytes": 123827,
+        "message_count": 10,
+        "content_characters": 108624,
+        "provider_request_id": "lc_run--01a0ae31-30cd-7fa3-80fd-af21d743fc62",
+        "provider_attempt_id": "provider-attempt-389d3315862a-1-7a1fe241",
+        "provider_usage": {
+          "input_tokens": 31922,
+          "output_tokens": 390,
+          "total_tokens": 32312
+        },
+        "total_elapsed_seconds": 8.638749,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "generate-0014-c0d6dcae80e7",
+        "call_kind": "generate",
+        "request_sha256": "29850a1fc88f5b392d83a12e74f554a3301be6a470e3f56d5b6ed69bab30ec74",
+        "request_bytes": 131258,
+        "message_count": 12,
+        "content_characters": 115113,
+        "provider_request_id": "lc_run--01a0ae31-88bf-7140-ba40-fed45747cb77",
+        "provider_attempt_id": "provider-attempt-82b6e904cc55-1-b598cdb6",
+        "provider_usage": {
+          "input_tokens": 34050,
+          "output_tokens": 381,
+          "total_tokens": 34431
+        },
+        "total_elapsed_seconds": 3.66497,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "generate-0016-d4f379d86176",
+        "call_kind": "generate",
+        "request_sha256": "4a01f89a8933e39dff822eeddab02d429df6888ae69b0656c0a23e0efd4d03a8",
+        "request_bytes": 148967,
+        "message_count": 6,
+        "content_characters": 134301,
+        "provider_request_id": "lc_run--01a0ae32-ff43-7b93-b1af-1f25ac726044",
+        "provider_attempt_id": "provider-attempt-aa3a2c8457d5-1-a0963145",
+        "provider_usage": {
+          "input_tokens": 35254,
+          "output_tokens": 1134,
+          "total_tokens": 36388
+        },
+        "total_elapsed_seconds": 6.884781,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "planner_initial-0006-62fd286e6ccb",
+        "call_kind": "planner_initial",
+        "request_sha256": "8988c75f9c4d9d5acaf4e3e1c2ee1f9d2c4b0a74881efc7af98d2a8304928d5f",
+        "request_bytes": 107501,
+        "message_count": 5,
+        "content_characters": 98978,
+        "provider_request_id": "lc_run--01a0ae2e-1b59-7f71-9851-98aacc6ddbd9",
+        "provider_attempt_id": "provider-attempt-11480fe84fe1-1-e3cf22fe",
+        "provider_usage": {
+          "input_tokens": 24394,
+          "output_tokens": 10513,
+          "total_tokens": 34907
+        },
+        "total_elapsed_seconds": 33.156375,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "planner_initial-0007-154b34f72bde",
+        "call_kind": "planner_initial",
+        "request_sha256": "46936bfd2396f796bd69466d2cbe2eea13a9b28351fa1a6edcc6d344b3c6c8d2",
+        "request_bytes": 162463,
+        "message_count": 7,
+        "content_characters": 145489,
+        "provider_request_id": "lc_run--01a0ae2e-a8df-75b1-9d61-0d4ba25c0245",
+        "provider_attempt_id": "provider-attempt-d2f43f7ccb45-1-5c4475f7",
+        "provider_usage": {
+          "input_tokens": 37812,
+          "output_tokens": 10028,
+          "total_tokens": 47840
+        },
+        "total_elapsed_seconds": 35.42506,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "planner_initial-0008-d5e9808aca76",
+        "call_kind": "planner_initial",
+        "request_sha256": "0b5e9d5968529040f380ec2606e6ec6bba4f053bbaef3cf4e528abbb7a94fc95",
+        "request_bytes": 215444,
+        "message_count": 9,
+        "content_characters": 190253,
+        "provider_request_id": "lc_run--01a0ae2f-411f-7891-9dbe-f50f52560b67",
+        "provider_attempt_id": "provider-attempt-bb3d62da016e-1-07d8df37",
+        "provider_usage": {
+          "input_tokens": 50689,
+          "output_tokens": 10026,
+          "total_tokens": 60715
+        },
+        "total_elapsed_seconds": 28.131959,
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      {
+        "call_id": "recovery_turn-0010-3f9930ff15c6",
+        "call_kind": "recovery_turn",
+        "request_sha256": "3ef94ac1135b8d5ff6fef8c36988e32bc5d20b8ccc449f578411b05e76c850cd",
+        "request_bytes": 313656,
+        "message_count": 13,
+        "content_characters": 282739,
+        "provider_request_id": "lc_run--01a0ae30-7a14-7563-9b54-2dec6a6a3d81",
+        "provider_attempt_id": "provider-attempt-e0a0ff5c2030-1-bbb5316f",
+        "provider_usage": {
+          "input_tokens": 94172,
+          "output_tokens": 139,
+          "total_tokens": 94311
+        },
+        "total_elapsed_seconds": 9.328117,
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "name": "failure_inspect",
+            "id": "call_00_ydGV1pJm6tQYqALCUqoH1129"
+          },
+          {
+            "name": "skill_resource",
+            "id": "call_01_G800ELtCXJ3GKts6WRxf6632"
+          }
+        ]
+      },
+      {
+        "call_id": "recovery_turn-0011-23893f300b7b",
+        "call_kind": "recovery_turn",
+        "request_sha256": "3f8a35cd2c4968bc95d70f35d2e6cbcdc69be561b300c9762a981f2abff3419d",
+        "request_bytes": 335990,
+        "message_count": 16,
+        "content_characters": 302078,
+        "provider_request_id": "lc_run--01a0ae30-a956-7ff2-8694-d927a961a94f",
+        "provider_attempt_id": "provider-attempt-e6a9b2439c1b-1-4ea8eea8",
+        "provider_usage": {
+          "input_tokens": 101122,
+          "output_tokens": 787,
+          "total_tokens": 101909
+        },
+        "total_elapsed_seconds": 5.63351,
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "name": "submit_recovery_directive",
+            "id": "call_00_BEFdkncla6rzGeuJu1je2205"
+          }
+        ]
+      },
+      {
+        "call_id": "recovery_turn-0017-21dad96cd7b4",
+        "call_kind": "recovery_turn",
+        "request_sha256": "8805c55b4113cc15265e5c066362ba839f53017217f40ba79e8a7171352eff6b",
+        "request_bytes": 337762,
+        "message_count": 13,
+        "content_characters": 304583,
+        "provider_request_id": "lc_run--01a0ae34-1d43-7dc3-b26a-435aedc200a8",
+        "provider_attempt_id": "provider-attempt-23967e7020d7-1-e607504c",
+        "provider_usage": {
+          "input_tokens": 100313,
+          "output_tokens": 193,
+          "total_tokens": 100506
+        },
+        "total_elapsed_seconds": 4.547499,
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "name": "failure_inspect",
+            "id": "call_00_OSv3fCFimRo6Eh88ifoj7758"
+          },
+          {
+            "name": "step_inspect",
+            "id": "call_01_zEYi8ylgSJSlIvz9gCWV3664"
+          }
+        ]
+      },
+      {
+        "call_id": "recovery_turn-0018-f4de4bd43eec",
+        "call_kind": "recovery_turn",
+        "request_sha256": "937df309cfecd764d7d57358b8b3f041dd39d268381a3a0f5933ddcaf102044d",
+        "request_bytes": 357756,
+        "message_count": 16,
+        "content_characters": 321775,
+        "provider_request_id": "lc_run--01a0ae34-3e00-7d70-b7d4-9dd12abe2a7a",
+        "provider_attempt_id": "provider-attempt-11b554aaa869-1-af9f78ec",
+        "provider_usage": {
+          "input_tokens": 106590,
+          "output_tokens": 99,
+          "total_tokens": 106689
+        },
+        "total_elapsed_seconds": 14.892247,
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "name": "evidence_read",
+            "id": "call_00_SYDvGbxx6VgQzwWlwo8Q8329"
+          }
+        ]
+      },
+      {
+        "call_id": "recovery_turn-0019-60d3b3d9f6ab",
+        "call_kind": "recovery_turn",
+        "request_sha256": "0d726f1b263274e9a5b2066895f8a25d62fd6b14679677e1a3794bb1c3b585ee",
+        "request_bytes": 364817,
+        "message_count": 18,
+        "content_characters": 327214,
+        "provider_request_id": "lc_run--01a0ae34-86c7-7901-8dc4-5cf5aeab25d1",
+        "provider_attempt_id": "provider-attempt-475d0dec1ad4-1-84e4c24a",
+        "provider_usage": {
+          "input_tokens": 108581,
+          "output_tokens": 857,
+          "total_tokens": 109438
+        },
+        "total_elapsed_seconds": 12.81043,
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "name": "submit_recovery_directive",
+            "id": "call_00_TE66TDvlgFI5bzk9Qrlz7789"
+          }
+        ]
+      },
+      {
+        "call_id": "recovery_turn-0020-5745b56334d0",
+        "call_kind": "recovery_turn",
+        "request_sha256": "759177fec6057785420cbc4832aab086d5b91b9c4c639fbf30e99174482c4c9f",
+        "request_bytes": 370363,
+        "message_count": 20,
+        "content_characters": 330457,
+        "provider_request_id": "lc_run--01a0ae34-c77b-7102-8ebc-7c52cf9efa70",
+        "provider_attempt_id": "provider-attempt-96e5d2166936-1-3970c602",
+        "provider_usage": {
+          "input_tokens": 109855,
+          "output_tokens": 531,
+          "total_tokens": 110386
+        },
+        "total_elapsed_seconds": 16.435844,
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "name": "submit_recovery_directive",
+            "id": "call_00_LyjhwosECYzkUCKQ2Sk96738"
+          }
+        ]
+      },
+      {
+        "call_id": "supervisor_reviewer-0015-99baaab045bd",
+        "call_kind": "supervisor_reviewer",
+        "request_sha256": "c98fa7f5edf60e9de296409bfe26f20aa64b1832501fb311912454ec7ef25bce",
+        "request_bytes": 88820,
+        "message_count": 8,
+        "content_characters": 81600,
+        "provider_request_id": null,
+        "provider_attempt_id": null,
+        "provider_usage": null,
+        "total_elapsed_seconds": null,
+        "finish_reason": null,
+        "tool_calls": []
+      },
+      {
+        "call_id": "task_router-0001-e9452a030b21",
+        "call_kind": "task_router",
+        "request_sha256": "bb61f698cd3be50ab182264bf23873c1dd383fc3d8312daeb48b62a960a8fd61",
+        "request_bytes": 4291,
+        "message_count": 1,
+        "content_characters": 3163,
+        "provider_request_id": null,
+        "provider_attempt_id": null,
+        "provider_usage": null,
+        "total_elapsed_seconds": null,
+        "finish_reason": null,
+        "tool_calls": []
+      },
+      {
+        "call_id": "terminal_summary-0021-98e7373b0c7f",
+        "call_kind": "terminal_summary",
+        "request_sha256": "2258d9f9722f9b64c98cf0138e18a8cb75f02ecca159fc50a8025c91e62b614a",
+        "request_bytes": 15618,
+        "message_count": 2,
+        "content_characters": 12329,
+        "provider_request_id": "lc_run--01a0ae35-1f96-7d31-b289-d7a341d3dfcf",
+        "provider_attempt_id": "provider-attempt-137629d59b4e-1-ee5ce052",
+        "provider_usage": {
+          "input_tokens": 4444,
+          "output_tokens": 12,
+          "total_tokens": 4456
+        },
+        "total_elapsed_seconds": 1.812941,
+        "finish_reason": "stop",
+        "tool_calls": []
+      }
+    ],
+    "terminal_summary_excluded_from_metrics_llm_events": true,
+    "metrics_plus_terminal_tokens": 1040365,
+    "metrics_plus_terminal_prompt_tokens": 1000037,
+    "metrics_plus_terminal_completion_tokens": 40328,
+    "sum_command_event_seconds": 13.317,
+    "sum_confirmation_event_seconds": 97.097,
+    "task_status": "blocked",
+    "execution_status": "failed",
+    "runtime_state_status": "blocked",
+    "steps": [
+      {
+        "step_id": "input_check",
+        "status": "passed",
+        "dependencies": [],
+        "inputs": [
+          "artifact-f45ed785f84d81e9cfab",
+          "artifact-2faee33f0d19e7f0dab4",
+          "artifact-431c5cce92b5b261677e",
+          "artifact-97f64b37bb55399a6d4e",
+          "artifact-a9a97d180ef458548099"
+        ],
+        "outputs": [],
+        "execution_capability_id": "genomics.wgs.short.read.mapping.inspect",
+        "success_criteria": [
+          "使用 inspect_wgs_inputs.py 组合检查四个 FASTQ 与 genome.fasta，输出一个 validation_observation，逐项保留前缀覆盖范围与任何 adverse/incomplete 结果",
+          "确认四个 FASTQ 与参考文件存在且可读；不修改任何原始输入文件"
+        ]
+      },
+      {
+        "step_id": "prepare_reference",
+        "status": "running",
+        "dependencies": [
+          "input_check"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099"
+        ],
+        "outputs": [
+          "plan-artifact-7c3b64e012cb94ddd0184b27"
+        ],
+        "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+        "success_criteria": [
+          "在输出目录 01.ref 内生成 genome.fasta 的 .fai、BWA 索引与 .dict，原始 genome.fasta 保持只读不改动",
+          "若所需索引工具缺失，发布 create_reference_indexes 的 blocked 事实并列出缺失命令，不伪造索引"
+        ]
+      },
+      {
+        "step_id": "map_s1",
+        "status": "pending",
+        "dependencies": [
+          "prepare_reference"
+        ],
+        "inputs": [
+          "artifact-f45ed785f84d81e9cfab",
+          "artifact-2faee33f0d19e7f0dab4",
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-7c3b64e012cb94ddd0184b27"
+        ],
+        "outputs": [
+          "plan-artifact-6dbcb01c336f1ecdbab14bf0",
+          "plan-artifact-2c039ae33dd355790ac96c07",
+          "plan-artifact-136c83c2a7a1ef844d66448a",
+          "plan-artifact-d12703950c2ee64cc331fa39",
+          "plan-artifact-e9c07213297945c745679c22"
+        ],
+        "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+        "success_criteria": [
+          "使用 BWA-MEM 比对 S1 双端 FASTQ，samtools sort 坐标排序，Picard MarkDuplicates 标记重复并保留重复，生成带 @RG 的 BAM 与 .bai",
+          "生成 S1 的 flagstat 与 coverage 统计；报告比对率、正确配对率与重复率",
+          "BWA/samtools/Picard 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造 BAM"
+        ]
+      },
+      {
+        "step_id": "map_s2",
+        "status": "pending",
+        "dependencies": [
+          "prepare_reference"
+        ],
+        "inputs": [
+          "artifact-431c5cce92b5b261677e",
+          "artifact-97f64b37bb55399a6d4e",
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-7c3b64e012cb94ddd0184b27"
+        ],
+        "outputs": [
+          "plan-artifact-4252b46e302628a2ddda25a4",
+          "plan-artifact-4781a93e1145109068cce9e6",
+          "plan-artifact-f9711e487c3995268205ed4c",
+          "plan-artifact-9772cbceae841824c38472e5",
+          "plan-artifact-32168b7797fb7f737266e9a8"
+        ],
+        "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+        "success_criteria": [
+          "使用 BWA-MEM 比对 S2 双端 FASTQ，samtools sort 坐标排序，Picard MarkDuplicates 标记重复并保留重复，生成带 @RG 的 BAM 与 .bai",
+          "生成 S2 的 flagstat 与 coverage 统计；报告比对率、正确配对率与重复率",
+          "BWA/samtools/Picard 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造 BAM"
+        ]
+      },
+      {
+        "step_id": "build_bam_list",
+        "status": "pending",
+        "dependencies": [
+          "map_s1",
+          "map_s2"
+        ],
+        "inputs": [
+          "plan-artifact-6dbcb01c336f1ecdbab14bf0",
+          "plan-artifact-4252b46e302628a2ddda25a4"
+        ],
+        "outputs": [
+          "plan-artifact-ae0d317f52985041c2a29b27"
+        ],
+        "execution_capability_id": "framework.generic.execute",
+        "success_criteria": [
+          "生成 bam.list，每行 sample<TAB>bam_path，样本名为 S1 与 S2，路径指向实际去重 BAM",
+          "不覆盖任何已有文件；若目标已存在则报告冲突"
+        ]
+      },
+      {
+        "step_id": "confirm_ploidy",
+        "status": "pending",
+        "dependencies": [
+          "build_bam_list"
+        ],
+        "inputs": [],
+        "outputs": [],
+        "execution_capability_id": "framework.generic.execute",
+        "success_criteria": [
+          "明确询问 S1/S2 的样本倍性（例如二倍体/单倍体/其他），说明该值将用于 HaplotypeCaller --sample-ploidy 与倍性相关过滤假设",
+          "不得由文件名、物种标签或 Plan 批准推断倍性；未获确认前不执行 calling"
+        ]
+      },
+      {
+        "step_id": "call_s1_gvcf",
+        "status": "pending",
+        "dependencies": [
+          "confirm_ploidy",
+          "prepare_reference",
+          "map_s1"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-7c3b64e012cb94ddd0184b27",
+          "plan-artifact-6dbcb01c336f1ecdbab14bf0",
+          "plan-artifact-2c039ae33dd355790ac96c07"
+        ],
+        "outputs": [
+          "plan-artifact-2c057839fdd64f6bb3d72577"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 GATK HaplotypeCaller -ERC GVCF 对 S1 去重 BAM 生成 GVCF，--sample-ploidy 使用用户确认值",
+          "GATK 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造 GVCF"
+        ]
+      },
+      {
+        "step_id": "call_s2_gvcf",
+        "status": "pending",
+        "dependencies": [
+          "confirm_ploidy",
+          "prepare_reference",
+          "map_s2"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-7c3b64e012cb94ddd0184b27",
+          "plan-artifact-4252b46e302628a2ddda25a4",
+          "plan-artifact-4781a93e1145109068cce9e6"
+        ],
+        "outputs": [
+          "plan-artifact-e2c4672702ba2390eccb081a"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 GATK HaplotypeCaller -ERC GVCF 对 S2 去重 BAM 生成 GVCF，--sample-ploidy 使用用户确认值",
+          "GATK 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造 GVCF"
+        ]
+      },
+      {
+        "step_id": "combine_gvcfs",
+        "status": "pending",
+        "dependencies": [
+          "call_s1_gvcf",
+          "call_s2_gvcf"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-2c057839fdd64f6bb3d72577",
+          "plan-artifact-e2c4672702ba2390eccb081a"
+        ],
+        "outputs": [
+          "plan-artifact-155ab1424d47ca2c1fb3855a"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 GATK CombineGVCFs 以重复 --variant 传入实际 GVCF 路径（不得传入 sample<TAB>path 映射）合并为队列 GVCF",
+          "GATK 缺失时该 stage 标记 blocked 并写明缺失命令"
+        ]
+      },
+      {
+        "step_id": "genotype_gvcfs",
+        "status": "pending",
+        "dependencies": [
+          "combine_gvcfs"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-155ab1424d47ca2c1fb3855a"
+        ],
+        "outputs": [
+          "plan-artifact-62c2678a43feed64b52cb0fe"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 GATK GenotypeGVCFs 对合并 GVCF 联合分型，生成未过滤原始 VCF",
+          "GATK 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造 VCF"
+        ]
+      },
+      {
+        "step_id": "split_variants",
+        "status": "pending",
+        "dependencies": [
+          "genotype_gvcfs"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-62c2678a43feed64b52cb0fe"
+        ],
+        "outputs": [
+          "plan-artifact-18b6ac69bd1df9965566f035",
+          "plan-artifact-4566552fa6cb2b8610101f88"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 GATK SelectVariants 分别提取 SNP 与 InDel 子集，保留原始 VCF 不变",
+          "GATK 缺失时该 stage 标记 blocked 并写明缺失命令"
+        ]
+      },
+      {
+        "step_id": "filter_snp",
+        "status": "pending",
+        "dependencies": [
+          "split_variants"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-18b6ac69bd1df9965566f035"
+        ],
+        "outputs": [
+          "filtered_snp_vcf"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 GATK VariantFiltration 按 SNP 硬过滤表达式过滤，再 SelectVariants --exclude-filtered 输出 PASS-only SNP VCF 到 output.filtered_snp_vcf",
+          "过滤表达式与倍性假设一致，并在报告中记录实际表达式",
+          "GATK 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造 VCF"
+        ]
+      },
+      {
+        "step_id": "filter_indel",
+        "status": "pending",
+        "dependencies": [
+          "split_variants"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "plan-artifact-4566552fa6cb2b8610101f88"
+        ],
+        "outputs": [
+          "filtered_indel_vcf"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 GATK VariantFiltration 按 InDel 硬过滤表达式过滤，再 SelectVariants --exclude-filtered 输出 PASS-only InDel VCF 到 output.filtered_indel_vcf",
+          "过滤表达式与倍性假设一致，并在报告中记录实际表达式",
+          "GATK 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造 VCF"
+        ]
+      },
+      {
+        "step_id": "validate_variants",
+        "status": "pending",
+        "dependencies": [
+          "filter_snp",
+          "filter_indel"
+        ],
+        "inputs": [
+          "artifact-a9a97d180ef458548099",
+          "filtered_snp_vcf",
+          "filtered_indel_vcf"
+        ],
+        "outputs": [],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.inspect",
+        "success_criteria": [
+          "使用 GATK ValidateVariants 校验过滤后 SNP 与 InDel VCF，输出 validation_observation，如实报告通过或失败",
+          "校验失败时保留真实错误信息，不将失败报告为成功"
+        ]
+      },
+      {
+        "step_id": "summarize_variants",
+        "status": "pending",
+        "dependencies": [
+          "validate_variants",
+          "filter_snp",
+          "filter_indel",
+          "genotype_gvcfs"
+        ],
+        "inputs": [
+          "filtered_snp_vcf",
+          "filtered_indel_vcf",
+          "plan-artifact-62c2678a43feed64b52cb0fe"
+        ],
+        "outputs": [
+          "plan-artifact-0d74766defb57e5afa082569",
+          "plan-artifact-682ccb3592719f2d6b192bd2",
+          "variant_stats"
+        ],
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "success_criteria": [
+          "使用 bcftools stats 对过滤后 SNP/InDel VCF 生成统计文件（bcftools 仅用于统计与索引，不参与 calling）",
+          "生成 output.variant_stats，包含 raw 与 PASS 的 SNP/InDel 计数、样本数与过滤表达式",
+          "bcftools 缺失时该 stage 标记 blocked 并写明缺失命令，不伪造统计"
+        ]
+      },
+      {
+        "step_id": "write_report",
+        "status": "pending",
+        "dependencies": [
+          "summarize_variants",
+          "map_s1",
+          "map_s2"
+        ],
+        "inputs": [
+          "variant_stats",
+          "plan-artifact-0d74766defb57e5afa082569",
+          "plan-artifact-682ccb3592719f2d6b192bd2",
+          "plan-artifact-d12703950c2ee64cc331fa39",
+          "plan-artifact-9772cbceae841824c38472e5",
+          "plan-artifact-e9c07213297945c745679c22",
+          "plan-artifact-32168b7797fb7f737266e9a8"
+        ],
+        "outputs": [
+          "report_md"
+        ],
+        "execution_capability_id": "framework.generic.execute",
+        "success_criteria": [
+          "report.md 包含：所选 skill 及选择理由、输入识别与样本信息、关键参数（含已确认倍性）、各阶段执行状态、过滤表达式、raw 与 PASS 变异计数、失败/阻塞原因",
+          "如实记录 blocked 阶段与缺失依赖，不将未执行或未验证的工作报告为完成"
+        ]
+      },
+      {
+        "step_id": "write_reproduce",
+        "status": "pending",
+        "dependencies": [
+          "summarize_variants"
+        ],
+        "inputs": [
+          "variant_stats"
+        ],
+        "outputs": [
+          "reproduce_sh"
+        ],
+        "execution_capability_id": "framework.generic.execute",
+        "success_criteria": [
+          "reproduce.sh 记录从输入核验、参考索引、mapping、calling、过滤到统计的完整可复现命令与参数",
+          "脚本不覆盖已有输入或结果文件，不包含伪造结果"
+        ]
+      },
+      {
+        "step_id": "write_stage_status",
+        "status": "pending",
+        "dependencies": [
+          "summarize_variants"
+        ],
+        "inputs": [
+          "variant_stats"
+        ],
+        "outputs": [
+          "stage_status_tsv"
+        ],
+        "execution_capability_id": "framework.generic.execute",
+        "success_criteria": [
+          "stage_status.tsv 逐阶段记录 00.input_check 至 06.reporting 的状态（completed/blocked/skipped）与原因",
+          "blocked 阶段写明缺失依赖或未决用户决策，不将 blocked 记为 completed"
+        ]
+      }
+    ],
+    "stop": {
+      "stop_reason": {
+        "error_code": "MISSING_REQUIRED_CAPABILITY_DICTIONARY_TOOL",
+        "detail": "参考索引步骤按契约发布了 create_reference_indexes 的 blocked 事实（缺失 picard），这是缺失必需能力的正确行为而非脚本错误；但索引包未生成，下游 mapping/calling 无法满足，且无已验证的兼容替代实现，故提交 blocked 并保留已完成工作。",
+        "transport_receipt": {},
+        "failure_stage": "",
+        "no_progress_rounds": 0,
+        "model_turns": 4,
+        "tool_calls": 3,
+        "termination_reason": "",
+        "budget_receipt": {
+          "error_code": "MISSING_REQUIRED_CAPABILITY_DICTIONARY_TOOL",
+          "detail": "参考索引步骤按契约发布了 create_reference_indexes 的 blocked 事实（缺失 picard），这是缺失必需能力的正确行为而非脚本错误；但索引包未生成，下游 mapping/calling 无法满足，且无已验证的兼容替代实现，故提交 blocked 并保留已完成工作。",
+          "transport_receipt": {},
+          "failure_stage": "",
+          "no_progress_rounds": 0,
+          "model_turns": 4,
+          "tool_calls": 3
+        }
+      },
+      "inspection_failures": [
+        {
+          "tool_ordinal": 2,
+          "tool_call_id": "call_01_zEYi8ylgSJSlIvz9gCWV3664",
+          "tool": "step.inspect",
+          "evidence_ref": "inspection:sha256:2a67d62f0381cf8d2d2bcb3c85d02122d51532d2fa79e7ecb302bb6011e3f1cf",
+          "error_code": "INSPECTION_REF_KIND_MISMATCH",
+          "detail": "{\"actual_kind\":\"evidence\",\"allowed_tools\":[\"evidence.read\"],\"declared_readable_candidates\":[],\"expected_kinds\":[\"phase_archive\"],\"ref_id\":\"inspection:sha256:2a67d62f0381cf8d2d2bcb3c85d02122d51532d2fa79e7ecb302bb6011e3f1cf\"}",
+          "stage": "recovery.inspection"
+        }
+      ],
+      "inspection_observations": [
+        {
+          "tool": "failure.inspect",
+          "source_ref": "outcome:sha256:daf92c90ca4cae816b62d3c35884dec5ddf014b352660374b2ffa05af752e75f",
+          "content_sha256": "0457bc960c7022b8d64d6b88cfce15439aad4c0e289ee131e0a5315a1eecf675",
+          "facts": {}
+        },
+        {
+          "tool": "evidence.read",
+          "source_ref": "inspection:sha256:2a67d62f0381cf8d2d2bcb3c85d02122d51532d2fa79e7ecb302bb6011e3f1cf",
+          "content_sha256": "81d9345b52ab37d405d234e96aee49f795fda76693da417c6f285954788e8085",
+          "facts": {}
+        }
+      ],
+      "directive_reception": [
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-7f6c8d46ea2c05b996874fcd:assistant:001",
+          "response_sha256": "437ffe38a01baed9d7bc5dccb8746a93374284b7a95dc91bb37cd3b2943708af",
+          "finish_reason": "tool_calls",
+          "status": "investigating",
+          "directive_adopted": false,
+          "command_started": false
+        },
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-7f6c8d46ea2c05b996874fcd:assistant:002",
+          "response_sha256": "750d94fa9afad19b75cb250de08d4451a8edd45e46e34d6e843f56f8741e9b6e",
+          "finish_reason": "tool_calls",
+          "status": "investigating",
+          "directive_adopted": false,
+          "command_started": false
+        },
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-7f6c8d46ea2c05b996874fcd:assistant:003",
+          "response_sha256": "289e25977b0842e398957b18ebf1e973aa12bbcc752395749aab228e04ee66b7",
+          "finish_reason": "tool_calls",
+          "status": "not_accepted",
+          "directive_adopted": false,
+          "command_started": false,
+          "transport": "native_tool",
+          "error_code": "STAGE_FIELD_REQUIRED",
+          "detail": "RecoveryDirective: schema_version",
+          "stage": "recovery.schema",
+          "candidate": null
+        },
+        {
+          "protocol": "recovery-submission-v1",
+          "response_message_id": "recovery-seed-7f6c8d46ea2c05b996874fcd:assistant:004",
+          "response_sha256": "aca4e7fe74577694d101e46b2f14a1f3db79cebb03c745a5aa298bcf0b2d5705",
+          "finish_reason": "tool_calls",
+          "status": "candidate_validated",
+          "directive_adopted": false,
+          "command_started": false,
+          "transport": "native_tool",
+          "candidate_sha256": "51f376e9580ab4ba6912e4d8bac201b92c63ecb3c7a9d43b3858a39626905888"
+        }
+      ],
+      "prior_completed_work": [
+        {
+          "step_id": "input_check",
+          "commit_id": "commit-step-260039ff93a55114ed4545a2",
+          "receipt": "typed-step-commit:commit-step-260039ff93a55114ed4545a2",
+          "committed": true
+        }
+      ],
+      "report_receipts": {
+        "stage_status.tsv": {
+          "status": "failed",
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/stage_status.tsv",
+          "task_id": "session_1789628497",
+          "stop_id": "managed-stop:8b253580d6c30ba5323b8c3ca323c469ded77c021bbf8296042d137629d59b4e",
+          "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+        },
+        "reproduce.sh": {
+          "status": "failed",
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/reproduce.sh",
+          "task_id": "session_1789628497",
+          "stop_id": "managed-stop:8b253580d6c30ba5323b8c3ca323c469ded77c021bbf8296042d137629d59b4e",
+          "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+        },
+        "report.md": {
+          "status": "failed",
+          "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/report.md",
+          "task_id": "session_1789628497",
+          "stop_id": "managed-stop:8b253580d6c30ba5323b8c3ca323c469ded77c021bbf8296042d137629d59b4e",
+          "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+        }
+      },
+      "required_output_status": "conflict",
+      "internal_diagnostic_delivery": {
+        "status": "complete",
+        "paths": {
+          "report.md": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/report.md",
+          "stage_status.tsv": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/stage_status.tsv",
+          "reproduce.sh": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/reproduce.sh"
+        },
+        "receipts": {
+          "report.md": {
+            "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/report.md",
+            "sha256": "3564957db703a7cef95f72d7bfb275307064e69ed0ff236a2fc4e37119e3b149",
+            "operation_id": "483b27a9144fc53fc238f34e45541cbe4fd63b266aef96f180383488e72c74cb",
+            "ownership": {
+              "operation_id": "483b27a9144fc53fc238f34e45541cbe4fd63b266aef96f180383488e72c74cb",
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/report.md",
+              "sha256": "3564957db703a7cef95f72d7bfb275307064e69ed0ff236a2fc4e37119e3b149",
+              "proof_name": ".runtime-report-proof-483b27a9144fc53fc238f34e45541cbe4fd63b266aef96f180383488e72c74cb",
+              "device": 45,
+              "inode": 33208719644
+            },
+            "status": "created"
+          },
+          "stage_status.tsv": {
+            "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/stage_status.tsv",
+            "sha256": "52aecfc583f79f679d31e5b9a0eca7ff9b26202e63c935bb47710dec892a945b",
+            "operation_id": "605db20eddbc18e17d80f78c34249db4c684c8f7f508c43f8b0f3e4a271ff84c",
+            "ownership": {
+              "operation_id": "605db20eddbc18e17d80f78c34249db4c684c8f7f508c43f8b0f3e4a271ff84c",
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/stage_status.tsv",
+              "sha256": "52aecfc583f79f679d31e5b9a0eca7ff9b26202e63c935bb47710dec892a945b",
+              "proof_name": ".runtime-report-proof-605db20eddbc18e17d80f78c34249db4c684c8f7f508c43f8b0f3e4a271ff84c",
+              "device": 45,
+              "inode": 30815503658
+            },
+            "status": "created"
+          },
+          "reproduce.sh": {
+            "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/reproduce.sh",
+            "sha256": "4bd216df6663e9bcae242e5f5ba69bd0ff1e5011de697f39df5c26c0b2597e6f",
+            "operation_id": "d39cdaac4e3458e44b1963656a20822ab813772fe7af7e96af8d9429baffe248",
+            "ownership": {
+              "operation_id": "d39cdaac4e3458e44b1963656a20822ab813772fe7af7e96af8d9429baffe248",
+              "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/state_contract/terminal_diagnostics/8842872c09e3ea7a1ad0418088dc8988bae2426c298202df3f30c02d156db61c/reproduce.sh",
+              "sha256": "4bd216df6663e9bcae242e5f5ba69bd0ff1e5011de697f39df5c26c0b2597e6f",
+              "proof_name": ".runtime-report-proof-d39cdaac4e3458e44b1963656a20822ab813772fe7af7e96af8d9429baffe248",
+              "device": 45,
+              "inode": 33208719900
+            },
+            "status": "created"
+          }
+        },
+        "scope": "internal_terminal_trace_only; not fixed-path delivery or scientific completion"
+      },
+      "recovery_usage": {
+        "scope": "last_admitted_episode",
+        "incident_id": "incident-cda4c4c5f6310ebf9aa1a43c",
+        "source_fingerprint": "7f6c8d46ea2c05b996874fcd",
+        "turn_count": 4,
+        "tool_call_count": 3,
+        "format_correction_count": 1
+      }
+    },
+    "runtime_counters": {
+      "preaction_rejections": 2,
+      "payload_repairs": 2,
+      "execution_retry_count": 0,
+      "primary_execution_dispatches": 2,
+      "primary_execution_failures": 1
+    }
+  },
+  "partial_index_witness": {
+    "source": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/attempts/attempt_51bd254a3abad5bfdfa0/approved.py",
+    "source_sha256": "2237ffe701786975aab01d5e995ac1b250b9020a7bd4550ccf8ace5dfc19f074",
+    "ast_changes": [
+      "REFERENCE constant",
+      "OUTDIR constant"
+    ],
+    "mocked_boundaries": [
+      "shutil.which",
+      "subprocess.run"
+    ],
+    "real_logic": [
+      "historical complete approved.py command-result and evidence branches",
+      "current completion_gate._contract_exists directory predicate"
+    ],
+    "limitation": "Demonstrates false created emission and generic directory predicate only; Supervisor/CommitStep not run and no scientific output accepted.",
+    "cases": [
+      {
+        "scenario": "only_fai_success",
+        "status": "PASS_current_behavior_witness",
+        "script_exit": 0,
+        "calls": [
+          {
+            "command": [
+              "samtools",
+              "faidx",
+              "<TMP>/bundle/genome.fasta"
+            ],
+            "returncode": 0
+          },
+          {
+            "command": [
+              "bwa",
+              "index",
+              "<TMP>/bundle/genome.fasta"
+            ],
+            "returncode": 1
+          },
+          {
+            "command": [
+              "picard",
+              "CreateSequenceDictionary",
+              "R=<TMP>/bundle/genome.fasta",
+              "O=<TMP>/bundle/genome.dict"
+            ],
+            "returncode": 1
+          }
+        ],
+        "emission": {
+          "schema_version": 1,
+          "produces_artifacts": [
+            {
+              "identity": "plan-artifact-7c3b64e012cb94ddd0184b27",
+              "path": "<TMP>/bundle"
+            }
+          ],
+          "explicit_side_effects": [
+            {
+              "identity": "create_reference_indexes",
+              "reference_resource_ref": "<TMP>/input.fasta",
+              "index_artifacts": [
+                "<TMP>/bundle/genome.fasta.fai"
+              ],
+              "status": "created"
+            }
+          ]
+        },
+        "current_directory_exists_validator": true,
+        "actual_files": [
+          "genome.fasta",
+          "genome.fasta.fai",
+          "logs/bwa.index.log",
+          "logs/picard.dict.log",
+          "logs/samtools.faidx.log"
+        ],
+        "formal_commit_executed": false
+      },
+      {
+        "scenario": "all_commands_fail_but_partial_bwa_file",
+        "status": "PASS_current_behavior_witness",
+        "script_exit": 0,
+        "calls": [
+          {
+            "command": [
+              "samtools",
+              "faidx",
+              "<TMP>/bundle/genome.fasta"
+            ],
+            "returncode": 1
+          },
+          {
+            "command": [
+              "bwa",
+              "index",
+              "<TMP>/bundle/genome.fasta"
+            ],
+            "returncode": 1
+          },
+          {
+            "command": [
+              "picard",
+              "CreateSequenceDictionary",
+              "R=<TMP>/bundle/genome.fasta",
+              "O=<TMP>/bundle/genome.dict"
+            ],
+            "returncode": 1
+          }
+        ],
+        "emission": {
+          "schema_version": 1,
+          "produces_artifacts": [
+            {
+              "identity": "plan-artifact-7c3b64e012cb94ddd0184b27",
+              "path": "<TMP>/bundle"
+            }
+          ],
+          "explicit_side_effects": [
+            {
+              "identity": "create_reference_indexes",
+              "reference_resource_ref": "<TMP>/input.fasta",
+              "index_artifacts": [
+                "<TMP>/bundle/genome.fasta.amb"
+              ],
+              "status": "created"
+            }
+          ]
+        },
+        "current_directory_exists_validator": true,
+        "actual_files": [
+          "genome.fasta",
+          "genome.fasta.amb",
+          "logs/bwa.index.log",
+          "logs/picard.dict.log",
+          "logs/samtools.faidx.log"
+        ],
+        "formal_commit_executed": false
+      }
+    ]
+  },
+  "cli_witness": {
+    "status": "PASS_current_behavior_witness",
+    "source": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/cli_lifecycle.py",
+    "source_sha256": "68eaa26ecd32e32d270d802ae6c54902013b7594644c0832b094a917b529b28c",
+    "input": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/run_metrics.json#final_result.terminal_diagnostic",
+    "checks": {
+      "specific_cause_still_displayed_unknown": true,
+      "resolved_inspection_failure_still_current": true,
+      "archive_status_visible": true,
+      "archive_path_not_visible": true
+    },
+    "text": "任务已停止 · blocked\n已有 1 步正式提交，完成事实保留。\n已提交步骤：只读核验 S1/S2 双端 FASTQ 与 genome.fasta 输入\n当前步骤：在输出目录内生成参考索引（.fai、BWA 索引、序列字典）（尚未正式提交）。\n原始问题：脚本执行失败，退出码 1；具体原因尚未定位（EXECUTION_FAILED）。\n恢复取证问题：读取证据失败（INSPECTION_REF_KIND_MISMATCH）\n停止触发：已按记录的停止条件结束；具体触发细节见详情（MISSING_REQUIRED_CAPABILITY_DICTIONARY_TOOL）。\n最近已记录调查：4 次模型请求，3 次工具调用；不是全会话累计。\n文件交付：conflict；目标文件受保护，未覆盖；内部诊断归档=complete\n下一步：先查看当前步骤的执行与核验详情，定位具体问题后再选择修复。",
+    "writes": false
+  }
+}

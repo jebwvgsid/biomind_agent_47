@@ -1,0 +1,302 @@
+{
+  "status": "PASS_CURRENT_BEHAVIOR",
+  "production_changes": false,
+  "config_imported": false,
+  "bio_agents_sha256": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+  "clip_source_line": 15354,
+  "current_installer_selected_doc_projection": [
+    {
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "loaded_doc_chars": 16861,
+      "clipped_doc_chars": 4015,
+      "mapping_prohibition_in_clipped_install_handover": true,
+      "prohibition_offset": 2078,
+      "current_sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673"
+    },
+    {
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "loaded_doc_chars": 9915,
+      "clipped_doc_chars": 4015,
+      "mapping_prohibition_in_clipped_install_handover": false,
+      "prohibition_offset": -1,
+      "current_sha256": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad"
+    }
+  ],
+  "historical_exact_material_versions": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0009-7e7691897098/request.json",
+      "pointer": "/messages/4/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0009-7e7691897098/request.json",
+      "pointer": "/messages/5/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0012-fefe90c44169/request.json",
+      "pointer": "/messages/4/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0012-fefe90c44169/request.json",
+      "pointer": "/messages/5/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0013-152ebb16a3d2/request.json",
+      "pointer": "/messages/4/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0013-152ebb16a3d2/request.json",
+      "pointer": "/messages/5/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0014-c0d6dcae80e7/request.json",
+      "pointer": "/messages/4/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0014-c0d6dcae80e7/request.json",
+      "pointer": "/messages/5/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0016-d4f379d86176/request.json",
+      "pointer": "/messages/4/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/generate-0016-d4f379d86176/request.json",
+      "pointer": "/messages/5/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/planner_initial-0006-62fd286e6ccb/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/planner_initial-0006-62fd286e6ccb/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/planner_initial-0007-154b34f72bde/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/planner_initial-0007-154b34f72bde/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/planner_initial-0008-d5e9808aca76/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/planner_initial-0008-d5e9808aca76/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0010-3f9930ff15c6/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0010-3f9930ff15c6/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0011-23893f300b7b/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0011-23893f300b7b/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0017-21dad96cd7b4/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0017-21dad96cd7b4/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0018-f4de4bd43eec/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0018-f4de4bd43eec/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0019-60d3b3d9f6ab/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0019-60d3b3d9f6ab/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0020-5745b56334d0/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/recovery_turn-0020-5745b56334d0/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/supervisor_reviewer-0015-99baaab045bd/request.json",
+      "pointer": "/messages/2/content",
+      "skill_id": "genomics/wgs-gatk-snp-indel",
+      "historical_declared_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "current_content_hash": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "historical_and_current_hash_match": true,
+      "mapping_prohibition_present": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789628497/context_trace/supervisor_reviewer-0015-99baaab045bd/request.json",
+      "pointer": "/messages/3/content",
+      "skill_id": "genomics/wgs-short-read-mapping",
+      "historical_declared_content_hash": "5274a542c8b9f6e2bf6f940d52d0495f131b4b090d04c8d7cacaf978008b8119",
+      "current_content_hash": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "historical_and_current_hash_match": false,
+      "mapping_prohibition_present": true
+    }
+  ],
+  "custom_environment_receipt": {
+    "fixture_recorded_env": "audit_user_other_env",
+    "requirements_env": "bio_wgs",
+    "explanation": "Real get_runtime_requirements prefers declared default_env, so parent post-install verifier does not accept chosen target_env as input."
+  }
+}

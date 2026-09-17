@@ -1,0 +1,76 @@
+{
+  "status": "current_behavior_witness_only",
+  "production_fix": false,
+  "real_installation": false,
+  "real_model": false,
+  "real_task_resume": false,
+  "config_module_imported": false,
+  "source_hashes": {
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/installer.py": {
+      "sha256": "1c4b40eb49944d14c45591993aaa501de489769298b7e7438f1459487d287891",
+      "class_line": 39
+    },
+    "/public/home/liusiqi/03.毕设/Biomind_v1/package_manager.py": {
+      "sha256": "9028f0fc2d80d57aed657bd18743722ca872a90fc321f1fe3065df3ec86c624d",
+      "class_line": 44
+    }
+  },
+  "results": [
+    {
+      "case": "registration_without_verification",
+      "status": "PASS_CURRENT_BEHAVIOR",
+      "runner_calls": 0,
+      "router": "end_success",
+      "registry_status": "registered",
+      "final": "✅ Installation & Registration Complete.",
+      "interpretation": "Installer inner graph can claim complete from registration alone; parent recheck is a separate gate."
+    },
+    {
+      "case": "conda_run_install_bypasses_review",
+      "status": "PASS_CURRENT_BEHAVIOR",
+      "review_calls": 0,
+      "runner_calls": 1,
+      "command_data": "conda run -n audit_missing python -m pip install audit_nonexistent_package",
+      "interpretation": "No strict contract in this fixture; prefix low-friction branch bypasses existing reviewer, runner replaced."
+    },
+    {
+      "case": "quit_returns_to_generate",
+      "status": "PASS_CURRENT_BEHAVIOR",
+      "runner_calls": 0,
+      "observation": "Installation terminated.",
+      "router": "generate",
+      "interpretation": "Installer quit text is not terminal marker consumed by router."
+    },
+    {
+      "case": "mixed_runtime_receipts",
+      "status": "PASS_CURRENT_BEHAVIOR",
+      "input": {
+        "runtime_status": {
+          "old_skill": {
+            "ok": true
+          },
+          "target_skill": {
+            "ok": false
+          }
+        }
+      },
+      "output": {
+        "type": "capability_available",
+        "payload": {
+          "status": "available",
+          "evidence": {
+            "runtime_status": [
+              {
+                "ok": true
+              },
+              {
+                "ok": false
+              }
+            ]
+          }
+        }
+      },
+      "interpretation": "Unscoped any(ok) precedes target failure; no matching target/attempt check in classifier."
+    }
+  ]
+}

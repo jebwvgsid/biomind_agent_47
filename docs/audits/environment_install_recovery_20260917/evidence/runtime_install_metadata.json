@@ -1,0 +1,147 @@
+{
+  "note": "Conda history transaction dates support package registration before incident, not unchanged binary content or historical PATH. Package build timestamp intentionally excluded from installation dates.",
+  "rows": [
+    {
+      "env": "bio_wgs",
+      "current_packages": [
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/conda-meta/openjdk-11.0.1-h516909a_1016.json",
+          "sha256": "174a3e4455f8cf2f39165260617cf457d1c6927aca947a7cae87cd04f97d1f64",
+          "name": "openjdk",
+          "version": "11.0.1",
+          "build": "h516909a_1016"
+        },
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/conda-meta/picard-2.20.4-0.json",
+          "sha256": "297370e2eb0dcd4148b0459b090e9071efd731e6c8de208ff39a93a1015fa138",
+          "name": "picard",
+          "version": "2.20.4",
+          "build": "0"
+        },
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/conda-meta/samtools-1.3.1-0.json",
+          "sha256": "21052034429c018fcc1bc03af28978d421dc45d098522248cab010be7604816f",
+          "name": "samtools",
+          "version": "1.3.1",
+          "build": "0"
+        },
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/conda-meta/bwa-0.7.19-h577a1d6_1.json",
+          "sha256": "de91365725ed152b6b584235539af14f9e9d04d21836b0320d1fe5217c1aa299",
+          "name": "bwa",
+          "version": "0.7.19",
+          "build": "h577a1d6_1"
+        }
+      ],
+      "history_path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/conda-meta/history",
+      "history_sha256": "696d314fa5d3bf8fac327f930eb30ae53bc41c057d82d2a7c94555dea39eb5ea",
+      "history_selected_lines": [
+        {
+          "line": 1,
+          "text": "==> 2026-07-04 00:00:07 <=="
+        },
+        {
+          "line": 4,
+          "text": "+bioconda/linux-64::bwa-0.7.19-h577a1d6_1"
+        },
+        {
+          "line": 5,
+          "text": "+bioconda/linux-64::bwa-mem2-2.3-he70b90d_0"
+        },
+        {
+          "line": 7,
+          "text": "+bioconda/linux-64::samtools-1.3.1-0"
+        },
+        {
+          "line": 8,
+          "text": "+bioconda/noarch::picard-2.20.4-0"
+        },
+        {
+          "line": 27,
+          "text": "+conda-forge/linux-64::openjdk-11.0.1-h516909a_1016"
+        }
+      ]
+    },
+    {
+      "env": "bio_gatk",
+      "current_packages": [
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/conda-meta/samtools-1.23.1-ha83d96e_0.json",
+          "sha256": "6b984fe16fe019000e367836ce01209c811befd868b984bc00edbf234f69a641",
+          "name": "samtools",
+          "version": "1.23.1",
+          "build": "ha83d96e_0"
+        },
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/conda-meta/picard-3.4.0-hdfd78af_0.json",
+          "sha256": "f361002791cfb5539601fbb44f687057b244dbbad951c059045aae36428e571d",
+          "name": "picard",
+          "version": "3.4.0",
+          "build": "hdfd78af_0"
+        },
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/conda-meta/openjdk-21.0.8-ha48796e_0.json",
+          "sha256": "e9680856023e34fc2b9c84aee0993d003bfc5ce88adcba04db02d960b8e30347",
+          "name": "openjdk",
+          "version": "21.0.8",
+          "build": "ha48796e_0"
+        },
+        {
+          "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/conda-meta/gatk4-4.6.2.0-py310hdfd78af_1.json",
+          "sha256": "7f75002c4d7ffdc39d8a6300b448aee62a86bb8c3061ba02ef343bfe86a78080",
+          "name": "gatk4",
+          "version": "4.6.2.0",
+          "build": "py310hdfd78af_1"
+        }
+      ],
+      "history_path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/conda-meta/history",
+      "history_sha256": "29612385aed1f91acfa85b95fc649486ddbaf052e346f28629f3ede0e2d2e51d",
+      "history_selected_lines": [
+        {
+          "line": 1,
+          "text": "==> 2026-07-03 19:37:29 <=="
+        },
+        {
+          "line": 7,
+          "text": "+bioconda/linux-64::samtools-1.9-h10a08f8_12"
+        },
+        {
+          "line": 8,
+          "text": "+bioconda/noarch::gatk4-4.6.2.0-py310hdfd78af_1"
+        },
+        {
+          "line": 9,
+          "text": "+bioconda/noarch::picard-3.4.0-hdfd78af_0"
+        },
+        {
+          "line": 69,
+          "text": "+conda-forge/linux-64::openjdk-17.0.7.4-0_graalvm230b10"
+        },
+        {
+          "line": 105,
+          "text": "==> 2026-07-10 14:53:59 <=="
+        },
+        {
+          "line": 110,
+          "text": "==> 2026-07-10 15:13:36 <=="
+        },
+        {
+          "line": 116,
+          "text": "-bioconda/linux-64::samtools-1.9-h10a08f8_12"
+        },
+        {
+          "line": 148,
+          "text": "-conda-forge/linux-64::openjdk-17.0.7.4-0_graalvm230b10"
+        },
+        {
+          "line": 160,
+          "text": "+bioconda/linux-64::samtools-1.23.1-ha83d96e_0"
+        },
+        {
+          "line": 207,
+          "text": "+conda-forge/linux-64::openjdk-21.0.8-ha48796e_0"
+        }
+      ]
+    }
+  ]
+}

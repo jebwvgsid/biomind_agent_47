@@ -1,0 +1,430 @@
+{
+  "scope": "current local help/launch only, not historical PATH or scientific validation",
+  "unrun": "GATK downstream subcommands not run if shared Java runtime cannot launch",
+  "paths": [
+    {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/picard",
+      "resolved": "/public/home/liusiqi/anaconda3/envs/bio_wgs/share/picard-2.20.4-0/picard",
+      "size": 2175,
+      "mtime_ns": 1563830107000000000
+    },
+    {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+      "resolved": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+      "size": 9701,
+      "mtime_ns": 1539935726000000000
+    },
+    {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/bwa",
+      "resolved": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/bwa",
+      "size": 1360712,
+      "mtime_ns": 1747108676000000000
+    },
+    {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/samtools",
+      "resolved": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/samtools",
+      "size": 4138381,
+      "mtime_ns": 1461888714000000000
+    },
+    {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/gatk",
+      "resolved": "/public/home/liusiqi/anaconda3/envs/bio_gatk/share/gatk4-4.6.2.0-1/gatk",
+      "size": 21097,
+      "mtime_ns": 1759164910000000000
+    },
+    {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/java",
+      "resolved": "/public/home/liusiqi/anaconda3/envs/bio_gatk/lib/jvm/bin/java",
+      "size": 16144,
+      "mtime_ns": 1753833771000000000
+    },
+    {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/python",
+      "resolved": "/public/home/liusiqi/anaconda3/envs/bio_gatk/lib/jvm/languages/python/bin/python",
+      "size": 58504,
+      "mtime_ns": 1686727763000000000
+    }
+  ],
+  "probes": [
+    {
+      "label": "ambient_lookup",
+      "argv": [
+        "/bin/bash",
+        "--noprofile",
+        "--norc",
+        "-c",
+        "command -v picard"
+      ],
+      "environment_allowlist": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:01:16.937731+00:00",
+      "finished_at": "2026-09-17T09:01:16.940093+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "picard_explicit_path_CreateSequenceDictionary",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/picard",
+        "CreateSequenceDictionary",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:01:16.940135+00:00",
+      "finished_at": "2026-09-17T09:01:21.028787+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "USAGE: CreateSequenceDictionary [options]\n\nDocumentation: http://broadinstitute.github.io/picard/command-line-overview.html#CreateSequenceDictionary\n\nCreates a sequence dictionary for a reference sequence.  This tool creates a sequence dictionary file (with \".dict\"\nextension) from a reference sequence provided in FASTA format, which is required by many processing and analysis tools.\nThe output file contains a header but no SAMRecords, and the header contains only sequence records.\n\nThe reference sequence can be gzipped (both .fasta and .fasta.gz are supported).\nUsage example:\n\njava -jar picard.jar CreateSequenceDictionary \\ \nR=reference.fasta \\ \nO=reference.dict\n\n\nVersion: 2.20.4-SNAPSHOT\n\n\nOptions:\n\n--help\n-h                            Displays options specific to this tool.\n\n--stdhelp\n-H                            Displays options specific to this tool AND options common to all Picard command line\n                              tools.\n\n--version                     Displays program version.\n\nOUTPUT=File\nO=File                        Output SAM file containing only the sequence dictionary. By default it will use the base\n                              name of the input reference with the .dict extension  Default value: null. \n\nGENOME_ASSEMBLY=String\nAS=String                     Put into AS field of sequence dictionary entry if supplied  Default value: null. \n\nURI=String\nUR=String                     Put into UR field of sequence dictionary entry.  If not supplied, input reference file is\n                              used  Default value: null. \n\nSPECIES=String\nSP=String                     Put into SP field of sequence dictionary entry  Default value: null. \n\nTRUNCATE_NAMES_AT_WHITESPACE=Boolean\n                              Make sequence name the first word from the > line in the fasta file.  By default the\n                              entire contents of the > line is used, excluding leading and trailing whitespace.  Default\n                              value: true. This option can be set to 'null' to clear the default value. Possible values:\n                              {true, false} \n\nNUM_SEQUENCES=Integer         Stop after writing this many sequences.  For testing.  Default value: 2147483647. This\n                              option can be set to 'null' to clear the default value. \n\nALT_NAMES=File\nAN=File                       Optional file containing the alternative names for the contigs. Tools may use this\n                              information to consider different contig notations as identical (e.g: 'chr1' and '1'). The\n                              alternative names will be put into the appropriate @AN annotation for each contig. No\n                              header. First column is the original name, the second column is an alternative name. One\n                              contig may have more than one alternative name.  Default value: null. \n\nREFERENCE=File\nR=File                        Input reference fasta or fasta.gz  Required. \n\n"
+    },
+    {
+      "label": "wgs_picard_MarkDuplicates",
+      "argv": [
+        "picard",
+        "MarkDuplicates",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:01:21.028844+00:00",
+      "finished_at": "2026-09-17T09:01:21.761063+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "USAGE: MarkDuplicates [options]\n\nDocumentation: http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates\n\nIdentifies duplicate reads.  \nThis tool locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a\nsingle fragment of DNA.  Duplicates can arise during sample preparation e.g. library construction using PCR.  See also\nEstimateLibraryComplexity (https://broadinstitute.github.io/picard/command-line-overview.html#EstimateLibraryComplexity)\nfor additional notes on PCR duplication artifacts.  Duplicate reads can also result from a single amplification cluster,\nincorrectly detected as multiple clusters by the optical sensor of the sequencing instrument.  These duplication\nartifacts are referred to as optical duplicates.\n\nThe MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM\nfile.  An BARCODE_TAG option is available to facilitate duplicate marking using molecular barcodes.  After duplicate\nreads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the\nsums of their base-quality scores (default method).\n\nThe tool's main output is a new SAM or BAM file, in which duplicates have been identified in the SAM flags field for\neach read.  Duplicates are marked with the hexadecimal value of 0x0400, which corresponds to a decimal value of 1024. \nIf you are not familiar with this type of annotation, please see the following blog post\n(https://www.broadinstitute.org/gatk/blog?id=7019) for additional information.\n\nAlthough the bitwise flag annotation indicates whether a read was marked as a duplicate, it does not identify the type\nof duplicate.  To do this, a new tag called the duplicate type (DT) tag was recently added as an optional output in  the\n'optional field' section of a SAM/BAM file.  Invoking the TAGGING_POLICY option, you can instruct the program to mark\nall the duplicates (All), only the optical duplicates (OpticalOnly), or no duplicates (DontTag).  The records within the\noutput of a SAM/BAM file will have values for the 'DT' tag (depending on the invoked TAGGING_POLICY), as either\nlibrary/PCR-generated duplicates (LB), or sequencing-platform artifact duplicates (SQ).  This tool uses the\nREAD_NAME_REGEX and the OPTICAL_DUPLICATE_PIXEL_DISTANCE options as the primary methods to identify and differentiate\nduplicate types.  Set READ_NAME_REGEX to null to skip optical duplicate detection, e.g. for RNA-seq or other data where\nduplicate sets are extremely large and estimating library complexity is not an aim.  Note that without optical duplicate\ncounts, library size estimation will be inaccurate.\n\nMarkDuplicates also produces a metrics file indicating the numbers of duplicates for both single- and paired-end reads.\n\nThe program can take either coordinate-sorted or query-sorted inputs, however the behavior is slightly different.  When\nthe input is coordinate-sorted, unmapped mates of mapped records and supplementary/secondary alignments are not marked\nas duplicates.  However, when the input is query-sorted (actually query-grouped), then unmapped mates and\nsecondary/supplementary reads are not excluded from the duplication test and can be marked as duplicate reads.\n\nIf desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQUENCING_DUPLICATES options.\n\nUsage example:\n\njava -jar picard.jar MarkDuplicates \\\nI=input.bam \\\nO=marked_duplicates.bam \\\nM=marked_dup_metrics.txt\nPlease see MarkDuplicates (http://broadinstitute.github.io/picard/picard-metric-definitions.html#DuplicationMetrics) for\ndetailed explanations of the output metrics.\n\nVersion: 2.20.4-SNAPSHOT\n\n\nOptions:\n\n--help\n-h                            Displays options specific to this tool.\n\n--stdhelp\n-H                            Displays options specific to this tool AND options common to all Picard command line\n                              tools.\n\n--version                     Displays program version.\n\nMAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=Integer\nMAX_SEQS=Integer              This option is obsolete. ReadEnds will always be spilled to disk.  Default value: 50000.\n                              This option can be set to 'null' to clear the default value. \n\nMAX_FILE_HANDLES_FOR_READ_ENDS_MAP=Integer\nMAX_FILE_HANDLES=Integer      Maximum number of file handles to keep open when spilling read ends to disk. Set this\n                              number a little lower than the per-process maximum number of file that may be open. This\n                              number can be found by executing the 'ulimit -n' command on a Unix system.  Default value:\n                              8000. This option can be set to 'null' to clear the default value. \n\nSORTING_COLLECTION_SIZE_RATIO=Double\n                              This number, plus the maximum RAM available to the JVM, determine the memory footprint\n                              used by some of the sorting collections.  If you are running out of memory, try reducing\n                              this number.  Default value: 0.25. This option can be set to 'null' to clear the default\n                              value. \n\nBARCODE_TAG=String            Barcode SAM tag (ex. BC for 10X Genomics)  Default value: null. \n\nREAD_ONE_BARCODE_TAG=String   Read one barcode SAM tag (ex. BX for 10X Genomics)  Default value: null. \n\nREAD_TWO_BARCODE_TAG=String   Read two barcode SAM tag (ex. BX for 10X Genomics)  Default value: null. \n\nTAG_DUPLICATE_SET_MEMBERS=Boolean\n                              If a read appears in a duplicate set, add two tags. The first tag, DUPLICATE_SET_SIZE_TAG\n                              (DS), indicates the size of the duplicate set. The smallest possible DS value is 2 which\n                              occurs when two reads map to the same portion of the reference only one of which is marked\n                              as duplicate. The second tag, DUPLICATE_SET_INDEX_TAG (DI), represents a unique identifier\n                              for the duplicate set to which the record belongs. This identifier is the index-in-file of\n                              the representative read that was selected out of the duplicate set.  Default value: false.\n                              This option can be set to 'null' to clear the default value. Possible values: {true,\n                              false} \n\nREMOVE_SEQUENCING_DUPLICATES=Boolean\n                              If true remove 'optical' duplicates and other duplicates that appear to have arisen from\n                              the sequencing process instead of the library preparation process, even if\n                              REMOVE_DUPLICATES is false. If REMOVE_DUPLICATES is true, all duplicates are removed and\n                              this option is ignored.  Default value: false. This option can be set to 'null' to clear\n                              the default value. Possible values: {true, false} \n\nTAGGING_POLICY=DuplicateTaggingPolicy\n                              Determines how duplicate types are recorded in the DT optional attribute.  Default value:\n                              DontTag. This option can be set to 'null' to clear the default value. Possible values:\n                              {DontTag, OpticalOnly, All} \n\nCLEAR_DT=Boolean              Clear DT tag from input SAM records. Should be set to false if input SAM doesn't have this\n                              tag.  Default true  Default value: true. This option can be set to 'null' to clear the\n                              default value. Possible values: {true, false} \n\nDUPLEX_UMI=Boolean            Treat UMIs as being duplex stranded.  This option requires that the UMI consist of two\n                              equal length strings that are separated by a hyphen (e.g. 'ATC-GTC'). Reads are considered\n                              duplicates if, in addition to standard definition, have identical normalized UMIs.  A UMI\n                              from the 'bottom' strand is normalized by swapping its content around the hyphen (eg.\n                              ATC-GTC becomes GTC-ATC).  A UMI from the 'top' strand is already normalized as it is.\n                              Both reads from a read pair considered top strand if the read 1 unclipped 5' coordinate is\n                              less than the read 2 unclipped 5' coordinate. All chimeric reads and read fragments are\n                              treated as having come from the top strand. With this option is it required that the\n                              BARCODE_TAG hold non-normalized UMIs. Default false.  Default value: false. This option\n                              can be set to 'null' to clear the default value. Possible values: {true, false} \n\nMOLECULAR_IDENTIFIER_TAG=String\n                              SAM tag to uniquely identify the molecule from which a read was derived.  Use of this\n                              option requires that the BARCODE_TAG option be set to a non null value.  Default null. \n                              Default value: null. \n\nINPUT=String\nI=String                      One or more input SAM or BAM files to analyze. Must be coordinate sorted.  Default value:\n                              null. This option may be specified 0 or more times. \n\nOUTPUT=File\nO=File                        The output file to write marked records to  Required. \n\nMETRICS_FILE=File\nM=File                        File to write duplication metrics to  Required. \n\nREMOVE_DUPLICATES=Boolean     If true do not write duplicates to the output file instead of writing them with\n                              appropriate flags set.  Default value: false. This option can be set to 'null' to clear\n                              the default value. Possible values: {true, false} \n\nASSUME_SORTED=Boolean\nAS=Boolean                    If true, assume that the input file is coordinate sorted even if the header says\n                              otherwise. Deprecated, used ASSUME_SORT_ORDER=coordinate instead.  Default value: false.\n                              This option can be set to 'null' to clear the default value. Possible values: {true,\n                              false}  Cannot be used in conjuction with option(s) ASSUME_SORT_ORDER (ASO)\n\nASSUME_SORT_ORDER=SortOrder\nASO=SortOrder                 If not null, assume that the input file has this order even if the header says otherwise. \n                              Default value: null. Possible values: {unsorted, queryname, coordinate, duplicate,\n                              unknown}  Cannot be used in conjuction with option(s) ASSUME_SORTED (AS)\n\nDUPLICATE_SCORING_STRATEGY=ScoringStrategy\nDS=ScoringStrategy            The scoring strategy for choosing the non-duplicate among candidates.  Default value:\n                              SUM_OF_BASE_QUALITIES. This option can be set to 'null' to clear the default value.\n                              Possible values: {SUM_OF_BASE_QUALITIES, TOTAL_MAPPED_REFERENCE_LENGTH, RANDOM} \n\nPROGRAM_RECORD_ID=String\nPG=String                     The program record ID for the @PG record(s) created by this program. Set to null to\n                              disable PG record creation.  This string may have a suffix appended to avoid collision\n                              with other program record IDs.  Default value: MarkDuplicates. This option can be set to\n                              'null' to clear the default value. \n\nPROGRAM_GROUP_VERSION=String\nPG_VERSION=String             Value of VN tag of PG record to be created. If not specified, the version will be detected\n                              automatically.  Default value: null. \n\nPROGRAM_GROUP_COMMAND_LINE=String\nPG_COMMAND=String             Value of CL tag of PG record to be created. If not supplied the command line will be\n                              detected automatically.  Default value: null. \n\nPROGRAM_GROUP_NAME=String\nPG_NAME=String                Value of PN tag of PG record to be created.  Default value: MarkDuplicates. This option\n                              can be set to 'null' to clear the default value. \n\nCOMMENT=String\nCO=String                     Comment(s) to include in the output file's header.  Default value: null. This option may\n                              be specified 0 or more times. \n\nREAD_NAME_REGEX=String        MarkDuplicates can use the tile and cluster positions to estimate the rate of optical\n                              duplication in addition to the dominant source of duplication, PCR, to provide a more\n                              accurate estimation of library size. By default (with no READ_NAME_REGEX specified),\n                              MarkDuplicates will attempt to extract coordinates using a split on ':' (see Note below). \n                              Set READ_NAME_REGEX to 'null' to disable optical duplicate detection. Note that without\n                              optical duplicate counts, library size estimation will be less accurate. If the read name\n                              does not follow a standard Illumina colon-separation convention, but does contain tile and\n                              x,y coordinates, a regular expression can be specified to extract three variables:\n                              tile/region, x coordinate and y coordinate from a read name. The regular expression must\n                              contain three capture groups for the three variables, in order. It must match the entire\n                              read name.   e.g. if field names were separated by semi-colon (';') this example regex\n                              could be specified      (?:.*;)?([0-9]+)[^;]*;([0-9]+)[^;]*;([0-9]+)[^;]*$ Note that if no\n                              READ_NAME_REGEX is specified, the read name is split on ':'.   For 5 element names, the\n                              3rd, 4th and 5th elements are assumed to be tile, x and y values.   For 7 element names\n                              (CASAVA 1.8), the 5th, 6th, and 7th elements are assumed to be tile, x and y values. \n                              Default value: <optimized capture of last three ':' separated fields as numeric values>.\n                              This option can be set to 'null' to clear the default value. \n\nOPTICAL_DUPLICATE_PIXEL_DISTANCE=Integer\n                              The maximum offset between two duplicate clusters in order to consider them optical\n                              duplicates. The default is appropriate for unpatterned versions of the Illumina platform.\n                              For the patterned flowcell models, 2500 is moreappropriate. For other platforms and\n                              models, users should experiment to find what works best.  Default value: 100. This option\n                              can be set to 'null' to clear the default value. \n\nMAX_OPTICAL_DUPLICATE_SET_SIZE=Long\n                              This number is the maximum size of a set of duplicate reads for which we will attempt to\n                              determine which are optical duplicates.  Please be aware that if you raise this value too\n                              high and do encounter a very large set of duplicate reads, it will severely affect the\n                              runtime of this tool.  To completely disable this check, set the value to -1.  Default\n                              value: 300000. This option can be set to 'null' to clear the default value. \n\n"
+    },
+    {
+      "label": "wgs_java",
+      "argv": [
+        "java",
+        "-version"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:01:21.761125+00:00",
+      "finished_at": "2026-09-17T09:01:41.792206+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "timeout",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"11.0.1\" 2018-10-16 LTS\nOpenJDK Runtime Environment Zulu11.2+3 (build 11.0.1+13-LTS)\nOpenJDK 64-Bit Server VM Zulu11.2+3 (build 11.0.1+13-LTS, mixed mode)\n"
+    },
+    {
+      "label": "wgs_bwa_index",
+      "argv": [
+        "bwa",
+        "index"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:01:41.805600+00:00",
+      "finished_at": "2026-09-17T09:01:41.917259+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "\nUsage:   bwa index [options] <in.fasta>\n\nOptions: -a STR    BWT construction algorithm: bwtsw, is or rb2 [auto]\n         -p STR    prefix of the index [same as fasta name]\n         -b INT    block size for the bwtsw algorithm (effective with -a bwtsw) [10000000]\n         -6        index files named as <in.fasta>.64.* instead of <in.fasta>.* \n\nWarning: `-a bwtsw' does not work for short genomes, while `-a is' and\n         `-a div' do not work for long genomes.\n\n"
+    },
+    {
+      "label": "wgs_bwa_mem",
+      "argv": [
+        "bwa",
+        "mem"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:01:41.917299+00:00",
+      "finished_at": "2026-09-17T09:02:01.940098+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "timeout",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "\nUsage: bwa mem [options] <idxbase> <in1.fq> [in2.fq]\n\nAlgorithm options:\n\n       -t INT        number of threads [1]\n       -k INT        minimum seed length [19]\n       -w INT        band width for banded alignment [100]\n       -d INT        off-diagonal X-dropoff [100]\n       -r FLOAT      look for internal seeds inside a seed longer than {-k} * FLOAT [1.5]\n       -y INT        seed occurrence for the 3rd round seeding [20]\n       -c INT        skip seeds with more than INT occurrences [500]\n       -D FLOAT      drop chains shorter than FLOAT fraction of the longest overlapping chain [0.50]\n       -W INT        discard a chain if seeded bases shorter than INT [0]\n       -m INT        perform at most INT rounds of mate rescues for each read [50]\n       -S            skip mate rescue\n       -P            skip pairing; mate rescue performed unless -S also in use\n\nScoring options:\n\n       -A INT        score for a sequence match, which scales options -TdBOELU unless overridden [1]\n       -B INT        penalty for a mismatch [4]\n       -O INT[,INT]  gap open penalties for deletions and insertions [6,6]\n       -E INT[,INT]  gap extension penalty; a gap of size k cost '{-O} + {-E}*k' [1,1]\n       -L INT[,INT]  penalty for 5'- and 3'-end clipping [5,5]\n       -U INT        penalty for an unpaired read pair [17]\n\n       -x STR        read type. Setting -x changes multiple parameters unless overridden [null]\n                     pacbio: -k17 -W40 -r10 -A1 -B1 -O1 -E1 -L0  (PacBio reads to ref)\n                     ont2d: -k14 -W20 -r10 -A1 -B1 -O1 -E1 -L0  (Oxford Nanopore 2D-reads to ref)\n                     intractg: -B9 -O16 -L5  (intra-species contigs to ref)\n\nInput/output options:\n\n       -p            smart pairing (ignoring in2.fq)\n       -R STR        read group header line such as '@RG\\tID:foo\\tSM:bar' [null]\n       -H STR/FILE   insert STR to header if it starts with @; or insert lines in FILE [null]\n       -o FILE       sam file to output results to [stdout]\n       -j            treat ALT contigs as part of the primary assembly (i.e. ignore <idxbase>.alt file)\n       -5            for split alignment, take the alignment with the smallest query (not genomic) coordinate as primary\n       -q            don't modify mapQ of supplementary alignments\n       -K INT        process INT input bases in each batch regardless of nThreads (for reproducibility) []\n\n       -v INT        verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n       -T INT        minimum score to output [30]\n       -h INT[,INT]  if there are <INT hits with score >80.00% of the max score, output all in XA [5,200]\n                     A second value may be given for alternate sequences.\n       -z FLOAT      The fraction of the max score to use with -h [0.800000].\n                     specify the mean, standard deviation (10% of the mean if absent), max\n       -a            output all alignments for SE or unpaired PE\n       -C            append FASTA/FASTQ comment to SAM output\n       -V            output the reference FASTA header in the XR tag\n       -Y            use soft clipping for supplementary alignments\n       -M            mark shorter split hits as secondary\n\n       -I FLOAT[,FLOAT[,INT[,INT]]]\n                     specify the mean, standard deviation (10% of the mean if absent), max\n                     (4 sigma from the mean if absent) and min of the insert size distribution.\n                     FR orientation only. [inferred]\n       -u            output XB instead of XA; XB is XA with the alignment score and mapping quality added.\n\nNote: Please read the man page for detailed description of the command line and options.\n\n"
+    },
+    {
+      "label": "wgs_samtools_version",
+      "argv": [
+        "samtools",
+        "--version"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:02:01.941559+00:00",
+      "finished_at": "2026-09-17T09:02:02.012526+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 0,
+      "stdout": "samtools 1.3.1\nUsing htslib 1.3.1\nCopyright (C) 2016 Genome Research Ltd.\n",
+      "stderr": ""
+    },
+    {
+      "label": "wgs_samtools_faidx",
+      "argv": [
+        "samtools",
+        "faidx",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:02:02.012572+00:00",
+      "finished_at": "2026-09-17T09:02:22.244711+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "timeout",
+      "returncode": 255,
+      "stdout": "",
+      "stderr": "faidx: invalid option -- '-'\n\nUsage:   samtools faidx <file.fa|file.fa.gz> [<reg> [...]]\n\n"
+    },
+    {
+      "label": "wgs_samtools_sort",
+      "argv": [
+        "samtools",
+        "sort",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:02:22.245614+00:00",
+      "finished_at": "2026-09-17T09:02:22.436376+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "sort: unrecognized option '--help'\nUsage: samtools sort [options...] [in.bam]\nOptions:\n  -l INT     Set compression level, from 0 (uncompressed) to 9 (best)\n  -m INT     Set maximum memory per thread; suffix K/M/G recognized [768M]\n  -n         Sort by read name\n  -o FILE    Write final output to FILE rather than standard output\n  -T PREFIX  Write temporary files to PREFIX.nnnn.bam\n  -@, --threads INT\n             Set number of sorting and compression threads [1]\n      --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form\n               of OPTION or OPTION=VALUE\n  -O, --output-fmt FORMAT[,OPT[=VAL]]...\n               Specify output format (SAM, BAM, CRAM)\n      --output-fmt-option OPT[=VAL]\n               Specify a single output file format option in the form\n               of OPTION or OPTION=VALUE\n      --reference FILE\n               Reference sequence FASTA FILE [null]\n"
+    },
+    {
+      "label": "wgs_samtools_index",
+      "argv": [
+        "samtools",
+        "index",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:02:22.436426+00:00",
+      "finished_at": "2026-09-17T09:02:42.741309+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "timeout",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "index: invalid option -- '-'\nUsage: samtools index [-bc] [-m INT] <in.bam> [out.index]\nOptions:\n  -b       Generate BAI-format index for BAM files [default]\n  -c       Generate CSI-format index for BAM files\n  -m INT   Set minimum interval size for CSI indices to 2^INT [14]\n"
+    },
+    {
+      "label": "wgs_samtools_flagstat",
+      "argv": [
+        "samtools",
+        "flagstat",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:02:42.742735+00:00",
+      "finished_at": "2026-09-17T09:02:42.845929+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "flagstat: unrecognized option '--help'\nUsage: samtools flagstat [--input-fmt-option OPT=VAL] <in.bam>\n"
+    },
+    {
+      "label": "wgs_samtools_depth",
+      "argv": [
+        "samtools",
+        "depth",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:02:42.845974+00:00",
+      "finished_at": "2026-09-17T09:03:02.914411+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "timeout",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "depth: unrecognized option '--help'\n\nUsage: samtools depth [options] in1.bam [in2.bam [...]]\nOptions:\n   -a                  output all positions (including zero depth)\n   -a -a (or -aa)      output absolutely all positions, including unused ref. sequences\n   -b <bed>            list of positions or regions\n   -f <list>           list of input BAM filenames, one per line [null]\n   -l <int>            read length threshold (ignore reads shorter than <int>)\n   -d/-m <int>         maximum coverage depth [8000]\n   -q <int>            base quality threshold\n   -Q <int>            mapping quality threshold\n   -r <chr:from-to>    region\n      --input-fmt-option OPT[=VAL]\n               Specify a single input file format option in the form\n               of OPTION or OPTION=VALUE\n      --reference FILE\n               Reference sequence FASTA FILE [null]\n\nThe output is a simple tab-separated table with three columns: reference name,\nposition, and coverage depth.  Note that positions with zero coverage may be\nomitted by default; see the -a option.\n\n"
+    },
+    {
+      "label": "wgs_samtools_dict_candidate",
+      "argv": [
+        "samtools",
+        "dict",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:03:02.914578+00:00",
+      "finished_at": "2026-09-17T09:03:03.064777+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "\nAbout:   Create a sequence dictionary file from a fasta file\nUsage:   samtools dict [options] <file.fa|file.fa.gz>\n\nOptions: -a, --assembly STR    assembly\n         -H, --no-header       do not print @HD line\n         -o, --output STR      file to write out dict file [stdout]\n         -s, --species STR     species\n         -u, --uri STR         URI [file:///abs/path/to/file.fa]\n\n"
+    },
+    {
+      "label": "gatk_java",
+      "argv": [
+        "java",
+        "-version"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+        "CONDA_DEFAULT_ENV": "bio_gatk"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:03:03.064834+00:00",
+      "finished_at": "2026-09-17T09:03:23.368939+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "timeout",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"21.0.8-internal\" 2025-07-15\nOpenJDK Runtime Environment (build 21.0.8-internal-adhoc.conda.src)\nOpenJDK 64-Bit Server VM (build 21.0.8-internal-adhoc.conda.src, mixed mode, sharing)\n"
+    },
+    {
+      "label": "gatk_HaplotypeCaller",
+      "argv": [
+        "gatk",
+        "HaplotypeCaller",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+        "CONDA_DEFAULT_ENV": "bio_gatk"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:03:23.369521+00:00",
+      "finished_at": "2026-09-17T09:03:25.005463+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "completed",
+      "returncode": 255,
+      "stdout": "",
+      "stderr": "Launcher class not found.\nException in thread \"main\" java.lang.NoClassDefFoundError: org/graalvm/polyglot/PolyglotException\nCaused by: java.lang.ClassNotFoundException: org.graalvm.polyglot.PolyglotException\n\tat java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)\n\tat java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)\n\tat java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)\n"
+    },
+    {
+      "label": "conda_run_help",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/bin/conda",
+        "run",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-help-probe-2fkgk8ft"
+      },
+      "cwd": "/tmp/biomind-help-probe-2fkgk8ft",
+      "started_at": "2026-09-17T09:03:25.005513+00:00",
+      "finished_at": "2026-09-17T09:03:45.261287+00:00",
+      "timeout_seconds": 20,
+      "output_limit_bytes": 65536,
+      "outcome": "timeout",
+      "returncode": -9,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "followup_correction": {
+    "original_unrun_field": "Initial-stage conditional note only; superseded for listed GATK subcommands by runtime_gatk_followup_results.json.",
+    "current_fact": "Default GATK wrapper selected broken Graal Python; explicit system Python with bio_gatk Java21 launched version and required subcommand help. Initial async timeout labels are probe wait/pipe completion outcomes, not proof of software launch timeout.",
+    "discriminating_retest": "runtime_probe_wait_check_results.json"
+  }
+}

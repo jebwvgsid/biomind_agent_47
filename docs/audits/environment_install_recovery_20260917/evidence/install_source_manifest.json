@@ -1,0 +1,260 @@
+{
+  "captured_at_utc": "2026-09-17T09:07:32.394058+00:00",
+  "version_scope": "working tree at capture; production changed externally during audit",
+  "files": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+      "sha256": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+      "mtime_ns": 1789635137000000000,
+      "definitions": [
+        {
+          "name": "_clip_prompt_text",
+          "line": 15354,
+          "end_line": 15358
+        },
+        {
+          "name": "_persist_plan_tracker",
+          "line": 15416,
+          "end_line": 15420
+        },
+        {
+          "name": "_mark_plan_current_done",
+          "line": 15501,
+          "end_line": 15519
+        },
+        {
+          "name": "_next_step_after_install_result",
+          "line": 17548,
+          "end_line": 17556
+        },
+        {
+          "name": "_redirect_install_command",
+          "line": 20358,
+          "end_line": 20416
+        },
+        {
+          "name": "_runtime_install_disallowed_by_task_spec",
+          "line": 20582,
+          "end_line": 20589
+        },
+        {
+          "name": "_selected_skill_install_command_context",
+          "line": 20914,
+          "end_line": 20968
+        },
+        {
+          "name": "_record_installed_skill_environment",
+          "line": 21166,
+          "end_line": 21198
+        },
+        {
+          "name": "_build_graph",
+          "line": 31748,
+          "end_line": 53402
+        },
+        {
+          "name": "install_subagent",
+          "line": 52584,
+          "end_line": 53107
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/installer.py",
+      "sha256": "1c4b40eb49944d14c45591993aaa501de489769298b7e7438f1459487d287891",
+      "mtime_ns": 1785684738000000000,
+      "definitions": [
+        {
+          "name": "_is_low_friction_installer_command",
+          "line": 68,
+          "end_line": 102
+        },
+        {
+          "name": "_runtime_contract_violation",
+          "line": 378,
+          "end_line": 408
+        },
+        {
+          "name": "_build_graph",
+          "line": 410,
+          "end_line": 754
+        },
+        {
+          "name": "inst_execute",
+          "line": 550,
+          "end_line": 700
+        },
+        {
+          "name": "inst_router",
+          "line": 705,
+          "end_line": 725
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/package_manager.py",
+      "sha256": "9028f0fc2d80d57aed657bd18743722ca872a90fc321f1fe3065df3ec86c624d",
+      "mtime_ns": 1784105701000000000,
+      "definitions": [
+        {
+          "name": "_save_registry",
+          "line": 223,
+          "end_line": 224
+        },
+        {
+          "name": "register_environment",
+          "line": 521,
+          "end_line": 576
+        },
+        {
+          "name": "verify_environment",
+          "line": 667,
+          "end_line": 706
+        },
+        {
+          "name": "install_package",
+          "line": 830,
+          "end_line": 857
+        },
+        {
+          "name": "register_existing_tool",
+          "line": 862,
+          "end_line": 951
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_manager.py",
+      "sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+      "mtime_ns": 1789451739000000000,
+      "definitions": [
+        {
+          "name": "_discover_skills",
+          "line": 70,
+          "end_line": 178
+        },
+        {
+          "name": "_rebuild_skill_lookup",
+          "line": 264,
+          "end_line": 286
+        },
+        {
+          "name": "load_skill",
+          "line": 2877,
+          "end_line": 2916
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/early_nodes.py",
+      "sha256": "cabf181201849b0fe2c4e6fd7ed0caeb441cefde23f54ca57d7a0277e98b55c9",
+      "mtime_ns": 1789220760000000000,
+      "definitions": []
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/execution.py",
+      "sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+      "mtime_ns": 1789468273000000000,
+      "definitions": []
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/runtime_graph.py",
+      "sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+      "mtime_ns": 1789468328000000000,
+      "definitions": [
+        {
+          "name": "route_execute_outcome",
+          "line": 77,
+          "end_line": 105
+        },
+        {
+          "name": "route_install_outcome",
+          "line": 339,
+          "end_line": 348
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workflow/outcomes.py",
+      "sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+      "mtime_ns": 1788796193000000000,
+      "definitions": []
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/task_spec.py",
+      "sha256": "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059",
+      "mtime_ns": 1788866656000000000,
+      "definitions": [
+        {
+          "name": "semantic_install_policy",
+          "line": 4176,
+          "end_line": 4203
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_tracker.py",
+      "sha256": "724f098ea3b41ed6e78ff629a2f014a8e5121fbb19cd2ab631cc03da8d2628c2",
+      "mtime_ns": 1789635667000000000,
+      "definitions": [
+        {
+          "name": "save_plan_state",
+          "line": 10990,
+          "end_line": 11028
+        },
+        {
+          "name": "_atomic_write_plan_state",
+          "line": 11865,
+          "end_line": 12067
+        },
+        {
+          "name": "advance_plan_after_verified_step",
+          "line": 12616,
+          "end_line": 12742
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/middleware.py",
+      "sha256": "25e1f5b83d2d4df03093ed5fe42979e0ba75f3587b98149feae5f99fa405ba56",
+      "mtime_ns": 1789570552000000000,
+      "definitions": [
+        {
+          "name": "review_code",
+          "line": 1194,
+          "end_line": 1305
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/state.py",
+      "sha256": "af4f504c0b61267659d3d554b27f9a9eec92a48b35143fbe838e4450ac8c4565",
+      "mtime_ns": 1788796193000000000,
+      "definitions": []
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/prompts/manager.py",
+      "sha256": "021f3b5e4e5b741e207a17a1da1801047bf8dd5e4770876b86214b1917b266b5",
+      "mtime_ns": 1789570553000000000,
+      "definitions": [
+        {
+          "name": "get_installer_system_prompt",
+          "line": 585,
+          "end_line": 599
+        }
+      ]
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/prompts/templates.py",
+      "sha256": "c8af0020f47de9b28439156bffaffd44d678872c17cc9f970a0b832b7016431d",
+      "mtime_ns": 1788361152000000000,
+      "definitions": []
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/controller_audit.py",
+      "sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3",
+      "mtime_ns": 1789118618000000000,
+      "definitions": []
+    }
+  ]
+}

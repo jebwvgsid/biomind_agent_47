@@ -1,0 +1,85 @@
+{
+  "purpose": "Discriminate async pipe-completion probe timeout from actual tool termination",
+  "result_code": "PROBE_WAIT_OR_PIPE_COMPLETION_ANOMALY",
+  "results": [
+    {
+      "label": "wgs_java",
+      "original_outcome": "timeout",
+      "original_returncode": 0,
+      "argv": [
+        "java",
+        "-version"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-probe-wait-ad7voh46",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-probe-wait-ad7voh46",
+      "started_at": "2026-09-17T09:11:03.383248+00:00",
+      "elapsed_seconds": 0.9456115122884512,
+      "timeout_seconds": 5,
+      "output_limit_bytes": 65536,
+      "capture_mode": "regular_files_with_poll_and_output_limit",
+      "outcome": "completed",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"11.0.1\" 2018-10-16 LTS\nOpenJDK Runtime Environment Zulu11.2+3 (build 11.0.1+13-LTS)\nOpenJDK 64-Bit Server VM Zulu11.2+3 (build 11.0.1+13-LTS, mixed mode)\n"
+    },
+    {
+      "label": "wgs_bwa_mem",
+      "original_outcome": "timeout",
+      "original_returncode": 1,
+      "argv": [
+        "bwa",
+        "mem"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-probe-wait-ad7voh46",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-probe-wait-ad7voh46",
+      "started_at": "2026-09-17T09:11:04.328859+00:00",
+      "elapsed_seconds": 0.05537448916584253,
+      "timeout_seconds": 5,
+      "output_limit_bytes": 65536,
+      "capture_mode": "regular_files_with_poll_and_output_limit",
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "\nUsage: bwa mem [options] <idxbase> <in1.fq> [in2.fq]\n\nAlgorithm options:\n\n       -t INT        number of threads [1]\n       -k INT        minimum seed length [19]\n       -w INT        band width for banded alignment [100]\n       -d INT        off-diagonal X-dropoff [100]\n       -r FLOAT      look for internal seeds inside a seed longer than {-k} * FLOAT [1.5]\n       -y INT        seed occurrence for the 3rd round seeding [20]\n       -c INT        skip seeds with more than INT occurrences [500]\n       -D FLOAT      drop chains shorter than FLOAT fraction of the longest overlapping chain [0.50]\n       -W INT        discard a chain if seeded bases shorter than INT [0]\n       -m INT        perform at most INT rounds of mate rescues for each read [50]\n       -S            skip mate rescue\n       -P            skip pairing; mate rescue performed unless -S also in use\n\nScoring options:\n\n       -A INT        score for a sequence match, which scales options -TdBOELU unless overridden [1]\n       -B INT        penalty for a mismatch [4]\n       -O INT[,INT]  gap open penalties for deletions and insertions [6,6]\n       -E INT[,INT]  gap extension penalty; a gap of size k cost '{-O} + {-E}*k' [1,1]\n       -L INT[,INT]  penalty for 5'- and 3'-end clipping [5,5]\n       -U INT        penalty for an unpaired read pair [17]\n\n       -x STR        read type. Setting -x changes multiple parameters unless overridden [null]\n                     pacbio: -k17 -W40 -r10 -A1 -B1 -O1 -E1 -L0  (PacBio reads to ref)\n                     ont2d: -k14 -W20 -r10 -A1 -B1 -O1 -E1 -L0  (Oxford Nanopore 2D-reads to ref)\n                     intractg: -B9 -O16 -L5  (intra-species contigs to ref)\n\nInput/output options:\n\n       -p            smart pairing (ignoring in2.fq)\n       -R STR        read group header line such as '@RG\\tID:foo\\tSM:bar' [null]\n       -H STR/FILE   insert STR to header if it starts with @; or insert lines in FILE [null]\n       -o FILE       sam file to output results to [stdout]\n       -j            treat ALT contigs as part of the primary assembly (i.e. ignore <idxbase>.alt file)\n       -5            for split alignment, take the alignment with the smallest query (not genomic) coordinate as primary\n       -q            don't modify mapQ of supplementary alignments\n       -K INT        process INT input bases in each batch regardless of nThreads (for reproducibility) []\n\n       -v INT        verbosity level: 1=error, 2=warning, 3=message, 4+=debugging [3]\n       -T INT        minimum score to output [30]\n       -h INT[,INT]  if there are <INT hits with score >80.00% of the max score, output all in XA [5,200]\n                     A second value may be given for alternate sequences.\n       -z FLOAT      The fraction of the max score to use with -h [0.800000].\n                     specify the mean, standard deviation (10% of the mean if absent), max\n       -a            output all alignments for SE or unpaired PE\n       -C            append FASTA/FASTQ comment to SAM output\n       -V            output the reference FASTA header in the XR tag\n       -Y            use soft clipping for supplementary alignments\n       -M            mark shorter split hits as secondary\n\n       -I FLOAT[,FLOAT[,INT[,INT]]]\n                     specify the mean, standard deviation (10% of the mean if absent), max\n                     (4 sigma from the mean if absent) and min of the insert size distribution.\n                     FR orientation only. [inferred]\n       -u            output XB instead of XA; XB is XA with the alignment score and mapping quality added.\n\nNote: Please read the man page for detailed description of the command line and options.\n\n"
+    },
+    {
+      "label": "wgs_samtools_coverage_help",
+      "original_outcome": "timeout",
+      "original_returncode": 1,
+      "argv": [
+        "samtools",
+        "coverage",
+        "--help"
+      ],
+      "environment_allowlist": {
+        "PATH": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin:/usr/bin:/bin",
+        "LC_ALL": "C",
+        "TMPDIR": "/tmp/biomind-probe-wait-ad7voh46",
+        "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "CONDA_DEFAULT_ENV": "bio_wgs"
+      },
+      "cwd": "/tmp/biomind-probe-wait-ad7voh46",
+      "started_at": "2026-09-17T09:11:04.384243+00:00",
+      "elapsed_seconds": 0.09111084043979645,
+      "timeout_seconds": 5,
+      "output_limit_bytes": 65536,
+      "capture_mode": "regular_files_with_poll_and_output_limit",
+      "outcome": "completed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "[main] unrecognized command 'coverage'\n"
+    }
+  ]
+}

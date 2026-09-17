@@ -1,0 +1,91 @@
+{
+  "type": "current_behavior_witness_and_existing_regression",
+  "python": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "completed_utc": "2026-09-17T08:59:11.430694+00:00",
+  "imported_module_disk_hashes_at_completion": {
+    "/public/home/liusiqi/03.毕设/Biomind_v1/docs/audits/environment_install_recovery_20260917/evidence/approval_witness.py": "f64c460d5fcb593e7a34d117b9364c7be77f5ee698b426196285349967fa1ba1",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/action_runtime.py": "53ff91ce91ea502b4fb46d63e374ee3e3ad27596a7aea924227cc672b95c3071",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/execution_authority.py": "2ab26ebe38dae92011956d653a896bfc0f0f7ad55dcce7b4bd7a92a08c31239d",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/candidate_repair_policy.py": "45bb6ee3aff8c2135ece783981c33493921226aec96a30a98b739bbac9502af3",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/task_spec.py": "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/state_contract_store.py": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/phase_timing.py": "59b69c848c2f05a8db568a6fe420b69771292d8173d0b4420db1aee3750b984d",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/runtime_evidence.py": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/active_state.py": "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/recovery_contract.py": "34a7cd4631ce4f3f68cd342006ed6c7dc5e4349922915d821b991467dfc0a13e",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_contract.py": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/workspace_attestation.py": "cca7537f7641f3388970395484618b0b4e1922af35655f90f2788afebf2d3f67",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_tracker.py": "890caaacdc07adc8af3c986dd01ab1e73fe321636f4b4c4b623587e0e9fa5630",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_manager.py": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/tests/test_action_scoped_runtime_bindings.py": "c477fd50ea8bac70ce727369df49f18b48ecb2dd489599456b1ab2aeefe9cc99",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/tests/test_plan_contract_approval_scope.py": "0560e576bc125921fc2f4076d5fa33d09e2a7e7a80d203749bebe795f06dc01a",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_bindings.py": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f"
+  },
+  "source_paths": [
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/action_runtime.py",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/plan_tracker.py"
+  ],
+  "scenarios": [
+    {
+      "scenario": "identical action identity",
+      "observed": "accepted",
+      "status": "PASS"
+    },
+    {
+      "scenario": "generated_script_sha256 changes",
+      "observed": "ACTION_APPROVAL_IDENTITY_DRIFT",
+      "status": "PASS"
+    },
+    {
+      "scenario": "capability_contract_hash_value changes",
+      "observed": "ACTION_APPROVAL_IDENTITY_DRIFT",
+      "status": "PASS"
+    },
+    {
+      "scenario": "runtime_env_manifest_hash changes",
+      "observed": "RUNTIME_BINDING_SNAPSHOT_DRIFT",
+      "status": "PASS"
+    },
+    {
+      "scenario": "artifact_env_manifest_hash changes",
+      "observed": "ACTION_APPROVAL_IDENTITY_DRIFT",
+      "status": "PASS"
+    },
+    {
+      "scenario": "execution_policy_manifest_hash changes",
+      "observed": "ACTION_APPROVAL_IDENTITY_DRIFT",
+      "status": "PASS"
+    },
+    {
+      "scenario": "working_directory changes",
+      "observed": "ACTION_APPROVAL_IDENTITY_DRIFT",
+      "status": "PASS"
+    },
+    {
+      "scenario": "same executable path with changed bytes",
+      "observed": "path/access prelaunch passes; manifest path-value digest unchanged",
+      "status": "PASS_CURRENT_BEHAVIOR",
+      "limitation": "These boundaries alone do not attest installed version or file content; no process executed."
+    },
+    {
+      "scenario": "registered path removed",
+      "observed": "RUNTIME_BINDING_PRELAUNCH_PATH_INVALID",
+      "status": "PASS"
+    }
+  ],
+  "existing_tests": {
+    "run": 21,
+    "failures": 1,
+    "errors": 1,
+    "skipped": 0,
+    "passed": false
+  },
+  "not_run": [
+    "production repair",
+    "real model",
+    "installation",
+    "scientific analysis",
+    "original task resume"
+  ]
+}

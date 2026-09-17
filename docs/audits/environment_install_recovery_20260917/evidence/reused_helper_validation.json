@@ -1,0 +1,49 @@
+{
+  "checked_utc": "2026-09-17T08:56:47.664677+00:00",
+  "evidence_path": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/fixes/skill_script_invocation_contract_20260917_results.json",
+  "evidence_sha256": "483fcc3449f72ccedfeef7731e3eba544b5ce27f0707cc44d71f193a8a38d16a",
+  "reported_tests": {
+    "passed": 69
+  },
+  "claimed_scope": "Isolated source export, synthetic configuration and temporary test inputs; no original WGS execution or live model calls.",
+  "source_hash_checks": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_script_invocation.py",
+      "expected": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "actual": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "match": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/agent_core/skill_resource_binding.py",
+      "expected": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "actual": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "match": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+      "expected": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32",
+      "actual": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+      "match": false
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "expected": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "actual": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "match": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/tests/test_skill_script_invocation.py",
+      "expected": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "actual": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "match": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/tests/test_preflight_mapping_commit.py",
+      "expected": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "actual": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "match": true
+    }
+  ],
+  "all_match": false,
+  "scope": "Historical test result reused after source hash checks; not rerun in this audit; does not certify files outside listed source set."
+}

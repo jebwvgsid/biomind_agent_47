@@ -1,0 +1,27 @@
+{
+  "checked_utc": "2026-09-17T08:57:53.356904+00:00",
+  "source_changes_since_start": [
+    {
+      "path": "agent_core/step_effects.py",
+      "initial": "8040375f2fdb8eb00c5b75977bac036a7e00db4781b3533a7e09f5f1bdfc633d",
+      "now": "565d06037d3f68b7818f3fced964066109c3836be3e2420abf5bf6445ee3cfa2"
+    },
+    {
+      "path": "agent_core/workspace_attestation.py",
+      "initial": "b87c1c615d6d417d2540abec90fbe3a8b4d8f10c5b97200768ef1bcc23471326",
+      "now": "8794ffe461d54efd4bff7d1f3ed2a3532a9ddb2f65c4cd7912581da28d819f8e"
+    },
+    {
+      "path": "agent_core/semantic_completion.py",
+      "initial": "abf7ba2dfd42cb8d91e79e5e93c298a780ba0b169267acf6e95f6b4d714326d3",
+      "now": "f2a8cf9057c36807acf2bd913c1458631f7582f5f972eec9b9173ef544f5e0f5"
+    },
+    {
+      "path": "bio_agents.py",
+      "initial": "75a90a11158304c2a060864de96889c27e4f53917d937b2946ea9377290c0f32",
+      "now": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883"
+    }
+  ],
+  "handling": "No production writes by this audit. Preserve concurrent changes, recheck affected conclusions; include only dedicated audit directory in isolated commit.",
+  "head_now": "4ea823511328ed4035ec2a99ddf09a3419bb288a"
+}

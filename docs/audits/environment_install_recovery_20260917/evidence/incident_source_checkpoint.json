@@ -1,0 +1,118 @@
+{
+  "recorded_at": "2026-09-17T09:05:28.340661+00:00",
+  "files": {
+    "agent_core/cli_lifecycle.py": {
+      "sha256": "68eaa26ecd32e32d270d802ae6c54902013b7594644c0832b094a917b529b28c",
+      "selected_functions": {
+        "_cause_text": 99,
+        "terminal_text": 139,
+        "delivery_text": 188
+      }
+    },
+    "agent_core/workflow/managed_stop.py": {
+      "sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa",
+      "selected_functions": {
+        "_save": 665
+      }
+    },
+    "agent_core/completion_gate.py": {
+      "sha256": "aaa7287807d27f1da83570c37025569f3ea995d97a6437b0d4ededd21b25189d",
+      "selected_functions": {
+        "_contract_exists": 1665
+      }
+    },
+    "agent_core/workflow/recovery_reception.py": {
+      "sha256": "d8f6d69a934534579c32163e29e1960a701376e2792859d4c85fb15cd0a03eb0",
+      "selected_functions": {
+        "adapt_native_version": 114
+      }
+    },
+    "agent_core/workflow/recovery_agent.py": {
+      "sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6",
+      "selected_functions": {}
+    },
+    "prompts/manager.py": {
+      "sha256": "021f3b5e4e5b741e207a17a1da1801047bf8dd5e4770876b86214b1917b266b5",
+      "selected_functions": {}
+    },
+    "agent_core/step_effects.py": {
+      "sha256": "565d06037d3f68b7818f3fced964066109c3836be3e2420abf5bf6445ee3cfa2",
+      "selected_functions": {
+        "compile_step_effect": 1178
+      }
+    },
+    "agent_core/workspace_attestation.py": {
+      "sha256": "cca7537f7641f3388970395484618b0b4e1922af35655f90f2788afebf2d3f67",
+      "selected_functions": {
+        "workspace_evidence_contract_supported": 268,
+        "finalize_mutation_attestation": 1306
+      }
+    },
+    "agent_core/semantic_completion.py": {
+      "sha256": "8dc3af63d3dc0f60a79c864be5fc32487fadbbb47e28770882cbee313a458cc7",
+      "selected_functions": {
+        "evaluate_workspace_mutation_receipts": 907
+      }
+    },
+    "bio_agents.py": {
+      "sha256": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+      "selected_functions": {}
+    }
+  },
+  "concurrent_change_effect": "Current changes in step_effects/workspace_attestation/semantic_completion and extra bio_agents code govern explicitly declared workspace_mutations and controller workspace revalidation. Historical prepare_reference step_effect.workspace_mutations is []; its bundle is immutable_artifact and create_reference_indexes is explicit_side_effect. These changes do not add reference-index member validation or change terminal CLI. No full integrated CommitStep witness was run.",
+  "baseline_keys": [
+    "captured_utc",
+    "repo",
+    "branch",
+    "BASE",
+    "HEAD_at_start",
+    "index_tree",
+    "staged_names",
+    "dirty_entries",
+    "current_source_manifest",
+    "auditor_environment"
+  ],
+  "historical_prepare_reference_effect": {
+    "schema_version": 1,
+    "produces_artifacts": [
+      "plan-artifact-7c3b64e012cb94ddd0184b27"
+    ],
+    "produces_bindings": [],
+    "produces_observations": [],
+    "workspace_mutations": [],
+    "explicit_side_effects": [
+      {
+        "identity": "create_reference_indexes",
+        "evidence_contract": {
+          "required_fields": [
+            "reference_resource_ref",
+            "index_artifacts"
+          ]
+        }
+      }
+    ]
+  },
+  "old_report_metadata": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/report.md",
+      "mtime_utc": "2026-09-08T14:40:31+00:00",
+      "sha256": "56e0281f8a28b6489e425638801329371d9e90b71c3d7b8405028a97bf430153",
+      "bytes": 3092,
+      "old_stop_identity_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/reproduce.sh",
+      "mtime_utc": "2026-09-08T14:40:31+00:00",
+      "sha256": "5aef1f18531a47157c20e82ce20b1b813f2b1b3f92a01cd8584b83ac0073848d",
+      "bytes": 3454,
+      "old_stop_identity_present": true
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium/stage_status.tsv",
+      "mtime_utc": "2026-09-08T14:40:30+00:00",
+      "sha256": "e161ee9d2326b6c95c19a985486287e7aee8df9cbb8e669440b8fd39950ef21d",
+      "bytes": 1937,
+      "old_stop_identity_present": false
+    }
+  ]
+}
