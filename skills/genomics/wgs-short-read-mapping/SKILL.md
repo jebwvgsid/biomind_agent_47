@@ -1,7 +1,7 @@
 ---
 name: wgs-short-read-mapping
 description: Map paired-end short-read WGS resequencing FASTQ to a reference genome with BWA-MEM or BWA-MEM2, samtools, and duplicate marking, producing coordinate-sorted indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq, long-read, or assembly comparison data.
-version: "1.1.3"
+version: "1.1.4"
 tags: [WGS, resequencing, mapping, BWA, BWA-MEM2, samtools, Picard, sambamba, mark-duplicates, BAM]
 legacy_ids: [short-read-mapping, bwa-mapping, wgs-bwa-mem, resequencing-mapping, 双端WGS fastq, WGS fastq比对, 先比对再做GATK]
 task_types: [wgs_mapping]
@@ -9,6 +9,49 @@ stage_tags: [read_mapping, bam_preparation]
 inputs: [reference_fasta, paired_fastq_sample_table, output_directory]
 outputs: [sorted_markdup_bam, bam_index, flagstat, coverage, duplicate_metrics, bam_list]
 generate:
+  script_invocations:
+    scripts/inspect_wgs_inputs.py:
+      schema_version: 1
+      runtime: controller_python
+      arguments:
+        --fastq: {nargs: 2, required: true, repeatable: true}
+        --reference: {nargs: 2, required: true}
+        --observation-id: {nargs: 1, required: true}
+        --evidence-dir: {nargs: 1, required: true, runtime_environment_variable: BIOMIND_PREFLIGHT_EVIDENCE_DIR}
+        --item-timeout-seconds: {nargs: 1}
+      delegates: [scripts/inspect_fastq.py, scripts/inspect_fasta_header.py, scripts/inspect_fastq_batch.py]
+    scripts/inspect_fastq_batch.py:
+      schema_version: 1
+      runtime: controller_python
+      arguments:
+        --item: {nargs: 2, required: true, repeatable: true}
+        --observation-id: {nargs: 1, required: true}
+        --evidence-dir: {nargs: 1, required: true, runtime_environment_variable: BIOMIND_PREFLIGHT_EVIDENCE_DIR}
+        --item-timeout-seconds: {nargs: 1}
+        --records: {nargs: 1}
+        --input-bytes: {nargs: 1}
+        --decoded-bytes: {nargs: 1}
+        --seconds: {nargs: 1}
+      delegates: [scripts/inspect_fastq.py]
+    scripts/inspect_fastq.py:
+      schema_version: 1
+      runtime: controller_python
+      arguments:
+        --path: {nargs: 1, required: true}
+        --observation-id: {nargs: 1, required: true}
+        --records: {nargs: 1}
+        --input-bytes: {nargs: 1}
+        --decoded-bytes: {nargs: 1}
+        --seconds: {nargs: 1}
+    scripts/inspect_fasta_header.py:
+      schema_version: 1
+      runtime: controller_python
+      arguments:
+        --path: {nargs: 1, required: true}
+        --observation-id: {nargs: 1, required: true}
+        --header-bytes: {nargs: 1}
+        --input-bytes: {nargs: 1}
+        --seconds: {nargs: 1}
   diagnostic_operations:
     - operation_id: samtools_header
       description: Read the SAM/BAM header through the already approved samtools runtime. This does not validate every alignment.
@@ -197,6 +240,41 @@ its delegated resources: `scripts/inspect_wgs_inputs.py`, `scripts/inspect_fastq
 by this Skill's exact ID and `#`. Use their supplied environment handles, not
 an installation root guessed from cwd. Read actual paths from current input
 bindings; labels and paths are distinct shell arguments, including spaces/中文.
+
+These four inspection helpers are **Python source files**, not standalone
+executables. Their `generate.script_invocations` contracts select
+`controller_python`: the same Python installation that runs BioMind and provides
+its `agent_core`/`execution` modules. This utility runtime is separate from the
+`bio_wgs` environment used by scientific alignment tools.
+
+The resource catalog supplies a complete, shell-quoted `invocation.shell_prefix`
+(the bound Python interpreter followed by the bound script path), as well as its
+equivalent `argv_prefix`. Copy that exact prefix and append the declared option
+tokens. For the mixed-input helper, the command shape is:
+
+```text
+<published invocation.shell_prefix> \
+  --observation-id <current declared observation identity> \
+  --evidence-dir "$BIOMIND_PREFLIGHT_EVIDENCE_DIR" \
+  --fastq <sample mate label> <quoted bound FASTQ path> \
+  --reference <reference label> <quoted bound FASTA path>
+```
+
+Replace the angle-bracket descriptions with current supplied values; repeat
+`--fastq` for each file. Each label/path is a separate argument. A quoted
+`BIOMIND_SKILL_*` script-path variable may replace the second argv token, but
+cannot replace the interpreter token. Do not run the source path alone, use a
+bare `python` from ambient PATH, or chmod the Skill file.
+
+The single-file readers support direct argv or simple shell commands. The batch
+and mixed-input helpers require the shell form because their evidence-directory
+variable is resolved only after approval. Simple shell permits optional
+`set -euo pipefail` and `exec`, comments, quoting and line continuations. Keep the
+helper invocation direct; dynamic wrappers, assignments, heredocs and compound
+shell require a different explicitly supported contract. Delegated resources
+must be declared and pinned, but need not be separately invoked. Invocation
+validation happens before approval; it checks entrypoint/argument shape, not
+input validity or scientific success. No approved script is rewritten on retry.
 
 Pass `--evidence-dir "$BIOMIND_PREFLIGHT_EVIDENCE_DIR"`. The execution policy
 approves the existing internal attempt-log root and this controlled reference;
