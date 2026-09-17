@@ -1,0 +1,16 @@
+component	estimated_tokens	measurement
+frozen_inputs	12064	real _context_budget_snapshot / reference fallback
+inherited_materials	77117	real _context_budget_snapshot / reference fallback
+local_messages	1	real _context_budget_snapshot / reference fallback
+pending_results	1	real _context_budget_snapshot / reference fallback
+provider_wrappers	1	real _context_budget_snapshot / reference fallback
+system	3782	real _context_budget_snapshot / reference fallback
+tool_schema	1794	real _context_budget_snapshot / reference fallback
+TOTAL_INPUT	94760	not vendor tokenizer
+output_reserve_tokens	8192	policy or estimator telemetry; do not add safe/trigger/target to input
+estimation_margin_tokens	4096	policy or estimator telemetry; do not add safe/trigger/target to input
+safety_headroom_tokens	2048	policy or estimator telemetry; do not add safe/trigger/target to input
+safe_input_tokens	187712	policy or estimator telemetry; do not add safe/trigger/target to input
+trigger_tokens	170000	policy or estimator telemetry; do not add safe/trigger/target to input
+target_tokens	130000	policy or estimator telemetry; do not add safe/trigger/target to input
+uncertainty_tokens	23883	policy or estimator telemetry; do not add safe/trigger/target to input

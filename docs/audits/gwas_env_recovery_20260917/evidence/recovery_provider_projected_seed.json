@@ -1,0 +1,1153 @@
+{
+  "current_failure_lineage": {
+    "failure_id": "failure-132564c0631456ab03c4240c",
+    "incident_id": "incident-4551e32d7e06392927bc241e",
+    "packet_version": 1,
+    "source_outcome_ref": "outcome:sha256:e9c200331f5ea25e9190c28e5173649a3a2f57ddc92493baf5de190431cddbfe"
+  },
+  "current_step": {
+    "action": "execute",
+    "inputs": [
+      "artifact-21e33d4d5643b1de2d1c",
+      "artifact-2d365aba43a2ca690c59",
+      "artifact-9bc15766bdb3bbf682fb",
+      "artifact-1785436e46c8870fa03c"
+    ],
+    "outputs": [
+      "plan-artifact-84b40467fc84915cc3e36bd5",
+      "plan-artifact-c2fefb6a80fc5e3281daa101",
+      "plan-artifact-38db30a57c72b4379b17f7af",
+      "plan-artifact-566070886c506b4b491bc250",
+      "plan-artifact-52dfa2642a38801a3c666879"
+    ],
+    "purpose": "validation",
+    "risk_level": "low",
+    "step_id": "check_inputs",
+    "success_criteria": [
+      "确认四个正式输入文件存在且可读，记录实际路径与文件大小",
+      "创建 00.input_check/ 与 logs/ 目录，提取 VCF 样本列表、表型表样本 ID 与 Q 矩阵样本 ID 并分别写入 00.input_check/",
+      "检查 bcftools、plink/plink2、emmax、Rscript、bedtools 是否存在并记录版本或缺失状态",
+      "不读取或使用 04/05/06 目录旧 manhattan 输出、demo/toy/tests/fixtures_legacy_toy/expected_answers 文件"
+    ],
+    "title": "只读检查正式输入与依赖可用性"
+  },
+  "dependencies": [],
+  "failure_packet": {
+    "diagnostic_facts": [
+      {
+        "fact_id": "producer-rejecting-checks",
+        "kind": "producer_failure_index",
+        "metadata": {
+          "checks": [
+            {
+              "code": "OBSERVED_ARTIFACT_CONTENT_INVALID: The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+              "detail": "OBSERVED_ARTIFACT_CONTENT_INVALID: The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+              "observation_status": "unknown",
+              "source_pointer": "/execution_record/validation/errors/0",
+              "stage": "validation"
+            },
+            {
+              "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
+              "detail": "The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+              "observation_status": "unknown",
+              "source_pointer": "/execution_record/runtime_output_reconciliation/violations/0",
+              "stage": "runtime_output_reconciliation"
+            }
+          ],
+          "commit_acceptance": "not_established",
+          "pointer_index_omitted": 0,
+          "process": {
+            "return_code": 0,
+            "started": true
+          },
+          "schema_version": 1,
+          "scope": {
+            "action_id": "action_4ef1b10abd40f94c",
+            "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+            "step_id": "check_inputs"
+          },
+          "total_rejecting_checks": 2,
+          "unexpanded_index_range": [],
+          "unexpanded_pointers": [],
+          "validation_acceptance": false
+        },
+        "summary": "OBSERVED_ARTIFACT_CONTENT_INVALID: The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract."
+      },
+      {
+        "fact_id": "failure-return-code",
+        "kind": "return_code",
+        "metadata": {
+          "return_code": 0
+        },
+        "summary": "Process return code: 0"
+      },
+      {
+        "fact_id": "failure-fact-0f38030654c068a0af88f5e0",
+        "kind": "result_realizations",
+        "metadata": {
+          "result_realizations": {
+            "authority": "recorded_contracts_and_observations; no_correspondence_or_acceptance_inferred",
+            "declared_results": [
+              {
+                "artifact_id": "plan-artifact-38db30a57c72b4379b17f7af",
+                "artifact_kind": "file",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/vcf.samples.txt",
+                "format": "txt",
+                "path_policy": "managed_exact",
+                "required": true,
+                "semantic_handle": "output.plan-artifact-38db30a57c72b4379b17f7af",
+                "validation_contract_id": "file_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-52dfa2642a38801a3c666879",
+                "artifact_kind": "file",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/q.samples.txt",
+                "format": "txt",
+                "path_policy": "managed_exact",
+                "required": true,
+                "semantic_handle": "output.plan-artifact-52dfa2642a38801a3c666879",
+                "validation_contract_id": "file_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-566070886c506b4b491bc250",
+                "artifact_kind": "file",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.samples.txt",
+                "format": "txt",
+                "path_policy": "managed_exact",
+                "required": true,
+                "semantic_handle": "output.plan-artifact-566070886c506b4b491bc250",
+                "validation_contract_id": "file_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-84b40467fc84915cc3e36bd5",
+                "artifact_kind": "directory",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check",
+                "format": "directory",
+                "path_policy": "managed_exact",
+                "required": true,
+                "semantic_handle": "output.plan-artifact-84b40467fc84915cc3e36bd5",
+                "validation_contract_id": "directory_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-c2fefb6a80fc5e3281daa101",
+                "artifact_kind": "directory",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/logs",
+                "format": "directory",
+                "path_policy": "managed_exact",
+                "required": true,
+                "semantic_handle": "output.plan-artifact-c2fefb6a80fc5e3281daa101",
+                "validation_contract_id": "directory_exists"
+              }
+            ],
+            "observed_candidates": [
+              {
+                "artifact_kind": "directory",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "directory",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts",
+                "representation": "directory",
+                "size": 8192
+              },
+              {
+                "artifact_kind": "directory",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "directory",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check",
+                "representation": "directory",
+                "size": 8192
+              },
+              {
+                "artifact_kind": "file",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_prefix_sha256": "114a18f2f41e54fa8355ab1aaf32b1934288818f73ab61c229ad82775c0a511e",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "text",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/dependency_status.tsv",
+                "representation": "plain",
+                "size": 398
+              },
+              {
+                "artifact_kind": "file",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_prefix_sha256": "0f507bd14cd859161d08939db410bb65b7ea7b61c2c3f27f92e2c0e8d02323fd",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "text",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/gff3.head.txt",
+                "representation": "plain",
+                "size": 207
+              },
+              {
+                "artifact_kind": "file",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_prefix_sha256": "72176768533a9bdfb786ebb3383813ea9d47b4264b83334b4a7070bc10b4d378",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "text",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.head.txt",
+                "representation": "plain",
+                "size": 39
+              },
+              {
+                "artifact_kind": "file",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_prefix_sha256": "ac2e1a2531a98628c5e25585b562fb4a0b64ca30757078ea2adff817c496b206",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "text",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.samples.txt",
+                "representation": "plain",
+                "size": 1498
+              },
+              {
+                "artifact_kind": "file",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_prefix_sha256": "d6e15feba6ccbb21c875efb14080d514728edbe2a6691cdcd9d4a02b614f0d72",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "text",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/q.samples.txt",
+                "representation": "plain",
+                "size": 1935
+              },
+              {
+                "artifact_kind": "file",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_prefix_sha256": "2edc291fd7e3485dac277fdfd133df086a16892b5e9331a6eabe5a09c45c2ca5",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "text",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/qmatrix.head.txt",
+                "representation": "plain",
+                "size": 81
+              },
+              {
+                "artifact_kind": "file",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_valid": false,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/vcf.samples.txt",
+                "representation": "plain",
+                "size": 0
+              },
+              {
+                "artifact_kind": "directory",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "content_valid": true,
+                "current_attempt_owned": true,
+                "exists": true,
+                "format": "directory",
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/logs",
+                "representation": "directory",
+                "size": 4096
+              }
+            ],
+            "reconciliation": {
+              "status": "recovery",
+              "violations": [
+                {
+                  "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
+                  "detail": "The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract."
+                }
+              ]
+            },
+            "scope": {
+              "action_id": "action_4ef1b10abd40f94c",
+              "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+              "execution_id": "exec-attempt_79e2ff04f7dcfa103d11",
+              "plan_id": "plan_3a827538750a5159c492",
+              "plan_version": "plan_v1",
+              "step_id": "check_inputs"
+            },
+            "source": "current_execution_record"
+          }
+        },
+        "summary": "Recorded result contracts and current execution output candidates."
+      }
+    ],
+    "error_code": "EXECUTION_FAILED",
+    "evidence_refs": [
+      "exec-attempt_79e2ff04f7dcfa103d11"
+    ],
+    "failed_action_ref": "action_4ef1b10abd40f94c",
+    "failed_attempt_ref": "attempt_79e2ff04f7dcfa103d11",
+    "failure_id": "failure-132564c0631456ab03c4240c",
+    "failure_owner": "GENERATED_ACTION",
+    "failure_type": "execution_failed",
+    "incident_id": "incident-4551e32d7e06392927bc241e",
+    "inspection_refs": [
+      "outcome:sha256:e9c200331f5ea25e9190c28e5173649a3a2f57ddc92493baf5de190431cddbfe",
+      "inspection:sha256:14cf29ed63a4c27c8055ed7f95dc91b0893695104abbfff64bd376f2d4566e0a",
+      "inspection:sha256:8591f652d7ca37eca41746070a13b846e44a60439f952b80c840459aceedede6",
+      "inspection:sha256:ef5641b3986fa6212b906e5702016d39764db5937d35ff91d0ecede3fdcb0528",
+      "inspection:sha256:7e8fa9ed85d67e2aa5f1f6551fcd778db4957ef2cd8b1ca1de81ae8681747a07",
+      "inspection:sha256:63636fe64e559a2b899a48c66b91f466df7b34411f192c5ea8fae64ca4caee5b",
+      "inspection:sha256:07067304a864c68ad415609c107901339b91c96c077b6fa5c0b00240e5461892",
+      "inspection:sha256:59535d16d4fb6cf48b34e97167b16ffbc6f0e036a49db4da43e38f4eaa7cc0d2",
+      "inspection:sha256:57443b3550146b785b237c0ec654d54ecfb4057ba9e9490104eeadf2ded23f32",
+      "inspection:sha256:b3829add1b47b7374ff28784cfdf05655aee7e6fbdf79fb2d521d214e1b099c3",
+      "inspection:sha256:1994fd5b7c5b9f63cf3d88c45d7b21dbd423672acb7b9c2974aac0b0bc92e254",
+      "inspection:sha256:63a972476a6152502f54f72f5848e36788ee42cb45a5d298b2bd0524d013d2d8"
+    ],
+    "packet_version": 1,
+    "retryable": true,
+    "source": "execute_outcome",
+    "source_outcome_ref": "outcome:sha256:e9c200331f5ea25e9190c28e5173649a3a2f57ddc92493baf5de190431cddbfe",
+    "summary": "A launched command failed after immutable evidence persistence."
+  },
+  "inspection_manifest": [
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "f44c34727a2fcb5b562a347cd2bdf0335539df9e3b378bfa38ada200e1f1ebc2",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:artifact-1785436e46c8870fa03c",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "",
+        "direction": "input",
+        "filesystem_readability": "NOT_CHECKED",
+        "producer_attempt_id": "",
+        "readable": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:artifact-1785436e46c8870fa03c"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "d83d1826d20d1e22ad3db938bdd0a4d4d57f7e2eb1001db9d4e8443e19d76d0e",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:artifact-21e33d4d5643b1de2d1c",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "",
+        "direction": "input",
+        "filesystem_readability": "NOT_CHECKED",
+        "producer_attempt_id": "",
+        "readable": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:artifact-21e33d4d5643b1de2d1c"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "4f565ecdc9a3afa91bb44d00eeb689ea00adf64ab8da71994afc0446ccd910f1",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:artifact-2d365aba43a2ca690c59",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "",
+        "direction": "input",
+        "filesystem_readability": "NOT_CHECKED",
+        "producer_attempt_id": "",
+        "readable": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:artifact-2d365aba43a2ca690c59"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "436366caf4d631376e6753657e01ee3a897025b73b906821a27233bca534a0c5",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:artifact-9bc15766bdb3bbf682fb",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "",
+        "direction": "input",
+        "filesystem_readability": "NOT_CHECKED",
+        "producer_attempt_id": "",
+        "readable": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:artifact-9bc15766bdb3bbf682fb"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "6a1451af91129dbefe9a43959eda5fc612c3b796d7fd7c27425488e92c820b31",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:plan-artifact-38db30a57c72b4379b17f7af",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "artifact_119176bef4f14af8a093@expected",
+        "diagnostic_only": true,
+        "direction": "output",
+        "filesystem_readability": "NOT_CHECKED",
+        "formal_consumption_allowed": false,
+        "producer_attempt_id": "",
+        "readable": true,
+        "source_uncertain": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:plan-artifact-38db30a57c72b4379b17f7af"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "7723374d3557e985bb35dae9b0768f1953db92f8de90614f1e614cfdb4dcb907",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:plan-artifact-52dfa2642a38801a3c666879",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "artifact_7737dd6293956de2d87d@expected",
+        "diagnostic_only": true,
+        "direction": "output",
+        "filesystem_readability": "NOT_CHECKED",
+        "formal_consumption_allowed": false,
+        "producer_attempt_id": "",
+        "readable": true,
+        "source_uncertain": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:plan-artifact-52dfa2642a38801a3c666879"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "f94e6a58bcf02dae7129e5bdf104224be7c22b7ba46a5d8ce45556bd6ec803fb",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:plan-artifact-566070886c506b4b491bc250",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "artifact_bcdee9bdafb4c771ce2f@expected",
+        "diagnostic_only": true,
+        "direction": "output",
+        "filesystem_readability": "NOT_CHECKED",
+        "formal_consumption_allowed": false,
+        "producer_attempt_id": "",
+        "readable": true,
+        "source_uncertain": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:plan-artifact-566070886c506b4b491bc250"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "38ddb85304950f4d1a563fd039811313e7d45a32613f27f6fbee88f0506d725e",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:plan-artifact-84b40467fc84915cc3e36bd5",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "artifact_fbe82a0ea3beb17850c5@expected",
+        "diagnostic_only": true,
+        "direction": "output",
+        "filesystem_readability": "NOT_CHECKED",
+        "formal_consumption_allowed": false,
+        "producer_attempt_id": "",
+        "readable": true,
+        "source_uncertain": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:plan-artifact-84b40467fc84915cc3e36bd5"
+    },
+    {
+      "allowed_tools": [
+        "artifact.inspect",
+        "artifact.read"
+      ],
+      "backend": "managed_artifacts",
+      "digest": "560b07b5c16c9b05ab8b14f880b7ad455812ed6c0ae44380520faf75ad4c9f48",
+      "kind": "artifact",
+      "readable": true,
+      "ref_id": "artifact:plan-artifact-c2fefb6a80fc5e3281daa101",
+      "scope": {
+        "access": "current_step",
+        "artifact_version_id": "artifact_2c893f1852d0e540d87b@expected",
+        "diagnostic_only": true,
+        "direction": "output",
+        "filesystem_readability": "NOT_CHECKED",
+        "formal_consumption_allowed": false,
+        "producer_attempt_id": "",
+        "readable": true,
+        "source_uncertain": true
+      },
+      "size_hint": 0,
+      "source_object_id": "artifact:plan-artifact-c2fefb6a80fc5e3281daa101"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "opaque_reference",
+      "digest": "263f044e2e846177688526c1bad6ae6d109334d87fb49782ff9c05f2794184a4",
+      "kind": "evidence",
+      "readable": false,
+      "ref_id": "exec-attempt_79e2ff04f7dcfa103d11",
+      "scope": {
+        "access": "current_step",
+        "resolvable": false
+      },
+      "size_hint": 0,
+      "source_object_id": "exec-attempt_79e2ff04f7dcfa103d11",
+      "unavailable_reason": "NO_REGISTERED_LOCATOR"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "1707c0267c007ff74601a213ba5e718ed88fb0e5def0a09ee035c41d7a196ad5",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:07067304a864c68ad415609c107901339b91c96c077b6fa5c0b00240e5461892",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "script",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "attempt_79e2ff04f7dcfa103d11",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 12064,
+      "source_object_id": "attempt_79e2ff04f7dcfa103d11"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "79a1275ab3e35b67603914eeed98a4c494248d6eac737c9ae4eeae7e3a6220c9",
+      "kind": "evidence",
+      "readable": false,
+      "ref_id": "inspection:sha256:14cf29ed63a4c27c8055ed7f95dc91b0893695104abbfff64bd376f2d4566e0a",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "validation",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": false,
+        "resolvable": false,
+        "source_object_id": "validation",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "validation",
+        "unavailable_reason": "NOT_APPLICABLE_NOT_PRODUCED"
+      },
+      "size_hint": 0,
+      "source_object_id": "validation",
+      "unavailable_reason": "NOT_APPLICABLE_NOT_PRODUCED"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "cea95a3db0fd43164232e12698fc1ddfe7f1a1b3b58b10b1db5d2cc66e68f9a9",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:1994fd5b7c5b9f63cf3d88c45d7b21dbd423672acb7b9c2974aac0b0bc92e254",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "parser_receipt",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "attempt_79e2ff04f7dcfa103d11",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 1213,
+      "source_object_id": "attempt_79e2ff04f7dcfa103d11"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "83d8f544a517676fc4132ba340c16b5eb92309b96eee838a117cfcbf6a3ac715",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:57443b3550146b785b237c0ec654d54ecfb4057ba9e9490104eeadf2ded23f32",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "task_context",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "task",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 18984,
+      "source_object_id": "task"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "4755dfedda11cc2b2f283df13035814e654a1e11708eb996cb186ef5e484e829",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:59535d16d4fb6cf48b34e97167b16ffbc6f0e036a49db4da43e38f4eaa7cc0d2",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "action",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "action_4ef1b10abd40f94c",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 1461,
+      "source_object_id": "action_4ef1b10abd40f94c"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "0ce8e111f5a81d235551c47f7ca65a48af40a265782ece511d8d0f1842b58323",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:63636fe64e559a2b899a48c66b91f466df7b34411f192c5ea8fae64ca4caee5b",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "execution",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "attempt_79e2ff04f7dcfa103d11",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 6650,
+      "source_object_id": "attempt_79e2ff04f7dcfa103d11"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "478c08f0131e7eb829a826629ba3a12baa479f619aac70969ca43d5ec73c91f4",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:63a972476a6152502f54f72f5848e36788ee42cb45a5d298b2bd0524d013d2d8",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "generation_context",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "generate-episode-588184957c0df2b91f0837a8",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 146614,
+      "source_object_id": "generate-episode-588184957c0df2b91f0837a8"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "dac3311a104f481a19870f5f5a72d5873c3e22b1f62004b3b5c47cb78fa56eb4",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:7e8fa9ed85d67e2aa5f1f6551fcd778db4957ef2cd8b1ca1de81ae8681747a07",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "step_attempt",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "check_inputs:attempt_79e2ff04f7dcfa103d11",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 24845,
+      "source_object_id": "check_inputs:attempt_79e2ff04f7dcfa103d11"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "a7e251e9c3cfec3bf329c9656993f6ebc4444964bca2828b5796ff65f59453dc",
+      "kind": "evidence",
+      "readable": false,
+      "ref_id": "inspection:sha256:8591f652d7ca37eca41746070a13b846e44a60439f952b80c840459aceedede6",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "completion_report",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": false,
+        "resolvable": false,
+        "source_object_id": "completion_report",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "completion_report",
+        "unavailable_reason": "NOT_APPLICABLE_NOT_PRODUCED"
+      },
+      "size_hint": 0,
+      "source_object_id": "completion_report",
+      "unavailable_reason": "NOT_APPLICABLE_NOT_PRODUCED"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "93e57d27fc60ce7403934866f7716d715514defbab2f0ab05f1e3c3a674d22e5",
+      "kind": "evidence",
+      "readable": true,
+      "ref_id": "inspection:sha256:b3829add1b47b7374ff28784cfdf05655aee7e6fbdf79fb2d521d214e1b099c3",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "plan",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": true,
+        "resolvable": true,
+        "source_object_id": "plan_3a827538750a5159c492",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "",
+        "unavailable_reason": ""
+      },
+      "size_hint": 137684,
+      "source_object_id": "plan_3a827538750a5159c492"
+    },
+    {
+      "allowed_tools": [
+        "evidence.read"
+      ],
+      "backend": "state_contract_inspection",
+      "digest": "6a9c96f7edb25e93998896b9ca3ffa39a304c0bd1e915531cba6221eb0d86b48",
+      "kind": "evidence",
+      "readable": false,
+      "ref_id": "inspection:sha256:ef5641b3986fa6212b906e5702016d39764db5937d35ff91d0ecede3fdcb0528",
+      "scope": {
+        "access": "current_step",
+        "allowed_tools": [
+          "evidence.read"
+        ],
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "episode_id": "recovery-seed-132564c0631456ab03c4240c",
+        "object_kind": "semantic_decision",
+        "object_revision": 1,
+        "plan_id": "plan_3a827538750a5159c492",
+        "plan_version": "plan_v1",
+        "readable": false,
+        "resolvable": false,
+        "source_object_id": "semantic_decision",
+        "step_id": "check_inputs",
+        "task_id": "session_1789648505",
+        "unavailable_detail": "semantic_decision",
+        "unavailable_reason": "NOT_APPLICABLE_NOT_PRODUCED"
+      },
+      "size_hint": 0,
+      "source_object_id": "semantic_decision",
+      "unavailable_reason": "NOT_APPLICABLE_NOT_PRODUCED"
+    },
+    {
+      "allowed_tools": [
+        "failure.inspect"
+      ],
+      "backend": "causal_failure_packet",
+      "digest": "15ef3f13955a906efc62fa88f45b5ba7f5e4bac96619cda1b3fdc02c9a84288b",
+      "kind": "failure",
+      "readable": true,
+      "ref_id": "outcome:sha256:e9c200331f5ea25e9190c28e5173649a3a2f57ddc92493baf5de190431cddbfe",
+      "scope": {
+        "access": "current_step"
+      },
+      "size_hint": 10784,
+      "source_object_id": "outcome:sha256:e9c200331f5ea25e9190c28e5173649a3a2f57ddc92493baf5de190431cddbfe"
+    },
+    {
+      "allowed_tools": [
+        "skill.headings",
+        "skill.read",
+        "skill.search",
+        "skill.resource"
+      ],
+      "backend": "skill_access_service",
+      "digest": "97d9741d2c6b2b283eb42d3267eacbfc013c691a25cf0e6b5dcdf9ccbf051b35",
+      "kind": "skill_resource",
+      "readable": true,
+      "ref_id": "skill:population-genetics/gwas-emmax-association",
+      "scope": {
+        "access": "selected_skill",
+        "skill_id": "population-genetics/gwas-emmax-association"
+      },
+      "size_hint": 0,
+      "source_object_id": "skill:population-genetics/gwas-emmax-association"
+    },
+    {
+      "allowed_tools": [
+        "skill.headings",
+        "skill.read",
+        "skill.search",
+        "skill.resource"
+      ],
+      "backend": "skill_access_service",
+      "digest": "a076bbdd1a4a55b5c50f99f247c2bf16bb0ac67e1cc55fa8f5d1b714470e903d",
+      "kind": "skill_resource",
+      "readable": true,
+      "ref_id": "skill:population-genetics/gwas-ldblock-candidate-region",
+      "scope": {
+        "access": "selected_skill",
+        "skill_id": "population-genetics/gwas-ldblock-candidate-region"
+      },
+      "size_hint": 0,
+      "source_object_id": "skill:population-genetics/gwas-ldblock-candidate-region"
+    },
+    {
+      "allowed_tools": [
+        "skill.headings",
+        "skill.read",
+        "skill.search",
+        "skill.resource"
+      ],
+      "backend": "skill_access_service",
+      "digest": "06fa564a66a4d24aae98d7964416c55f5abc8e6bd1b37520eb2bf12a64eeb1f0",
+      "kind": "skill_resource",
+      "readable": true,
+      "ref_id": "skill:population-genetics/gwas-manhattan-qq-plot",
+      "scope": {
+        "access": "selected_skill",
+        "skill_id": "population-genetics/gwas-manhattan-qq-plot"
+      },
+      "size_hint": 0,
+      "source_object_id": "skill:population-genetics/gwas-manhattan-qq-plot"
+    },
+    {
+      "allowed_tools": [
+        "skill.headings",
+        "skill.read",
+        "skill.search",
+        "skill.resource"
+      ],
+      "backend": "skill_access_service",
+      "digest": "45b89f4a6b2bbf3c78f2c65a9a111324146d96271352c4c564d4988184fffddb",
+      "kind": "skill_resource",
+      "readable": true,
+      "ref_id": "skill:population-genetics/gwas-vcf-prep-qc",
+      "scope": {
+        "access": "selected_skill",
+        "skill_id": "population-genetics/gwas-vcf-prep-qc"
+      },
+      "size_hint": 0,
+      "source_object_id": "skill:population-genetics/gwas-vcf-prep-qc"
+    },
+    {
+      "allowed_tools": [
+        "skill.headings",
+        "skill.read",
+        "skill.search",
+        "skill.resource"
+      ],
+      "backend": "skill_access_service",
+      "digest": "7125bc59e82cf291d76a7cce743fbc013c0f63772a4cac98efb48b84d44f2ab9",
+      "kind": "skill_resource",
+      "readable": true,
+      "ref_id": "skill:population-genetics/popgen-gwas-workflow",
+      "scope": {
+        "access": "selected_skill",
+        "skill_id": "population-genetics/popgen-gwas-workflow"
+      },
+      "size_hint": 0,
+      "source_object_id": "skill:population-genetics/popgen-gwas-workflow"
+    }
+  ],
+  "invocation_scope": {
+    "plan_id": "plan_3a827538750a5159c492",
+    "step_id": "check_inputs",
+    "task_id": "session_1789648505"
+  },
+  "schema_version": 1,
+  "selected_skill_manifest": {
+    "bundle_id": "recovery-skills-3b7c3388be96d79ff60578b9",
+    "manifest_only": true,
+    "skills": [
+      {
+        "scope": "task",
+        "skill_id": "population-genetics/popgen-gwas-workflow",
+        "snapshot_id": "skill-snapshot-2ddb19d1fe969ffdfcd8"
+      },
+      {
+        "scope": "task",
+        "skill_id": "population-genetics/gwas-vcf-prep-qc",
+        "snapshot_id": "skill-snapshot-349abf8056706e9869e2"
+      },
+      {
+        "scope": "task",
+        "skill_id": "population-genetics/gwas-emmax-association",
+        "snapshot_id": "skill-snapshot-facd2d7b23603b8b0a05"
+      },
+      {
+        "scope": "task",
+        "skill_id": "population-genetics/gwas-manhattan-qq-plot",
+        "snapshot_id": "skill-snapshot-16f8ddd656569d06a5f1"
+      },
+      {
+        "scope": "task",
+        "skill_id": "population-genetics/gwas-ldblock-candidate-region",
+        "snapshot_id": "skill-snapshot-73c56d2ef3993d46cdaf"
+      }
+    ]
+  },
+  "task_semantic_slice": {
+    "goal": "对 Part6.GWAS/data 的 SNP VCF (Real_snp.vcf.gz) 与 C16_0 表型 (Real_trait.C16_0.table) 执行标准 GWAS（含 kinship/covariate 说明的混合模型），生成 Manhattan/QQ 图并给出候选区间；输出写入 benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-GWAS-008/medium，至少包含 report.md、reproduce.sh 和 stage_status.tsv，无法执行的 stage 需明确 blocked 并说明原因。",
+    "hard_constraints": [
+      {
+        "requirement_id": "requirement-1",
+        "strength": "required",
+        "value": "禁止使用 04/05/06 目录旧 manhattan 输出作为新结果。"
+      },
+      {
+        "requirement_id": "requirement-2",
+        "strength": "required",
+        "value": "禁止 phenotype/sample ID 未对齐时继续。"
+      },
+      {
+        "requirement_id": "requirement-3",
+        "strength": "required",
+        "value": "禁止无 kinship/covariate 说明直接称为 MLM。"
+      },
+      {
+        "requirement_id": "requirement-4",
+        "strength": "required",
+        "value": "plink/emmax/tassel/R 包缺失时 blocked by stage；不得伪造 p-value。"
+      },
+      {
+        "requirement_id": "requirement-5",
+        "strength": "required",
+        "value": "只使用本提示词给出的正式输入或数据目录；不得把 BioMind 代码仓库目录误当作 benchmark 数据根目录；所有 benchmarks/... 相对路径以项目根目录解析。"
+      },
+      {
+        "requirement_id": "requirement-6",
+        "strength": "required",
+        "value": "不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。"
+      },
+      {
+        "requirement_id": "requirement-7",
+        "strength": "required",
+        "value": "缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。"
+      },
+      {
+        "requirement_id": "requirement-8",
+        "strength": "required",
+        "value": "最终至少生成 report.md 和 reproduce.sh；多阶段任务还应生成 stage_status.tsv 或等价状态表。"
+      },
+      {
+        "requirement_id": "requirement-9",
+        "strength": "required",
+        "value": "report.md 中需说明为什么选择这些 skill/流程；对能执行的 stage 生成真实结果，对不能执行的 stage 明确 blocked 并说明原因。"
+      }
+    ],
+    "input_roles": [
+      {
+        "format": "vcf",
+        "required": true,
+        "role": "variant_vcf"
+      },
+      {
+        "format": "table",
+        "required": true,
+        "role": "phenotype_table"
+      },
+      {
+        "format": "q",
+        "required": true,
+        "role": "q_matrix"
+      },
+      {
+        "format": "gff3",
+        "required": true,
+        "role": "annotation_gff3"
+      }
+    ],
+    "output_roles": [
+      {
+        "format": "directory",
+        "output_id": "output_dir",
+        "path_policy": "managed_exact",
+        "required": true,
+        "role": "output_dir"
+      },
+      {
+        "format": "file",
+        "output_id": "report_md",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "report",
+        "root_ref": "output_dir"
+      },
+      {
+        "format": "file",
+        "output_id": "reproduce_sh",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "reproduce_script",
+        "root_ref": "output_dir"
+      },
+      {
+        "format": "file",
+        "output_id": "stage_status_tsv",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "stage_status_table",
+        "root_ref": "output_dir"
+      },
+      {
+        "format": "file",
+        "output_id": "manhattan_qq_plots",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "gwas_plots",
+        "root_ref": "output_dir"
+      },
+      {
+        "format": "file",
+        "output_id": "candidate_region",
+        "path_policy": "planner_materialized",
+        "required": true,
+        "role": "candidate_interval",
+        "root_ref": "output_dir"
+      }
+    ]
+  }
+}

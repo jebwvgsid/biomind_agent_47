@@ -1,0 +1,2071 @@
+{
+  "captured_utc": "2026-09-17T14:54:30.949812+00:00",
+  "head": "82c27867d862ef32d657fbc6162c70d4bc06492c",
+  "branch": "refactor/consultant-controller-authority",
+  "index_tree": "4fa77f0b2612a1dd54e5e6224cbadec601828e58",
+  "source_root": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+  "source_manifest": [
+    {
+      "path": "agent_core/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    {
+      "path": "agent_core/action_runtime.py",
+      "sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d",
+      "size": 51778
+    },
+    {
+      "path": "agent_core/active_state.py",
+      "sha256": "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105",
+      "size": 10940
+    },
+    {
+      "path": "agent_core/approved_resource_locator.py",
+      "sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+      "size": 2890
+    },
+    {
+      "path": "agent_core/candidate_repair_policy.py",
+      "sha256": "45bb6ee3aff8c2135ece783981c33493921226aec96a30a98b739bbac9502af3",
+      "size": 2105
+    },
+    {
+      "path": "agent_core/cli_activity.py",
+      "sha256": "32dc70a5f66375c72ec17a927e074cfc9d911c253c0a32cf1149fa95c258a188",
+      "size": 2669
+    },
+    {
+      "path": "agent_core/cli_display.py",
+      "sha256": "59ef61857b3c8a23479e45e0023c2afe8c8f970b211b31a71b027a597c1ff15d",
+      "size": 30981
+    },
+    {
+      "path": "agent_core/cli_lifecycle.py",
+      "sha256": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+      "size": 13112
+    },
+    {
+      "path": "agent_core/cli_logging.py",
+      "sha256": "981e05b7c29d30ec536bf53e7b81291409ebd587ca9b17663765204f52a86f82",
+      "size": 2552
+    },
+    {
+      "path": "agent_core/cli_plain.py",
+      "sha256": "4132898b02b0d9b3c67f099b61a04aff711b9c3056a7d17cb1d89f24d0bf8daa",
+      "size": 21053
+    },
+    {
+      "path": "agent_core/cli_review.py",
+      "sha256": "ef2efe1a5a02f044ecf7c42907f9be856da1bed193c53053fca2351ae11744d6",
+      "size": 3811
+    },
+    {
+      "path": "agent_core/cli_terminal.py",
+      "sha256": "524166fcc8586e9d19fa0afe960e6441e241c5d95a558110c2ef59cab4143b1d",
+      "size": 41922
+    },
+    {
+      "path": "agent_core/committed_observations.py",
+      "sha256": "17a02c12d0323f5bc1e74f97ff90362866e1bfe68e5935693c0382816a138884",
+      "size": 7165
+    },
+    {
+      "path": "agent_core/completion_gate.py",
+      "sha256": "aaa7287807d27f1da83570c37025569f3ea995d97a6437b0d4ededd21b25189d",
+      "size": 155015
+    },
+    {
+      "path": "agent_core/consultant_binding.py",
+      "sha256": "d359659fb23000de7228df34aab446fb1b253bb53dd34569289bd6313bea0637",
+      "size": 22801
+    },
+    {
+      "path": "agent_core/consultant_continuation.py",
+      "sha256": "dbf65f17015470d316bc34b7076973480c181b3a44440924b53df40732dd1544",
+      "size": 19028
+    },
+    {
+      "path": "agent_core/consultant_finalize.py",
+      "sha256": "95622ed70f84e107a3d11d6095df6f0d1d3819975ca90953e7f076640a1e1b17",
+      "size": 216461
+    },
+    {
+      "path": "agent_core/consultation_state.py",
+      "sha256": "2dcd0daa49783aab020d91282db5056803ab1b48ab515c27add6f64d46444b2c",
+      "size": 127456
+    },
+    {
+      "path": "agent_core/context_budget.py",
+      "sha256": "181bebc8844b393a2ee715f51af88ab3139272452e54b895d597d117568caea0",
+      "size": 17560
+    },
+    {
+      "path": "agent_core/context_lineage.py",
+      "sha256": "5e66bc3ca1b6275dabdcc153281640167ac351cfc871e6e95fbef713813adef8",
+      "size": 296646
+    },
+    {
+      "path": "agent_core/controller_audit.py",
+      "sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3",
+      "size": 40196
+    },
+    {
+      "path": "agent_core/deepseek_stream.py",
+      "sha256": "2da1f92d742d1b249f8beb35114317189db7a7f413c1805a8d1c5c8625bd4f94",
+      "size": 2940
+    },
+    {
+      "path": "agent_core/diagnostics.py",
+      "sha256": "3be6dcf23934f0ce44de2aaa4577861b48b35919c9dd634876eeef4f7e80b029",
+      "size": 126798
+    },
+    {
+      "path": "agent_core/evidence_projection.py",
+      "sha256": "abae8a30477826ece6b4583e256e5e202176016b3384236018205e00f59bc6ba",
+      "size": 16995
+    },
+    {
+      "path": "agent_core/execution_authority.py",
+      "sha256": "2ab26ebe38dae92011956d653a896bfc0f0f7ad55dcce7b4bd7a92a08c31239d",
+      "size": 4411
+    },
+    {
+      "path": "agent_core/formal_artifact_resolver.py",
+      "sha256": "3f6c2e0c9a3d84c05fa26202b5875a1a37bd8cb5b8abbbcb86488fe32adff1ba",
+      "size": 49764
+    },
+    {
+      "path": "agent_core/genomics_contig_parser.py",
+      "sha256": "2c5a3521736ee808598a5c0a9252a2227611f90441d6537e0424b424e98c3423",
+      "size": 15989
+    },
+    {
+      "path": "agent_core/genomics_reference_bundle.py",
+      "sha256": "602c4f46f875fa776bf71893b413a4ab7613f7c6f28312de4c8004103471c56d",
+      "size": 14958
+    },
+    {
+      "path": "agent_core/human_io.py",
+      "sha256": "54ebb9f1fd67daa01175d1201a0a5acf9fbe55e73976f79ddb3aeb5a8ecebdd2",
+      "size": 16755
+    },
+    {
+      "path": "agent_core/inspection_readers.py",
+      "sha256": "9a77b2a571b79f7bcede9258dd7ef47b67ac84e50ce7a3a07bb70a25b48c845d",
+      "size": 11187
+    },
+    {
+      "path": "agent_core/installer.py",
+      "sha256": "34529a85c94d9066834b4b84e43bb0fb300202d22d1e6d5bbf6d2018e9f9770f",
+      "size": 35311
+    },
+    {
+      "path": "agent_core/knowledge_conflicts.py",
+      "sha256": "b4c14042cac8219f65c80aa5095357ab8cf9578ae3abd4a0965d71d6514aa46b",
+      "size": 53611
+    },
+    {
+      "path": "agent_core/llm_safety.py",
+      "sha256": "ee97e68b5ec55c72ff08cf01bea2ddfd563aec6211ed2a20ba19a7d27835ec94",
+      "size": 2361
+    },
+    {
+      "path": "agent_core/managed_artifacts.py",
+      "sha256": "d2b489a0ffa5c3fb9332ca085d34d97e12c1d262a786d4b9e2d67e49c61213e8",
+      "size": 102067
+    },
+    {
+      "path": "agent_core/middleware.py",
+      "sha256": "25e1f5b83d2d4df03093ed5fe42979e0ba75f3587b98149feae5f99fa405ba56",
+      "size": 169337
+    },
+    {
+      "path": "agent_core/node_context.py",
+      "sha256": "b5863c22cd64c5b2f56a03864d478810e1e3928fa31b645e46032e8c593d3d79",
+      "size": 130116
+    },
+    {
+      "path": "agent_core/phase_timing.py",
+      "sha256": "59b69c848c2f05a8db568a6fe420b69771292d8173d0b4420db1aee3750b984d",
+      "size": 1485
+    },
+    {
+      "path": "agent_core/plan_bindings.py",
+      "sha256": "6f4348a4c08577ea19d30f3a9d6c2ccdb2429a58512d623e447f87b4069536f6",
+      "size": 98944
+    },
+    {
+      "path": "agent_core/plan_contract.py",
+      "sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+      "size": 99011
+    },
+    {
+      "path": "agent_core/plan_tracker.py",
+      "sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28",
+      "size": 575257
+    },
+    {
+      "path": "agent_core/planner_context.py",
+      "sha256": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a",
+      "size": 16062
+    },
+    {
+      "path": "agent_core/planner_loop.py",
+      "sha256": "75f5a5b4dc282d663d03a80836aedb926285b12f48017298c599177c209d8649",
+      "size": 29899
+    },
+    {
+      "path": "agent_core/planner_output_policy.py",
+      "sha256": "9d937db3705bbda6f18b5e4344a125ab226870c1e7af7b283c925b5f1a5871e2",
+      "size": 18471
+    },
+    {
+      "path": "agent_core/planner_recovery.py",
+      "sha256": "09f311dd02997260a62af1d7477e94b6805cb69ba7244022775f26e56c38bebd",
+      "size": 17729
+    },
+    {
+      "path": "agent_core/planner_revision.py",
+      "sha256": "97d01a83695b0b41cbf90e046a43205c91e3fc11fc92b0f5a12256f77e5dd44e",
+      "size": 6178
+    },
+    {
+      "path": "agent_core/provider_attempt.py",
+      "sha256": "eab697938a26396f22bd930d7b6b60e022ba15397f20dafbdf5272d9a0d58f24",
+      "size": 64296
+    },
+    {
+      "path": "agent_core/provider_message_safety.py",
+      "sha256": "fa3ded55b7c5cd1f5f857b114f6f7f4312e885491391f45981e12f14bbd6ec38",
+      "size": 495
+    },
+    {
+      "path": "agent_core/public_response.py",
+      "sha256": "260f6c77c1271c52e4f014a8eef07dd9bbbb219522dcadfd5f970de36dacd692",
+      "size": 6717
+    },
+    {
+      "path": "agent_core/recovery.py",
+      "sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+      "size": 288508
+    },
+    {
+      "path": "agent_core/recovery_contract.py",
+      "sha256": "34a7cd4631ce4f3f68cd342006ed6c7dc5e4349922915d821b991467dfc0a13e",
+      "size": 1210
+    },
+    {
+      "path": "agent_core/recovery_evidence.py",
+      "sha256": "febe265f9d000477d87511010e2b807de70d1d585814717ae330b4e82c3b2846",
+      "size": 12720
+    },
+    {
+      "path": "agent_core/recovery_provider.py",
+      "sha256": "8fc7bcc76f25609149c92c47aed7797939440feb961aa756a66389ed5d9d215e",
+      "size": 2497
+    },
+    {
+      "path": "agent_core/reproduction.py",
+      "sha256": "799f88bb4af5fbd87ed2a2b7ca35fd9e1ca514ed8dbe1fa0de50339fdf2b1472",
+      "size": 8016
+    },
+    {
+      "path": "agent_core/retriever.py",
+      "sha256": "9964e558e7aa987db1b08b52b3a61b821ed6a20885d3d6377a756c67ba84f0f9",
+      "size": 2404
+    },
+    {
+      "path": "agent_core/root_cause.py",
+      "sha256": "fa3291f87291777cc51ea2537c171ffcc981ae408836ce0769e69c1d592e9a23",
+      "size": 69172
+    },
+    {
+      "path": "agent_core/router.py",
+      "sha256": "aaf2b7889f4a183961da99ed6dcb7230fdaaa9b6b44642eecb79138d3dc07760",
+      "size": 12494
+    },
+    {
+      "path": "agent_core/runtime_evidence.py",
+      "sha256": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424",
+      "size": 24427
+    },
+    {
+      "path": "agent_core/runtime_identity.py",
+      "sha256": "86608e805adb614cac97a5e495bbaef0d26ff757ac50198c7a0b68e4f343dae8",
+      "size": 6948
+    },
+    {
+      "path": "agent_core/runtime_inspection.py",
+      "sha256": "270d874dc0e45883131c3293e239ee7ff78793bb3d034a0f0b2cd00bd58bb8f3",
+      "size": 29596
+    },
+    {
+      "path": "agent_core/runtime_probe_contract.py",
+      "sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce",
+      "size": 9455
+    },
+    {
+      "path": "agent_core/semantic_completion.py",
+      "sha256": "7943675b991094fd1fded34a07be8ab5c8e4f783eb4ed33b0c0161ecb768a27d",
+      "size": 84288
+    },
+    {
+      "path": "agent_core/skill_access.py",
+      "sha256": "d883268ea852052991a8a3655a687db98d31b4e967a8e25fd12959c641294341",
+      "size": 149570
+    },
+    {
+      "path": "agent_core/skill_discovery.py",
+      "sha256": "8552c165a255b962d5be9fe5aa3d0e8ebd21ebe9bc02d051ad595f6fbc980b82",
+      "size": 35322
+    },
+    {
+      "path": "agent_core/skill_manager.py",
+      "sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+      "size": 147988
+    },
+    {
+      "path": "agent_core/skill_resource_binding.py",
+      "sha256": "d31d00c103d7af4d31ba780e453f8dddf8d35020354294c1136eecbb6039f6ec",
+      "size": 11018
+    },
+    {
+      "path": "agent_core/skill_script_invocation.py",
+      "sha256": "3e6652eadc88a1261fcaea59255cb950f755d6d755b7eaf10108780091ff35c3",
+      "size": 18777
+    },
+    {
+      "path": "agent_core/state.py",
+      "sha256": "157d4da1da6c483abb2afa32935cc289e14e15e203b164265888e70b502e5b10",
+      "size": 9611
+    },
+    {
+      "path": "agent_core/state_contract_store.py",
+      "sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+      "size": 14884
+    },
+    {
+      "path": "agent_core/step_effects.py",
+      "sha256": "565d06037d3f68b7818f3fced964066109c3836be3e2420abf5bf6445ee3cfa2",
+      "size": 175877
+    },
+    {
+      "path": "agent_core/task_spec.py",
+      "sha256": "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059",
+      "size": 257661
+    },
+    {
+      "path": "agent_core/wiki_lifecycle.py",
+      "sha256": "36ad90e542ddf86d45b4173301c8dd422e9a21441529e6d4c678321916be4c3b",
+      "size": 12463
+    },
+    {
+      "path": "agent_core/workflow/__init__.py",
+      "sha256": "53c2997ceadcc125740b6e42ff4dc9380cdccafc0c337882d4e843909976e585",
+      "size": 4102
+    },
+    {
+      "path": "agent_core/workflow/candidate_repair.py",
+      "sha256": "88df1ad82e1d7ed0a22f097c6afabab1f410e251a3933d709f6b04d54e450239",
+      "size": 32819
+    },
+    {
+      "path": "agent_core/workflow/commit_step.py",
+      "sha256": "5f7eae758fc308447d3b013d8cd28debc87d72a28fd6788f551fcb676ec8a1e5",
+      "size": 33146
+    },
+    {
+      "path": "agent_core/workflow/consultant_resume.py",
+      "sha256": "e07641d873d4563f985f4873bacb952a45a7e52a62db7978d4717e52ec100baf",
+      "size": 2699
+    },
+    {
+      "path": "agent_core/workflow/context_activation.py",
+      "sha256": "5025aab95377469cdbcf3903258581caf521b79b775f1e52a86699bb834d2704",
+      "size": 6595
+    },
+    {
+      "path": "agent_core/workflow/context_compaction.py",
+      "sha256": "8ac0c9b67bbb6c054c0b58965e983f6900855fa178f369dc2fb7f082c3070392",
+      "size": 129756
+    },
+    {
+      "path": "agent_core/workflow/diagnostic_admission.py",
+      "sha256": "5ef3687b3afedb77e6141285f91e784cd22737705e7faa06f5d9fef9ce66bf4a",
+      "size": 14157
+    },
+    {
+      "path": "agent_core/workflow/early_nodes.py",
+      "sha256": "1e9042eee7e12536052155944cb35819fdda43834ba85b10433ec23cf040cde8",
+      "size": 57094
+    },
+    {
+      "path": "agent_core/workflow/execution.py",
+      "sha256": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+      "size": 76933
+    },
+    {
+      "path": "agent_core/workflow/final_audit.py",
+      "sha256": "05f7564381653aaebb73051b1d91ac6e7c14850fbf778a5559c431fe1fd0717b",
+      "size": 16591
+    },
+    {
+      "path": "agent_core/workflow/generate_handoff.py",
+      "sha256": "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc",
+      "size": 40678
+    },
+    {
+      "path": "agent_core/workflow/inspection_evidence.py",
+      "sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84",
+      "size": 45987
+    },
+    {
+      "path": "agent_core/workflow/inspection_stop.py",
+      "sha256": "726e7a399ad8e40b7a9000df8e97650435f1c675b09eb40ef16edc436ba7a512",
+      "size": 38069
+    },
+    {
+      "path": "agent_core/workflow/managed_stop.py",
+      "sha256": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+      "size": 82875
+    },
+    {
+      "path": "agent_core/workflow/outcomes.py",
+      "sha256": "efc6ff0ec02814749b65c634830f1164ccfb8c5e81dd30c7b093a96c5b1022a8",
+      "size": 26262
+    },
+    {
+      "path": "agent_core/workflow/phase_archive.py",
+      "sha256": "7a3587589f52db7f51435e277928204120cf55c1bccdf51be7ab577be3c538e0",
+      "size": 21166
+    },
+    {
+      "path": "agent_core/workflow/phase_compaction.py",
+      "sha256": "f73a7fac6a9b5d78d8520d079a8f424981fda680a69abfac5596e8a279515640",
+      "size": 30664
+    },
+    {
+      "path": "agent_core/workflow/phase_inspection.py",
+      "sha256": "f8be1e09d038f02a2d59cfca20d6e997425549434641b53beb53d90bd4b84eab",
+      "size": 12922
+    },
+    {
+      "path": "agent_core/workflow/phase_subgraph.py",
+      "sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392",
+      "size": 60966
+    },
+    {
+      "path": "agent_core/workflow/pi_rpc.py",
+      "sha256": "14747444e33ef98d1db433c8f21567f736c439b62406afcd92026a91cca13e88",
+      "size": 37401
+    },
+    {
+      "path": "agent_core/workflow/recovery_agent.py",
+      "sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6",
+      "size": 103678
+    },
+    {
+      "path": "agent_core/workflow/recovery_context.py",
+      "sha256": "2b870bc3034c9654506dcffe2dfe4b74d41a97a38670332434fcbd9d258c3aa4",
+      "size": 16032
+    },
+    {
+      "path": "agent_core/workflow/recovery_node.py",
+      "sha256": "368729d753c29123a3081d29a39fe9962d4dd8305c083bc8380181114fe02328",
+      "size": 102088
+    },
+    {
+      "path": "agent_core/workflow/recovery_projection.py",
+      "sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+      "size": 96375
+    },
+    {
+      "path": "agent_core/workflow/recovery_reception.py",
+      "sha256": "d8f6d69a934534579c32163e29e1960a701376e2792859d4c85fb15cd0a03eb0",
+      "size": 8298
+    },
+    {
+      "path": "agent_core/workflow/recovery_runtime.py",
+      "sha256": "9b0b4f08cf902c370631d0c3a79c019444203bf57c9da29da4cdeb2d1d657825",
+      "size": 47149
+    },
+    {
+      "path": "agent_core/workflow/recovery_tools.py",
+      "sha256": "ba16dae96997112ef488f8a90d89ba9fd219e8f7a9859d8a6d0e4a021c81fb5f",
+      "size": 56811
+    },
+    {
+      "path": "agent_core/workflow/result_resolution.py",
+      "sha256": "dc5e037b54a9f51462defd5cd3dbc43fb98d57b20cfc1e2acff49ff09de602b5",
+      "size": 24716
+    },
+    {
+      "path": "agent_core/workflow/runtime_evidence_recovery.py",
+      "sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620",
+      "size": 63336
+    },
+    {
+      "path": "agent_core/workflow/runtime_graph.py",
+      "sha256": "94a54d08572f1d2dd675134755551d0c95e3207f1c63eca17059c9e5b7be1dd2",
+      "size": 18087
+    },
+    {
+      "path": "agent_core/workflow/runtime_recovery_reporting.py",
+      "sha256": "d35947cbf386f4a934ca4a34fd071bb290e469c260617bb0c49aebfb9945e969",
+      "size": 34318
+    },
+    {
+      "path": "agent_core/workflow/scoped_context.py",
+      "sha256": "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4",
+      "size": 15722
+    },
+    {
+      "path": "agent_core/workflow/stage_contracts.py",
+      "sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+      "size": 57984
+    },
+    {
+      "path": "agent_core/workflow/step_worker.py",
+      "sha256": "ce816aceee63691beaa56d2a4463679ab815d4dadc63d45f145fab2fb0e8478d",
+      "size": 26490
+    },
+    {
+      "path": "agent_core/workflow/typed_node.py",
+      "sha256": "41a87dee3256ecb4f1dfc7bca05b91279413e32ea548882db82b38b67f57b1c2",
+      "size": 4286
+    },
+    {
+      "path": "agent_core/workflow/verifier.py",
+      "sha256": "6bb3459a9933dd294eb16109af226ed5a296d4bd626065054f5cff6d981df9ab",
+      "size": 23415
+    },
+    {
+      "path": "agent_core/workflow_manager.py",
+      "sha256": "2c250c2f86d5aea2da7e450ccd90cc98c0d583812aa22b005768ff9dae9fdc19",
+      "size": 33206
+    },
+    {
+      "path": "agent_core/workspace_attestation.py",
+      "sha256": "cca7537f7641f3388970395484618b0b4e1922af35655f90f2788afebf2d3f67",
+      "size": 97299
+    },
+    {
+      "path": "agent_core/workspace_revalidation.py",
+      "sha256": "b020a6556583aa8c5b105ed93b6a3f17dca17652f826c1567422127f7e81ff3e",
+      "size": 13232
+    },
+    {
+      "path": "apps/remote-workbench/README.md",
+      "sha256": "315d6c1233a63ac6791d47fea81b9e4541f327bb457b91e8708158510e1bc409",
+      "size": 6249
+    },
+    {
+      "path": "apps/remote-workbench/THIRD_PARTY_NOTICES.md",
+      "sha256": "aa209a90295a8bb1f1a5837468469ea96a89c603a172fc892378f94a7552e216",
+      "size": 3621
+    },
+    {
+      "path": "apps/remote-workbench/package.json",
+      "sha256": "4e79502533106309e38cccdf78dd35f3b1f32bb5969c4d06dd85bedcd68e0f41",
+      "size": 695
+    },
+    {
+      "path": "apps/remote-workbench/tsconfig.json",
+      "sha256": "9e3be4d3bc64fa94dd1dee32b1def90bcfe3f4a089822df0a491f71e3179090c",
+      "size": 348
+    },
+    {
+      "path": "bio_agents.py",
+      "sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9",
+      "size": 2733075
+    },
+    {
+      "path": "config/__init__.py",
+      "sha256": "bba896c13436a1c4eacec68b946e43676ba03b9c895d90c9dafc8a2ce52115f0",
+      "size": 4892
+    },
+    {
+      "path": "config/config.py",
+      "sha256": "ec7d04be7c225a60835fc3a2afea4bc72dcc2c9540cc9de0a3a865a28203caa5",
+      "size": 15850
+    },
+    {
+      "path": "config/logger.py",
+      "sha256": "42657408667fce07c0d36869cfdcf1efedf45279c35604de6a046f1cd75e25a0",
+      "size": 2224
+    },
+    {
+      "path": "config/reliability.py",
+      "sha256": "cccba67a7def8603ad013bcd38563d8c7532f18c6e652e055a1e2dee68fd40cb",
+      "size": 2673
+    },
+    {
+      "path": "config/settings.py",
+      "sha256": "9f0a0227cdf57672dcc0d0888438c16b6d35d258611fba44a1bd44b977cf0310",
+      "size": 3375
+    },
+    {
+      "path": "config/startup.py",
+      "sha256": "fb0e1920dd327ba5f73196aac561b8b4637177def0134b9302b0091aa033578c",
+      "size": 10787
+    },
+    {
+      "path": "execution/__init__.py",
+      "sha256": "98d661dc77aae3bf23d0c2f70638eeb7cc99d9bcda6a6089c090a96e2ba9add5",
+      "size": 1410
+    },
+    {
+      "path": "execution/confirmation.py",
+      "sha256": "4a94f445c1b2ac30247f37859d4b8aae113cca463596e71e24fec1b2e8659ae9",
+      "size": 20855
+    },
+    {
+      "path": "execution/executor.py",
+      "sha256": "b83a08f98b96b8c64175ae21f321af43a72541b64178905af73fe4da6ff6d756",
+      "size": 47773
+    },
+    {
+      "path": "execution/monitoring.py",
+      "sha256": "c671ef9c84b89f488304e0f2c9ddf14c87f2e8d0a79aae89adcf1684431b9ebe",
+      "size": 6276
+    },
+    {
+      "path": "execution/preflight.py",
+      "sha256": "78ee0aa4b319a6d223c1214e0f13c0bee1eea0b4df3634efcde8ed5e9d83741e",
+      "size": 7602
+    },
+    {
+      "path": "execution/preflight_progress.py",
+      "sha256": "dd4651f3062d6615673aa81338d240beb0b344454152dce1d61c217d033f5a67",
+      "size": 2806
+    },
+    {
+      "path": "execution/profiling.py",
+      "sha256": "d73e89dbc1c92bf51c905db447226992cebc9528d0b910791a2cf8ae1faafba5",
+      "size": 89359
+    },
+    {
+      "path": "execution/runtime_contract.py",
+      "sha256": "fa410e2dfd8f59614c44e9de924e5e65c61a65217f989b57da6109efb1c083c2",
+      "size": 4920
+    },
+    {
+      "path": "execution/script_validation.py",
+      "sha256": "030d46ef3df2800c2c0838837dae2ba1281cc8cd02c3b3d7d73276626af13ccf",
+      "size": 8942
+    },
+    {
+      "path": "execution/shell_safety.py",
+      "sha256": "7cdf784a7a4510b2667aff9b3fa596430694cc5e9fdf2c28d049dc751d34648a",
+      "size": 6865
+    },
+    {
+      "path": "execution/validator.py",
+      "sha256": "9255efdf2276eadb5ca62eab3baed7a8a99a35e6c17287019392bce90add4dc9",
+      "size": 20977
+    },
+    {
+      "path": "integrations/pi_step_worker/package.json",
+      "sha256": "c6f255b46f0d9ee5d3678ff62b8b03339ac77311eda025687d136487bf5b5a4c",
+      "size": 425
+    },
+    {
+      "path": "integrations/pi_step_worker/tsconfig.json",
+      "sha256": "d8941c0889b71754e0928343fdf57803c296e9f7ad565aee3e5a0e8bf34c65f3",
+      "size": 222
+    },
+    {
+      "path": "memory/__init__.py",
+      "sha256": "8fc5927d8a469fc88cf071942afbdf87067a6f7c630295a0e3e65c8610c2207c",
+      "size": 221
+    },
+    {
+      "path": "memory/artifact_index.py",
+      "sha256": "2e59fa6f03867b8ce32cc23fdd77763d57569c72f95a5a034a1100dadf5dd40c",
+      "size": 5173
+    },
+    {
+      "path": "memory/core_store.py",
+      "sha256": "4c08d070b9ee52e85cb31d52fadaa52863bdfe69960ad8464a424cce32f0fc2e",
+      "size": 17369
+    },
+    {
+      "path": "memory/patch_validator.py",
+      "sha256": "b3bab8cf5c55abb3d4d017a84e73ad70437d555d67d564f91e0209c8388449e3",
+      "size": 4252
+    },
+    {
+      "path": "memory/persistence.py",
+      "sha256": "fc8cb41759b57e93d34ac35d1b8f28024ddd72777a39e8732643a99d43901a3d",
+      "size": 6934
+    },
+    {
+      "path": "memory/policy.py",
+      "sha256": "a3d478c0204daac64138397bc7814c27689fda8c52b9891cb37dacf364134ec0",
+      "size": 8263
+    },
+    {
+      "path": "memory/session_archive.py",
+      "sha256": "2ac2b70c6771dff7dd2041c1dd520da2d714628b6b58d24066a15a779c8eb495",
+      "size": 35058
+    },
+    {
+      "path": "memory/session_archive_writer.py",
+      "sha256": "14d0c054ddc61d61158cb101ce9509c2bacd91c2930a65a3366659afeb874754",
+      "size": 14625
+    },
+    {
+      "path": "memory/task_semantics.py",
+      "sha256": "13b273b90334b5dfb595524b17bcc90038c0579cb31dba60bb00cf762bc1fa54",
+      "size": 19691
+    },
+    {
+      "path": "memory/task_summary.py",
+      "sha256": "f758f3416ed9d0f6647e50f2c3d39c194a6d295715d5541faf9441a568eda891",
+      "size": 17915
+    },
+    {
+      "path": "memory/utils.py",
+      "sha256": "12d6b9e6c1a175ed7c8140e5a1697b953741f0016b01783b23797c7aa975a01c",
+      "size": 2618
+    },
+    {
+      "path": "memory/wiki_memory.py",
+      "sha256": "c919c7ba3faaf7ee14b5cebdbc92bff0ec7abde2c7cee3d364459dcec1e4285d",
+      "size": 131575
+    },
+    {
+      "path": "memory_manager.py",
+      "sha256": "9ac2ee7690587557de55138886003cbc44b0a85abcd6855769de60e200cca4af",
+      "size": 23200
+    },
+    {
+      "path": "package_manager.py",
+      "sha256": "73694e758960b3c71286d61cedc17c782b6c11ebeede3e964e41194f888093b5",
+      "size": 48334
+    },
+    {
+      "path": "prompts/__init__.py",
+      "sha256": "71fc9379314f2bd1a0dd5f7829192657e7ddbadd4d30b9c04b8728792f760fc0",
+      "size": 422
+    },
+    {
+      "path": "prompts/context_compaction.py",
+      "sha256": "9c6624c844b5a078175aad00fe472a443cdf601773e5e239f40d0d0f78d48839",
+      "size": 10383
+    },
+    {
+      "path": "prompts/manager.py",
+      "sha256": "505b863ce854e1a478a776b402b556d52642600b6940874a1f322786abc8f416",
+      "size": 159084
+    },
+    {
+      "path": "prompts/templates.py",
+      "sha256": "c8af0020f47de9b28439156bffaffd44d678872c17cc9f970a0b832b7016431d",
+      "size": 56806
+    },
+    {
+      "path": "requirements-cli.txt",
+      "sha256": "ebdda2435895622a762265912c08003f84f8f2d3a8344a8f333ccc98fce14e02",
+      "size": 94
+    },
+    {
+      "path": "skills/3d-dna/3d-dna-analysis/SKILL.md",
+      "sha256": "6bc65b604642f2c25ab43ea36448e5d1eca1a007d039559fae32b7a52fa8e56d",
+      "size": 6093
+    },
+    {
+      "path": "skills/3d-dna/calder2-subcompartment/SKILL.md",
+      "sha256": "26d6fcca7ec7db790ac928f4df231b68096d84fd28735644779bedc9ce1e2355",
+      "size": 6137
+    },
+    {
+      "path": "skills/3d-dna/calder2-subcompartment/scripts/run_calder_compartments.py",
+      "sha256": "2307e12ad92f5032e4831c43f79286b4cb3fae891b4d923f11434c98ec517e65",
+      "size": 41092
+    },
+    {
+      "path": "skills/3d-dna/compartment-calling/SKILL.md",
+      "sha256": "df81351dae9d9d2a55f04c4ba869c776c3e0b1fc8b9764cb679de72162b29dfa",
+      "size": 9700
+    },
+    {
+      "path": "skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py",
+      "sha256": "417be50734a016dc74063f202b542aafb196257b48eae753b1554b4e820c3b7b",
+      "size": 11235
+    },
+    {
+      "path": "skills/3d-dna/compartment-calling/scripts/run_calder_compartments.py",
+      "sha256": "8fadd9cdf112020cd4fcdac75242cc91822c9778137ad1688f0118e41a120de8",
+      "size": 649
+    },
+    {
+      "path": "skills/3d-dna/differential-compartment/SKILL.md",
+      "sha256": "a01c8ad702ca80cf0594166ce238c46316aa37383f5b4c378b4b1ac4e38c6f0c",
+      "size": 4911
+    },
+    {
+      "path": "skills/3d-dna/differential-compartment/scripts/summarize_differential_compartments.py",
+      "sha256": "3d3934cb6126d02c6991f2a00644c490a68524b56305baf7b72bee81f81d1493",
+      "size": 20989
+    },
+    {
+      "path": "skills/3d-dna/differential-tad/SKILL.md",
+      "sha256": "9b53b9a4c675f1883f16272394f43da471a7aef4e8fb90655446699664973a57",
+      "size": 7469
+    },
+    {
+      "path": "skills/3d-dna/differential-tad/scripts/run_differential_tads.py",
+      "sha256": "1bd7ccadd5a8e78575374996b0ac25e6cf8955054312c0feba5b60e026a0187a",
+      "size": 19491
+    },
+    {
+      "path": "skills/3d-dna/loop-calling/SKILL.md",
+      "sha256": "32848673bf2a2ddb08c3af743c84829426821964fd5750b559d3aa3a4ab02147",
+      "size": 11483
+    },
+    {
+      "path": "skills/3d-dna/loop-calling/examples/pairs.tsv",
+      "sha256": "6272d149d39d89104c28b8f9b443e6e999e4c9890ae78b00f311444d0bfc685e",
+      "size": 44
+    },
+    {
+      "path": "skills/3d-dna/loop-calling/examples/run_10kb.sh",
+      "sha256": "b54e5e6f8ef69e78e24bd463cc1f0fade63d084641561043adf447fa0dae562d",
+      "size": 335
+    },
+    {
+      "path": "skills/3d-dna/loop-calling/examples/samples.tsv",
+      "sha256": "54a53ba0511e6565df9c09613b354dd22bcd34a71f893117cb42e3462c80cb26",
+      "size": 70
+    },
+    {
+      "path": "skills/3d-dna/loop-calling/scripts/run_mustache_loops.py",
+      "sha256": "96cf688e76d0f01a7634212168d842965e1cfcba2f35cef4e881e364b4191053",
+      "size": 22488
+    },
+    {
+      "path": "skills/3d-dna/loop-classification/SKILL.md",
+      "sha256": "623c19c935e74f97de5924c2c1b9db502e28cbb5879f2b2aa3d262461654bd7d",
+      "size": 5838
+    },
+    {
+      "path": "skills/3d-dna/loop-classification/examples/marks.tsv",
+      "sha256": "79180fa675b3431562e0e338a92734e6e7aa0cbe9c8df757a6db3688ef77e02d",
+      "size": 157
+    },
+    {
+      "path": "skills/3d-dna/loop-classification/examples/run_classification.sh",
+      "sha256": "0a1cb32ec5d84fc98b4df2e8974ca0f786040a1550a41b6277e804ad17a50953",
+      "size": 327
+    },
+    {
+      "path": "skills/3d-dna/loop-classification/scripts/classify_loops_by_marks.py",
+      "sha256": "45780a6329b2969091475d0c438270f279a47f0b5d03a98689759686e6a169a3",
+      "size": 13922
+    },
+    {
+      "path": "skills/3d-dna/tad-boundary-change/SKILL.md",
+      "sha256": "3ca6c14559169177b584598313d160e67d04ae0b6de15d0f284ca04bca801ce2",
+      "size": 9798
+    },
+    {
+      "path": "skills/3d-dna/tad-boundary-change/references/output_schema.md",
+      "sha256": "16b04fc49e353d69ba97a3f6f47a67d30a7fd4afd305c8c93b82f8397700d9ff",
+      "size": 4275
+    },
+    {
+      "path": "skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py",
+      "sha256": "fea0f62a68dcb5ee63179fcf09cdab46c5b57e3d06c71ad205ab5c4254fbe6ca",
+      "size": 43804
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/SKILL.md",
+      "sha256": "ce50823cbb1fddc4e46f2979079a8c343e5119c8a43b6279b77d1388fcae5c50",
+      "size": 21897
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/references/hicfindtads_workflow.md",
+      "sha256": "259da30c26f78d42b23e647f36c5bd0612ef632e60db9ed72f1505d1224c7505",
+      "size": 1887
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/references/output_schema.md",
+      "sha256": "4bd6db7bbf2803140c556da9d46ee6b5f21073a21a6dc03a288ae016f9db4702",
+      "size": 2450
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/references/preflight_checks.md",
+      "sha256": "ba61c8fe990558bb787179530248de51c98a43be2609c5d7f59f9c1b5b165680",
+      "size": 4222
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/scripts/call_tads.py",
+      "sha256": "0eb464676ff58a86c24098f276705a6c40177ce4b41a0af0bad0df4e0ffa932a",
+      "size": 33802
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/scripts/check_cooler_resolution.py",
+      "sha256": "1811b95ba3cb5cc02656a2dc025386b83e9f996cc98952071473ab89b9adcbdf",
+      "size": 6968
+    },
+    {
+      "path": "skills/3d-dna/tad-calling/scripts/check_mcool_balance.py",
+      "sha256": "081f080aa4569f03eae379d8d709bd98b0886bc4043b220147e7c44e5ed404e9",
+      "size": 16564
+    },
+    {
+      "path": "skills/SKILL_TEMPLATE.md",
+      "sha256": "0b7ee888403b7dc60a76536bb618d06e1914b40912dc0c59c352c5fd6a6cdcea",
+      "size": 5166
+    },
+    {
+      "path": "skills/crop-breeding/_gwas_common/scripts/gwas_common.R",
+      "sha256": "c504ae365fdddd2824ee3c343b3e5f2323f55db8d30ec40f41a72fa714a36bde",
+      "size": 5465
+    },
+    {
+      "path": "skills/crop-breeding/_gwas_common/scripts/gwas_common.py",
+      "sha256": "9feabddefec20c7791789a556ad8ce111b851b69f942017ded5d332a87292539",
+      "size": 19715
+    },
+    {
+      "path": "skills/crop-breeding/_gwas_common/scripts/map_snp_to_gene.py",
+      "sha256": "6a5292b3553665d1974ff04419f6675b96deb9d17bd0ca65e2f860a525d3acf0",
+      "size": 1157
+    },
+    {
+      "path": "skills/crop-breeding/_gwas_common/scripts/standardize_gwas_summary.py",
+      "sha256": "e6b3f21340f1da8ff78c3b7b1c25bf845502c4961bb5ca47785c0604f8dcf7f7",
+      "size": 1887
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/SKILL.md",
+      "sha256": "7609eb34f2fa1fae4db7c0c969b9234c9b7ba3dc5666aa91fe383f0e74ffc426",
+      "size": 4300
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/agents/openai.yaml",
+      "sha256": "63006181731f5302e0f5406eb003248df0fdabc7cf876fe87aa73ecab0276249",
+      "size": 137
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/references/install-and-data.md",
+      "sha256": "43cc15d45a7a312a2ceb9b71871617c6937e465ff772e9e9ce7878a457b09ce9",
+      "size": 1932
+    },
+    {
+      "path": "skills/crop-breeding/crop-cnn-attention-genomic-prediction/references/source-notes.md",
+      "sha256": "1b7719fd27cdc121712db2d343abcfcd33a213797719603878073b1f943a87ee",
+      "size": 1473
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/SKILL.md",
+      "sha256": "b923abff675d8a9b5a04ea8dd014f4fc3344e08d66553fec04b495deb42605db",
+      "size": 4688
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/agents/openai.yaml",
+      "sha256": "fb022d67ea7041d3ca4817f84ed52d9ea417dc8e87d60ee3e98191cf5b3897d7",
+      "size": 161
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/references/install-and-data.md",
+      "sha256": "baa56fceac5080cc6e491864fd52a871741eac28d02a3b10ab9ccaa7abcf5426",
+      "size": 2256
+    },
+    {
+      "path": "skills/crop-breeding/crop-conserved-transcriptome-ml/references/source-notes.md",
+      "sha256": "4e78c2ea4b9b0a6b7d33159e61073d38a0f3f8fbfe1e78190487098ba9aa632c",
+      "size": 1403
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/SKILL.md",
+      "sha256": "682a662e663d54b9ec6471cddfbcf90dd0c139edd3ac7321299efdc6b29537af",
+      "size": 2132
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/agents/openai.yaml",
+      "sha256": "f3dc7cc9ea0805fb3572f2bcc71962a77e994c29e37321599879c002d11e77fe",
+      "size": 135
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/scripts/make_deg_report.py",
+      "sha256": "cda12f5aee90422b0382c63b2fed8c192e061e67655a7e44b3a670034ca34b44",
+      "size": 2812
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/scripts/plot_heatmap.R",
+      "sha256": "78bdfee7b4aeb38634ed7cf23f2efb49ab84b4d99ddad95dc2f6eeeb60271fbe",
+      "size": 1364
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/scripts/plot_ma.R",
+      "sha256": "0bc5f3d23400eaf675c34e15a3a64311030d7b9d905b0582be1030bc63d19f14",
+      "size": 1068
+    },
+    {
+      "path": "skills/crop-breeding/crop-diff-visualizer/scripts/plot_volcano.R",
+      "sha256": "a434b3fe5ef7105461e04ad5fc526a3d80becb75e896fc6cbe53775567e7af9f",
+      "size": 1547
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/SKILL.md",
+      "sha256": "ce84f44193d12fdb55bd17f0c529e60a86e780d33e0fd17c5b852fffc697a4d2",
+      "size": 5104
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/agents/openai.yaml",
+      "sha256": "fae40caa93d5eeb0e2bd1afb07a172746de4c960fc4bd450087f839f1c325653",
+      "size": 134
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/references/install-and-data.md",
+      "sha256": "a5b1d744643b0eb84bc3b8668dcd9cec556e4b1b96ccb1f0e2955891479343db",
+      "size": 2094
+    },
+    {
+      "path": "skills/crop-breeding/crop-dnngp-multiomics-prediction/references/source-notes.md",
+      "sha256": "2b2923193ae080afab515eca8c8aaf36d188e667857f57b4f47d349475c7f758",
+      "size": 1819
+    },
+    {
+      "path": "skills/crop-breeding/crop-genomic-prediction/SKILL.md",
+      "sha256": "853f70c7738678e03210ed9202be26cf424ea1f62b479cb6348db77fe08f81eb",
+      "size": 3575
+    },
+    {
+      "path": "skills/crop-breeding/crop-genomic-prediction/agents/openai.yaml",
+      "sha256": "4bc806a63318bae5bb528bf4f044e268603bb7e763dfeae6e6381fbf9aa22518",
+      "size": 138
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/SKILL.md",
+      "sha256": "9a56f1cb0b719ea627bd58315e603aa0d01c2e1c2532c25ecb174a04b5ca54de",
+      "size": 5894
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/agents/openai.yaml",
+      "sha256": "0b81d04762844fe1a51239aba0db2c83ffddc221a7c390458c08fbb26151b94c",
+      "size": 151
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/references/install-and-data.md",
+      "sha256": "f16dd882d51689b26dc8c0748f33826f9e3c0a759986d9106370e5ad17eeb3df",
+      "size": 2373
+    },
+    {
+      "path": "skills/crop-breeding/crop-gp-waiter-transformer/references/source-notes.md",
+      "sha256": "e610c6e0149c837ffbd487107d1ac4f6fb7e3f0c45cb230477c048c6cc53a6b1",
+      "size": 2164
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-bglr-bayesian/SKILL.md",
+      "sha256": "3a6b51f8efdb56716323c3eb2131c08c98a858a9927695127b1a8827a5803b42",
+      "size": 2126
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-bglr-bayesian/agents/openai.yaml",
+      "sha256": "22df2e3b96217b776459eb0c004539b5a03826553c66145b279e65284b418cd1",
+      "size": 123
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-bglr-bayesian/scripts/run_bglr_bayesian.R",
+      "sha256": "a4f5ea90b6cf071e3ca62da4d1389eff80ae4b7d9865b1612811bd3db769cb1d",
+      "size": 9529
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-rrblup-gblup/SKILL.md",
+      "sha256": "40bdf12307ee3dee8a59b7674800d200b2bc8f390344aaa7c6677fa3ae0d4c8e",
+      "size": 2874
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-rrblup-gblup/agents/openai.yaml",
+      "sha256": "14d519f7dac56b422a7442a6953c93b55ab21c2f3d10ba7e16233d03f25ffb69",
+      "size": 125
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-rrblup-gblup/scripts/run_rrblup_package.R",
+      "sha256": "8d6617c9988989caabf9c3bf4bfdf4b9656f59023f90ed714bee7daf424eb618",
+      "size": 10871
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-sommer-multikernel-gxe/SKILL.md",
+      "sha256": "1274ef499445fa4b677b1661695ca4824fb1cd89c9c3dadec6ffd632969118d4",
+      "size": 2375
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-sommer-multikernel-gxe/agents/openai.yaml",
+      "sha256": "32cef15d30b5fa5df5b29dc9db015983d94c6083748f4fbccd786e6cd6369596",
+      "size": 144
+    },
+    {
+      "path": "skills/crop-breeding/crop-gs-sommer-multikernel-gxe/scripts/run_sommer_multikernel_gxe.R",
+      "sha256": "ce75728464a6f32eec25edd164d9c51c7754c858441a732964f0c70b6ae2094f",
+      "size": 8040
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gapit3-model-compare/SKILL.md",
+      "sha256": "ea12c005577533ae4db4b30eb7f3c07e027b8b1254aaecd1aac8e257dc84a605",
+      "size": 2800
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gapit3-model-compare/agents/openai.yaml",
+      "sha256": "0827691cb610c3d66a94f8ef0d5235ecdd92dcae981360e744784fd2b27263a2",
+      "size": 214
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gapit3-model-compare/scripts/run_gapit3_models.R",
+      "sha256": "02ae9f2b9a804eeb164d6c741dc72d6df48cbd9f7130744891eca9eff5c77515",
+      "size": 3887
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gemma-lmm/SKILL.md",
+      "sha256": "120ebaebfb6d3d2763613f5d3e09248beb0162982241b2e5f927e02930abeba7",
+      "size": 2848
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gemma-lmm/agents/openai.yaml",
+      "sha256": "24a9ac08cdc758f981bf1d5ca1d6c71133eef1313d76afb7ae9209b00b05f094",
+      "size": 187
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-gemma-lmm/scripts/run_gemma_lmm.py",
+      "sha256": "b0691c0f28ed27794b775eb5e9f3254a797bb665dfd36743796c8441c15469c5",
+      "size": 3924
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pav-sv-pangenome/SKILL.md",
+      "sha256": "5ee508bc80af4793be95dab8c80b6a359183cc65dba01708ff82e793205451ec",
+      "size": 2994
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pav-sv-pangenome/agents/openai.yaml",
+      "sha256": "baa639292cf3bd49ca1c28c26730b85a2184c078702f280147e492d502f10c9d",
+      "size": 198
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pav-sv-pangenome/scripts/run_pav_sv_gwas.R",
+      "sha256": "52dbda7c9ce8e51273ce49e9aafdb7a53e8923b04795b4b8aeee9be881cfcda8",
+      "size": 3634
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/SKILL.md",
+      "sha256": "2d66dc0f2d5cf8fe8faa3dabe253186f8d6b57f69a54d0fdf3dfcb15614dc1d7",
+      "size": 3847
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/agents/openai.yaml",
+      "sha256": "cdd94291854c3ce237eb8b57d081ce45e3c6973ac93f277ea5d1832065f99eac",
+      "size": 201
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/map_snp_to_gene.py",
+      "sha256": "976c41a7cf8b4f1bd87696308be41afc55a3504566ab9937f1e6cf3333424d30",
+      "size": 329
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/parse_gwas_results.py",
+      "sha256": "839a26d185198fd8cdb9be49af20ea952d7b52aea52b34a0c667ed0380db0049",
+      "size": 338
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/plot_gwas.R",
+      "sha256": "8309b5af2ac4e3ca31e7983c28d5ef4e7de08247cff57f1c160da2cf08bf1fb3",
+      "size": 964
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/run_gemma_gwas.sh",
+      "sha256": "188b37308590531bcaa687c817117b4974331697e726c2dc381afee49f95d3e1",
+      "size": 945
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/run_plink2_qc.sh",
+      "sha256": "9a24a16ef199342c7e0707882d6c9d8f1a9528cae81478eec1800aac4d7a861c",
+      "size": 1290
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/run_regenie_gwas.sh",
+      "sha256": "45d69767a601db69c64c39d1b07faa518d0f90598c038d6005a53fb74e854a1f",
+      "size": 403
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-pipeline/scripts/vcf_to_plink.sh",
+      "sha256": "4b863de8f473bff9e12273112384c9e773acc741576626bb5b7dabbfe2c5cf02",
+      "size": 881
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-qc-plink2-vcftools/SKILL.md",
+      "sha256": "b91e82122fb44915ebec934b2615949abce906a64042cdf3a78c9542ce781379",
+      "size": 2991
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-qc-plink2-vcftools/agents/openai.yaml",
+      "sha256": "8a311cc88a6c4f140438b3d72d0104da697dfed9099cca4a09219d2357a72ebd",
+      "size": 196
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-qc-plink2-vcftools/scripts/run_crop_gwas_qc.py",
+      "sha256": "e42e85dd71d50b85c139eec2e23f086975bc7661147047df897b974546dc13cf",
+      "size": 6195
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-rmvp-large-scale/SKILL.md",
+      "sha256": "a9e5b5329347c4527cf821311a0f24522222fb434f771818ccb0d426f0cbd351",
+      "size": 2636
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-rmvp-large-scale/agents/openai.yaml",
+      "sha256": "12b4b3039ae013577acf2bdeb7232890acb8ff7953784c69248920985f4329bf",
+      "size": 197
+    },
+    {
+      "path": "skills/crop-breeding/crop-gwas-rmvp-large-scale/scripts/run_rmvp_gwas.R",
+      "sha256": "9ad37dc0ae6616a11c7b72e98330dcab5b87f8c12192ab3f68f222c50feae998",
+      "size": 3734
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/SKILL.md",
+      "sha256": "e4566ac9135559a48feff8cc7dbb3a3817fdd1abf7b88e732d5ea00fb1152e08",
+      "size": 4992
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/agents/openai.yaml",
+      "sha256": "b13025d63c2f756ef98b5fc0d730c8ef4f3056985c7b5c16b50adb4e5789fc5b",
+      "size": 152
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/references/install-and-data.md",
+      "sha256": "15dc58cba663c05c0e1f430e4545bc527ae4459e9b8efcf561a372de5312d7e1",
+      "size": 1980
+    },
+    {
+      "path": "skills/crop-breeding/crop-gxe-environmental-index-prediction/references/source-notes.md",
+      "sha256": "bd231d8c06d488fc5549fc3c723ca83cd92efa021ddf4241b84c7e0dc91ad062",
+      "size": 1484
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/SKILL.md",
+      "sha256": "121c840c4dc701624bd623438cdef3b27b9984dc72d7d561ec022239a025fb8b",
+      "size": 4954
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/agents/openai.yaml",
+      "sha256": "9867a5b9c232fdb4d727727a4be4be02542ac1cb1045eb733d7f23ef09c95d84",
+      "size": 148
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/references/install-and-data.md",
+      "sha256": "48fded0fe9a3b98ab0e424964eba9f9e5ec7adc9ba14f546aec4b204e44fad2c",
+      "size": 2109
+    },
+    {
+      "path": "skills/crop-breeding/crop-pangenome-sv-genomic-selection/references/source-notes.md",
+      "sha256": "580cad238451ac8caafe35703505fb3b83a308d54f96a4121c8a8b1810ff876d",
+      "size": 1372
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/SKILL.md",
+      "sha256": "046d5aae4fa312b88bbacd32d3e928122e6671e436ef92c9a84d9c215136c6e1",
+      "size": 2953
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/agents/openai.yaml",
+      "sha256": "a94a37a3f6cf1371da4f697d3bb4a07e677a15e231d2a619e28ba36bd34fa4ec",
+      "size": 132
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/extract_region_from_vcf.sh",
+      "sha256": "152b0f077ec6ce9f92ac89415ca7fb70ac2501ba91bfecffc1aa924b865ce914",
+      "size": 622
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/haplotype_network_input.py",
+      "sha256": "7209c2243dbf70ef709b4530ffd419cf07aaeb2b58b427683061b948bee308c5",
+      "size": 855
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/run_popgen_stats.py",
+      "sha256": "eb8941c9c250fd5c9c9fbcd128e582a216c08ad1e0a16d4c302cc2813d9b986d",
+      "size": 3246
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/summarize_candidate_region.py",
+      "sha256": "ae956c719dc66f5a4873342b3e12481da0424f2b01bba3eac420f014e26d24f6",
+      "size": 1113
+    },
+    {
+      "path": "skills/crop-breeding/crop-popgen-dnasp/scripts/vcf_to_fasta_alignment.py",
+      "sha256": "aead8f8046b7de701def4892339255ebd842c4b11f8f7869eec1ce57aabeff9e",
+      "size": 1639
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/SKILL.md",
+      "sha256": "98fccc2cb2bcbbc9cbe96a3545e1caf6436be0dd2fb54e633a5de7f5bed361f3",
+      "size": 3215
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/agents/openai.yaml",
+      "sha256": "7dd1b4c029c1c30f7bf0f68940989b0257019636c252b5e0a22cb6447ed4d703",
+      "size": 145
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/scripts/merge_annotation_expression.py",
+      "sha256": "4253f48e317c2330707c3204dc3c02398efc666b5e188f4d4232e16db6793742",
+      "size": 1074
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/scripts/run_deseq2.R",
+      "sha256": "524b9b9392f61a90efe058b910e2e8f69b30877582ae03058c477275319f9986",
+      "size": 1785
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/scripts/run_edger.R",
+      "sha256": "65b868fe18f4ff46884a6c516be4972e873fee8b83d3a16b7930c1c65dd1be8f",
+      "size": 1662
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-de/scripts/run_tpm_fc_filter.py",
+      "sha256": "8edf17fea513c79bb4273c6d4e6b858475c3b804744f14ccd0d0913710438935",
+      "size": 4012
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/SKILL.md",
+      "sha256": "ab489042fef3fecd9aeff696da1cda9995de55968793c0766173f2ffaed31cba",
+      "size": 3333
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/agents/openai.yaml",
+      "sha256": "90aa69a64600bf09467a2576c384ac5e6f880baf3dd75a7428617b7ea1536cb6",
+      "size": 139
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/scripts/build_samplesheet.py",
+      "sha256": "96beabfb1c65a55b8c1195695e70a5126c8a7c8fed8b841775dad1ac1710fc65",
+      "size": 2297
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/scripts/parse_nfcore_outputs.py",
+      "sha256": "41edfe63f07255aff741f1b1bf7ee996dc863b6156096325a0e1cd6551016bf1",
+      "size": 2312
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/scripts/run_nfcore_rnaseq.sh",
+      "sha256": "21f343c77164798a861eeb336179a236930503e4effe957302f58813e0871b37",
+      "size": 2233
+    },
+    {
+      "path": "skills/crop-breeding/crop-rnaseq-pipeline/templates/samplesheet.template.csv",
+      "sha256": "5f7b85c88ee0016ca5b16cdf97af69e3abb329eed41b066c17231f4ecf04d8e7",
+      "size": 229
+    },
+    {
+      "path": "skills/crop-breeding/crop-smart-breeding-strategy/SKILL.md",
+      "sha256": "c5b3090ed6e2386c980226cf692e60a0181ac647259a82a48603908bb80db739",
+      "size": 4303
+    },
+    {
+      "path": "skills/crop-breeding/crop-smart-breeding-strategy/agents/openai.yaml",
+      "sha256": "14a279be53cc2bd666d00b99fa62cc828e6857078ce30f8bf53d2911c80a61e1",
+      "size": 144
+    },
+    {
+      "path": "skills/crop-breeding/crop-smart-breeding-strategy/references/source-notes.md",
+      "sha256": "c1957c989de6778de955fab4187222bfb7adf848abe3ff8a84355a6c6c6cae33",
+      "size": 1298
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/SKILL.md",
+      "sha256": "97baaad5af07de59bf723df03c54fa8e4c03a2800b6197c83f0bbb6af087ef5b",
+      "size": 2206
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/agents/openai.yaml",
+      "sha256": "0be4c2952fe7950e9690ef0ec51cc83fced68ab45b378a86942d407c68cfe103",
+      "size": 136
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/scripts/apply_marker_effects.py",
+      "sha256": "99707962ae34e54d32dfedfe73f69c9f61a1af869b9ec3a3e7a48983a76721e2",
+      "size": 4024
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/scripts/call_variants_or_accept_vcf.sh",
+      "sha256": "1bcfe40431d127cb441dc125e2bcd51293695feb6e325a867f0fa7c454c57c5b",
+      "size": 498
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/scripts/normalize_filter_vcf.sh",
+      "sha256": "ef32d3fbe9066b1ee7b3c4c43d0006c8dde12c7c4a7e9f08296b454ba24cdd4a",
+      "size": 782
+    },
+    {
+      "path": "skills/crop-breeding/crop-wgs-to-marker-score/scripts/report_marker_score.py",
+      "sha256": "48abd4d7fe72c5ccdcda321d9923830d2b165623364d50c24b8bc319667ef08b",
+      "size": 1229
+    },
+    {
+      "path": "skills/databases/ensembl/ensembl-database/SKILL.md",
+      "sha256": "390bcf058827160389202269b5a3866f36911e9b7a06802bbdec65dc913cee33",
+      "size": 6351
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/SKILL.md",
+      "sha256": "8fa8f2845feef3054064a96be7130403e5dc7c5ba9e3f6711cc78fd235369894",
+      "size": 5346
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/examples/fetch_pubmed.py",
+      "sha256": "566c8bbebd1165e3a2a223cf7124912d0bc7c55f101b2f26b85469adf18cb6a0",
+      "size": 3714
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/examples/fetch_records.py",
+      "sha256": "6c683a64f5c03dffedf2db383c642fa1b5d618de9efd9e9005c29fad3f23943d",
+      "size": 3257
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/examples/fetch_summaries.py",
+      "sha256": "42cc3b9ab489daf386316864eb6b4d52b2e83f85d7a5600f463b4fe78cb9630e",
+      "size": 4933
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/references/usage-guide.md",
+      "sha256": "ed695ff91c1e13845987400bb8632573e274f0ddaeb3bafa06adb0eb4ab780d4",
+      "size": 3829
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-fetch/references/usage-guide.zh.md",
+      "sha256": "d705fd44e8299f37d5cec275bb3fc803801bfd351e6d9563cecd0e902c19988b",
+      "size": 3996
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-link/SKILL.md",
+      "sha256": "461a521b370b68c71e889ef4b3af1ca8da1122eaf4e4c868598dc878b0c8a47f",
+      "size": 7886
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/SKILL.md",
+      "sha256": "78f32880e6513944011e8f5a4abadd47236f8e745f7542bc011f0ea5e3702f7a",
+      "size": 4185
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/examples/database_info.py",
+      "sha256": "6135c9c36a260244e47c6be0a3aca696ceb10cc82827ce35b6b85d1b2d622a6e",
+      "size": 1846
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/examples/global_query.py",
+      "sha256": "492be437cb20e4c930b4f33e27c2dbe6e97c1f829a09794da456cf3220cbb8c7",
+      "size": 1356
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/examples/search_entrez.py",
+      "sha256": "b8a72f1f0a90f28e241f139d934771993c55a068dcb524e07ddce65073cf16cb",
+      "size": 1797
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/references/usage-guide.md",
+      "sha256": "a758b966cb628d07fdceb2e4e90301e9f0d97b20e6b6584ad4eedfc9dfc72026",
+      "size": 1864
+    },
+    {
+      "path": "skills/databases/ncbi/entrez-search/references/usage-guide.zh.md",
+      "sha256": "5e1b02c83687375587516c6ab3816ecc69f4dc9c1a523a120293142b9ef7f3de",
+      "size": 1818
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/SKILL.md",
+      "sha256": "a6893e686438e07597520c7d77cd213c423ac3b13d1465f6619f43941b0cb7d1",
+      "size": 4812
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/examples/geo_from_pubmed.py",
+      "sha256": "23ba3f8d5ea8adb66fee753d138e431478d572681ab527c5c37bf761e27f1eee",
+      "size": 1865
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/examples/geo_to_sra.py",
+      "sha256": "1e8b7c38725152641aa0bc337dfa040bc02cbad8a9f5d24f10b64c7d82a054ae",
+      "size": 2566
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/examples/search_geo.py",
+      "sha256": "b0321f131f7bb51263953170ecb1ec76997affe2527c3055f16bddcd8a399b90",
+      "size": 2007
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/references/usage-guide.md",
+      "sha256": "f22d1492ae7eb83414c619c8089233a0a53f345b7ac1e789e48a30a5889c5480",
+      "size": 2635
+    },
+    {
+      "path": "skills/databases/ncbi/geo-data/references/usage-guide.zh.md",
+      "sha256": "9efa716aa2d97efaf39e6bba81b8a3bced52ca22935ec753294ba5e804fbe317",
+      "size": 2687
+    },
+    {
+      "path": "skills/enrichment-analysis/SKILL.md",
+      "sha256": "981e62066150e8b65e0ca328d54014aa25e8eeb2a0160d103a5218a6e304e94f",
+      "size": 9789
+    },
+    {
+      "path": "skills/enrichment-analysis/agents/openai.yaml",
+      "sha256": "a1fb94d29f9e91b6e1c6ac2d3c5147aa84e7972d99d73afb9946f330fe8221eb",
+      "size": 232
+    },
+    {
+      "path": "skills/enrichment-analysis/references/database_decision.md",
+      "sha256": "2f7b4aaf47a42c99a4c3bf2a2a83ba5c9139b1538c780b36dc0c65b845d280f3",
+      "size": 2941
+    },
+    {
+      "path": "skills/enrichment-analysis/references/input_qc_and_background.md",
+      "sha256": "91098c9e1daddee21b90cdee3f1c7caf6284c735981fa5e9128bd95d55b9b8f2",
+      "size": 2846
+    },
+    {
+      "path": "skills/enrichment-analysis/references/reporting_standard.md",
+      "sha256": "d7b14316dc1aaf53152cf6e55cab4440c5a0d32f3c4858b62e517f10984342ba",
+      "size": 1839
+    },
+    {
+      "path": "skills/enrichment-analysis/scripts/build_term2gene_from_annotation.py",
+      "sha256": "9862a439fd49a0f47a01d38111c0dba76ee1263c08cf561c7108a18719ee92cb",
+      "size": 6785
+    },
+    {
+      "path": "skills/enrichment-analysis/scripts/check_enrichment_inputs.py",
+      "sha256": "9a274f47b75a72917346f0128be82e45a593f881359caf191264f4b69b721290",
+      "size": 12103
+    },
+    {
+      "path": "skills/enrichment-analysis/scripts/run_enrichment.R",
+      "sha256": "4f643465eca5793b157977c44765076ebc780e404ddd0a1d7744a276699f8db2",
+      "size": 12608
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-methylation-workflow/SKILL.md",
+      "sha256": "52d08cd0d6244606a0c09e661170874882a880b5e55d7cb30cd18da6c820abbd",
+      "size": 7042
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-methylation-workflow/agents/openai.yaml",
+      "sha256": "810cb3299e0e4f9fb0a4e3df4e7c4d6f8f65db039ff0e8ab2a08e9fcea483b0b",
+      "size": 291
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-porec-contact/SKILL.md",
+      "sha256": "e2acf0e3c4a1d15cfcd99250b7e1c8353fd31aee703b41bc76a1fe42d6f72354",
+      "size": 5542
+    },
+    {
+      "path": "skills/epigenomics/methylation/aporec-porec-contact/agents/openai.yaml",
+      "sha256": "af88524b77a4e152f46c70afa9e41b483fca941f9e597b801baa48c0677f35a6",
+      "size": 252
+    },
+    {
+      "path": "skills/epigenomics/methylation/dorado-modbase-prep/SKILL.md",
+      "sha256": "595cf1c5455abc4e16a855c19c3b88a4792985eb7910d3e20697d767d44ec240",
+      "size": 5704
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/SKILL.md",
+      "sha256": "47de8c171d38eb1a34f5659eb4f7fd506fd756d85246fc556704a7bfaac1bbb8",
+      "size": 11062
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/references/api_reference.md",
+      "sha256": "5f18fb77bc3a0f845667cefa429b01ab03660451189b53e917b1c2f257c301e7",
+      "size": 7251
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/references/workflow_guide.md",
+      "sha256": "bbdc6a1b9473975eb5a9705273981fa017c969b479a6034e819b05e507cfdcf5",
+      "size": 14159
+    },
+    {
+      "path": "skills/epigenomics/methylation/gene-plot/scripts/plot_methylation.py",
+      "sha256": "822fb203eba256eeb605cf9fdae0ff58bcd332820f2b00978a4f9296bf81dda8",
+      "size": 13240
+    },
+    {
+      "path": "skills/epigenomics/methylation/modkit-dmr/SKILL.md",
+      "sha256": "e5fd27c55d1d3449b482a7043ba3a03176f3fa53cd563757806496264729c369",
+      "size": 6617
+    },
+    {
+      "path": "skills/epigenomics/methylation/modkit-pileup/SKILL.md",
+      "sha256": "39ed0cdce4a15dceea092136aefb19f8947e07caad851d4559a990a710e933a5",
+      "size": 8687
+    },
+    {
+      "path": "skills/epigenomics/methylation/modkit-pileup/scripts/annotate_plant_context.py",
+      "sha256": "d723ccbc2fe06214912e9f5df42a3ba731ed58d62711b244e72de6e497526420",
+      "size": 4536
+    },
+    {
+      "path": "skills/genomics/assembly/SKILL.md",
+      "sha256": "78e45367a610a558ea1858d8dcd9b57c07b76d8a67771e8eaf4bb0559b528cdb",
+      "size": 6374
+    },
+    {
+      "path": "skills/genomics/assembly-variant-assemblytics/SKILL.md",
+      "sha256": "f2659cca7131f21b37d6ffdab2875c59a178d0bdb061fe5a7fc80894358bff60",
+      "size": 2498
+    },
+    {
+      "path": "skills/genomics/assembly-variant-svim-asm/SKILL.md",
+      "sha256": "4c23a3e1289383a4c93fe13cd3ac69e41d3e6fe349095ceb973f5f70d43c9537",
+      "size": 2683
+    },
+    {
+      "path": "skills/genomics/assembly-variant-syri/SKILL.md",
+      "sha256": "a4e9ea41d20f8f067dbed1bc4a1d00c2081e91927f289994c22f55d651f70cf1",
+      "size": 5960
+    },
+    {
+      "path": "skills/genomics/long-read-sv-cutesv/SKILL.md",
+      "sha256": "1037419fa7b31bec9889847bbd083883d919f301ab0fa341eb63d105a67d7446",
+      "size": 2501
+    },
+    {
+      "path": "skills/genomics/long-read-sv-sniffles-survivor/SKILL.md",
+      "sha256": "26fdc68f44718f6cd874d850eced995c63ce2a7690bd8afc057819087525d488",
+      "size": 5878
+    },
+    {
+      "path": "skills/genomics/long-read-sv-sniffles2/SKILL.md",
+      "sha256": "55b1392d46a0cbc382dd4a80cdaf8aa5a8d0778c40fdbb24e4d4a1e9a64f32d3",
+      "size": 4804
+    },
+    {
+      "path": "skills/genomics/pacbio-sv-pbsv/SKILL.md",
+      "sha256": "b4bec2e06eb82d20743ba4826b101afb34fefeb358d0f104057f0b02715cbf81",
+      "size": 2736
+    },
+    {
+      "path": "skills/genomics/reseq-variant-workflow/SKILL.md",
+      "sha256": "b9bcafbdc29eed5d38696c8f0f8268aa81b6586d7c6930b4e6104250b38376cb",
+      "size": 8716
+    },
+    {
+      "path": "skills/genomics/rnaseq-variant-calling/SKILL.md",
+      "sha256": "979f8ea4f364b1ebad298705c137537403304732c0dff52adfcc2b5d0bc20089",
+      "size": 5844
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/SKILL.md",
+      "sha256": "a47c305477c9a1c8e592e0d0187af200b079001bc709e1e6d84983ef2615f43e",
+      "size": 13682
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/agents/openai.yaml",
+      "sha256": "0761e520aa52c155168debe101054f97e803e6c7537febfe841b917224655d83",
+      "size": 144
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/references/snpeff_config_templates.md",
+      "sha256": "1dd82f6a94bb300593ae9d4266454add4c9313a3939794833b9b4c26dec3d5e5",
+      "size": 2784
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/references/snpeff_notes.md",
+      "sha256": "126cfeee7e8f92d9abb450357ea3b36b01bea6b31b527ff9a196b796388d6fb5",
+      "size": 3569
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/scripts/ann_summary.py",
+      "sha256": "8b06004830dbf14eae7a3a6017651a3acf25533fce59897b4d2aeb19d3b46b26",
+      "size": 4563
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py",
+      "sha256": "b057cd7fc30ad923ffddb7ee48b1221b687464464bd68037f18a56006fc9763f",
+      "size": 34902
+    },
+    {
+      "path": "skills/genomics/snpeff-annotation/scripts/snpeff_checks.py",
+      "sha256": "22f36e5540c378abf4876c3c091544a27de0dc44daab30ab164f4153b1e00f46",
+      "size": 1515
+    },
+    {
+      "path": "skills/genomics/wgs-bcftools-snp-indel/SKILL.md",
+      "sha256": "b5a0be00067c41b55f31d41f59a8c52428430bc4efb465b464655f6d4ebbe665",
+      "size": 4765
+    },
+    {
+      "path": "skills/genomics/wgs-cnvnator-cnv/SKILL.md",
+      "sha256": "7756fc0be129d77334c7e2058f35b146d582975a3293e40dd49be6d61c58c297",
+      "size": 5166
+    },
+    {
+      "path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+      "sha256": "ab73a4316ca944e889f4c6094a9624f3541dfe1cbf870cd50d571d4b86d2f59e",
+      "size": 9572
+    },
+    {
+      "path": "skills/genomics/wgs-gatk-snp-indel/references/calling-methods.md",
+      "sha256": "42dba80eb60e1bdc6ccfc7d338f237a06d82aaab61c7031abd76c23745f4948e",
+      "size": 7194
+    },
+    {
+      "path": "skills/genomics/wgs-lumpy-sv/SKILL.md",
+      "sha256": "e02ddf4463bccf1a3271771d186cfcb9c7677d23de877b9f8169786b21b04e07",
+      "size": 5555
+    },
+    {
+      "path": "skills/genomics/wgs-manta-sv/SKILL.md",
+      "sha256": "38428f8312c2a5e1fdc43ec18abec6bab5f97db9713c42d6ec8306946136a206",
+      "size": 4504
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "sha256": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+      "size": 17597
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/failure-publication.md",
+      "sha256": "d055422243efa52e800c7203f137889b1e08dc325b03834644769678796bffca",
+      "size": 2262
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/mapping-methods.md",
+      "sha256": "5d039cd548f32489f3352b30ae5efe3d0813e4e1659ba70af5c0b66b65330506",
+      "size": 12035
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/runtime-and-reference.md",
+      "sha256": "564a16e997341ee7e34cc69f98f7ae6904bf0c5d317611785fbcca2c44f56cd1",
+      "size": 1741
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_fasta_header.py",
+      "sha256": "1cbfb2a45bf0dcd3d06784fade31d7822bf3d374a81c80545493e168bbc1eced",
+      "size": 1831
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq.py",
+      "sha256": "6c74374f6daad34daa911c45f9fadd8e763603939f88d9993f9748a3d53c1dc6",
+      "size": 2160
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_fastq_batch.py",
+      "sha256": "a3fb0858570e7dbd925c008b747581c9b6393091c9ac2f52d099e84cc5e442ec",
+      "size": 4061
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/scripts/inspect_wgs_inputs.py",
+      "sha256": "171bc36e21edcf073c47f8c0a96faaa9fe6723e01a73aaf0b5578463de16a02a",
+      "size": 3311
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/SKILL.md",
+      "sha256": "74a1e0abd8bc082a33b68197a416c0dd7f340df76bb8b185a8a038a999fdbefe",
+      "size": 11405
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/agents/openai.yaml",
+      "sha256": "8986d4e79612603299b4803231a3bce7d79dbea54b0fbb594e923d567804bfcb",
+      "size": 162
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/references/wgs_gatk_notes.md",
+      "sha256": "7dd5e20eb51d7e1596485eec5566d7351ab39c29cb7febd155f0944e0de26c3a",
+      "size": 4208
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/scripts/make_gatk_interval_plan.py",
+      "sha256": "971bccea668bab1719cd15d99ba988b7cd4aade1fefe4670a0d29a35911e1d21",
+      "size": 8233
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py",
+      "sha256": "9ea0960236b7827be05063f7e32c65b70692a3efa338350b618a369dba4a5e12",
+      "size": 30587
+    },
+    {
+      "path": "skills/genomics/wgs-variant-calling/tests/demo_ref.fa.fai",
+      "sha256": "54ee9a073f0ea053f0f8930a14dbf7824deccf13fe16c451c9bc63f301ba2049",
+      "size": 160
+    },
+    {
+      "path": "skills/open-chromatin/modkit-cpu/SKILL.md",
+      "sha256": "6aadbfce01a03c6f03e04ff8d2d1c5d66fb53ed53ca09b79c155a5fd82030530",
+      "size": 5890
+    },
+    {
+      "path": "skills/open-chromatin/modkit-cpu/scripts/run_modkit_open_chromatin_cpu.sh",
+      "sha256": "02cf80cd23da2c5eee7fd2df5ce2cb76fe11d281fd9141e2631ce96fd924620d",
+      "size": 10442
+    },
+    {
+      "path": "skills/population-genetics/gwas-emmax-association/SKILL.md",
+      "sha256": "97d9741d2c6b2b283eb42d3267eacbfc013c691a25cf0e6b5dcdf9ccbf051b35",
+      "size": 4322
+    },
+    {
+      "path": "skills/population-genetics/gwas-emmax-association/scripts/emmax_to_manhattan.py",
+      "sha256": "e138ff8db4cdd8f6a4595623e271557a2f8602396cb2c748c6921bada7a23427",
+      "size": 2219
+    },
+    {
+      "path": "skills/population-genetics/gwas-ldblock-candidate-region/SKILL.md",
+      "sha256": "a076bbdd1a4a55b5c50f99f247c2bf16bb0ac67e1cc55fa8f5d1b714470e903d",
+      "size": 5333
+    },
+    {
+      "path": "skills/population-genetics/gwas-ldblock-candidate-region/scripts/make_ldblock_jobs.py",
+      "sha256": "6f1d18297b5a015b9863e28b7c4b044fa1f58d285a48015f3ab4876a2dde582a",
+      "size": 1803
+    },
+    {
+      "path": "skills/population-genetics/gwas-manhattan-qq-plot/SKILL.md",
+      "sha256": "06fa564a66a4d24aae98d7964416c55f5abc8e6bd1b37520eb2bf12a64eeb1f0",
+      "size": 3715
+    },
+    {
+      "path": "skills/population-genetics/gwas-manhattan-qq-plot/scripts/plot_gwas.R",
+      "sha256": "3663a3bc0a0ef7e9ac9ea00c3b3cff412e6ce2980cb628f53f8b61c674b00383",
+      "size": 4249
+    },
+    {
+      "path": "skills/population-genetics/gwas-tassel-glm-mlm/SKILL.md",
+      "sha256": "cb3e8e63c2e89f62aa920937185e9837de2bd8ad05ecd4f4c836a7b8c0ed4d83",
+      "size": 4749
+    },
+    {
+      "path": "skills/population-genetics/gwas-tassel-glm-mlm/scripts/tassel_to_manhattan.py",
+      "sha256": "7a11d628374867254e6ac130268dced5f9fe5677154498f2366914280092712d",
+      "size": 2579
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+      "sha256": "45b89f4a6b2bbf3c78f2c65a9a111324146d96271352c4c564d4988184fffddb",
+      "size": 5382
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/sort_phenotype.py",
+      "sha256": "9a2e843b53c4e6a1dd6a4388608103e042996c0584426b09eea5c4be30b17a25",
+      "size": 5292
+    },
+    {
+      "path": "skills/population-genetics/popgen-gwas-workflow/SKILL.md",
+      "sha256": "7125bc59e82cf291d76a7cce743fbc013c0f63772a4cac98efb48b84d44f2ab9",
+      "size": 4582
+    },
+    {
+      "path": "skills/scrna/annotate/basic/SKILL.md",
+      "sha256": "888f82a6806db31cc6b31f4981eea2989c02aeba90f79c73b506ba84532c7778",
+      "size": 2415
+    },
+    {
+      "path": "skills/scrna/annotate/basic/scripts/annotate_scrna_seurat.R",
+      "sha256": "bf9f888acdd295b9916b2c6677ecf7d936ec3038824eab27d126042a00a813cf",
+      "size": 9772
+    },
+    {
+      "path": "skills/scrna/cluster/basic/SKILL.md",
+      "sha256": "3ef574690e2e565dcb952a67b7a10901821318d72cb03ae5840cc839caf008ae",
+      "size": 2364
+    },
+    {
+      "path": "skills/scrna/cluster/basic/scripts/cluster_scrna_seurat.R",
+      "sha256": "8f43b66eb471c6c3acd98c9d1b023a43525d384d7725324ff4f901676a00e992",
+      "size": 5747
+    },
+    {
+      "path": "skills/scrna/de/contrast/SKILL.md",
+      "sha256": "b9375f3a866968e1c9203e5f16e4a89cd5858f14304c5d95c603e6244c0de84e",
+      "size": 2321
+    },
+    {
+      "path": "skills/scrna/de/contrast/scripts/de_contrast_seurat.R",
+      "sha256": "b9568c588265e84dcece063430be9d1f6407dae6859974e8e418d772a7eb2f61",
+      "size": 6009
+    },
+    {
+      "path": "skills/scrna/de/pseudobulk/SKILL.md",
+      "sha256": "0253f4a0bb95b947eebc849505b6a6b09981bc40a0320e5e023d67935f1fa176",
+      "size": 2928
+    },
+    {
+      "path": "skills/scrna/enrichment/marker-de/SKILL.md",
+      "sha256": "da296305c0f4bb6e90e96d2e644545f2db97be97b308674186ecefa0722154d9",
+      "size": 2825
+    },
+    {
+      "path": "skills/scrna/env/bootstrap/SKILL.md",
+      "sha256": "33b77338b385ca411304380b2dd6f894640fed0885dff9016be515b34f67070f",
+      "size": 2521
+    },
+    {
+      "path": "skills/scrna/env/bootstrap/scripts/check_scrna_env.R",
+      "sha256": "febee578f7420970cfe85b47b0fe9c4025e17ef9656372889ccde16bcf7cd0c6",
+      "size": 1126
+    },
+    {
+      "path": "skills/scrna/ingest/data-download/SKILL.md",
+      "sha256": "155a264c4a1c15012dc687f7f1487159abd9204553f06129296b271fb946cfaf",
+      "size": 2652
+    },
+    {
+      "path": "skills/scrna/ingest/data-download/references/example_manifest.yaml",
+      "sha256": "87a1f689212fa2584f330005b25e6c57d9312c112eef44c959da836571f1b0e9",
+      "size": 687
+    },
+    {
+      "path": "skills/scrna/ingest/data-download/scripts/convert_rdata_to_rds.R",
+      "sha256": "4a7ae340efacc0f7729d14730e40296e224685bd46a07d85267728cc0115b773",
+      "size": 2188
+    },
+    {
+      "path": "skills/scrna/ingest/data-download/scripts/ingest_scrna_seurat.R",
+      "sha256": "a9911716ead6f672f8906027dd2fbcf64e8982c0f41b6d49a67847d78ab5a962",
+      "size": 5932
+    },
+    {
+      "path": "skills/scrna/integration/batch-correction/SKILL.md",
+      "sha256": "0ed2599d09b68b2ca7b9833f879241fdc2755992d2b90a1bb773c43372d0bdae",
+      "size": 2901
+    },
+    {
+      "path": "skills/scrna/markers/conserved/SKILL.md",
+      "sha256": "cc2ce735edfd333c5bbeae6a7b9a786ce16803435f930b9ac8ed79202d84d798",
+      "size": 2405
+    },
+    {
+      "path": "skills/scrna/markers/find/SKILL.md",
+      "sha256": "d42755bca29f62ebb5470cb4726c92d72c5e87da78a9752678307ae8f8a469e6",
+      "size": 2153
+    },
+    {
+      "path": "skills/scrna/markers/find/scripts/find_markers_seurat.R",
+      "sha256": "92c0bd4606df0261ea6a6e1fbd1b09d167e3077b1724db581bed830039ba8c0d",
+      "size": 4376
+    },
+    {
+      "path": "skills/scrna/preprocess/basic/SKILL.md",
+      "sha256": "5e16ec856d6e381fef4e9cf3fb69f63f649aea2139032a5f4fdcfea9bb32ac0e",
+      "size": 2438
+    },
+    {
+      "path": "skills/scrna/preprocess/basic/scripts/preprocess_scrna_seurat.R",
+      "sha256": "e1845998ffb8732635e99953085b442187411836afbd7155cce5fa16e5bbeccb",
+      "size": 4124
+    },
+    {
+      "path": "skills/scrna/preprocess/sctransform/SKILL.md",
+      "sha256": "d1970f7891a9972499d86a17ee570628da98452da3014b8e21202c48c760ede1",
+      "size": 3018
+    },
+    {
+      "path": "skills/scrna/qc/cell-cycle-doublet/SKILL.md",
+      "sha256": "5b730c1ffde40bd50472dadd0b623ac5ff23cb0743ace48a8068762223b58ba2",
+      "size": 2739
+    },
+    {
+      "path": "skills/scrna/qc/filter/SKILL.md",
+      "sha256": "31ec10d4de1f095d8d87769160efdb0c49ca5dfbfd5e329ca515259e168e4624",
+      "size": 2444
+    },
+    {
+      "path": "skills/scrna/qc/filter/scripts/qc_filter_seurat.R",
+      "sha256": "5abf352ca39ad2ab0fe84a2e87f59325efa77ea420f80be0aece5c628d813d36",
+      "size": 5070
+    },
+    {
+      "path": "skills/scrna/report/summary/SKILL.md",
+      "sha256": "e2e3adf147401318ee0d83facb31c80d00a0b85dcbfdd9d79dbc7f7177a8ecf1",
+      "size": 2072
+    },
+    {
+      "path": "skills/scrna/trajectory/pseudotime/SKILL.md",
+      "sha256": "7c81f54b59757668e0176536bf5470f01c7b94dc04acca3bedf630414b4c488a",
+      "size": 3175
+    },
+    {
+      "path": "skills/scrna/workflows/ingest-qc/SKILL.md",
+      "sha256": "adc54a108ab140260d8c90436aa68dbb84bdc990778da27aa2d37812e0f7a38a",
+      "size": 2853
+    },
+    {
+      "path": "skills/scrna/workflows/ingest-qc/scripts/run_scrna_ingest_qc.sh",
+      "sha256": "6b093643ec8deaeb822910379deb42814ad87421d47e52638ca75eb1bb7e66fe",
+      "size": 1302
+    },
+    {
+      "path": "skills/sequence/search/local-blast/SKILL.md",
+      "sha256": "aa8f25fa26f175d6ef800c4f23fc7bb02aa314a3541a50b57640663c5f9c8a00",
+      "size": 6741
+    },
+    {
+      "path": "skills/sequence/search/remote-blast/SKILL.md",
+      "sha256": "cc1586f3d617a2778be39dcbdd639a7b5afbdbd233f52933632d8583f6dfdcba",
+      "size": 4620
+    },
+    {
+      "path": "skills/sequence/search/sequence-similarity/SKILL.md",
+      "sha256": "e366ff9d836349c794f744d3f7c2532eae106135f2fb4a1158fdfbdf6ed5ba64",
+      "size": 6428
+    },
+    {
+      "path": "supervisor.py",
+      "sha256": "fb06664eddb552c6ff9bb018c4d88da7afdd07241f31bf6d78435340106efb42",
+      "size": 155564
+    },
+    {
+      "path": "test.py",
+      "sha256": "102fa35ed99be8dc0d18a3394da775f14eebf1989839a90aedf9b82a155f4e72",
+      "size": 923
+    },
+    {
+      "path": "text_rag.py",
+      "sha256": "1ce43bf381d6c683ae71d577445c96056661d42f212229e3568d3cf81b9946d6",
+      "size": 2424
+    },
+    {
+      "path": "workflows/aporec_methylation_analysis.yaml",
+      "sha256": "c343ff1eb88583f31cf3f5e8ef17a2ea829e8dc4ca395686750711302cbbb2f5",
+      "size": 3047
+    },
+    {
+      "path": "workflows/crop_genomic_prediction.yaml",
+      "sha256": "c3a52aa4a74278ae1589faa2dd0f44f7c0c7826fcbd086a0d411ececc151de46",
+      "size": 1715
+    },
+    {
+      "path": "workflows/crop_gwas_analysis.yaml",
+      "sha256": "e5b13871d491d03a0853adcccabccf2a18eb976def044ea0aaf02ba46af05c55",
+      "size": 2739
+    },
+    {
+      "path": "workflows/hic_tad_analysis.yaml",
+      "sha256": "fbcace953ee2356609a99465ee95d97d01ade52a418a21c082ae49621f121525",
+      "size": 1588
+    },
+    {
+      "path": "workflows/scrna_downstream_after_qc.yaml",
+      "sha256": "2713101cac845563a47f8fd30460e1a1a863b98bec26c375202d9e8dd0761e33",
+      "size": 4356
+    },
+    {
+      "path": "workflows/scrna_ingest_qc.yaml",
+      "sha256": "f7731aef92e4142f8cb3a2335d1303d029fad066a5d637e37b34c6404abe72b3",
+      "size": 965
+    },
+    {
+      "path": "workflows/scrna_standard_analysis.yaml",
+      "sha256": "e692bd17bfd4b4326879f142bdb968ce7ad8beee1b7de3c505250c94fe4f4b2b",
+      "size": 3271
+    },
+    {
+      "path": "workflows/scrna_tutorial_standard_analysis.yaml",
+      "sha256": "2a1d0c67f3d21bfba9ef474bfd4ef61915e2aa4e23aedb1edacaa6bf6a620518",
+      "size": 5166
+    }
+  ],
+  "status_before": " M agent_core/node_context.py\n M agent_core/plan_tracker.py\n M agent_core/planner_context.py\n M agent_core/provider_message_safety.py\n M agent_core/semantic_completion.py\n M agent_core/skill_resource_binding.py\n M agent_core/step_effects.py\n M agent_core/workflow/managed_stop.py\n M agent_core/workspace_attestation.py\n M bio_agents.py\n M config/__init__.py\n M config/config.py\n M config/logger.py\n M config/settings.py\n M config/startup.py\n D docs/audits/architecture/RECOVERY_CONTEXT_CURRENT.md\n D docs/audits/architecture/RECOVERY_PHASE_CONTEXT_CURRENT.md\n D docs/audits/architecture/context_memory_and_compression_contract.md\n D docs/audits/architecture/controller_front_half_retirement_20260903.md\n D docs/audits/architecture/controller_runtime_migration_20260903.md\n D docs/audits/architecture/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md\n D docs/audits/architecture/global_prompt_context_lifecycle.md\n D docs/audits/architecture/managed_artifact_preexecution_boundary_audit_20260825.md\n D docs/audits/architecture/node_prompt_payload_matrix.tsv\n D docs/audits/architecture/node_provider_context_matrix_20260820.tsv\n D docs/audits/architecture/open_world_highlighted_requirements_migration_report_20260819.md\n D docs/audits/architecture/pi_migration_rpc_poc_20260903.md\n D docs/audits/architecture/pi_migration_stepworker_boundary_20260903.md\n D docs/audits/architecture/planner_constraint_provenance_projection_audit_20260818.md\n D docs/audits/architecture/planner_context_reentry_prompt_regression_audit_20260820.md\n D docs/audits/architecture/planner_pending_snapshot_reentry_fix_report_20260819.md\n D docs/audits/architecture/planner_request_component_inventory_20260820.tsv\n D docs/audits/architecture/progressive_skill_access_search_and_replan_implementation_report_20260827.md\n D docs/audits/architecture/provider_attempt_session_archive_phase3_implementation_20260826.md\n D docs/audits/architecture/provider_cache_inventory.tsv\n D docs/audits/architecture/provider_stream_session_archive_boundary_audit_20260825.md\n D docs/audits/architecture/recovery_context_component_matrix_20260903.tsv\n D docs/audits/architecture/recovery_context_disclosure_matrix.tsv\n D docs/audits/architecture/recovery_context_engineering_audit_20260903.md\n D docs/audits/architecture/recovery_context_engineering_delta_20260903.md\n D docs/audits/architecture/recovery_progressive_disclosure_contract.md\n D docs/audits/architecture/recovery_progressive_disclosure_history.md\n D docs/audits/architecture/runtime_and_recovery_context_contract.md\n D docs/audits/architecture/schema2_adapter_semantic_coverage_20260903.md\n D docs/audits/architecture/schema2_consultant_agent_loop_20260903.md\n D docs/audits/architecture/semantic_history_authority_matrix.tsv\n D docs/audits/architecture/skill_planning_contract_retirement_audit_20260819.md\n D docs/audits/architecture/skill_planning_contract_retirement_report_20260819.md\n M prompts/manager.py\n M skills/genomics/snpeff-annotation/SKILL.md\n D skills/genomics/snpeff-annotation/tests/demo.gff3\n D skills/genomics/snpeff-annotation/tests/demo.vcf\n D skills/genomics/snpeff-annotation/tests/demo_ref.fa\n M tests/planner_fix_acceptance/test_planner_recorded_workflow.py\n M tests/test_bio_agents_memory.py\n M tests/test_consultant_first_graph_integration_v21.py\n M tests/test_execution_provenance.py\n M tests/test_generate_capability_scoped_prompt.py\n M tests/test_generate_only_output_contract_v2.py\n M tests/test_generate_provider_payload_safety.py\n M tests/test_node_context_semantic_continuity.py\n M tests/test_output_router.py\n M tests/test_plan_contract_convergence_v2.py\n M tests/test_plan_dataflow_p1.py\n M tests/test_plan_lifecycle.py\n M tests/test_plan_local_preaction_convergence_v2.py\n M tests/test_preflight_mapping_commit.py\n M tests/test_recovery_agent_loop.py\n M tests/test_recovery_agent_seed.py\n M tests/test_recovery_context_bounds.py\n M tests/test_recovery_context_p0.py\n M tests/test_recovery_progressive_skill_access.py\n M tests/test_recovery_schema2_node.py\n M tests/test_recovery_tools.py\n M tests/test_renderer_controller.py\n M tests/test_renderer_plan_ownership.py\n M tests/test_run_profiler.py\n M tests/test_runtime_preflight.py\n M tests/test_schema2_adapter_semantic_coverage.py\n M tests/test_supervisor_validation_evidence.py\n M tests/test_typed_outcomes.py\n?? agent_core/workspace_revalidation.py\n?? benchmarks/biomind_agent_benchmark/v3/\n?? benchmarks/biomind_agent_benchmark/v5/\n?? benchmarks/biomind_agent_benchmark/v5_1/\n?? docs/audits/architecture/README.md\n?? docs/audits/architecture/artifacts/\n?? docs/audits/architecture/authority/\n?? docs/audits/architecture/context/\n?? docs/audits/architecture/controller/\n?? docs/audits/architecture/nodes/\n?? docs/audits/architecture/provider-and-archive/\n?? docs/audits/architecture/skills/\n?? docs/audits/session_1789456793_review_20260915/\n?? docs/fixes/biomind_context_continuity_compaction_20260906.md\n?? docs/fixes/biomind_context_continuity_compaction_coverage_20260906.tsv\n?? docs/fixes/generate_admission_typed_repair_20260906.md\n?? docs/fixes/hash_prompt_policy_20260911.md\n?? docs/fixes/hash_prompt_policy_20260911_results.json\n?? docs/fixes/implementation_boundary_map_20260906.md\n?? docs/fixes/planner_feedback_metadata_boundary_20260911.md\n?? docs/fixes/recovery_execution_contract_fix_20260902.md\n?? docs/fixes/skill_script_invocation_contract_20260917.md\n?? docs/fixes/skill_script_invocation_contract_20260917_results.json\n?? docs/fixes/workspace_mutation_receipts_20260917.md\n?? docs/fixes/workspace_mutation_receipts_20260917_results.json\n?? docs/implementation/inspection_evidence_terminal_20260907/\n?? docs/implementation/recovery_common_finalization_20260907/\n?? tests/test_benchmark_v3_harness.py\n?? tests/test_benchmark_v5_1_semantic_lint.py\n?? tests/test_benchmark_v5_review_assets.py\n?? tests/test_common_runtime_stop.py\n?? tests/test_failure_packet_incident_lineage.py\n?? tests/test_generate_admission_typed_repair.py\n?? tests/test_generate_context_episode.py\n?? tests/test_hash_prompt_policy.py\n?? tests/test_inspection_node_failures.py\n?? tests/test_inspection_terminal_workflow.py\n?? tests/test_mutation_provenance_integration_fix.py\n?? tests/test_phase_context_activation_persistence.py\n?? tests/test_phase_context_compaction_runtime.py\n?? tests/test_phase_provider_prefix_active.py\n?? tests/test_planner_agent_loop.py\n?? tests/test_planner_feedback_boundary.py\n?? tests/test_recovery_compaction_production.py\n?? tests/test_schema2_context_compaction.py\n?? tests/test_schema2_generate_skill_routing.py\n?? tests/test_schema2_integration_a_production.py\n?? tests/test_semantic_completion.py\n?? tests/test_semantic_completion_workflow.py\n?? tests/test_skill_material_continuity.py\n?? tests/test_step_effect_runtime.py\n?? tests/test_step_effect_schema2_graph.py\n?? tests/test_supervisor_context_continuity.py\n?? tests/test_workspace_idempotent_revalidation.py\n?? tests/test_workspace_mutation_allocation.py\n?? tests/test_workspace_mutation_graph_repair.py\n?? tests/test_workspace_mutation_provenance.py\n?? tests/test_workspace_plan_mutation_admission.py\n?? tests/test_workspace_revalidation_completion.py\n",
+  "staged_before": []
+}

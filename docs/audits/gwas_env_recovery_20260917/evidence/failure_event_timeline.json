@@ -1,0 +1,32 @@
+{
+  "log_path": "/public/home/liusiqi/03.毕设/Biomind_v1/logs/biomind_3621046.log",
+  "log_sha256": "40e4d2ce057dd68b42bf2ae04932a343041d709932f2803e03a7e730d586ad3e",
+  "selected_events": [
+    {
+      "line": 5341,
+      "text": "2026-09-17 20:55:35,969 - execution.executor - INFO - Execution output stream=stdout offset=1238 tail=INPUT_OK\t/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz\t759180760 bytes"
+    },
+    {
+      "line": 5592,
+      "text": "2026-09-17 20:55:37,886 - agent_core.workflow.typed_node - INFO - TYPED_NODE_OUTCOME task=session_1789648505 node=execute type=execution_failed"
+    },
+    {
+      "line": 5648,
+      "text": "2026-09-17 20:55:38,586 - agent_core.workflow.recovery_node - ERROR - Recovery agent phase failed closed: task=session_1789648505 seed=recovery-seed-132564c0631456ab03c4240c"
+    },
+    {
+      "line": 5658,
+      "text": "agent_core.workflow.recovery_agent.RecoveryAgentError: RECOVERY_SEED_CAPACITY_EXCEEDED: chars=32097 limit=32000"
+    },
+    {
+      "line": 5659,
+      "text": "2026-09-17 20:55:38,625 - agent_core.workflow.typed_node - INFO - TYPED_NODE_OUTCOME task=session_1789648505 node=recovery type=internal_protocol_error"
+    },
+    {
+      "line": 5790,
+      "text": "2026-09-17 20:55:39,432 - BioMind.Agent - INFO - LLM request started: stage=terminal_summary task=session_1789648505 messages=2 chars=8866 timeout=45.0s"
+    }
+  ],
+  "recovery_provider_starts": [],
+  "limits": "The log plus exception call order establish this Recovery entry stopped before a provider request. The terminal_summary request is a distinct explanation stage."
+}

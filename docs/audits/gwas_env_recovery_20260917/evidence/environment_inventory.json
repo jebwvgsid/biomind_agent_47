@@ -1,0 +1,849 @@
+{
+  "captured_utc": "2026-09-17T15:02:15.303690+00:00",
+  "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "witness_sha256": "d104b4915a15200ddfb73ae775ef67bb6d01b8a7d9df298008c0fd7c9ceefca3",
+  "config_whitelist": {
+    "/public/home/liusiqi/03.毕设/Biomind_v1/.env": {
+      "BIO_SOFTWARE_ROOT": "/public/home/liusiqi/03.毕设/agent_shim",
+      "BIO_SOURCE_INSTALL_DIR": "/public/home/liusiqi/03.毕设/source_tools",
+      "ANACONDA_ROOT": "/public/home/liusiqi/anaconda3",
+      "BIOMIND_SKILLS_DIR": "/public/home/liusiqi/03.毕设/Biomind_v1/skills"
+    }
+  },
+  "conda_index": {
+    "path": "/public/home/liusiqi/.conda/environments.txt",
+    "exists": true,
+    "sha256": "dfc898b84289b5ca3c9569f19d6dd3a7898455adde0745afb5c79749c77d173f"
+  },
+  "tools_setup": {
+    "path": "/public/home/liusiqi/03.毕设/agent_shim/tools_setup.yaml",
+    "exists": false
+  },
+  "prefixes": {
+    "/public/home/liusiqi/anaconda3/envs/bio_methylation_plot": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/hicexplore": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/compartment": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_scrna_core": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_gatk": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_wgs": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_lumpy": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_cnvnator": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_longread_sv": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_rnaseq_variant": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_syri": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/dorado": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/mustache": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_cutesv": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/calder2": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_porec": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_svim_asm": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_manta": [
+      "software_registry",
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/gp_waiter": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/grapepan_tools": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/popgen_gwas": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/popgen_gwas_r": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/bio_bcftools": [
+      "software_registry"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/porec_env": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/assembly": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/mamba": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/calder_env": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/calder2_env": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/samtools": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/diffdomain": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/gene_pav": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/biomind": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/porec": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/eggnog_env": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/rna_env": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/dmr_r": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/jcvi": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3/envs/diffdomain_fix": [
+      "configured_conda_root_direct_child",
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/anaconda3": [
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss": [
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env": [
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/.local/share/mamba/envs/isoseq3": [
+      "conda_environments_index"
+    ],
+    "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env": [
+      "conda_environments_index"
+    ]
+  },
+  "tool_candidates": [
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/python3.12",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/compartment/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/compartment/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/compartment/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/compartment/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/compartment/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/compartment/bin/python3.10",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "java",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/java",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/lib/jvm/bin/java",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/lib/jvm/languages/python/bin/python",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "java",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/python3.11",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_lumpy/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_lumpy/bin/python2.7",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator/bin/python3.13",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/python3.7",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/mustache/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/mustache/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/mustache/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/mustache/bin/python3.8",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/python",
+      "executable": true,
+      "origins": [
+        "software_registry",
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/porec_env/bin/python3.10",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/calder_env/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/calder_env/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/calder_env/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/calder_env/bin/python3.14",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/calder2_env/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/calder2_env/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/calder2_env/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/calder2_env/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/calder2_env/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/calder2_env/bin/python3.9",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/samtools/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/samtools/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/samtools/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/samtools/bin/python3.14",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/diffdomain/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/diffdomain/bin/python3.7",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/gene_pav/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/gene_pav/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/gene_pav/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/gene_pav/bin/python3.10",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/porec/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/porec/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/porec/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/porec/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/porec/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/porec/bin/python3.14",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/eggnog_env/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/eggnog_env/bin/python3.9",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/python3.13",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/dmr_r/bin/python3.14",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/anaconda3/envs/jcvi/bin/Rscript",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/jcvi/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/anaconda3/envs/jcvi/bin/bedtools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/jcvi/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/jcvi/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/jcvi/bin/python3.12",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bcftools",
+      "path": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix/bin/bcftools",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix/bin/bcftools",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix/bin/python3.7",
+      "executable": true,
+      "origins": [
+        "configured_conda_root_direct_child",
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/anaconda3/bin/python",
+      "realpath": "/public/home/liusiqi/anaconda3/bin/python3.13",
+      "executable": true,
+      "origins": [
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "Rscript",
+      "path": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss/bin/Rscript",
+      "realpath": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss/bin/Rscript",
+      "executable": true,
+      "origins": [
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "bedtools",
+      "path": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss/bin/bedtools",
+      "realpath": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss/bin/bedtools",
+      "executable": true,
+      "origins": [
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss/bin/python",
+      "realpath": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss/bin/python3.10",
+      "executable": true,
+      "origins": [
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env/bin/python",
+      "realpath": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env/bin/python3.13",
+      "executable": true,
+      "origins": [
+        "conda_environments_index"
+      ]
+    },
+    {
+      "tool": "python",
+      "path": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env/bin/python",
+      "realpath": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env/bin/python3.13",
+      "executable": true,
+      "origins": [
+        "conda_environments_index"
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "tool": "bedtools",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/bedtools",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "bedtools v2.31.1\n",
+      "stderr": "",
+      "stdout_sha256": "0577f8bb261a44762497546cb1f7738a91b91633e8a6b48de3eb61dd82e00fcf",
+      "status": "completed"
+    },
+    {
+      "tool": "Rscript_packages",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/Rscript",
+        "--vanilla",
+        "-e",
+        "for(p in c(\"CMplot\",\"qqman\")){cat(p,\"=\",requireNamespace(p,quietly=TRUE),\"\\n\",sep=\"\")}"
+      ],
+      "returncode": 0,
+      "stdout": "CMplot=FALSE\nqqman=FALSE\n",
+      "stderr": "",
+      "stdout_sha256": "1dccca89801519242925dc5f3e728c8fe444e28c31d9773635c63825781f11ff",
+      "status": "completed"
+    },
+    {
+      "tool": "Rscript_packages",
+      "argv": [
+        "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss/bin/Rscript",
+        "--vanilla",
+        "-e",
+        "for(p in c(\"CMplot\",\"qqman\")){cat(p,\"=\",requireNamespace(p,quietly=TRUE),\"\\n\",sep=\"\")}"
+      ],
+      "returncode": 0,
+      "stdout": "CMplot=FALSE\nqqman=FALSE\n",
+      "stderr": "",
+      "stdout_sha256": "1dccca89801519242925dc5f3e728c8fe444e28c31d9773635c63825781f11ff",
+      "status": "completed"
+    },
+    {
+      "tool": "Rscript_packages",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/bio_scrna_core/bin/Rscript",
+        "--vanilla",
+        "-e",
+        "for(p in c(\"CMplot\",\"qqman\")){cat(p,\"=\",requireNamespace(p,quietly=TRUE),\"\\n\",sep=\"\")}"
+      ],
+      "returncode": 0,
+      "stdout": "CMplot=FALSE\nqqman=FALSE\n",
+      "stderr": "",
+      "stdout_sha256": "1dccca89801519242925dc5f3e728c8fe444e28c31d9773635c63825781f11ff",
+      "status": "completed"
+    }
+  ],
+  "limits": "No recursion, no arbitrary user PATH scan, no install, no original session write; indexed candidate absence does not establish server-wide absence; R package probe covers only shown prefixes."
+}

@@ -1,0 +1,293 @@
+{
+  "typed_type": "execution_failed",
+  "typed_summary": "A launched command failed after immutable evidence persistence.",
+  "returncode": 0,
+  "producer_failure_code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
+  "failure_packet": {
+    "schema_version": 1,
+    "failure_id": "failure-10ebc343efc954567e3fd99a",
+    "task_id": "session_1789648505",
+    "step_id": "check_inputs",
+    "failure_type": "execution_failed",
+    "failure_owner": "GENERATED_ACTION",
+    "error_code": "EXECUTION_FAILED",
+    "summary": "A launched command failed after immutable evidence persistence.",
+    "retryable": true,
+    "evidence_refs": [
+      "exec-attempt_79e2ff04f7dcfa103d11"
+    ],
+    "source": "execute_outcome",
+    "source_outcome_ref": "outcome:sha256:6ea4211dc0f9cc764a6579626593a525b8ed4794852b8658c17db34a5664a0d8",
+    "plan_spec_ref": {
+      "schema_version": 1,
+      "task_id": "session_1789648505",
+      "plan_id": "plan_3a827538750a5159c492",
+      "plan_version": "plan_v1",
+      "plan_revision": 1,
+      "plan_semantic_hash": "sha256:1289df3b4b082fabd4f2d0669842cecb4ae644729509aa16a1ceff6d2dbff83a",
+      "plan_record_hash": "sha256:ef9cbce87bda48f89486c2f6ef4dc0452677f9baf7c5066a523c2f8e9ec599cd",
+      "plan_snapshot_ref": "object:sha256:40ac510155e8f9eff53f2b408552e001a8007e9a95433a0ec632272895b3c856"
+    },
+    "attempt_ref": "attempt_79e2ff04f7dcfa103d11",
+    "action_ref": "action_4ef1b10abd40f94c",
+    "failure_fingerprint": "b79471f502136160e669",
+    "diagnostic_facts": [
+      {
+        "fact_id": "producer-rejecting-checks",
+        "kind": "producer_failure_index",
+        "summary": "OBSERVED_ARTIFACT_CONTENT_INVALID: The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+        "metadata": {
+          "schema_version": 1,
+          "checks": [
+            {
+              "source_pointer": "/execution_record/validation/errors/0",
+              "stage": "validation",
+              "code": "OBSERVED_ARTIFACT_CONTENT_INVALID: The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+              "detail": "OBSERVED_ARTIFACT_CONTENT_INVALID: The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+              "observation_status": "unknown"
+            },
+            {
+              "source_pointer": "/execution_record/runtime_output_reconciliation/violations/0",
+              "stage": "runtime_output_reconciliation",
+              "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
+              "detail": "The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+              "observation_status": "unknown"
+            }
+          ],
+          "total_rejecting_checks": 2,
+          "unexpanded_index_range": [],
+          "unexpanded_pointers": [],
+          "pointer_index_omitted": 0,
+          "process": {
+            "return_code": 0,
+            "started": true
+          },
+          "scope": {
+            "step_id": "check_inputs",
+            "action_id": "action_4ef1b10abd40f94c",
+            "attempt_id": "attempt_79e2ff04f7dcfa103d11"
+          },
+          "validation_acceptance": false,
+          "commit_acceptance": "not_established"
+        }
+      },
+      {
+        "fact_id": "failure-return-code",
+        "kind": "return_code",
+        "summary": "Process return code: 0",
+        "metadata": {
+          "return_code": 0
+        }
+      },
+      {
+        "fact_id": "failure-fact-0f38030654c068a0af88f5e0",
+        "kind": "result_realizations",
+        "summary": "Recorded result contracts and current execution output candidates.",
+        "metadata": {
+          "result_realizations": {
+            "source": "current_execution_record",
+            "scope": {
+              "plan_id": "plan_3a827538750a5159c492",
+              "plan_version": "plan_v1",
+              "step_id": "check_inputs",
+              "action_id": "action_4ef1b10abd40f94c",
+              "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+              "execution_id": "exec-attempt_79e2ff04f7dcfa103d11"
+            },
+            "authority": "recorded_contracts_and_observations; no_correspondence_or_acceptance_inferred",
+            "declared_results": [
+              {
+                "artifact_id": "plan-artifact-38db30a57c72b4379b17f7af",
+                "semantic_handle": "output.plan-artifact-38db30a57c72b4379b17f7af",
+                "required": true,
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/vcf.samples.txt",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "path_policy": "managed_exact",
+                "artifact_kind": "file",
+                "format": "txt",
+                "validation_contract_id": "file_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-52dfa2642a38801a3c666879",
+                "semantic_handle": "output.plan-artifact-52dfa2642a38801a3c666879",
+                "required": true,
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/q.samples.txt",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "path_policy": "managed_exact",
+                "artifact_kind": "file",
+                "format": "txt",
+                "validation_contract_id": "file_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-566070886c506b4b491bc250",
+                "semantic_handle": "output.plan-artifact-566070886c506b4b491bc250",
+                "required": true,
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.samples.txt",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "path_policy": "managed_exact",
+                "artifact_kind": "file",
+                "format": "txt",
+                "validation_contract_id": "file_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-84b40467fc84915cc3e36bd5",
+                "semantic_handle": "output.plan-artifact-84b40467fc84915cc3e36bd5",
+                "required": true,
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "path_policy": "managed_exact",
+                "artifact_kind": "directory",
+                "format": "directory",
+                "validation_contract_id": "directory_exists"
+              },
+              {
+                "artifact_id": "plan-artifact-c2fefb6a80fc5e3281daa101",
+                "semantic_handle": "output.plan-artifact-c2fefb6a80fc5e3281daa101",
+                "required": true,
+                "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/logs",
+                "constraint_origin": "IMPLEMENTATION_DETAIL",
+                "path_policy": "managed_exact",
+                "artifact_kind": "directory",
+                "format": "directory",
+                "validation_contract_id": "directory_exists"
+              }
+            ],
+            "observed_candidates": [
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "directory",
+                "format": "directory",
+                "representation": "directory",
+                "size": 8192,
+                "content_valid": true
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "directory",
+                "format": "directory",
+                "representation": "directory",
+                "size": 8192,
+                "content_valid": true
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/dependency_status.tsv",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "file",
+                "format": "text",
+                "representation": "plain",
+                "size": 398,
+                "content_valid": true,
+                "content_prefix_sha256": "114a18f2f41e54fa8355ab1aaf32b1934288818f73ab61c229ad82775c0a511e"
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/gff3.head.txt",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "file",
+                "format": "text",
+                "representation": "plain",
+                "size": 207,
+                "content_valid": true,
+                "content_prefix_sha256": "0f507bd14cd859161d08939db410bb65b7ea7b61c2c3f27f92e2c0e8d02323fd"
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.head.txt",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "file",
+                "format": "text",
+                "representation": "plain",
+                "size": 39,
+                "content_valid": true,
+                "content_prefix_sha256": "72176768533a9bdfb786ebb3383813ea9d47b4264b83334b4a7070bc10b4d378"
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.samples.txt",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "file",
+                "format": "text",
+                "representation": "plain",
+                "size": 1498,
+                "content_valid": true,
+                "content_prefix_sha256": "ac2e1a2531a98628c5e25585b562fb4a0b64ca30757078ea2adff817c496b206"
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/q.samples.txt",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "file",
+                "format": "text",
+                "representation": "plain",
+                "size": 1935,
+                "content_valid": true,
+                "content_prefix_sha256": "d6e15feba6ccbb21c875efb14080d514728edbe2a6691cdcd9d4a02b614f0d72"
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/qmatrix.head.txt",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "file",
+                "format": "text",
+                "representation": "plain",
+                "size": 81,
+                "content_valid": true,
+                "content_prefix_sha256": "2edc291fd7e3485dac277fdfd133df086a16892b5e9331a6eabe5a09c45c2ca5"
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/vcf.samples.txt",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "file",
+                "format": "",
+                "representation": "plain",
+                "size": 0,
+                "content_valid": false
+              },
+              {
+                "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/logs",
+                "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+                "current_attempt_owned": true,
+                "exists": true,
+                "artifact_kind": "directory",
+                "format": "directory",
+                "representation": "directory",
+                "size": 4096,
+                "content_valid": true
+              }
+            ],
+            "reconciliation": {
+              "status": "recovery",
+              "violations": [
+                {
+                  "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
+                  "detail": "The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract."
+                }
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "inspection_refs": [
+      "outcome:sha256:6ea4211dc0f9cc764a6579626593a525b8ed4794852b8658c17db34a5664a0d8"
+    ],
+    "incident_id": "incident-4551e32d7e06392927bc241e",
+    "packet_version": 1
+  },
+  "boundary": "Recorded executor return; real reconciler, TypedExecute and build_causal_failure_record. No execution/Commit."
+}

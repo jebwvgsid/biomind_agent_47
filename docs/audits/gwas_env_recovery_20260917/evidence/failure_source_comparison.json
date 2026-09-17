@@ -1,0 +1,252 @@
+[
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/recovery_projection.py",
+    "relative_path": "agent_core/workflow/recovery_projection.py",
+    "symbol": "_producer_failure_index",
+    "line": 661,
+    "end_line": 736,
+    "file_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+    "ast_sha256": "d05acc4d88beb004e978dbc333d7081449964d53dba9b925b9a455988a1ba5f0"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/recovery_projection.py",
+    "relative_path": "agent_core/workflow/recovery_projection.py",
+    "symbol": "_failure_identity",
+    "line": 1216,
+    "end_line": 1269,
+    "file_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+    "ast_sha256": "1cafe857dcb9bcb30358dff1557b52c7227f847da1961732219a97fd4d47b3cf"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/recovery_projection.py",
+    "relative_path": "agent_core/workflow/recovery_projection.py",
+    "symbol": "build_causal_failure_record",
+    "line": 1611,
+    "end_line": 1739,
+    "file_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+    "ast_sha256": "9544e53354a9971420914ec43f5668cf68db8efbdc3c2f592230ceb76e2c1b0b"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/recovery_projection.py",
+    "relative_path": "agent_core/workflow/recovery_projection.py",
+    "symbol": "_producer_failure_index",
+    "line": 661,
+    "end_line": 736,
+    "file_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+    "ast_sha256": "d05acc4d88beb004e978dbc333d7081449964d53dba9b925b9a455988a1ba5f0"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/recovery_projection.py",
+    "relative_path": "agent_core/workflow/recovery_projection.py",
+    "symbol": "_failure_identity",
+    "line": 1216,
+    "end_line": 1269,
+    "file_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+    "ast_sha256": "1cafe857dcb9bcb30358dff1557b52c7227f847da1961732219a97fd4d47b3cf"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/recovery_projection.py",
+    "relative_path": "agent_core/workflow/recovery_projection.py",
+    "symbol": "build_causal_failure_record",
+    "line": 1611,
+    "end_line": 1739,
+    "file_sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+    "ast_sha256": "9544e53354a9971420914ec43f5668cf68db8efbdc3c2f592230ceb76e2c1b0b"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/execution.py",
+    "relative_path": "agent_core/workflow/execution.py",
+    "symbol": "TypedExecute",
+    "line": 1174,
+    "end_line": 1540,
+    "file_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+    "ast_sha256": "8d4fbb3b99bbf0201a24d07a41c4b6fa1924b16bed29e7ddb7b0f79ee12e8c8d"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/execution.py",
+    "relative_path": "agent_core/workflow/execution.py",
+    "symbol": "TypedExecute",
+    "line": 1183,
+    "end_line": 1549,
+    "file_sha256": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+    "ast_sha256": "8d4fbb3b99bbf0201a24d07a41c4b6fa1924b16bed29e7ddb7b0f79ee12e8c8d"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/cli_lifecycle.py",
+    "relative_path": "agent_core/cli_lifecycle.py",
+    "symbol": "_cause_text",
+    "line": 99,
+    "end_line": 123,
+    "file_sha256": "68eaa26ecd32e32d270d802ae6c54902013b7594644c0832b094a917b529b28c",
+    "ast_sha256": "82f3903e8a57f7c14e7632fec2d9e4103441fb19bd31c7bc136ad38c095ccecf"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/cli_lifecycle.py",
+    "relative_path": "agent_core/cli_lifecycle.py",
+    "symbol": "_stop_text",
+    "line": 126,
+    "end_line": 136,
+    "file_sha256": "68eaa26ecd32e32d270d802ae6c54902013b7594644c0832b094a917b529b28c",
+    "ast_sha256": "50a56aecce63bde8567d6f2842c749cf7c954d03d500a2891c1775a432099f23"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/cli_lifecycle.py",
+    "relative_path": "agent_core/cli_lifecycle.py",
+    "symbol": "delivery_text",
+    "line": 188,
+    "end_line": 196,
+    "file_sha256": "68eaa26ecd32e32d270d802ae6c54902013b7594644c0832b094a917b529b28c",
+    "ast_sha256": "e2bd8b5b33d1001584f78c7ae1a284b764aa88b8bf04ac10663c77339103d4e8"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/cli_lifecycle.py",
+    "relative_path": "agent_core/cli_lifecycle.py",
+    "symbol": "_cause_text",
+    "line": 99,
+    "end_line": 131,
+    "file_sha256": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+    "ast_sha256": "af1779ea0c7ae9f1455f4e06069e6c58e915ac724efe72efb1ab7af2224bc2b8"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/cli_lifecycle.py",
+    "relative_path": "agent_core/cli_lifecycle.py",
+    "symbol": "_stop_text",
+    "line": 134,
+    "end_line": 144,
+    "file_sha256": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+    "ast_sha256": "50a56aecce63bde8567d6f2842c749cf7c954d03d500a2891c1775a432099f23"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/cli_lifecycle.py",
+    "relative_path": "agent_core/cli_lifecycle.py",
+    "symbol": "delivery_text",
+    "line": 199,
+    "end_line": 221,
+    "file_sha256": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+    "ast_sha256": "41f833188f37a62157bd48df4e979af16a9d2a3865fc9d10240b90c04fa4e35a"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/managed_artifacts.py",
+    "relative_path": "agent_core/managed_artifacts.py",
+    "symbol": "reconcile_runtime_outputs",
+    "line": 1883,
+    "end_line": 2169,
+    "file_sha256": "d2b489a0ffa5c3fb9332ca085d34d97e12c1d262a786d4b9e2d67e49c61213e8",
+    "ast_sha256": "afbfefbfd2ebb9633c2dbc158c8939de868cc4dd0edf2452675cc84721ca37c7"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/managed_artifacts.py",
+    "relative_path": "agent_core/managed_artifacts.py",
+    "symbol": "reconcile_runtime_outputs",
+    "line": 1883,
+    "end_line": 2169,
+    "file_sha256": "d2b489a0ffa5c3fb9332ca085d34d97e12c1d262a786d4b9e2d67e49c61213e8",
+    "ast_sha256": "afbfefbfd2ebb9633c2dbc158c8939de868cc4dd0edf2452675cc84721ca37c7"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/inspection_stop.py",
+    "relative_path": "agent_core/workflow/inspection_stop.py",
+    "symbol": "_execution",
+    "line": 166,
+    "end_line": 192,
+    "file_sha256": "726e7a399ad8e40b7a9000df8e97650435f1c675b09eb40ef16edc436ba7a512",
+    "ast_sha256": "6d19c1ef54904378fd37925059cacf8a8ed8995a5298c1ab64e65c20c2a1de35"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/inspection_stop.py",
+    "relative_path": "agent_core/workflow/inspection_stop.py",
+    "symbol": "build_inspection_stop",
+    "line": 195,
+    "end_line": 295,
+    "file_sha256": "726e7a399ad8e40b7a9000df8e97650435f1c675b09eb40ef16edc436ba7a512",
+    "ast_sha256": "5d7ce780c89a6ef218ce6770bdd573924dc0d864a386913f495e1ebbe4e1d8f3"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/inspection_stop.py",
+    "relative_path": "agent_core/workflow/inspection_stop.py",
+    "symbol": "_execution",
+    "line": 166,
+    "end_line": 192,
+    "file_sha256": "726e7a399ad8e40b7a9000df8e97650435f1c675b09eb40ef16edc436ba7a512",
+    "ast_sha256": "6d19c1ef54904378fd37925059cacf8a8ed8995a5298c1ab64e65c20c2a1de35"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/inspection_stop.py",
+    "relative_path": "agent_core/workflow/inspection_stop.py",
+    "symbol": "build_inspection_stop",
+    "line": 195,
+    "end_line": 295,
+    "file_sha256": "726e7a399ad8e40b7a9000df8e97650435f1c675b09eb40ef16edc436ba7a512",
+    "ast_sha256": "5d7ce780c89a6ef218ce6770bdd573924dc0d864a386913f495e1ebbe4e1d8f3"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/managed_stop.py",
+    "relative_path": "agent_core/workflow/managed_stop.py",
+    "symbol": "report_delivery_status",
+    "line": 519,
+    "end_line": 525,
+    "file_sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa",
+    "ast_sha256": "4b6e815c59daf894b60acbd2b7992fa58f17043301f7dc28f05376e53f78a4ea"
+  },
+  {
+    "version": "prerequisite",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/workflow/managed_stop.py",
+    "relative_path": "agent_core/workflow/managed_stop.py",
+    "symbol": "projection",
+    "line": 639,
+    "end_line": 662,
+    "file_sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa",
+    "ast_sha256": "81574b105e51fbf7496dba8ccf9c4b54ff216118d14d3f23a26e0dd03eb684d1"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/managed_stop.py",
+    "relative_path": "agent_core/workflow/managed_stop.py",
+    "symbol": "_project_current_stop_facts",
+    "line": 320,
+    "end_line": 384,
+    "file_sha256": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+    "ast_sha256": "c9844474c1f1ccbbf6573c51b8cfc59cf9b7aa2a8648249b155c3c1b846d2ffe"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/managed_stop.py",
+    "relative_path": "agent_core/workflow/managed_stop.py",
+    "symbol": "report_delivery_status",
+    "line": 619,
+    "end_line": 625,
+    "file_sha256": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+    "ast_sha256": "4b6e815c59daf894b60acbd2b7992fa58f17043301f7dc28f05376e53f78a4ea"
+  },
+  {
+    "version": "current",
+    "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/managed_stop.py",
+    "relative_path": "agent_core/workflow/managed_stop.py",
+    "symbol": "projection",
+    "line": 746,
+    "end_line": 772,
+    "file_sha256": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+    "ast_sha256": "491b23d577cdf754ac0443ca62fd1cbf6a0845514808ca898126bed990c727f9"
+  }
+]

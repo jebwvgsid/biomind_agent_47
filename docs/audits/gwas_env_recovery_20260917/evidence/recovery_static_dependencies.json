@@ -1,0 +1,12 @@
+{
+  "directory": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/recovery_static_dependencies",
+  "schema_version": 1,
+  "purpose": "Only static bootstrap dependency beyond the persistent frozen source; never import production config or credentials.",
+  "files": {
+    "offline_managed_bootstrap.py": {
+      "source": "/public/home/liusiqi/03.毕设/Biomind_v1/tests/offline_managed_bootstrap.py",
+      "sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0",
+      "bytes": 9711
+    }
+  }
+}

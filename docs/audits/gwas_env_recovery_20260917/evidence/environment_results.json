@@ -1,0 +1,2024 @@
+{
+  "captured_utc": "2026-09-17T14:59:48.100082+00:00",
+  "interpreter": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+  "witness": {
+    "path": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/audits/gwas_env_recovery_20260917/witnesses/environment_audit.py",
+    "sha256": "c748ae3852f9a09f924ae9ed98136f93602c8de43b634d7d935f800ad4540b36",
+    "size": 18047
+  },
+  "source_comparison": [
+    {
+      "file": "bio_agents.py",
+      "function": "_runtime_audit_for_skill",
+      "baseline_line": 19315,
+      "current_line": 19346,
+      "identical": false,
+      "baseline_method_sha256": "f40d839ab2c392722e0dddd4725b367d9517a836364d4b36b6b8c410c2120dd4",
+      "current_method_sha256": "772280d5f9b80fd12f737f54a68c0e47903bf040510667059072029c67dc0eae"
+    },
+    {
+      "file": "bio_agents.py",
+      "function": "_consultant_runtime_seed_evidence",
+      "baseline_line": 19883,
+      "current_line": 19992,
+      "identical": false,
+      "baseline_method_sha256": "34365121735b0227c6a67e72cf590b7d04b7f42cbbe7eade47bac4a146595c8f",
+      "current_method_sha256": "7db116b4bb6422f06ed992a314315d8ed9919c57b46314f413ec27ffc055414d"
+    },
+    {
+      "file": "bio_agents.py",
+      "function": "_consultant_runtime_preflight",
+      "baseline_line": 19590,
+      "current_line": 19630,
+      "identical": true,
+      "baseline_method_sha256": "b49c37af600eb7bd321c72d518d000a87712046abefccb41723479b1d02277c6",
+      "current_method_sha256": "b49c37af600eb7bd321c72d518d000a87712046abefccb41723479b1d02277c6"
+    },
+    {
+      "file": "bio_agents.py",
+      "function": "_verify_conda_env_presence",
+      "baseline_line": 19074,
+      "current_line": 19074,
+      "identical": true,
+      "baseline_method_sha256": "9d9eefe63d767b9b9def12aa0f4b7374a2ff2bf343c15045b207ddf294ab5415",
+      "current_method_sha256": "9d9eefe63d767b9b9def12aa0f4b7374a2ff2bf343c15045b207ddf294ab5415"
+    },
+    {
+      "file": "bio_agents.py",
+      "function": "_runtime_binding_source",
+      "baseline_line": 19866,
+      "current_line": 19951,
+      "identical": false,
+      "baseline_method_sha256": "59be0df47cd13e7f47ba8354bf12d00c697ed42ca3a2e91286a5c67d75ce1d3e",
+      "current_method_sha256": "c6a3bdfa291a12189cc2a0d2a16b0c781ad161b9e57dfab4988fdbed8c50c0af"
+    },
+    {
+      "file": "bio_agents.py",
+      "function": "_reuse_registered_runtime_for_install",
+      "baseline_line": 20171,
+      "current_line": 20281,
+      "identical": true,
+      "baseline_method_sha256": "e8ecd39779fa5ecff3660ad6bcd3bcb64728b3dfa8f43ece43c4cea21e3b1256",
+      "current_method_sha256": "e8ecd39779fa5ecff3660ad6bcd3bcb64728b3dfa8f43ece43c4cea21e3b1256"
+    },
+    {
+      "file": "package_manager.py",
+      "function": "find_matching_environment",
+      "baseline_line": 626,
+      "current_line": 626,
+      "identical": true,
+      "baseline_method_sha256": "aea96d2116ea0477f578a0590474ec72b2bbba2654c13eb933d0803219ec93cc",
+      "current_method_sha256": "aea96d2116ea0477f578a0590474ec72b2bbba2654c13eb933d0803219ec93cc"
+    },
+    {
+      "file": "agent_core/skill_manager.py",
+      "function": "get_runtime_env",
+      "baseline_line": 1767,
+      "current_line": 1769,
+      "identical": false,
+      "baseline_method_sha256": "9a41ef22379f0db90fecc9a93305142d9484501666823ed7b2c2302aa08b8a49",
+      "current_method_sha256": "8cf99f10122e3bbc7abff30320962f579556514b28aa3583e6c58a9e7a732161"
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/bio_agents.py",
+      "function": "install_subagent",
+      "line": 52584,
+      "contains_find_matching_environment": true,
+      "contains_registered_reuse_call": true,
+      "delegates_to_scoped_impl": false
+    },
+    {
+      "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/bio_agents.py",
+      "function": "install_subagent",
+      "line": 53150,
+      "contains_find_matching_environment": false,
+      "contains_registered_reuse_call": false,
+      "delegates_to_scoped_impl": true
+    }
+  ],
+  "audit_branch_witnesses": [
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "use_cache": false,
+      "declared_failure": "Conda environment `declared` is not available under the configured root.",
+      "calls": [],
+      "decision": "declared_runtime_healthcheck_failed",
+      "status": "healthcheck_failed",
+      "reason_code": "RUNTIME_HEALTHCHECK_FAILED",
+      "candidate": {},
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "use_cache": false,
+      "declared_failure": "tool entry exists but cannot start",
+      "calls": [],
+      "decision": "declared_runtime_healthcheck_failed",
+      "status": "healthcheck_failed",
+      "reason_code": "RUNTIME_HEALTHCHECK_FAILED",
+      "candidate": {},
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "use_cache": false,
+      "declared_failure": "version constraint not satisfied",
+      "calls": [],
+      "decision": "declared_runtime_healthcheck_failed",
+      "status": "healthcheck_failed",
+      "reason_code": "RUNTIME_HEALTHCHECK_FAILED",
+      "candidate": {},
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "use_cache": true,
+      "declared_failure": "Conda environment `declared` is not available under the configured root.",
+      "calls": [
+        "find_matching_environment",
+        "verify_candidate"
+      ],
+      "decision": "alternate_runtime_candidate_verified_needs_user_or_planner_decision",
+      "status": "healthcheck_failed",
+      "reason_code": "DECLARED_RUNTIME_UNAVAILABLE_ALTERNATE_VERIFIED",
+      "candidate": {
+        "env": "candidate",
+        "match_type": "partial",
+        "matched_packages": [],
+        "matched_capabilities": [],
+        "missing_packages": [],
+        "missing_capabilities": [],
+        "status": "verified",
+        "bound_tools": []
+      },
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "use_cache": true,
+      "declared_failure": "tool entry exists but cannot start",
+      "calls": [
+        "find_matching_environment",
+        "verify_candidate"
+      ],
+      "decision": "alternate_runtime_candidate_verified_needs_user_or_planner_decision",
+      "status": "healthcheck_failed",
+      "reason_code": "DECLARED_RUNTIME_UNAVAILABLE_ALTERNATE_VERIFIED",
+      "candidate": {
+        "env": "candidate",
+        "match_type": "partial",
+        "matched_packages": [],
+        "matched_capabilities": [],
+        "missing_packages": [],
+        "missing_capabilities": [],
+        "status": "verified",
+        "bound_tools": []
+      },
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "use_cache": true,
+      "declared_failure": "version constraint not satisfied",
+      "calls": [
+        "find_matching_environment",
+        "verify_candidate"
+      ],
+      "decision": "alternate_runtime_candidate_verified_needs_user_or_planner_decision",
+      "status": "healthcheck_failed",
+      "reason_code": "DECLARED_RUNTIME_UNAVAILABLE_ALTERNATE_VERIFIED",
+      "candidate": {
+        "env": "candidate",
+        "match_type": "partial",
+        "matched_packages": [],
+        "matched_capabilities": [],
+        "missing_packages": [],
+        "missing_capabilities": [],
+        "status": "verified",
+        "bound_tools": []
+      },
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "use_cache": false,
+      "declared_failure": "Conda environment `declared` is not available under the configured root.",
+      "calls": [],
+      "decision": "declared_runtime_healthcheck_failed",
+      "status": "healthcheck_failed",
+      "reason_code": "RUNTIME_HEALTHCHECK_FAILED",
+      "candidate": {},
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "use_cache": false,
+      "declared_failure": "tool entry exists but cannot start",
+      "calls": [],
+      "decision": "declared_runtime_healthcheck_failed",
+      "status": "healthcheck_failed",
+      "reason_code": "RUNTIME_HEALTHCHECK_FAILED",
+      "candidate": {},
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "use_cache": false,
+      "declared_failure": "version constraint not satisfied",
+      "calls": [],
+      "decision": "declared_runtime_healthcheck_failed",
+      "status": "healthcheck_failed",
+      "reason_code": "RUNTIME_HEALTHCHECK_FAILED",
+      "candidate": {},
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "use_cache": true,
+      "declared_failure": "Conda environment `declared` is not available under the configured root.",
+      "calls": [
+        "find_matching_environment",
+        "verify_candidate"
+      ],
+      "decision": "alternate_runtime_candidate_verified_needs_user_or_planner_decision",
+      "status": "healthcheck_failed",
+      "reason_code": "DECLARED_RUNTIME_UNAVAILABLE_ALTERNATE_VERIFIED",
+      "candidate": {
+        "env": "candidate",
+        "match_type": "partial",
+        "matched_packages": [],
+        "matched_capabilities": [],
+        "missing_packages": [],
+        "missing_capabilities": [],
+        "status": "verified",
+        "bound_tools": []
+      },
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "use_cache": true,
+      "declared_failure": "tool entry exists but cannot start",
+      "calls": [
+        "find_matching_environment",
+        "verify_candidate"
+      ],
+      "decision": "alternate_runtime_candidate_verified_needs_user_or_planner_decision",
+      "status": "healthcheck_failed",
+      "reason_code": "DECLARED_RUNTIME_UNAVAILABLE_ALTERNATE_VERIFIED",
+      "candidate": {
+        "env": "candidate",
+        "match_type": "partial",
+        "matched_packages": [],
+        "matched_capabilities": [],
+        "missing_packages": [],
+        "missing_capabilities": [],
+        "status": "verified",
+        "bound_tools": []
+      },
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "use_cache": true,
+      "declared_failure": "version constraint not satisfied",
+      "calls": [
+        "find_matching_environment",
+        "verify_candidate"
+      ],
+      "decision": "alternate_runtime_candidate_verified_needs_user_or_planner_decision",
+      "status": "healthcheck_failed",
+      "reason_code": "DECLARED_RUNTIME_UNAVAILABLE_ALTERNATE_VERIFIED",
+      "candidate": {
+        "env": "candidate",
+        "match_type": "partial",
+        "matched_packages": [],
+        "matched_capabilities": [],
+        "missing_packages": [],
+        "missing_capabilities": [],
+        "status": "verified",
+        "bound_tools": []
+      },
+      "substitutions": "declared and candidate healthcheck leaves; real audit/finalization method"
+    }
+  ],
+  "phase_wire_witness": {
+    "actual_production_methods": [
+      "__init__",
+      "note_provider_visible_materials",
+      "prepare_messages",
+      "prepare_split_prompt",
+      "queue_provider_event",
+      "split_prompt"
+    ],
+    "prefix_identical": true,
+    "runtime_fact_in_second_request": false,
+    "existing_event_api_delivers_fact_once": true,
+    "substitution": "payload-safety check omitted; real LangChain messages and production scoped-context message builders; no provider called",
+    "request2": [
+      {
+        "role": "system",
+        "content": "Fixed policy"
+      },
+      {
+        "role": "human",
+        "content": "<phase_seed_contract schema_version=\"1\">\n{}\n</phase_seed_contract>\n<controller_feedback>{}</controller_feedback>"
+      },
+      {
+        "role": "ai",
+        "content": "select_skill"
+      },
+      {
+        "role": "human",
+        "content": "Skill selection accepted"
+      }
+    ],
+    "request3": [
+      {
+        "role": "system",
+        "content": "Fixed policy"
+      },
+      {
+        "role": "human",
+        "content": "<phase_seed_contract schema_version=\"1\">\n{}\n</phase_seed_contract>\n<controller_feedback>{}</controller_feedback>"
+      },
+      {
+        "role": "ai",
+        "content": "select_skill"
+      },
+      {
+        "role": "human",
+        "content": "Skill selection accepted"
+      },
+      {
+        "role": "human",
+        "content": "RUNTIME_HEALTHCHECK_FAILED: candidate bcftools available in bio_gatk; association unverified"
+      }
+    ]
+  },
+  "historical": {
+    "consultant_requests": [
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/context_trace/consultant-0002-318ea95c43b7/request.json",
+        "sha256": "5fc091bed0bc4be490f7e6f735b017d14939a530bd342949f986f3406fca6ec4",
+        "size": 37300,
+        "message_count": 2,
+        "terms": {
+          "runtime_checks": 0,
+          "RUNTIME_HEALTHCHECK_FAILED": 0,
+          "healthcheck_failed": 0,
+          "registered_tools": 0,
+          "matching_env_candidate": 0,
+          "software_registry": 0,
+          "popgen_gwas": 0
+        },
+        "messages": [
+          {
+            "role": "system",
+            "chars": 22820,
+            "content_sha256": "051d7285c8b21cd99830a2db0c6e1499f289a73611615a5f5d388d97a6994ad0",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 11311,
+            "content_sha256": "b9d5fbb4e0090abc303f8f86d1402b28c5d9963627ca523cae1d17f2aa0b6e7b",
+            "short_observation": ""
+          }
+        ]
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/context_trace/consultant-0003-2144ad635190/request.json",
+        "sha256": "cc13a59c415eee3a5c98b8db0045eced5f3752afcbb657135d74fb09832ffc9d",
+        "size": 58824,
+        "message_count": 4,
+        "terms": {
+          "runtime_checks": 0,
+          "RUNTIME_HEALTHCHECK_FAILED": 0,
+          "healthcheck_failed": 0,
+          "registered_tools": 0,
+          "matching_env_candidate": 0,
+          "software_registry": 0,
+          "popgen_gwas": 0
+        },
+        "messages": [
+          {
+            "role": "system",
+            "chars": 22820,
+            "content_sha256": "051d7285c8b21cd99830a2db0c6e1499f289a73611615a5f5d388d97a6994ad0",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 11311,
+            "content_sha256": "b9d5fbb4e0090abc303f8f86d1402b28c5d9963627ca523cae1d17f2aa0b6e7b",
+            "short_observation": ""
+          },
+          {
+            "role": "assistant",
+            "chars": 584,
+            "content_sha256": "5d9976581cdf2997c517cf9b7ae79399d47ff3d3a4936d8009c428bd563880d1",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 18831,
+            "content_sha256": "83439329c656f956f708a33c56457831f317cf704fe22d4912caeacbd3cf8999",
+            "short_observation": ""
+          }
+        ]
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/context_trace/consultant-0004-c6121b520251/request.json",
+        "sha256": "5bc28ebb30a127de1abdc3da1f7258a51801c3df504ffcedb5d53d64799bf461",
+        "size": 84260,
+        "message_count": 6,
+        "terms": {
+          "runtime_checks": 0,
+          "RUNTIME_HEALTHCHECK_FAILED": 0,
+          "healthcheck_failed": 0,
+          "registered_tools": 0,
+          "matching_env_candidate": 0,
+          "software_registry": 0,
+          "popgen_gwas": 4
+        },
+        "messages": [
+          {
+            "role": "system",
+            "chars": 22820,
+            "content_sha256": "051d7285c8b21cd99830a2db0c6e1499f289a73611615a5f5d388d97a6994ad0",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 11311,
+            "content_sha256": "b9d5fbb4e0090abc303f8f86d1402b28c5d9963627ca523cae1d17f2aa0b6e7b",
+            "short_observation": ""
+          },
+          {
+            "role": "assistant",
+            "chars": 584,
+            "content_sha256": "5d9976581cdf2997c517cf9b7ae79399d47ff3d3a4936d8009c428bd563880d1",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 18831,
+            "content_sha256": "83439329c656f956f708a33c56457831f317cf704fe22d4912caeacbd3cf8999",
+            "short_observation": ""
+          },
+          {
+            "role": "assistant",
+            "chars": 444,
+            "content_sha256": "8d5eac521d5986d138250f9af5cd80b61b1f06c33b46f3dc3c4316fae9ca0813",
+            "short_observation": "{\"action_type\":\"load_skill_doc\",\"skill_ids\":[\"population-genetics/popgen-gwas-workflow\",\"population-genetics/gwas-vcf-prep-qc\",\"population-genetics/gwas-emmax-association\",\"population-genetics/gwas-manhattan-qq-plot\",\"population-genetics/gwas-ldblock-candidate-region\"],\"task_hypothesis\":\"Standard GWAS on resequencing SNP VCF plus C16_0 phenotype table with Q matrix and GFF3 annotation, producing Manhattan/QQ plots and candidate intervals.\"}"
+          },
+          {
+            "role": "human",
+            "chars": 23486,
+            "content_sha256": "fe6ab874da5e2a6b068bf5a0a74b6339a166d21fd91fe7d00bc3285a13f4bdcc",
+            "short_observation": ""
+          }
+        ]
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/context_trace/consultant-0005-cd07abb1e4ce/request.json",
+        "sha256": "c2734c4ea6490866fcb6c7fa7e5348faa0726ab5b50a522dc4d327e4fbce74fd",
+        "size": 96096,
+        "message_count": 8,
+        "terms": {
+          "runtime_checks": 0,
+          "RUNTIME_HEALTHCHECK_FAILED": 0,
+          "healthcheck_failed": 0,
+          "registered_tools": 0,
+          "matching_env_candidate": 0,
+          "software_registry": 0,
+          "popgen_gwas": 4
+        },
+        "messages": [
+          {
+            "role": "system",
+            "chars": 22820,
+            "content_sha256": "051d7285c8b21cd99830a2db0c6e1499f289a73611615a5f5d388d97a6994ad0",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 11311,
+            "content_sha256": "b9d5fbb4e0090abc303f8f86d1402b28c5d9963627ca523cae1d17f2aa0b6e7b",
+            "short_observation": ""
+          },
+          {
+            "role": "assistant",
+            "chars": 584,
+            "content_sha256": "5d9976581cdf2997c517cf9b7ae79399d47ff3d3a4936d8009c428bd563880d1",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 18831,
+            "content_sha256": "83439329c656f956f708a33c56457831f317cf704fe22d4912caeacbd3cf8999",
+            "short_observation": ""
+          },
+          {
+            "role": "assistant",
+            "chars": 444,
+            "content_sha256": "8d5eac521d5986d138250f9af5cd80b61b1f06c33b46f3dc3c4316fae9ca0813",
+            "short_observation": "{\"action_type\":\"load_skill_doc\",\"skill_ids\":[\"population-genetics/popgen-gwas-workflow\",\"population-genetics/gwas-vcf-prep-qc\",\"population-genetics/gwas-emmax-association\",\"population-genetics/gwas-manhattan-qq-plot\",\"population-genetics/gwas-ldblock-candidate-region\"],\"task_hypothesis\":\"Standard GWAS on resequencing SNP VCF plus C16_0 phenotype table with Q matrix and GFF3 annotation, producing Manhattan/QQ plots and candidate intervals.\"}"
+          },
+          {
+            "role": "human",
+            "chars": 23486,
+            "content_sha256": "fe6ab874da5e2a6b068bf5a0a74b6339a166d21fd91fe7d00bc3285a13f4bdcc",
+            "short_observation": ""
+          },
+          {
+            "role": "assistant",
+            "chars": 8789,
+            "content_sha256": "28f0f775035438c6f2e7701c8c2839c2ee28fd8bc63abc97323e10169dd855cb",
+            "short_observation": ""
+          },
+          {
+            "role": "human",
+            "chars": 221,
+            "content_sha256": "0e599b2208867ae491ce7b629c4fbf78f89fef1d73fb6bbb7fdb644268bcaf89",
+            "short_observation": "<skill_selection_observation accepted=\"true\">The documented selection was recorded. Interpret it and choose ANSWER_USER, another tool, UPDATE_TASKSPEC, or an explicit SUBMIT_PLANNING_HANDOFF.</skill_selection_observation>"
+          }
+        ]
+      }
+    ],
+    "runtime_records": [
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-vcf-prep-qc",
+          "skill_document_digest": "sha256:45b89f4a6b2bbf3c78f2c65a9a111324146d96271352c4c564d4988184fffddb",
+          "skill_contract_digest": "sha256:c6a488a047e92bbf83823d1b47aaa1279a6a15fd9c31c255f18f3f49f0a8f059",
+          "environment_id": "popgen_gwas",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:ef886f428d2471ae2e56b91011f328f0d58af32bafc18beab24796586ee3c738"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:ef886f428d2471ae2e56b91011f328f0d58af32bafc18beab24796586ee3c738",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      },
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-emmax-association",
+          "skill_document_digest": "sha256:97d9741d2c6b2b283eb42d3267eacbfc013c691a25cf0e6b5dcdf9ccbf051b35",
+          "skill_contract_digest": "sha256:6e1defcb1237963e1df292ddf2f9119c0b7b538dcd0312253f52ff58973de270",
+          "environment_id": "popgen_gwas",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:e27810562775f9639ef608551b7d20d5177c166b8354f3b99bb9e1b23b7f1e51"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:e27810562775f9639ef608551b7d20d5177c166b8354f3b99bb9e1b23b7f1e51",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      },
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-manhattan-qq-plot",
+          "skill_document_digest": "sha256:06fa564a66a4d24aae98d7964416c55f5abc8e6bd1b37520eb2bf12a64eeb1f0",
+          "skill_contract_digest": "sha256:9ebe3b26d522b37e01c30dab0b1b77bde926a34dd655aeebcdabbe9b24e2082a",
+          "environment_id": "popgen_gwas_r",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:54b0f220818f4c589ad899618ae84c52fd5ed9417427d76aa7f24156b7db9f9e"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:54b0f220818f4c589ad899618ae84c52fd5ed9417427d76aa7f24156b7db9f9e",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      },
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-ldblock-candidate-region",
+          "skill_document_digest": "sha256:a076bbdd1a4a55b5c50f99f247c2bf16bb0ac67e1cc55fa8f5d1b714470e903d",
+          "skill_contract_digest": "sha256:85bc062b715f1af008cf86162698a0185a2a10dce5ec8cd3c74e339ef2da660f",
+          "environment_id": "popgen_gwas",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:bcd2f255f5a393448c224f024a520c17e94c6354e0b4e0d822ecdaad9b6902df"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:bcd2f255f5a393448c224f024a520c17e94c6354e0b4e0d822ecdaad9b6902df",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      },
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-vcf-prep-qc",
+          "skill_document_digest": "sha256:45b89f4a6b2bbf3c78f2c65a9a111324146d96271352c4c564d4988184fffddb",
+          "skill_contract_digest": "sha256:c6a488a047e92bbf83823d1b47aaa1279a6a15fd9c31c255f18f3f49f0a8f059",
+          "environment_id": "popgen_gwas",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:ef886f428d2471ae2e56b91011f328f0d58af32bafc18beab24796586ee3c738"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:ef886f428d2471ae2e56b91011f328f0d58af32bafc18beab24796586ee3c738",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      },
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-emmax-association",
+          "skill_document_digest": "sha256:97d9741d2c6b2b283eb42d3267eacbfc013c691a25cf0e6b5dcdf9ccbf051b35",
+          "skill_contract_digest": "sha256:6e1defcb1237963e1df292ddf2f9119c0b7b538dcd0312253f52ff58973de270",
+          "environment_id": "popgen_gwas",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:e27810562775f9639ef608551b7d20d5177c166b8354f3b99bb9e1b23b7f1e51"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:e27810562775f9639ef608551b7d20d5177c166b8354f3b99bb9e1b23b7f1e51",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      },
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-manhattan-qq-plot",
+          "skill_document_digest": "sha256:06fa564a66a4d24aae98d7964416c55f5abc8e6bd1b37520eb2bf12a64eeb1f0",
+          "skill_contract_digest": "sha256:9ebe3b26d522b37e01c30dab0b1b77bde926a34dd655aeebcdabbe9b24e2082a",
+          "environment_id": "popgen_gwas_r",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:54b0f220818f4c589ad899618ae84c52fd5ed9417427d76aa7f24156b7db9f9e"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:54b0f220818f4c589ad899618ae84c52fd5ed9417427d76aa7f24156b7db9f9e",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      },
+      {
+        "scope": {
+          "skill_id": "population-genetics/gwas-ldblock-candidate-region",
+          "skill_document_digest": "sha256:a076bbdd1a4a55b5c50f99f247c2bf16bb0ac67e1cc55fa8f5d1b714470e903d",
+          "skill_contract_digest": "sha256:85bc062b715f1af008cf86162698a0185a2a10dce5ec8cd3c74e339ef2da660f",
+          "environment_id": "popgen_gwas",
+          "environment_fingerprint": "",
+          "host_id": "sha256:584ac1d1a85a775cafeb8c01b3858772e5ce578317f2fbd1db19d574492c4106",
+          "inspection_contract_digest": "sha256:bcd2f255f5a393448c224f024a520c17e94c6354e0b4e0d822ecdaad9b6902df"
+        },
+        "inspection": {
+          "status": "execution_error",
+          "method_digest": "sha256:bcd2f255f5a393448c224f024a520c17e94c6354e0b4e0d822ecdaad9b6902df",
+          "coverage_complete": false
+        },
+        "facts": {},
+        "resolved_runtime_paths": {}
+      }
+    ],
+    "attempt": {
+      "approved.sh": {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/attempts/attempt_79e2ff04f7dcfa103d11/approved.sh",
+        "sha256": "50a040a8c4e6ccd9476f0c6f775801ffa3b96d0b1e2d7b5a4734c3af0306f57a",
+        "size": 3219
+      },
+      "executed.sh": {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/attempts/attempt_79e2ff04f7dcfa103d11/executed.sh",
+        "sha256": "51e6d1e6fb1d42c9a6ee836a876436f6fbeced3f99a600adafbab34135c8f124",
+        "size": 2080
+      },
+      "runtime_env_manifest.json": {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/attempts/attempt_79e2ff04f7dcfa103d11/runtime_env_manifest.json",
+        "sha256": "6f3231bd83c5313e78154b9006865a10897e12ff7f617465d516cb401afc19f8",
+        "size": 470
+      }
+    },
+    "runtime_manifest": {
+      "action_id": "action_4ef1b10abd40f94c",
+      "bindings": [],
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "execution_capability_id": "framework.generic.execute",
+      "manifest_hash": "sha256:8b29ffee0c653aba7fce9fc3733701a30e336f948a5513ebd355b837894ad457",
+      "plan_id": "plan_3a827538750a5159c492",
+      "schema_version": 1,
+      "scope": "current_action",
+      "selected_skill_id": "",
+      "step_id": "check_inputs"
+    },
+    "script_bcftools_lines": [
+      {
+        "line": 11,
+        "text": "VCF_SAMPLES=\"${CHECK_DIR}/vcf.samples.txt\""
+      },
+      {
+        "line": 34,
+        "text": "  if command -v \"$1\" >/dev/null 2>&1; then"
+      },
+      {
+        "line": 42,
+        "text": "probe bcftools bcftools --version"
+      },
+      {
+        "line": 52,
+        "text": "# ---- 3. VCF 样本列表（bcftools 可用时） ----"
+      },
+      {
+        "line": 53,
+        "text": "if command -v bcftools >/dev/null 2>&1; then"
+      },
+      {
+        "line": 54,
+        "text": "  bcftools query -l \"${VCF}\" > \"${VCF_SAMPLES}\""
+      },
+      {
+        "line": 56,
+        "text": "  bcftools view -h \"${VCF}\" 2>/dev/null | tail -n 5 > \"${CHECK_DIR}/vcf.header.tail.txt\" || true"
+      },
+      {
+        "line": 59,
+        "text": "  printf 'VCF_SAMPLE_COUNT\\tNA\\tbcftools missing: cannot list VCF samples\\n'"
+      }
+    ]
+  },
+  "inventory": {
+    "registry": {
+      "path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+      "sha256": "f5718506aa3cd9dd574ced665c004a11f1b881e55d57c1e77d622fcfe7a45626",
+      "size": 45260
+    },
+    "skill_registry": {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/.skill_runtime_registry.json",
+      "sha256": "185f6bf065e97ea1adba9efde5de645fe1cb470145d7ec387efcd3bc78a5ca50",
+      "size": 122876
+    },
+    "environments": [
+      {
+        "environment": "bio_methylation_plot",
+        "status": "verified",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_methylation_plot",
+        "prefix_exists": false,
+        "language": "python",
+        "packages": [
+          "pyBigWig",
+          "pandas",
+          "numpy",
+          "matplotlib"
+        ],
+        "skill_ids": [
+          "甲基化基因绘图",
+          "epigenomics/methylation/gene-plot"
+        ],
+        "last_verified_at": "2026-04-21T17:23:39.696075",
+        "tool_candidates": []
+      },
+      {
+        "environment": "hicexplore",
+        "status": "success",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+        "prefix_exists": true,
+        "language": "python",
+        "packages": [
+          "hicexplorer",
+          "cooler",
+          "matplotlib"
+        ],
+        "skill_ids": [
+          "3d-dna/tad-calling",
+          "3d-dna/tad-boundary-change",
+          "3d-dna/differential-tad",
+          "3d-dna/differential-compartment"
+        ],
+        "last_verified_at": "2026-06-26T16:34:43.461699",
+        "tool_candidates": [
+          {
+            "tool": "Rscript",
+            "path": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/Rscript",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/Rscript",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "bedtools",
+            "path": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/bedtools",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/bedtools",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/hicexplore/bin/python3.12",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "compartment",
+        "status": "success",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/compartment",
+        "prefix_exists": true,
+        "language": "python",
+        "packages": [
+          "cooler",
+          "cooltools",
+          "pandas",
+          "numpy",
+          "scipy",
+          "h5py",
+          "bedtools"
+        ],
+        "skill_ids": [
+          "3d-dna/compartment-calling"
+        ],
+        "last_verified_at": "2026-07-28T16:54:02.548612",
+        "tool_candidates": [
+          {
+            "tool": "Rscript",
+            "path": "/public/home/liusiqi/anaconda3/envs/compartment/bin/Rscript",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/compartment/bin/Rscript",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "bedtools",
+            "path": "/public/home/liusiqi/anaconda3/envs/compartment/bin/bedtools",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/compartment/bin/bedtools",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/compartment/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/compartment/bin/python3.10",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_scrna_core",
+        "status": "success",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+        "prefix_exists": true,
+        "language": "bash",
+        "packages": [
+          "Seurat",
+          "Matrix",
+          "yaml",
+          "ggplot2",
+          "patchwork",
+          "dplyr"
+        ],
+        "skill_ids": [
+          "scrna/workflows/ingest-qc",
+          "scrna/preprocess/basic",
+          "scrna/cluster/basic",
+          "scrna/markers/find",
+          "scrna/ingest/data-download",
+          "scrna/qc/filter",
+          "scrna/annotate/basic",
+          "scrna/report/summary"
+        ],
+        "last_verified_at": "2026-07-02T16:24:55.403321",
+        "tool_candidates": [
+          {
+            "tool": "Rscript",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core/bin/Rscript",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core/bin/Rscript",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_sequence_search_local_blast_runtime",
+        "status": "success",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+        "prefix_exists": true,
+        "language": "cli",
+        "packages": [
+          "blast"
+        ],
+        "skill_ids": [
+          "sequence/search/local-blast"
+        ],
+        "last_verified_at": "2026-07-28T16:52:55.982515",
+        "tool_candidates": []
+      },
+      {
+        "environment": "bio_gatk",
+        "status": "success",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+        "prefix_exists": true,
+        "language": "bash",
+        "packages": [
+          "gatk4",
+          "samtools",
+          "bcftools",
+          "picard",
+          "snpeff",
+          "openjdk"
+        ],
+        "skill_ids": [
+          "genomics/wgs-gatk-snp-indel",
+          "genomics/snpeff-annotation"
+        ],
+        "last_verified_at": "2026-09-17T16:29:01.840651",
+        "tool_candidates": [
+          {
+            "tool": "bcftools",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "Rscript",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/Rscript",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/Rscript",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "java",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/java",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/lib/jvm/bin/java",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_gatk/lib/jvm/languages/python/bin/python",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_wgs",
+        "status": "success",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+        "prefix_exists": true,
+        "language": "bash",
+        "packages": [
+          "bwa",
+          "bwa-mem2",
+          "samtools",
+          "picard",
+          "sambamba"
+        ],
+        "skill_ids": [
+          "genomics/wgs-short-read-mapping"
+        ],
+        "last_verified_at": "2026-09-17T15:03:59.194580",
+        "tool_candidates": [
+          {
+            "tool": "java",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/python3.11",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_lumpy",
+        "status": "verified",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+        "prefix_exists": true,
+        "language": "bash",
+        "packages": [
+          "lumpy-sv",
+          "svtyper",
+          "svtools",
+          "samtools",
+          "sambamba",
+          "samblaster",
+          "bwa"
+        ],
+        "skill_ids": [
+          "genomics/wgs-lumpy-sv",
+          "genomics/reseq-variant-workflow"
+        ],
+        "last_verified_at": "2026-07-08T15:26:33.404408",
+        "tool_candidates": [
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_lumpy/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_lumpy/bin/python2.7",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_cnvnator",
+        "status": "verified",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+        "prefix_exists": true,
+        "language": "bash",
+        "packages": [
+          "cnvnator",
+          "root",
+          "samtools",
+          "seqkit"
+        ],
+        "skill_ids": [
+          "genomics/wgs-cnvnator-cnv"
+        ],
+        "last_verified_at": "2026-07-08T16:08:43.856183",
+        "tool_candidates": [
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator/bin/python3.13",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_longread_sv",
+        "status": "success",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+        "prefix_exists": true,
+        "language": "bash",
+        "packages": [
+          "minimap2",
+          "samtools",
+          "sniffles",
+          "survivor",
+          "bcftools"
+        ],
+        "skill_ids": [
+          "genomics/long-read-sv-sniffles-survivor",
+          "genomics/long-read-sv-sniffles2"
+        ],
+        "last_verified_at": "2026-09-02T10:28:05.502630",
+        "tool_candidates": [
+          {
+            "tool": "bcftools",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/bcftools",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/bcftools",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv/bin/python3.7",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_rnaseq_variant",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_rnaseq_variant",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "hisat2",
+          "samtools",
+          "picard",
+          "gatk4",
+          "bcftools"
+        ],
+        "skill_ids": [
+          "genomics/rnaseq-variant-calling"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "bio_syri",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_syri",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "mummer4",
+          "syri",
+          "plotsr",
+          "samtools"
+        ],
+        "skill_ids": [
+          "genomics/assembly-variant-syri"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "dorado",
+        "status": "broken",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/dorado",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "dorado",
+          "samtools",
+          "modkit"
+        ],
+        "skill_ids": [
+          "epigenomics/methylation/dorado-modbase-prep"
+        ],
+        "last_verified_at": "2026-07-09T11:19:22.583855",
+        "tool_candidates": []
+      },
+      {
+        "environment": "mustache",
+        "status": "broken",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/mustache",
+        "prefix_exists": true,
+        "language": "python",
+        "packages": [
+          "mustache"
+        ],
+        "skill_ids": [
+          "3d-dna/loop-calling"
+        ],
+        "last_verified_at": "2026-07-09T15:42:55.269266",
+        "tool_candidates": [
+          {
+            "tool": "bedtools",
+            "path": "/public/home/liusiqi/anaconda3/envs/mustache/bin/bedtools",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/mustache/bin/bedtools",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/mustache/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/mustache/bin/python3.8",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "bio_cutesv",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_cutesv",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "cutesv",
+          "samtools",
+          "bcftools"
+        ],
+        "skill_ids": [
+          "genomics/long-read-sv-cutesv"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "calder2",
+        "status": "verified",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/calder2",
+        "prefix_exists": true,
+        "language": "python",
+        "packages": [
+          "cooler",
+          "pandas",
+          "numpy",
+          "scipy",
+          "h5py"
+        ],
+        "skill_ids": [
+          "3d-dna/calder2-subcompartment"
+        ],
+        "last_verified_at": "2026-08-07T10:00:25.023378",
+        "tool_candidates": []
+      },
+      {
+        "environment": "bio_porec",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_porec",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "dorado",
+          "modkit",
+          "samtools",
+          "htslib",
+          "pigz",
+          "bedtools",
+          "deeptools",
+          "cphasing-rs",
+          "cooler"
+        ],
+        "skill_ids": [
+          "epigenomics/methylation/aporec-methylation-workflow"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "bio_svim_asm",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_svim_asm",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "svim-asm",
+          "minimap2",
+          "samtools",
+          "bcftools"
+        ],
+        "skill_ids": [
+          "genomics/assembly-variant-svim-asm"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "bio_manta",
+        "status": "broken",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+        "prefix_exists": true,
+        "language": "bash",
+        "packages": [
+          "manta",
+          "samtools",
+          "bcftools"
+        ],
+        "skill_ids": [
+          "genomics/wgs-manta-sv"
+        ],
+        "last_verified_at": "2026-08-07T14:32:20.900207",
+        "tool_candidates": [
+          {
+            "tool": "bcftools",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/bcftools",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/bcftools",
+            "is_file": true,
+            "executable": true
+          },
+          {
+            "tool": "python",
+            "path": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/python",
+            "realpath": "/public/home/liusiqi/anaconda3/envs/bio_manta/bin/python",
+            "is_file": true,
+            "executable": true
+          }
+        ]
+      },
+      {
+        "environment": "gp_waiter",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/gp_waiter",
+        "prefix_exists": false,
+        "language": "python",
+        "packages": [
+          "pytorch",
+          "numpy",
+          "pandas",
+          "scikit-learn"
+        ],
+        "skill_ids": [
+          "crop-breeding/crop-gp-waiter-transformer"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "grapepan_tools",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/grapepan_tools",
+        "prefix_exists": false,
+        "language": "shell",
+        "packages": [
+          "bcftools",
+          "vcftools",
+          "htslib",
+          "samtools",
+          "bedtools",
+          "plink",
+          "plink2"
+        ],
+        "skill_ids": [
+          "crop-breeding/crop-pangenome-sv-genomic-selection"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "popgen_gwas",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/popgen_gwas",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "bedtools",
+          "LDBlockShow",
+          "ShowLDSVG",
+          "python"
+        ],
+        "skill_ids": [
+          "population-genetics/gwas-ldblock-candidate-region"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "popgen_gwas_r",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/popgen_gwas_r",
+        "prefix_exists": false,
+        "language": "r",
+        "packages": [
+          "R",
+          "CMplot",
+          "qqman"
+        ],
+        "skill_ids": [
+          "population-genetics/gwas-manhattan-qq-plot"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      },
+      {
+        "environment": "bio_bcftools",
+        "status": "registered",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_bcftools",
+        "prefix_exists": false,
+        "language": "bash",
+        "packages": [
+          "bcftools",
+          "samtools",
+          "htslib"
+        ],
+        "skill_ids": [
+          "genomics/wgs-bcftools-snp-indel"
+        ],
+        "last_verified_at": "",
+        "tool_candidates": []
+      }
+    ],
+    "registered_tools": {},
+    "bounded_scope": "registered environment names × exact bin/tool names; no absence claim outside index",
+    "bcftools_match": {
+      "env": "bio_gatk",
+      "match_type": "exact",
+      "matched_packages": [
+        "bcftools"
+      ],
+      "matched_capabilities": [],
+      "missing_packages": [],
+      "missing_capabilities": [],
+      "record": {
+        "env": "bio_gatk",
+        "purpose": "Runtime for skill genomics/snpeff-annotation",
+        "language": "bash",
+        "packages": [
+          "gatk4",
+          "samtools",
+          "bcftools",
+          "picard",
+          "snpeff",
+          "openjdk"
+        ],
+        "capabilities": [
+          "haplotypecaller",
+          "gvcf",
+          "genomicsdb",
+          "hard-filtering",
+          "snpeff-annotation",
+          "snpeff-custom-db",
+          "ann-effect-summary",
+          "combinegvcfs"
+        ],
+        "healthcheck": "conda run -n bio_gatk bash -c 'SNPEFF_JAVA_HOME=\"${SNPEFF_JAVA_HOME:-}\"; if [ -z \"$SNPEFF_JAVA_HOME\" ] && [ -n \"${BIO_SOURCE_INSTALL_DIR:-}\" ] && [ -x \"${BIO_SOURCE_INSTALL_DIR}/temurin-21/bin/java\" ]; then SNPEFF_JAVA_HOME=\"${BIO_SOURCE_INSTALL_DIR}/temurin-21\"; fi; SNPEFF_JAR=$(find \"$CONDA_PREFIX/share\" -maxdepth 4 -type f -name snpEff.jar -print -quit); test -s \"$SNPEFF_JAR\" || exit 1; if [ -n \"$SNPEFF_JAVA_HOME\" ]; then test -x \"$SNPEFF_JAVA_HOME/bin/java\" || exit 1; \"$SNPEFF_JAVA_HOME/bin/java\" -jar \"$SNPEFF_JAR\" -version >/dev/null || exit 1; else command -v snpEff >/dev/null || exit 1; snpEff -version >/dev/null || exit 1; java -version >/dev/null || exit 1; SNPEFF_JAVA_HOME=$(dirname \"$(dirname \"$(command -v java)\")\"); fi; printf \"RESOLVED_ENV_PREFIX=%s\\nRESOLVED_SNPEFF_JAR=%s\\nRESOLVED_JAVA_HOME=%s\\n\" \"$CONDA_PREFIX\" \"$SNPEFF_JAR\" \"$SNPEFF_JAVA_HOME\"'",
+        "healthchecks_by_skill": {
+          "genomics/wgs-gatk-snp-indel": "conda run -n bio_gatk bash -c 'SNPEFF_JAVA_HOME=\"${SNPEFF_JAVA_HOME:-}\"; if [ -z \"$SNPEFF_JAVA_HOME\" ] && [ -n \"${BIO_SOURCE_INSTALL_DIR:-}\" ] && [ -x \"${BIO_SOURCE_INSTALL_DIR}/temurin-21/bin/java\" ]; then SNPEFF_JAVA_HOME=\"${BIO_SOURCE_INSTALL_DIR}/temurin-21\"; fi; SNPEFF_JAR=$(find \"$CONDA_PREFIX/share\" -maxdepth 4 -type f -name snpEff.jar -print -quit); test -s \"$SNPEFF_JAR\" || exit 1; if [ -n \"$SNPEFF_JAVA_HOME\" ]; then test -x \"$SNPEFF_JAVA_HOME/bin/java\" || exit 1; \"$SNPEFF_JAVA_HOME/bin/java\" -jar \"$SNPEFF_JAR\" -version >/dev/null || exit 1; else command -v snpEff >/dev/null || exit 1; snpEff -version >/dev/null || exit 1; java -version >/dev/null || exit 1; SNPEFF_JAVA_HOME=$(dirname \"$(dirname \"$(command -v java)\")\"); fi; printf \"RESOLVED_ENV_PREFIX=%s\\nRESOLVED_SNPEFF_JAR=%s\\nRESOLVED_JAVA_HOME=%s\\n\" \"$CONDA_PREFIX\" \"$SNPEFF_JAR\" \"$SNPEFF_JAVA_HOME\"'",
+          "genomics/snpeff-annotation": "conda run -n bio_gatk bash -c 'SNPEFF_JAVA_HOME=\"${SNPEFF_JAVA_HOME:-}\"; if [ -z \"$SNPEFF_JAVA_HOME\" ] && [ -n \"${BIO_SOURCE_INSTALL_DIR:-}\" ] && [ -x \"${BIO_SOURCE_INSTALL_DIR}/temurin-21/bin/java\" ]; then SNPEFF_JAVA_HOME=\"${BIO_SOURCE_INSTALL_DIR}/temurin-21\"; fi; SNPEFF_JAR=$(find \"$CONDA_PREFIX/share\" -maxdepth 4 -type f -name snpEff.jar -print -quit); test -s \"$SNPEFF_JAR\" || exit 1; if [ -n \"$SNPEFF_JAVA_HOME\" ]; then test -x \"$SNPEFF_JAVA_HOME/bin/java\" || exit 1; \"$SNPEFF_JAVA_HOME/bin/java\" -jar \"$SNPEFF_JAR\" -version >/dev/null || exit 1; else command -v snpEff >/dev/null || exit 1; snpEff -version >/dev/null || exit 1; java -version >/dev/null || exit 1; SNPEFF_JAVA_HOME=$(dirname \"$(dirname \"$(command -v java)\")\"); fi; printf \"RESOLVED_ENV_PREFIX=%s\\nRESOLVED_SNPEFF_JAR=%s\\nRESOLVED_JAVA_HOME=%s\\n\" \"$CONDA_PREFIX\" \"$SNPEFF_JAR\" \"$SNPEFF_JAVA_HOME\"'"
+        },
+        "status": "success",
+        "notes": "RESOLVED_ENV_PREFIX=/public/home/liusiqi/anaconda3/envs/bio_gatk\nRESOLVED_SNPEFF_JAR=/public/home/liusiqi/anaconda3/envs/bio_gatk/share/snpeff-5.3.0a-0/snpEff.jar\nRESOLVED_JAVA_HOME=/public/home/liusiqi/03.毕设/source_tools/temurin-21",
+        "skill_ids": [
+          "genomics/wgs-gatk-snp-indel",
+          "genomics/snpeff-annotation"
+        ],
+        "bound_tools": [],
+        "registered_at": "2026-07-03T19:29:44.039867",
+        "last_verified_at": "2026-09-17T16:29:01.840651"
+      }
+    }
+  },
+  "real_process": {
+    "verified": true,
+    "environment": "bio_gatk",
+    "tool": {
+      "path": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+      "sha256": "3b547a00e95811dbad702ce0bc3f7858f4646cc5d6e02d995b3fb55adba87b64",
+      "size": 1457280
+    },
+    "version_output": "bcftools 1.24\nUsing htslib 1.23.1\nCopyright (C) 2026 Genome Research Ltd.\nLicense GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.",
+    "query_command": "#!/bin/bash\nset -euo pipefail\ncd /tmp/biomind-gwas-environment-zi8n_krp\nexec /public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools query -l '/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz'\n",
+    "runtime_binding_manifest": {
+      "schema_version": 1,
+      "action_id": "audit-bcftools",
+      "plan_id": "audit-only",
+      "step_id": "sample-list",
+      "selected_skill_id": "",
+      "execution_capability_id": "framework.generic.execute",
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "scope": "current_action",
+      "bindings": [],
+      "manifest_hash": "sha256:dca532bc31abf43772051f910cea0b44bc67f399c78d4591bbeea3f5a88e600c"
+    },
+    "approval_identity": {
+      "schema_version": 1,
+      "generated_script_sha256": "1edbf0d7ad604769899ce22ffee92fdf84dca066d67c9518e2688a1119a1d712",
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "runtime_env_manifest_hash": "sha256:dca532bc31abf43772051f910cea0b44bc67f399c78d4591bbeea3f5a88e600c",
+      "artifact_env_manifest_hash": "sha256:f44d085d57a95cef31eaf08d6bd5664d23d633708d2387e5ed6baab8f600860f",
+      "execution_policy_manifest_hash": "sha256:95ab0aad786567db4f4d37e6efde3cb0e4fbe07558777cb6a269131f8c327603",
+      "working_directory": "/tmp/biomind-gwas-environment-zi8n_krp",
+      "approval_identity_hash": "sha256:c127f4faf234dd356e0845c3d95903c582eef94850f2b8290f120201b41b5602"
+    },
+    "approval_scope": "synthetic audit approval identity, not original user approval; no UI/provider/Commit path exercised",
+    "actual_runner": "execution.executor.run_script_path",
+    "process_env": {
+      "PATH": "/usr/bin:/bin",
+      "LC_ALL": "C",
+      "TMPDIR": "/tmp/biomind-gwas-environment-zi8n_krp"
+    },
+    "returncode": 0,
+    "stderr": "",
+    "sample_count": 215,
+    "samples": [
+      "GA0001",
+      "GA0002",
+      "GA0003",
+      "GA0004",
+      "GA0005",
+      "GA0006",
+      "GA0007",
+      "GA0008",
+      "GA0009",
+      "GA0010",
+      "GA0011",
+      "GA0012",
+      "GA0013",
+      "GA0014",
+      "GA0015",
+      "GA0016",
+      "GA0017",
+      "GA0018",
+      "GA0019",
+      "GA0020",
+      "GA0021",
+      "GA0022",
+      "GA0023",
+      "GA0024",
+      "GA0025",
+      "GA0026",
+      "GA0027",
+      "GA0028",
+      "GA0029",
+      "GA0030",
+      "GA0031",
+      "GA0032",
+      "GA0033",
+      "GA0034",
+      "GA0035",
+      "GA0036",
+      "GA0037",
+      "GA0038",
+      "GA0039",
+      "GA0040",
+      "GA0041",
+      "GA0042",
+      "GA0043",
+      "GA0044",
+      "GA0045",
+      "GA0046",
+      "GA0047",
+      "GA0048",
+      "GA0049",
+      "GA0050",
+      "GA0051",
+      "GA0052",
+      "GA0053",
+      "GA0054",
+      "GA0055",
+      "GA0056",
+      "GA0057",
+      "GA0058",
+      "GA0059",
+      "GA0060",
+      "GA0061",
+      "GA0062",
+      "GA0063",
+      "GA0064",
+      "GA0065",
+      "GA0066",
+      "GA0067",
+      "GA0068",
+      "GA0069",
+      "GA0070",
+      "GA0071",
+      "GA0072",
+      "GA0073",
+      "GA0074",
+      "GA0075",
+      "GA0076",
+      "GA0077",
+      "GA0078",
+      "GA0079",
+      "GA0080",
+      "GA0081",
+      "GA0082",
+      "GA0083",
+      "GA0084",
+      "GA0085",
+      "GA0086",
+      "GA0087",
+      "GA0088",
+      "GA0089",
+      "GA0090",
+      "GA0091",
+      "GA0092",
+      "GA0093",
+      "GA0094",
+      "GA0095",
+      "GA0096",
+      "GA0097",
+      "GA0098",
+      "GA0099",
+      "GA0100",
+      "GA0101",
+      "GA0102",
+      "GA0103",
+      "GA0104",
+      "GA0105",
+      "GA0106",
+      "GA0107",
+      "GA0108",
+      "GA0109",
+      "GA0110",
+      "GA0111",
+      "GA0112",
+      "GA0113",
+      "GA0114",
+      "GA0115",
+      "GA0116",
+      "GA0117",
+      "GA0118",
+      "GA0119",
+      "GA0120",
+      "GA0121",
+      "GA0122",
+      "GA0123",
+      "GA0124",
+      "GA0125",
+      "GA0126",
+      "GA0127",
+      "GA0128",
+      "GA0129",
+      "GA0130",
+      "GA0131",
+      "GA0132",
+      "GA0133",
+      "GA0134",
+      "GA0135",
+      "GA0136",
+      "GA0137",
+      "GA0138",
+      "GA0139",
+      "GA0140",
+      "GA0141",
+      "GA0142",
+      "GA0143",
+      "GA0144",
+      "GA0145",
+      "GA0146",
+      "GA0147",
+      "GA0148",
+      "GA0149",
+      "GA0150",
+      "GA0151",
+      "GA0152",
+      "GA0153",
+      "GA0154",
+      "GA0155",
+      "GA0156",
+      "GA0157",
+      "GA0158",
+      "GA0159",
+      "GA0160",
+      "GA0161",
+      "GA0162",
+      "GA0163",
+      "GA0164",
+      "GA0165",
+      "GA0166",
+      "GA0167",
+      "GA0168",
+      "GA0169",
+      "GA0170",
+      "GA0171",
+      "GA0172",
+      "GA0173",
+      "GA0174",
+      "GA0175",
+      "GA0176",
+      "GA0177",
+      "GA0178",
+      "GA0179",
+      "GA0180",
+      "GA0181",
+      "GA0182",
+      "GA0183",
+      "GA0184",
+      "GA0185",
+      "GA0186",
+      "GA0187",
+      "GA0188",
+      "GA0189",
+      "GA0190",
+      "GA0191",
+      "GA0192",
+      "GA0193",
+      "GA0194",
+      "GA0195",
+      "GA0196",
+      "GA0197",
+      "GA0198",
+      "GA0199",
+      "GA0200",
+      "GA0201",
+      "GA0202",
+      "GA0203",
+      "GA0204",
+      "GA0205",
+      "GA0206",
+      "GA0207",
+      "GA0208",
+      "GA0209",
+      "GA0210",
+      "GA0211",
+      "GA0212",
+      "GA0213",
+      "GA0214",
+      "GA0215"
+    ],
+    "sample_list_sha256": "15139c9237b91c4fbca6daf7a3908d70ca95b30d541bc3db44bc7adcf05ab88c",
+    "approval_drift_rejected": "ACTION_APPROVAL_IDENTITY_DRIFT: {\"approved_identity_hash\":\"sha256:c127f4faf234dd356e0845c3d95903c582eef94850f2b8290f120201b41b5602\",\"changed_fields\":[\"generated_script_sha256\"],\"drift\":{\"generated_script_sha256\":{\"approved\":\"1edbf0d7ad604769899ce22ffee92fdf84dca066d67c9518e2688a1119a1d712\",\"observed\":\"changed\"}},\"observed_identity_hash\":\"sha256:c127f4faf234dd356e0845c3d95903c582eef94850f2b8290f120201b41b5602\"}",
+    "registry_unchanged": true,
+    "input": {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz",
+      "sha256": "0f9745d9e931a353ee61a55c577dbb8eb5196263b4bacb0e79e7a9450ee76ccc",
+      "size": 759180760
+    },
+    "boundary": "existing PM candidate+readonly version -> explicit immutable generic action -> approval hash validation -> real runner/query; automatic Consultant discovery remains broken; not complete GWAS"
+  },
+  "source_files": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/bio_agents.py",
+      "sha256": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+      "size": 2717517
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/bio_agents.py",
+      "sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9",
+      "size": 2733075
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/package_manager.py",
+      "sha256": "9028f0fc2d80d57aed657bd18743722ca872a90fc321f1fe3065df3ec86c624d",
+      "size": 48070
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/package_manager.py",
+      "sha256": "73694e758960b3c71286d61cedc17c782b6c11ebeede3e964e41194f888093b5",
+      "size": 48334
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/skill_manager.py",
+      "sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+      "size": 147587
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/skill_manager.py",
+      "sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+      "size": 147988
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/phase_subgraph.py",
+      "sha256": "635c381be44cf3d152b44a7a04744c79c4de591ba6ece7d33384ed5b7af21392",
+      "size": 60966
+    }
+  ],
+  "imported_frozen_modules": {
+    "agent_core": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "agent_core.managed_artifacts": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/managed_artifacts.py",
+      "sha256": "d2b489a0ffa5c3fb9332ca085d34d97e12c1d262a786d4b9e2d67e49c61213e8",
+      "size": 102067
+    },
+    "agent_core.plan_bindings": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/plan_bindings.py",
+      "sha256": "6f4348a4c08577ea19d30f3a9d6c2ccdb2429a58512d623e447f87b4069536f6",
+      "size": 98944
+    },
+    "agent_core.execution_authority": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/execution_authority.py",
+      "sha256": "2ab26ebe38dae92011956d653a896bfc0f0f7ad55dcce7b4bd7a92a08c31239d",
+      "size": 4411
+    },
+    "agent_core.candidate_repair_policy": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/candidate_repair_policy.py",
+      "sha256": "45bb6ee3aff8c2135ece783981c33493921226aec96a30a98b739bbac9502af3",
+      "size": 2105
+    },
+    "agent_core.task_spec": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/task_spec.py",
+      "sha256": "71aea8c9b11f8180d4c7671b237bc4f8eb9c7733977acd4495cb7ff552b3d059",
+      "size": 257661
+    },
+    "agent_core.state_contract_store": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/state_contract_store.py",
+      "sha256": "834b87e246fe1d27af8f797a5c39e9f33c6410d7b565d3b4c1ec78bd72ddec28",
+      "size": 14884
+    },
+    "agent_core.phase_timing": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/phase_timing.py",
+      "sha256": "59b69c848c2f05a8db568a6fe420b69771292d8173d0b4420db1aee3750b984d",
+      "size": 1485
+    },
+    "agent_core.runtime_evidence": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/runtime_evidence.py",
+      "sha256": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424",
+      "size": 24427
+    },
+    "agent_core.active_state": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/active_state.py",
+      "sha256": "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105",
+      "size": 10940
+    },
+    "agent_core.recovery_contract": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/recovery_contract.py",
+      "sha256": "34a7cd4631ce4f3f68cd342006ed6c7dc5e4349922915d821b991467dfc0a13e",
+      "size": 1210
+    },
+    "agent_core.plan_contract": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/plan_contract.py",
+      "sha256": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+      "size": 99011
+    },
+    "agent_core.workspace_attestation": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workspace_attestation.py",
+      "sha256": "cca7537f7641f3388970395484618b0b4e1922af35655f90f2788afebf2d3f67",
+      "size": 97299
+    },
+    "agent_core.plan_tracker": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/plan_tracker.py",
+      "sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28",
+      "size": 575257
+    },
+    "agent_core.workflow.phase_archive": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/phase_archive.py",
+      "sha256": "7a3587589f52db7f51435e277928204120cf55c1bccdf51be7ab577be3c538e0",
+      "size": 21166
+    },
+    "agent_core.workflow.step_worker": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/step_worker.py",
+      "sha256": "ce816aceee63691beaa56d2a4463679ab815d4dadc63d45f145fab2fb0e8478d",
+      "size": 26490
+    },
+    "agent_core.workflow.pi_rpc": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/pi_rpc.py",
+      "sha256": "14747444e33ef98d1db433c8f21567f736c439b62406afcd92026a91cca13e88",
+      "size": 37401
+    },
+    "agent_core.workflow.outcomes": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/outcomes.py",
+      "sha256": "efc6ff0ec02814749b65c634830f1164ccfb8c5e81dd30c7b093a96c5b1022a8",
+      "size": 26262
+    },
+    "agent_core.workflow.typed_node": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/typed_node.py",
+      "sha256": "41a87dee3256ecb4f1dfc7bca05b91279413e32ea548882db82b38b67f57b1c2",
+      "size": 4286
+    },
+    "agent_core.step_effects": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/step_effects.py",
+      "sha256": "565d06037d3f68b7818f3fced964066109c3836be3e2420abf5bf6445ee3cfa2",
+      "size": 175877
+    },
+    "agent_core.completion_gate": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/completion_gate.py",
+      "sha256": "aaa7287807d27f1da83570c37025569f3ea995d97a6437b0d4ededd21b25189d",
+      "size": 155015
+    },
+    "agent_core.context_lineage": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/context_lineage.py",
+      "sha256": "5e66bc3ca1b6275dabdcc153281640167ac351cfc871e6e95fbef713813adef8",
+      "size": 296646
+    },
+    "agent_core.root_cause": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/root_cause.py",
+      "sha256": "fa3291f87291777cc51ea2537c171ffcc981ae408836ce0769e69c1d592e9a23",
+      "size": 69172
+    },
+    "agent_core.controller_audit": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/controller_audit.py",
+      "sha256": "ba8f244a415ddd7cc29be9042918c5f39cfc35728dce25599a83394830e6dba3",
+      "size": 40196
+    },
+    "agent_core.diagnostics": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/diagnostics.py",
+      "sha256": "3be6dcf23934f0ce44de2aaa4577861b48b35919c9dd634876eeef4f7e80b029",
+      "size": 126798
+    },
+    "agent_core.recovery": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/recovery.py",
+      "sha256": "0b57dfee1469f7545a871d13fe12af63004da80eccc326279dd0353c5ca6049f",
+      "size": 288508
+    },
+    "agent_core.genomics_contig_parser": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/genomics_contig_parser.py",
+      "sha256": "2c5a3521736ee808598a5c0a9252a2227611f90441d6537e0424b424e98c3423",
+      "size": 15989
+    },
+    "agent_core.evidence_projection": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/evidence_projection.py",
+      "sha256": "abae8a30477826ece6b4583e256e5e202176016b3384236018205e00f59bc6ba",
+      "size": 16995
+    },
+    "agent_core.semantic_completion": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/semantic_completion.py",
+      "sha256": "7943675b991094fd1fded34a07be8ab5c8e4f783eb4ed33b0c0161ecb768a27d",
+      "size": 84288
+    },
+    "agent_core.workflow.commit_step": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/commit_step.py",
+      "sha256": "5f7eae758fc308447d3b013d8cd28debc87d72a28fd6788f551fcb676ec8a1e5",
+      "size": 33146
+    },
+    "agent_core.state": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/state.py",
+      "sha256": "157d4da1da6c483abb2afa32935cc289e14e15e203b164265888e70b502e5b10",
+      "size": 9611
+    },
+    "agent_core.approved_resource_locator": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/approved_resource_locator.py",
+      "sha256": "9ea558583c7b344ed77ddf24341d0d4299c0b4b77d0503b5742c8f1fd917b852",
+      "size": 2890
+    },
+    "agent_core.action_runtime": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/action_runtime.py",
+      "sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d",
+      "size": 51778
+    },
+    "agent_core.workflow.runtime_evidence_recovery": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/runtime_evidence_recovery.py",
+      "sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620",
+      "size": 63336
+    },
+    "agent_core.workflow.runtime_recovery_reporting": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/runtime_recovery_reporting.py",
+      "sha256": "d35947cbf386f4a934ca4a34fd071bb290e469c260617bb0c49aebfb9945e969",
+      "size": 34318
+    },
+    "agent_core.workflow.inspection_stop": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/inspection_stop.py",
+      "sha256": "726e7a399ad8e40b7a9000df8e97650435f1c675b09eb40ef16edc436ba7a512",
+      "size": 38069
+    },
+    "agent_core.workflow.managed_stop": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/managed_stop.py",
+      "sha256": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+      "size": 82875
+    },
+    "agent_core.workflow.runtime_graph": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/runtime_graph.py",
+      "sha256": "94a54d08572f1d2dd675134755551d0c95e3207f1c63eca17059c9e5b7be1dd2",
+      "size": 18087
+    },
+    "agent_core.workflow.verifier": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/verifier.py",
+      "sha256": "6bb3459a9933dd294eb16109af226ed5a296d4bd626065054f5cff6d981df9ab",
+      "size": 23415
+    },
+    "agent_core.workflow.candidate_repair": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/candidate_repair.py",
+      "sha256": "88df1ad82e1d7ed0a22f097c6afabab1f410e251a3933d709f6b04d54e450239",
+      "size": 32819
+    },
+    "agent_core.workflow.scoped_context": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/scoped_context.py",
+      "sha256": "d812ae23048fbd06a0c549d17626cb91aff8ab6570775bf998be61bc3cacbde4",
+      "size": 15722
+    },
+    "agent_core.workflow.stage_contracts": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/stage_contracts.py",
+      "sha256": "9397dc85e2d372ae545415cf2a377dd597f76fe6580f9801e39101c45b168248",
+      "size": 57984
+    },
+    "agent_core.workflow.generate_handoff": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/generate_handoff.py",
+      "sha256": "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc",
+      "size": 40678
+    },
+    "agent_core.workflow.execution": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/execution.py",
+      "sha256": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+      "size": 76933
+    },
+    "agent_core.workflow.inspection_evidence": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/inspection_evidence.py",
+      "sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84",
+      "size": 45987
+    },
+    "agent_core.workflow.recovery_projection": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/recovery_projection.py",
+      "sha256": "5549ae23a6a38f78efccad787b09ebcef66d4685afe11f7a6844be2070ce4f94",
+      "size": 96375
+    },
+    "agent_core.workflow.recovery_runtime": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/recovery_runtime.py",
+      "sha256": "9b0b4f08cf902c370631d0c3a79c019444203bf57c9da29da4cdeb2d1d657825",
+      "size": 47149
+    },
+    "agent_core.committed_observations": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/committed_observations.py",
+      "sha256": "17a02c12d0323f5bc1e74f97ff90362866e1bfe68e5935693c0382816a138884",
+      "size": 7165
+    },
+    "agent_core.workflow.final_audit": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/final_audit.py",
+      "sha256": "05f7564381653aaebb73051b1d91ac6e7c14850fbf778a5559c431fe1fd0717b",
+      "size": 16591
+    },
+    "agent_core.workflow": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/workflow/__init__.py",
+      "sha256": "53c2997ceadcc125740b6e42ff4dc9380cdccafc0c337882d4e843909976e585",
+      "size": 4102
+    },
+    "package_manager": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/package_manager.py",
+      "sha256": "73694e758960b3c71286d61cedc17c782b6c11ebeede3e964e41194f888093b5",
+      "size": 48334
+    },
+    "execution.profiling": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/execution/profiling.py",
+      "sha256": "d73e89dbc1c92bf51c905db447226992cebc9528d0b910791a2cf8ae1faafba5",
+      "size": 89359
+    },
+    "execution.runtime_contract": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/execution/runtime_contract.py",
+      "sha256": "fa410e2dfd8f59614c44e9de924e5e65c61a65217f989b57da6109efb1c083c2",
+      "size": 4920
+    },
+    "execution.shell_safety": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/execution/shell_safety.py",
+      "sha256": "7cdf784a7a4510b2667aff9b3fa596430694cc5e9fdf2c28d049dc751d34648a",
+      "size": 6865
+    },
+    "agent_core.cli_display": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/cli_display.py",
+      "sha256": "59ef61857b3c8a23479e45e0023c2afe8c8f970b211b31a71b027a597c1ff15d",
+      "size": 30981
+    },
+    "execution.executor": {
+      "path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/execution/executor.py",
+      "sha256": "b83a08f98b96b8c64175ae21f321af43a72541b64178905af73fe4da6ff6d756",
+      "size": 47773
+    }
+  }
+}

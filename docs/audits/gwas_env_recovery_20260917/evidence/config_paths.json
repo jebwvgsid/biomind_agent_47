@@ -1,0 +1,15 @@
+{
+  "source": "/public/home/liusiqi/03.毕设/Biomind_v1/.env",
+  "allowlisted_fields": {
+    "BIO_SOFTWARE_ROOT": "/public/home/liusiqi/03.毕设/agent_shim",
+    "BIO_SOURCE_INSTALL_DIR": "/public/home/liusiqi/03.毕设/source_tools",
+    "ANACONDA_ROOT": "/public/home/liusiqi/anaconda3"
+  },
+  "absent_allowlisted_fields": [
+    "SCHEMA2_CONTEXT_COMPACTION_ENABLED",
+    "SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS",
+    "SCHEMA2_CONTEXT_HEADROOM_TOKENS",
+    "SCHEMA2_CONTEXT_LIMIT_TOKENS",
+    "SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS"
+  ]
+}

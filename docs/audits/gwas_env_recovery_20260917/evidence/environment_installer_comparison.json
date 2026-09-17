@@ -1,0 +1,107 @@
+{
+  "old_partial_match": {
+    "source": {
+      "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/bio_agents.py",
+      "line": 52584,
+      "file_sha256": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+      "method_sha256": "4226e663517ec6a75f71946963321a23ed5d20f6edfa9d62cc507864c49f9c1c"
+    },
+    "statement_line": 52814,
+    "calls": [
+      {
+        "language": "bash",
+        "packages": [
+          "bcftools",
+          "plink"
+        ],
+        "capabilities": [
+          "emmax-association"
+        ]
+      }
+    ],
+    "selected_default": "registered_candidate",
+    "candidate_message": "\n\n[ENVIRONMENT REUSE CANDIDATE]\n- Reuse and extend environment: registered_candidate\n- Missing packages: plink\n- Missing capabilities: emmax-association\n- Prefer extending this environment instead of creating a new one.\n"
+  },
+  "current_selection": {
+    "source": {
+      "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/bio_agents.py",
+      "line": 21495,
+      "file_sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9",
+      "method_sha256": "e4a7c00b698061bf79fcfefc2a542b006e48e56cb3824e748db1ba0948bfb8fe"
+    },
+    "statement_line": 21516,
+    "selected_target": "declared_missing",
+    "candidate_or_registered_reuse_calls": []
+  },
+  "get_runtime_env_same_condition": [
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "status": "verified",
+      "selected": "declared_missing",
+      "source": {
+        "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/skill_manager.py",
+        "line": 1767,
+        "file_sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+        "method_sha256": "9a41ef22379f0db90fecc9a93305142d9484501666823ed7b2c2302aa08b8a49"
+      }
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "status": "broken",
+      "selected": "declared_missing",
+      "source": {
+        "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/skill_manager.py",
+        "line": 1767,
+        "file_sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+        "method_sha256": "9a41ef22379f0db90fecc9a93305142d9484501666823ed7b2c2302aa08b8a49"
+      }
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+      "status": "registered",
+      "selected": "declared_missing",
+      "source": {
+        "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source/agent_core/skill_manager.py",
+        "line": 1767,
+        "file_sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+        "method_sha256": "9a41ef22379f0db90fecc9a93305142d9484501666823ed7b2c2302aa08b8a49"
+      }
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "status": "verified",
+      "selected": "registered_candidate",
+      "source": {
+        "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/skill_manager.py",
+        "line": 1769,
+        "file_sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+        "method_sha256": "8cf99f10122e3bbc7abff30320962f579556514b28aa3583e6c58a9e7a732161"
+      }
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "status": "broken",
+      "selected": "declared_missing",
+      "source": {
+        "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/skill_manager.py",
+        "line": 1769,
+        "file_sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+        "method_sha256": "8cf99f10122e3bbc7abff30320962f579556514b28aa3583e6c58a9e7a732161"
+      }
+    },
+    {
+      "snapshot": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+      "status": "registered",
+      "selected": "declared_missing",
+      "source": {
+        "file": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_env_recovery_20260917/current_source/agent_core/skill_manager.py",
+        "line": 1769,
+        "file_sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+        "method_sha256": "8cf99f10122e3bbc7abff30320962f579556514b28aa3583e6c58a9e7a732161"
+      }
+    }
+  ],
+  "classification": "Installer candidate discovery caller removed without equivalent automatic scoped-workorder replacement; not reached in GWAS incident",
+  "boundary": "AST real statements plus leaf candidate fixture, not full Installer/HITL graph; existing function library remains, production scoped caller does not invoke it",
+  "witness_sha256": "b2fe4520d6a781fb352fcf3563653ed5c89a700e83b2da34ed1379713474b0fe"
+}

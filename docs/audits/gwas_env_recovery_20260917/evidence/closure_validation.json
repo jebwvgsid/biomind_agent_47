@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "counts": {
+    "json": 33,
+    "tsv": 6,
+    "python": 12,
+    "links": 28,
+    "source_symbols": 43
+  },
+  "matrix_findings": 21,
+  "problems": [],
+  "scope": "artifact consistency and selected symbols only; not repaired scientific behavior"
+}

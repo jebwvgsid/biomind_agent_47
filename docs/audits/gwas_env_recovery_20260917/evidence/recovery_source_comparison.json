@@ -1,0 +1,110 @@
+{
+  "old": "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind_audit_exports/environment_binding_unified_20260917/prerequisite_source",
+  "current": "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+  "rows": [
+    {
+      "file": "agent_core/workflow/recovery_agent.py",
+      "old_sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6",
+      "current_sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6",
+      "file_identical": true,
+      "functions": {
+        "project_recovery_seed_for_provider": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "_context_budget_snapshot": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "RecoveryAgentLoop": {
+          "identical_ast": true,
+          "present_both": true
+        }
+      }
+    },
+    {
+      "file": "agent_core/workflow/recovery_node.py",
+      "old_sha256": "368729d753c29123a3081d29a39fe9962d4dd8305c083bc8380181114fe02328",
+      "current_sha256": "368729d753c29123a3081d29a39fe9962d4dd8305c083bc8380181114fe02328",
+      "file_identical": true,
+      "functions": {
+        "_initial_inherited_materials": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "_build_compaction_request": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "_run_investigation": {
+          "identical_ast": true,
+          "present_both": true
+        }
+      }
+    },
+    {
+      "file": "agent_core/workflow/context_compaction.py",
+      "old_sha256": "8ac0c9b67bbb6c054c0b58965e983f6900855fa178f369dc2fb7f082c3070392",
+      "current_sha256": "8ac0c9b67bbb6c054c0b58965e983f6900855fa178f369dc2fb7f082c3070392",
+      "file_identical": true,
+      "functions": {
+        "ContextBudgetPolicy": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "ReferenceTokenEstimator": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "prepare_compaction": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "measure_compactor_wire_tokens": {
+          "identical_ast": true,
+          "present_both": true
+        }
+      }
+    },
+    {
+      "file": "agent_core/workflow/recovery_tools.py",
+      "old_sha256": "ba16dae96997112ef488f8a90d89ba9fd219e8f7a9859d8a6d0e4a021c81fb5f",
+      "current_sha256": "ba16dae96997112ef488f8a90d89ba9fd219e8f7a9859d8a6d0e4a021c81fb5f",
+      "file_identical": true,
+      "functions": {
+        "build_recovery_inspection_registry": {
+          "identical_ast": true,
+          "present_both": true
+        },
+        "_evidence_read": {
+          "identical_ast": true,
+          "present_both": true
+        }
+      }
+    },
+    {
+      "file": "agent_core/workflow/inspection_evidence.py",
+      "old_sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84",
+      "current_sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84",
+      "file_identical": true,
+      "functions": {
+        "InspectionObjectReader": {
+          "identical_ast": true,
+          "present_both": true
+        }
+      }
+    },
+    {
+      "file": "agent_core/workflow/recovery_context.py",
+      "old_sha256": "2b870bc3034c9654506dcffe2dfe4b74d41a97a38670332434fcbd9d258c3aa4",
+      "current_sha256": "2b870bc3034c9654506dcffe2dfe4b74d41a97a38670332434fcbd9d258c3aa4",
+      "file_identical": true,
+      "functions": {
+        "RecoveryObservationStore": {
+          "identical_ast": true,
+          "present_both": true
+        }
+      }
+    }
+  ]
+}

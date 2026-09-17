@@ -1,0 +1,37 @@
+{
+  "current_stop_id": "managed-stop:a1c497e60c109ec6d00689d8f6d32539232486562d8b79e17faba15b70b06307",
+  "status": "failed",
+  "origin": {
+    "source_stage": "execute",
+    "source_owner": "GENERATED_ACTION",
+    "failure_id": "failure-132564c0631456ab03c4240c",
+    "failure_type": "execution_failed",
+    "error_code": "EXECUTION_FAILED",
+    "summary": "A launched command failed after immutable evidence persistence.",
+    "concerns": [],
+    "evidence_refs": [
+      "exec-attempt_79e2ff04f7dcfa103d11"
+    ],
+    "returncode": 0,
+    "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+    "process_fact_scope": "original causal execution; no scientific validity inferred"
+  },
+  "stop_reason": {
+    "error_code": "RECOVERY_SEED_CAPACITY_EXCEEDED",
+    "detail": "chars=32097 limit=32000",
+    "transport_receipt": {},
+    "failure_stage": "",
+    "no_progress_rounds": 0,
+    "model_turns": 0,
+    "tool_calls": 0,
+    "termination_reason": "",
+    "budget_receipt": {}
+  },
+  "recovery_usage": {
+    "scope": "unknown"
+  },
+  "scientific_completion": "not_completed",
+  "delivery": "complete",
+  "cli_text": "任务已停止 · failed\n已有 0 步正式提交，完成事实保留。\n当前步骤：只读检查正式输入与依赖可用性（尚未正式提交）。\n原始问题：脚本执行失败，退出码 0；具体原因尚未定位（EXECUTION_FAILED）。\n停止触发：已按记录的停止条件结束；具体触发细节见详情（RECOVERY_SEED_CAPACITY_EXCEEDED）。\n调查累计次数：未知（现有回执未提供完整范围）。\n文件交付：complete\n本次报告 report.md：/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-GWAS-008/medium/report.md\n本次报告 stage_status.tsv：/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-GWAS-008/medium/stage_status.tsv\n本次报告 reproduce.sh：/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-GWAS-008/medium/reproduce.sh\n下一步：先查看当前步骤的执行与核验详情，定位具体问题后再选择修复。",
+  "boundary": "Pure current receipt projection; no writer or original-session access."
+}

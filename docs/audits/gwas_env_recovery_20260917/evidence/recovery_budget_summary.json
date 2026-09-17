@@ -1,0 +1,520 @@
+{
+  "scope": "offline audit; original session never executed; original production source never edited",
+  "sandbox": "/tmp/biomind-recovery-budget-audit-ca_01bht",
+  "frozen_head": "82c27867d862ef32d657fbc6162c70d4bc06492c",
+  "actual_session_recovery_provider_calls": 0,
+  "hypothetical_exception": "Only isolated runtime RECOVERY_SEED_HARD_LIMIT_CHARS raised; real assemblers, budget core, archive and readers used; no SDK/network request",
+  "model_external_capacity": "UNVERIFIED; 200000 is application configuration only",
+  "input_integrity_checked_against_original": true,
+  "seed": {
+    "chars": 32097,
+    "estimated_tokens": 11061,
+    "sha256": "6cc4ed37aea1c457b87203fb752b9c4b0ee1af714a63620ff3e504077cce83cd",
+    "utf8_bytes": 32953
+  },
+  "seed_parts": {
+    "current_failure_lineage": {
+      "chars": 221,
+      "estimated_tokens": 74,
+      "sha256": "ff1a7c419dc0e791765ab2c85b8d0ae066eb7bdb3d68ddf7f79c304bc6f4efee",
+      "utf8_bytes": 221
+    },
+    "current_step": {
+      "chars": 761,
+      "estimated_tokens": 343,
+      "sha256": "58ed946f4860271734a5c91f91b3dc536e89ea6ea4e17874fa99cacc7f43aa78",
+      "utf8_bytes": 967
+    },
+    "dependencies": {
+      "chars": 2,
+      "estimated_tokens": 1,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "utf8_bytes": 2
+    },
+    "failure_packet": {
+      "chars": 10240,
+      "estimated_tokens": 3442,
+      "sha256": "3350e3426149a85d3aa9d99f51d85be1d9208da31930cda8bdbb08c3df59ae35",
+      "utf8_bytes": 10300
+    },
+    "inspection_manifest": {
+      "chars": 17250,
+      "estimated_tokens": 5750,
+      "sha256": "afba46c23cfd56f0c6671b1e09e5b8202652f7c6ed57c1592e36e7bb8cdeae97",
+      "utf8_bytes": 17250
+    },
+    "invocation_scope": {
+      "chars": 95,
+      "estimated_tokens": 32,
+      "sha256": "fd8b3029071a405f36dfbd1f2829754587759a5341a26ed10e6a413f215e8ade",
+      "utf8_bytes": 95
+    },
+    "schema_version": {
+      "chars": 1,
+      "estimated_tokens": 1,
+      "sha256": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+      "utf8_bytes": 1
+    },
+    "selected_skill_manifest": {
+      "chars": 712,
+      "estimated_tokens": 238,
+      "sha256": "c658767bf4f921ebed6c709ac51e51cc00a64efc2c159bb6190ab5a2155ef33b",
+      "utf8_bytes": 712
+    },
+    "task_semantic_slice": {
+      "chars": 2626,
+      "estimated_tokens": 1121,
+      "sha256": "5ff93200352cb650714b8ab765891515829a9de660d8ba923eff54f5d4ca7b7a",
+      "utf8_bytes": 3216
+    }
+  },
+  "message_parts": [
+    {
+      "index": 0,
+      "role": "system",
+      "content_chars": 11250,
+      "canonical_message_chars": 11345,
+      "sha256": "28ae73c2bae823ce50903da974057843dc6266c9a2d0f6fee7a707fcad17e8e1"
+    },
+    {
+      "index": 1,
+      "role": "human",
+      "content_chars": 32149,
+      "canonical_message_chars": 35106,
+      "sha256": "3599ef3045030d2b53574bd88aab9b61236aff85d6f0efd5f2bf1a1a54ac6097"
+    },
+    {
+      "index": 2,
+      "role": "human",
+      "content_chars": 4952,
+      "canonical_message_chars": 5254,
+      "sha256": "393408f05b4e24895a734acd7e556d64307af92484ac93afe61cb987b9ad1d7c"
+    },
+    {
+      "index": 3,
+      "role": "human",
+      "content_chars": 5977,
+      "canonical_message_chars": 6309,
+      "sha256": "7fbb8ad741947d10602164255cbcd95349cf6dc34fd3d97f56d26e6e9b9e40af"
+    },
+    {
+      "index": 4,
+      "role": "human",
+      "content_chars": 4343,
+      "canonical_message_chars": 4593,
+      "sha256": "c6a47a84d433f2899026b9978b761aa82d66249cbe97e0046c626a03bd94d967"
+    },
+    {
+      "index": 5,
+      "role": "human",
+      "content_chars": 6000,
+      "canonical_message_chars": 6337,
+      "sha256": "53e8a67b1c3f5b8badba11ec18bfe89bc47b34740672b23ee5a2eaf5238dd9bc"
+    },
+    {
+      "index": 6,
+      "role": "human",
+      "content_chars": 5204,
+      "canonical_message_chars": 5428,
+      "sha256": "8c682bfe65b920ba651bb17faadf34e5ad6a04f9841f2c82e7d735e3b65b7f18"
+    },
+    {
+      "index": 7,
+      "role": "human",
+      "content_chars": 827,
+      "canonical_message_chars": 939,
+      "sha256": "bca7e17536be7e6be3ad40f5cb197fbc8a1da5808bc6de8c37e3679355101c64"
+    },
+    {
+      "index": 8,
+      "role": "human",
+      "content_chars": 834,
+      "canonical_message_chars": 946,
+      "sha256": "2d2c1734a86647b67c7762b6f50a6b02af733a4bc29457ce372e3da5b209d7c1"
+    },
+    {
+      "index": 9,
+      "role": "human",
+      "content_chars": 834,
+      "canonical_message_chars": 946,
+      "sha256": "1ce2e3d48800dc6eaf2a4e7e46e6b297003eec53e5c5cff95d2450d0fbfae539"
+    },
+    {
+      "index": 10,
+      "role": "human",
+      "content_chars": 7037,
+      "canonical_message_chars": 7715,
+      "sha256": "b0ab6c1423a0c5e253902a2190a8b0f8b83fe3f1a8ee44c7a02c4d2ba83e982a"
+    },
+    {
+      "index": 11,
+      "role": "human",
+      "content_chars": 12268,
+      "canonical_message_chars": 13419,
+      "sha256": "f2b2d233ad255dc29d160341f781d284188c8a46a2546e9311d726ed15f62971"
+    },
+    {
+      "index": 12,
+      "role": "human",
+      "content_chars": 2189,
+      "canonical_message_chars": 2434,
+      "sha256": "8151b25edab7091d0189801efc349cda42b7785ae5e9c4efea02d1689a7af49d"
+    },
+    {
+      "index": 13,
+      "role": "human",
+      "content_chars": 18752,
+      "canonical_message_chars": 20385,
+      "sha256": "d35b60f508e4640d817720630cfaf9742aa3456fa2b3c05925e9237c26f07b72"
+    },
+    {
+      "index": 14,
+      "role": "human",
+      "content_chars": 135297,
+      "canonical_message_chars": 147643,
+      "sha256": "64a98fa897893a654a3f03fb824fb11fe584ce673de62e424ff1f535369e22cd"
+    },
+    {
+      "index": 15,
+      "role": "human",
+      "content_chars": 1953,
+      "canonical_message_chars": 2166,
+      "sha256": "5052dd89320aa9ef79d2e2f50186661b0eb52d950f3cd57d7b1fdc7830c4855d"
+    }
+  ],
+  "message_count": 16,
+  "tool_count": 11,
+  "tool_schema_chars": 5382,
+  "complete_budget": {
+    "application_context_limit_tokens": 200000,
+    "cached_input_tokens": null,
+    "cached_tokens_count_toward_input": true,
+    "component_token_counts": {
+      "frozen_inputs": 12064,
+      "inherited_materials": 77117,
+      "local_messages": 1,
+      "pending_results": 1,
+      "provider_wrappers": 1,
+      "system": 3782,
+      "tool_schema": 1794
+    },
+    "compressor_prompt_overhead_tokens": 0,
+    "compressor_safe_input_tokens": null,
+    "effective_context_limit_tokens": 200000,
+    "estimated_input_tokens": 94760,
+    "estimation_margin_tokens": 4096,
+    "estimator_name": "mixed_script_reference_fallback",
+    "estimator_version": "ascii3-cjk1.25-other2-v1",
+    "exact_or_estimated": "estimated",
+    "hard_block": false,
+    "known_provider_context_limit_tokens": null,
+    "output_reserve_tokens": 8192,
+    "overhead_max_tokens": 23883,
+    "overhead_min_tokens": 0,
+    "policy_version": "schema2-context-budget-v1",
+    "remaining_safe_tokens": 92952,
+    "safe_input_tokens": 187712,
+    "safety_headroom_tokens": 2048,
+    "schema_version": 1,
+    "should_compact": false,
+    "target_ratio": 0.65,
+    "target_tokens": 130000,
+    "trigger_ratio": 0.85,
+    "trigger_tokens": 170000,
+    "uncertainty_tokens": 23883
+  },
+  "raw_manifest_groups": {
+    "managed_artifacts": {
+      "rows": 9,
+      "canonical_item_chars": 6113
+    },
+    "opaque_reference": {
+      "rows": 1,
+      "canonical_item_chars": 488
+    },
+    "state_contract_inspection": {
+      "rows": 11,
+      "canonical_item_chars": 10399
+    },
+    "causal_failure_packet": {
+      "rows": 1,
+      "canonical_item_chars": 549
+    },
+    "skill_access_service": {
+      "rows": 5,
+      "canonical_item_chars": 2917
+    }
+  },
+  "raw_within_row_equal_duplicate_fields": {
+    "readable": {
+      "rows": 20,
+      "canonical_field_chars_excluding_comma": 303
+    },
+    "allowed_tools": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 363
+    },
+    "plan_id": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 407
+    },
+    "source_object_id": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 493
+    },
+    "step_id": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 264
+    },
+    "task_id": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 330
+    },
+    "unavailable_reason": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 334
+    }
+  },
+  "provider_projected_manifest_groups": {
+    "managed_artifacts": {
+      "rows": 9,
+      "canonical_item_chars": 4988
+    },
+    "opaque_reference": {
+      "rows": 1,
+      "canonical_item_chars": 387
+    },
+    "state_contract_inspection": {
+      "rows": 11,
+      "canonical_item_chars": 9096
+    },
+    "causal_failure_packet": {
+      "rows": 1,
+      "canonical_item_chars": 424
+    },
+    "skill_access_service": {
+      "rows": 5,
+      "canonical_item_chars": 2327
+    }
+  },
+  "provider_projected_within_row_equal_duplicate_fields": {
+    "readable": {
+      "rows": 20,
+      "canonical_field_chars_excluding_comma": 303
+    },
+    "allowed_tools": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 363
+    },
+    "source_object_id": {
+      "rows": 11,
+      "canonical_field_chars_excluding_comma": 493
+    },
+    "unavailable_reason": {
+      "rows": 3,
+      "canonical_field_chars_excluding_comma": 150
+    }
+  },
+  "raw_reference_matrix_measurement": "27 row matrix describes preprojection registry manifest; not seed character counts",
+  "projected_manifest_chars": 17250,
+  "manifest_unique_ref_count": 27,
+  "body_parts": {
+    "plan": {
+      "canonical_body_chars": 134567,
+      "fields": {
+        "approved_plan": 134303,
+        "schema_version": 1,
+        "scope": 218
+      },
+      "approved_plan_fields": {
+        "artifact_allocation_mapping": 1547,
+        "artifact_usage": 8126,
+        "base_task_semantic_hash": 73,
+        "compiled_dataflow": 33596,
+        "generated_from_task_revision": 1,
+        "plan_artifacts": 18126,
+        "plan_compilation_receipt": 9480,
+        "plan_dataflow_receipt": 734,
+        "plan_document": 1251,
+        "plan_id": 27,
+        "plan_resource_bindings": 31449,
+        "plan_revision": 1,
+        "plan_version": 9,
+        "selected_skill_ids": 225,
+        "steps": 27491,
+        "task_output_materializations": 1816
+      }
+    },
+    "task_context": {
+      "canonical_body_chars": 18014,
+      "fields": {
+        "accepted_consultant_handoff": 1786,
+        "schema_version": 1,
+        "scope": 218,
+        "task_spec": 15937
+      }
+    }
+  },
+  "plan_equal_subobjects_ge500chars": [
+    {
+      "sha256": "027900e7b8d343cb2a8cffff69ab20ae9d9d4caa859e243754e6a635d8aa9ff9",
+      "chars": 511,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.7",
+        "approved_plan.plan_resource_bindings.plan-artifact-235208a00ad359c015889230",
+        "approved_plan.plan_resource_bindings.plan.markers_tfam"
+      ]
+    },
+    {
+      "sha256": "a63cb773c844d82d8ecfa463c881f483a9e9dcb941653f91eb452171052228df",
+      "chars": 510,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.9",
+        "approved_plan.plan_resource_bindings.plan-artifact-38db30a57c72b4379b17f7af",
+        "approved_plan.plan_resource_bindings.plan.vcf_samples"
+      ]
+    },
+    {
+      "sha256": "abcf87a62bf30148835aa07e47d9be968bf51e98a91fd85d85c92f8fc8b39371",
+      "chars": 510,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.10",
+        "approved_plan.plan_resource_bindings.plan-artifact-4222a690c7ce84688e4630a7",
+        "approved_plan.plan_resource_bindings.plan.manht_input"
+      ]
+    },
+    {
+      "sha256": "6684756b7088653054cb10d208a4fa7d93e2207b3cce3c3dc4dd4c2393e015bd",
+      "chars": 522,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.11",
+        "approved_plan.plan_resource_bindings.plan-artifact-4e597dcf35f0699e7bcf9f8e",
+        "approved_plan.plan_resource_bindings.plan.sample_alignment_report"
+      ]
+    },
+    {
+      "sha256": "87092b899575d2063d0eb9327acf17ba5e55c6ea55740f61c80047eba35ab620",
+      "chars": 508,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.12",
+        "approved_plan.plan_resource_bindings.plan-artifact-52dfa2642a38801a3c666879",
+        "approved_plan.plan_resource_bindings.plan.q_samples"
+      ]
+    },
+    {
+      "sha256": "8eb360d30cb2735654317b689ef8ec67e312cbe28564708e1b6908309a67894f",
+      "chars": 516,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.13",
+        "approved_plan.plan_resource_bindings.plan-artifact-566070886c506b4b491bc250",
+        "approved_plan.plan_resource_bindings.plan.phenotype_samples"
+      ]
+    },
+    {
+      "sha256": "ffbdaa751deffd7ff3586c79efcbea19c9d3e0c23d0760f6aa1ad19b25b9769b",
+      "chars": 512,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.16",
+        "approved_plan.plan_resource_bindings.plan-artifact-77e8d72c35b4a7fc64155ed6",
+        "approved_plan.plan_resource_bindings.plan.qmatrix_emmax"
+      ]
+    },
+    {
+      "sha256": "a4b2aa61a81703cd110a72b80b8c967d800868d01ae1ef986a82095bd2c5b883",
+      "chars": 510,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.17",
+        "approved_plan.plan_resource_bindings.plan-artifact-788ed5b2a6f3e7c4281aff5e",
+        "approved_plan.plan_resource_bindings.plan.trait_emmax"
+      ]
+    },
+    {
+      "sha256": "e652096655721aca81c637fae39ea30679dd858a7cb9a333118f186cef7b25d8",
+      "chars": 516,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.18",
+        "approved_plan.plan_resource_bindings.plan-artifact-7fa141cb8c23cbecbdc99c38",
+        "approved_plan.plan_resource_bindings.plan.significant_sites"
+      ]
+    },
+    {
+      "sha256": "13043be4c6af199c230ec781e6042cef09f42b54ba696de1c237093b70d0bdc4",
+      "chars": 514,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.22",
+        "approved_plan.plan_resource_bindings.plan-artifact-d01d4be2d47a2a35c6d60565",
+        "approved_plan.plan_resource_bindings.plan.candidate_genes"
+      ]
+    },
+    {
+      "sha256": "afd2aec482499a473c6321beeea4b70010e8f437ca32cddc7806430204909f98",
+      "chars": 511,
+      "paths": [
+        "approved_plan.compiled_dataflow.resources.25",
+        "approved_plan.plan_resource_bindings.plan-artifact-e9317d9c100c3b98905c8fc2",
+        "approved_plan.plan_resource_bindings.plan.markers_tped"
+      ]
+    }
+  ],
+  "formal_read_summary": {
+    "read": 8,
+    "unavailable": 3,
+    "restart_same_bytes": true,
+    "wrong_attempt": {
+      "code": "INSPECTION_REF_SCOPE_MISMATCH",
+      "detail": "attempt_id",
+      "type": "InspectionEvidenceError"
+    },
+    "descriptor_tamper": [
+      {
+        "case": "revision",
+        "error": {
+          "code": "INSPECTION_OBJECT_REVISION_MISMATCH",
+          "detail": "",
+          "type": "InspectionEvidenceError"
+        }
+      },
+      {
+        "case": "tools",
+        "error": {
+          "code": "INSPECTION_TOOL_NOT_ALLOWED",
+          "detail": "",
+          "type": "InspectionEvidenceError"
+        }
+      },
+      {
+        "case": "digest",
+        "error": {
+          "code": "INSPECTION_REF_INDEX_MISMATCH",
+          "detail": "",
+          "type": "InspectionEvidenceError"
+        }
+      }
+    ]
+  },
+  "compactor_output_reserve_gap": {
+    "core_reserved_output": 8192,
+    "adapter_fallback_bound_max_tokens": 16000,
+    "source": "bio_agents.py:18194-18207; llm_kwargs:2640 has no max_tokens",
+    "sample_admitted_map_input": 187086,
+    "sample_with_possible_adapter_output": 203086,
+    "application_context": 200000,
+    "actual_provider_call": false
+  },
+  "externalized_read_gap": {
+    "archive_survives_restart": true,
+    "formal_readers_accept_archive_ref": false,
+    "code": "INSPECTION_REF_NOT_DECLARED",
+    "archive_ref": "phase-archive:sha256:926ddc01d68f0b07d2255f1694a1e2cd8d86f0c82359ea4d204f431458d95c83"
+  },
+  "production_imports_match_frozen": true,
+  "source_file_count": 411,
+  "witness_sha256": "1508a5643f0d874a8c4f90352961fabfcb355b2819a8ee604549252dc49ff0d4",
+  "witness_bootstrap_revision": {
+    "original_capture_witness_sha256": "25b57eeb20f84fefef4047afd7a887e0b2c31706a42ab3b89e2fc82e8e6c03e0",
+    "revised_witness_sha256": "1508a5643f0d874a8c4f90352961fabfcb355b2819a8ee604549252dc49ff0d4",
+    "change_scope": "stage/bootstrap source selection only; capture worker AST unchanged; evidence-pack CLI accepts --sandbox",
+    "validation": "new stage with historical /tmp reads denied; 78 recorded imported production modules have identical hashes; no capture/probe rerun",
+    "proof": "recovery_stage_rebuild.json"
+  }
+}

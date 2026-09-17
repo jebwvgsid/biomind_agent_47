@@ -1,0 +1,216 @@
+{
+  "matched_recorded_result": true,
+  "result": {
+    "status": "recovery",
+    "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+    "exit_code": 0,
+    "bindings": [
+      {
+        "artifact_id": "plan-artifact-52dfa2642a38801a3c666879",
+        "semantic_handle": "output.plan-artifact-52dfa2642a38801a3c666879",
+        "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/q.samples.txt",
+        "observed_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/q.samples.txt",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "constraint_origin": "IMPLEMENTATION_DETAIL",
+        "realization": "expected",
+        "format": "text",
+        "representation": "plain",
+        "content_valid": true,
+        "format_compatibility": "unproven"
+      },
+      {
+        "artifact_id": "plan-artifact-566070886c506b4b491bc250",
+        "semantic_handle": "output.plan-artifact-566070886c506b4b491bc250",
+        "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.samples.txt",
+        "observed_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.samples.txt",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "constraint_origin": "IMPLEMENTATION_DETAIL",
+        "realization": "expected",
+        "format": "text",
+        "representation": "plain",
+        "content_valid": true,
+        "format_compatibility": "unproven"
+      },
+      {
+        "artifact_id": "plan-artifact-84b40467fc84915cc3e36bd5",
+        "semantic_handle": "output.plan-artifact-84b40467fc84915cc3e36bd5",
+        "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check",
+        "observed_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "constraint_origin": "IMPLEMENTATION_DETAIL",
+        "realization": "expected",
+        "format": "directory",
+        "representation": "directory",
+        "content_valid": true,
+        "format_compatibility": "compatible"
+      },
+      {
+        "artifact_id": "plan-artifact-c2fefb6a80fc5e3281daa101",
+        "semantic_handle": "output.plan-artifact-c2fefb6a80fc5e3281daa101",
+        "expected_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/logs",
+        "observed_path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/logs",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "constraint_origin": "IMPLEMENTATION_DETAIL",
+        "realization": "expected",
+        "format": "directory",
+        "representation": "directory",
+        "content_valid": true,
+        "format_compatibility": "compatible"
+      }
+    ],
+    "violations": [
+      {
+        "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
+        "owner": "ARTIFACT_CONTRACT",
+        "route": "recovery",
+        "message": "The current-attempt artifact for output.plan-artifact-38db30a57c72b4379b17f7af exists but did not pass its content validation contract.",
+        "logical_artifact": "plan-artifact-38db30a57c72b4379b17f7af",
+        "expected_realization": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/vcf.samples.txt",
+        "observed_candidates": [
+          "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/vcf.samples.txt"
+        ],
+        "constraint_origin": "IMPLEMENTATION_DETAIL",
+        "validation_contract_id": "file_exists"
+      }
+    ],
+    "observed_candidates": [
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts",
+        "exists": true,
+        "artifact_kind": "directory",
+        "size": 8192,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "directory",
+        "representation": "directory",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check",
+        "exists": true,
+        "artifact_kind": "directory",
+        "size": 8192,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "directory",
+        "representation": "directory",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/dependency_status.tsv",
+        "exists": true,
+        "artifact_kind": "file",
+        "size": 398,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "text",
+        "representation": "plain",
+        "content_prefix_sha256": "114a18f2f41e54fa8355ab1aaf32b1934288818f73ab61c229ad82775c0a511e",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/gff3.head.txt",
+        "exists": true,
+        "artifact_kind": "file",
+        "size": 207,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "text",
+        "representation": "plain",
+        "content_prefix_sha256": "0f507bd14cd859161d08939db410bb65b7ea7b61c2c3f27f92e2c0e8d02323fd",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.head.txt",
+        "exists": true,
+        "artifact_kind": "file",
+        "size": 39,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "text",
+        "representation": "plain",
+        "content_prefix_sha256": "72176768533a9bdfb786ebb3383813ea9d47b4264b83334b4a7070bc10b4d378",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/phenotype.samples.txt",
+        "exists": true,
+        "artifact_kind": "file",
+        "size": 1498,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "text",
+        "representation": "plain",
+        "content_prefix_sha256": "ac2e1a2531a98628c5e25585b562fb4a0b64ca30757078ea2adff817c496b206",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/q.samples.txt",
+        "exists": true,
+        "artifact_kind": "file",
+        "size": 1935,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "text",
+        "representation": "plain",
+        "content_prefix_sha256": "d6e15feba6ccbb21c875efb14080d514728edbe2a6691cdcd9d4a02b614f0d72",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/qmatrix.head.txt",
+        "exists": true,
+        "artifact_kind": "file",
+        "size": 81,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "text",
+        "representation": "plain",
+        "content_prefix_sha256": "2edc291fd7e3485dac277fdfd133df086a16892b5e9331a6eabe5a09c45c2ca5",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/00.input_check/vcf.samples.txt",
+        "exists": true,
+        "artifact_kind": "file",
+        "size": 0,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": false,
+        "format": "",
+        "representation": "plain",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789648505/plan_artifacts/logs",
+        "exists": true,
+        "artifact_kind": "directory",
+        "size": 4096,
+        "mtime_ns": 1789649735000000000,
+        "ctime_ns": 1789649735000000000,
+        "content_valid": true,
+        "format": "directory",
+        "representation": "directory",
+        "attempt_id": "attempt_79e2ff04f7dcfa103d11",
+        "current_attempt_owned": true
+      }
+    ],
+    "fingerprint": "57ca25809ada5ba3070898d180fe5d5a38ea49a26ebc2512a9c6420c3c0f1220"
+  }
+}
