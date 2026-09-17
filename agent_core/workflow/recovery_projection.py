@@ -1222,10 +1222,16 @@ def _failure_identity(
     if source_kind == "execute_outcome":
         if outcome_type == "execution_failed":
             record = dict(payload.get("execution_record") or {})
+            validation_failed = any(
+                isinstance(value, Mapping) and value.get("passed") is False
+                for value in (record.get("validation"), payload.get("validation"), payload.get("validation_evidence"))
+            )
             return (
                 outcome_type,
                 str(payload.get("failure_owner") or "GENERATED_ACTION"),
-                str(record.get("error_code") or payload.get("error_code") or "EXECUTION_FAILED"),
+                str(record.get("failure_code") or record.get("error_code")
+                    or payload.get("failure_code") or payload.get("error_code")
+                    or ("VALIDATION_FAILED" if validation_failed else "EXECUTION_FAILED")),
                 True,
             )
         if outcome_type == "diagnostic_completed":

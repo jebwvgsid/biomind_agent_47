@@ -488,7 +488,8 @@ def build_managed_stop(task_id, values, durable, boundary):
         episode = _mapping(payload.get("recovery_episode_facts"))
         primary = _mapping(payload.get("primary_cause"))
         episode.setdefault("terminal_error", {"code": payload.get("error_code") or payload.get("reason_code") or payload.get("violation_code") or boundary["node"].upper() + "_" + str(outcome.get("type")).upper(),
-            "detail": payload.get("detail") or outcome.get("summary")})
+            "detail": payload.get("detail") or outcome.get("summary"),
+            "failure_stage": payload.get("failure_stage") or ""})
         value = build_inspection_stop(seed=seed, durable=durable, source=source or outcome, episode=episode,
             archive_ref=str(payload.get("recovery_archive_ref") or ""))
     value.update(producer=PRODUCER, status=boundary["status"], scope=fixed_scope, authority=_authority(durable),
@@ -553,7 +554,9 @@ def build_managed_stop(task_id, values, durable, boundary):
     if last_receipt in episodes:
         episodes = [last_receipt]
     value["recovery_usage"] = {"scope": "unknown"}
-    if len(episodes) == 1:
+    if value["stop_reason"].get("dispatch_status") == "not_started":
+        value["recovery_usage"] = {"scope": "current_admission", "turn_count": 0, "tool_call_count": 0}
+    elif len(episodes) == 1:
         business = episodes[0]["business_resume_state"]
         value["recovery_usage"] = {"scope": "last_admitted_episode", "incident_id": packet["incident_id"],
             "source_fingerprint": episodes[0].get("source_fingerprint"),

@@ -1746,6 +1746,7 @@ class Schema2RecoveryNode:
             }
         projection = None
         episode: dict[str, Any] = {}
+        failure_stage = "recovery.seed_projection"
 
         def fail(*, task_id, durable, code, detail="", recovery_archive_ref=""):
             held_episode = deepcopy(episode)
@@ -1756,17 +1757,27 @@ class Schema2RecoveryNode:
                     "stage": "recovery.finalization", "error_code": str(code),
                 })
             else:
-                held_episode["terminal_error"] = {"code": str(code), "detail": str(detail)}
+                held_episode["terminal_error"] = {
+                    "code": str(code), "detail": str(detail), "failure_stage": failure_stage,
+                }
+                if failure_stage in {"recovery.seed_projection", "recovery.context_preparation"}:
+                    held_episode["terminal_error"]["dispatch_status"] = "not_started"
+                if code == "RECOVERY_SEED_CAPACITY_EXCEEDED":
+                    held_episode["terminal_error"].update(
+                        failure_stage="recovery.seed_admission", dispatch_status="not_started")
             stopped = self._inspection_stop_result(
                 projection=projection, durable=durable, episode=held_episode,
                 archive_ref=recovery_archive_ref,
             )
             if stopped is not None:
                 return stopped
-            return self._internal(
+            result = self._internal(
                 task_id=task_id, durable=durable, code=code, detail=detail,
                 recovery_archive_ref=recovery_archive_ref,
             )
+            result["recovery_outcome"]["payload"].update(
+                failure_stage=failure_stage, detail=str(detail), recovery_episode_facts=held_episode)
+            return result
 
         try:
             projection = project_recovery_seed(state, durable)
@@ -1777,6 +1788,7 @@ class Schema2RecoveryNode:
                     code="RECOVERY_CAUSAL_PACKET_MISSING",
                 )
             seed = projection.recovery_seed
+            failure_stage = "recovery.context_preparation"
             from agent_core.workflow.recovery_runtime import revalidation_stop_reason
             stop_reason = revalidation_stop_reason(projection, durable, self.runtime.repair_limit)
             if stop_reason:
@@ -1879,6 +1891,7 @@ class Schema2RecoveryNode:
         maintenance = deepcopy(dict(budget_state.get("compaction_maintenance") or {}))
 
         while True:
+            failure_stage = "recovery.agent_loop"
             try:
                 episode = await RecoveryAgentLoop(
                     model=self.model,
@@ -1955,6 +1968,7 @@ class Schema2RecoveryNode:
             boundary = dict(episode.get("compaction_required") or {})
             if not boundary:
                 break
+            failure_stage = "recovery.context_compaction"
             if overflow_epoch >= self.loop_config.max_overflow_epochs:
                 return fail(
                     task_id=task_id,

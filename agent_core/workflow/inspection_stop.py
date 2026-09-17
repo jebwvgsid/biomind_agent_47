@@ -163,15 +163,29 @@ def inspection_stop_scope(seed, durable=None):
         "episode_id": _code(seed.get("seed_id"))}
 
 
-def _execution(durable, source, scope):
+def _execution(durable, source, scope, packet=None):
     payload = _mapping(source.get("payload"))
     report = _mapping(payload.get("completion_report"))
     process = _mapping(report.get("process_outcome"))
     validation = _mapping(payload.get("validation_evidence"))
+    record = _mapping(payload.get("execution_record"))
+    if any(record.get(key) and scope.get(key) and str(record[key]) != str(scope[key])
+           for key in ("task_id", "plan_id", "plan_version", "step_id", "attempt_id")):
+        record = {}
+    index = _mapping(payload.get("producer_failure_index"))
+    packet = _mapping(packet)
+    if not index and packet.get("attempt_ref") == scope["attempt_id"] and packet.get("step_id") == scope["step_id"]:
+        index = next((_mapping(row.get("metadata")) for row in packet.get("diagnostic_facts") or []
+                      if isinstance(row, Mapping) and row.get("kind") == "producer_failure_index"), {})
+    if any(_mapping(index.get("scope")).get(key) and scope.get(key)
+           and str(index["scope"][key]) != str(scope[key])
+           for key in ("task_id", "plan_id", "plan_version", "step_id", "attempt_id")):
+        index = {}
     attempt = _mapping(_mapping(_mapping(durable.get("provenance_state")).get("attempts")).get(scope["attempt_id"]))
     if attempt and str(attempt.get("step_id") or "") != scope["step_id"]:
         attempt = {}
-    rc = process.get("returncode", attempt.get("returncode", validation.get("returncode")))
+    rc = process.get("returncode", record.get("returncode", record.get("exit_code",
+        attempt.get("returncode", validation.get("returncode", _mapping(index.get("process")).get("return_code"))))))
     if isinstance(rc, bool) or not isinstance(rc, int):
         rc = None
     execution_status = str(process.get("execution_status") or attempt.get("status") or "unknown").lower()
@@ -179,13 +193,19 @@ def _execution(durable, source, scope):
     current = next((row for row in _steps(durable) if row.get("step_id") == scope["step_id"]), {})
     gate = _mapping(report.get("completion_gate"))
     deterministic = (gate.get("passed") is True and report.get("deterministic_veto") is not True)
+    validation_status = process.get("validation_status") or validation.get("status")
+    if _mapping(record.get("validation")).get("passed") is False or index.get("validation_acceptance") is False:
+        validation_status, deterministic = "failed", False
+    elif not validation_status and _mapping(record.get("validation")).get("passed") is True:
+        validation_status = "passed"
     script = _safe(attempt.get("executed_script_path"), 1600)
     if script == "[redacted]" or Path(script).name in {"启动.sh", "startup.py"}:
         script = ""
     return {"attempt_id": scope["attempt_id"], "step_id": scope["step_id"], "executed": executed,
         "purpose": _code(attempt.get("purpose") or attempt.get("execution_purpose"), "UNKNOWN"),
         "returncode": rc, "deterministic_passed": deterministic,
-        "validation_status": _code(process.get("validation_status") or validation.get("status"), "unknown"),
+        "validation_status": _code(validation_status, "unknown"),
+        "validation_checks": deepcopy(index.get("checks") or []),
         "reviewer_disposition": _code(report.get("effective_disposition"), "inspection_required"),
         "step_status": _code(current.get("status"), "verification_pending"),
         "committed": str(current.get("status") or "") in _FINISHED,
@@ -271,11 +291,12 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             **({"resource_receipt": deepcopy(episode["resource_receipt"])} if episode.get("resource_receipt") else {}),
             "transport_receipt": deepcopy(_mapping(error.get("transport_receipt"))),
             "failure_stage": _code(error.get("failure_stage")),
+            **({"dispatch_status": "not_started"} if error.get("dispatch_status") == "not_started" else {}),
             "no_progress_rounds": int(audit.get("no_progress_rounds") or 0),
             "model_turns": int(audit.get("turn_count") or 0), "tool_calls": int(audit.get("tool_call_count") or 0)},
         "resolution": "unresolved", "automatic_actions_stopped": True,
         "technical_classification": ("recovery_provider_transport_error" if reason == "RECOVERY_PROVIDER_TRANSPORT_FAILED" else "inspection_infrastructure_error" if technical else "inspection_unresolved"),
-        "execution": _execution(durable, source, scope),
+        "execution": _execution(durable, source, scope, packet),
         "stages": [{"step_id": _code(row.get("step_id")), "title": _safe(row.get("title"), 400),
             "status": _code(row.get("status"), "unknown")} for row in _steps(durable)],
         "archive_ref": _safe(archive_ref, 800), "summary_mode": "deterministic", "summary_llm_calls": 0,

@@ -1381,7 +1381,11 @@ class TypedExecute:
                     "failure_fingerprint": str(execution.get("failure_fingerprint") or _fingerprint(execution)),
                     "progress_snapshot": dict(value.get("recovery_progress") or execution.get("progress_snapshot") or {}),
                 }
-                summary = "A launched command failed after immutable evidence persistence."
+                summary = (
+                    "The command exited successfully, but formal output validation rejected its evidence; the step is not committed."
+                    if return_code in (0, "0") and execution.get("validation", {}).get("passed") is False
+                    else "A launched command failed after immutable evidence persistence."
+                )
         elif str(value.get("task_status") or "").lower() == "blocked":
             outcome_type = "blocked"
             payload = {

@@ -1,5 +1,6 @@
 """Display projections of supplied receipts. No state loading or business decisions."""
 import json
+import re
 
 
 def tool_result_text(tool, observation):
@@ -111,8 +112,18 @@ def _cause_text(facts, origin):
     code = str(origin.get('error_code') or origin.get('reason_code') or '')
     if code in _OUTPUT_PROTECTION:
         return _OUTPUT_PROTECTION[code][0] + '（' + code + '）。', False
+    execution = facts.get('execution') or {}
+    same_attempt = (not origin.get('attempt_id') or origin.get('attempt_id') == execution.get('attempt_id'))
+    if (code in {'VALIDATION_FAILED', 'OBSERVED_ARTIFACT_CONTENT_INVALID'}
+            or (code == 'EXECUTION_FAILED' and same_attempt and execution.get('validation_status') == 'failed')):
+        rc = origin.get('returncode', execution.get('returncode'))
+        label = f'进程退出码 {rc}；' if type(rc) is int else ''
+        detail = '必需产物内容未通过正式核验' if code == 'OBSERVED_ARTIFACT_CONTENT_INVALID' else '正式产物核验失败'
+        return label + detail + '（' + code + '）；当前步骤尚未正式提交。', False
     if code == 'EXECUTION_FAILED':
         rc = origin.get('returncode')
+        if rc == 0:
+            return '进程退出码 0；执行后的失败原因仍待核对（EXECUTION_FAILED）。', False
         label = '脚本执行失败' + (f'，退出码 {rc}' if type(rc) is int else '')
         runtime = facts.get('runtime_diagnostics') or {}
         if runtime.get('authority') == 'script_report_only' and runtime.get('missing_commands'):
@@ -132,6 +143,19 @@ def _cause_text(facts, origin):
 
 
 def _stop_text(stop, code):
+    detail = str(stop.get('detail') or '')
+    if code == 'RECOVERY_SEED_CAPACITY_EXCEEDED':
+        # Historical receipts retain their original units and admission stage.
+        counts = dict(re.findall(r'\b(chars|limit)=(\d+)\b', detail))
+        amount = ('，' + counts['chars'] + ' / ' + counts['limit'] + ' 字符'
+                  if 'chars' in counts and 'limit' in counts else '')
+        return 'Recovery 固定 seed 在首次调用前超过字符限制' + amount + '（' + code + '）。'
+    if ('TOKEN_LIMIT' in code or 'COMPACTION' in code or 'CONTEXT' in code):
+        counts = dict(re.findall(r'\b(tokens|safe)=(\d+)\b', detail))
+        if 'tokens' in counts and 'safe' in counts:
+            stage = _brief(stop.get('failure_stage') or 'recovery.context_budget')
+            return (stage + ' 的输入估算为 ' + counts['tokens'] + ' tokens，有效输入上限 '
+                    + counts['safe'] + ' tokens；已停止（' + code + '）。')
     if code in {'RECOVERY_NO_PROGRESS', 'RECOVERY_NO_PROGRESS_LIMIT'}:
         rounds = stop.get('no_progress_rounds')
         prefix = f'连续 {rounds} 轮' if type(rounds) is int and rounds > 0 else '恢复调查'
@@ -176,7 +200,9 @@ def terminal_text(status, facts):
     if trigger:
         rows.append('停止触发：' + _stop_text(stop, str(trigger)))
     usage = facts.get('recovery_usage') or {}
-    if usage.get('scope') in {'last_admitted_episode', 'current_episode'}:
+    if usage.get('scope') == 'current_admission':
+        rows.append('本次 Recovery 准入在派发前停止：0 次模型请求，0 次工具调用；不是全会话累计。')
+    elif usage.get('scope') in {'last_admitted_episode', 'current_episode'}:
         label = '最近已记录调查' if usage['scope'] == 'last_admitted_episode' else '本次调查'
         rows.append(f"{label}：{usage.get('turn_count', '未知')} 次模型请求，{usage.get('tool_call_count', '未知')} 次工具调用；不是全会话累计。")
     else:
