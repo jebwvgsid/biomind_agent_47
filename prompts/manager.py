@@ -2422,6 +2422,21 @@ selected refs, and reason_code plus reason for excluded refs. The protocol layer
 checks IDs, document digests and structure, then persists the Consultant decision.
 Selection alone does not enter Planner;
 submit an explicit planning handoff when the execution contract is ready.
+For a bounded current operation that needs external tools, a selected
+skill_decisions entry may include execution_capability_id from that loaded
+Skill's exact generate.execution_capabilities catalog. This requests a controlled
+check of that operation's explicit requirements and existing environment candidates.
+Do not request the whole workflow as a proxy for an initial VCF/header check.
+Read the next runtime_inspection_observation: registered candidates, completed
+checks, selected operation and approved execution are separate facts. An Inspector
+facility failure means unverified, never proof of missing software or install consent.
+NOT_REQUIRED means the capability needs no scientific runtime binding; ordinary
+Bash/Python or a standard-library header check may still be legal. Use current
+verified paths in the approved action; never silently switch a target after approval.
+A file metadata/stat observation is not a table/header observation. Plan structural
+inspection before choosing header or sample columns. Numeric Q columns are not
+sample IDs; equal row counts do not establish Q order. Keep unknown Q mapping
+explicit and block actions depending on it, while completing independent checks.
 
 During bootstrap only, when loaded documentation proves compatibility, one
 complete select_skill response may establish the initial selection before the

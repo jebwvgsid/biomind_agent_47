@@ -19998,17 +19998,49 @@ class BioAnalystAgent:
             "inspection_contract_digest": stable_digest(method) if method else "",
         }
 
+    def _runtime_evidence_for_capability(self, task_id, durable, skill_id, capability_id):
+        """Revalidate declared subjects before projecting task-owned evidence.
+
+        This is a view of the existing ledger, not a second selection registry.
+        A prefix/Skill/probe change invalidates its old scope. Multiple current
+        subjects remain ambiguous until the existing decision flow resolves it.
+        """
+        task_state = dict(durable.get("task_state") or {})
+        envelope = dict(task_state.get("runtime_evidence") or {})
+        if not envelope:
+            return task_state
+        # Validate the entire admitted ledger before choosing a narrower view.
+        evaluate_runtime_evidence(task_state, task_id=task_id, skill_scope={"skill_id": skill_id})
+        records = [row for row in envelope.get("records", []) if row["scope"]["skill_id"] == skill_id]
+        legacy_scope = self._runtime_evidence_scope(skill_id)
+        scoped = []
+        if capability_id:
+            requirements = self.skill_manager.get_runtime_requirements(skill_id, capability_id=capability_id)
+            if requirements.get("inspection_probes") and requirements.get("inspection_contract_complete"):
+                scopes = {env: self._runtime_evidence_scope(skill_id, target_env=env, capability_id=capability_id)
+                          for env in {row["scope"]["environment_id"] for row in records}}
+                scoped = [row for row in records if row["scope"] == scopes.get(row["scope"]["environment_id"])]
+        if not scoped:
+            scoped = [row for row in records if row["scope"] == legacy_scope]
+        return {**task_state, "runtime_evidence": {**envelope, "records": scoped}}
+
     def _runtime_audit_projection(self, task_id: str, skill_ids=None) -> List[Dict[str, Any]]:
         durable = load_plan_state(self.data_path, task_id)
         task_state = dict(durable.get("task_state") or {})
         if "runtime_evidence" not in task_state:
             return []
         selected = list(skill_ids if skill_ids is not None else (
-            task_state.get("selected_skills") or durable.get("selected_skill_ids") or []
-        ))
-        return [audit for skill_id in selected for audit in project_runtime_audits(
-            task_state, task_id=task_id, skill_scope=self._runtime_evidence_scope(skill_id)
-        )]
+            task_state.get("selected_skills") or durable.get("selected_skill_ids") or []))
+        audits = {}
+        for skill_id in selected:
+            contracts = self.skill_manager.get_execution_capability_registry([skill_id])
+            capability_ids = [cid for cid, contract in contracts.items()
+                              if contract.get("selected_skill_id") == skill_id]
+            for capability_id in capability_ids or [""]:
+                view = self._runtime_evidence_for_capability(task_id, durable, skill_id, capability_id)
+                for audit in project_runtime_audits(view, task_id=task_id, skill_scope={"skill_id": skill_id}):
+                    audits[audit["runtime_audit_id"]] = audit
+        return list(audits.values())
 
     def _runtime_binding_source(self, state: Mapping[str, Any], skill_ids=None) -> Mapping[str, Any]:
         task_id = str(state.get("task_id") or state.get("session_id") or "")
@@ -20017,39 +20049,123 @@ class BioAnalystAgent:
             return state
         task_state = dict(durable.get("task_state") or {})
         selected = list(skill_ids if skill_ids is not None else (
-            task_state.get("selected_skills") or durable.get("selected_skill_ids") or []
-        ))
-        evaluations, planning = {}, []
+            task_state.get("selected_skills") or durable.get("selected_skill_ids") or []))
+        current_step = next((row for row in durable.get("steps", [])
+                             if row.get("step_id") == durable.get("current_step_id")), {})
+        current_capability = str(current_step.get("execution_capability_id") or "")
+        evaluations, planning, launch_audits = {}, [], {}
         for skill_id in selected:
             contracts = self.skill_manager.get_execution_capability_registry([skill_id])
-            required = sorted({bid for contract in contracts.values()
-                               for bid in contract.get("required_runtime_binding_ids") or []})
-            current = evaluate_runtime_evidence(
-                task_state, task_id=task_id, skill_scope=self._runtime_evidence_scope(skill_id),
-                required_binding_ids=required)
-            evaluations.update(current)
-            observed_audits = self._runtime_audit_projection(task_id, [skill_id])
-            paths = {key: value for audit in observed_audits
-                     for key, value in (audit.get("resolved_runtime_paths") or {}).items()}
-            capabilities = []
+            capabilities, all_audits = [], {}
             for cid, contract in contracts.items():
                 if contract.get("selected_skill_id") != skill_id:
                     continue
                 ids = list(contract.get("required_runtime_binding_ids") or [])
+                view = self._runtime_evidence_for_capability(task_id, durable, skill_id, cid)
+                current = evaluate_runtime_evidence(view, task_id=task_id,
+                    skill_scope={"skill_id": skill_id}, required_binding_ids=ids)
+                audits = project_runtime_audits(view, task_id=task_id, skill_scope={"skill_id": skill_id})
+                all_audits.update({row["runtime_audit_id"]: row for row in audits})
                 statuses = {bid: current.get(bid, {"availability": "UNKNOWN"}) for bid in ids}
                 availability = ("NOT_REQUIRED" if not ids else "AVAILABLE"
                     if all(v["availability"] == "AVAILABLE" for v in statuses.values()) else "UNKNOWN")
                 capabilities.append({"capability_id": cid, "availability": availability, "bindings": statuses})
+                if not current_capability or cid == current_capability:
+                    for bid, value in current.items():
+                        previous = evaluations.get(bid)
+                        evaluations[bid] = value if previous is None or previous == value else {
+                            "availability": "AMBIGUOUS", "reason_code": "conflicting_capability_evidence",
+                            "evidence_ids": sorted(set(previous.get("evidence_ids", []) + value.get("evidence_ids", [])))}
+                    launch_audits.update({row["runtime_audit_id"]: row for row in audits})
             requirements = self._skill_runtime_requirements(skill_id)
-            planning.append({"skill_id": skill_id,
-                "status": "ready" if required and all(current[bid]["availability"] == "AVAILABLE" for bid in required) else "unknown",
+            observed = list(all_audits.values())
+            # Per-operation probes cannot establish whole-Skill readiness,
+            # even when the operation happens to use every declared probe.
+            planning.append({"skill_id": skill_id, "status": "unknown",
+                "scope_note": "Readiness is reported per capability; whole-Skill dependencies were not verified.",
                 "declared_env": requirements.get("default_env", ""),
-                "checked_env": observed_audits[-1].get("checked_env", "") if observed_audits else "",
-                "observed_at": observed_audits[-1].get("observed_at", "") if observed_audits else "",
-                "evidence_ids": sorted({eid for row in current.values() for eid in row.get("evidence_ids", [])}),
-                "resolved_runtime_paths": paths, "capabilities": capabilities})
-        return {"runtime_audit": self._runtime_audit_projection(task_id, selected),
+                "checked_env": observed[-1].get("checked_env", "") if observed else "",
+                "observed_at": observed[-1].get("observed_at", "") if observed else "",
+                "evidence_ids": list(all_audits),
+                "resolved_runtime_paths": {key: value for audit in observed
+                    for key, value in (audit.get("resolved_runtime_paths") or {}).items()},
+                "capabilities": capabilities})
+        return {"runtime_audit": list(launch_audits.values()),
                 "runtime_binding_evaluations": evaluations, "runtime_planning_audit": planning}
+
+    @staticmethod
+    def _runtime_operation_observation(results):
+        """Provider facts from bounded inspections, without raw logs or scripts."""
+        observations = []
+        for result in results:
+            value = {key: deepcopy(result[key]) for key in (
+                "skill_id", "capability_id", "operation", "declared_env", "required_binding_ids",
+                "availability", "decision", "reason_code", "install_required") if key in result}
+            value["candidates"] = [{key: deepcopy(row[key]) for key in (
+                "env", "prefix", "prefix_present", "provenance", "availability", "inspection_status",
+                "reason_code", "detail", "inspection_error", "observed_at", "runtime_observation_scope", "coverage",
+                "resolved_runtime_paths") if key in row} for row in result.get("candidates", [])]
+            chosen = result.get("selected_candidate") or {}
+            value["selected_environment"] = chosen.get("env", "")
+            value["scope_note"] = "Availability covers only this declared operation; other workflow stages remain separately unverified."
+            observations.append(value)
+        return observations
+
+    async def _consultant_operation_runtime_evidence(self, selected_skills, task_id, decisions):
+        """Inspect explicit declared operations before target/approval freeze."""
+        durable = load_plan_state(self.data_path, task_id)
+        prior_records = ((durable.get("task_state") or {}).get("runtime_evidence") or {}).get("records", [])
+        audits, observations = [], []
+        seen = set()
+        for decision in decisions:
+            skill_id = str(decision.get("skill_id") or "")
+            capability_id = str(decision.get("execution_capability_id") or "")
+            if skill_id not in selected_skills or not capability_id:
+                continue
+            identity = (skill_id, capability_id)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            contracts = self.skill_manager.get_execution_capability_registry([skill_id])
+            if capability_id not in contracts:
+                raise ValueError("UNKNOWN_EXECUTION_CAPABILITY: " + capability_id)
+            result = await self._discover_skill_runtime_candidates(skill_id, task_id,
+                capability_id=capability_id, use_cache=False)
+            observations.append(result)
+            # Seal only inspected subjects. A registered/missing prefix alone is
+            # not an inspection result and cannot establish a negative binding.
+            inspected = ([result["selected_candidate"]] if result.get("selected_candidate") else
+                         [row for row in result.get("candidates", []) if row.get("audit")])
+            for row in inspected:
+                audit = deepcopy(row["audit"])
+                scope = dict(row.get("runtime_observation_scope") or {})
+                expected = self._runtime_evidence_scope(skill_id, target_env=row["env"], capability_id=capability_id)
+                if scope != expected:
+                    audit.update(status="unknown", resolved_runtime_paths={})
+                    row.update(availability="UNKNOWN", inspection_status="execution_error",
+                        reason_code="RUNTIME_EVIDENCE_SCOPE_CHANGED", resolved_runtime_paths={})
+                    result.update(availability="UNKNOWN", decision="candidate_unverified",
+                        reason_code="RUNTIME_EVIDENCE_SCOPE_CHANGED", install_required=False)
+                    result.pop("selected_candidate", None)
+                observed_at = str(row.get("observed_at") or "")
+                if not observed_at:
+                    continue
+                previous = [record["evidence_id"] for record in prior_records
+                            if record["scope"] == scope and record["observed_at"] < observed_at]
+                audit.update(skill_id=skill_id, checked_env=row["env"], env=row["env"],
+                    capability_id=capability_id, reason_code=row.get("reason_code", ""))
+                audit["runtime_evidence_record"] = make_runtime_evidence(audit,
+                    task_id=task_id, skill_scope=scope, observed_at=observed_at,
+                    coverage=row.get("coverage"), inspection_status=row.get("inspection_status"),
+                    supersedes=previous)
+                audits.append(audit)
+        if not observations:
+            audits, evidence, _ = self._consultant_runtime_seed_evidence(selected_skills, task_id)
+            return audits, evidence, []
+        evidence = {sid: {"skill_id": sid, "status": "unknown", "availability_status": "unknown",
+            "evidence_status": "checked", "operations": [row for row in observations if row["skill_id"] == sid]}
+            for sid in selected_skills}
+        return audits, evidence, observations
 
     def _consultant_runtime_seed_evidence(
         self,
@@ -20064,48 +20180,14 @@ class BioAnalystAgent:
                 str(audit.get("skill_id") or audit.get("skill")): dict(audit)
                 for audit in audits if audit.get("skill_id") or audit.get("skill")
             }, summary
-        audits, summary = self._consultant_runtime_preflight(
-            list(selected_skills or []),
-            task_id,
-            require_scoped_evidence=True,
-        )
-        durable_records = {
-            record["evidence_id"]: record for record in (
-                (load_plan_state(self.data_path, task_id).get("task_state") or {}).get("runtime_evidence") or {}
-            ).get("records", [])
-        }
-        evidence: Dict[str, Dict[str, Any]] = {}
-        for audit in audits:
-            skill_id = str(audit.get("skill_id") or audit.get("skill") or "").strip()
-            if skill_id:
-                previous = durable_records.get(audit.get("runtime_audit_id"))
-                if previous:
-                    audit["runtime_evidence_record"] = deepcopy(previous)
-                    audit["declared_ok"] = True
-                    evidence[skill_id] = dict(audit)
-                    continue
-                scope = dict(audit.get("runtime_observation_scope") or self._runtime_evidence_scope(skill_id))
-                cache = getattr(self, "runtime_status", {}).get(task_id, {}).get(
-                    self._runtime_cache_key(skill_id, str(audit.get("env") or "")), {}
-                )
-                # Cache reuse preserves its original observation time. Missing
-                # producer timestamps do not manufacture a fresh observation.
-                observed_at = str(audit.get("observed_at") or cache.get("checked_at") or "")
-                if observed_at:
-                    try:
-                        observed_at = datetime.fromisoformat(observed_at).astimezone().isoformat()
-                    except ValueError:
-                        observed_at = ""
-                if not observed_at:
-                    evidence[skill_id] = dict(audit)
-                    continue
-                audit["runtime_evidence_record"] = make_runtime_evidence(
-                    audit, task_id=task_id, skill_scope=scope,
-                    observed_at=observed_at, coverage=audit.get("coverage"),
-                    inspection_status=audit.get("inspection_status"),
-                )
-                evidence[skill_id] = dict(audit)
-        return audits, evidence, summary
+        source = self._runtime_binding_source({"task_id": task_id}, selected_skills)
+        audits = list(source.get("runtime_audit") or [])
+        evidence = {row["skill_id"]: {**row, "evidence_status": "checked"}
+                    for row in source.get("runtime_planning_audit") or []}
+        for skill_id in selected_skills:
+            evidence.setdefault(skill_id, {"skill_id": skill_id, "status": "unknown",
+                "reason_code": "RUNTIME_OPERATION_REQUIRED", "evidence_status": "pending"})
+        return audits, evidence, self._format_runtime_audit(audits)
 
     def _consultant_runtime_preflight_summary(self, selected_skills: Optional[List[str]], task_id: str) -> str:
         """Backward-compatible textual view for callers and tests."""
@@ -37305,11 +37387,15 @@ question. Never guess a scientific or database identity.
                         for skill_id in selected
                         if self.skill_manager and self.skill_manager.has_renderer(skill_id)
                     ]
-                    candidate_runtime_audits, candidate_runtime_evidence, _ = (
-                        self._consultant_runtime_seed_evidence(selected, task_id)
-                        if selected
-                        else ([], {}, "")
-                    )
+                    candidate_runtime_observations = []
+                    if selected and payload_action_type == "select_skill":
+                        candidate_runtime_audits, candidate_runtime_evidence, candidate_runtime_observations = (
+                            await self._consultant_operation_runtime_evidence(selected, task_id, selected_decisions)
+                        )
+                    else:
+                        candidate_runtime_audits, candidate_runtime_evidence, _ = (
+                            self._consultant_runtime_seed_evidence(selected, task_id) if selected else ([], {}, "")
+                        )
                     candidate = build_consultant_candidate(
                         task_spec if task_spec_is_initialized(task_spec) else None,
                         consultation_state,
@@ -37389,6 +37475,7 @@ question. Never guess a scientific or database identity.
                         observation={
                             "accepted": True,
                             "selected_skill_ids": selected,
+                            "runtime_checks": self._runtime_operation_observation(candidate_runtime_observations),
                         },
                     )
                     selection_update = {
@@ -37416,7 +37503,15 @@ question. Never guess a scientific or database identity.
                             "task_spec": candidate["task_spec"],
                             "task_revision": task_spec_revision(candidate["task_spec"]),
                         })
-                    return commit_candidate_update(selection_update)
+                    committed = commit_candidate_update(selection_update)
+                    observation = self._runtime_operation_observation(candidate_runtime_observations)
+                    if consultant_phase_context is not None and observation:
+                        consultant_phase_context.queue_provider_event(
+                            event_id="runtime-operations:" + stable_digest(observation),
+                            name="runtime_inspection_observation",
+                            content=json.dumps({"runtime_checks": observation}, ensure_ascii=False, sort_keys=True),
+                        )
+                    return committed
 
                 if payload_action_type == "submit_planning_handoff":
                     handoff_check = validate_planning_handoff_protocol(candidate)
