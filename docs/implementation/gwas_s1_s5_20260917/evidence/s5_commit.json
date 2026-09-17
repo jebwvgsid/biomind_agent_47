@@ -1,0 +1,64 @@
+{
+  "slice": "S5",
+  "parent": "3f71b90789c14b2662e717225cf826b1cf5ec3b3",
+  "commit": "7d62508ec9d7fda14164da1523488d93184ed0ee",
+  "files": [
+    "agent_core/workflow/execution.py",
+    "agent_core/workflow/recovery_projection.py",
+    "agent_core/workflow/inspection_stop.py",
+    "agent_core/workflow/managed_stop.py",
+    "agent_core/workflow/recovery_node.py",
+    "agent_core/cli_lifecycle.py",
+    "tests/test_gwas_failure_semantics.py"
+  ],
+  "tests": {
+    "passed": 42,
+    "failed": 0,
+    "excluded_legacy_fixture_paths": 2
+  },
+  "source": "/tmp/biomind-gwas-s1-s5-20260917/integration",
+  "partition": [
+    {
+      "path": "agent_core/workflow/execution.py",
+      "tested_sha256": "a12de786b26392b80cf57ca03fe232d0cfd0800ff9f2ec70ac1abfffd47ac5f4",
+      "index_sha256": "a12de786b26392b80cf57ca03fe232d0cfd0800ff9f2ec70ac1abfffd47ac5f4",
+      "preserved_overlay": false
+    },
+    {
+      "path": "agent_core/workflow/recovery_projection.py",
+      "tested_sha256": "d9ea4bf56b622e40b247fbb567e1a38d5528d33ea484c6bcb2609e74a7bd3eb7",
+      "index_sha256": "d9ea4bf56b622e40b247fbb567e1a38d5528d33ea484c6bcb2609e74a7bd3eb7",
+      "preserved_overlay": false
+    },
+    {
+      "path": "agent_core/workflow/inspection_stop.py",
+      "tested_sha256": "dfa93b57f07fb3f8bab77afe9c08f71587d791c1892d91283888a1f70acf950d",
+      "index_sha256": "dfa93b57f07fb3f8bab77afe9c08f71587d791c1892d91283888a1f70acf950d",
+      "preserved_overlay": false
+    },
+    {
+      "path": "agent_core/workflow/managed_stop.py",
+      "tested_sha256": "0d1664fa28fa8d3997f329969eb7272873c7a7ccbd9e2b747d41d379f62bb3f0",
+      "index_sha256": "88f041f81b7c7fd6662522499b8c1974e24394d42bb29b95a3bb8511781478d0",
+      "preserved_overlay": true
+    },
+    {
+      "path": "agent_core/workflow/recovery_node.py",
+      "tested_sha256": "7579c5b513fb6f0abca1b9d8f9f99b4f24bb29a15910fa9001d52b0d0271529d",
+      "index_sha256": "7579c5b513fb6f0abca1b9d8f9f99b4f24bb29a15910fa9001d52b0d0271529d",
+      "preserved_overlay": false
+    },
+    {
+      "path": "agent_core/cli_lifecycle.py",
+      "tested_sha256": "4cff20aeab02a0ab3672306840052c6c2db7b57e59efecdc2a0355414f925e52",
+      "index_sha256": "4cff20aeab02a0ab3672306840052c6c2db7b57e59efecdc2a0355414f925e52",
+      "preserved_overlay": false
+    },
+    {
+      "path": "tests/test_gwas_failure_semantics.py",
+      "tested_sha256": "ea4684492813505cf9c8d85a82d91a24f527523a70e6e88e1d42262ea12fddfc",
+      "index_sha256": "ea4684492813505cf9c8d85a82d91a24f527523a70e6e88e1d42262ea12fddfc",
+      "preserved_overlay": false
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/test_gwas_input_observation_graph_s3.py::test_real_gwas_observation_is_consumed_after_commit_and_unknown_q_refuses_output",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_observation_graph_s3.py::test_real_gwas_observation_is_consumed_after_commit_and_unknown_q_refuses_output",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0762948701158166,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_observation_graph_s3.py::test_real_gwas_observation_is_consumed_after_commit_and_unknown_q_refuses_output",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 12.407020120881498,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_observation_graph_s3.py::test_real_gwas_observation_is_consumed_after_commit_and_unknown_q_refuses_output",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0004118354991078377,
+    "failure": ""
+  }
+]

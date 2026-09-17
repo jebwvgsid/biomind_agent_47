@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "review_kind": "read_only_single_process_exit_evidence_review",
+  "scope": "Existing logs, pytest reports, selected source and prior 377-test receipt only. No application execution, test rerun, production modification, credential read or original-session mutation.",
+  "conclusion": "The single-process exit cause is undetermined. No confirmed native-state contamination or faulting native library was identified.",
+  "current_run": {
+    "candidate": "/tmp/biomind-gwas-s1-s5-20260917/integration",
+    "source_manifest": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/source_manifest.json",
+    "source_manifest_sha256": "37a4eeab1179440a38233615a71d5db1f1af6af56724d9e35c5e7f7f834b4db1",
+    "source_file_count": 926,
+    "invocation": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/invocation.json",
+    "results": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/results.json",
+    "log": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/run.log",
+    "process_returncode": -11,
+    "returncode_evidence_source": "Reported by parent agent from its subprocess wrapper; not stored as a completion field in the inspected invocation/results files.",
+    "pytest_report_counts": {
+      "start": 360,
+      "setup_passed": 360,
+      "call_passed": 385,
+      "teardown_passed": 359
+    },
+    "completed_test_nodes": 359,
+    "additional_passed_subtest_reports": 26,
+    "interrupted_node": "tests/test_preflight_mapping_commit.py::test_mapping_registry_real_readers_formal_commit[compact]",
+    "interrupted_node_report_state": "setup passed; no call or teardown report",
+    "last_completed_node": "tests/test_common_scope_guards.py::test_execution_snapshot_source_failure_is_explicit_and_preserves_cause[tamper]",
+    "progress_artifact": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/artifacts/new-mapping-preflight-compact-progress.json",
+    "progress": {
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "routes": [
+        "triage",
+        "consultant",
+        "planner",
+        "plan_review"
+      ],
+      "executions": []
+    },
+    "stage_limit": "Generate provider request was recorded; no tiny-runner execution was recorded. Exact crashing instruction is unknown.",
+    "log_limits": [
+      "No Python traceback or native fatal stack in inspected run.log.",
+      "No normal PYTEST_EXIT_CODE or SOURCE_UNCHANGED completion footer."
+    ]
+  },
+  "prior_run": {
+    "candidate": "/tmp/biomind-unified-cumulative-release/candidate",
+    "receipt": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/environment_binding_unified_20260917/evidence/cumulative_receipt.json",
+    "results": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/environment_binding_unified_20260917/evidence/cumulative_pytest_results.json",
+    "invocation": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/environment_binding_unified_20260917/evidence/cumulative_invocation.json",
+    "log": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/environment_binding_unified_20260917/evidence/cumulative_test.log",
+    "report": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/environment_binding_unified_20260917/REPORT.md",
+    "source_file_count": 905,
+    "source_manifest_sha256": "fa3f61b8c2c2b7059d27f30c0f756ef9b8af8d4cfc945de1e6815d402f141ed1",
+    "passed_test_nodes": 377,
+    "passed_subtests": 26,
+    "failed": 0,
+    "duration_seconds": 120.49,
+    "mode": "One fresh interpreter with one candidate; receipt records unchanged tested sources.",
+    "same_compact_node": {
+      "phase": "call",
+      "outcome": "passed",
+      "duration_seconds": 6.450646526180208
+    },
+    "limit": "Prior success does not prove the present expanded run is free of order-dependent or native failures."
+  },
+  "source_comparison": [
+    {
+      "relative_path": "tests/offline_managed_bootstrap.py",
+      "current_path": "/tmp/biomind-gwas-s1-s5-20260917/integration/tests/offline_managed_bootstrap.py",
+      "prior_path": "/tmp/biomind-unified-cumulative-release/candidate/tests/offline_managed_bootstrap.py",
+      "captured_current_sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0",
+      "inspected_current_sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0",
+      "inspected_prior_sha256": "f00f12f8f68c872cacdf265e7edfde5e79df6eaaa3573974e61f1bbe77e8ebc0",
+      "all_equal": true
+    },
+    {
+      "relative_path": "tests/test_preflight_mapping_commit.py",
+      "current_path": "/tmp/biomind-gwas-s1-s5-20260917/integration/tests/test_preflight_mapping_commit.py",
+      "prior_path": "/tmp/biomind-unified-cumulative-release/candidate/tests/test_preflight_mapping_commit.py",
+      "captured_current_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "inspected_current_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "inspected_prior_sha256": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+      "all_equal": true
+    },
+    {
+      "relative_path": "tests/test_plan_local_preaction_convergence_v2.py",
+      "current_path": "/tmp/biomind-gwas-s1-s5-20260917/integration/tests/test_plan_local_preaction_convergence_v2.py",
+      "prior_path": "/tmp/biomind-unified-cumulative-release/candidate/tests/test_plan_local_preaction_convergence_v2.py",
+      "captured_current_sha256": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591",
+      "inspected_current_sha256": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591",
+      "inspected_prior_sha256": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591",
+      "all_equal": true
+    }
+  ],
+  "isolation_observations": [
+    {
+      "fact": "Shared async fixture stops patches, calls default-executor shutdown(wait=False, cancel_futures=True), clears the loop executor and removes its temporary directory; it does not await agent.aclose().",
+      "source": "/tmp/biomind-gwas-s1-s5-20260917/integration/tests/test_plan_local_preaction_convergence_v2.py",
+      "line": 577,
+      "classification": "Existing incomplete resource-cleanup boundary; not an established crash cause."
+    },
+    {
+      "fact": "BioAnalystAgent.aclose explicitly releases the process-local session archive writer; the writer registry holds references until release/shutdown.",
+      "source": "/tmp/biomind-gwas-s1-s5-20260917/integration/bio_agents.py",
+      "line": 4051,
+      "related_source": "/tmp/biomind-gwas-s1-s5-20260917/integration/memory/session_archive_writer.py",
+      "related_line": 331,
+      "classification": "Mechanism supporting a potential cleanup concern only."
+    },
+    {
+      "fact": "The fixture disables observation sidechannels; writer threads start only on enqueue, not on registry acquisition. No runtime thread census or native stack established a residual active writer at this failure.",
+      "source": "/tmp/biomind-gwas-s1-s5-20260917/integration/tests/test_plan_local_preaction_convergence_v2.py",
+      "line": 558,
+      "related_source": "/tmp/biomind-gwas-s1-s5-20260917/integration/memory/session_archive_writer.py",
+      "related_line": 109,
+      "classification": "Limits causation claims."
+    },
+    {
+      "fact": "The selected test files contained no direct faulthandler.disable call, SIGSEGV handler reset, or explicit numpy/pandas/scipy/torch/ctypes import found by targeted source review. Dependencies can still load native extensions.",
+      "classification": "No direct selected-test reset evidence; does not exclude native faults."
+    },
+    {
+      "fact": "Bootstrap has an opt-in persistent fatal-file plugin, but this run invocation does not set BIOMIND_OFFLINE_FATAL_FILE. The inspected log lacks a fatal traceback.",
+      "source": "/tmp/biomind-gwas-s1-s5-20260917/integration/tests/offline_managed_bootstrap.py",
+      "line": 112,
+      "related_source": "/tmp/biomind-gwas-s1-s5-20260917/integration/tests/cli_fatal_plugin.py",
+      "classification": "Diagnostic evidence limitation; no assertion that the signal handler was disabled."
+    }
+  ],
+  "reporting_recommendation": "Preserve this single-process -11 as an unexplained validation-process failure. Fresh-interpreter batches of every same frozen-source test can establish per-test coverage; do not report them as identifying or fixing the single-process crash.",
+  "performed_actions": "Read-only review already completed; this JSON records those results without new investigation or test execution."
+}

@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "started_at": "2026-09-17T16:40:24.135862+00:00",
+  "finished_at": "2026-09-17T16:40:27.349087+00:00",
+  "read_scope": "Only durable baseline/protected/commit allowlists and their exact paths. No main-tree recursion, config import, .env read, Git operation, install, provider, or original-state write.",
+  "baseline_head_from_receipt": "3f71b90789c14b2662e717225cf826b1cf5ec3b3",
+  "observed_receipt_tip": "41d166b8766ae2a251c9451dc59733fe3022b1a4",
+  "git_head_independently_read": false,
+  "receipt_chain": [
+    {
+      "receipt": "s5_commit.json",
+      "slice": "S5",
+      "parent": "3f71b90789c14b2662e717225cf826b1cf5ec3b3",
+      "commit": "7d62508ec9d7fda14164da1523488d93184ed0ee"
+    },
+    {
+      "receipt": "s1_commit.json",
+      "slice": "S1",
+      "parent": "7d62508ec9d7fda14164da1523488d93184ed0ee",
+      "commit": "9693df595ce6181393e4f6383c513deb08aaa560"
+    },
+    {
+      "receipt": "s2_commit.json",
+      "slice": "S2",
+      "parent": "9693df595ce6181393e4f6383c513deb08aaa560",
+      "commit": "e53d1328e209c8a4e0cf33ced223a635e0e0e34b"
+    },
+    {
+      "receipt": "s3_commit.json",
+      "slice": "S3",
+      "parent": "e53d1328e209c8a4e0cf33ced223a635e0e0e34b",
+      "commit": "af49f24c5801407b9127ce1b69b546ab67abd9b1"
+    },
+    {
+      "receipt": "s3_observation_commit.json",
+      "slice": "S3_observation",
+      "parent": "af49f24c5801407b9127ce1b69b546ab67abd9b1",
+      "commit": "41d166b8766ae2a251c9451dc59733fe3022b1a4"
+    }
+  ],
+  "input_manifests_sha256": {
+    "baseline.json": "8c939cf87948cbb9d84c73fb179b32dbd40c8487b4993376c6861bb29ec36730",
+    "baseline_manifest.json": "f2a22ced269da71ebb2d2890fb3a9c454d425eb4de712a203b6a49da3d20ccd4",
+    "protected_original.json": "e9127044e9ac632753ffa799c5d13d88c45454005aa8cdce5f532c42d2c8ad75"
+  },
+  "commit_receipts_sha256": {
+    "s5_commit.json": "7882cb512e936e79f89e153ee55627c23e787422e16521087bf411948c930081",
+    "s1_commit.json": "e180ab1a7ab98284b6a7281bfe00dd2336c6799490de605d6002087f28f214d7",
+    "s2_commit.json": "04cf8ddf7132b3510f12480d456feb4a631aa86a9c6ce0faead3e9b5e3d6f659",
+    "s3_commit.json": "31971e5e07f5abc85954889ad3a5601218778c5b2c38f0be73d925336c4ed3bb",
+    "s3_observation_commit.json": "c8b9c7f1fc742af5d6ba56e0eb7d7e3a257ebf298dec656af4953532e7bbfb8b"
+  },
+  "baseline_source_snapshot": {
+    "files": 905,
+    "all_match": true,
+    "mismatches": []
+  },
+  "main_source": {
+    "allowlisted_paths_checked": 915,
+    "original_paths": 905,
+    "unchanged_original_paths": 889,
+    "changed_original_paths": 16,
+    "new_committed_paths": [
+      "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md",
+      "skills/population-genetics/gwas-vcf-prep-qc/scripts/input_contract.py",
+      "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+      "tests/test_gwas_failure_semantics.py",
+      "tests/test_gwas_input_contracts_s3.py",
+      "tests/test_gwas_input_observation_graph_s3.py",
+      "tests/test_gwas_runtime_auto_chain.py",
+      "tests/test_gwas_runtime_discovery.py",
+      "tests/test_gwas_runtime_projection_s2.py",
+      "tests/test_gwas_skill_contracts_s3.py"
+    ],
+    "changed_original_paths_are_committed": true,
+    "latest_committed_worktree_snapshots_match": true,
+    "unexpected_changes": [],
+    "hash_mismatches": [],
+    "missing": []
+  },
+  "partition_records": {
+    "count": 30,
+    "preserved_overlay_entries": [
+      {
+        "receipt": "s5_commit.json",
+        "path": "agent_core/workflow/managed_stop.py",
+        "tested_worktree_sha256": "0d1664fa28fa8d3997f329969eb7272873c7a7ccbd9e2b747d41d379f62bb3f0",
+        "committed_index_sha256": "88f041f81b7c7fd6662522499b8c1974e24394d42bb29b95a3bb8511781478d0"
+      },
+      {
+        "receipt": "s1_commit.json",
+        "path": "bio_agents.py",
+        "tested_worktree_sha256": "eb89be23f2a034f4a3ed5bb207535ef5a248767faa848c08163a6f1fc07087c6",
+        "committed_index_sha256": "e8e8d05fc19c55e8d04f5a3d196834190b35c81f3f02f425e765adcc463dd331"
+      },
+      {
+        "receipt": "s1_commit.json",
+        "path": "tests/test_runtime_preflight.py",
+        "tested_worktree_sha256": "770739ea6ffb79ce6eda6046926e7e3d11d305f95a84468d2f9f1e35181c077a",
+        "committed_index_sha256": "a505a29952b17b3d0ae27ce0a8b03220c7e873e9780cb851bada130bd15ebe2e"
+      },
+      {
+        "receipt": "s2_commit.json",
+        "path": "bio_agents.py",
+        "tested_worktree_sha256": "0c60d4a1c3504abf4e2ac7b357aa57cbab83cbcdfe47bc87224d82d3dbe0ac78",
+        "committed_index_sha256": "b0d8dafdc29351bb34b54cc54fad19eacc58705ace5bcbd74d9b2cefaa1e9fcb"
+      },
+      {
+        "receipt": "s2_commit.json",
+        "path": "prompts/manager.py",
+        "tested_worktree_sha256": "0a1b883e744e9e1770095345d385c930325f629efeabea763bdf076dca3acf00",
+        "committed_index_sha256": "292006ae763a384dde7dcab4bdc89710ca82810c694ae6bf505b372d00706924"
+      }
+    ],
+    "receipt_errors": [],
+    "source_snapshot_errors": []
+  },
+  "protected_non_source": {
+    "files": 161,
+    "groups": {
+      "original_deliveries": 3,
+      "original_session": 157,
+      "software_registry": 1
+    },
+    "all_unchanged": true,
+    "changed_during_review": [],
+    "mismatches": [],
+    "identity_review_sha256": "a2a08030e93f7a0c9df63a7526c59f82ad7d46d2208f1b12e54a98f0f8cb13ba"
+  },
+  "errors": [],
+  "limitations": [
+    "Commit/index blob partition facts are checked for internal consistency and against full tested snapshots; no independent Git blob/index/HEAD verification was performed.",
+    "Unknown paths outside the durable source/protected/committed allowlist were not traversed; final root Git/status audit still owns that boundary.",
+    "S4 and any not-yet-committed observation changes in integration are not included as allowed main-tree changes."
+  ]
+}

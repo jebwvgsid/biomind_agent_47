@@ -1,0 +1,26 @@
+{
+  "baseline_result": "/tmp/biomind-gwas-s1-test/managed-bootstrap-1d2ck3sd/pytest-results.json",
+  "candidate_pre_fixture_fix_result": "/tmp/biomind-gwas-s1-test/managed-bootstrap-99j_vgjv/pytest-results.json",
+  "baseline_failures": [
+    "tests/test_package_manager.py::PackageManagerRegistrationTests::test_conda_root_prefers_local_prefix_without_conda_info",
+    "tests/test_package_manager.py::PackageManagerRegistrationTests::test_configured_anaconda_root_is_used_for_healthchecks",
+    "tests/test_package_manager.py::PackageManagerRegistrationTests::test_healthcheck_uses_existing_environment_prefix_without_conda_run",
+    "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_formal_declarations_reach_registry_semantic_and_runtime_views",
+    "tests/test_planner_wgs_skill_contracts.py::PlannerWGSSkillContractTests::test_supported_reference_effect_retains_evidence_requirements",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_active_durable_finalize_overrides_stale_completed_terminal",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_command_trace_does_not_leak_xtrace_state_to_child_processes",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_consultant_execute_loop_guard_is_present",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_external_llm_request_cancellation_still_propagates",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_llm_request_has_hard_timeout",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_planner_does_not_load_global_installed_tool_inventory",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_provider_cancelled_llm_request_becomes_retryable_timeout",
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_relative_skill_healthcheck_is_run_from_repo_root"
+  ],
+  "candidate_additional_failure": [
+    "tests/test_runtime_preflight.py::RuntimePreflightTests::test_runtime_audit_reports_verified_alternate_environment_candidate"
+  ],
+  "additional_fixed_fixture_case": "tests/test_runtime_preflight.py::RuntimePreflightTests::test_runtime_audit_reports_verified_alternate_environment_candidate",
+  "final_fixed_pass_evidence": "/tmp/biomind-gwas-s1-test/managed-bootstrap-msp69gg9/pytest-results.json",
+  "same_existing_failures": true,
+  "note": "Existing source assertions, incomplete fixture data_path, directory-name assertion, bootstrap-denied subprocess and old WGS declarations are not repaired in S1."
+}

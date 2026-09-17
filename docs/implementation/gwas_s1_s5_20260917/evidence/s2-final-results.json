@@ -1,0 +1,127 @@
+[
+  {
+    "nodeid": "tests/test_gwas_runtime_projection_s2.py::test_changed_scope_downgrades_provider_observation_and_ledger_together",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_projection_s2.py::test_changed_scope_downgrades_provider_observation_and_ledger_together",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.006660042330622673,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_projection_s2.py::test_changed_scope_downgrades_provider_observation_and_ledger_together",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.011691088788211346,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_projection_s2.py::test_changed_scope_downgrades_provider_observation_and_ledger_together",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000166391022503376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005764821544289589,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.3692594971507788,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018339790403842926,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006523830816149712,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 3.9310201443731785,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017199013382196426,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006451345980167389,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.0823636641725898,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018997862935066223,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006292788311839104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.646723144687712,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002285502851009369,
+    "failure": ""
+  }
+]

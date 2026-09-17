@@ -1,0 +1,14 @@
+{
+  "command": "env -i PATH=/usr/bin:/bin TMPDIR=/tmp/biomind-gwas-host-controlled BIOMIND_DISABLE_DOTENV=1 /public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/biomind-gwas-host-controlled/candidate/tests/offline_managed_bootstrap.py /tmp/biomind-gwas-host-controlled/candidate -q -s tests/test_host_controlled_bcftools.py",
+  "files": [
+    {
+      "path": "/tmp/biomind-gwas-host-controlled/candidate/tests/offline_managed_bootstrap.py",
+      "sha256": "b6df4bf8514c91ed5db9b4c03fc25fbc2258ce6aa099bcc32c1a508a51351c10"
+    },
+    {
+      "path": "/tmp/biomind-gwas-host-controlled/candidate/tests/test_host_controlled_bcftools.py",
+      "sha256": "d3b73d91d9ad51762d1488503cf923400372458ee4e5d4aceeb7c6251f015c23"
+    }
+  ],
+  "one_shot": "One exact argv/cwd/env admission. No repeated OS probe, no bwrap/host configuration or registry changes."
+}

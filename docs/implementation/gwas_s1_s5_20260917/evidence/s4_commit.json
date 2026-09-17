@@ -1,0 +1,374 @@
+{
+  "slice": "S4",
+  "parent": "41d166b8766ae2a251c9451dc59733fe3022b1a4",
+  "candidate": "/tmp/biomind-gwas-s1-s5-20260917/integration",
+  "files": [
+    "agent_core/cli_lifecycle.py",
+    "agent_core/workflow/inspection_evidence.py",
+    "agent_core/workflow/inspection_stop.py",
+    "agent_core/workflow/phase_archive.py",
+    "agent_core/workflow/recovery_agent.py",
+    "agent_core/workflow/recovery_context.py",
+    "agent_core/workflow/recovery_node.py",
+    "agent_core/workflow/recovery_runtime.py",
+    "agent_core/workflow/recovery_tools.py",
+    "bio_agents.py",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/plan_state.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/0ce8e111f5a81d235551c47f7ca65a48af40a265782ece511d8d0f1842b58323.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/1707c0267c007ff74601a213ba5e718ed88fb0e5def0a09ee035c41d7a196ad5.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/4755dfedda11cc2b2f283df13035814e654a1e11708eb996cb186ef5e484e829.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/478c08f0131e7eb829a826629ba3a12baa479f619aac70969ca43d5ec73c91f4.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/83d8f544a517676fc4132ba340c16b5eb92309b96eee838a117cfcbf6a3ac715.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/93e57d27fc60ce7403934866f7716d715514defbab2f0ab05f1e3c3a674d22e5.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/cea95a3db0fd43164232e12698fc1ddfe7f1a1b3b58b10b1db5d2cc66e68f9a9.json",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/dac3311a104f481a19870f5f5a72d5873c3e22b1f62004b3b5c47cb78fa56eb4.json",
+    "tests/fixtures/gwas_s4_history/staging_manifest.json",
+    "tests/test_gwas_failure_semantics.py",
+    "tests/test_gwas_runtime_projection_s2.py",
+    "tests/test_gwas_s4_recovery_integration.py",
+    "tests/test_recovery_agent_seed.py",
+    "tests/test_recovery_schema2_node.py",
+    "tests/test_unified_runtime_preparation.py"
+  ],
+  "expected_candidate_hashes": {
+    "agent_core/cli_lifecycle.py": "7503f5b78fc47d447058a727a9a0614ee91b6661f0b64cfb8ebda36a1c46936e",
+    "agent_core/workflow/inspection_evidence.py": "b2274ef91e5f2eef35060e66571e28d786a344eef4ed75cd9156a2d563eed546",
+    "agent_core/workflow/inspection_stop.py": "229d3d7c58914f5e3ef4ec1e73d9b2c7856dc03fca21e86a9d88d3f579c4c7fa",
+    "agent_core/workflow/phase_archive.py": "540b91eee739900cce93f6f2fe12192c7d2893ff483ed9dbf9547c8bd7c96d76",
+    "agent_core/workflow/recovery_agent.py": "d9b242f98dc3b612a766363811554e4b5c079231a48df70cc64f07eecfd8d6bc",
+    "agent_core/workflow/recovery_context.py": "12bcc521c76e09231b43fee25ec44d48831332496e1aa5755ad723aba8ff304e",
+    "agent_core/workflow/recovery_node.py": "4b661dad545b971904f92ed368ba5f6f63902f0d5a809dd4434934947be901f7",
+    "agent_core/workflow/recovery_runtime.py": "afc2fdec02ca8f339285ccbaf527d0bc76630415a5ab058388df420cd6f71352",
+    "agent_core/workflow/recovery_tools.py": "c992381b37cf3bbfcd88984cd34f383a7d9ba14f325689a14745523e219491f8",
+    "bio_agents.py": "cda1d345ed32378174f5f339abbaa42bd76c08c6fb71dbb557cbef844f1895a3",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/plan_state.json": "1367343ed268939b02062bd2406e6ea102bad10349e6e7089e79c0cd0d30fede",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/0ce8e111f5a81d235551c47f7ca65a48af40a265782ece511d8d0f1842b58323.json": "0ce8e111f5a81d235551c47f7ca65a48af40a265782ece511d8d0f1842b58323",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/1707c0267c007ff74601a213ba5e718ed88fb0e5def0a09ee035c41d7a196ad5.json": "1707c0267c007ff74601a213ba5e718ed88fb0e5def0a09ee035c41d7a196ad5",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/4755dfedda11cc2b2f283df13035814e654a1e11708eb996cb186ef5e484e829.json": "4755dfedda11cc2b2f283df13035814e654a1e11708eb996cb186ef5e484e829",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/478c08f0131e7eb829a826629ba3a12baa479f619aac70969ca43d5ec73c91f4.json": "478c08f0131e7eb829a826629ba3a12baa479f619aac70969ca43d5ec73c91f4",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/83d8f544a517676fc4132ba340c16b5eb92309b96eee838a117cfcbf6a3ac715.json": "83d8f544a517676fc4132ba340c16b5eb92309b96eee838a117cfcbf6a3ac715",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/93e57d27fc60ce7403934866f7716d715514defbab2f0ab05f1e3c3a674d22e5.json": "93e57d27fc60ce7403934866f7716d715514defbab2f0ab05f1e3c3a674d22e5",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/cea95a3db0fd43164232e12698fc1ddfe7f1a1b3b58b10b1db5d2cc66e68f9a9.json": "cea95a3db0fd43164232e12698fc1ddfe7f1a1b3b58b10b1db5d2cc66e68f9a9",
+    "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/dac3311a104f481a19870f5f5a72d5873c3e22b1f62004b3b5c47cb78fa56eb4.json": "dac3311a104f481a19870f5f5a72d5873c3e22b1f62004b3b5c47cb78fa56eb4",
+    "tests/fixtures/gwas_s4_history/staging_manifest.json": "5700ff4e407beac49998d8afbe7e1d3b1b977946d6ee552ea889e26f881c0591",
+    "tests/test_gwas_failure_semantics.py": "b5349134f4f171fa045bf95731e93b1412faa02518293a25db13a81bd7535ee6",
+    "tests/test_gwas_runtime_projection_s2.py": "50fa81f2776ef3d77d61796b2334424d849625c8bc9534912ff995988d580717",
+    "tests/test_gwas_s4_recovery_integration.py": "8ac4b5b05b97bda453963bb9c31beaecaeece21bceb47f3b6df6615cbb25a7c8",
+    "tests/test_recovery_agent_seed.py": "d2864b684ded385ad743874e96ce049eb8efd66032ca344ec58dae479dfba3bd",
+    "tests/test_recovery_schema2_node.py": "c39ce03a47705d226f28b0c92b534ef015e2a7891d9f6681cdbb6a7e844bdc8b",
+    "tests/test_unified_runtime_preparation.py": "8ee4f24be8283f909b4d795c43cecf429b3d82fa77838abfd713f9dc94e9642a"
+  },
+  "message": "fix: enforce recovery dispatch budgets and scoped archive reads",
+  "validation": {
+    "source_manifest_sha256": "9b4ebef7e58cbfc7fcfeaf6da17161d2fad21f604e1ac5fadbac24406e38c1dc",
+    "batches": [
+      {
+        "label": "runtime",
+        "returncode": 0,
+        "summary": [
+          "359 passed, 26 subtests passed in 65.81s (0:01:05)",
+          "SOURCE_UNCHANGED True"
+        ]
+      },
+      {
+        "label": "graphs",
+        "returncode": 0,
+        "summary": [
+          "81 passed, 19 subtests passed in 64.82s (0:01:04)",
+          "SOURCE_UNCHANGED True"
+        ]
+      },
+      {
+        "label": "recovery",
+        "returncode": 0,
+        "summary": [
+          "68 passed, 36 deselected in 99.50s (0:01:39)",
+          "SOURCE_UNCHANGED True"
+        ]
+      },
+      {
+        "label": "resume",
+        "returncode": 0,
+        "summary": [
+          "2 passed in 3.51s",
+          "SOURCE_UNCHANGED True"
+        ]
+      }
+    ],
+    "invocations": "/tmp/biomind-gwas-s1-s5-20260917/final-release/summary.json",
+    "note": "Includes necessary S5 budget projection and S1/S2/S4 compatibility test integration on one cumulative source."
+  },
+  "manual_index_overrides": {
+    "tests/test_recovery_schema2_node.py": {
+      "index_file": "/tmp/biomind-gwas-s1-s5-20260917/s4-manual-test-index.py",
+      "receipt": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/gwas_s1_s5_20260917/evidence/s4_manual_partition.json"
+    }
+  },
+  "commit": "b82272283354bf299cea0000ba51af53d8b787d8",
+  "partition": [
+    {
+      "path": "agent_core/cli_lifecycle.py",
+      "mode": "100644",
+      "before_sha256": "4cff20aeab02a0ab3672306840052c6c2db7b57e59efecdc2a0355414f925e52",
+      "tested_sha256": "7503f5b78fc47d447058a727a9a0614ee91b6661f0b64cfb8ebda36a1c46936e",
+      "index_sha256": "7503f5b78fc47d447058a727a9a0614ee91b6661f0b64cfb8ebda36a1c46936e",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "2ffe93a8711620d651660690fbb55aa535634b5d"
+    },
+    {
+      "path": "agent_core/workflow/inspection_evidence.py",
+      "mode": "100644",
+      "before_sha256": "b2e78dac3fba81a8e8e5d1fba5e82ac4b4355a7a811581758fddefd2d40d8a84",
+      "tested_sha256": "b2274ef91e5f2eef35060e66571e28d786a344eef4ed75cd9156a2d563eed546",
+      "index_sha256": "b2274ef91e5f2eef35060e66571e28d786a344eef4ed75cd9156a2d563eed546",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "8641db994a8b74baddd008a3724209b9f37eefc2"
+    },
+    {
+      "path": "agent_core/workflow/inspection_stop.py",
+      "mode": "100644",
+      "before_sha256": "dfa93b57f07fb3f8bab77afe9c08f71587d791c1892d91283888a1f70acf950d",
+      "tested_sha256": "229d3d7c58914f5e3ef4ec1e73d9b2c7856dc03fca21e86a9d88d3f579c4c7fa",
+      "index_sha256": "229d3d7c58914f5e3ef4ec1e73d9b2c7856dc03fca21e86a9d88d3f579c4c7fa",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "91a5fb8a96532c0df7766aa6342d50a5b5067f07"
+    },
+    {
+      "path": "agent_core/workflow/phase_archive.py",
+      "mode": "100644",
+      "before_sha256": "7a3587589f52db7f51435e277928204120cf55c1bccdf51be7ab577be3c538e0",
+      "tested_sha256": "540b91eee739900cce93f6f2fe12192c7d2893ff483ed9dbf9547c8bd7c96d76",
+      "index_sha256": "540b91eee739900cce93f6f2fe12192c7d2893ff483ed9dbf9547c8bd7c96d76",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "f29c70f36ab1644865fd2467a368ce709c737e2e"
+    },
+    {
+      "path": "agent_core/workflow/recovery_agent.py",
+      "mode": "100644",
+      "before_sha256": "70c9a86e883e89840a81879d69635ee26bd73ece3717c06e89ec1e4ce9c1cbf6",
+      "tested_sha256": "d9b242f98dc3b612a766363811554e4b5c079231a48df70cc64f07eecfd8d6bc",
+      "index_sha256": "d9b242f98dc3b612a766363811554e4b5c079231a48df70cc64f07eecfd8d6bc",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "8f3fa1f619564b7ed697a20f34e2f434e007ceca"
+    },
+    {
+      "path": "agent_core/workflow/recovery_context.py",
+      "mode": "100644",
+      "before_sha256": "2b870bc3034c9654506dcffe2dfe4b74d41a97a38670332434fcbd9d258c3aa4",
+      "tested_sha256": "12bcc521c76e09231b43fee25ec44d48831332496e1aa5755ad723aba8ff304e",
+      "index_sha256": "12bcc521c76e09231b43fee25ec44d48831332496e1aa5755ad723aba8ff304e",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "758df23c244899ff7d7d7fa033c0d6610a271698"
+    },
+    {
+      "path": "agent_core/workflow/recovery_node.py",
+      "mode": "100644",
+      "before_sha256": "7579c5b513fb6f0abca1b9d8f9f99b4f24bb29a15910fa9001d52b0d0271529d",
+      "tested_sha256": "4b661dad545b971904f92ed368ba5f6f63902f0d5a809dd4434934947be901f7",
+      "index_sha256": "4b661dad545b971904f92ed368ba5f6f63902f0d5a809dd4434934947be901f7",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "79cf4b18b484e13059b288f98237a78fff481a5b"
+    },
+    {
+      "path": "agent_core/workflow/recovery_runtime.py",
+      "mode": "100644",
+      "before_sha256": "9b0b4f08cf902c370631d0c3a79c019444203bf57c9da29da4cdeb2d1d657825",
+      "tested_sha256": "afc2fdec02ca8f339285ccbaf527d0bc76630415a5ab058388df420cd6f71352",
+      "index_sha256": "afc2fdec02ca8f339285ccbaf527d0bc76630415a5ab058388df420cd6f71352",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "40d5f6320d8ce98c316fc2e734b955a39418abe9"
+    },
+    {
+      "path": "agent_core/workflow/recovery_tools.py",
+      "mode": "100644",
+      "before_sha256": "ba16dae96997112ef488f8a90d89ba9fd219e8f7a9859d8a6d0e4a021c81fb5f",
+      "tested_sha256": "c992381b37cf3bbfcd88984cd34f383a7d9ba14f325689a14745523e219491f8",
+      "index_sha256": "c992381b37cf3bbfcd88984cd34f383a7d9ba14f325689a14745523e219491f8",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "9ac91cf254862d70543f7d82980fc2b31805be4c"
+    },
+    {
+      "path": "bio_agents.py",
+      "mode": "100644",
+      "before_sha256": "0c60d4a1c3504abf4e2ac7b357aa57cbab83cbcdfe47bc87224d82d3dbe0ac78",
+      "tested_sha256": "cda1d345ed32378174f5f339abbaa42bd76c08c6fb71dbb557cbef844f1895a3",
+      "index_sha256": "93e7d50f7fa4a8475adf64f62eed7b328d0abc1d43f842871895f2a25af2895e",
+      "preserved_overlay": true,
+      "manual_index_override": null,
+      "index_blob": "2e7e3a846da579e5531154c15cf57e0bbb26670f"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/plan_state.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "1367343ed268939b02062bd2406e6ea102bad10349e6e7089e79c0cd0d30fede",
+      "index_sha256": "1367343ed268939b02062bd2406e6ea102bad10349e6e7089e79c0cd0d30fede",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "788f86b19dd1b1c34ea3153d122db87148e8a9b7"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/0ce8e111f5a81d235551c47f7ca65a48af40a265782ece511d8d0f1842b58323.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "0ce8e111f5a81d235551c47f7ca65a48af40a265782ece511d8d0f1842b58323",
+      "index_sha256": "0ce8e111f5a81d235551c47f7ca65a48af40a265782ece511d8d0f1842b58323",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "3731a0e922c3177d4d6a879437d85fbb75f0d66f"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/1707c0267c007ff74601a213ba5e718ed88fb0e5def0a09ee035c41d7a196ad5.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "1707c0267c007ff74601a213ba5e718ed88fb0e5def0a09ee035c41d7a196ad5",
+      "index_sha256": "1707c0267c007ff74601a213ba5e718ed88fb0e5def0a09ee035c41d7a196ad5",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "33ca7505a859dd0f2c56d02517ebe014ba5006ff"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/4755dfedda11cc2b2f283df13035814e654a1e11708eb996cb186ef5e484e829.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "4755dfedda11cc2b2f283df13035814e654a1e11708eb996cb186ef5e484e829",
+      "index_sha256": "4755dfedda11cc2b2f283df13035814e654a1e11708eb996cb186ef5e484e829",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "32150f502c478dcd3eff753fadb308fc1423cf80"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/478c08f0131e7eb829a826629ba3a12baa479f619aac70969ca43d5ec73c91f4.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "478c08f0131e7eb829a826629ba3a12baa479f619aac70969ca43d5ec73c91f4",
+      "index_sha256": "478c08f0131e7eb829a826629ba3a12baa479f619aac70969ca43d5ec73c91f4",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "9c04c8d706531fcb694494a61a7d3f5881646400"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/83d8f544a517676fc4132ba340c16b5eb92309b96eee838a117cfcbf6a3ac715.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "83d8f544a517676fc4132ba340c16b5eb92309b96eee838a117cfcbf6a3ac715",
+      "index_sha256": "83d8f544a517676fc4132ba340c16b5eb92309b96eee838a117cfcbf6a3ac715",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "d267286d50b13aed2a418177ff7b5e48dd5cb85c"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/93e57d27fc60ce7403934866f7716d715514defbab2f0ab05f1e3c3a674d22e5.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "93e57d27fc60ce7403934866f7716d715514defbab2f0ab05f1e3c3a674d22e5",
+      "index_sha256": "93e57d27fc60ce7403934866f7716d715514defbab2f0ab05f1e3c3a674d22e5",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "952477c2df21ff430d57991214a6f9d753621853"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/cea95a3db0fd43164232e12698fc1ddfe7f1a1b3b58b10b1db5d2cc66e68f9a9.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "cea95a3db0fd43164232e12698fc1ddfe7f1a1b3b58b10b1db5d2cc66e68f9a9",
+      "index_sha256": "cea95a3db0fd43164232e12698fc1ddfe7f1a1b3b58b10b1db5d2cc66e68f9a9",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "b09519e011703ba66568a65f4b5dbfc9239278f0"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/data/task_outputs/session_1789648505/state_contract/objects/dac3311a104f481a19870f5f5a72d5873c3e22b1f62004b3b5c47cb78fa56eb4.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "dac3311a104f481a19870f5f5a72d5873c3e22b1f62004b3b5c47cb78fa56eb4",
+      "index_sha256": "dac3311a104f481a19870f5f5a72d5873c3e22b1f62004b3b5c47cb78fa56eb4",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "cff80e25a80c2d3587a77c68d058f6a3b808ca1f"
+    },
+    {
+      "path": "tests/fixtures/gwas_s4_history/staging_manifest.json",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "5700ff4e407beac49998d8afbe7e1d3b1b977946d6ee552ea889e26f881c0591",
+      "index_sha256": "5700ff4e407beac49998d8afbe7e1d3b1b977946d6ee552ea889e26f881c0591",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "04a5ef56e9c07bdceb0317c10d9ab6afe3dec9aa"
+    },
+    {
+      "path": "tests/test_gwas_failure_semantics.py",
+      "mode": "100644",
+      "before_sha256": "ea4684492813505cf9c8d85a82d91a24f527523a70e6e88e1d42262ea12fddfc",
+      "tested_sha256": "b5349134f4f171fa045bf95731e93b1412faa02518293a25db13a81bd7535ee6",
+      "index_sha256": "b5349134f4f171fa045bf95731e93b1412faa02518293a25db13a81bd7535ee6",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "510a9596da4682c2a03593bc45c6985dcd2b3008"
+    },
+    {
+      "path": "tests/test_gwas_runtime_projection_s2.py",
+      "mode": "100644",
+      "before_sha256": "ea5d668f40937153bcee07ed7fb09e36133b694481cfdc6e86a3fdaa82bc3853",
+      "tested_sha256": "50fa81f2776ef3d77d61796b2334424d849625c8bc9534912ff995988d580717",
+      "index_sha256": "50fa81f2776ef3d77d61796b2334424d849625c8bc9534912ff995988d580717",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "271f61fe61a4ffc9443ef519561e8a0f15e84274"
+    },
+    {
+      "path": "tests/test_gwas_s4_recovery_integration.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "8ac4b5b05b97bda453963bb9c31beaecaeece21bceb47f3b6df6615cbb25a7c8",
+      "index_sha256": "8ac4b5b05b97bda453963bb9c31beaecaeece21bceb47f3b6df6615cbb25a7c8",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "2a485112b00f1043c15cb663b306420479c6c321"
+    },
+    {
+      "path": "tests/test_recovery_agent_seed.py",
+      "mode": "100644",
+      "before_sha256": "283836f56080d9122fb8842f8391e5140a1b856ac10c425e7b9988c6d841dc34",
+      "tested_sha256": "d2864b684ded385ad743874e96ce049eb8efd66032ca344ec58dae479dfba3bd",
+      "index_sha256": "bd2268ac66647acb4e74dfc58db7021090568722e00f96059910834820ab49a1",
+      "preserved_overlay": true,
+      "manual_index_override": null,
+      "index_blob": "465e952e9930eca429166655ec4bc7c058413dd4"
+    },
+    {
+      "path": "tests/test_recovery_schema2_node.py",
+      "mode": "100644",
+      "before_sha256": "4fbbc298140707b3702ef44134b521f050a44343434d551819b43c83df5f5a97",
+      "tested_sha256": "c39ce03a47705d226f28b0c92b534ef015e2a7891d9f6681cdbb6a7e844bdc8b",
+      "index_sha256": "ff962f97f0f2fa153aa6741a35762d981b058b81b0c72e8471aed9955028f401",
+      "preserved_overlay": true,
+      "manual_index_override": {
+        "index_file": "/tmp/biomind-gwas-s1-s5-20260917/s4-manual-test-index.py",
+        "receipt": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/gwas_s1_s5_20260917/evidence/s4_manual_partition.json"
+      },
+      "index_blob": "8f4bee6aaf5a3ac3604205d34ad5dedfd3b74741"
+    },
+    {
+      "path": "tests/test_unified_runtime_preparation.py",
+      "mode": "100644",
+      "before_sha256": "81ff7f37a5b6270a5ae4a2cef74c083bf88d3a9ee8d0680d2abad377beb125c6",
+      "tested_sha256": "8ee4f24be8283f909b4d795c43cecf429b3d82fa77838abfd713f9dc94e9642a",
+      "index_sha256": "8ee4f24be8283f909b4d795c43cecf429b3d82fa77838abfd713f9dc94e9642a",
+      "preserved_overlay": false,
+      "manual_index_override": null,
+      "index_blob": "9fa2fefac8606e9ab305734932c6cc7106dd7567"
+    }
+  ],
+  "git_index_was_empty": true
+}

@@ -1,0 +1,8 @@
+{
+  "head": "3f71b90789c14b2662e717225cf826b1cf5ec3b3",
+  "source_files": 905,
+  "audit_source_new_differences": [],
+  "baseline_source": "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind_audit_exports/gwas_s1_s5_20260917/baseline_source",
+  "integration": "/tmp/biomind-gwas-s1-s5-20260917/integration",
+  "original_staged_empty": true
+}

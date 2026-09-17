@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "review_scope": "Read-only final four-batch receipts, explicit source manifest, collector and current report; no tests rerun or production/Git modifications. Diagnostic evidence was subsequently copied under an explicit bounded authorization.",
+  "batches": [
+    {
+      "batch": "runtime",
+      "returncode": 0,
+      "test_executions": 359,
+      "call_reports": 385,
+      "additional_subtest_reports": 26,
+      "failed_reports": 0,
+      "passed_teardowns": 359,
+      "normal_exit_footer": true,
+      "source_unchanged": true,
+      "python_source_identity": "a441872b35ee6787abb0786abce7532e5077254fdac7f86f847d919020ceb812",
+      "source_manifest_sha256": "9b4ebef7e58cbfc7fcfeaf6da17161d2fad21f604e1ac5fadbac24406e38c1dc"
+    },
+    {
+      "batch": "graphs",
+      "returncode": 0,
+      "test_executions": 81,
+      "call_reports": 100,
+      "additional_subtest_reports": 19,
+      "failed_reports": 0,
+      "passed_teardowns": 81,
+      "normal_exit_footer": true,
+      "source_unchanged": true,
+      "python_source_identity": "a441872b35ee6787abb0786abce7532e5077254fdac7f86f847d919020ceb812",
+      "source_manifest_sha256": "9b4ebef7e58cbfc7fcfeaf6da17161d2fad21f604e1ac5fadbac24406e38c1dc"
+    },
+    {
+      "batch": "recovery",
+      "returncode": 0,
+      "test_executions": 68,
+      "call_reports": 68,
+      "additional_subtest_reports": 0,
+      "failed_reports": 0,
+      "passed_teardowns": 68,
+      "normal_exit_footer": true,
+      "source_unchanged": true,
+      "python_source_identity": "a441872b35ee6787abb0786abce7532e5077254fdac7f86f847d919020ceb812",
+      "source_manifest_sha256": "9b4ebef7e58cbfc7fcfeaf6da17161d2fad21f604e1ac5fadbac24406e38c1dc"
+    },
+    {
+      "batch": "resume",
+      "returncode": 0,
+      "test_executions": 2,
+      "call_reports": 2,
+      "additional_subtest_reports": 0,
+      "failed_reports": 0,
+      "passed_teardowns": 2,
+      "normal_exit_footer": true,
+      "source_unchanged": true,
+      "python_source_identity": "a441872b35ee6787abb0786abce7532e5077254fdac7f86f847d919020ceb812",
+      "source_manifest_sha256": "9b4ebef7e58cbfc7fcfeaf6da17161d2fad21f604e1ac5fadbac24406e38c1dc"
+    }
+  ],
+  "counting": {
+    "test_executions": 510,
+    "distinct_nodeids": 508,
+    "passed_subtest_reports": 45,
+    "repeated_nodes": {
+      "tests/test_gwas_s4_recovery_integration.py::test_external_observation_new_process_next_page": 2,
+      "tests/test_gwas_s4_recovery_integration.py::test_persistent_epoch_and_observation_restart": 2
+    },
+    "recommended_description": "510 successful test executions (508 distinct node IDs plus two fresh-process resume executions), and 45 passed subtests."
+  },
+  "identity": {
+    "manifest_path": "/tmp/biomind-gwas-s1-s5-20260917/final-release/source_manifest.json",
+    "file_count": 926,
+    "canonical_sorted_compact_json_sha256": "9b4ebef7e58cbfc7fcfeaf6da17161d2fad21f604e1ac5fadbac24406e38c1dc",
+    "raw_manifest_file_sha256": "f6dd9232a1d7b28b753c178951d8bcea64c0152dd0d16d82d66ae5dd553a1c50",
+    "all_batch_manifest_identities_match": true,
+    "all_batch_python_identities_match": true,
+    "current_candidate_file_mismatches": []
+  },
+  "baseline_exclusions": {
+    "count": 36,
+    "exact_node_deselections": 33,
+    "named_k_exclusions": 3,
+    "status": "Explicit and retained; the 33 inspection/context failures reproduced with same traces on baseline. The other three are covered by the root/R1 comparison, not independently rerun here."
+  },
+  "review_findings_reported_to_parent": [
+    {
+      "id": "count_distinct_nodes",
+      "finding": "The two resume nodes repeat prepare-stage node IDs; 510 is successful executions, 508 is distinct node IDs.",
+      "parent_response": "Parent acknowledged and will use exact wording."
+    },
+    {
+      "id": "collector_missing_cas_budget_rows",
+      "file": "/tmp/biomind-gwas-s1-s5-20260917/collect_final_evidence.py",
+      "reviewed_line": 34,
+      "finding": "The initial collector copied cas_receipt.json but omitted it from gather(); its 27 recorded compactor requests would be absent from FINAL_DISPATCH_BUDGETS.tsv. All 27 recorded budgets independently satisfied the stated cap and input constraints.",
+      "suggested_action": "Gather cas_receipt.json under cas_race or explicitly limit the table scope. Parent owns collector changes."
+    },
+    {
+      "id": "digest_scope_name",
+      "file": "/tmp/biomind-gwas-s1-s5-20260917/collect_final_evidence.py",
+      "reviewed_line": 29,
+      "finding": "The initial wire_sha256 hashes only messages, not tools/model/output cap.",
+      "suggested_action": "Name it messages_sha256 or hash full dispatch fields. Parent owns collector changes."
+    },
+    {
+      "id": "durable_diagnostic_raw_files",
+      "finding": "Initial collector included only passing final batches; failure-review JSON referenced temporary raw logs/results.",
+      "resolution": "Completed bounded persistent copy of 11 diagnostic files with byte-for-byte hashes; manifest linked below."
+    },
+    {
+      "id": "final_report_limits",
+      "finding": "At review start REPORT preserved process-leaf substitutions, real host 60-second timeout and unknown Q mapping, but had not yet added final counts, 36 exclusions or unexplained single-process -11.",
+      "parent_response": "Parent is finishing final report and acknowledged retaining these limits."
+    }
+  ],
+  "diagnostic_manifest": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/gwas_s1_s5_20260917/evidence/diagnostic_raw_evidence.json",
+  "required_limits": [
+    "Single-process -11 remains unexplained; its mapping test had recorded Generate request but no runner execution.",
+    "Four passing batches are same-source isolated-process coverage, not proof the single-process crash was fixed.",
+    "Real controlled host bcftools check timed out after 60 seconds and remained UNKNOWN, without binding or install.",
+    "Q remains 215x3 numeric without sample identity; mapping unknown blocks dependent association work.",
+    "Model responses, Inspector OS leaves and human decisions are test substitutes; intermediate production paths and tiny runner execution are real."
+  ],
+  "source_and_docs_modifications": "No production, tests, Git or REPORT edits. Only the authorized diagnostic manifest was written in docs; this review is stored under /tmp."
+}

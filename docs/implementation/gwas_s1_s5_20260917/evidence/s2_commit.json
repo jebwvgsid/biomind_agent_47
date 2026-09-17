@@ -1,0 +1,65 @@
+{
+  "slice": "S2",
+  "parent": "9693df595ce6181393e4f6383c513deb08aaa560",
+  "candidate": "/tmp/biomind-gwas-s1-s5-20260917/integration",
+  "files": [
+    "bio_agents.py",
+    "prompts/manager.py",
+    "tests/test_gwas_runtime_auto_chain.py",
+    "tests/test_gwas_runtime_projection_s2.py"
+  ],
+  "expected_candidate_hashes": {
+    "bio_agents.py": "0c60d4a1c3504abf4e2ac7b357aa57cbab83cbcdfe47bc87224d82d3dbe0ac78",
+    "prompts/manager.py": "0a1b883e744e9e1770095345d385c930325f629efeabea763bdf076dca3acf00",
+    "tests/test_gwas_runtime_auto_chain.py": "5c1f7ad290ba0976c0af4fd01bf09a3c94efeaa9f30ac2f91c093c4bd0c024be",
+    "tests/test_gwas_runtime_projection_s2.py": "ea5d668f40937153bcee07ed7fb09e36133b694481cfdc6e86a3fdaa82bc3853"
+  },
+  "message": "fix: carry scoped runtime observations through consultant and approved execution",
+  "validation": {
+    "command_log": "/tmp/biomind-gwas-s1-s5-20260917/s2-final-test.log",
+    "results": "/tmp/biomind-gwas-s1-s5-20260917/s2-final-results.json",
+    "passed": 5,
+    "source_unchanged": true,
+    "prior_joint_result": "/tmp/biomind-gwas-s1-s5-20260917/s2-s3-results.json"
+  },
+  "commit": "e53d1328e209c8a4e0cf33ced223a635e0e0e34b",
+  "partition": [
+    {
+      "path": "bio_agents.py",
+      "mode": "100644",
+      "before_sha256": "eb89be23f2a034f4a3ed5bb207535ef5a248767faa848c08163a6f1fc07087c6",
+      "tested_sha256": "0c60d4a1c3504abf4e2ac7b357aa57cbab83cbcdfe47bc87224d82d3dbe0ac78",
+      "index_sha256": "b0d8dafdc29351bb34b54cc54fad19eacc58705ace5bcbd74d9b2cefaa1e9fcb",
+      "preserved_overlay": true,
+      "index_blob": "22b4aba11163af23f390ae70947ada3d8ee929b1"
+    },
+    {
+      "path": "prompts/manager.py",
+      "mode": "100644",
+      "before_sha256": "505b863ce854e1a478a776b402b556d52642600b6940874a1f322786abc8f416",
+      "tested_sha256": "0a1b883e744e9e1770095345d385c930325f629efeabea763bdf076dca3acf00",
+      "index_sha256": "292006ae763a384dde7dcab4bdc89710ca82810c694ae6bf505b372d00706924",
+      "preserved_overlay": true,
+      "index_blob": "028ac54289d1393f174cbe6339da31c2385ce357"
+    },
+    {
+      "path": "tests/test_gwas_runtime_auto_chain.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "5c1f7ad290ba0976c0af4fd01bf09a3c94efeaa9f30ac2f91c093c4bd0c024be",
+      "index_sha256": "5c1f7ad290ba0976c0af4fd01bf09a3c94efeaa9f30ac2f91c093c4bd0c024be",
+      "preserved_overlay": false,
+      "index_blob": "feadfae302292717fbd580d1bf0174d9de094aff"
+    },
+    {
+      "path": "tests/test_gwas_runtime_projection_s2.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "ea5d668f40937153bcee07ed7fb09e36133b694481cfdc6e86a3fdaa82bc3853",
+      "index_sha256": "ea5d668f40937153bcee07ed7fb09e36133b694481cfdc6e86a3fdaa82bc3853",
+      "preserved_overlay": false,
+      "index_blob": "6a54f6a88f8b94eb76b4e30d937671df8ea376e5"
+    }
+  ],
+  "git_index_was_empty": true
+}

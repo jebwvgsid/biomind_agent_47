@@ -1,0 +1,78 @@
+{
+  "command": [
+    "/usr/bin/python",
+    "-B",
+    "/tmp/biomind-gwas-s1-s5-20260917/s3-joint/skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+    "--vcf",
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz",
+    "--phenotype",
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_trait.C16_0.table",
+    "--q-matrix",
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.3.Q",
+    "--gff3",
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real.gff3",
+    "--observation-id",
+    "gwas_input_structure"
+  ],
+  "returncode": 0,
+  "stdout": "BIOMIND_EFFECT_EVIDENCE_JSON={\"produces_observations\": [{\"observation_id\": \"gwas_input_structure\", \"value\": {\"schema_version\": 1, \"producer\": \"gwas_input_structure_v1\", \"status\": \"observed\", \"vcf\": {\"sample_ids\": [\"GA0001\", \"GA0002\", \"GA0003\", \"GA0004\", \"GA0005\", \"GA0006\", \"GA0007\", \"GA0008\", \"GA0009\", \"GA0010\", \"GA0011\", \"GA0012\", \"GA0013\", \"GA0014\", \"GA0015\", \"GA0016\", \"GA0017\", \"GA0018\", \"GA0019\", \"GA0020\", \"GA0021\", \"GA0022\", \"GA0023\", \"GA0024\", \"GA0025\", \"GA0026\", \"GA0027\", \"GA0028\", \"GA0029\", \"GA0030\", \"GA0031\", \"GA0032\", \"GA0033\", \"GA0034\", \"GA0035\", \"GA0036\", \"GA0037\", \"GA0038\", \"GA0039\", \"GA0040\", \"GA0041\", \"GA0042\", \"GA0043\", \"GA0044\", \"GA0045\", \"GA0046\", \"GA0047\", \"GA0048\", \"GA0049\", \"GA0050\", \"GA0051\", \"GA0052\", \"GA0053\", \"GA0054\", \"GA0055\", \"GA0056\", \"GA0057\", \"GA0058\", \"GA0059\", \"GA0060\", \"GA0061\", \"GA0062\", \"GA0063\", \"GA0064\", \"GA0065\", \"GA0066\", \"GA0067\", \"GA0068\", \"GA0069\", \"GA0070\", \"GA0071\", \"GA0072\", \"GA0073\", \"GA0074\", \"GA0075\", \"GA0076\", \"GA0077\", \"GA0078\", \"GA0079\", \"GA0080\", \"GA0081\", \"GA0082\", \"GA0083\", \"GA0084\", \"GA0085\", \"GA0086\", \"GA0087\", \"GA0088\", \"GA0089\", \"GA0090\", \"GA0091\", \"GA0092\", \"GA0093\", \"GA0094\", \"GA0095\", \"GA0096\", \"GA0097\", \"GA0098\", \"GA0099\", \"GA0100\", \"GA0101\", \"GA0102\", \"GA0103\", \"GA0104\", \"GA0105\", \"GA0106\", \"GA0107\", \"GA0108\", \"GA0109\", \"GA0110\", \"GA0111\", \"GA0112\", \"GA0113\", \"GA0114\", \"GA0115\", \"GA0116\", \"GA0117\", \"GA0118\", \"GA0119\", \"GA0120\", \"GA0121\", \"GA0122\", \"GA0123\", \"GA0124\", \"GA0125\", \"GA0126\", \"GA0127\", \"GA0128\", \"GA0129\", \"GA0130\", \"GA0131\", \"GA0132\", \"GA0133\", \"GA0134\", \"GA0135\", \"GA0136\", \"GA0137\", \"GA0138\", \"GA0139\", \"GA0140\", \"GA0141\", \"GA0142\", \"GA0143\", \"GA0144\", \"GA0145\", \"GA0146\", \"GA0147\", \"GA0148\", \"GA0149\", \"GA0150\", \"GA0151\", \"GA0152\", \"GA0153\", \"GA0154\", \"GA0155\", \"GA0156\", \"GA0157\", \"GA0158\", \"GA0159\", \"GA0160\", \"GA0161\", \"GA0162\", \"GA0163\", \"GA0164\", \"GA0165\", \"GA0166\", \"GA0167\", \"GA0168\", \"GA0169\", \"GA0170\", \"GA0171\", \"GA0172\", \"GA0173\", \"GA0174\", \"GA0175\", \"GA0176\", \"GA0177\", \"GA0178\", \"GA0179\", \"GA0180\", \"GA0181\", \"GA0182\", \"GA0183\", \"GA0184\", \"GA0185\", \"GA0186\", \"GA0187\", \"GA0188\", \"GA0189\", \"GA0190\", \"GA0191\", \"GA0192\", \"GA0193\", \"GA0194\", \"GA0195\", \"GA0196\", \"GA0197\", \"GA0198\", \"GA0199\", \"GA0200\", \"GA0201\", \"GA0202\", \"GA0203\", \"GA0204\", \"GA0205\", \"GA0206\", \"GA0207\", \"GA0208\", \"GA0209\", \"GA0210\", \"GA0211\", \"GA0212\", \"GA0213\", \"GA0214\", \"GA0215\"], \"sample_count\": 215, \"decoded_bytes_read\": 47382, \"whole_vcf_validated\": false, \"file_identity\": {\"path\": \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz\", \"header_sha256\": \"a4aefc25853a0d07041b3dd68facf2be959359ffcb55e1faae4aae2898e34426\", \"identity_scope\": \"header_only\", \"file_bytes\": 759180760}}, \"phenotype\": {\"header\": null, \"header_present\": false, \"sample_column\": 0, \"row_count\": 215, \"column_count\": 2, \"ids\": [\"GA0001\", \"GA0002\", \"GA0003\", \"GA0004\", \"GA0005\", \"GA0006\", \"GA0007\", \"GA0008\", \"GA0009\", \"GA0010\", \"GA0011\", \"GA0012\", \"GA0013\", \"GA0014\", \"GA0015\", \"GA0016\", \"GA0017\", \"GA0018\", \"GA0019\", \"GA0020\", \"GA0021\", \"GA0022\", \"GA0023\", \"GA0024\", \"GA0025\", \"GA0026\", \"GA0027\", \"GA0028\", \"GA0029\", \"GA0030\", \"GA0031\", \"GA0032\", \"GA0033\", \"GA0034\", \"GA0035\", \"GA0036\", \"GA0037\", \"GA0038\", \"GA0039\", \"GA0040\", \"GA0041\", \"GA0042\", \"GA0043\", \"GA0044\", \"GA0045\", \"GA0046\", \"GA0047\", \"GA0048\", \"GA0049\", \"GA0050\", \"GA0051\", \"GA0052\", \"GA0053\", \"GA0054\", \"GA0055\", \"GA0056\", \"GA0057\", \"GA0058\", \"GA0059\", \"GA0060\", \"GA0061\", \"GA0062\", \"GA0063\", \"GA0064\", \"GA0065\", \"GA0066\", \"GA0067\", \"GA0068\", \"GA0069\", \"GA0070\", \"GA0071\", \"GA0072\", \"GA0073\", \"GA0074\", \"GA0075\", \"GA0076\", \"GA0077\", \"GA0078\", \"GA0079\", \"GA0080\", \"GA0081\", \"GA0082\", \"GA0083\", \"GA0084\", \"GA0085\", \"GA0086\", \"GA0087\", \"GA0088\", \"GA0089\", \"GA0090\", \"GA0091\", \"GA0092\", \"GA0093\", \"GA0094\", \"GA0095\", \"GA0096\", \"GA0097\", \"GA0098\", \"GA0099\", \"GA0100\", \"GA0101\", \"GA0102\", \"GA0103\", \"GA0104\", \"GA0105\", \"GA0106\", \"GA0107\", \"GA0108\", \"GA0109\", \"GA0110\", \"GA0111\", \"GA0112\", \"GA0113\", \"GA0114\", \"GA0115\", \"GA0116\", \"GA0117\", \"GA0118\", \"GA0119\", \"GA0120\", \"GA0121\", \"GA0122\", \"GA0123\", \"GA0124\", \"GA0125\", \"GA0126\", \"GA0127\", \"GA0128\", \"GA0129\", \"GA0130\", \"GA0131\", \"GA0132\", \"GA0133\", \"GA0134\", \"GA0135\", \"GA0136\", \"GA0137\", \"GA0138\", \"GA0139\", \"GA0140\", \"GA0141\", \"GA0142\", \"GA0143\", \"GA0144\", \"GA0145\", \"GA0146\", \"GA0147\", \"GA0148\", \"GA0149\", \"GA0150\", \"GA0151\", \"GA0152\", \"GA0153\", \"GA0154\", \"GA0155\", \"GA0156\", \"GA0157\", \"GA0158\", \"GA0159\", \"GA0160\", \"GA0161\", \"GA0162\", \"GA0163\", \"GA0164\", \"GA0165\", \"GA0166\", \"GA0167\", \"GA0168\", \"GA0169\", \"GA0170\", \"GA0171\", \"GA0172\", \"GA0173\", \"GA0174\", \"GA0175\", \"GA0176\", \"GA0177\", \"GA0178\", \"GA0179\", \"GA0180\", \"GA0181\", \"GA0182\", \"GA0183\", \"GA0184\", \"GA0185\", \"GA0186\", \"GA0187\", \"GA0188\", \"GA0189\", \"GA0190\", \"GA0191\", \"GA0192\", \"GA0193\", \"GA0194\", \"GA0195\", \"GA0196\", \"GA0197\", \"GA0198\", \"GA0199\", \"GA0200\", \"GA0201\", \"GA0202\", \"GA0203\", \"GA0204\", \"GA0205\", \"GA0206\", \"GA0207\", \"GA0208\", \"GA0209\", \"GA0210\", \"GA0211\", \"GA0212\", \"GA0213\", \"GA0214\", \"GA0215\"], \"file_identity\": {\"path\": \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_trait.C16_0.table\", \"sha256\": \"3cc8469f7663251953f369cbdc135c3eba928c55971dc9fbe79520379d0a190d\", \"bytes\": 2795, \"identity_scope\": \"full_file\"}}, \"vcf_phenotype_alignment\": {\"target_count\": 215, \"observed_count\": 215, \"missing_ids\": [], \"extra_ids\": [], \"same_ids\": true, \"order_matches\": true, \"alignment\": \"identical\"}, \"q_mapping\": {\"status\": \"unknown\", \"reason_code\": \"Q_SAMPLE_MAPPING_UNKNOWN\", \"reason\": \"Q rows have no IDs; equal row counts do not establish sample correspondence or order\"}, \"blocked_operations\": [\"q_covariate_preparation\", \"association_using_q\"], \"scientific_completion\": false, \"q_matrix\": {\"header\": null, \"header_present\": false, \"sample_column\": null, \"row_count\": 215, \"column_count\": 3, \"file_identity\": {\"path\": \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.3.Q\", \"sha256\": \"37760098d22166924528be5848e8f1a7302eeb250ebafb7102260620eb4210c6\", \"bytes\": 5805, \"identity_scope\": \"full_file\"}}, \"gff3\": {\"path\": \"/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real.gff3\", \"bytes_read\": 65536, \"identity_scope\": \"prefix_only\", \"prefix_sha256\": \"cb90f335c39d5ee78ab2f06aeea059611cf043ebbd520e83ae3db906eb5ea9fb\", \"file_bytes\": 44435360, \"first_feature_columns\": 9, \"whole_file_validated\": false}}}]}\n",
+  "stderr": "",
+  "before": {
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz": {
+      "device": 49,
+      "inode": 25979632684,
+      "bytes": 759180760,
+      "mtime_ns": 1631981135000000000
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_trait.C16_0.table": {
+      "device": 49,
+      "inode": 25979634476,
+      "bytes": 2795,
+      "mtime_ns": 1631981135000000000,
+      "sha256": "3cc8469f7663251953f369cbdc135c3eba928c55971dc9fbe79520379d0a190d"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.3.Q": {
+      "device": 49,
+      "inode": 25979634220,
+      "bytes": 5805,
+      "mtime_ns": 1631981135000000000,
+      "sha256": "37760098d22166924528be5848e8f1a7302eeb250ebafb7102260620eb4210c6"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real.gff3": {
+      "device": 49,
+      "inode": 26653083461,
+      "bytes": 44435360,
+      "mtime_ns": 1631981135000000000
+    }
+  },
+  "after": {
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz": {
+      "device": 49,
+      "inode": 25979632684,
+      "bytes": 759180760,
+      "mtime_ns": 1631981135000000000
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_trait.C16_0.table": {
+      "device": 49,
+      "inode": 25979634476,
+      "bytes": 2795,
+      "mtime_ns": 1631981135000000000,
+      "sha256": "3cc8469f7663251953f369cbdc135c3eba928c55971dc9fbe79520379d0a190d"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.3.Q": {
+      "device": 49,
+      "inode": 25979634220,
+      "bytes": 5805,
+      "mtime_ns": 1631981135000000000,
+      "sha256": "37760098d22166924528be5848e8f1a7302eeb250ebafb7102260620eb4210c6"
+    },
+    "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real.gff3": {
+      "device": 49,
+      "inode": 26653083461,
+      "bytes": 44435360,
+      "mtime_ns": 1631981135000000000
+    }
+  },
+  "input_identity_unchanged": true,
+  "scope": "VCF decoded header only, phenotype and Q full small file, GFF3 first 65536 bytes. No actual Q mapping or scientific output."
+}

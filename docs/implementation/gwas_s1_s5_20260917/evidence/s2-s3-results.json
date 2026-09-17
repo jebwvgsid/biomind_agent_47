@@ -1,0 +1,1510 @@
+[
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0022631799802184105,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 6.075759924016893,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[available]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00033621862530708313,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007475595921278,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 4.033770635724068,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[refresh]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001870160922408104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006603570654988289,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.0180110950022936,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[facility_denied]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017322879284620285,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006415378302335739,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 2.7132339579984546,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_runtime_auto_chain.py::test_operation_discovery_to_actual_provider_and_approved_runner[target_invalidated]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015619676560163498,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_duplicate_id_preserves_existing_output",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_duplicate_id_preserves_existing_output",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002843989059329033,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_duplicate_id_preserves_existing_output",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016394266858696938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_duplicate_id_preserves_existing_output",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012706778943538666,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018315576016902924,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005469626747071743,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_empty_duplicate_missing_and_ragged_ids_fail",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012371502816677094,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_header_and_named_column",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_header_and_named_column",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017954502254724503,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_header_and_named_column",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0014923140406608582,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_header_and_named_column",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012352503836154938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_map_target_must_match_inspected_vcf_order",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_map_target_must_match_inspected_vcf_order",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001861555501818657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_map_target_must_match_inspected_vcf_order",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001048046164214611,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_map_target_must_match_inspected_vcf_order",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012070871889591217,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_row_assignments_reorder_and_lock_versions",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_row_assignments_reorder_and_lock_versions",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001838160678744316,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_row_assignments_reorder_and_lock_versions",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0021824967116117477,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_explicit_row_assignments_reorder_and_lock_versions",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012641958892345428,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_first_sample_named_id_is_data_beside_numeric_trait",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_first_sample_named_id_is_data_beside_numeric_trait",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001813489943742752,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_first_sample_named_id_is_data_beside_numeric_trait",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0017129909247159958,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_first_sample_named_id_is_data_beside_numeric_trait",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001236218959093094,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_gzip_vcf_header_scoped_and_bounded",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_gzip_vcf_header_scoped_and_bounded",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001835934817790985,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_gzip_vcf_header_scoped_and_bounded",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00290889386087656,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_gzip_vcf_header_scoped_and_bounded",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012329407036304474,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019390881061553955,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006794915534555912,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_invalid_columns_are_never_guessed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012784358114004135,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_labeled_q_order_can_be_validated_and_reordered",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_labeled_q_order_can_be_validated_and_reordered",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001897905021905899,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_labeled_q_order_can_be_validated_and_reordered",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016837390139698982,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_labeled_q_order_can_be_validated_and_reordered",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014390982687473297,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018752086907625198,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007581457495689392,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_duplicate_missing_and_wrong_order_rejected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012276321649551392,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_wrong_file_versions_rejected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_wrong_file_versions_rejected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018412619829177856,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_wrong_file_versions_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002312537282705307,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_map_wrong_file_versions_rejected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012523122131824493,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_mapping_path_or_count_alone_is_insufficient",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_mapping_path_or_count_alone_is_insufficient",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018443353474140167,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_mapping_path_or_count_alone_is_insufficient",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_mapping_path_or_count_alone_is_insufficient",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_mapping_path_or_count_alone_is_insufficient",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0031170127913355827,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_mapping_path_or_count_alone_is_insufficient",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012327730655670166,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_allowed_only_explicitly_and_not_all_missing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_allowed_only_explicitly_and_not_all_missing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001857047900557518,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_allowed_only_explicitly_and_not_all_missing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0027084359899163246,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_allowed_only_explicitly_and_not_all_missing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000128074549138546,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_and_extra_ids_reported_without_fid_fallback",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_and_extra_ids_reported_without_fid_fallback",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001881057396531105,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_and_extra_ids_reported_without_fid_fallback",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00128856860101223,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_missing_and_extra_ids_reported_without_fid_fallback",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012757908552885056,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_no_header_215_preserves_first_sample",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_no_header_215_preserves_first_sample",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018588360399007797,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_no_header_215_preserves_first_sample",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0024792877957224846,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_no_header_215_preserves_first_sample",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013162102550268173,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019000470638275146,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009104885160923004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_nonfinite_q_is_not_a_sample_id_column",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014661997556686401,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_numeric_q_equal_counts_remains_unknown_inspection_succeeds",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_numeric_q_equal_counts_remains_unknown_inspection_succeeds",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001901937648653984,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_numeric_q_equal_counts_remains_unknown_inspection_succeeds",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0008404729887843132,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_numeric_q_equal_counts_remains_unknown_inspection_succeeds",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000125763937830925,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_output_cannot_overwrite_input_or_share_destinations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_output_cannot_overwrite_input_or_share_destinations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001832135021686554,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_output_cannot_overwrite_input_or_share_destinations",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019059479236602783,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_output_cannot_overwrite_input_or_share_destinations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012828782200813293,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_header_labels_do_not_become_sample_ids",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_header_labels_do_not_become_sample_ids",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001882854849100113,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_header_labels_do_not_become_sample_ids",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0018763383850455284,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_header_labels_do_not_become_sample_ids",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014506746083498,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_requires_finite_values_and_complete_rows",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_requires_finite_values_and_complete_rows",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019268319010734558,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_requires_finite_values_and_complete_rows",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00213775597512722,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_q_requires_finite_values_and_complete_rows",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013171229511499405,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_sample_column_does_not_authorize_numeric_q_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_sample_column_does_not_authorize_numeric_q_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001880936324596405,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_sample_column_does_not_authorize_numeric_q_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0024001365527510643,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_sample_column_does_not_authorize_numeric_q_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012980867177248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_unknown_q_blocks_output_and_preserves_old_bytes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_unknown_q_blocks_output_and_preserves_old_bytes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020720530301332474,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_unknown_q_blocks_output_and_preserves_old_bytes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001239253208041191,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_unknown_q_blocks_output_and_preserves_old_bytes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012756604701280594,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_vcf_duplicate_or_absent_samples_rejected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_vcf_duplicate_or_absent_samples_rejected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019218958914279938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_vcf_duplicate_or_absent_samples_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007868381217122078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_vcf_duplicate_or_absent_samples_rejected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001230509951710701,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_wholly_numeric_sample_ids_need_explicit_column",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_wholly_numeric_sample_ids_need_explicit_column",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018671900033950806,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_wholly_numeric_sample_ids_need_explicit_column",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019214088097214699,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_input_contracts_s3.py::InputContracts::test_wholly_numeric_sample_ids_need_explicit_column",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015535671263933182,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_current_skill_loads_distinct_capabilities_and_standardlib_needs_no_scientific_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_current_skill_loads_distinct_capabilities_and_standardlib_needs_no_scientific_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006768153980374336,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_current_skill_loads_distinct_capabilities_and_standardlib_needs_no_scientific_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01719768065959215,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_current_skill_loads_distinct_capabilities_and_standardlib_needs_no_scientific_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014336686581373215,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[inspect_inputs.py-arguments0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[inspect_inputs.py-arguments0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006214268505573273,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[inspect_inputs.py-arguments0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10753023996949196,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[inspect_inputs.py-arguments0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001617511734366417,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[sort_phenotype.py-arguments1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[sort_phenotype.py-arguments1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006348136812448502,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[sort_phenotype.py-arguments1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10398032329976559,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_helper_root_explicit_closure_and_argument_contract[sort_phenotype.py-arguments1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016818195581436157,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_dependency_source_drift_is_rejected_without_mutating_frozen_action",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_dependency_source_drift_is_rejected_without_mutating_frozen_action",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005413545295596123,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_dependency_source_drift_is_rejected_without_mutating_frozen_action",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10434715449810028,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_dependency_source_drift_is_rejected_without_mutating_frozen_action",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016941968351602554,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_formal_invocation_keeps_explicit_tassel_flag_value",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_formal_invocation_keeps_explicit_tassel_flag_value",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000570111908018589,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_formal_invocation_keeps_explicit_tassel_flag_value",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10358382482081652,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_formal_invocation_keeps_explicit_tassel_flag_value",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001549646258354187,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_inputs-outputs0-observations0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_inputs-outputs0-observations0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006847651675343513,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_inputs-outputs0-observations0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.019739758223295212,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_inputs-outputs0-observations0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016474351286888123,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_vcf_samples-outputs1-observations1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_vcf_samples-outputs1-observations1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007037082687020302,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_vcf_samples-outputs1-observations1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01989070512354374,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[inspect_vcf_samples-outputs1-observations1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016241148114204407,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[extract_vcf_samples-outputs2-observations2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[extract_vcf_samples-outputs2-observations2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006735241040587425,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[extract_vcf_samples-outputs2-observations2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.02105283923447132,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_skill_contracts_s3.py::test_real_plan_effect_compilation_allows_optional_initial_sample_file[extract_vcf_samples-outputs2-observations2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001647472381591797,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_root_closure_deduplicates_diamond_and_is_deterministic",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_root_closure_deduplicates_diamond_and_is_deterministic",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005306480452418327,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_root_closure_deduplicates_diamond_and_is_deterministic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.06526014022529125,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_root_closure_deduplicates_diamond_and_is_deterministic",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015449617058038712,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_old_complete_refs_keep_order_and_duplicate_refs_are_deduplicated",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_old_complete_refs_keep_order_and_duplicate_refs_are_deduplicated",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005328431725502014,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_old_complete_refs_keep_order_and_duplicate_refs_are_deduplicated",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0648194719105959,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_old_complete_refs_keep_order_and_duplicate_refs_are_deduplicated",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015264004468917847,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph0-SKILL_INVOCATION_DEPENDENCY_CYCLE]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph0-SKILL_INVOCATION_DEPENDENCY_CYCLE]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006516063585877419,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph0-SKILL_INVOCATION_DEPENDENCY_CYCLE]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010251189582049847,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph0-SKILL_INVOCATION_DEPENDENCY_CYCLE]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001681894063949585,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph1-SKILL_INVOCATION_DEPENDENCY_UNBOUND]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph1-SKILL_INVOCATION_DEPENDENCY_UNBOUND]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006489083170890808,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph1-SKILL_INVOCATION_DEPENDENCY_UNBOUND]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005889452062547207,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph1-SKILL_INVOCATION_DEPENDENCY_UNBOUND]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015712156891822815,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph2-SKILL_INVOCATION_CONTRACT_INVALID]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph2-SKILL_INVOCATION_CONTRACT_INVALID]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006624357774853706,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph2-SKILL_INVOCATION_CONTRACT_INVALID]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006077118217945099,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_bad_explicit_dependency_is_rejected_with_evidence[graph2-SKILL_INVOCATION_CONTRACT_INVALID]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015813671052455902,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_bytes]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_bytes]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006121136248111725,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_bytes]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05103644635528326,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_bytes]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001707235351204872,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_missing]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_missing]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006485730409622192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_missing]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04433284979313612,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_missing]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016829930245876312,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_escape]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_escape]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006605666130781174,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_escape]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04451602790504694,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[child_escape]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016700662672519684,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[skill_revision]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[skill_revision]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006531085819005966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[skill_revision]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.037708510644733906,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[skill_revision]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016129948198795319,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[interpreter_stat]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[interpreter_stat]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00065606739372015,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[interpreter_stat]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04961492586880922,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_post_approval_closure_drift_rejected_and_source_unchanged[interpreter_stat]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017124880105257034,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_projection_white_list_retains_parameters_and_evidence_without_stat",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_projection_white_list_retains_parameters_and_evidence_without_stat",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005450835451483727,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_projection_white_list_retains_parameters_and_evidence_without_stat",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05574070196598768,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_projection_white_list_retains_parameters_and_evidence_without_stat",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015350989997386932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrong_interpreter]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrong_interpreter]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006153453141450882,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrong_interpreter]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03546017687767744,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrong_interpreter]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015784148126840591,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[missing_interpreter]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[missing_interpreter]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006076507270336151,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[missing_interpreter]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03536234050989151,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[missing_interpreter]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000159434974193573,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[argument_arity]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[argument_arity]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006059193983674049,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[argument_arity]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03553122002631426,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[argument_arity]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015691760927438736,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrapper]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrapper]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000612025149166584,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrapper]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03631337080150843,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_diagnostic_keeps_real_validator_carrier_and_actual_expected[wrapper]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015827640891075134,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_direct_argv_production_binder_calls_builder_without_rewriting",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_direct_argv_production_binder_calls_builder_without_rewriting",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005604801699519157,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_direct_argv_production_binder_calls_builder_without_rewriting",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.036095588468015194,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_direct_argv_production_binder_calls_builder_without_rewriting",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016356445848941803,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_deferred_root_keeps_quoted_runtime_binding_and_no_leaf_creation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_deferred_root_keeps_quoted_runtime_binding_and_no_leaf_creation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000534646213054657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_deferred_root_keeps_quoted_runtime_binding_and_no_leaf_creation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05352791119366884,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_deferred_root_keeps_quoted_runtime_binding_and_no_leaf_creation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015432201325893402,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_runtime_and_complete_closure_are_both_part_of_approval_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_runtime_and_complete_closure_are_both_part_of_approval_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005428949370980263,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_runtime_and_complete_closure_are_both_part_of_approval_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.023937220685184002,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_helper_selection.py::test_runtime_and_complete_closure_are_both_part_of_approval_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015424098819494247,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_offline_authority_replay.py::test_gwas_offline_consultant_authority_replay",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_offline_authority_replay.py::test_gwas_offline_consultant_authority_replay",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001388993114233017,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_offline_authority_replay.py::test_gwas_offline_consultant_authority_replay",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3704700395464897,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_offline_authority_replay.py::test_gwas_offline_consultant_authority_replay",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00025919266045093536,
+    "failure": ""
+  }
+]

@@ -1,0 +1,121 @@
+{
+  "root": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/final_evidence",
+  "files": {
+    "graphs/gwas-input-observation-joint.json": {
+      "sha256": "367a784cfa0407a4271f3c9daa21882d3babd0f8abb09ac071020d3c26f59ec2",
+      "bytes": 1113642
+    },
+    "graphs/gwas-runtime-auto-available.json": {
+      "sha256": "9b8b5f7e3047d9bcfceba718c711d7f7f1732caf02fb078427a775ac726ad18d",
+      "bytes": 449187
+    },
+    "graphs/gwas-runtime-auto-facility_denied.json": {
+      "sha256": "dddb2bfc2b4bd3804b1cec9629f3a55d6fe57aae6e9d804bae94be8a8ee7767c",
+      "bytes": 143510
+    },
+    "graphs/gwas-runtime-auto-refresh.json": {
+      "sha256": "be839c9512569b83d9fc6f532b93defa740c1d801249a55eee2805fcad684025",
+      "bytes": 559309
+    },
+    "graphs/gwas-runtime-auto-target_invalidated.json": {
+      "sha256": "1db1a2dad56c4ba9b6a28dc220fde54500d810c86a6e1dd076fbbbcc3e1beca4",
+      "bytes": 310905
+    },
+    "graphs/invocation.json": {
+      "sha256": "05d8983370c2abbd6263cbf1cbd3135ab665bb06732693a058a3f7f375a5c30b",
+      "bytes": 9566
+    },
+    "graphs/results.json": {
+      "sha256": "3b946c6c163f68ca7c5882739eaf18f8e11f2ea6c2ba12a518a0f4c6eddf96c1",
+      "bytes": 76986
+    },
+    "graphs/run.log": {
+      "sha256": "698d5967caf75703dbaa17b634ca73a0cdbbfa5a834a1caa787a12c68843757d",
+      "bytes": 21976
+    },
+    "recovery/cas_receipt.json": {
+      "sha256": "7bebc289d45d4c237c50920e9d74958b3e2dc0a05659bce35a0d50e70cc7b645",
+      "bytes": 1620365
+    },
+    "recovery/closure_receipt.json": {
+      "sha256": "3bc9c4f67ef401aa8e3306e9e4af2f93a3b4a10008372453196c05e71a9028a6",
+      "bytes": 63660
+    },
+    "recovery/dispatch_receipts.json": {
+      "sha256": "e9df6095ac9b6f61cfa217714059eaa7e8275080f87c952f1913709639097f41",
+      "bytes": 338046
+    },
+    "recovery/historical_dispatch.json": {
+      "sha256": "677873ffd8e4385caf5d613ad2ba57e6a30337847f291c6f32cdfddadcf79240",
+      "bytes": 290821
+    },
+    "recovery/historical_ref_reads.json": {
+      "sha256": "f90dc8d4363be7930fef93ec90fb99397d6c14a997e3aac275ca15488e343003",
+      "bytes": 2436
+    },
+    "recovery/invocation.json": {
+      "sha256": "496b208c96ec431b296e1b7ab7c835369d4466a7a7bddbf6911acd65887fec8b",
+      "bytes": 8802
+    },
+    "recovery/multilevel_dispatch.json": {
+      "sha256": "1751a56bed3bb34bb09e115673e776e8197fa70b7e0f9523cfed7b7ebf97ab68",
+      "bytes": 1736959
+    },
+    "recovery/receive_limit_receipt.json": {
+      "sha256": "7e57debef5e05016f9adbe55afa65b26753fc98a2e04d98e20fc63b0932a51c1",
+      "bytes": 13386
+    },
+    "recovery/results.json": {
+      "sha256": "01c0b2f9098550ba2fe39388e00c5aa5cefea70526c636101b155c8c0f7e4521",
+      "bytes": 59631
+    },
+    "recovery/run.log": {
+      "sha256": "ba26eba006ddd792a7f49a38fc9ad4e25a69dfc1d315c14cc9cc989fa8cb2889",
+      "bytes": 19646
+    },
+    "resume/first_page.json": {
+      "sha256": "d85bde285a268f5c1f525ca0a2c77e88df4273df135860502566ee6c15f8a13c",
+      "bytes": 12817
+    },
+    "resume/invocation.json": {
+      "sha256": "aae8de7dea7b69b4016ecdfa967d74cb33af03942bdee31e2ce0095760f93798",
+      "bytes": 8697
+    },
+    "resume/later_page.json": {
+      "sha256": "30cf1bb8d07151a78b28244be3ccd54fa76202dbef5515c1432e545fd9a7182d",
+      "bytes": 17149
+    },
+    "resume/restart_after.json": {
+      "sha256": "ee616209a7f98b965b4c50e608a2b2ee80f84e7f4c2e2b07d96df5971ac92838",
+      "bytes": 282887
+    },
+    "resume/restart_before.json": {
+      "sha256": "490b462bfc278529e39b0bed31f22ee4a9875f6496b057f471fd26dbdb2c57cf",
+      "bytes": 1891056
+    },
+    "resume/restart_result.json": {
+      "sha256": "7ac2e05fe4a1b953b9747d31d4762663765ef8fd72b416d31d7c59bc40196e4f",
+      "bytes": 15383
+    },
+    "resume/results.json": {
+      "sha256": "f0fa9127b001cbafe927919f1ebc091a6fc2af1935ef7e2e43ab48f48438f1d8",
+      "bytes": 1605
+    },
+    "resume/run.log": {
+      "sha256": "c9228bdb36731c4d8b2b3e60c3f09159fbf2b0d15d5563d2cccd520435d8dc95",
+      "bytes": 18715
+    },
+    "runtime/invocation.json": {
+      "sha256": "4507046353248ca6fdc58e39d1e14157f8b10cdd9e011d5321c289d3600dd69a",
+      "bytes": 9539
+    },
+    "runtime/results.json": {
+      "sha256": "86a7bb3218e71c4c11db5dc5a2e790787b52091e4a422ebd28a2812a09c31f96",
+      "bytes": 336300
+    },
+    "runtime/run.log": {
+      "sha256": "496d3f782f17684b66538fa3d4d13ca56b695f6cdbd3c54a00d860f2091e91b8",
+      "bytes": 24154
+    }
+  }
+}

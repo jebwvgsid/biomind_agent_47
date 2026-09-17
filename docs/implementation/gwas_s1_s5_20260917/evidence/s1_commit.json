@@ -1,0 +1,97 @@
+{
+  "slice": "S1",
+  "parent": "7d62508ec9d7fda14164da1523488d93184ed0ee",
+  "candidate": "/tmp/biomind-gwas-s1-s5-20260917/s1",
+  "files": [
+    "bio_agents.py",
+    "package_manager.py",
+    "agent_core/skill_manager.py",
+    "agent_core/runtime_inspection.py",
+    "agent_core/runtime_probe_contract.py",
+    "tests/test_runtime_preflight.py",
+    "tests/test_gwas_runtime_discovery.py"
+  ],
+  "expected_candidate_hashes": {
+    "bio_agents.py": "eb89be23f2a034f4a3ed5bb207535ef5a248767faa848c08163a6f1fc07087c6",
+    "package_manager.py": "a6a5ef2d44c0cf639a97ba53638d656506432f30e09e40b65224c7cc6dce5067",
+    "agent_core/skill_manager.py": "689ea82917472f80e8abb7ec1f700749223cb65024580f6bda45dd26d1b9d974",
+    "agent_core/runtime_inspection.py": "2da4f6b79aa35366584240a17c741fd3ec1ed7912924fc3b3eda104958993ef0",
+    "agent_core/runtime_probe_contract.py": "3c00bc7a1a6f0cabd06042617cf903c3c43fdfff22c69ccac665636ce127bd88",
+    "tests/test_runtime_preflight.py": "770739ea6ffb79ce6eda6046926e7e3d11d305f95a84468d2f9f1e35181c077a",
+    "tests/test_gwas_runtime_discovery.py": "1cc8cd08b195cfb3a6052cc97df0cd20c85469b3edbcdc314e081d1b44064881"
+  },
+  "message": "fix: discover operation runtime candidates through controlled inspection",
+  "validation": {
+    "passed": 102,
+    "subtests_passed": 12,
+    "results": "/tmp/biomind-gwas-s1-test/managed-bootstrap-msp69gg9/pytest-results.json",
+    "source_unchanged": true
+  },
+  "commit": "9693df595ce6181393e4f6383c513deb08aaa560",
+  "partition": [
+    {
+      "path": "agent_core/runtime_inspection.py",
+      "mode": "100644",
+      "before_sha256": "270d874dc0e45883131c3293e239ee7ff78793bb3d034a0f0b2cd00bd58bb8f3",
+      "tested_sha256": "2da4f6b79aa35366584240a17c741fd3ec1ed7912924fc3b3eda104958993ef0",
+      "index_sha256": "2da4f6b79aa35366584240a17c741fd3ec1ed7912924fc3b3eda104958993ef0",
+      "preserved_overlay": false,
+      "index_blob": "0082d0e779c18fceb92a115f04fcd31aa082a2be"
+    },
+    {
+      "path": "agent_core/runtime_probe_contract.py",
+      "mode": "100644",
+      "before_sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce",
+      "tested_sha256": "3c00bc7a1a6f0cabd06042617cf903c3c43fdfff22c69ccac665636ce127bd88",
+      "index_sha256": "3c00bc7a1a6f0cabd06042617cf903c3c43fdfff22c69ccac665636ce127bd88",
+      "preserved_overlay": false,
+      "index_blob": "f70dc5867e271d098d66b2c1d4b9c352c05fe63c"
+    },
+    {
+      "path": "agent_core/skill_manager.py",
+      "mode": "100644",
+      "before_sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+      "tested_sha256": "689ea82917472f80e8abb7ec1f700749223cb65024580f6bda45dd26d1b9d974",
+      "index_sha256": "689ea82917472f80e8abb7ec1f700749223cb65024580f6bda45dd26d1b9d974",
+      "preserved_overlay": false,
+      "index_blob": "c6b874c82045035b74a6f7a621c3a2a49771fe29"
+    },
+    {
+      "path": "bio_agents.py",
+      "mode": "100644",
+      "before_sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9",
+      "tested_sha256": "eb89be23f2a034f4a3ed5bb207535ef5a248767faa848c08163a6f1fc07087c6",
+      "index_sha256": "e8e8d05fc19c55e8d04f5a3d196834190b35c81f3f02f425e765adcc463dd331",
+      "preserved_overlay": true,
+      "index_blob": "b778f8a48da736ef489492177dd2cfa2d9c1e223"
+    },
+    {
+      "path": "package_manager.py",
+      "mode": "100644",
+      "before_sha256": "73694e758960b3c71286d61cedc17c782b6c11ebeede3e964e41194f888093b5",
+      "tested_sha256": "a6a5ef2d44c0cf639a97ba53638d656506432f30e09e40b65224c7cc6dce5067",
+      "index_sha256": "a6a5ef2d44c0cf639a97ba53638d656506432f30e09e40b65224c7cc6dce5067",
+      "preserved_overlay": false,
+      "index_blob": "29ee7964646466a5df64bd453b54c572b11410c9"
+    },
+    {
+      "path": "tests/test_gwas_runtime_discovery.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "1cc8cd08b195cfb3a6052cc97df0cd20c85469b3edbcdc314e081d1b44064881",
+      "index_sha256": "1cc8cd08b195cfb3a6052cc97df0cd20c85469b3edbcdc314e081d1b44064881",
+      "preserved_overlay": false,
+      "index_blob": "658c876b96f7a80f7963aa36ff4555224de0bc65"
+    },
+    {
+      "path": "tests/test_runtime_preflight.py",
+      "mode": "100644",
+      "before_sha256": "a533b4e680c3a31005fc70b8fa15570bd1e9e18a53e36fb1a1c7c01b4dccfebb",
+      "tested_sha256": "770739ea6ffb79ce6eda6046926e7e3d11d305f95a84468d2f9f1e35181c077a",
+      "index_sha256": "a505a29952b17b3d0ae27ce0a8b03220c7e873e9780cb851bada130bd15ebe2e",
+      "preserved_overlay": true,
+      "index_blob": "bd5322e99359b6cba52dcddbe622c12533ebb0f6"
+    }
+  ],
+  "git_index_was_empty": true
+}

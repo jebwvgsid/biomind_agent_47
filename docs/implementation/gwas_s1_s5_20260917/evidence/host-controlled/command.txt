@@ -1,0 +1,1 @@
+env -i PATH=/usr/bin:/bin TMPDIR=/tmp/biomind-gwas-host-controlled BIOMIND_DISABLE_DOTENV=1 /public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/biomind-gwas-host-controlled/candidate/tests/offline_managed_bootstrap.py /tmp/biomind-gwas-host-controlled/candidate -q -s tests/test_host_controlled_bcftools.py

@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_binder_persists_install_packet_for_resume",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_binder_persists_install_packet_for_resume",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.001369290053844452,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_binder_persists_install_packet_for_resume",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.008612253703176975,
+    "failure": "tests/test_recovery_projection.py:344: in test_binder_persists_install_packet_for_resume\n    ).bind(\nagent_core/workflow/recovery_projection.py:2029: in bind\n    inspection_entries = prepare_inspection_evidence(\nagent_core/workflow/inspection_evidence.py:460: in prepare_inspection_evidence\n    object_ref = store.put_object(_object_type(kind), wrapper)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nagent_core/state_contract_store.py:102: in put_object\n    _atomic_immutable_json(self.object_root / f\"{digest}.json\", record)\nagent_core/state_contract_store.py:49: in _atomic_immutable_json\n    path.parent.mkdir(parents=True, exist_ok=True)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1311: in mkdir\n    os.mkdir(self, mode)\ntests/offline_managed_bootstrap.py:35: in guard\n    if not str(Path(os.fsdecode(args[0])).absolute()).startswith('/tmp/'):raise RuntimeError('OFFLINE_MUTATION_DENIED')\n                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   RuntimeError: OFFLINE_MUTATION_DENIED"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_binder_persists_install_packet_for_resume",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014495477080345154,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_failure_packet_carries_step_archive_inspection_ref",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_failure_packet_carries_step_archive_inspection_ref",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019673723727464676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_failure_packet_carries_step_archive_inspection_ref",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.055200531147420406,
+    "failure": "tests/test_recovery_projection.py:380: in test_completion_failure_packet_carries_step_archive_inspection_ref\n    ).bind(\nagent_core/workflow/recovery_projection.py:2029: in bind\n    inspection_entries = prepare_inspection_evidence(\nagent_core/workflow/inspection_evidence.py:460: in prepare_inspection_evidence\n    object_ref = store.put_object(_object_type(kind), wrapper)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nagent_core/state_contract_store.py:102: in put_object\n    _atomic_immutable_json(self.object_root / f\"{digest}.json\", record)\nagent_core/state_contract_store.py:49: in _atomic_immutable_json\n    path.parent.mkdir(parents=True, exist_ok=True)\n/public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/pathlib.py:1311: in mkdir\n    os.mkdir(self, mode)\ntests/offline_managed_bootstrap.py:35: in guard\n    if not str(Path(os.fsdecode(args[0])).absolute()).startswith('/tmp/'):raise RuntimeError('OFFLINE_MUTATION_DENIED')\n                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   RuntimeError: OFFLINE_MUTATION_DENIED"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_failure_packet_carries_step_archive_inspection_ref",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017663650214672089,
+    "failure": ""
+  }
+]

@@ -1,0 +1,65 @@
+{
+  "candidate": "/tmp/biomind-gwas-s1-s5-20260917/s3",
+  "baseline": "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind_audit_exports/gwas_env_recovery_20260917/current_source",
+  "files": [
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+      "sha256": "6dfececa7fffc021e4fe65361d152a4dc1236449d33c64c6bfd156150569280d",
+      "bytes": 15727,
+      "baseline_sha256": "45b89f4a6b2bbf3c78f2c65a9a111324146d96271352c4c564d4988184fffddb",
+      "change": "modified"
+    },
+    {
+      "path": "skills/population-genetics/popgen-gwas-workflow/SKILL.md",
+      "sha256": "34d7880ca624e645fc1c6c6bc50aed8e59f2db9a1441863bae1305030598e905",
+      "bytes": 5951,
+      "baseline_sha256": "7125bc59e82cf291d76a7cce743fbc013c0f63772a4cac98efb48b84d44f2ab9",
+      "change": "modified"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/input_contract.py",
+      "sha256": "79bdf7c613a853ed416f2f051ca122c300ab1f7d0cdb3ab49f2d2a84f35b3e6c",
+      "bytes": 9669,
+      "baseline_sha256": null,
+      "change": "new"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+      "sha256": "d5d57b6f1ed347caacb2a7c8071ab28b3f28838d5d49eee41daa712cca11ff31",
+      "bytes": 4759,
+      "baseline_sha256": null,
+      "change": "new"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/sort_phenotype.py",
+      "sha256": "813b2cc607727381236699fdc2476bba892573c71b6da8392a396f4795708dae",
+      "bytes": 8080,
+      "baseline_sha256": "9a2e843b53c4e6a1dd6a4388608103e042996c0584426b09eea5c4be30b17a25",
+      "change": "modified"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md",
+      "sha256": "39d376f5101ab511d46c4be756807f1f089791299690098269af1e518f7563ce",
+      "bytes": 5407,
+      "baseline_sha256": null,
+      "change": "new"
+    },
+    {
+      "path": "tests/test_gwas_input_contracts_s3.py",
+      "sha256": "b7619fe303f39dbac7f36101db8c7d8a341f6afeb6aae07a1b192107a65acb6b",
+      "bytes": 15066,
+      "baseline_sha256": null,
+      "change": "new"
+    },
+    {
+      "path": "tests/test_gwas_skill_contracts_s3.py",
+      "sha256": "5b35e77db2587da8515d00a60cb08d69ea48415e9d0a0ec7501d8c3bee45f575",
+      "bytes": 7473,
+      "baseline_sha256": null,
+      "change": "new"
+    }
+  ],
+  "manifest_sha256": "44b5b7a0a2f65fbfb73a7d10cc240928677fbcf0745b2a025686f9223433f76f",
+  "frozen": true,
+  "python_tree_identity": "98460d7f6da5293c7954db586097ac73a73ac8b25a879083d0b3e4627b7b7f8b"
+}

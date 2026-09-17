@@ -1,0 +1,18 @@
+{
+  "entry_function_hashes": {
+    "/tmp/biomind-gwas-host-controlled/candidate/bio_agents.py": {
+      "_discover_skill_runtime_candidates": "c63d5d72c3778a8a2f2bda438318a8c4d6248c869a49e8288aea7151692c6d62",
+      "_runtime_evidence_service": "e691243feac71d4a91ecfbad4c13cdd7f94f7299982a3338a2d41a239d6e4e95",
+      "_runtime_evidence_scope": "d18180938f89ba48275132f71f9e22fac167d5a3b1c450cd24859ee86e07cf0e",
+      "_skill_runtime_requirements": "daf9d7e4126e714f42aaa4dfe3e8a6e141d33488d9616f52683826de9fafef6c"
+    },
+    "/tmp/biomind-gwas-s1-s5-20260917/integration/bio_agents.py": {
+      "_discover_skill_runtime_candidates": "c63d5d72c3778a8a2f2bda438318a8c4d6248c869a49e8288aea7151692c6d62",
+      "_runtime_evidence_service": "e691243feac71d4a91ecfbad4c13cdd7f94f7299982a3338a2d41a239d6e4e95",
+      "_runtime_evidence_scope": "d18180938f89ba48275132f71f9e22fac167d5a3b1c450cd24859ee86e07cf0e",
+      "_skill_runtime_requirements": "daf9d7e4126e714f42aaa4dfe3e8a6e141d33488d9616f52683826de9fafef6c"
+    }
+  },
+  "equal": true,
+  "note": "Source file identity differs because of other S2/S4 edits; these host discovery entry definitions are identical. No host probe rerun."
+}

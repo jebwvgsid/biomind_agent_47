@@ -1,0 +1,18 @@
+{
+  "only_changed_file": "tests/test_recovery_schema2_node.py",
+  "before_sha256": "98551d237bc9cb7493afcdba7602a2c92c64e6b56283d22ed6bd379311bbeb54",
+  "after_sha256": "c39ce03a47705d226f28b0c92b534ef015e2a7891d9f6681cdbb6a7e844bdc8b",
+  "production_files_unchanged": {
+    "bio_agents.py": true,
+    "agent_core/workflow/recovery_agent.py": true,
+    "agent_core/workflow/recovery_runtime.py": true,
+    "agent_core/workflow/recovery_node.py": true,
+    "agent_core/workflow/recovery_context.py": true,
+    "agent_core/workflow/recovery_tools.py": true,
+    "agent_core/workflow/inspection_evidence.py": true,
+    "agent_core/workflow/phase_archive.py": true
+  },
+  "tests": "3 passed in 3.84s; SOURCE_UNCHANGED True",
+  "log": "/tmp/biomind-gwas-s1-s5-20260917/s4_runs/provider_contract_fix.log",
+  "patch_sha256": "fa99524be454632691fec463e72d720bc8014b5f9bb73be1ef3d29601bf31855"
+}

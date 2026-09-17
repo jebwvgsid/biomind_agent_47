@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "scope": "Bounded copy of diagnostic test-run evidence only; no original scientific session, credentials, inputs, temp work trees or application source copied.",
+  "persistent_root": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence",
+  "files": [
+    {
+      "group": "single_process_exit",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/invocation.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/single_process_exit/invocation.json",
+      "sha256": "d00f8886b420d5fd67836238460150260bac178900d1b4b14e73453b0c8544c8",
+      "bytes": 3785
+    },
+    {
+      "group": "single_process_exit",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/results.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/single_process_exit/results.json",
+      "sha256": "7501b0975444daa7fd6bd11eeeb7317f79d390186939c00ab3edd28999e08748",
+      "bytes": 336656
+    },
+    {
+      "group": "single_process_exit",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/run.log",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/single_process_exit/run.log",
+      "sha256": "58f071f0de170d930351a3e9162cd57ce6551d92ae978a26c914b6b6cfaad140",
+      "bytes": 4433
+    },
+    {
+      "group": "single_process_exit",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/final-cumulative/source_manifest.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/single_process_exit/source_manifest.json",
+      "sha256": "47529a3f9b0b65b8d339f69f97b9628e775c5393f795a83f27e8e86c0cc8db51",
+      "bytes": 110516
+    },
+    {
+      "group": "recovery_baseline",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/recovery-baseline/exit.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/recovery_baseline/exit.json",
+      "sha256": "b9f87d4ceb14f54a8787da14c5985aa499e13197fe39c8f0f4ecf87e7a01957e",
+      "bytes": 22
+    },
+    {
+      "group": "recovery_baseline",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/recovery-baseline/invocation.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/recovery_baseline/invocation.json",
+      "sha256": "53d22afb606c7d24fb394a448e61c55a5e241952bcd23c6bea5a98e0c3d5a1b6",
+      "bytes": 1410
+    },
+    {
+      "group": "recovery_baseline",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/recovery-baseline/results.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/recovery_baseline/results.json",
+      "sha256": "7e823ae199b8ee2aef3cab0e9704a87d5b6ff4a031a803eafff0930ae6c4de3f",
+      "bytes": 68915
+    },
+    {
+      "group": "recovery_baseline",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/recovery-baseline/run.log",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/recovery_baseline/run.log",
+      "sha256": "ba977373fa201ac3786e226dcff3b5a69c25defff2239be2b7f77fdf8e420912",
+      "bytes": 63366
+    },
+    {
+      "group": "recovery_before_baseline_exclusion",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/final-batched/recovery/invocation.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/recovery_before_baseline_exclusion/invocation.json",
+      "sha256": "20110f1fcf5d9277ebdc7eb494221719ca9b665587f2a27cda45a8b1a03eb864",
+      "bytes": 1393
+    },
+    {
+      "group": "recovery_before_baseline_exclusion",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/final-batched/recovery/results.json",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/recovery_before_baseline_exclusion/results.json",
+      "sha256": "41e0959de4a38756da1e789109318b5a81107e69b00a91346a8159bf2beea6fb",
+      "bytes": 99114
+    },
+    {
+      "group": "recovery_before_baseline_exclusion",
+      "original_path": "/tmp/biomind-gwas-s1-s5-20260917/final-batched/recovery/run.log",
+      "persistent_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/gwas_s1_s5_20260917/diagnostic_evidence/recovery_before_baseline_exclusion/run.log",
+      "sha256": "daf543b4bfa385983c8fb947bd6e3c6bed2ba87ab23f39223acbd7bbdbff7e2d",
+      "bytes": 71248
+    }
+  ],
+  "all_copies_hash_equal": true,
+  "single_process_exit_limit": "The -11 exit code is reported in the separately retained review from the parent subprocess wrapper; an absent source exit receipt was not fabricated.",
+  "related_reviews": {
+    "single_process_exit": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/gwas_s1_s5_20260917/evidence/single-process-exit-review.json",
+    "baseline_comparison": "/public/home/liusiqi/03.毕设/Biomind_v1/docs/implementation/gwas_s1_s5_20260917/evidence/recovery-baseline-comparison.json"
+  }
+}

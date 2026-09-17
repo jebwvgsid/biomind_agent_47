@@ -1,0 +1,16 @@
+{
+  "path": "tests/test_recovery_schema2_node.py",
+  "reason": "The original working overlay contains six additional tests/helper methods absent from HEAD; do not commit those old additions as this task. Apply only increments to HEAD-owned identical _Model and node_runs definitions in the index. All task edits to the retained overlay are delivered by the exact base-to-tested patch and final full-source snapshot.",
+  "head_sha256": "2b9b1e57fd11d3147bb2e9a174548503ce29501e026e0fab636d69918c40e109",
+  "base_sha256": "4fbbc298140707b3702ef44134b521f050a44343434d551819b43c83df5f5a97",
+  "tested_sha256": "c39ce03a47705d226f28b0c92b534ef015e2a7891d9f6681cdbb6a7e844bdc8b",
+  "index_sha256": "ff962f97f0f2fa153aa6741a35762d981b058b81b0c72e8471aed9955028f401",
+  "index_definitions": [
+    "_Model",
+    "Schema2RecoveryNodeTests.test_node_runs_local_agent_then_deterministic_runtime"
+  ],
+  "complete_increment_patch": "s4_preserved_overlay_test_increment.patch",
+  "complete_increment_patch_format": "unified diff with zero context; git apply --unidiff-zero on the hash-matched base",
+  "complete_increment_patch_sha256": "17ac7a3835328640c4e3a3c4dce0bf492b174f607f40289f0df54ccf7255e254",
+  "patch_replay_equals_tested": true
+}

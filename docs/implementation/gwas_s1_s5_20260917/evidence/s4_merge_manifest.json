@@ -1,0 +1,50 @@
+[
+  {
+    "path": "bio_agents.py",
+    "returncode": 0,
+    "s4_sha256": "9cb116044324b5e80ae00886d983fcef70ceda7b314b264040a30f634f5a55f3",
+    "merged_sha256": "cda1d345ed32378174f5f339abbaa42bd76c08c6fb71dbb557cbef844f1895a3"
+  },
+  {
+    "path": "agent_core/workflow/recovery_agent.py",
+    "returncode": 0,
+    "s4_sha256": "d9b242f98dc3b612a766363811554e4b5c079231a48df70cc64f07eecfd8d6bc",
+    "merged_sha256": "d9b242f98dc3b612a766363811554e4b5c079231a48df70cc64f07eecfd8d6bc"
+  },
+  {
+    "path": "agent_core/workflow/recovery_runtime.py",
+    "returncode": 0,
+    "s4_sha256": "afc2fdec02ca8f339285ccbaf527d0bc76630415a5ab058388df420cd6f71352",
+    "merged_sha256": "afc2fdec02ca8f339285ccbaf527d0bc76630415a5ab058388df420cd6f71352"
+  },
+  {
+    "path": "agent_core/workflow/recovery_node.py",
+    "returncode": 0,
+    "s4_sha256": "96c0fcc0995a4f4c85735e7c6b0d37bf5e56a8f62e65e82dc86ebd1da97a9a27",
+    "merged_sha256": "4b661dad545b971904f92ed368ba5f6f63902f0d5a809dd4434934947be901f7"
+  },
+  {
+    "path": "agent_core/workflow/recovery_context.py",
+    "returncode": 0,
+    "s4_sha256": "12bcc521c76e09231b43fee25ec44d48831332496e1aa5755ad723aba8ff304e",
+    "merged_sha256": "12bcc521c76e09231b43fee25ec44d48831332496e1aa5755ad723aba8ff304e"
+  },
+  {
+    "path": "agent_core/workflow/recovery_tools.py",
+    "returncode": 0,
+    "s4_sha256": "c992381b37cf3bbfcd88984cd34f383a7d9ba14f325689a14745523e219491f8",
+    "merged_sha256": "c992381b37cf3bbfcd88984cd34f383a7d9ba14f325689a14745523e219491f8"
+  },
+  {
+    "path": "agent_core/workflow/inspection_evidence.py",
+    "returncode": 0,
+    "s4_sha256": "b2274ef91e5f2eef35060e66571e28d786a344eef4ed75cd9156a2d563eed546",
+    "merged_sha256": "b2274ef91e5f2eef35060e66571e28d786a344eef4ed75cd9156a2d563eed546"
+  },
+  {
+    "path": "agent_core/workflow/phase_archive.py",
+    "returncode": 0,
+    "s4_sha256": "540b91eee739900cce93f6f2fe12192c7d2893ff483ed9dbf9547c8bd7c96d76",
+    "merged_sha256": "540b91eee739900cce93f6f2fe12192c7d2893ff483ed9dbf9547c8bd7c96d76"
+  }
+]

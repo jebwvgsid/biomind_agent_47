@@ -1,0 +1,273 @@
+{
+  "result": {
+    "skill_id": "population-genetics/gwas-vcf-prep-qc",
+    "capability_id": "population.genetics.gwas.vcf.prep.qc.inspect_vcf_samples",
+    "candidates": [
+      {
+        "env": "bio_gatk",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+        "provenance": [
+          "explicit_target"
+        ],
+        "registered_status": "registered",
+        "prefix_present": true,
+        "tool_candidates": {
+          "bcftools": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools"
+        },
+        "missing_tool_candidates": [],
+        "matched_packages": [
+          "bcftools"
+        ],
+        "matched_capabilities": [],
+        "availability": "UNKNOWN",
+        "reason_code": "RUNTIME_INSPECTION_TIMEOUT",
+        "is_declared": true,
+        "explicit_target": true,
+        "score": 30,
+        "inspection_status": "timeout",
+        "coverage": {},
+        "resolved_runtime_paths": {},
+        "audit": {},
+        "observed_at": "2026-09-17T16:26:11.573344+00:00",
+        "transient": true,
+        "needs_user_decision": false,
+        "runtime_observation_scope": {
+          "skill_id": "population-genetics/gwas-vcf-prep-qc",
+          "skill_document_digest": "sha256:6dfececa7fffc021e4fe65361d152a4dc1236449d33c64c6bfd156150569280d",
+          "skill_contract_digest": "sha256:139f49163c3617e01bdcff21446a56fc30cc5b1463adba2c394275c6aedd8b76",
+          "environment_id": "bio_gatk",
+          "environment_fingerprint": "sha256:7100953f6101ec39fa2740eb9f43aae23b4082d4836035c92ad7f851e0abc769",
+          "host_id": "sha256:0183d0625b83a48de47044bd294549755fe590516dc731f8bbf2c75e7d1fb9b6",
+          "inspection_contract_digest": "sha256:70be4ced80c73e95c658e89d57bc4174bdfa9b1eb3febdbb468799fa899f5e1c"
+        },
+        "inspection_contract": {
+          "contract_id": "skill-runtime-inspection:population-genetics/gwas-vcf-prep-qc",
+          "contract_digest": "sha256:347e54132e8fdde7ec79441357e72e3878815fd204ffab2da2c8ca5906dbf71e",
+          "method_digest": "sha256:70be4ced80c73e95c658e89d57bc4174bdfa9b1eb3febdbb468799fa899f5e1c",
+          "permitted": true,
+          "safe_repeat": true,
+          "coverage_binding_ids": [
+            "runtime.bcftools.samples.bin"
+          ],
+          "cache_restore_permitted": false,
+          "deadline_seconds": 60.0,
+          "reason_code": "",
+          "needs_user_decision": false
+        }
+      }
+    ],
+    "selected_candidate": {},
+    "decision": "unverified",
+    "availability": "UNKNOWN",
+    "install_required": false,
+    "operation": "inspect_vcf_samples",
+    "required_binding_ids": [
+      "runtime.bcftools.samples.bin"
+    ],
+    "declared_env": "popgen_gwas",
+    "reason_code": "RUNTIME_OPERATION_NOT_VERIFIED"
+  },
+  "process_calls": [
+    {
+      "argv": [
+        "/usr/bin/bwrap",
+        "--unshare-user",
+        "--unshare-ipc",
+        "--unshare-pid",
+        "--unshare-net",
+        "--unshare-uts",
+        "--die-with-parent",
+        "--new-session",
+        "--cap-drop",
+        "ALL",
+        "--ro-bind",
+        "/usr/bin",
+        "/usr/bin",
+        "--ro-bind",
+        "/usr/lib",
+        "/usr/lib",
+        "--ro-bind",
+        "/usr/lib64",
+        "/usr/lib64",
+        "--ro-bind",
+        "/usr/bin",
+        "/bin",
+        "--ro-bind",
+        "/usr/lib",
+        "/lib",
+        "--ro-bind",
+        "/usr/lib64",
+        "/lib64",
+        "--ro-bind",
+        "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+        "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--tmpfs",
+        "/tmp",
+        "--chdir",
+        "/tmp",
+        "--setenv",
+        "CONDA_DEFAULT_ENV",
+        "bio_gatk",
+        "--setenv",
+        "CONDA_PREFIX",
+        "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+        "--setenv",
+        "LC_ALL",
+        "C",
+        "--setenv",
+        "PATH",
+        "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin:/usr/bin:/bin",
+        "--setenv",
+        "TMPDIR",
+        "/tmp",
+        "--",
+        "/usr/bin/python3",
+        "-I",
+        "-S",
+        "-c",
+        "import json, os, signal, subprocess, sys, tempfile, time\ndef stop(signum, frame):\n    raise SystemExit(128 + signum)\nsignal.signal(signal.SIGTERM, stop)\ndeadline = time.monotonic() + 50\nspec = json.loads(sys.argv[1])\nfacts = {}\nfor probe in spec['probes']:\n    ok = True\n    reason = ''\n    for check in probe['checks']:\n        try:\n            remaining = deadline - time.monotonic()\n            if remaining <= 0: raise subprocess.TimeoutExpired(check['argv'], 0)\n            with tempfile.TemporaryFile() as output:\n                process = subprocess.Popen(check['argv'], stdin=subprocess.DEVNULL,\n                    stdout=output, stderr=subprocess.STDOUT, env=spec['environment'],\n                    cwd='/tmp', close_fds=True, start_new_session=True)\n                try:\n                    code = process.wait(timeout=min(check['timeout'], remaining))\n                finally:\n                    # A launcher may leave a Java child behind, including on a\n                    # nominally successful exit. Retire the complete probe group.\n                    try: os.killpg(process.pid, signal.SIGKILL)\n                    except ProcessLookupError: pass\n                    process.wait()\n                output.seek(0)\n                text = output.read(65537).decode('utf-8', errors='replace')\n            ok = code in check['success_codes'] and all(token in text for token in check['contains']) and len(text.encode()) <= 65536\n            reason = '' if ok else 'RUNTIME_PROBE_COMMAND_MISMATCH'\n        except (OSError, subprocess.TimeoutExpired):\n            ok, reason = False, 'RUNTIME_PROBE_EXECUTION_INCOMPLETE'\n        if not ok: break\n    facts[probe['output']] = {'ok': ok, 'reason_code': reason}\n    if ok:\n        print(probe['output'] + '=' + probe['value'])\nprint('BIOMIND_PROBE_RESULTS=' + json.dumps(facts, sort_keys=True))",
+        "{\"environment\": {\"CONDA_DEFAULT_ENV\": \"bio_gatk\", \"CONDA_PREFIX\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk\", \"HOME\": \"/tmp\", \"JAVA_HOME\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk\", \"LC_ALL\": \"C\", \"PATH\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin:/usr/bin:/bin\", \"TMPDIR\": \"/tmp\"}, \"probes\": [{\"checks\": [{\"argv\": [\"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools\", \"--version\"], \"contains\": [\"bcftools\"], \"success_codes\": [0], \"timeout\": 8}, {\"argv\": [\"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools\", \"query\", \"--help\"], \"contains\": [\"Usage:\", \"query\"], \"success_codes\": [0, 1], \"timeout\": 8}], \"output\": \"RESOLVED_BCFTOOLS_SAMPLES_BIN\", \"value\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools\"}]}"
+      ],
+      "cwd": "/",
+      "env": {},
+      "specification": {
+        "skill_id": "population-genetics/gwas-vcf-prep-qc",
+        "subject": {
+          "skill_id": "population-genetics/gwas-vcf-prep-qc",
+          "skill_document_digest": "sha256:6dfececa7fffc021e4fe65361d152a4dc1236449d33c64c6bfd156150569280d",
+          "skill_contract_digest": "sha256:139f49163c3617e01bdcff21446a56fc30cc5b1463adba2c394275c6aedd8b76",
+          "environment_id": "bio_gatk",
+          "environment_fingerprint": "sha256:7100953f6101ec39fa2740eb9f43aae23b4082d4836035c92ad7f851e0abc769",
+          "host_id": "sha256:0183d0625b83a48de47044bd294549755fe590516dc731f8bbf2c75e7d1fb9b6",
+          "inspection_contract_digest": "sha256:70be4ced80c73e95c658e89d57bc4174bdfa9b1eb3febdbb468799fa899f5e1c"
+        },
+        "argv": [
+          "/usr/bin/python3",
+          "-I",
+          "-S",
+          "-c",
+          "import json, os, signal, subprocess, sys, tempfile, time\ndef stop(signum, frame):\n    raise SystemExit(128 + signum)\nsignal.signal(signal.SIGTERM, stop)\ndeadline = time.monotonic() + 50\nspec = json.loads(sys.argv[1])\nfacts = {}\nfor probe in spec['probes']:\n    ok = True\n    reason = ''\n    for check in probe['checks']:\n        try:\n            remaining = deadline - time.monotonic()\n            if remaining <= 0: raise subprocess.TimeoutExpired(check['argv'], 0)\n            with tempfile.TemporaryFile() as output:\n                process = subprocess.Popen(check['argv'], stdin=subprocess.DEVNULL,\n                    stdout=output, stderr=subprocess.STDOUT, env=spec['environment'],\n                    cwd='/tmp', close_fds=True, start_new_session=True)\n                try:\n                    code = process.wait(timeout=min(check['timeout'], remaining))\n                finally:\n                    # A launcher may leave a Java child behind, including on a\n                    # nominally successful exit. Retire the complete probe group.\n                    try: os.killpg(process.pid, signal.SIGKILL)\n                    except ProcessLookupError: pass\n                    process.wait()\n                output.seek(0)\n                text = output.read(65537).decode('utf-8', errors='replace')\n            ok = code in check['success_codes'] and all(token in text for token in check['contains']) and len(text.encode()) <= 65536\n            reason = '' if ok else 'RUNTIME_PROBE_COMMAND_MISMATCH'\n        except (OSError, subprocess.TimeoutExpired):\n            ok, reason = False, 'RUNTIME_PROBE_EXECUTION_INCOMPLETE'\n        if not ok: break\n    facts[probe['output']] = {'ok': ok, 'reason_code': reason}\n    if ok:\n        print(probe['output'] + '=' + probe['value'])\nprint('BIOMIND_PROBE_RESULTS=' + json.dumps(facts, sort_keys=True))",
+          "{\"environment\": {\"CONDA_DEFAULT_ENV\": \"bio_gatk\", \"CONDA_PREFIX\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk\", \"HOME\": \"/tmp\", \"JAVA_HOME\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk\", \"LC_ALL\": \"C\", \"PATH\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin:/usr/bin:/bin\", \"TMPDIR\": \"/tmp\"}, \"probes\": [{\"checks\": [{\"argv\": [\"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools\", \"--version\"], \"contains\": [\"bcftools\"], \"success_codes\": [0], \"timeout\": 8}, {\"argv\": [\"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools\", \"query\", \"--help\"], \"contains\": [\"Usage:\", \"query\"], \"success_codes\": [0, 1], \"timeout\": 8}], \"output\": \"RESOLVED_BCFTOOLS_SAMPLES_BIN\", \"value\": \"/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools\"}]}"
+        ],
+        "read_roots": [
+          "/public/home/liusiqi/anaconda3/envs/bio_gatk"
+        ],
+        "environment": {
+          "PATH": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin:/usr/bin:/bin",
+          "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "CONDA_DEFAULT_ENV": "bio_gatk",
+          "LC_ALL": "C",
+          "TMPDIR": "/tmp"
+        },
+        "output_names": [
+          "RESOLVED_BCFTOOLS_SAMPLES_BIN"
+        ],
+        "output_contracts": {},
+        "structured_probe": {
+          "probes": [
+            {
+              "output": "RESOLVED_BCFTOOLS_SAMPLES_BIN",
+              "value": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+              "checks": [
+                {
+                  "argv": [
+                    "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+                    "--version"
+                  ],
+                  "success_codes": [
+                    0
+                  ],
+                  "contains": [
+                    "bcftools"
+                  ],
+                  "timeout": 8
+                },
+                {
+                  "argv": [
+                    "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+                    "query",
+                    "--help"
+                  ],
+                  "success_codes": [
+                    0,
+                    1
+                  ],
+                  "contains": [
+                    "Usage:",
+                    "query"
+                  ],
+                  "timeout": 8
+                }
+              ]
+            }
+          ],
+          "environment": {
+            "PATH": "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin:/usr/bin:/bin",
+            "JAVA_HOME": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+            "CONDA_PREFIX": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+            "CONDA_DEFAULT_ENV": "bio_gatk",
+            "LC_ALL": "C",
+            "TMPDIR": "/tmp",
+            "HOME": "/tmp"
+          }
+        },
+        "coverage_binding_ids": [
+          "runtime.bcftools.samples.bin"
+        ],
+        "timeout_seconds": 60.0,
+        "output_limit_bytes": 65536,
+        "method_digest": "sha256:70be4ced80c73e95c658e89d57bc4174bdfa9b1eb3febdbb468799fa899f5e1c"
+      }
+    }
+  ],
+  "explicit_target": "bio_gatk",
+  "capability_id": "population.genetics.gwas.vcf.prep.qc.inspect_vcf_samples",
+  "checks": [
+    {
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+        "--version"
+      ],
+      "success_codes": [
+        0
+      ],
+      "contains": [
+        "bcftools"
+      ],
+      "timeout": 8
+    },
+    {
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/bcftools",
+        "query",
+        "--help"
+      ],
+      "success_codes": [
+        0,
+        1
+      ],
+      "contains": [
+        "Usage:",
+        "query"
+      ],
+      "timeout": 8
+    }
+  ],
+  "registry_unchanged": true,
+  "availability_scope": "Only bcftools --version and query --help. No VCF inputs or association ran.",
+  "source_hashes": {
+    "bio_agents.py": "9e0f9f075ecbb7587ebb3fed51558b8aeb49734d0685aa6e6304e3415396edd3",
+    "package_manager.py": "a6a5ef2d44c0cf639a97ba53638d656506432f30e09e40b65224c7cc6dce5067",
+    "agent_core/skill_manager.py": "689ea82917472f80e8abb7ec1f700749223cb65024580f6bda45dd26d1b9d974",
+    "agent_core/runtime_inspection.py": "2da4f6b79aa35366584240a17c741fd3ec1ed7912924fc3b3eda104958993ef0",
+    "agent_core/runtime_probe_contract.py": "3c00bc7a1a6f0cabd06042617cf903c3c43fdfff22c69ccac665636ce127bd88",
+    "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md": "6dfececa7fffc021e4fe65361d152a4dc1236449d33c64c6bfd156150569280d",
+    "tests/offline_managed_bootstrap.py": "b6df4bf8514c91ed5db9b4c03fc25fbc2258ce6aa099bcc32c1a508a51351c10",
+    "tests/test_host_controlled_bcftools.py": "d3b73d91d9ad51762d1488503cf923400372458ee4e5d4aceeb7c6251f015c23"
+  },
+  "boundary": "Real production discovery/adapter/probe and OS. Private metadata/config only; exact one-shot bwrap audit allowlist; original sandbox and all other guards retained."
+}

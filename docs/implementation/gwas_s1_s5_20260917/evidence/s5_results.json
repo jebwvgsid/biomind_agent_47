@@ -1,0 +1,1052 @@
+[
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_rc_zero_rejection_keeps_specific_cause_target_commit_and_delivery_separate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_rc_zero_rejection_keeps_specific_cause_target_commit_and_delivery_separate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016333162784576416,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_rc_zero_rejection_keeps_specific_cause_target_commit_and_delivery_separate",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.06238684616982937,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_rc_zero_rejection_keeps_specific_cause_target_commit_and_delivery_separate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012874789535999298,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[SPECIFIC_OUTPUT_ERROR-EXECUTION_FAILED-False-SPECIFIC_OUTPUT_ERROR]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[SPECIFIC_OUTPUT_ERROR-EXECUTION_FAILED-False-SPECIFIC_OUTPUT_ERROR]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004222048446536064,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[SPECIFIC_OUTPUT_ERROR-EXECUTION_FAILED-False-SPECIFIC_OUTPUT_ERROR]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002226894721388817,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[SPECIFIC_OUTPUT_ERROR-EXECUTION_FAILED-False-SPECIFIC_OUTPUT_ERROR]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015187915414571762,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--False-VALIDATION_FAILED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--False-VALIDATION_FAILED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00034437794238328934,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--False-VALIDATION_FAILED]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0018461402505636215,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--False-VALIDATION_FAILED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013376306742429733,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--None-EXECUTION_FAILED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--None-EXECUTION_FAILED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000341612845659256,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--None-EXECUTION_FAILED]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0018106214702129364,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[--None-EXECUTION_FAILED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013867393136024475,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[-PROCESS_TIMEOUT-None-PROCESS_TIMEOUT]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[-PROCESS_TIMEOUT-None-PROCESS_TIMEOUT]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003303997218608856,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[-PROCESS_TIMEOUT-None-PROCESS_TIMEOUT]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019561881199479103,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_causal_fallback_uses_specific_owner_code_then_explicit_validation[-PROCESS_TIMEOUT-None-PROCESS_TIMEOUT]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013233069330453873,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_cross_attempt_specific_failure_is_rejected_not_consumed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_cross_attempt_specific_failure_is_rejected_not_consumed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.59569588303566e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_cross_attempt_specific_failure_is_rejected_not_consumed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010162517428398132,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_cross_attempt_specific_failure_is_rejected_not_consumed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013262685388326645,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_projection_ignores_foreign_attempt_index",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_projection_ignores_foreign_attempt_index",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010025873780250549,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_projection_ignores_foreign_attempt_index",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.003476850688457489,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_projection_ignores_foreign_attempt_index",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011129770427942276,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_pre_dispatch_zero_has_explicit_scope_and_historical_char_units",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_pre_dispatch_zero_has_explicit_scope_and_historical_char_units",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.689386934041977e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_pre_dispatch_zero_has_explicit_scope_and_historical_char_units",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004911960102617741,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_gwas_failure_semantics.py::test_pre_dispatch_zero_has_explicit_scope_and_historical_char_units",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011603999882936478,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_post_execution_stop_saves_exact_step_and_preserves_other_steps_and_attempt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_post_execution_stop_saves_exact_step_and_preserves_other_steps_and_attempt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0018122931942343712,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_post_execution_stop_saves_exact_step_and_preserves_other_steps_and_attempt",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03378806822001934,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_post_execution_stop_saves_exact_step_and_preserves_other_steps_and_attempt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013008620589971542,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[new_attempt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[new_attempt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005467599257826805,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[new_attempt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03504461981356144,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[new_attempt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013541709631681442,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[step_changed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[step_changed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000562337227165699,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[step_changed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03457439038902521,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[step_changed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014246255159378052,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[plan_changed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[plan_changed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000562611036002636,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[plan_changed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03531218506395817,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[plan_changed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016256794333457947,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[attempt_wrong_plan]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[attempt_wrong_plan]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000615864060819149,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[attempt_wrong_plan]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.043966093100607395,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[attempt_wrong_plan]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015567056834697723,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[running_attempt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[running_attempt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005964143201708794,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[running_attempt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04355096723884344,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[running_attempt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014162249863147736,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[active_owner]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[active_owner]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005678329616785049,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[active_owner]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.043388959020376205,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[active_owner]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015417952090501785,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[committed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[committed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005580959841609001,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[committed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04377591982483864,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[committed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001366138458251953,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[commit_receipt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[commit_receipt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005709156394004822,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[commit_receipt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04341928940266371,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_terminal_writer_never_stops_unowned_or_committed_step[commit_receipt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013517588376998901,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[later_same-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[later_same-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005830554291605949,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[later_same-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.013595327734947205,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[later_same-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014080386608839035,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[earlier_same-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[earlier_same-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000604238361120224,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[earlier_same-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.013684374280273914,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[earlier_same-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014015007764101028,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_ref-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_ref-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006263116374611855,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_ref-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.013697164133191109,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_ref-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014085881412029266,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_episode-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_episode-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006226310506463051,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_episode-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01383797638118267,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[different_episode-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014372635632753372,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[mutable_path-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[mutable_path-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006200484931468964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[mutable_path-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.013663810677826405,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_only_later_same_immutable_evidence_resolves_historical_read_error[mutable_path-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013987720012664795,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_cli_reports_exact_observed_command_gap_without_claiming_global_absence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_cli_reports_exact_observed_command_gap_without_claiming_global_absence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004913322627544403,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_cli_reports_exact_observed_command_gap_without_claiming_global_absence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.013525808230042458,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_cli_reports_exact_observed_command_gap_without_claiming_global_absence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013266969472169876,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_delivery_paths_require_current_successful_receipt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_delivery_paths_require_current_successful_receipt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005011437460780144,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_delivery_paths_require_current_successful_receipt",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00018257834017276764,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_delivery_paths_require_current_successful_receipt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012939516454935074,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_recorded_incident_replay_uses_real_ordered_receipts_without_reopening_session",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_recorded_incident_replay_uses_real_ordered_receipts_without_reopening_session",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.987503290176392e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_recorded_incident_replay_uses_real_ordered_receipts_without_reopening_session",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0019632261246442795,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_recorded_incident_replay_uses_real_ordered_receipts_without_reopening_session",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001111077144742012,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_real_terminal_graph_preserves_old_report_and_exposes_new_internal_report",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_real_terminal_graph_preserves_old_report_and_exposes_new_internal_report",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004781186580657959,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_real_terminal_graph_preserves_old_report_and_exposes_new_internal_report",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 4.001338456757367,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_terminal_facts.py::test_real_terminal_graph_preserves_old_report_and_exposes_new_internal_report",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00034341588616371155,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_gate_and_commit_have_exact_causal_packets",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_gate_and_commit_have_exact_causal_packets",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00032699480652809143,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_gate_and_commit_have_exact_causal_packets",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010427816770970821,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_gate_and_commit_have_exact_causal_packets",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013281125575304031,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_cross_step_and_wrong_plan_packets_are_rejected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_cross_step_and_wrong_plan_packets_are_rejected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001997603103518486,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_cross_step_and_wrong_plan_packets_are_rejected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0017745159566402435,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_cross_step_and_wrong_plan_packets_are_rejected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012635532766580582,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_execution_failure_becomes_compact_recovery_seed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_execution_failure_becomes_compact_recovery_seed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019424129277467728,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_execution_failure_becomes_compact_recovery_seed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0052230339497327805,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_execution_failure_becomes_compact_recovery_seed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013389531522989273,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_nested_conversation_payload_fails_closed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_nested_conversation_payload_fails_closed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018981937319040298,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_nested_conversation_payload_fails_closed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016475440934300423,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_nested_conversation_payload_fails_closed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012594368308782578,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_packet_plan_record_identity_is_revalidated",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_packet_plan_record_identity_is_revalidated",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019872281700372696,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_packet_plan_record_identity_is_revalidated",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0033664312213659286,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_packet_plan_record_identity_is_revalidated",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014019664376974106,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_pre_execution_rejection_has_unambiguous_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_pre_execution_rejection_has_unambiguous_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018936675041913986,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_pre_execution_rejection_has_unambiguous_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00424369890242815,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_pre_execution_rejection_has_unambiguous_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012681074440479279,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_outcome_without_packet_is_not_authority",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_outcome_without_packet_is_not_authority",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020356383174657822,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_outcome_without_packet_is_not_authority",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009694406762719154,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_outcome_without_packet_is_not_authority",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001230388879776001,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_same_step_outcomes_cannot_override_packet",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_same_step_outcomes_cannot_override_packet",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001875031739473343,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_same_step_outcomes_cannot_override_packet",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004306476563215256,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_same_step_outcomes_cannot_override_packet",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012820400297641754,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_skill_projection_is_manifest_only",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_skill_projection_is_manifest_only",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000191468745470047,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_skill_projection_is_manifest_only",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004636505618691444,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_skill_projection_is_manifest_only",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012932904064655304,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_stale_edge_packet_cannot_override_new_active_packet",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_stale_edge_packet_cannot_override_new_active_packet",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019123312085866928,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_stale_edge_packet_cannot_override_new_active_packet",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.003584468737244606,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_stale_edge_packet_cannot_override_new_active_packet",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015159789472818375,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_commit_requests_plan_revision",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_commit_requests_plan_revision",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002541160210967064,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_commit_requests_plan_revision",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010914362035691738,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_commit_requests_plan_revision",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001364573836326599,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_completion_gate_requests_plan_revision",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_completion_gate_requests_plan_revision",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001992247998714447,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_completion_gate_requests_plan_revision",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009105502627789974,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_completion_gate_requests_plan_revision",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013489555567502975,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_execute_semantics_do_not_regress",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_execute_semantics_do_not_regress",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019581057131290436,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_execute_semantics_do_not_regress",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007805768400430679,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_execute_semantics_do_not_regress",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013727787882089615,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_install_failure_enters_bounded_repair",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_install_failure_enters_bounded_repair",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019218772649765015,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_install_failure_enters_bounded_repair",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00777820311486721,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_install_failure_enters_bounded_repair",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014251284301280975,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_missing_packet_fails_closed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_missing_packet_fails_closed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002017645165324211,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_missing_packet_fails_closed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0029932530596852303,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_missing_packet_fails_closed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013583898544311523,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_valid_packet_and_consumed_replay_are_idempotent",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_valid_packet_and_consumed_replay_are_idempotent",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019263941794633865,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_valid_packet_and_consumed_replay_are_idempotent",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010542389936745167,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_valid_packet_and_consumed_replay_are_idempotent",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020924117416143417,
+    "failure": ""
+  }
+]

@@ -1,0 +1,67 @@
+{
+  "slice": "S3_observation",
+  "parent": "af49f24c5801407b9127ce1b69b546ab67abd9b1",
+  "candidate": "/tmp/biomind-gwas-s1-s5-20260917/integration",
+  "files": [
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+    "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md",
+    "tests/test_gwas_input_contracts_s3.py",
+    "tests/test_gwas_input_observation_graph_s3.py"
+  ],
+  "expected_candidate_hashes": {
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py": "b1f1bc5fbab5cf15c0b17c880ccf507c7a9e6b26d04639b6b435cab3423c1583",
+    "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md": "8ce9b6704a5706efbc99120c57a33c11801e14a6026dfa3dbf6bed4e2c45a245",
+    "tests/test_gwas_input_contracts_s3.py": "3baab1ad78b15e03640afe1f372de0f502a2aa47094d1b0aadfc582401bfbc9a",
+    "tests/test_gwas_input_observation_graph_s3.py": "9998d1b1f8f23214fad36e257b8cbe4e3fdd964828333ab8e1285b524f99fe31"
+  },
+  "message": "fix: retain GWAS input identity through committed observation projection",
+  "validation": {
+    "command_log": "/tmp/biomind-gwas-s1-s5-20260917/s3-observation-test.log",
+    "results": "/tmp/biomind-gwas-s1-s5-20260917/s3-observation-results.json",
+    "passed": 1,
+    "subtests_passed": 0,
+    "source_unchanged": true,
+    "note": "S4 production and S5 budget projection also present in integration; committed separately.",
+    "prior_joint_result": "/tmp/biomind-gwas-s1-s5-20260917/s3-joint-integrated-results.json"
+  },
+  "commit": "41d166b8766ae2a251c9451dc59733fe3022b1a4",
+  "partition": [
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md",
+      "mode": "100644",
+      "before_sha256": "39d376f5101ab511d46c4be756807f1f089791299690098269af1e518f7563ce",
+      "tested_sha256": "8ce9b6704a5706efbc99120c57a33c11801e14a6026dfa3dbf6bed4e2c45a245",
+      "index_sha256": "8ce9b6704a5706efbc99120c57a33c11801e14a6026dfa3dbf6bed4e2c45a245",
+      "preserved_overlay": false,
+      "index_blob": "b5cae544d7b8a6668dd262fa6c10d096efd6ddb0"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+      "mode": "100644",
+      "before_sha256": "d5d57b6f1ed347caacb2a7c8071ab28b3f28838d5d49eee41daa712cca11ff31",
+      "tested_sha256": "b1f1bc5fbab5cf15c0b17c880ccf507c7a9e6b26d04639b6b435cab3423c1583",
+      "index_sha256": "b1f1bc5fbab5cf15c0b17c880ccf507c7a9e6b26d04639b6b435cab3423c1583",
+      "preserved_overlay": false,
+      "index_blob": "7634981bb8f7ff71e7b791e2fa3c98bdf463f6f4"
+    },
+    {
+      "path": "tests/test_gwas_input_contracts_s3.py",
+      "mode": "100644",
+      "before_sha256": "b7619fe303f39dbac7f36101db8c7d8a341f6afeb6aae07a1b192107a65acb6b",
+      "tested_sha256": "3baab1ad78b15e03640afe1f372de0f502a2aa47094d1b0aadfc582401bfbc9a",
+      "index_sha256": "3baab1ad78b15e03640afe1f372de0f502a2aa47094d1b0aadfc582401bfbc9a",
+      "preserved_overlay": false,
+      "index_blob": "c0aef60a30478296cbbe7723fb83441362afb4b4"
+    },
+    {
+      "path": "tests/test_gwas_input_observation_graph_s3.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "9998d1b1f8f23214fad36e257b8cbe4e3fdd964828333ab8e1285b524f99fe31",
+      "index_sha256": "9998d1b1f8f23214fad36e257b8cbe4e3fdd964828333ab8e1285b524f99fe31",
+      "preserved_overlay": false,
+      "index_blob": "c3fd60c73d9aa789fee8253da296e77ba95423fd"
+    }
+  ],
+  "git_index_was_empty": true
+}

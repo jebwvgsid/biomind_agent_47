@@ -1,0 +1,110 @@
+{
+  "slice": "S3",
+  "parent": "e53d1328e209c8a4e0cf33ced223a635e0e0e34b",
+  "candidate": "/tmp/biomind-gwas-s1-s5-20260917/integration",
+  "files": [
+    "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+    "skills/population-genetics/popgen-gwas-workflow/SKILL.md",
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/input_contract.py",
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/sort_phenotype.py",
+    "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md",
+    "tests/test_gwas_input_contracts_s3.py",
+    "tests/test_gwas_skill_contracts_s3.py"
+  ],
+  "expected_candidate_hashes": {
+    "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md": "6dfececa7fffc021e4fe65361d152a4dc1236449d33c64c6bfd156150569280d",
+    "skills/population-genetics/popgen-gwas-workflow/SKILL.md": "34d7880ca624e645fc1c6c6bc50aed8e59f2db9a1441863bae1305030598e905",
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/input_contract.py": "79bdf7c613a853ed416f2f051ca122c300ab1f7d0cdb3ab49f2d2a84f35b3e6c",
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py": "d5d57b6f1ed347caacb2a7c8071ab28b3f28838d5d49eee41daa712cca11ff31",
+    "skills/population-genetics/gwas-vcf-prep-qc/scripts/sort_phenotype.py": "813b2cc607727381236699fdc2476bba892573c71b6da8392a396f4795708dae",
+    "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md": "39d376f5101ab511d46c4be756807f1f089791299690098269af1e518f7563ce",
+    "tests/test_gwas_input_contracts_s3.py": "b7619fe303f39dbac7f36101db8c7d8a341f6afeb6aae07a1b192107a65acb6b",
+    "tests/test_gwas_skill_contracts_s3.py": "5b35e77db2587da8515d00a60cb08d69ea48415e9d0a0ec7501d8c3bee45f575"
+  },
+  "message": "fix: validate GWAS sample identity and explicit Q row mapping",
+  "validation": {
+    "command_log": "/tmp/biomind-gwas-s1-s5-20260917/s2-s3-test.log",
+    "results": "/tmp/biomind-gwas-s1-s5-20260917/s2-s3-results.json",
+    "passed": 55,
+    "subtests_passed": 19,
+    "source_unchanged": true,
+    "s3_only_passed": 51
+  },
+  "commit": "af49f24c5801407b9127ce1b69b546ab67abd9b1",
+  "partition": [
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+      "mode": "100644",
+      "before_sha256": "45b89f4a6b2bbf3c78f2c65a9a111324146d96271352c4c564d4988184fffddb",
+      "tested_sha256": "6dfececa7fffc021e4fe65361d152a4dc1236449d33c64c6bfd156150569280d",
+      "index_sha256": "6dfececa7fffc021e4fe65361d152a4dc1236449d33c64c6bfd156150569280d",
+      "preserved_overlay": false,
+      "index_blob": "5e7a3539882923a3902a1d7271c83761eebe8d72"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "39d376f5101ab511d46c4be756807f1f089791299690098269af1e518f7563ce",
+      "index_sha256": "39d376f5101ab511d46c4be756807f1f089791299690098269af1e518f7563ce",
+      "preserved_overlay": false,
+      "index_blob": "5ce158680d33bd940ea1ebe3694e64a926efadf3"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/input_contract.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "79bdf7c613a853ed416f2f051ca122c300ab1f7d0cdb3ab49f2d2a84f35b3e6c",
+      "index_sha256": "79bdf7c613a853ed416f2f051ca122c300ab1f7d0cdb3ab49f2d2a84f35b3e6c",
+      "preserved_overlay": false,
+      "index_blob": "830bf6a2316d62ccb395e612dd7101fcddfb038f"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "d5d57b6f1ed347caacb2a7c8071ab28b3f28838d5d49eee41daa712cca11ff31",
+      "index_sha256": "d5d57b6f1ed347caacb2a7c8071ab28b3f28838d5d49eee41daa712cca11ff31",
+      "preserved_overlay": false,
+      "index_blob": "db574cbbb1767da8049603b62f8a2531580aa38d"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/sort_phenotype.py",
+      "mode": "100644",
+      "before_sha256": "9a2e843b53c4e6a1dd6a4388608103e042996c0584426b09eea5c4be30b17a25",
+      "tested_sha256": "813b2cc607727381236699fdc2476bba892573c71b6da8392a396f4795708dae",
+      "index_sha256": "813b2cc607727381236699fdc2476bba892573c71b6da8392a396f4795708dae",
+      "preserved_overlay": false,
+      "index_blob": "6e1bd36d9c222f7eee198d1da21f88b533e1b6ac"
+    },
+    {
+      "path": "skills/population-genetics/popgen-gwas-workflow/SKILL.md",
+      "mode": "100644",
+      "before_sha256": "7125bc59e82cf291d76a7cce743fbc013c0f63772a4cac98efb48b84d44f2ab9",
+      "tested_sha256": "34d7880ca624e645fc1c6c6bc50aed8e59f2db9a1441863bae1305030598e905",
+      "index_sha256": "34d7880ca624e645fc1c6c6bc50aed8e59f2db9a1441863bae1305030598e905",
+      "preserved_overlay": false,
+      "index_blob": "52206509050e5778f794b93390c6f1a6021b105c"
+    },
+    {
+      "path": "tests/test_gwas_input_contracts_s3.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "b7619fe303f39dbac7f36101db8c7d8a341f6afeb6aae07a1b192107a65acb6b",
+      "index_sha256": "b7619fe303f39dbac7f36101db8c7d8a341f6afeb6aae07a1b192107a65acb6b",
+      "preserved_overlay": false,
+      "index_blob": "5a02e6bfc63d58c8353d637b77f62a314d7f0e06"
+    },
+    {
+      "path": "tests/test_gwas_skill_contracts_s3.py",
+      "mode": "100644",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tested_sha256": "5b35e77db2587da8515d00a60cb08d69ea48415e9d0a0ec7501d8c3bee45f575",
+      "index_sha256": "5b35e77db2587da8515d00a60cb08d69ea48415e9d0a0ec7501d8c3bee45f575",
+      "preserved_overlay": false,
+      "index_blob": "169c3853987e5f6c969974d71c1f9cd373650e6c"
+    }
+  ],
+  "git_index_was_empty": true
+}

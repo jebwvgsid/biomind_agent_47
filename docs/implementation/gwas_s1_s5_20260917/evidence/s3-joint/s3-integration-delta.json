@@ -1,0 +1,34 @@
+{
+  "candidate": "/tmp/biomind-gwas-s1-s5-20260917/s3-joint",
+  "frozen_s3_base": "/tmp/biomind-gwas-s1-s5-20260917/s3",
+  "source_python_identity": "bcc1a75137a77f7930a44e4914744c431e09764dc5a795b35e6ce54048d3d875",
+  "files": [
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/scripts/inspect_inputs.py",
+      "sha256": "b1f1bc5fbab5cf15c0b17c880ccf507c7a9e6b26d04639b6b435cab3423c1583",
+      "bytes": 5268,
+      "frozen_s3_sha256": "d5d57b6f1ed347caacb2a7c8071ab28b3f28838d5d49eee41daa712cca11ff31"
+    },
+    {
+      "path": "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md",
+      "sha256": "8ce9b6704a5706efbc99120c57a33c11801e14a6026dfa3dbf6bed4e2c45a245",
+      "bytes": 5734,
+      "frozen_s3_sha256": "39d376f5101ab511d46c4be756807f1f089791299690098269af1e518f7563ce"
+    },
+    {
+      "path": "tests/test_gwas_input_contracts_s3.py",
+      "sha256": "3baab1ad78b15e03640afe1f372de0f502a2aa47094d1b0aadfc582401bfbc9a",
+      "bytes": 15435,
+      "frozen_s3_sha256": "b7619fe303f39dbac7f36101db8c7d8a341f6afeb6aae07a1b192107a65acb6b"
+    },
+    {
+      "path": "tests/test_gwas_input_observation_graph_s3.py",
+      "sha256": "89c16a824adb9d5756bd69de8b4ba388dd658428bb7cf108348d0753093812f8",
+      "bytes": 17165,
+      "frozen_s3_sha256": null
+    }
+  ],
+  "manifest_sha256": "76ea722ead27200f1d238c72d76c550f8fcf960abf2e7703c67abbd197aab77c",
+  "status": "frozen",
+  "validation": "33 passed, 19 subtests passed; SOURCE_UNCHANGED True"
+}
