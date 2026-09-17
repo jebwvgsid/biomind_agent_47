@@ -1,0 +1,1452 @@
+[
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_receipt_exposes_explicit_controller_invocation_and_exact_contract",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_receipt_exposes_explicit_controller_invocation_and_exact_contract",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0020199883729219437,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_receipt_exposes_explicit_controller_invocation_and_exact_contract",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009277737699449062,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_receipt_exposes_explicit_controller_invocation_and_exact_contract",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014551449567079544,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_controller_interpreter_retains_virtualenv_launcher_path",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_controller_interpreter_retains_virtualenv_launcher_path",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005320161581039429,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_controller_interpreter_retains_virtualenv_launcher_path",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006673664785921574,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_controller_interpreter_retains_virtualenv_launcher_path",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014410633593797684,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[installed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[installed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00051924679428339,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[installed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.037339053116738796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[installed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001288028433918953,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[\\u4e2d\\u6587 \\u5b89\\u88c5]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[\\u4e2d\\u6587 \\u5b89\\u88c5]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005851732566952705,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[\\u4e2d\\u6587 \\u5b89\\u88c5]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.036583710461854935,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[\\u4e2d\\u6587 \\u5b89\\u88c5]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001314319670200348,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[dollar$literal`text`]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[dollar$literal`text`]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005624527111649513,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[dollar$literal`text`]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03700388688594103,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[dollar$literal`text`]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013294070959091187,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[literal]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[literal]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005497792735695839,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[literal]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.42424257192760706,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[literal]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001825513318181038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[env]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[env]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006485972553491592,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[env]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012838051654398441,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[env]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014851056039333344,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[exec_continuation]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[exec_continuation]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005861716344952583,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[exec_continuation]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.013721653260290623,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[exec_continuation]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014118943363428116,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_direct_argv_has_same_contract_without_shell_reparsing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_direct_argv_has_same_contract_without_shell_reparsing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004915902391076088,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_direct_argv_has_same_contract_without_shell_reparsing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00960210058838129,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_direct_argv_has_same_contract_without_shell_reparsing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012644100934267044,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_validation_checks_the_argv_carrier_actually_executed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_validation_checks_the_argv_carrier_actually_executed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004808278754353523,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_validation_checks_the_argv_carrier_actually_executed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00939006544649601,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_validation_checks_the_argv_carrier_actually_executed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000125017948448658,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[None]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[None]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005380017682909966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[None]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009432347491383553,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[None]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001269793137907982,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[python]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[python]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005857646465301514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[python]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009162661619484425,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[python]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012921635061502457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[/bin/sh]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[/bin/sh]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005551772192120552,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[/bin/sh]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00969676859676838,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[/bin/sh]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001316312700510025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments0]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments0]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005538314580917358,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments0]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009223741479218006,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments0]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001311562955379486,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000562409870326519,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00961271207779646,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013402104377746582,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005732458084821701,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00921311229467392,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013418681919574738,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments3]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments3]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005533536896109581,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments3]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0098101906478405,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments3]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014549586921930313,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments4]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments4]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005719652399420738,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments4]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009187012910842896,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments4]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013118982315063477,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments5]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments5]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005877474322915077,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments5]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01039655040949583,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments5]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013250112533569336,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_repeated_multi_value_argument_preserves_distinct_label_path_arguments",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_repeated_multi_value_argument_preserves_distinct_label_path_arguments",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004929592832922935,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_repeated_multi_value_argument_preserves_distinct_label_path_arguments",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009289689362049103,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_repeated_multi_value_argument_preserves_distinct_label_path_arguments",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012375321239233017,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_single_quoted_env_variable_is_not_mistaken_for_resource_expansion",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_single_quoted_env_variable_is_not_mistaken_for_resource_expansion",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000491701066493988,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_single_quoted_env_variable_is_not_mistaken_for_resource_expansion",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009312673471868038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_single_quoted_env_variable_is_not_mistaken_for_resource_expansion",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001274552196264267,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[comment_only]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[comment_only]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005582626909017563,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[comment_only]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009231251664459705,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[comment_only]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013396237045526505,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[echo_only]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[echo_only]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005757464095950127,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[echo_only]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009385148994624615,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[echo_only]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013248436152935028,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[conditional]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[conditional]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000574083998799324,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[conditional]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009240014478564262,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[conditional]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013587437570095062,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[eval]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[eval]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005720891058444977,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[eval]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009663613513112068,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[eval]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014916900545358658,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[heredoc]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[heredoc]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005682846531271935,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[heredoc]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009165704250335693,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[heredoc]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013457611203193665,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[env_assignment]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[env_assignment]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000585402362048626,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[env_assignment]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00949884857982397,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[env_assignment]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014431029558181763,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_delegate_is_pinned_without_requiring_direct_invocation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_delegate_is_pinned_without_requiring_direct_invocation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004961537197232246,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_delegate_is_pinned_without_requiring_direct_invocation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01992167253047228,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_delegate_is_pinned_without_requiring_direct_invocation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013032928109169006,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_delegate_is_rejected_instead_of_resolved_implicitly",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_delegate_is_rejected_instead_of_resolved_implicitly",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004931315779685974,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_delegate_is_rejected_instead_of_resolved_implicitly",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.011157184839248657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_missing_delegate_is_rejected_instead_of_resolved_implicitly",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012916512787342072,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[document]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[document]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006294958293437958,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[document]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01021826732903719,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[document]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014188513159751892,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[interpreter]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[interpreter]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006162067875266075,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[interpreter]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012506099417805672,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[interpreter]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014991872012615204,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[env]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[env]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006160885095596313,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[env]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012180650606751442,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[env]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014837179332971573,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[script]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[script]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006304364651441574,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[script]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012157219462096691,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[script]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000143381766974926,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_uncontracted_skill_resource_preserves_existing_binding_behavior",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_uncontracted_skill_resource_preserves_existing_binding_behavior",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005196500569581985,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_uncontracted_skill_resource_preserves_existing_binding_behavior",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0053744083270430565,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_uncontracted_skill_resource_preserves_existing_binding_behavior",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013034231960773468,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_user_owned_script_has_no_new_skill_invocation_gate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_user_owned_script_has_no_new_skill_invocation_gate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005163624882698059,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_user_owned_script_has_no_new_skill_invocation_gate",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00013622920960187912,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_user_owned_script_has_no_new_skill_invocation_gate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010896101593971252,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_frontmatter_delimiters_and_metadata_generate_are_preserved",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_frontmatter_delimiters_and_metadata_generate_are_preserved",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005179122090339661,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_frontmatter_delimiters_and_metadata_generate_are_preserved",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010486520826816559,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_frontmatter_delimiters_and_metadata_generate_are_preserved",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001295255497097969,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[invalid]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[invalid]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002035321667790413,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[invalid]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0004835398867726326,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[invalid]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010732468217611313,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate1]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate1]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019473116844892502,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate1]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000590084120631218,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate1]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011252798140048981,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate2]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate2]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001952601596713066,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate2]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007885843515396118,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate2]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011445768177509308,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_deferred_argument_keeps_runtime_identity_and_does_not_claim_direct_argv",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_deferred_argument_keeps_runtime_identity_and_does_not_claim_direct_argv",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005120895802974701,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_deferred_argument_keeps_runtime_identity_and_does_not_claim_direct_argv",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.026163521222770214,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_script_invocation.py::test_deferred_argument_keeps_runtime_identity_and_does_not_claim_direct_argv",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014307070523500443,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[relocated installation]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[relocated installation]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006358949467539787,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[relocated installation]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.015688198618590832,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[relocated installation]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015855394303798676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[\\u4e2d\\u6587 \\u6839]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[\\u4e2d\\u6587 \\u6839]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006550438702106476,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[\\u4e2d\\u6587 \\u6839]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.015379614196717739,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[\\u4e2d\\u6587 \\u6839]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014411099255084991,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[external-install-root]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[external-install-root]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000616888515651226,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[external-install-root]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.015296733006834984,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[external-install-root]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013911817222833633,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[script]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[script]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006321137771010399,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[script]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.014943213202059269,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[script]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013822969049215317,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[document]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[document]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006111208349466324,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[document]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01232119370251894,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[document]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014012400060892105,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[cwd]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[cwd]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006093448027968407,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[cwd]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01481351163238287,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[cwd]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014721136540174484,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[namespace]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[namespace]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006382009014487267,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[namespace]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01026676595211029,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[namespace]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013825111091136932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[env]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[env]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006270455196499825,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[env]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.014963684603571892,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[env]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000139688141644001,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[scope]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[scope]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006216475740075111,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[scope]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.014920142479240894,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[scope]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014400947839021683,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[missing]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[missing]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006143022328615189,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[missing]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.01218570489436388,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[missing]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001420881599187851,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[symlink_escape]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[symlink_escape]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000612061470746994,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[symlink_escape]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012520717456936836,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[symlink_escape]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014580413699150085,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[other/skill#scripts/call_tads.py]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[other/skill#scripts/call_tads.py]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006294120103120804,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[other/skill#scripts/call_tads.py]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0061953626573085785,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[other/skill#scripts/call_tads.py]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001470278948545456,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#../call_tads.py]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#../call_tads.py]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000634489580988884,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#../call_tads.py]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006146211177110672,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#../call_tads.py]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001399591565132141,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#/etc/passwd]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#/etc/passwd]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006360150873661041,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#/etc/passwd]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006324786692857742,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#/etc/passwd]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015514343976974487,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[call_tads.py]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[call_tads.py]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006125578656792641,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[call_tads.py]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006132582202553749,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[call_tads.py]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014155544340610504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_same_basename_is_resolved_by_skill_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_same_basename_is_resolved_by_skill_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005262941122055054,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_same_basename_is_resolved_by_skill_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.019485287368297577,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_same_basename_is_resolved_by_skill_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013430509716272354,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_undeclared_user_script_does_not_gain_a_global_skill_gate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_undeclared_user_script_does_not_gain_a_global_skill_gate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010925345122814178,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_undeclared_user_script_does_not_gain_a_global_skill_gate",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00013641640543937683,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_undeclared_user_script_does_not_gain_a_global_skill_gate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.691009134054184e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_unreadable_declared_script_is_permission_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_unreadable_declared_script_is_permission_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005360692739486694,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_unreadable_declared_script_is_permission_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007864282466471195,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_skill_resource_binding.py::test_unreadable_declared_script_is_permission_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021519046276807785,
+    "failure": ""
+  }
+]

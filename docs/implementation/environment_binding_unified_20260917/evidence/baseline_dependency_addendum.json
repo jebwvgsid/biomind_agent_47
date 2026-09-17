@@ -1,0 +1,60 @@
+{
+  "reason": "Production import memory.task_semantics; Python source only, no session/database material; untouched by this task",
+  "files": {
+    "memory/artifact_index.py": {
+      "sha256": "2e59fa6f03867b8ce32cc23fdd77763d57569c72f95a5a034a1100dadf5dd40c",
+      "mode": 420
+    },
+    "memory/core_store.py": {
+      "sha256": "4c08d070b9ee52e85cb31d52fadaa52863bdfe69960ad8464a424cce32f0fc2e",
+      "mode": 420
+    },
+    "memory/persistence.py": {
+      "sha256": "fc8cb41759b57e93d34ac35d1b8f28024ddd72777a39e8732643a99d43901a3d",
+      "mode": 420
+    },
+    "memory/session_archive.py": {
+      "sha256": "2ac2b70c6771dff7dd2041c1dd520da2d714628b6b58d24066a15a779c8eb495",
+      "mode": 420
+    },
+    "memory/task_summary.py": {
+      "sha256": "f758f3416ed9d0f6647e50f2c3d39c194a6d295715d5541faf9441a568eda891",
+      "mode": 420
+    },
+    "memory/session_archive_writer.py": {
+      "sha256": "14d0c054ddc61d61158cb101ce9509c2bacd91c2930a65a3366659afeb874754",
+      "mode": 384
+    },
+    "memory/patch_validator.py": {
+      "sha256": "b3bab8cf5c55abb3d4d017a84e73ad70437d555d67d564f91e0209c8388449e3",
+      "mode": 420
+    },
+    "memory/policy.py": {
+      "sha256": "a3d478c0204daac64138397bc7814c27689fda8c52b9891cb37dacf364134ec0",
+      "mode": 420
+    },
+    "memory/task_semantics.py": {
+      "sha256": "13b273b90334b5dfb595524b17bcc90038c0579cb31dba60bb00cf762bc1fa54",
+      "mode": 420
+    },
+    "memory/utils.py": {
+      "sha256": "12d6b9e6c1a175ed7c8140e5a1697b953741f0016b01783b23797c7aa975a01c",
+      "mode": 420
+    },
+    "memory/wiki_memory.py": {
+      "sha256": "c919c7ba3faaf7ee14b5cebdbc92bff0ec7abde2c7cee3d364459dcec1e4285d",
+      "mode": 420
+    },
+    "memory/__init__.py": {
+      "sha256": "8fc5927d8a469fc88cf071942afbdf87067a6f7c630295a0e3e65c8610c2207c",
+      "mode": 420
+    }
+  },
+  "head_fixture_inclusions": [
+    {
+      "path": "skills/genomics/wgs-variant-calling/tests/demo_ref.fa.fai",
+      "sha256": "54ee9a073f0ea053f0f8930a14dbf7824deccf13fe16c451c9bc63f301ba2049",
+      "reason": "Initial exporter omitted .fai; exact unchanged HEAD fixture, not this task increment."
+    }
+  ]
+}

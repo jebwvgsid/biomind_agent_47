@@ -1,0 +1,1377 @@
+[
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0038367221131920815,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3331919200718403,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016756821423768997,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005490127950906754,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.22939006425440311,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001636529341340065,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005994746461510658,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3262331886216998,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001665716990828514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006230855360627174,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.32656389195472,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001684660091996193,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007036067545413971,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3305220762267709,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016550906002521515,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006714882329106331,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3279410069808364,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000170217826962471,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006279228255152702,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.33609639946371317,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017274543642997742,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006195083260536194,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3218815689906478,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017530657351016998,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006212843582034111,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3851324887946248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017084740102291107,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006296513602137566,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.32311453856527805,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016898009926080704,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006163083016872406,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3686943678185344,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001956503838300705,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006459560245275497,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3377761859446764,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001884717494249344,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000711086206138134,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3476961413398385,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00020383112132549286,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006023189052939415,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.20574083179235458,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016344338655471802,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005412418395280838,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3612696696072817,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001631053164601326,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006062248721718788,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04017215222120285,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016034580767154694,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006142780184745789,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.039583285339176655,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015017855912446976,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005080010741949081,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04163805581629276,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014681275933980942,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005191098898649216,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.02337601501494646,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014634989202022552,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005164043977856636,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007843766361474991,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011993478983640671,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.78522002696991e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.2239259360358119,
+    "failure": "tests/test_semantic_completion.py:254: in test_live_snpeff_skill_compiles_structured_c04_predicate\n    contract = registry[capability_id]\n               ^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'genomics.snpeff_annotation.check_contig_compatibility'"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016954168677330017,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005616014823317528,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010098976083099842,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013187993317842484,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005172127857804298,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00029993150383234024,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011028535664081573,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005935328081250191,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00028511881828308105,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001222686842083931,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008625788614153862,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003013359382748604,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001251697540283203,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006101056933403015,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002888692542910576,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012904219329357147,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004729013890028,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000264754518866539,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001123286783695221,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004863375797867775,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007038936018943787,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001312829554080963,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006888126954436302,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006262048147618771,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001298505812883377,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005164472386240959,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00324295274913311,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001292480155825615,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005781771615147591,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001574312336742878,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001246938481926918,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005124462768435478,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016523273661732674,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012390315532684326,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005173180252313614,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008690034039318562,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001337788999080658,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000510229729115963,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0023926952853798866,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001283222809433937,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004991907626390457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00141061469912529,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012384355068206787,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000666390173137188,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00315939262509346,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014604628086090088,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00067899189889431,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.003305148333311081,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014899391680955887,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006857765838503838,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.003164272755384445,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014913640916347504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006811199709773064,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0030274419113993645,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014873407781124115,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005170712247490883,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0031110169366002083,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001289844512939453,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005152272060513496,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004501833580434322,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012993160635232925,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005156416445970535,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002362539991736412,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012658815830945969,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005120337009429932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004491820000112057,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014189351350069046,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005407240241765976,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0028024744242429733,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001378711313009262,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005654525011777878,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0032660504803061485,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013464782387018204,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011665653437376022,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005501849576830864,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000125102698802948,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005345558747649193,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006741577759385109,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014039315283298492,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010919850319623947,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006185872480273247,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010488182306289673,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001076357439160347,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0046574268490076065,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001189839094877243,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011154450476169586,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002156241796910763,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012138392776250839,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011020340025424957,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005196232348680496,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011933781206607819,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001223711296916008,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006422027945518494,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012264959514141083,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005575930699706078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.054463231936097145,
+    "failure": "tests/test_semantic_completion_workflow.py:679: in test_e2e_a_review_correction_new_evidence_then_single_commit\n    assert first_durable == first_before\nE   AssertionError: assert {'schema_vers...'plan-1', ...} == {'schema_vers...'plan-1', ...}\nE     \nE     Omitting 11 identical items, use -vv to show\nE     Differing items:\nE     {'task_state': {'status': 'running', 'workflow_routing_schema_version': 2, 'semantic_review_receipts': {'assessment:sh...6d4abf25cfb5e2bc250f237fe47d2140bbcfeffddec4e43675401916c9', 'policy_version': 'semantic-review-correction-v1', ...}}}} != {'task_state': {'status': 'running', 'workflow_routing_schema_version': 2}}\nE     Left contains 3 more items:\nE     {'approval_gate_v2': {'applicable': False,\nE                           'reason': 'reader_incompatible',...\nE     \nE     ...Full output truncated (4 lines hidden), use '-vv' to show"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001699887216091156,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001493869349360466,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006986204534769058,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012553762644529343,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006045037880539894,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.027968923561275005,
+    "failure": "tests/test_semantic_completion_workflow.py:878: in test_e2e_a_check_only_real_incompatibility_stays_false_and_completes\n    assert outcome[\"type\"] == \"verified\"\nE   AssertionError: assert 'assessment_pending' == 'verified'\nE     \nE     - verified\nE     + assessment_pending"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002620341256260872,
+    "failure": ""
+  }
+]

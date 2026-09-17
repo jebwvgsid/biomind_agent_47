@@ -1,0 +1,15 @@
+{
+  "candidate": "/tmp/biomind-unified-cumulative-release/candidate",
+  "python_source_identity": "1423d6287d975886e745492625ae3044b7095f03fe9804fea5a598d9b2b48ecc",
+  "source_manifest_sha256": "fa3f61b8c2c2b7059d27f30c0f756ef9b8af8d4cfc945de1e6815d402f141ed1",
+  "source_files": 905,
+  "source_unchanged_during_tests": true,
+  "all_exported_files_match_final_workspace": true,
+  "passed": 377,
+  "subtests_passed": 26,
+  "failed": 0,
+  "seconds": 120.49,
+  "reconstructed_candidate": "/tmp/biomind-unified-reconstructed-release",
+  "reconstruction_hash_match_files": 905,
+  "boundaries": "Synthetic config/provider/user and installer/inspection/target healthcheck process leaves; optional Consultant seed/preflight and memory sidechannels disabled in graph fixture. Real state, scope, validation, approval, Installer graph, receipt, registration, recovery, Commit and registered actual tiny science runner. Real scientific micro tools separately recorded. No installation/model API/full WGS."
+}

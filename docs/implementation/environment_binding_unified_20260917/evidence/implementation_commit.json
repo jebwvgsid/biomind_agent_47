@@ -1,0 +1,13 @@
+{
+  "prerequisite_commit": "078f7198e8c5c4447affefa6bfdbdf14e7de5152",
+  "implementation_commit": "2e70f28658b8aee0d7cd9451f7f353f4b4121825",
+  "dependency_preparation_commit": "d2a35c4834c15373841c5e2969281c11c4db6da7",
+  "tested_candidate": "/tmp/biomind-unified-cumulative-release/candidate",
+  "status": "Final cumulative candidate passed; exact prerequisite plus task patch reconstructed and matched all source files. Actual host controlled discovery remains blocked as separately recorded.",
+  "source_identity": "1423d6287d975886e745492625ae3044b7095f03fe9804fea5a598d9b2b48ecc",
+  "source_manifest_sha256": "fa3f61b8c2c2b7059d27f30c0f756ef9b8af8d4cfc945de1e6815d402f141ed1",
+  "standalone_head_is_tested_candidate": false,
+  "retained_prerequisite_note": "Pre-existing dirty changes remain outside these commits. Use exact exported prerequisite and task_increment.patch for tested reconstruction.",
+  "source_file_count": 905,
+  "task_increment_files": 47
+}

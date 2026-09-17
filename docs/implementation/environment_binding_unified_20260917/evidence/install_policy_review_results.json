@@ -1,0 +1,2025 @@
+{
+  "status": "PASS",
+  "passed": 79,
+  "command": "TMPDIR=/tmp/biomind-install-temproot LANGCHAIN_TRACING_V2=false LANGSMITH_TRACING=false BIOMIND_OFFLINE_RESULTS=/tmp/biomind-install-policy-final-results.json timeout 100 /public/home/liusiqi/anaconda3/envs/biomind/bin/python /tmp/biomind-install-boundary-5z83_7p3/tests/offline_managed_bootstrap.py /tmp/biomind-install-boundary-5z83_7p3 -q -s tests/test_unified_installer_boundary.py tests/test_installer_agent.py tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_installer_success_uses_direct_skill_healthcheck tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_uses_scoped_parent_result_and_existing_router tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_repeated_installation_uses_persisted_execution_receipt tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_resume_interrupt_preserves_work_order tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_prints_final_observation",
+  "candidate": "/tmp/biomind-install-boundary-5z83_7p3",
+  "scope": "Final installer review fixes only: install prohibition at mutation boundary; no prepare-installation choice after execution evidence.",
+  "source_unchanged_during_run": true,
+  "real_installation": false,
+  "real_model_api": false,
+  "credential_reads": false,
+  "assertions": [
+    "A real typed forbidden_behavior.runtime_install constraint allows readonly provided_environment, manual_done and registration_retry to verify/register; it preserves quit/reject terminal outcomes.",
+    "The same prohibition still blocks the first actual Installer entry before any installer provider/review/runner call.",
+    "A real failed installation receipt exposes no prepare_installation choice in question text or displayed options; an explicit unsupported prepare answer takes the existing consultation route with identical receipt and no repeat execution."
+  ],
+  "source_hashes": {
+    "bio_agents.py": {
+      "tested_sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9",
+      "working_sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9"
+    },
+    "tests/test_unified_installer_boundary.py": {
+      "tested_sha256": "de2681dc6a27c17da97b16d4bf559eafc88849970ce8a22e0d3e07c75a0a6966",
+      "working_sha256": "de2681dc6a27c17da97b16d4bf559eafc88849970ce8a22e0d3e07c75a0a6966"
+    },
+    "agent_core/workflow/early_nodes.py": {
+      "tested_sha256": "1e9042eee7e12536052155944cb35819fdda43834ba85b10433ec23cf040cde8",
+      "working_sha256": "1e9042eee7e12536052155944cb35819fdda43834ba85b10433ec23cf040cde8"
+    },
+    "agent_core/workflow/runtime_evidence_recovery.py": {
+      "tested_sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620",
+      "working_sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620"
+    }
+  },
+  "method_hashes": {
+    "_install_subagent_impl": {
+      "tested_sha256": "1f67dc2e83fce8356ef6eee6919cb2df27dfcfa46d7ab891d6faf417a57edd6d",
+      "working_sha256": "1f67dc2e83fce8356ef6eee6919cb2df27dfcfa46d7ab891d6faf417a57edd6d"
+    },
+    "_publish_installation_question": {
+      "tested_sha256": "837b89d8592a5609fe22852c6d76ad81d6f1ed833e218284f42af39da2b6396c",
+      "working_sha256": "837b89d8592a5609fe22852c6d76ad81d6f1ed833e218284f42af39da2b6396c"
+    },
+    "_ask_installation_resolution": {
+      "tested_sha256": "b9edd924b770feeab9e610b4cf2e6cb0fbf0dcac61bda71be07ac72dba7349d8",
+      "working_sha256": "b9edd924b770feeab9e610b4cf2e6cb0fbf0dcac61bda71be07ac72dba7349d8"
+    }
+  },
+  "results": [
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_missing_scope_executes_nothing",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_missing_scope_executes_nothing",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.058216349221765995,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_missing_scope_executes_nothing",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.006943506188690662,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_missing_scope_executes_nothing",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00017156731337308884,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_conda_run_requires_explicit_review_and_records_exact_scope",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_conda_run_requires_explicit_review_and_records_exact_scope",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009639457799494267,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_conda_run_requires_explicit_review_and_records_exact_scope",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.007984058931469917,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_conda_run_requires_explicit_review_and_records_exact_scope",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001443326473236084,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[n-rejected]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[n-rejected]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009911991655826569,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[n-rejected]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.006819756701588631,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[n-rejected]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013677775859832764,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[q-cancelled]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[q-cancelled]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009500425308942795,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[q-cancelled]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.007105211727321148,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_user_decision_terminates_and_same_request_does_not_repeat[q-cancelled]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013764481991529465,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_matching_approval_is_reused_but_changed_target_requires_review",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_matching_approval_is_reused_but_changed_target_requires_review",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009226287715137005,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_matching_approval_is_reused_but_changed_target_requires_review",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.011785479262471199,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_matching_approval_is_reused_but_changed_target_requires_review",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00012869201600551605,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[sources-value0]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[sources-value0]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009347611106932163,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[sources-value0]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.008724108338356018,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[sources-value0]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001454334706068039,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[version_requirements-value1]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[version_requirements-value1]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009388826787471771,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[version_requirements-value1]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.008669122122228146,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[version_requirements-value1]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014687422662973404,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[impact-shared environment]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[impact-shared environment]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009379883296787739,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[impact-shared environment]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.008667025715112686,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[impact-shared environment]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013975147157907486,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[verification_commands-value3]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[verification_commands-value3]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009308621287345886,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[verification_commands-value3]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00876200757920742,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_scope_drift_invalidates_approval[verification_commands-value3]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001390194520354271,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_completed_install_is_not_reexecuted_for_registration_retry",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_completed_install_is_not_reexecuted_for_registration_retry",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009236092679202557,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_completed_install_is_not_reexecuted_for_registration_retry",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.007544424384832382,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_completed_install_is_not_reexecuted_for_registration_retry",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001362031325697899,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_register_tag_never_writes_or_claims_availability",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_register_tag_never_writes_or_claims_availability",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009231986477971077,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_register_tag_never_writes_or_claims_availability",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0033908430486917496,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_register_tag_never_writes_or_claims_availability",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00012975279241800308,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_registration_target_must_match_work_order",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_registration_target_must_match_work_order",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009202726185321808,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_registration_target_must_match_work_order",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0031427359208464622,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_registration_target_must_match_work_order",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00012635160237550735,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_execution_failure_retains_numeric_result_and_no_later_commands",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_execution_failure_retains_numeric_result_and_no_later_commands",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00922950729727745,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_execution_failure_retains_numeric_result_and_no_later_commands",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.005069602280855179,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_execution_failure_retains_numeric_result_and_no_later_commands",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013049039989709854,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Permission denied-permission]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Permission denied-permission]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00022948160767555237,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Permission denied-permission]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 9.648501873016357e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Permission denied-permission]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 8.560996502637863e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Could not resolve host-network]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Could not resolve host-network]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00021388940513134003,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Could not resolve host-network]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00012327730655670166,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Could not resolve host-network]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 9.03978943824768e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[LibMambaUnsatisfiableError: incompatible constraints-solver]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[LibMambaUnsatisfiableError: incompatible constraints-solver]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00033788569271564484,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[LibMambaUnsatisfiableError: incompatible constraints-solver]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00010713841766119003,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[LibMambaUnsatisfiableError: incompatible constraints-solver]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 8.434243500232697e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Failed building wheel for test-only-build]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Failed building wheel for test-only-build]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00021035224199295044,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Failed building wheel for test-only-build]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00010334886610507965,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[Failed building wheel for test-only-build]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 8.624233305454254e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[unexpected exit 7-unknown]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[unexpected exit 7-unknown]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0001997901126742363,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[unexpected exit 7-unknown]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 9.748898446559906e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failure_category_requires_recognized_evidence[unexpected exit 7-unknown]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 8.714757859706879e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_prefix-/tmp/old-target]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_prefix-/tmp/old-target]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005525173619389534,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_prefix-/tmp/old-target]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0003139618784189224,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_prefix-/tmp/old-target]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010143499821424484,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_env-old-default]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_env-old-default]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005630543455481529,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_env-old-default]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0002766065299510956,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[target_env-old-default]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010259728878736496,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[attempt_id-old-attempt]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[attempt_id-old-attempt]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0015360955148935318,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[attempt_id-old-attempt]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0002970891073346138,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[attempt_id-old-attempt]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010806135833263397,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[request_id-old-request]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[request_id-old-request]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005808426067233086,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[request_id-old-request]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0002710893750190735,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[request_id-old-request]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010525248944759369,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[selected_skills-value4]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[selected_skills-value4]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.000582672655582428,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[selected_skills-value4]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0002815602347254753,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[selected_skills-value4]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001024371013045311,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[capabilities-value5]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[capabilities-value5]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005767559632658958,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[capabilities-value5]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00028152670711278915,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[capabilities-value5]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010393187403678894,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[generation_source_scope-value6]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[generation_source_scope-value6]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005632732063531876,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[generation_source_scope-value6]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00027314387261867523,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_rejects_wrong_request_identity[generation_source_scope-value6]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010671466588973999,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_ignores_old_ok_and_scientific_step_status",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_ignores_old_ok_and_scientific_step_status",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0004490166902542114,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_ignores_old_ok_and_scientific_step_status",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0005400581285357475,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_ignores_old_ok_and_scientific_step_status",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 9.609293192625046e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_capability]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_capability]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005173198878765106,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_capability]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00035079475492239,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_capability]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 9.89716500043869e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_skill]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_skill]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.000521928071975708,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_skill]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0003345021978020668,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[missing_skill]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010422896593809128,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[registry_failure]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[registry_failure]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005391240119934082,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[registry_failure]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0003514382988214493,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[registry_failure]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00010016653686761856,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[unknown_check]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[unknown_check]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0005163168534636497,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[unknown_check]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0003460980951786041,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_requires_all_current_target_stages[unknown_check]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001004636287689209,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_accepts_only_complete_target_receipt",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_accepts_only_complete_target_receipt",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00047078076750040054,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_accepts_only_complete_target_receipt",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00034740567207336426,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_typed_classifier_accepts_only_complete_target_receipt",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 9.655579924583435e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_strict_source_contract_cannot_be_bypassed_by_approval",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_strict_source_contract_cannot_be_bypassed_by_approval",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009223239496350288,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_strict_source_contract_cannot_be_bypassed_by_approval",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.004605536349117756,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_strict_source_contract_cannot_be_bypassed_by_approval",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013069994747638702,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_model_text_cannot_expand_frozen_source_contract",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_model_text_cannot_expand_frozen_source_contract",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009286144748330116,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_model_text_cannot_expand_frozen_source_contract",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0032754167914390564,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_model_text_cannot_expand_frozen_source_contract",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013208668678998947,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_rechecks_target_registers_and_preserves_science",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_rechecks_target_registers_and_preserves_science",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.012999887578189373,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_rechecks_target_registers_and_preserves_science",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.05219613201916218,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_rechecks_target_registers_and_preserves_science",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001360299065709114,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_cannot_reuse_old_default_success",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_cannot_reuse_old_default_success",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009033785201609135,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_cannot_reuse_old_default_success",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.028240084648132324,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_completion_cannot_reuse_old_default_success",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00012620724737644196,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_undeclared_tool_without_probing_or_installing",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_undeclared_tool_without_probing_or_installing",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009025939740240574,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_undeclared_tool_without_probing_or_installing",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.017466132529079914,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_undeclared_tool_without_probing_or_installing",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013172533363103867,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_approved_prefix_mismatch",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_approved_prefix_mismatch",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.008837376721203327,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_approved_prefix_mismatch",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.017395286820828915,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_approved_prefix_mismatch",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00012862961739301682,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[/tmp/external-environment]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[/tmp/external-environment]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009350416250526905,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[/tmp/external-environment]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.017414993606507778,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[/tmp/external-environment]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001401994377374649,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[base]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[base]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.008996592834591866,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[base]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.017827142030000687,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_rejects_unsupported_environment_before_verification[base]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013727974146604538,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_prepare_installation_cannot_be_inferred_without_durable_user_event",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_prepare_installation_cannot_be_inferred_without_durable_user_event",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.008798029273748398,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_prepare_installation_cannot_be_inferred_without_durable_user_event",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.017866280861198902,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_prepare_installation_cannot_be_inferred_without_durable_user_event",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00013342872262001038,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[provided_environment-available]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[provided_environment-available]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.008996615186333656,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[provided_environment-available]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.040880756452679634,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[provided_environment-available]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001547178253531456,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[manual_done-available]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[manual_done-available]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009068844839930534,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[manual_done-available]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.038180574774742126,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[manual_done-available]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015291757881641388,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[registration_retry-available]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[registration_retry-available]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009898437187075615,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[registration_retry-available]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.03809662535786629,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[registration_retry-available]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016419123858213425,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[quit-cancelled]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[quit-cancelled]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009153843857347965,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[quit-cancelled]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.018772157840430737,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[quit-cancelled]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00015156343579292297,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[reject-rejected]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[reject-rejected]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.010051118209958076,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[reject-rejected]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.019414027221500874,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_preserves_readonly_resolution_and_stop[reject-rejected]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001797247678041458,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_still_blocks_required_installation",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_still_blocks_required_installation",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.018380905501544476,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_still_blocks_required_installation",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.019663848914206028,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_forbidden_policy_still_blocks_required_installation",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014710426330566406,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failed_installation_work_order_does_not_offer_or_accept_another_prepare_event",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failed_installation_work_order_does_not_offer_or_accept_another_prepare_event",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.018174019642174244,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failed_installation_work_order_does_not_offer_or_accept_another_prepare_event",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.10539404768496752,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_failed_installation_work_order_does_not_offer_or_accept_another_prepare_event",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00020714383572340012,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_wait_requires_explicit_completion_event",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_wait_requires_explicit_completion_event",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009219933301210403,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_wait_requires_explicit_completion_event",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.09721110668033361,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_manual_wait_requires_explicit_completion_event",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001734187826514244,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_done-available]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_done-available]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00923189613968134,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_done-available]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.13222395535558462,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_done-available]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002014515921473503,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[registration_retry-available]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[registration_retry-available]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009197826497256756,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[registration_retry-available]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.13106160424649715,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[registration_retry-available]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00019231997430324554,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[quit-cancelled]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[quit-cancelled]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009345793165266514,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[quit-cancelled]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.10873795580118895,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[quit-cancelled]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00020876433700323105,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[reject-rejected]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[reject-rejected]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00920652411878109,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[reject-rejected]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.10958534106612206,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[reject-rejected]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001918906345963478,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_wait-manual_wait]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_wait-manual_wait]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009173998609185219,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_wait-manual_wait]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.1204558527097106,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[manual_wait-manual_wait]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00017995946109294891,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[answer5-available]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[answer5-available]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009212351404130459,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[answer5-available]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.13287582248449326,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_ask_user_event_reenters_exact_installation[answer5-available]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00020549073815345764,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[I installed something]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[I installed something]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.012120475992560387,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[I installed something]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.07447168417274952,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[I installed something]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002011312171816826,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[manual_done please]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[manual_done please]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0093558169901371,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[manual_done please]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.07357894722372293,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[manual_done please]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001818481832742691,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[{\"action\":\"manual_done\",\"other\":true}]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[{\"action\":\"manual_done\",\"other\":true}]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009219784289598465,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[{\"action\":\"manual_done\",\"other\":true}]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.07366270385682583,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_free_text_does_not_claim_manual_completion[{\"action\":\"manual_done\",\"other\":true}]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00018177740275859833,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_question_cannot_resolve_different_request",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_question_cannot_resolve_different_request",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009034013375639915,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_question_cannot_resolve_different_request",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.04131472855806351,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_installation_question_cannot_resolve_different_request",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016742851585149765,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_old_installation_receipt_cannot_authorize_later_scientific_attempt",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_old_installation_receipt_cannot_authorize_later_scientific_attempt",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009536038152873516,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_old_installation_receipt_cannot_authorize_later_scientific_attempt",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.06564662232995033,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_old_installation_receipt_cannot_authorize_later_scientific_attempt",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00017317850142717361,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_production_graph_interrupt_resumes_manual_installation_at_original_step",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_production_graph_interrupt_resumes_manual_installation_at_original_step",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009294562041759491,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_production_graph_interrupt_resumes_manual_installation_at_original_step",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.15661740396171808,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_production_graph_interrupt_resumes_manual_installation_at_original_step",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00017714686691761017,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_registration_failure_retries_only_incomplete_registry",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_registration_failure_retries_only_incomplete_registry",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.010099428705871105,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_registration_failure_retries_only_incomplete_registry",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.07853249460458755,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_registration_failure_retries_only_incomplete_registry",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00014515593647956848,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_automatic_install_uses_real_graph_then_verifies_and_resumes",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_automatic_install_uses_real_graph_then_verifies_and_resumes",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.01828837487846613,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_automatic_install_uses_real_graph_then_verifies_and_resumes",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.10831387434154749,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_parent_automatic_install_uses_real_graph_then_verifies_and_resumes",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00018407683819532394,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_real_structured_target_verifier_keeps_unrequired_unknown_separate",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_real_structured_target_verifier_keeps_unrequired_unknown_separate",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.009073445573449135,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_real_structured_target_verifier_keeps_unrequired_unknown_separate",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0067076729610562325,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_real_structured_target_verifier_keeps_unrequired_unknown_separate",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.000146571546792984,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[y-available]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[y-available]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.01840341091156006,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[y-available]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.27670344337821007,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[y-available]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002201627939939499,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[n-rejected]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[n-rejected]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.019379218108952045,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[n-rejected]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.25814288854599,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[n-rejected]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002139052376151085,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[q-cancelled]",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[q-cancelled]",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.018619355745613575,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[q-cancelled]",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.2577722119167447,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_unified_installer_boundary.py::test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval[q-cancelled]",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00020937621593475342,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_has_generate_turn_and_repeated_observation_guards",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_has_generate_turn_and_repeated_observation_guards",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00010472536087036133,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_has_generate_turn_and_repeated_observation_guards",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00031507574021816254,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_has_generate_turn_and_repeated_observation_guards",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 8.107908070087433e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_preserves_code_review_feedback_on_reject",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_preserves_code_review_feedback_on_reject",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 7.972307503223419e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_preserves_code_review_feedback_on_reject",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0002869497984647751,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_preserves_code_review_feedback_on_reject",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 7.753726094961166e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_converts_llm_provider_rejection_to_failure_state",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_converts_llm_provider_rejection_to_failure_state",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 7.650814950466156e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_converts_llm_provider_rejection_to_failure_state",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00025088153779506683,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_converts_llm_provider_rejection_to_failure_state",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 7.811468094587326e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_enforces_strict_skill_runtime_contracts",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_enforces_strict_skill_runtime_contracts",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 7.604341953992844e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_enforces_strict_skill_runtime_contracts",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0002776673063635826,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_enforces_strict_skill_runtime_contracts",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 7.534585893154144e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_runs_bash_inside_source_root",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_runs_bash_inside_source_root",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 8.350983262062073e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_runs_bash_inside_source_root",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00026031769812107086,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_runs_bash_inside_source_root",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 7.689837366342545e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_registration_is_parent_owned_after_target_verification",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_registration_is_parent_owned_after_target_verification",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00024371035397052765,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_registration_is_parent_owned_after_target_verification",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.00031848344951868057,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_registration_is_parent_owned_after_target_verification",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 7.849745452404022e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_uses_step_local_context_after_initial_prompt",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_uses_step_local_context_after_initial_prompt",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 8.714757859706879e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_uses_step_local_context_after_initial_prompt",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0002783350646495819,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::test_installer_uses_step_local_context_after_initial_prompt",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 8.190516382455826e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::InstallerStepContextTests::test_step_context_keeps_work_order_and_latest_evidence",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::InstallerStepContextTests::test_step_context_keeps_work_order_and_latest_evidence",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00027961190789937973,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::InstallerStepContextTests::test_step_context_keeps_work_order_and_latest_evidence",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.0003210855647921562,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_installer_agent.py::InstallerStepContextTests::test_step_context_keeps_work_order_and_latest_evidence",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00011244416236877441,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_installer_success_uses_direct_skill_healthcheck",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_installer_success_uses_direct_skill_healthcheck",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0002510854974389076,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_installer_success_uses_direct_skill_healthcheck",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.02086258213967085,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_installer_success_uses_direct_skill_healthcheck",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 9.652785956859589e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_uses_scoped_parent_result_and_existing_router",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_uses_scoped_parent_result_and_existing_router",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00017885956913232803,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_uses_scoped_parent_result_and_existing_router",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.026706701144576073,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_uses_scoped_parent_result_and_existing_router",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.00016003474593162537,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_repeated_installation_uses_persisted_execution_receipt",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_repeated_installation_uses_persisted_execution_receipt",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.0003828844055533409,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_repeated_installation_uses_persisted_execution_receipt",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.020928370766341686,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_repeated_installation_uses_persisted_execution_receipt",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0001064026728272438,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_resume_interrupt_preserves_work_order",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_resume_interrupt_preserves_work_order",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00019194837659597397,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_resume_interrupt_preserves_work_order",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.020841319113969803,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_resume_interrupt_preserves_work_order",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 9.945221245288849e-05,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_prints_final_observation",
+      "phase": "start"
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_prints_final_observation",
+      "phase": "setup",
+      "outcome": "passed",
+      "duration": 0.00020394101738929749,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_prints_final_observation",
+      "phase": "call",
+      "outcome": "passed",
+      "duration": 0.020440994761884212,
+      "failure": ""
+    },
+    {
+      "nodeid": "tests/test_bio_agents_memory.py::BioAgentMemoryTests::test_install_subagent_prints_final_observation",
+      "phase": "teardown",
+      "outcome": "passed",
+      "duration": 0.0002483893185853958,
+      "failure": ""
+    }
+  ]
+}

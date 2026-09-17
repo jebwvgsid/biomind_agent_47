@@ -1,0 +1,12 @@
+{
+  "candidate": "/tmp/biomind-unified-cumulative-complete/candidate",
+  "source_files": 905,
+  "source_manifest_sha256": "b1d0e71306db2ee5dd4079cb6085a6bcabf0b983757a73dcdb5638e2152371b5",
+  "python_source_identity": "a057fd64da80bf5c73d75059807d0fa86dfa40cd25964ea6e1148849c52c18ba",
+  "source_unchanged_during_tests": true,
+  "passed": 370,
+  "subtests_passed": 26,
+  "failed": 0,
+  "seconds": 122.24,
+  "status": "Passed intermediate follow-up checkpoint, superseded by installation-policy boundary fix and final run."
+}

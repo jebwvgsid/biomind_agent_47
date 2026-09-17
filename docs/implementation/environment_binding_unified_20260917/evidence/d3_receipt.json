@@ -1,0 +1,32 @@
+{
+  "new_tests_passed": 20,
+  "new_failures": [],
+  "source_files": {
+    "agent_core/genomics_reference_bundle.py": {
+      "tested_sha256": "602c4f46f875fa776bf71893b413a4ab7613f7c6f28312de4c8004103471c56d",
+      "workspace_sha256": "602c4f46f875fa776bf71893b413a4ab7613f7c6f28312de4c8004103471c56d"
+    },
+    "agent_core/semantic_completion.py": {
+      "tested_sha256": "7943675b991094fd1fded34a07be8ab5c8e4f783eb4ed33b0c0161ecb768a27d",
+      "workspace_sha256": "7943675b991094fd1fded34a07be8ab5c8e4f783eb4ed33b0c0161ecb768a27d"
+    },
+    "tests/test_unified_reference_bundle.py": {
+      "tested_sha256": "b5e549d22ddcd0d2155bb63c43ce8ac260d85d68da73c09f8b91a9db889864cb",
+      "workspace_sha256": "b5e549d22ddcd0d2155bb63c43ce8ac260d85d68da73c09f8b91a9db889864cb"
+    },
+    "skills/genomics/wgs-short-read-mapping/SKILL.md": {
+      "tested_sha256": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+      "workspace_sha256": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa"
+    }
+  },
+  "tested_files_match_workspace": true,
+  "legacy_failure_set_unchanged": true,
+  "legacy_failures": [
+    "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit"
+  ],
+  "command": "env -i PATH=/usr/bin:/bin TMPDIR=/tmp/biomind-r1-tXsGVj/tmp BIOMIND_DISABLE_DOTENV=1 BIOMIND_OFFLINE_RESULTS=/tmp/biomind-r1-tXsGVj/d3-verified-results.json /public/home/liusiqi/anaconda3/envs/biomind/bin/python -I /tmp/biomind-r1-tXsGVj/candidate/tests/offline_managed_bootstrap.py /tmp/biomind-r1-tXsGVj/candidate -q tests/test_unified_reference_bundle.py --tb=short",
+  "micro_receipt": "d3_micro_receipt.json",
+  "scope": "D3 local checkpoint plus latest mapping Skill; root must run cumulative integration candidate"
+}

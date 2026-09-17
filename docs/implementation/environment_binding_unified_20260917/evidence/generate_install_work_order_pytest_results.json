@@ -1,0 +1,77 @@
+[
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[whole_json]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[whole_json]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0021597547456622124,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[whole_json]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 4.114565039984882,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[whole_json]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00034768134355545044,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[prose_embedded]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[prose_embedded]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006917547434568405,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[prose_embedded]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.3961468441411853,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[prose_embedded]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019454862922430038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[extra_execution_field]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[extra_execution_field]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006422083824872971,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[extra_execution_field]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.4775392189621925,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_real_generate_installation_work_order_is_non_executing[extra_execution_field]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002032015472650528,
+    "failure": ""
+  }
+]

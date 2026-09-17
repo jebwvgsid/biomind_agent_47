@@ -1,0 +1,238 @@
+{
+  "test_file": "tests/test_unified_dependency_preparation.py",
+  "result": "5 passed in 23.80s",
+  "source_unchanged": true,
+  "source_identity": "0d830c6cca8caa8bf3a9b5a93242744aa038d85114a403074f538c30bfd38c1a",
+  "before_expected_regression": {
+    "results": "/tmp/biomind-dependency-ya50d_mq/before_results.json",
+    "artifacts": "/tmp/biomind-dependency-ya50d_mq/before_artifacts",
+    "reason": "Required UNKNOWN/UNAVAILABLE stopped without actual AskUser interrupt; no science provider, approval, execution, Commit"
+  },
+  "scenarios": [
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/dependency_entry_before_after/artifacts/dependency-preparation-unavailable-choice.json",
+      "initial_availability": "UNAVAILABLE",
+      "installation": false,
+      "provided": false,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 0
+      },
+      "probes": 1,
+      "science_approvals": 0,
+      "science_execution": 0,
+      "installer_models": 0,
+      "installer_approvals": 0,
+      "installer_executions": 0,
+      "artifact_sha256": "9d4db410c4253fc46e8281a8ceacca00aa646144a2e26c27171db5fd17f9c4ff"
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/dependency_entry_before_after/artifacts/dependency-preparation-unavailable-install.json",
+      "initial_availability": "UNAVAILABLE",
+      "installation": true,
+      "provided": true,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "probes": 2,
+      "science_approvals": 1,
+      "science_execution": 1,
+      "installer_models": 1,
+      "installer_approvals": 1,
+      "installer_executions": 1,
+      "subject_unchanged": true,
+      "epoch_before": 0,
+      "epoch_after": 1,
+      "old_episode": "runtime-episode:sha256:e1238b862bdb0e9ef66beae0f608dcaa64ba3ea24e9ff4b26aab9ee4f5672b24",
+      "new_episode": "runtime-episode:sha256:5268f7b2e19edadce665c758bd2e136bf5d3bfa9c26b15a4dda3f9ef8c74c664",
+      "commits": 1,
+      "old_evidence_immutable": true,
+      "supersedes": {
+        "runtime-evidence:sha256:9c692be96d9a8adb4bcff8ed41e19c2852530492c404145dd825692eaa9c6f94": [
+          "runtime-evidence:sha256:82c548f383753dbb4e24f0d044993036c9a6970a69bbf87a8d33fc6ffdf031ac"
+        ]
+      },
+      "receipt_status": "available",
+      "registration": {
+        "skill_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-dependency-ya50d_mq/tmp/biomind-plan-local-graph-wc6vl2l2/envs/offline_env"
+            }
+          }
+        },
+        "software_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-dependency-ya50d_mq/tmp/biomind-plan-local-graph-wc6vl2l2/envs/offline_env"
+            }
+          }
+        }
+      },
+      "terminal_projection": {
+        "runtime_diagnostic": {},
+        "managed_stop": {},
+        "plan_status": "completed"
+      },
+      "target_verification_prepared_sequence": [
+        false,
+        false,
+        true
+      ],
+      "artifact_sha256": "76c0bcdee8a51fe0bfac43f57db8c5731cc6a9d1fba536d753f5eacf16733e0c"
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/dependency_entry_before_after/artifacts/dependency-preparation-unavailable-provided.json",
+      "initial_availability": "UNAVAILABLE",
+      "installation": false,
+      "provided": true,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "probes": 2,
+      "science_approvals": 1,
+      "science_execution": 1,
+      "installer_models": 0,
+      "installer_approvals": 0,
+      "installer_executions": 0,
+      "subject_unchanged": true,
+      "epoch_before": 0,
+      "epoch_after": 1,
+      "old_episode": "runtime-episode:sha256:a54b69ec226af5c6b81052508b527c79f620d1f7dd2ade648b2225c15aecf3d3",
+      "new_episode": "runtime-episode:sha256:c81b99bc8ea72269e5714ccf65f2bf28c674de482db6ec721a6d012a257d9f2c",
+      "commits": 1,
+      "old_evidence_immutable": true,
+      "supersedes": {
+        "runtime-evidence:sha256:76013d62385d81621a21b388893a1d9f6c1012857b62bac925f5e980c90dc29e": [
+          "runtime-evidence:sha256:57b596db14e01938eb9635b47be12ff9e5316d309931b1e1a60e1d2202b8f5be"
+        ]
+      },
+      "receipt_status": "available",
+      "registration": {
+        "skill_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-dependency-ya50d_mq/tmp/biomind-plan-local-graph-c6sr68w1/envs/offline_env"
+            }
+          }
+        },
+        "software_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-dependency-ya50d_mq/tmp/biomind-plan-local-graph-c6sr68w1/envs/offline_env"
+            }
+          }
+        }
+      },
+      "terminal_projection": {
+        "runtime_diagnostic": {},
+        "managed_stop": {},
+        "plan_status": "completed"
+      },
+      "target_verification_prepared_sequence": [
+        true
+      ],
+      "artifact_sha256": "58826de3f683cd2207888b6f2fbe4488a18b0589a07a7537db5bd7a04367fc79"
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/dependency_entry_before_after/artifacts/dependency-preparation-unknown-choice.json",
+      "initial_availability": "UNKNOWN",
+      "installation": false,
+      "provided": false,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 0
+      },
+      "probes": 1,
+      "science_approvals": 0,
+      "science_execution": 0,
+      "installer_models": 0,
+      "installer_approvals": 0,
+      "installer_executions": 0,
+      "artifact_sha256": "0df47282ff8371c90757d7bb4dfb31f0aa2c3cdf4783fa85da7d51f8c0a74215"
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/dependency_entry_before_after/artifacts/dependency-preparation-unknown-provided.json",
+      "initial_availability": "UNKNOWN",
+      "installation": false,
+      "provided": true,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "probes": 2,
+      "science_approvals": 1,
+      "science_execution": 1,
+      "installer_models": 0,
+      "installer_approvals": 0,
+      "installer_executions": 0,
+      "subject_unchanged": true,
+      "epoch_before": 0,
+      "epoch_after": 1,
+      "old_episode": "runtime-episode:sha256:053333ffaddfa4af65311628645dd7cfe5e8ff423beb3ea2e850c53862852399",
+      "new_episode": "runtime-episode:sha256:8360d44a33fed552a57207f405a9402a9d9e6b85dad4305322deeb99327c296f",
+      "commits": 1,
+      "old_evidence_immutable": true,
+      "supersedes": {
+        "runtime-evidence:sha256:e89ec823212e723225096e87a56bbba1fcbc5525290edc2cc7ac0925741f154d": [
+          "runtime-evidence:sha256:fad8cfcc2aa45c494b7923d81998cf670ff14235ddd05e1f758ba5e14e3e3620"
+        ]
+      },
+      "receipt_status": "available",
+      "registration": {
+        "skill_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-dependency-ya50d_mq/tmp/biomind-plan-local-graph-q1mrfrx0/envs/offline_env"
+            }
+          }
+        },
+        "software_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-dependency-ya50d_mq/tmp/biomind-plan-local-graph-q1mrfrx0/envs/offline_env"
+            }
+          }
+        }
+      },
+      "terminal_projection": {
+        "runtime_diagnostic": {},
+        "managed_stop": {},
+        "plan_status": "completed"
+      },
+      "target_verification_prepared_sequence": [
+        true
+      ],
+      "artifact_sha256": "2ecb4c4552d91b9142e1dd089b2236aa741fbe08c688b8ae5061614a9bc6ef03"
+    }
+  ],
+  "external_evidence": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/dependency_entry_before_after",
+  "test_sha256": "c57fdd16df56c343ea6815a1f9b4d01708b48e6ce014ff8f2e983ef48260fd0d",
+  "boundaries": "Synthetic model/user/probe process/exact target healthcheck/installation runner; optional Consultant seed/preflight and memory sidechannels disabled. Real Installer graph, current state/scope/approval/registration/evidence/recovery/Commit; actual allowed tiny science runner.",
+  "historical_checkpoint_only": true
+}

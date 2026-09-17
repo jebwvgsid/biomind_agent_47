@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_final_skill_actual_request_root_closure_and_on_demand_resources",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_final_skill_actual_request_root_closure_and_on_demand_resources",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.019407004117965698,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_final_skill_actual_request_root_closure_and_on_demand_resources",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 8.029512300156057,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_skill_requests.py::test_final_skill_actual_request_root_closure_and_on_demand_resources",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000490277074277401,
+    "failure": ""
+  }
+]

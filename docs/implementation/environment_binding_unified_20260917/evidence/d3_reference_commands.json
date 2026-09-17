@@ -1,0 +1,36 @@
+[
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/samtools",
+      "faidx",
+      "/tmp/biomind-d3-micro/bundle/reference.fa"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/bwa",
+      "index",
+      "/tmp/biomind-d3-micro/bundle/reference.fa"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "[bwa_index] Pack FASTA... 0.00 sec\n[bwa_index] Construct BWT for the packed sequence...\n[bwa_index] 0.00 seconds elapse.\n[bwa_index] Update BWT... 0.00 sec\n[bwa_index] Pack forward-only FASTA... 0.00 sec\n[bwa_index] Construct SA from BWT and Occ... 0.00 sec\n[main] Version: 0.7.19-r1273\n[main] CMD: /public/home/liusiqi/anaconda3/envs/bio_wgs/bin/bwa index /tmp/biomind-d3-micro/bundle/reference.fa\n[main] Real time: 0.005 sec; CPU: 0.002 sec\n"
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+      "-Xmx256m",
+      "-jar",
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/share/picard-2.20.4-0/picard.jar",
+      "CreateSequenceDictionary",
+      "R=/tmp/biomind-d3-micro/bundle/reference.fa",
+      "O=/tmp/biomind-d3-micro/bundle/reference.dict"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "INFO\t2026-09-17 18:51:33\tCreateSequenceDictionary\t\n\n********** NOTE: Picard's command line syntax is changing.\n**********\n********** For more information, please see:\n********** https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)\n**********\n********** The command line looks like this in the new syntax:\n**********\n**********    CreateSequenceDictionary -R /tmp/biomind-d3-micro/bundle/reference.fa -O /tmp/biomind-d3-micro/bundle/reference.dict\n**********\n\n\n18:51:35.128 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/public/home/liusiqi/anaconda3/envs/bio_wgs/share/picard-2.20.4-0/picard.jar!/com/intel/gkl/native/libgkl_compression.so\n[Thu Sep 17 18:51:35 CST 2026] CreateSequenceDictionary OUTPUT=/tmp/biomind-d3-micro/bundle/reference.dict REFERENCE=/tmp/biomind-d3-micro/bundle/reference.fa    TRUNCATE_NAMES_AT_WHITESPACE=true NUM_SEQUENCES=2147483647 VERBOSITY=INFO QUIET=false VALIDATION_STRINGENCY=STRICT COMPRESSION_LEVEL=5 MAX_RECORDS_IN_RAM=500000 CREATE_INDEX=false CREATE_MD5_FILE=false GA4GH_CLIENT_SECRETS=client_secrets.json USE_JDK_DEFLATER=false USE_JDK_INFLATER=false\n[Thu Sep 17 18:51:35 CST 2026] Executing as liusiqi@ln02 on Linux 5.14.0-284.11.1.el9_2.x86_64 amd64; OpenJDK 64-Bit Server VM 11.0.1+13-LTS; Deflater: Intel; Inflater: Intel; Provider GCS is not available; Picard version: 2.20.4-SNAPSHOT\n[Thu Sep 17 18:51:35 CST 2026] picard.sam.CreateSequenceDictionary done. Elapsed time: 0.00 minutes.\nRuntime.totalMemory()=268435456\n"
+  }
+]

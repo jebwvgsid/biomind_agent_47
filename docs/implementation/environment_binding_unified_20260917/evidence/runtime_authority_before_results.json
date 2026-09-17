@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_install]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_install]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.004570418037474155,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_install]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11451634299010038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_install]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001926599070429802,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_recovery]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_recovery]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000643143430352211,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_recovery]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10264738462865353,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_review_runtime_scope.py::test_stale_authority_retires_new_failure[stale_recovery]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001971302554011345,
+    "failure": ""
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "candidate": "/tmp/biomind-unified-cumulative-final/candidate",
+  "python_source_identity": "0642a281d1b340ee429c3ad34f502086f928f4f25b796ad0e2ad3ecd25be3c72",
+  "source_manifest_sha256": "81ef1f5a6f7e4a71a1c6290375649b6733acf09a10213682d0b1a6b77aac361d",
+  "source_files": 903,
+  "source_unchanged_during_tests": true,
+  "all_exported_files_match_final_workspace": true,
+  "passed": 346,
+  "subtests_passed": 26,
+  "failed": 0,
+  "seconds": 104.9,
+  "reconstructed_candidate": "/tmp/biomind-unified-reconstructed-final",
+  "reconstruction_hash_match_files": 903,
+  "boundaries": "Synthetic config/provider/user and installer/inspection process leaves; real state, validation, approval, receipt, registration, recovery, Commit and registered tiny runner. Real scientific micro tools separately recorded. No installation/model API/full WGS."
+}

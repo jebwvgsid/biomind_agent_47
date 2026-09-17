@@ -1,0 +1,365 @@
+{
+  "head_before": "078f7198e8c5c4447affefa6bfdbdf14e7de5152",
+  "files": [
+    {
+      "path": "agent_core/action_runtime.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "a2f24c8a780f481e7ea8cf14b00b3d690e54c08f",
+      "staged_sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d",
+      "working_sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/cli_lifecycle.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "690a3b7a3ce516289b5e2973d85bd00e6de42cc6",
+      "staged_sha256": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+      "working_sha256": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/genomics_reference_bundle.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "14f9c9edb4a185ed72ea7171d4370890b45c9d15",
+      "staged_sha256": "602c4f46f875fa776bf71893b413a4ab7613f7c6f28312de4c8004103471c56d",
+      "working_sha256": "602c4f46f875fa776bf71893b413a4ab7613f7c6f28312de4c8004103471c56d",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/installer.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "d39c6b606d1d98961576744fad44523b435a2d5f",
+      "staged_sha256": "34529a85c94d9066834b4b84e43bb0fb300202d22d1e6d5bbf6d2018e9f9770f",
+      "working_sha256": "34529a85c94d9066834b4b84e43bb0fb300202d22d1e6d5bbf6d2018e9f9770f",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/node_context.py",
+      "partition": "task_only_three_way",
+      "staged_git_blob": "e80b8064c61a2e21a2f51d8c25f5cb7102fdc8ad",
+      "staged_sha256": "2dd01199ccfae6af8308c7bdce59b111bbd8aed37582f9d265a467a48ad481ce",
+      "working_sha256": "b5863c22cd64c5b2f56a03864d478810e1e3928fa31b645e46032e8c593d3d79",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "agent_core/plan_bindings.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "9c7bfdde3d5955aee3118ca28277d0c2032f6585",
+      "staged_sha256": "6f4348a4c08577ea19d30f3a9d6c2ccdb2429a58512d623e447f87b4069536f6",
+      "working_sha256": "6f4348a4c08577ea19d30f3a9d6c2ccdb2429a58512d623e447f87b4069536f6",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/plan_tracker.py",
+      "partition": "task_only_three_way",
+      "staged_git_blob": "460db99999c4c7777123bcb1c5b7604c17c8dc9e",
+      "staged_sha256": "2d97f97f52511a4d2822bed148c0ce80e3686dd28ec29decfa2f5ba5d21c7a1c",
+      "working_sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "agent_core/runtime_inspection.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "e2e15790388dea34ea9131c230a2d862e97017b8",
+      "staged_sha256": "270d874dc0e45883131c3293e239ee7ff78793bb3d034a0f0b2cd00bd58bb8f3",
+      "working_sha256": "270d874dc0e45883131c3293e239ee7ff78793bb3d034a0f0b2cd00bd58bb8f3",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/runtime_probe_contract.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "43ffc28354cc22748b5c40771c9c74ba16cbb4a9",
+      "staged_sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce",
+      "working_sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/semantic_completion.py",
+      "partition": "task_only_three_way",
+      "staged_git_blob": "fc4d1613c75d4cdab4703b3d51c4b84acd0e21db",
+      "staged_sha256": "23a06a192a44fa22dbee509d738153db45f68f1a01b75e7a30c3fb67d9064b68",
+      "working_sha256": "7943675b991094fd1fded34a07be8ab5c8e4f783eb4ed33b0c0161ecb768a27d",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "agent_core/skill_manager.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "5b36504869ee473b3165646d795f907748a9260e",
+      "staged_sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+      "working_sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/skill_resource_binding.py",
+      "partition": "task_only_three_way",
+      "staged_git_blob": "2cb7afe2b268f920cf9af6eb1efb262357102fcd",
+      "staged_sha256": "00461179770a244e446f11167f1697fef36ec06444b4ea29e36592db34dd2aab",
+      "working_sha256": "d31d00c103d7af4d31ba780e453f8dddf8d35020354294c1136eecbb6039f6ec",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "agent_core/skill_script_invocation.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "38ab170561f1ca9c51dd30541aa0a0b1b35b67b8",
+      "staged_sha256": "3e6652eadc88a1261fcaea59255cb950f755d6d755b7eaf10108780091ff35c3",
+      "working_sha256": "3e6652eadc88a1261fcaea59255cb950f755d6d755b7eaf10108780091ff35c3",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/state.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "4de79bf09e8b267a1a0dd24b215d78b57e4b5ef3",
+      "staged_sha256": "157d4da1da6c483abb2afa32935cc289e14e15e203b164265888e70b502e5b10",
+      "working_sha256": "157d4da1da6c483abb2afa32935cc289e14e15e203b164265888e70b502e5b10",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/workflow/early_nodes.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "ea562ce8bdcb40dde12623613a78e43fa119da90",
+      "staged_sha256": "a273c3ffec3a80df6047e060df85cfa7ad0caf1e2652a293625f3ade841487ec",
+      "working_sha256": "a273c3ffec3a80df6047e060df85cfa7ad0caf1e2652a293625f3ade841487ec",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/workflow/execution.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "0ce3226e09776d8feaa9f6c9b9983ef0d720f248",
+      "staged_sha256": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+      "working_sha256": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/workflow/managed_stop.py",
+      "partition": "task_only_three_way",
+      "staged_git_blob": "760cf0a55a61d9376eabd5be3e53376f3f5ab6e8",
+      "staged_sha256": "924769f04a9a0e5d3d7209f20d4d0afb88e21ff061ba848300ee6b02e6718ff3",
+      "working_sha256": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "agent_core/workflow/outcomes.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "1c317986c87a51bd58030ae4bed8a8b341f3320f",
+      "staged_sha256": "efc6ff0ec02814749b65c634830f1164ccfb8c5e81dd30c7b093a96c5b1022a8",
+      "working_sha256": "efc6ff0ec02814749b65c634830f1164ccfb8c5e81dd30c7b093a96c5b1022a8",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/workflow/runtime_evidence_recovery.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "ab4f955763eae5fd1307642e6e0dfc49dae488c0",
+      "staged_sha256": "8d6858e31962b6309cd4ea71682e17cd07c48b6109c78e3eea82f32465811eea",
+      "working_sha256": "8d6858e31962b6309cd4ea71682e17cd07c48b6109c78e3eea82f32465811eea",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/workflow/runtime_graph.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "3b42a77640fb39327c31af508931b31ced5a00dd",
+      "staged_sha256": "94a54d08572f1d2dd675134755551d0c95e3207f1c63eca17059c9e5b7be1dd2",
+      "working_sha256": "94a54d08572f1d2dd675134755551d0c95e3207f1c63eca17059c9e5b7be1dd2",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "bio_agents.py",
+      "partition": "task_only_three_way_with_reviewed_catalog_replacement",
+      "staged_git_blob": "b24eaa700c4b299874c7584942361c04eb032c57",
+      "staged_sha256": "262c9c38e10670fa8827e8ea5d57a4dd8fa90507a853a2ee1158eae4dee23444",
+      "working_sha256": "aca73ca04b68afc3fbf2a0bcb6d32a08a31c3a93b6028aa8dd29ab33d0bd4a31",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "package_manager.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "b12a6080c79437a0d34a5cbfed227f8bbdd3732e",
+      "staged_sha256": "73694e758960b3c71286d61cedc17c782b6c11ebeede3e964e41194f888093b5",
+      "working_sha256": "73694e758960b3c71286d61cedc17c782b6c11ebeede3e964e41194f888093b5",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "prompts/manager.py",
+      "partition": "task_only_three_way",
+      "staged_git_blob": "79f7869819e1e4c0828c2e00cf6e3506863515cb",
+      "staged_sha256": "43d23c10455cd8b60dfff5d52d28f0dab0d12b74b1d692a0c0dfca1ef7b6d638",
+      "working_sha256": "505b863ce854e1a478a776b402b556d52642600b6940874a1f322786abc8f416",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "skills/3d-dna/calder2-subcompartment/SKILL.md",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "0affceb464c980cadfeaf2ceff6d1887f21f4892",
+      "staged_sha256": "26d6fcca7ec7db790ac928f4df231b68096d84fd28735644779bedc9ce1e2355",
+      "working_sha256": "26d6fcca7ec7db790ac928f4df231b68096d84fd28735644779bedc9ce1e2355",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "1846c1fe6d69ada4a6628d76310a2def0007425a",
+      "staged_sha256": "ab73a4316ca944e889f4c6094a9624f3541dfe1cbf870cd50d571d4b86d2f59e",
+      "working_sha256": "ab73a4316ca944e889f4c6094a9624f3541dfe1cbf870cd50d571d4b86d2f59e",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "skills/genomics/wgs-gatk-snp-indel/references/calling-methods.md",
+      "partition": "new_task_file",
+      "staged_git_blob": "0320b93d5959748542bca33d7fed89366b371f1b",
+      "staged_sha256": "42dba80eb60e1bdc6ccfc7d338f237a06d82aaab61c7031abd76c23745f4948e",
+      "working_sha256": "42dba80eb60e1bdc6ccfc7d338f237a06d82aaab61c7031abd76c23745f4948e",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "f6b72dd533aa2bf7906aaa81659ff05d6be3a95b",
+      "staged_sha256": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+      "working_sha256": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/failure-publication.md",
+      "partition": "new_task_file",
+      "staged_git_blob": "9008c0eb81ae6c930197dea84ba7fbfb86dc7ac6",
+      "staged_sha256": "d055422243efa52e800c7203f137889b1e08dc325b03834644769678796bffca",
+      "working_sha256": "d055422243efa52e800c7203f137889b1e08dc325b03834644769678796bffca",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/mapping-methods.md",
+      "partition": "new_task_file",
+      "staged_git_blob": "d6a57f22960a3d10ac87e04c49fc705973da997b",
+      "staged_sha256": "5d039cd548f32489f3352b30ae5efe3d0813e4e1659ba70af5c0b66b65330506",
+      "working_sha256": "5d039cd548f32489f3352b30ae5efe3d0813e4e1659ba70af5c0b66b65330506",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/runtime-and-reference.md",
+      "partition": "new_task_file",
+      "staged_git_blob": "f7d50781595dad9dea6f6b03fb0710e4282bd332",
+      "staged_sha256": "564a16e997341ee7e34cc69f98f7ae6904bf0c5d317611785fbcca2c44f56cd1",
+      "working_sha256": "564a16e997341ee7e34cc69f98f7ae6904bf0c5d317611785fbcca2c44f56cd1",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/fixtures/unified_terminal_recorded.json",
+      "partition": "new_task_file",
+      "staged_git_blob": "8fe622508bcd17e25e2e9b09ee98d7041a5a1fa3",
+      "staged_sha256": "e7c789721cff0b67bd8d61aebae93bd6a5f26a74a0971889301bd2fe2afe8d56",
+      "working_sha256": "e7c789721cff0b67bd8d61aebae93bd6a5f26a74a0971889301bd2fe2afe8d56",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_action_scoped_runtime_bindings.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "771dd2bd23c8fb75e88ed5b1ba537c3b12ef2cd6",
+      "staged_sha256": "2dff656a8024cd2f3e3183622f04fa9d4115bbccb59b73e31f44d265dde16fa8",
+      "working_sha256": "2dff656a8024cd2f3e3183622f04fa9d4115bbccb59b73e31f44d265dde16fa8",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_bio_agents_memory.py",
+      "partition": "task_only_three_way",
+      "staged_git_blob": "bccdc0a417adbb3a21ebe889994c6982dc76de78",
+      "staged_sha256": "12ad58fcd586eabc3b40d1450b6ad5a2bff1c787cbef6d46c8cbf94819f5a0b0",
+      "working_sha256": "19cbf59ce05ef3c575dd4f33e3afcec78386f493be8181bafaef9e35379037e6",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "tests/test_installer_agent.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "78e4117862bf3273e80b29c972a991bb9ccfc3cf",
+      "staged_sha256": "8a488111b151f56ba35c752e259ffee3cfdd7a24841d360b4de5365836cf2380",
+      "working_sha256": "8a488111b151f56ba35c752e259ffee3cfdd7a24841d360b4de5365836cf2380",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_skill_script_invocation.py",
+      "partition": "clean_or_committed_prerequisite",
+      "staged_git_blob": "cfc955124ce081acd698d06008b060e42da9af7d",
+      "staged_sha256": "146296f53a5d42f21ae1e063c5a64074eb1c26c53e3dbe3f0a937d999701719a",
+      "working_sha256": "146296f53a5d42f21ae1e063c5a64074eb1c26c53e3dbe3f0a937d999701719a",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_binding_rollback.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "edd595532091440d747b4eccd0c4832390887475",
+      "staged_sha256": "cf65d1edb63253f167be57cb2510238abf13f8b495ecb9ab755015ffe57db362",
+      "working_sha256": "cf65d1edb63253f167be57cb2510238abf13f8b495ecb9ab755015ffe57db362",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_helper_selection.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "3c185ce5131b1f2758ddd1cc119716dbd8ee39c6",
+      "staged_sha256": "9bf02ed834936590e70b3f81f9367f60a47db78cc76e61d179ee87380c57e1ca",
+      "working_sha256": "9bf02ed834936590e70b3f81f9367f60a47db78cc76e61d179ee87380c57e1ca",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_installer_boundary.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "4ad8b8e45968bd8b1033002862b0ff10268871f6",
+      "staged_sha256": "cd9e7c1ff48231b76d4e3373d361b33f1f74db945332425358b60ce6250ff765",
+      "working_sha256": "cd9e7c1ff48231b76d4e3373d361b33f1f74db945332425358b60ce6250ff765",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_reference_bundle.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "77b5392afa1f2255c547031f72960ec2ec1199e6",
+      "staged_sha256": "b5e549d22ddcd0d2155bb63c43ce8ac260d85d68da73c09f8b91a9db889864cb",
+      "working_sha256": "b5e549d22ddcd0d2155bb63c43ce8ac260d85d68da73c09f8b91a9db889864cb",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_runtime_expiry.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "036d5192435bbad093d50da129b4647e4ab67fe5",
+      "staged_sha256": "99061766f5e4fa362e45ccb5daac1a87fdc81cff8acd268e7c6a2437097b7ab2",
+      "working_sha256": "99061766f5e4fa362e45ccb5daac1a87fdc81cff8acd268e7c6a2437097b7ab2",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_runtime_generation_authority.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "0cf76df5f5c04fa338014c19f129301fadcdcfde",
+      "staged_sha256": "ba20b667c71c2e43c2453de13b2eb56846ea139094d3d4e08d3a497600c88a79",
+      "working_sha256": "ba20b667c71c2e43c2453de13b2eb56846ea139094d3d4e08d3a497600c88a79",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_runtime_graph.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "0338abff5fb0297f6fdea849752857f16b7744fa",
+      "staged_sha256": "169334b24d15b312492ee68427d0c343dd27acaac5a6f57b44a71ef06100d792",
+      "working_sha256": "169334b24d15b312492ee68427d0c343dd27acaac5a6f57b44a71ef06100d792",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_runtime_preparation.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "c72ff9b35cf52cc3399844e12c6a59da1a7e4db8",
+      "staged_sha256": "81ff7f37a5b6270a5ae4a2cef74c083bf88d3a9ee8d0680d2abad377beb125c6",
+      "working_sha256": "81ff7f37a5b6270a5ae4a2cef74c083bf88d3a9ee8d0680d2abad377beb125c6",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_skill_requests.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "06a97ceb7a8e33278dc8364705d659e84890a700",
+      "staged_sha256": "e2f9658509088844523d6d1da0ffb924cb19e7a484a51bfaa44442a2b0612d5b",
+      "working_sha256": "e2f9658509088844523d6d1da0ffb924cb19e7a484a51bfaa44442a2b0612d5b",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_terminal_facts.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "ec122e74924c6de52ad0e842308dd7599df9da65",
+      "staged_sha256": "81ec48bd7b2833a3605d00247d3081354c14b337fb389a3868a832eeca0686b4",
+      "working_sha256": "81ec48bd7b2833a3605d00247d3081354c14b337fb389a3868a832eeca0686b4",
+      "retained_prerequisite_difference": false
+    }
+  ]
+}

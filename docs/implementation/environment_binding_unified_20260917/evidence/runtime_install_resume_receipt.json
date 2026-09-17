@@ -1,0 +1,32 @@
+{
+  "tests_passed": 62,
+  "subtests_passed": 5,
+  "failures": [],
+  "source_identity": "SOURCE_IDENTITY 35e1f05c808c9a312e36f062f835256d2d15b96219aaeaa8a87ed3a989f2a4eb",
+  "files": {
+    "agent_core/workflow/runtime_evidence_recovery.py": {
+      "tested_sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620",
+      "workspace_sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620"
+    },
+    "tests/test_unified_runtime_preparation_install_resume.py": {
+      "tested_sha256": "6872ae70fa406f5ff6ac40e7e53c17c8ea8c2ee43bd0012b75d6682402b27184",
+      "workspace_sha256": "6872ae70fa406f5ff6ac40e7e53c17c8ea8c2ee43bd0012b75d6682402b27184"
+    },
+    "agent_core/action_runtime.py": {
+      "tested_sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d",
+      "workspace_sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d"
+    },
+    "agent_core/plan_tracker.py": {
+      "tested_sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28",
+      "workspace_sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28"
+    },
+    "agent_core/runtime_evidence.py": {
+      "tested_sha256": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424",
+      "workspace_sha256": "0592e54d55b7dc9beaa83d6994a7ed0e2e25c0fed18a64613ff373ac5a054424"
+    }
+  },
+  "base_commit": "2e70f28",
+  "scope": "13 new same-prefix resume cases + authority + existing Recovery; no actual install/model",
+  "tested_files_match_workspace": true,
+  "command": "env -i PATH=/usr/bin:/bin TMPDIR=/tmp/biomind-r1-tXsGVj/tmp BIOMIND_DISABLE_DOTENV=1 BIOMIND_OFFLINE_RESULTS=/tmp/biomind-r1-tXsGVj/install-resume-results.json /public/home/liusiqi/anaconda3/envs/biomind/bin/python -I /tmp/biomind-r1-tXsGVj/review-candidate/tests/offline_managed_bootstrap.py /tmp/biomind-r1-tXsGVj/review-candidate -q tests/test_unified_runtime_preparation_install_resume.py tests/test_unified_runtime_generation_authority.py tests/test_runtime_evidence_recovery.py --tb=short"
+}

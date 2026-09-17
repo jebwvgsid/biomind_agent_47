@@ -1,0 +1,37 @@
+{
+  "source_files": {
+    "agent_core/plan_tracker.py": {
+      "tested_sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28",
+      "workspace_sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28"
+    },
+    "agent_core/plan_bindings.py": {
+      "tested_sha256": "6f4348a4c08577ea19d30f3a9d6c2ccdb2429a58512d623e447f87b4069536f6",
+      "workspace_sha256": "6f4348a4c08577ea19d30f3a9d6c2ccdb2429a58512d623e447f87b4069536f6"
+    },
+    "tests/test_unified_binding_rollback.py": {
+      "tested_sha256": "cf65d1edb63253f167be57cb2510238abf13f8b495ecb9ab755015ffe57db362",
+      "workspace_sha256": "cf65d1edb63253f167be57cb2510238abf13f8b495ecb9ab755015ffe57db362"
+    }
+  },
+  "all_tested_files_match_workspace": true,
+  "new_tests_passed": [
+    "tests/test_unified_binding_rollback.py::test_rollback_reload_commit_and_consume_exact_new_identity",
+    "tests/test_unified_binding_rollback.py::test_persisted_residue_repaired_and_old_event_preserves_later_commit",
+    "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[plan_revision]",
+    "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[state_generation]",
+    "tests/test_unified_binding_rollback.py::test_actual_limited_rollback_and_plan_scope_are_respected"
+  ],
+  "legacy_failure_set_unchanged": true,
+  "legacy_failures": [
+    "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations"
+  ],
+  "bootstrap": "tests/offline_managed_bootstrap.py",
+  "isolation": "env -i; BIOMIND_DISABLE_DOTENV=1; config module stubs; /tmp export excluding config; audit hooks deny network, production paths and unapproved child processes; original sessions untouched",
+  "command": "env -i PATH=/usr/bin:/bin TMPDIR=/tmp/biomind-r1-tXsGVj/tmp BIOMIND_DISABLE_DOTENV=1 BIOMIND_OFFLINE_RESULTS=/tmp/biomind-r1-tXsGVj/final-results.json /public/home/liusiqi/anaconda3/envs/biomind/bin/python -I /tmp/biomind-r1-tXsGVj/candidate/tests/offline_managed_bootstrap.py /tmp/biomind-r1-tXsGVj/candidate -q tests/test_unified_binding_rollback.py tests/test_recovery_binding_final_spec.py --tb=short"
+}

@@ -1,0 +1,25 @@
+{
+  "suite": "actual Generate work order boundary through current production graph",
+  "test_calls": {
+    "passed": 3
+  },
+  "failed_phases": [],
+  "candidate": "/tmp/biomind-unified-request-zm426q4h/candidate",
+  "tested_source_sha256": {
+    "bio_agents.py": "ece37886c7625a9a7e496b63dbd4336a04d350e957cf5514aaf2592116da679d",
+    "agent_core/workflow/runtime_graph.py": "a3a5fb85b2c2d1a8f0890f73d0921b20b5b2f56029ea5c1f44da486ee3383a2c",
+    "agent_core/workflow/execution.py": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+    "agent_core/workflow/outcomes.py": "98fda275e0d221f74d8eb77a6a7cc8f389e1ef580dbff09bbd929eb13da4e6ac",
+    "tests/test_unified_skill_requests.py": "e2f9658509088844523d6d1da0ffb924cb19e7a484a51bfaa44442a2b0612d5b"
+  },
+  "source_matches_at_recording": {
+    "bio_agents.py": false,
+    "agent_core/workflow/runtime_graph.py": true,
+    "agent_core/workflow/execution.py": true,
+    "agent_core/workflow/outcomes.py": true,
+    "tests/test_unified_skill_requests.py": true
+  },
+  "scope": "whole raw JSON -> typed installation_requested/Installer route; prose and executable extra fields -> candidate_rejected/Generate correction. Stop before Installer. 0 scientific execute,0 Commit,empty pending action.",
+  "production_issue_found_and_fixed": "Both runtime and production graphs lacked install_subagent in Generate conditional destinations; root added the edges.",
+  "source_unchanged_during_test": true
+}

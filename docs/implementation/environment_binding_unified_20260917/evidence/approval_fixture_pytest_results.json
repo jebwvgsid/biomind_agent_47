@@ -1,0 +1,527 @@
+[
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_capability_and_contract_hash_change_plan_semantic_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_capability_and_contract_hash_change_plan_semantic_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00037744734436273575,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_capability_and_contract_hash_change_plan_semantic_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.003254869021475315,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_capability_and_contract_hash_change_plan_semantic_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013830047100782394,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_legacy_pending_action_requires_regeneration",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_legacy_pending_action_requires_regeneration",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020118802785873413,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_legacy_pending_action_requires_regeneration",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009961193427443504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_legacy_pending_action_requires_regeneration",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001139473170042038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_missing_capability_never_falls_back_to_registry",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_missing_capability_never_falls_back_to_registry",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017272401601076126,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_missing_capability_never_falls_back_to_registry",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011278018355369568,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_missing_capability_never_falls_back_to_registry",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001059211790561676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_planner_cannot_create_optional_binding_id",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_planner_cannot_create_optional_binding_id",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001645199954509735,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_planner_cannot_create_optional_binding_id",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010715164244174957,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_planner_cannot_create_optional_binding_id",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010180193930864334,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_provider_projection_has_exact_current_value_and_no_unrelated_bindings",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_provider_projection_has_exact_current_value_and_no_unrelated_bindings",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019714422523975372,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_provider_projection_has_exact_current_value_and_no_unrelated_bindings",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001157953403890133,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_provider_projection_has_exact_current_value_and_no_unrelated_bindings",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010520406067371368,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_registry_has_canonical_ids_without_resolved_aliases",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_registry_has_canonical_ids_without_resolved_aliases",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001678531989455223,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_registry_has_canonical_ids_without_resolved_aliases",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009496640413999557,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_registry_has_canonical_ids_without_resolved_aliases",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010992493480443954,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_required_unknown_runtime_is_unavailable_and_not_guessed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_required_unknown_runtime_is_unavailable_and_not_guessed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001623956486582756,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_required_unknown_runtime_is_unavailable_and_not_guessed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010505104437470436,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_required_unknown_runtime_is_unavailable_and_not_guessed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010436307638883591,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_runtime_value_digest_change_invalidates_manifest",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_runtime_value_digest_change_invalidates_manifest",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018839817494153976,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_runtime_value_digest_change_invalidates_manifest",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00139656662940979,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_runtime_value_digest_change_invalidates_manifest",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010693259537220001,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_same_skill_capability_without_runtime_never_receives_other_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_same_skill_capability_without_runtime_never_receives_other_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016869977116584778,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_same_skill_capability_without_runtime_never_receives_other_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0012144064530730247,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_same_skill_capability_without_runtime_never_receives_other_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011058896780014038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_sensitive_value_is_not_persisted_in_manifest",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_sensitive_value_is_not_persisted_in_manifest",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017066672444343567,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_sensitive_value_is_not_persisted_in_manifest",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0011499887332320213,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_sensitive_value_is_not_persisted_in_manifest",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010725483298301697,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_source_text_cannot_grant_runtime_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_source_text_cannot_grant_runtime_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000174657441675663,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_source_text_cannot_grant_runtime_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010124826803803444,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_source_text_cannot_grant_runtime_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010440126061439514,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_unknown_capability_reports_available_ids",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_unknown_capability_reports_available_ids",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017016194760799408,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_unknown_capability_reports_available_ids",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0012907171621918678,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_unknown_capability_reports_available_ids",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013655610382556915,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.2219011439010501,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00059474166482687,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010398495942354202,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018407590687274933,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002691959962248802,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011856574565172195,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023506488651037216,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03637182433158159,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015097856521606445,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001954948529601097,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007742610760033131,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013679265975952148,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001858184114098549,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0014774305745959282,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001187426969408989,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017316080629825592,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002409246750175953,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011032354086637497,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00016935821622610092,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0015426473692059517,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011135265231132507,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019496586173772812,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009277843870222569,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011299923062324524,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017664674669504166,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012272559106349945,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014347583055496216,
+    "failure": ""
+  }
+]

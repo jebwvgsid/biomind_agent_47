@@ -1,0 +1,9 @@
+{
+  "paths": {
+    "agent_core/skill_script_invocation.py": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+    "tests/test_skill_script_invocation.py": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+    "skills/genomics/wgs-short-read-mapping/SKILL.md": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673"
+  },
+  "source": "exact common prerequisite_source captured before this task",
+  "verification": "58 passed in new isolated prerequisite process; source unchanged; not a claim that audit HEAD alone is runnable"
+}

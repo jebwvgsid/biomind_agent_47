@@ -1,0 +1,502 @@
+[
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0518521536141634,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.4704704927280545,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_original_directory_contract_can_commit_partial_bundle",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018709618598222733,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005845511332154274,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2629379276186228,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_complete_real_tool_bundle_validates_and_commits",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018342025578022003,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006303749978542328,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3259113458916545,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[fai_only]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018042419105768204,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006667999550700188,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3259643381461501,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[partial_bwa]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019675027579069138,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006877314299345016,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.32388035766780376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[empty_bwt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017708446830511093,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000648176297545433,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3246718989685178,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_contig]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017770566046237946,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006846459582448006,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3252948224544525,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_fai_length]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018915627151727676,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006483336910605431,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.37991604395210743,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_dict_length]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017553847283124924,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006662337109446526,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3298923568800092,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_md5]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019221100956201553,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000670229084789753,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.3397016962990165,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_source]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018129684031009674,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006308816373348236,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.35470288805663586,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_pac]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021034199744462967,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007069110870361328,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.33601786382496357,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[wrong_amb]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018879026174545288,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006449958309531212,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.36015547160059214,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_bad_bundle_rejected_by_actual_validation_and_commit[truncated_sa]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018588639795780182,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005679698660969734,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.20636890549212694,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_commit_recomputes_bundle_after_successful_verification",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016799475997686386,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005852887406945229,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.317160758189857,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_old_unowned_bundle_still_rejected_by_existing_provenance_gate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017047952860593796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006217285990715027,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03940135147422552,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[missing_source_role]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001517152413725853,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005931444466114044,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.039904775097966194,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_missing_or_ambiguous_formal_scope_is_diagnosed[multiple_outputs]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015853717923164368,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[inputs]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[inputs]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005844626575708389,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[inputs]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04116973467171192,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[inputs]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001456737518310547,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[resource_uses]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[resource_uses]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005812440067529678,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[resource_uses]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04167033080011606,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_plan_local_bundle_resolves_exact_approved_output_identity[resource_uses]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015058554708957672,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005199853330850601,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05452326592057943,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_reference_bundle.py::test_final_skill_declares_parser_and_compiles_into_formal_step",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002052122727036476,
+    "failure": ""
+  }
+]

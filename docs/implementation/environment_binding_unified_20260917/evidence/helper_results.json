@@ -1,0 +1,22 @@
+{
+  "suite": "R3 helper local regression; not integrated production graph",
+  "candidate": "/tmp/biomind-unified-helper-lf1y9l_m/candidate",
+  "test_calls": {
+    "passed": 76
+  },
+  "failed_phases": [],
+  "tested_sources_match_worktree": true,
+  "source_sha256": {
+    "agent_core/skill_resource_binding.py": "d31d00c103d7af4d31ba780e453f8dddf8d35020354294c1136eecbb6039f6ec",
+    "agent_core/skill_script_invocation.py": "3e6652eadc88a1261fcaea59255cb950f755d6d755b7eaf10108780091ff35c3",
+    "tests/test_unified_helper_selection.py": "9bf02ed834936590e70b3f81f9367f60a47db78cc76e61d179ee87380c57e1ca",
+    "tests/test_skill_script_invocation.py": "146296f53a5d42f21ae1e063c5a64074eb1c26c53e3dbe3f0a937d999701719a"
+  },
+  "bootstrap": "tests/offline_managed_bootstrap.py",
+  "environment": "env -i, BIOMIND_DISABLE_DOTENV=1, isolated TMPDIR; config/startup excluded; audit denies network and protected reads",
+  "initial_export_rejections": [
+    "config AST scan rejected before tests; excluded config/startup",
+    "TMPDIR=/tmp temporary-directory open rejected; set TMPDIR to isolated /tmp child"
+  ],
+  "scope": "Real SkillManager, registry, binding, invocation, policy and approval identity. Config/manager discovery stubbed only at existing offline bootstrap boundary. No model/API/software installation or scientific pipeline."
+}

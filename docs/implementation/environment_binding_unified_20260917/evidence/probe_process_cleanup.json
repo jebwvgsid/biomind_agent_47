@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "case": "per-check-deadline",
+      "seconds": 8.031746858730912,
+      "child_stopped": true,
+      "coverage": {
+        "runtime.bwa.index.bin": {
+          "availability": "UNKNOWN",
+          "output_name": "RESOLVED_BWA_INDEX_BIN",
+          "value_kind": "executable_path",
+          "conclusion_complete": false,
+          "reason_code": "RUNTIME_PROBE_EXECUTION_INCOMPLETE"
+        }
+      }
+    },
+    {
+      "case": "outer-driver-deadline",
+      "seconds": 0.5066882129758596,
+      "child_stopped": true
+    }
+  ],
+  "source_sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce",
+  "scope": "Temporary fake bwa process only; real Python driver/launcher groups; no environment changes or real install/model API"
+}

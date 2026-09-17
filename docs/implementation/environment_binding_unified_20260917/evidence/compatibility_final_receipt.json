@@ -1,0 +1,25 @@
+{
+  "passed": 63,
+  "failed": 15,
+  "source_unchanged": true,
+  "candidate": "/tmp/biomind-unified-cumulative-release/candidate",
+  "source_manifest_sha256": "fa3f61b8c2c2b7059d27f30c0f756ef9b8af8d4cfc945de1e6815d402f141ed1",
+  "failed_nodes": [
+    "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_baseline_real_generate_execute_hitl_and_commit_first_nonruntime_step",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_execute_prelaunch_rejects_path_invalidated_during_real_approval",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_inspection_failure_stops_with_truthful_explanation_without_dispatch",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_missing_fact_recovers_in_same_graph_before_provider_then_executes_once",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_new_instance_and_new_graph_reopen_durable_accepted_evidence",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_real_checkpoint_interrupt_after_acceptance_resumes_same_generate",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_runtime_stop_writes_requested_reports_through_real_output_contract",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_second_prelaunch_rejection_closes_unlaunched_starting_attempt",
+    "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_successful_inspection_with_incomplete_output_remains_unknown",
+    "tests/test_runtime_evidence_transport.py::RuntimeEvidenceTransportProductionTests::test_real_consultant_returns_commit_planner_reload_and_resolver",
+    "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit"
+  ],
+  "interpretation": "All 15 failed nodes are in the previously reproduced common baseline failures; this is not a green whole-repository claim. 7 approval-scope checks passed and are included in final cumulative selection."
+}

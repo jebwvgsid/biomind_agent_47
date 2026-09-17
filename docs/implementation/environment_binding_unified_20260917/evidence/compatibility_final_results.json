@@ -1,0 +1,1952 @@
+[
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00039538461714982986,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.018757431767880917,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_action_lineage_requires_current_approval_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015482306480407715,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021383818238973618,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0077377138659358025,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_approval_scope_invalidates_when_task_spec_changes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012975279241800308,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001862635836005211,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001423838548362255,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_duplicate_output_contract_preserves_all_provenance",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010229647159576416,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018252898007631302,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0023527657613158226,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_revision_delta_uses_stable_ids_and_classifies_collapse",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011931359767913818,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00017717201262712479,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0015331404283642769,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_search_cannot_validate_local_filesystem",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011294055730104446,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00019290298223495483,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.009251439943909645,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_semantic_revision_advances_version_and_stales_approval",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003402484580874443,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00018005911260843277,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.012238073162734509,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_plan_contract_approval_scope.py::PlanContractApprovalScopeTests::test_step_skill_or_renderer_contract_change_stales_approval",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001577502116560936,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011314637959003448,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003008926287293434,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.402167052030563e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.496323764324188e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016791746020317078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011914968490600586,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.04057163838297129,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0015762513503432274,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016045290976762772,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005276128649711609,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03228156827390194,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014736689627170563,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005214223638176918,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03320985101163387,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014082249253988266,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0004922915250062943,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.024858899414539337,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015433412045240402,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011205766350030899,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0009871162474155426,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001079728826880455,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011068955063819885,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00014445092529058456,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.09091904759407e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011663511395454407,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007117120549082756,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011034775525331497,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010290183126926422,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00023807771503925323,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.238161146640778e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010824762284755707,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005133086815476418,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010415073484182358,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001440253108739853,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003794105723500252,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010343827307224274,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013508088886737823,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00012171082198619843,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.926354348659515e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010363291949033737,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005423976108431816,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010035280138254166,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000555599108338356,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.025018027052283287,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014338921755552292,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005190949887037277,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.006288608536124229,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013737753033638,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005133505910634995,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.043921840377151966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001760302111506462,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006449306383728981,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04263835772871971,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014142226427793503,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000530557706952095,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.025809788145124912,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014340970665216446,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011360645294189453,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0002677151933312416,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.907595813274384e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000544985756278038,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.022822394967079163,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014340877532958984,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011102575808763504,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0005304208025336266,
+    "failure": "tests/test_recovery_binding_final_spec.py:862: in test_snpeff_skill_declares_typed_producer_build_and_annotation_operations\n    assert \"prepare_database:\" in document\nE   AssertionError: assert 'prepare_database:' in '---\\nname: snpeff-annotation\\ndescription: Annotate VCF SNPs and indels with snpEff using an existing database or a c...pcingola.github.io/SnpEff/snpeff/build_db/),\\n  [ANN format](https://pcingola.github.io/SnpEff/snpeff/inputoutput/).\\n'"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00022551603615283966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011969637125730515,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006076060235500336,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011145696043968201,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010871421545743942,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002411077730357647,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012974627315998077,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006106961518526077,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0007775677368044853,
+    "failure": "tests/test_recovery_binding_final_spec.py:961: in test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity\n    accept_action_binding_candidates(\nagent_core/plan_bindings.py:810: in accept_action_binding_candidates\n    candidates = _candidate_map(action)\n                 ^^^^^^^^^^^^^^^^^^^^^^\nagent_core/plan_bindings.py:789: in _candidate_map\n    raise PlanBindingError(\nE   agent_core.plan_bindings.PlanBindingError: PLAN_BINDING_CANDIDATE_VALUE_SHAPE_INVALID: {\"binding_name\":\"snpeff_db\",\"observed_python_type\":\"str\",\"value_type\":\"artifact_ref\"}"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016425549983978271,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_baseline_real_generate_execute_hitl_and_commit_first_nonruntime_step",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_baseline_real_generate_execute_hitl_and_commit_first_nonruntime_step",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002970602363348007,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_baseline_real_generate_execute_hitl_and_commit_first_nonruntime_step",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.8769618226215243,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:252: in test_baseline_real_generate_execute_hitl_and_commit_first_nonruntime_step\n    state = await self._approved(\"runtime-prior-step\", two_steps=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-hx80nylo/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:67d2380a8e66e72e61489acdd012b58cb46c7d99e69dd65059819f25dd56b011\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-hx80nylo/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:67d2380a8e66e72e61489acdd012b58cb46c7d99e69dd65059819f25dd56b011', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_baseline_real_generate_execute_hitl_and_commit_first_nonruntime_step",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021562445908784866,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_execute_prelaunch_rejects_path_invalidated_during_real_approval",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_execute_prelaunch_rejects_path_invalidated_during_real_approval",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002579912543296814,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_execute_prelaunch_rejects_path_invalidated_during_real_approval",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.6693094614893198,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:382: in test_execute_prelaunch_rejects_path_invalidated_during_real_approval\n    state = await self._approved(\"runtime-path-invalidated\")\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-h50xmzlg/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:ddf2fe7183fd62e5cdf474e15008f91dcb18cfe32bda115d73e7c04132bd854f\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-h50xmzlg/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:ddf2fe7183fd62e5cdf474e15008f91dcb18cfe32bda115d73e7c04132bd854f', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_execute_prelaunch_rejects_path_invalidated_during_real_approval",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021667033433914185,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_inspection_failure_stops_with_truthful_explanation_without_dispatch",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_inspection_failure_stops_with_truthful_explanation_without_dispatch",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002591656520962715,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_inspection_failure_stops_with_truthful_explanation_without_dispatch",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.7444476559758186,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:376: in test_inspection_failure_stops_with_truthful_explanation_without_dispatch\n    await self._assert_unknown_inspection_stops(\"timeout\", \"timeout\")\ntests/test_runtime_evidence_recovery_production.py:336: in _assert_unknown_inspection_stops\n    state = await self._approved(\"runtime-inspection-\" + mode)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-cx9mrjhd/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:eee5af9f8a414812f404781e91ca8f67914239e12ab7820d2621b4db8cbb419c\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-cx9mrjhd/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:eee5af9f8a414812f404781e91ca8f67914239e12ab7820d2621b4db8cbb419c', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_inspection_failure_stops_with_truthful_explanation_without_dispatch",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021555740386247635,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_missing_fact_recovers_in_same_graph_before_provider_then_executes_once",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_missing_fact_recovers_in_same_graph_before_provider_then_executes_once",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002678902819752693,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_missing_fact_recovers_in_same_graph_before_provider_then_executes_once",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.6642042249441147,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:262: in test_missing_fact_recovers_in_same_graph_before_provider_then_executes_once\n    state = await self._approved(\"runtime-same-execution\", two_steps=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-tl6233nm/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:bd98214d4b232a1b86f3acaadbfb288859eae40085bffff35f614a1fb52bd5f7\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-tl6233nm/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:bd98214d4b232a1b86f3acaadbfb288859eae40085bffff35f614a1fb52bd5f7', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_missing_fact_recovers_in_same_graph_before_provider_then_executes_once",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021555088460445404,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_new_instance_and_new_graph_reopen_durable_accepted_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_new_instance_and_new_graph_reopen_durable_accepted_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026021338999271393,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_new_instance_and_new_graph_reopen_durable_accepted_evidence",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.8071643449366093,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:295: in test_new_instance_and_new_graph_reopen_durable_accepted_evidence\n    state = await self._approved(\"runtime-durable-reopen\", two_steps=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-84emzyjs/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:ea6d8d8c93b7ad16b162bf5721512d9f5ba16e13a6f35790ef3035b96c85a3eb\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-84emzyjs/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:ea6d8d8c93b7ad16b162bf5721512d9f5ba16e13a6f35790ef3035b96c85a3eb', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_new_instance_and_new_graph_reopen_durable_accepted_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002072639763355255,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_real_checkpoint_interrupt_after_acceptance_resumes_same_generate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_real_checkpoint_interrupt_after_acceptance_resumes_same_generate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025936588644981384,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_real_checkpoint_interrupt_after_acceptance_resumes_same_generate",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.77020229306072,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:282: in test_real_checkpoint_interrupt_after_acceptance_resumes_same_generate\n    state = await self._approved(\"runtime-checkpoint-resume\")\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-cf1xjr9o/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:4fc0a1ff018b2d3909855ad2c5581e6990f78b161c6b24bb98e96ae62c858e81\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-cf1xjr9o/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:4fc0a1ff018b2d3909855ad2c5581e6990f78b161c6b24bb98e96ae62c858e81', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_real_checkpoint_interrupt_after_acceptance_resumes_same_generate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021440815180540085,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_runtime_stop_writes_requested_reports_through_real_output_contract",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_runtime_stop_writes_requested_reports_through_real_output_contract",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002682562917470932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_runtime_stop_writes_requested_reports_through_real_output_contract",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.8512625340372324,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:406: in test_runtime_stop_writes_requested_reports_through_real_output_contract\n    state = await self._approved(\"runtime-requested-stop-reports\", recovery_reports=True)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-325boubz/report.md` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:1c207d0a1d40a7179ef14eed8f528372e89f02a2e6a8e4ea641ca063c0c2d427\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {\"identity\": \"stage_status\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.stage_status\", \"output_id\": \"stage_status\", \"role\": \"stage_status\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"stage_status\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"stage_status\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-325boubz/stage_status.tsv` has no logical producer.\", \"observed_identity\": {\"identity\": \"stage_status\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:1c207d0a1d40a7179ef14eed8f528372e89f02a2e6a8e4ea641ca063c0c2d427\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {\"identity\": \"reproduce_script\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.reproduce_script\", \"output_id\": \"reproduce_script\", \"role\": \"reproduce_script\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"reproduce_script\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"reproduce_script\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-325boubz/reproduce.sh` has no logical producer.\", \"observed_identity\": {\"identity\": \"reproduce_script\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:1c207d0a1d40a7179ef14eed8f528372e89f02a2e6a8e4ea641ca063c0c2d427\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-325boubz/report.md` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:1c207d0a1d40a7179ef14eed8f528372e89f02a2e6a8e4ea641ca063c0c2d427', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-325boubz/stage_status.tsv` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'stage_status'}, 'affected_output': {'output_id': 'stage_status', 'handle': 'output.stage_status', 'role': 'stage_status'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'stage_status'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'stage_status', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['stage_status'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:1c207d0a1d40a7179ef14eed8f528372e89f02a2e6a8e4ea641ca063c0c2d427', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-325boubz/reproduce.sh` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'reproduce_script'}, 'affected_output': {'output_id': 'reproduce_script', 'handle': 'output.reproduce_script', 'role': 'reproduce_script'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'reproduce_script'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'reproduce_script', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['reproduce_script'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:1c207d0a1d40a7179ef14eed8f528372e89f02a2e6a8e4ea641ca063c0c2d427', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_runtime_stop_writes_requested_reports_through_real_output_contract",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00023401249200105667,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_second_prelaunch_rejection_closes_unlaunched_starting_attempt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_second_prelaunch_rejection_closes_unlaunched_starting_attempt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002695182338356972,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_second_prelaunch_rejection_closes_unlaunched_starting_attempt",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.8562571555376053,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:431: in test_second_prelaunch_rejection_closes_unlaunched_starting_attempt\n    state = await self._approved(\"runtime-late-path-invalidated\")\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-8icjry4z/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:8d07b410a8bbf0aa11903d55af60940bf23737046bb27e43fa5e27b34522f3cd\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-8icjry4z/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:8d07b410a8bbf0aa11903d55af60940bf23737046bb27e43fa5e27b34522f3cd', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_second_prelaunch_rejection_closes_unlaunched_starting_attempt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002088155597448349,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_successful_inspection_with_incomplete_output_remains_unknown",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_successful_inspection_with_incomplete_output_remains_unknown",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00028141867369413376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_successful_inspection_with_incomplete_output_remains_unknown",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.682492945343256,
+    "failure": "tests/test_runtime_evidence_recovery_production.py:379: in test_successful_inspection_with_incomplete_output_remains_unknown\n    await self._assert_unknown_inspection_stops(\"incomplete\", \"incomplete\")\ntests/test_runtime_evidence_recovery_production.py:336: in _assert_unknown_inspection_stops\n    state = await self._approved(\"runtime-inspection-\" + mode)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_runtime_evidence_recovery_production.py:188: in _approved\n    self.assertEqual((durable.get(\"current_approval\") or {}).get(\"status\"), \"approved\", str(review))\nE   AssertionError: None != 'approved' : {'messages': [SystemMessage(content='{\"code\": \"PLAN_REVIEW_REJECTED\", \"validation_issues\": [{\"affected_artifact\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"affected_output\": {\"handle\": \"output.report\", \"output_id\": \"report\", \"role\": \"report\"}, \"affected_step_ids\": [], \"code\": \"REQUIRED_OUTPUT_UNCOVERED\", \"disposition\": \"REPAIR_REQUIRED\", \"expected_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\"}, \"field_path\": \"outputs\", \"machine_evidence\": {\"affected_output_ids\": [\"report\"], \"producer_step_ids\": [], \"typed_usage_available\": false, \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, \"message\": \"Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-6te47bpn/report.txt` has no logical producer.\", \"observed_identity\": {\"identity\": \"report\", \"kind\": \"authoritative\", \"producer_step_ids\": []}, \"owner\": \"planner\", \"repair_target\": \"outputs\", \"severity\": \"error\", \"source_ref\": \"object:sha256:a35fac96b708299229b0137f9bbb198625efb1d47459a88e6c6d7c68922418dc\", \"violation_code\": \"REQUIRED_OUTPUT_UNCOVERED\"}, {\"affected_artifact\": {}, \"affected_output\": {}, \"affected_step_ids\": [], \"code\": \"STEPS\", \"disposition\": \"REPAIR_REQUIRED\", \"field_path\": \"steps\", \"machine_evidence\": {\"violation_code\": \"STEPS\"}, \"message\": \"Plan has no executable steps.\", \"owner\": \"planner\", \"repair_target\": \"steps\", \"severity\": \"error\", \"violation_code\": \"STEPS\"}]}', additional_kwargs={}, response_metadata={})], 'validation_issues': [{'code': 'REQUIRED_OUTPUT_UNCOVERED', 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED', 'message': 'Required output `/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-6te47bpn/report.txt` has no logical producer.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'outputs', 'repair_target': 'outputs', 'affected_artifact': {'kind': 'authoritative', 'identity': 'report'}, 'affected_output': {'output_id': 'report', 'handle': 'output.report', 'role': 'report'}, 'expected_identity': {'kind': 'authoritative', 'identity': 'report'}, 'observed_identity': {'kind': 'authoritative', 'identity': 'report', 'producer_step_ids': []}, 'machine_evidence': {'typed_usage_available': False, 'producer_step_ids': [], 'affected_output_ids': ['report'], 'violation_code': 'REQUIRED_OUTPUT_UNCOVERED'}, 'source_ref': 'object:sha256:a35fac96b708299229b0137f9bbb198625efb1d47459a88e6c6d7c68922418dc', 'owner': 'planner', 'affected_step_ids': []}, {'code': 'STEPS', 'violation_code': 'STEPS', 'message': 'Plan has no executable steps.', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', 'field_path': 'steps', 'repair_target': 'steps', 'owner': 'planner', 'affected_step_ids': [], 'affected_artifact': {}, 'affected_output': {}, 'machine_evidence': {'violation_code': 'STEPS'}}], 'required_next_action': 'PLAN_CONTRACT_REPAIR', 'next_step': 'planner'}"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery_production.py::RuntimeEvidenceRecoveryProductionTests::test_successful_inspection_with_incomplete_output_remains_unknown",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000273657962679863,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_transport.py::RuntimeEvidenceTransportProductionTests::test_real_consultant_returns_commit_planner_reload_and_resolver",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_transport.py::RuntimeEvidenceTransportProductionTests::test_real_consultant_returns_commit_planner_reload_and_resolver",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0003713984042406082,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_transport.py::RuntimeEvidenceTransportProductionTests::test_real_consultant_returns_commit_planner_reload_and_resolver",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.9126419145613909,
+    "failure": "tests/test_runtime_evidence_transport.py:187: in test_real_consultant_returns_commit_planner_reload_and_resolver\n    self.assertEqual(len(consultant), 4, diagnostics)\nE   AssertionError: 1 != 4 : [{\"triage\": {\"triage_outcome\": {\"schema_version\": 1, \"type\": \"consultation_ready\", \"summary\": \"Triage classified the request as managed.\", \"scope\": {\"task_id\": \"rt01-real-transport\", \"plan_id\": \"plan_02ed47367d00a797f813\", \"plan_version\": \"plan_v1\", \"step_id\": \"\"}, \"payload\": {\"task_mode\": \"managed\", \"request_kind\": \"execute\"}, \"evidence_refs\": []}}}, {\"consultant\": {\"consultant_outcome\": {\"schema_version\": 1, \"type\": \"planning_ready\", \"summary\": \"The Agent initiated and durably committed the planning handoff.\", \"scope\": {\"task_id\": \"rt01-real-transport\", \"plan_id\": \"plan_02ed47367d00a797f813\", \"plan_version\": \"plan_v1\", \"step_id\": \"\"}, \"payload\": {\"task_revision\": 2, \"contract_status\": \"canonical_task_ready\"}, \"evidence_refs\": []}, \"runtime_audit\": [{\"skill_id\": \"sequence/search/local-blast\", \"declared_env\": \"offline_env\", \"env_runner\": \"conda run -n offline_env\", \"declared_healthcheck\": \"conda run -n offline_env offline-runtime-inspect\", \"tools\": [\"tool\"], \"packages\": [], \"capabilities\": [], \"metadata_present\": true, \"skill_registry\": {\"skill_id\": \"sequence/search/local-blast\", \"env\": \"offline_env\", \"env_runner\": \"conda run -n offline_env\", \"language\": \"cli\", \"packages\": [], \"capabilities\": [], \"healthcheck\": \"conda run -n offline_env offline-runtime-inspect\", \"install_command\": \"\", \"status\": \"verified\", \"notes\": \"RESOLVED_TOOL_BIN=/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-xh70772h/envs/offline_env/bin/tool\\n\", \"last_verified_at\": \"2026-09-17T20:04:34.107881\", \"metadata_present\": true, \"metadata_status\": \"present\", \"declared_runtime\": {\"default_env\": \"offline_env\", \"env_runner\": \"conda run -n offline_env\", \"language\": \"cli\", \"tools\": [\"tool\"], \"packages\": [], \"capabilities\": [], \"install_tool\": \"\", \"install_commands\": [], \"install_fallbacks\": [], \"install_policy\": \"\", \"healthcheck\": \"conda run -n offline_env offline-runtime-inspect\", \"env_file\": \"\"}, \"default_env\": \"offline_env\", \"tools\": [\"tool\"]}, \"package_manager_env\": {\"env\": \"offline_env\", \"purpose\": \"Runtime for skill sequence/search/local-blast\", \"language\": \"cli\", \"packages\": [], \"capabilities\": [], \"healthcheck\": \"conda run -n offline_env offline-runtime-inspect\", \"healthchecks_by_skill\": {\"sequence/search/local-blast\": \"conda run -n offline_env offline-runtime-inspect\"}, \"status\": \"registered\", \"notes\": \"Auto-registered from skill runtime metadata before healthcheck.\", \"skill_ids\": [\"sequence/search/local-blast\"], \"bound_tools\": [], \"registered_at\": \"2026-09-17T20:04:34.107353\", \"last_verified_at\": \"\"}, \"registered_tools\": [], \"matching_env_candidate\": {}, \"candidate_healthcheck\": {}, \"declared_ok\": true, \"declared_detail\": \"RESOLVED_TOOL_BIN=/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-xh70772h/envs/offline_env/bin/tool\\n\", \"checked_env\": \"offline_env\", \"decision\": \"runtime_ready\", \"observed_at\": \"2026-09-17T20:04:34+08:00\", \"skill\": \"sequence/search/local-blast\", \"env\": \"offline_env\", \"status\": \"ready\", \"healthcheck\": \"conda run -n offline_env offline-runtime-inspect\", \"healthcheck_status\": \"passed\", \"install_required\": false, \"reason\": \"RESOLVED_TOOL_BIN=/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-xh70772h/envs/offline_env/bin/tool\\n\", \"reason_code\": \"RUNTIME_READY\", \"evidence_status\": \"checked\", \"availability_status\": \"ready\", \"resolved_runtime_paths\": {\"RESOLVED_TOOL_BIN\": \"/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-xh70772h/envs/offline_env/bin/tool\", \"RESOLVED_ENV_PREFIX\": \"/tmp/biomind-unified-compatibility-release/tmp/biomind-rt01-production-xh70772h/envs/offline_env\"}}], \"canonical_commit\": {\"succeeded\": true, \"task_revision\": 2, \"state_generation\": 13, \"binding_phase\": \"EXISTING_BINDING_CHANGE\"}, \"consultant_commit_rejection\": {}}}, {\"planner\": {\"planner_outcome\": {\"schema_version\": 1, \"type\": \"harness_error\", \"summary\": \"PLANNER_PROGRESS_RECEIPT_MISSING: Planner stopped without an approved Plan; this planning invocation executed no step.\", \"scope\": {\"task_id\": \"rt01-real-transport\", \"plan_id\": \"\", \"plan_version\": \"\", \"step_id\": \"\", \"attempt_id\": \"\", \"task_revision\": 2, \"planning_epoch_id\": \"\", \"failure_fingerprint\": \"\", \"candidate_context_ref\": \"\"}, \"payload\": {\"error_code\": \"PLANNER_PROGRESS_RECEIPT_MISSING\", \"exception_class\": \"SemanticCoverageError\", \"detail\": \"Planner returned without a durable planning epoch, local-loop observation, candidate Plan, review submission, or reconciliation receipt. A schema-2 self-loop cannot be inferred from an empty planning state.\", \"source_node\": \"planner\", \"semantic_state\": {\"phase\": \"finalize\", \"task_status\": \"\"}, \"status\": \"failed\", \"reason_code\": \"PLANNER_PROGRESS_RECEIPT_MISSING\", \"planning_terminal\": {\"schema_version\": 1, \"producer\": \"planner_terminal_facts_v1\", \"scope\": {\"task_id\": \"rt01-real-transport\", \"plan_id\": \"\", \"plan_version\": \"\", \"step_id\": \"\", \"attempt_id\": \"\", \"task_revision\": 2, \"planning_epoch_id\": \"\", \"failure_fingerprint\": \"\", \"candidate_context_ref\": \"\"}, \"task_semantic_hash\": \"sha256:f6f724716aa148d258beb859b1e287dc529b50c5c0bcc9641cf68c7aa3710a4c\", \"task_summary\": \"Create the requested report from the supplied reference input\", \"no_approved_plan\": true, \"plan_materialized\": false, \"validation_issues\": [], \"source_failure_status\": \"not_persisted\", \"primary_failure\": {\"status\": \"not_persisted\", \"reason_code\": \"PLANNER_ORIGIN_NOT_PERSISTED\"}, \"candidate_source\": {}, \"primary_context_ref\": \"\", \"terminal_diagnostic\": {\"error_code\": \"PLANNER_PROGRESS_RECEIPT_MISSING\", \"detail\": \"Planner returned without a durable planning epoch, local-loop observation, candidate Plan, review submission, or reconciliation receipt. A schema-2 self-loop cannot be inferred from an empty planning state.\", \"error_owner\": \"planner\"}, \"planning_epoch\": {}, \"validation_source\": \"\", \"attempt\": 0, \"repeat_count\": 0, \"response_integrity\": {}, \"occurrence_receipt\": {}, \"attempted_remediation\": [], \"first_truncation\": {}, \"output_policy\": {}}}, \"evidence_refs\": []}}}, {}]"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_transport.py::RuntimeEvidenceTransportProductionTests::test_real_consultant_returns_commit_planner_reload_and_resolver",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00024052057415246964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006511500105261803,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00082443468272686,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_strips_comma_delimited_header_metadata",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013439543545246124,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022790860384702682,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.22212617471814156,
+    "failure": "tests/test_semantic_completion.py:254: in test_live_snpeff_skill_compiles_structured_c04_predicate\n    contract = registry[capability_id]\n               ^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'genomics.snpeff_annotation.check_contig_compatibility'"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_live_snpeff_skill_compiles_structured_c04_predicate",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018640607595443726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000630432739853859,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.010476576164364815,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_vcf_contig_parser_handles_gzip_and_rejects_malformed_header",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000148136168718338,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005477247759699821,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003302525728940964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v02_vcf_structured_header_is_quote_aware_and_crlf_safe",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012573972344398499,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006699869409203529,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003196410834789276,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers0-VCF_CONTIG_HEADER_ID_EMPTY]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014452729374170303,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0008872747421264648,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003217598423361778,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers1-VCF_CONTIG_HEADER_ID_MISSING]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014263950288295746,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006684353575110435,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00032797921448946,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v03_empty_missing_and_duplicate_vcf_ids_are_format_errors[headers2-VCF_CONTIG_HEADER_ID_DUPLICATED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013365782797336578,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005278177559375763,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00030097924172878265,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v04_records_without_contig_header_are_reported_without_guessing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012300070375204086,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005333563312888145,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010660188272595406,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v05_header_and_record_contigs_remain_separate_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013208668678998947,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00072505883872509,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.011033964343369007,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c03_check_only_false_predicate_is_structurally_not_applicable",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014304649084806442,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005223248153924942,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0032854070886969566,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_snpeff_false_predicate_routes_to_typed_correction",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001361202448606491,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005223769694566727,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0015995809808373451,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c02_unpredicated_false_observation_is_not_a_global_truthiness_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013249553740024567,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005424609407782555,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001724090427160263,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_pre_review_report_is_pending_and_never_pretends_commit_eligibility",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001358604058623314,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006736321374773979,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.008757311850786209,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c04_true_predicate_does_not_override_bound_parser_concern",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014336127787828445,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005425233393907547,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002528553828597069,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c05_optional_reviewer_suggestion_can_complete",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013764109462499619,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005645658820867538,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0014953631907701492,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_c07_cross_report_reviewer_decision_fails_closed",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013519078493118286,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006992686539888382,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.003423755057156086,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-False-BOOLEAN_PREDICATE_NOT_SATISFIED]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001528887078166008,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007213428616523743,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0032851984724402428,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-false-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001575695350766182,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007190657779574394,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0032845428213477135,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[present-None-BOOLEAN_PREDICATE_CLAIM_TYPE_INVALID]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000169435515999794,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007249349728226662,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0031042760238051414,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_v06_boolean_string_null_and_missing_are_distinct[missing-None-BOOLEAN_PREDICATE_EVIDENCE_MISSING]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015618186444044113,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005512302741408348,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0034081069752573967,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_controller_parser_overrides_incorrect_action_claim",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013889651745557785,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000546380877494812,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004540081135928631,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_reviewer_uses_typed_disposition_and_never_scans_concern_keywords",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013904087245464325,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005454057827591896,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002533615566790104,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_invalid_reviewer_combination_fails_closed_to_assessment_pending",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001416364684700966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005484120920300484,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004647706635296345,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_workspace_receipt_requires_runtime_producer_hash_and_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001422390341758728,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005476446822285652,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0030804136767983437,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_hash_and_disposition_are_tamper_evident",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013583526015281677,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005680369213223457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.002455039881169796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion.py::test_completion_report_identity_ignores_validation_observation_timestamp",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013763178139925003,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012953951954841614,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005677494220435619,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_typed_supervisor_emits_report_and_semantic_disposition",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001275874674320221,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005946680903434753,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0071013206616044044,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c01_typed_supervisor_routes_deterministic_false_to_correction",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014340877532958984,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012158136814832687,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0007025869563221931,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_each_semantic_disposition_has_an_exact_route_without_prose_routing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012204702943563461,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012025982141494751,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005151745863258839,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_user_information_disposition_projects_one_typed_pending_question",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012336019426584244,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012375973165035248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0021408619359135628,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_rejects_verified_outcome_without_completion_report",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012562237679958344,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013323035091161728,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.005529613234102726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_independently_recomputes_and_honors_deterministic_veto",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001234849914908409,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00012372713536024094,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007593630813062191,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_commit_records_report_decision_and_consumption_in_one_state_write",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013120193034410477,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005774581804871559,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0327942781150341,
+    "failure": "tests/test_semantic_completion_workflow.py:679: in test_e2e_a_review_correction_new_evidence_then_single_commit\n    assert first_durable == first_before\nE   AssertionError: assert {'schema_vers...'plan-1', ...} == {'schema_vers...'plan-1', ...}\nE     \nE     Omitting 11 identical items, use -vv to show\nE     Differing items:\nE     {'task_state': {'status': 'running', 'workflow_routing_schema_version': 2, 'semantic_review_receipts': {'assessment:sh...6d4abf25cfb5e2bc250f237fe47d2140bbcfeffddec4e43675401916c9', 'policy_version': 'semantic-review-correction-v1', ...}}}} != {'task_state': {'status': 'running', 'workflow_routing_schema_version': 2}}\nE     Left contains 3 more items:\nE     {'approval_gate_v2': {'applicable': False,\nE                           'reason': 'reader_incompatible',...\nE     \nE     ...Full output truncated (4 lines hidden), use '-vv' to show"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_review_correction_new_evidence_then_single_commit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001769382506608963,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00013625994324684143,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.007259373553097248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_c09_wrong_accept_cannot_hide_missing_runtime_mutation_receipt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001278882846236229,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006432682275772095,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.040926297195255756,
+    "failure": "tests/test_semantic_completion_workflow.py:878: in test_e2e_a_check_only_real_incompatibility_stays_false_and_completes\n    assert outcome[\"type\"] == \"verified\"\nE   AssertionError: assert 'assessment_pending' == 'verified'\nE     \nE     - verified\nE     + assessment_pending"
+  },
+  {
+    "nodeid": "tests/test_semantic_completion_workflow.py::test_e2e_a_check_only_real_incompatibility_stays_false_and_completes",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00025018956512212753,
+    "failure": ""
+  }
+]

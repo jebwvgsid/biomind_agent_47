@@ -1,0 +1,24 @@
+{
+  "tests_passed": 68,
+  "subtests_passed": 5,
+  "failures": [],
+  "source_identity": "SOURCE_IDENTITY 146e266abeaa487d26ce70fe6f0b85f656f76460b7bb8a5bb63e8ab1ea3b753f",
+  "files": {
+    "agent_core/action_runtime.py": {
+      "tested_sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d",
+      "workspace_sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d"
+    },
+    "agent_core/workflow/runtime_evidence_recovery.py": {
+      "tested_sha256": "8d6858e31962b6309cd4ea71682e17cd07c48b6109c78e3eea82f32465811eea",
+      "workspace_sha256": "8d6858e31962b6309cd4ea71682e17cd07c48b6109c78e3eea82f32465811eea"
+    },
+    "tests/test_unified_runtime_expiry.py": {
+      "tested_sha256": "99061766f5e4fa362e45ccb5daac1a87fdc81cff8acd268e7c6a2437097b7ab2",
+      "workspace_sha256": "99061766f5e4fa362e45ccb5daac1a87fdc81cff8acd268e7c6a2437097b7ab2"
+    }
+  },
+  "scope": "5 new expiry scenarios plus 3 existing runtime suites; no scientific tools executed",
+  "tested_files_match_workspace": true,
+  "command": "env -i PATH=/usr/bin:/bin TMPDIR=/tmp/biomind-r1-tXsGVj/tmp BIOMIND_DISABLE_DOTENV=1 BIOMIND_OFFLINE_RESULTS=/tmp/biomind-r1-tXsGVj/expiry-fixed-results.json /public/home/liusiqi/anaconda3/envs/biomind/bin/python -I /tmp/biomind-r1-tXsGVj/review-candidate/tests/offline_managed_bootstrap.py /tmp/biomind-r1-tXsGVj/review-candidate -q tests/test_unified_runtime_expiry.py tests/test_action_scoped_runtime_bindings.py tests/test_runtime_evidence_records.py tests/test_runtime_evidence_recovery.py --tb=short",
+  "successful_call_reports_including_subtests": 73
+}

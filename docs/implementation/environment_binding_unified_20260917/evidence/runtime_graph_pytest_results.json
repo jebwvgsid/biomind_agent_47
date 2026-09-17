@@ -1,0 +1,52 @@
+[
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[first-required]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[first-required]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.02909732609987259,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[first-required]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 11.310545913875103,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[first-required]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003905687481164932,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[approved-empty-to-required-revision]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[approved-empty-to-required-revision]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007441733032464981,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[approved-empty-to-required-revision]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.9347215173766017,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_graph.py::test_required_runtime_recovers_before_provider_and_real_tiny_execution[approved-empty-to-required-revision]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002396879717707634,
+    "failure": ""
+  }
+]

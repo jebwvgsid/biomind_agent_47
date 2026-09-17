@@ -1,0 +1,32 @@
+{
+  "tests_passed": 28,
+  "failures": [],
+  "prior_replay_witnesses": 2,
+  "source_identity": "SOURCE_IDENTITY dd01a47af661fa61028b92b3342d8bea637c6113cec8e06dba9112328fd174a6",
+  "files": {
+    "agent_core/workflow/runtime_evidence_recovery.py": {
+      "tested_sha256": "75787e574d0d9eff5dcf073736110dfd577ece386c8dc372e19d04832fa00d00",
+      "workspace_sha256": "75787e574d0d9eff5dcf073736110dfd577ece386c8dc372e19d04832fa00d00"
+    },
+    "tests/test_unified_runtime_generation_authority.py": {
+      "tested_sha256": "ba20b667c71c2e43c2453de13b2eb56846ea139094d3d4e08d3a497600c88a79",
+      "workspace_sha256": "ba20b667c71c2e43c2453de13b2eb56846ea139094d3d4e08d3a497600c88a79"
+    },
+    "tests/test_unified_runtime_preparation.py": {
+      "tested_sha256": "593b10326b90af7f5d031d964098e37da73d378e8fac013ac2345e647dcf92c5",
+      "workspace_sha256": "593b10326b90af7f5d031d964098e37da73d378e8fac013ac2345e647dcf92c5"
+    },
+    "agent_core/runtime_probe_contract.py": {
+      "tested_sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce",
+      "workspace_sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce"
+    },
+    "agent_core/active_state.py": {
+      "tested_sha256": "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105",
+      "workspace_sha256": "6480969a03be9cd2a7ca90f2422c672e0b5e352a246509b8dffb66b50b91d105"
+    },
+    "agent_core/workflow/generate_handoff.py": {
+      "tested_sha256": "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc",
+      "workspace_sha256": "574f4021c5e9fec4027730babd98ff36f92c85e1b23bd7a630a143cada80fbcc"
+    }
+  }
+}

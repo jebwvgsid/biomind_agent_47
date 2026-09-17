@@ -1,0 +1,110 @@
+[
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/bwa",
+      "mem",
+      "-t",
+      "1",
+      "-R",
+      "@RG\\tID:tiny\\tSM:tiny\\tLB:lib1\\tPL:ILLUMINA",
+      "/tmp/biomind-d3-micro/bundle/reference.fa",
+      "/tmp/biomind-d3-micro/reads1.fq",
+      "/tmp/biomind-d3-micro/reads2.fq"
+    ],
+    "returncode": 0,
+    "stdout_file": "mapped.sam",
+    "stderr": "[M::bwa_idx_load_from_disk] read 0 ALT contigs\n[M::process] read 8 sequences (640 bp)...\n[M::mem_pestat] # candidate unique pairs for (FF, FR, RF, RR): (0, 4, 0, 0)\n[M::mem_pestat] skip orientation FF as there are not enough pairs\n[M::mem_pestat] skip orientation FR as there are not enough pairs\n[M::mem_pestat] skip orientation RF as there are not enough pairs\n[M::mem_pestat] skip orientation RR as there are not enough pairs\n[M::mem_process_seqs] Processed 8 reads in 0.001 CPU sec, 0.025 real sec\n[main] Version: 0.7.19-r1273\n[main] CMD: /public/home/liusiqi/anaconda3/envs/bio_wgs/bin/bwa mem -t 1 -R @RG\\tID:tiny\\tSM:tiny\\tLB:lib1\\tPL:ILLUMINA /tmp/biomind-d3-micro/bundle/reference.fa /tmp/biomind-d3-micro/reads1.fq /tmp/biomind-d3-micro/reads2.fq\n[main] Real time: 0.028 sec; CPU: 0.003 sec\n"
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/samtools",
+      "sort",
+      "-@",
+      "1",
+      "-o",
+      "/tmp/biomind-d3-micro/sorted.bam",
+      "/tmp/biomind-d3-micro/mapped.sam"
+    ],
+    "returncode": 0,
+    "stdout_file": "last.stdout",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/java",
+      "-Xmx256m",
+      "-jar",
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/share/picard-2.20.4-0/picard.jar",
+      "MarkDuplicates",
+      "I=/tmp/biomind-d3-micro/sorted.bam",
+      "O=/tmp/biomind-d3-micro/marked.bam",
+      "M=/tmp/biomind-d3-micro/duplicates.txt",
+      "CREATE_INDEX=true",
+      "ASSUME_SORTED=true",
+      "VALIDATION_STRINGENCY=STRICT",
+      "TMP_DIR=/tmp/biomind-d3-micro"
+    ],
+    "returncode": 0,
+    "stdout_file": "last.stdout",
+    "stderr": "INFO\t2026-09-17 18:55:24\tMarkDuplicates\t\n\n********** NOTE: Picard's command line syntax is changing.\n**********\n********** For more information, please see:\n********** https://github.com/broadinstitute/picard/wiki/Command-Line-Syntax-Transition-For-Users-(Pre-Transition)\n**********\n********** The command line looks like this in the new syntax:\n**********\n**********    MarkDuplicates -I /tmp/biomind-d3-micro/sorted.bam -O /tmp/biomind-d3-micro/marked.bam -M /tmp/biomind-d3-micro/duplicates.txt -CREATE_INDEX true -ASSUME_SORTED true -VALIDATION_STRINGENCY STRICT -TMP_DIR /tmp/biomind-d3-micro\n**********\n\n\n18:55:24.467 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/public/home/liusiqi/anaconda3/envs/bio_wgs/share/picard-2.20.4-0/picard.jar!/com/intel/gkl/native/libgkl_compression.so\n[Thu Sep 17 18:55:24 CST 2026] MarkDuplicates INPUT=[/tmp/biomind-d3-micro/sorted.bam] OUTPUT=/tmp/biomind-d3-micro/marked.bam METRICS_FILE=/tmp/biomind-d3-micro/duplicates.txt ASSUME_SORTED=true TMP_DIR=[/tmp/biomind-d3-micro] VALIDATION_STRINGENCY=STRICT CREATE_INDEX=true    MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=50000 MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=8000 SORTING_COLLECTION_SIZE_RATIO=0.25 TAG_DUPLICATE_SET_MEMBERS=false REMOVE_SEQUENCING_DUPLICATES=false TAGGING_POLICY=DontTag CLEAR_DT=true DUPLEX_UMI=false ADD_PG_TAG_TO_READS=true REMOVE_DUPLICATES=false DUPLICATE_SCORING_STRATEGY=SUM_OF_BASE_QUALITIES PROGRAM_RECORD_ID=MarkDuplicates PROGRAM_GROUP_NAME=MarkDuplicates READ_NAME_REGEX=<optimized capture of last three ':' separated fields as numeric values> OPTICAL_DUPLICATE_PIXEL_DISTANCE=100 MAX_OPTICAL_DUPLICATE_SET_SIZE=300000 VERBOSITY=INFO QUIET=false COMPRESSION_LEVEL=5 MAX_RECORDS_IN_RAM=500000 CREATE_MD5_FILE=false GA4GH_CLIENT_SECRETS=client_secrets.json USE_JDK_DEFLATER=false USE_JDK_INFLATER=false\n[Thu Sep 17 18:55:24 CST 2026] Executing as liusiqi@ln02 on Linux 5.14.0-284.11.1.el9_2.x86_64 amd64; OpenJDK 64-Bit Server VM 11.0.1+13-LTS; Deflater: Intel; Inflater: Intel; Provider GCS is not available; Picard version: 2.20.4-SNAPSHOT\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tStart of doWork freeMemory: 19463600; totalMemory: 25165824; maxMemory: 268435456\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tReading input file and constructing read end information.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tWill retain up to 972592 data points before spilling to disk.\nWARNING\t2026-09-17 18:55:24\tAbstractOpticalDuplicateFinderCommandLineProgram\tA field field parsed out of a read name was expected to contain an integer and did not. Read name: read0. Cause: String 'read0' did not start with a parsable number.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tRead 8 records. 0 pairs never matched.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tAfter buildSortedReadEndLists freeMemory: 10877504; totalMemory: 25165824; maxMemory: 268435456\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tWill retain up to 8388608 duplicate indices before spilling to disk.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tTraversing read pair information and detecting duplicates.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tTraversing fragment information and detecting duplicates.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tSorting list of duplicate records.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tAfter generateDuplicateIndexes freeMemory: 50347328; totalMemory: 124780544; maxMemory: 268435456\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tMarking 2 records as duplicates.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tFound 0 optical duplicate clusters.\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tReads are assumed to be ordered by: coordinate\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tBefore output close freeMemory: 21455816; totalMemory: 28311552; maxMemory: 268435456\nINFO\t2026-09-17 18:55:24\tMarkDuplicates\tAfter output close freeMemory: 18410544; totalMemory: 25165824; maxMemory: 268435456\n[Thu Sep 17 18:55:24 CST 2026] picard.sam.markduplicates.MarkDuplicates done. Elapsed time: 0.01 minutes.\nRuntime.totalMemory()=25165824\n"
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/samtools",
+      "flagstat",
+      "/tmp/biomind-d3-micro/marked.bam"
+    ],
+    "returncode": 0,
+    "stdout_file": "flagstat.txt",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_wgs/bin/samtools",
+      "coverage",
+      "/tmp/biomind-d3-micro/marked.bam"
+    ],
+    "returncode": 1,
+    "stdout_file": "coverage.txt",
+    "stderr": "[main] unrecognized command 'coverage'\n"
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/gatk",
+      "--java-options",
+      "-Xmx256m",
+      "HaplotypeCaller",
+      "-R",
+      "/tmp/biomind-d3-micro/bundle/reference.fa",
+      "-I",
+      "/tmp/biomind-d3-micro/marked.bam",
+      "-O",
+      "/tmp/biomind-d3-micro/launcher.vcf",
+      "--native-pair-hmm-threads",
+      "1"
+    ],
+    "returncode": 255,
+    "stdout_file": "last.stdout",
+    "stderr": "Launcher class not found.\nException in thread \"main\" java.lang.NoClassDefFoundError: org/graalvm/polyglot/PolyglotException\nCaused by: java.lang.ClassNotFoundException: org.graalvm.polyglot.PolyglotException\n\tat java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)\n\tat java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)\n\tat java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)\n"
+  },
+  {
+    "argv": [
+      "/public/home/liusiqi/anaconda3/envs/bio_gatk/bin/java",
+      "-Xmx256m",
+      "-jar",
+      "/public/home/liusiqi/anaconda3/envs/bio_gatk/share/gatk4-4.6.2.0-1/gatk-package-4.6.2.0-local.jar",
+      "HaplotypeCaller",
+      "-R",
+      "/tmp/biomind-d3-micro/bundle/reference.fa",
+      "-I",
+      "/tmp/biomind-d3-micro/marked.bam",
+      "-O",
+      "/tmp/biomind-d3-micro/direct-java.vcf",
+      "--native-pair-hmm-threads",
+      "1"
+    ],
+    "returncode": -9,
+    "stdout_file": "last.stdout",
+    "stderr": "18:55:28.454 INFO  NativeLibraryLoader - Loading libgkl_compression.so from jar:file:/public/home/liusiqi/anaconda3/envs/bio_gatk/share/gatk4-4.6.2.0-1/gatk-package-4.6.2.0-local.jar!/com/intel/gkl/native/libgkl_compression.so\n18:55:29.090 INFO  HaplotypeCaller - ------------------------------------------------------------\n18:55:29.098 INFO  HaplotypeCaller - The Genome Analysis Toolkit (GATK) v4.6.2.0\n18:55:29.098 INFO  HaplotypeCaller - For support and documentation go to https://software.broadinstitute.org/gatk/\n18:55:29.098 INFO  HaplotypeCaller - Executing as liusiqi@ln02 on Linux v5.14.0-284.11.1.el9_2.x86_64 amd64\n18:55:29.098 INFO  HaplotypeCaller - Java runtime: OpenJDK 64-Bit Server VM v21.0.8-internal-adhoc.conda.src\n18:55:29.098 INFO  HaplotypeCaller - Start Date/Time: September 17, 2026, 6:55:27\u202fPM CST\n18:55:29.098 INFO  HaplotypeCaller - ------------------------------------------------------------\n18:55:29.098 INFO  HaplotypeCaller - ------------------------------------------------------------\n18:55:29.099 INFO  HaplotypeCaller - HTSJDK Version: 4.2.0\n18:55:29.099 INFO  HaplotypeCaller - Picard Version: 3.4.0\n18:55:29.099 INFO  HaplotypeCaller - Built for Spark Version: 3.5.0\n18:55:29.101 INFO  HaplotypeCaller - HTSJDK Defaults.COMPRESSION_LEVEL : 2\n18:55:29.101 INFO  HaplotypeCaller - HTSJDK Defaults.USE_ASYNC_IO_READ_FOR_SAMTOOLS : false\n18:55:29.101 INFO  HaplotypeCaller - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_SAMTOOLS : true\n18:55:29.102 INFO  HaplotypeCaller - HTSJDK Defaults.USE_ASYNC_IO_WRITE_FOR_TRIBBLE : false\n18:55:29.102 INFO  HaplotypeCaller - Deflater: IntelDeflater\n18:55:29.102 INFO  HaplotypeCaller - Inflater: IntelInflater\n18:55:29.102 INFO  HaplotypeCaller - GCS max retries/reopens: 20\n18:55:29.102 INFO  HaplotypeCaller - Requester pays: disabled\n18:55:29.102 INFO  HaplotypeCaller - Initializing engine\n"
+  }
+]

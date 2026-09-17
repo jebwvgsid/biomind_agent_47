@@ -1,0 +1,289 @@
+{
+  "original_head": "73e1f8fbc585c695530fba01d4e5394b99b4cbcc",
+  "patch": "/public/home/liusiqi/03.\u6bd5\u8bbe/biomind_audit_exports/environment_binding_unified_20260917/task_increment.patch",
+  "patch_sha256": "2f8c3f40bdca910a6f77989dfa09138eafd0b4b42cd21d92ddff840d2ba81cfd",
+  "files": [
+    {
+      "path": "agent_core/action_runtime.py",
+      "before_sha256": "53ff91ce91ea502b4fb46d63e374ee3e3ad27596a7aea924227cc672b95c3071",
+      "after_sha256": "4a3b7a7b9b6b871c43ab66a0a0c8830afb40ca48e3c412747e9c73b16f8a642d",
+      "mode": 384
+    },
+    {
+      "path": "agent_core/cli_lifecycle.py",
+      "before_sha256": "68eaa26ecd32e32d270d802ae6c54902013b7594644c0832b094a917b529b28c",
+      "after_sha256": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/genomics_reference_bundle.py",
+      "before_sha256": null,
+      "after_sha256": "602c4f46f875fa776bf71893b413a4ab7613f7c6f28312de4c8004103471c56d",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/installer.py",
+      "before_sha256": "1c4b40eb49944d14c45591993aaa501de489769298b7e7438f1459487d287891",
+      "after_sha256": "34529a85c94d9066834b4b84e43bb0fb300202d22d1e6d5bbf6d2018e9f9770f",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/node_context.py",
+      "before_sha256": "a25b99034dbf21d5d71673811c2de705a3bce810205c272770e036dc288da1ff",
+      "after_sha256": "b5863c22cd64c5b2f56a03864d478810e1e3928fa31b645e46032e8c593d3d79",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/plan_bindings.py",
+      "before_sha256": "3d87cdba694d46416eca46995655c338c0ac13394e9fc3c667cc437db1cea20f",
+      "after_sha256": "6f4348a4c08577ea19d30f3a9d6c2ccdb2429a58512d623e447f87b4069536f6",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/plan_tracker.py",
+      "before_sha256": "724f098ea3b41ed6e78ff629a2f014a8e5121fbb19cd2ab631cc03da8d2628c2",
+      "after_sha256": "b18cae073d8bc63778cceee220aac54577efa66e5371a128caa05ecff0d8dc28",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/runtime_inspection.py",
+      "before_sha256": "485229946948afa1bada3494b81f3c70c24d01e9faf9547c773971c7a94045ee",
+      "after_sha256": "270d874dc0e45883131c3293e239ee7ff78793bb3d034a0f0b2cd00bd58bb8f3",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/runtime_probe_contract.py",
+      "before_sha256": null,
+      "after_sha256": "a3b48e1c0f98aa2e587aa117a123c6bffc16a73160ea0c5d22ac1badfac6fdce",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/semantic_completion.py",
+      "before_sha256": "8dc3af63d3dc0f60a79c864be5fc32487fadbbb47e28770882cbee313a458cc7",
+      "after_sha256": "7943675b991094fd1fded34a07be8ab5c8e4f783eb4ed33b0c0161ecb768a27d",
+      "mode": 384
+    },
+    {
+      "path": "agent_core/skill_manager.py",
+      "before_sha256": "ed96e8ca6f773ab102f60ada9bd1a020fa3e6a95b187328340fcd263f0a37c92",
+      "after_sha256": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/skill_resource_binding.py",
+      "before_sha256": "684b9da4f468bcf5dee3e653cfc2746de9f04fa09993c81bf6f4017f9bcf1445",
+      "after_sha256": "d31d00c103d7af4d31ba780e453f8dddf8d35020354294c1136eecbb6039f6ec",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/skill_script_invocation.py",
+      "before_sha256": "e58e32bd3a3be70f348f0c97517e30b77b238c85ece13bd848c139669df44c97",
+      "after_sha256": "3e6652eadc88a1261fcaea59255cb950f755d6d755b7eaf10108780091ff35c3",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/state.py",
+      "before_sha256": "af4f504c0b61267659d3d554b27f9a9eec92a48b35143fbe838e4450ac8c4565",
+      "after_sha256": "157d4da1da6c483abb2afa32935cc289e14e15e203b164265888e70b502e5b10",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/workflow/early_nodes.py",
+      "before_sha256": "cabf181201849b0fe2c4e6fd7ed0caeb441cefde23f54ca57d7a0277e98b55c9",
+      "after_sha256": "1e9042eee7e12536052155944cb35819fdda43834ba85b10433ec23cf040cde8",
+      "mode": 384
+    },
+    {
+      "path": "agent_core/workflow/execution.py",
+      "before_sha256": "ecf8d9e45242ac87fdcad984305d172a5efae135f992fcff1637563ced74ee29",
+      "after_sha256": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/workflow/managed_stop.py",
+      "before_sha256": "bf5867b71dad6ad65d059f0bcee664fb3bd9f9fdea49ff6cbd9a72c7df8681fa",
+      "after_sha256": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/workflow/outcomes.py",
+      "before_sha256": "43a028f37142a625c2522376c91cfa8027aec6c979ac63d5c10b5dc2ded8cf76",
+      "after_sha256": "efc6ff0ec02814749b65c634830f1164ccfb8c5e81dd30c7b093a96c5b1022a8",
+      "mode": 384
+    },
+    {
+      "path": "agent_core/workflow/runtime_evidence_recovery.py",
+      "before_sha256": "80e7b63f6a06ea1409b4b3e3ca7e8ee08dc93a6f1ba29243aed33b67eb782e44",
+      "after_sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620",
+      "mode": 420
+    },
+    {
+      "path": "agent_core/workflow/runtime_graph.py",
+      "before_sha256": "66dbc186acf9a5cf9d6ebdd0d9686f6780b1f040fc7e62cc63c29b86321f4ab2",
+      "after_sha256": "94a54d08572f1d2dd675134755551d0c95e3207f1c63eca17059c9e5b7be1dd2",
+      "mode": 384
+    },
+    {
+      "path": "bio_agents.py",
+      "before_sha256": "c4d81118032f0132a8269cb5344cc1650986d148a8e80bd911906bb304d35883",
+      "after_sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9",
+      "mode": 420
+    },
+    {
+      "path": "package_manager.py",
+      "before_sha256": "9028f0fc2d80d57aed657bd18743722ca872a90fc321f1fe3065df3ec86c624d",
+      "after_sha256": "73694e758960b3c71286d61cedc17c782b6c11ebeede3e964e41194f888093b5",
+      "mode": 420
+    },
+    {
+      "path": "prompts/manager.py",
+      "before_sha256": "021f3b5e4e5b741e207a17a1da1801047bf8dd5e4770876b86214b1917b266b5",
+      "after_sha256": "505b863ce854e1a478a776b402b556d52642600b6940874a1f322786abc8f416",
+      "mode": 420
+    },
+    {
+      "path": "skills/3d-dna/calder2-subcompartment/SKILL.md",
+      "before_sha256": "9b8539230a67687f36e3e9dc0d8edbdceb48a3c812f12cc395f211cc33e325f9",
+      "after_sha256": "26d6fcca7ec7db790ac928f4df231b68096d84fd28735644779bedc9ce1e2355",
+      "mode": 420
+    },
+    {
+      "path": "skills/genomics/wgs-gatk-snp-indel/SKILL.md",
+      "before_sha256": "7444ab129be62dedebabccc602f2d2ae88d39ae33f7426fa4641e6aa8d2013ad",
+      "after_sha256": "ab73a4316ca944e889f4c6094a9624f3541dfe1cbf870cd50d571d4b86d2f59e",
+      "mode": 384
+    },
+    {
+      "path": "skills/genomics/wgs-gatk-snp-indel/references/calling-methods.md",
+      "before_sha256": null,
+      "after_sha256": "42dba80eb60e1bdc6ccfc7d338f237a06d82aaab61c7031abd76c23745f4948e",
+      "mode": 420
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/SKILL.md",
+      "before_sha256": "ca46ef15d79e260f01a8967fa8c97ec6abb50adb0e14bb1175a2c76d345e7673",
+      "after_sha256": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+      "mode": 384
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/failure-publication.md",
+      "before_sha256": null,
+      "after_sha256": "d055422243efa52e800c7203f137889b1e08dc325b03834644769678796bffca",
+      "mode": 420
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/mapping-methods.md",
+      "before_sha256": null,
+      "after_sha256": "5d039cd548f32489f3352b30ae5efe3d0813e4e1659ba70af5c0b66b65330506",
+      "mode": 420
+    },
+    {
+      "path": "skills/genomics/wgs-short-read-mapping/references/runtime-and-reference.md",
+      "before_sha256": null,
+      "after_sha256": "564a16e997341ee7e34cc69f98f7ae6904bf0c5d317611785fbcca2c44f56cd1",
+      "mode": 420
+    },
+    {
+      "path": "tests/fixtures/unified_terminal_recorded.json",
+      "before_sha256": null,
+      "after_sha256": "e7c789721cff0b67bd8d61aebae93bd6a5f26a74a0971889301bd2fe2afe8d56",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_action_scoped_runtime_bindings.py",
+      "before_sha256": "c477fd50ea8bac70ce727369df49f18b48ecb2dd489599456b1ab2aeefe9cc99",
+      "after_sha256": "2dff656a8024cd2f3e3183622f04fa9d4115bbccb59b73e31f44d265dde16fa8",
+      "mode": 384
+    },
+    {
+      "path": "tests/test_bio_agents_memory.py",
+      "before_sha256": "cd4a10615295b846f8670a3dc71860aa8024db1b9d59c2fa87fe9c06963e877e",
+      "after_sha256": "19cbf59ce05ef3c575dd4f33e3afcec78386f493be8181bafaef9e35379037e6",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_installer_agent.py",
+      "before_sha256": "afeb4c58785c7e3b0200169f4c94c84815617709b9928d9fb6908e8a2cb34672",
+      "after_sha256": "8a488111b151f56ba35c752e259ffee3cfdd7a24841d360b4de5365836cf2380",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_skill_script_invocation.py",
+      "before_sha256": "7e9fb70e39ee331e038ae3995e4951eb4ef49a707aed2421485282ae858518f1",
+      "after_sha256": "146296f53a5d42f21ae1e063c5a64074eb1c26c53e3dbe3f0a937d999701719a",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_binding_rollback.py",
+      "before_sha256": null,
+      "after_sha256": "cf65d1edb63253f167be57cb2510238abf13f8b495ecb9ab755015ffe57db362",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_dependency_preparation.py",
+      "before_sha256": null,
+      "after_sha256": "c57fdd16df56c343ea6815a1f9b4d01708b48e6ce014ff8f2e983ef48260fd0d",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_helper_selection.py",
+      "before_sha256": null,
+      "after_sha256": "9bf02ed834936590e70b3f81f9367f60a47db78cc76e61d179ee87380c57e1ca",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_installer_boundary.py",
+      "before_sha256": null,
+      "after_sha256": "de2681dc6a27c17da97b16d4bf559eafc88849970ce8a22e0d3e07c75a0a6966",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_reference_bundle.py",
+      "before_sha256": null,
+      "after_sha256": "b5e549d22ddcd0d2155bb63c43ce8ac260d85d68da73c09f8b91a9db889864cb",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_runtime_expiry.py",
+      "before_sha256": null,
+      "after_sha256": "99061766f5e4fa362e45ccb5daac1a87fdc81cff8acd268e7c6a2437097b7ab2",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_runtime_generation_authority.py",
+      "before_sha256": null,
+      "after_sha256": "ba20b667c71c2e43c2453de13b2eb56846ea139094d3d4e08d3a497600c88a79",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_runtime_graph.py",
+      "before_sha256": null,
+      "after_sha256": "169334b24d15b312492ee68427d0c343dd27acaac5a6f57b44a71ef06100d792",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_runtime_preparation.py",
+      "before_sha256": null,
+      "after_sha256": "81ff7f37a5b6270a5ae4a2cef74c083bf88d3a9ee8d0680d2abad377beb125c6",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_runtime_preparation_install_resume.py",
+      "before_sha256": null,
+      "after_sha256": "6872ae70fa406f5ff6ac40e7e53c17c8ea8c2ee43bd0012b75d6682402b27184",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_skill_requests.py",
+      "before_sha256": null,
+      "after_sha256": "e2f9658509088844523d6d1da0ffb924cb19e7a484a51bfaa44442a2b0612d5b",
+      "mode": 420
+    },
+    {
+      "path": "tests/test_unified_terminal_facts.py",
+      "before_sha256": null,
+      "after_sha256": "81ec48bd7b2833a3605d00247d3081354c14b337fb389a3868a832eeca0686b4",
+      "mode": 420
+    }
+  ]
+}

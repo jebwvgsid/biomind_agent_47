@@ -1,0 +1,1587 @@
+[
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNKNOWN]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNKNOWN]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.06493150256574154,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNKNOWN]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.27056252490729094,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNKNOWN]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019303429871797562,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNAVAILABLE]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNAVAILABLE]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006768312305212021,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNAVAILABLE]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.2314680777490139,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_same_prefix_verified_installation_reopens_once_without_any_execution_attempt[UNAVAILABLE]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001811264082789421,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[no_receipt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[no_receipt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006431341171264648,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[no_receipt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11913274601101875,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[no_receipt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001639658585190773,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[not_available]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[not_available]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006527341902256012,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[not_available]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11763391550630331,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[not_available]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016810279339551926,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_hash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_hash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006550392135977745,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_hash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11635741777718067,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_hash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015854183584451675,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[stale_source]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[stale_source]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00063368771225214,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[stale_source]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1160516869276762,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[stale_source]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016062892973423004,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_target]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_target]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006375396624207497,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_target]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11677961237728596,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_ordinary_or_unverified_installation_cannot_reset_terminal_runtime_budget[wrong_target]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016365665942430496,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[UNKNOWN-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[UNKNOWN-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006508566439151764,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[UNKNOWN-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1830601366236806,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[UNKNOWN-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018536671996116638,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[ERROR-False]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[ERROR-False]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006992127746343613,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[ERROR-False]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.18154533300548792,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[ERROR-False]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018762238323688507,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[AVAILABLE-True]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[AVAILABLE-True]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000687762163579464,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[AVAILABLE-True]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.18563663680106401,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_reinspection_failure_unknown_or_partial_result_preserves_negative_facts[AVAILABLE-True]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018542539328336716,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_consumed_work_order_replay_does_not_cover_a_later_source",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_consumed_work_order_replay_does_not_cover_a_later_source",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006242487579584122,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_consumed_work_order_replay_does_not_cover_a_later_source",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11599511373788118,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_consumed_work_order_replay_does_not_cover_a_later_source",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018008798360824585,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNKNOWN]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNKNOWN]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006394442170858383,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNKNOWN]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.26554066501557827,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNKNOWN]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018183980137109756,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNAVAILABLE]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNAVAILABLE]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006704442203044891,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNAVAILABLE]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.25895515736192465,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_preparation_install_resume.py::test_new_installation_epoch_keeps_previously_retired_attempts_inert[UNAVAILABLE]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018009543418884277,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_install]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_install]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000652385875582695,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_install]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1081434665247798,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_install]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017546676099300385,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_recovery]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_recovery]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006633922457695007,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_recovery]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11370434705168009,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_historical_available_or_completed_retry_cannot_retire_later_failure[stale_recovery]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001818351447582245,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_id]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_id]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006165159866213799,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_id]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10576284117996693,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_id]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017559528350830078,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[attempt_id]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[attempt_id]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006576674059033394,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[attempt_id]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10351718030869961,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[attempt_id]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017329584807157516,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_env]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_env]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000647393986582756,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_env]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1046825423836708,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_env]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018057413399219513,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_prefix]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_prefix]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006699757650494576,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_prefix]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10537369549274445,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[target_prefix]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001852530986070633,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_hash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_hash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007116664201021194,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_hash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1053147790953517,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[request_hash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001698555424809456,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[generation_source_scope]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[generation_source_scope]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006604166701436043,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[generation_source_scope]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10531337186694145,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[generation_source_scope]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001875944435596466,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[source_attempt_ids]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[source_attempt_ids]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006617754697799683,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[source_attempt_ids]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10678097233176231,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[source_attempt_ids]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018158555030822754,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[approved_plan_snapshot_ref]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[approved_plan_snapshot_ref]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006986921653151512,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[approved_plan_snapshot_ref]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10823798272758722,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_available_receipt_requires_exact_work_order_and_frozen_scientific_source[approved_plan_snapshot_ref]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018097925931215286,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_current_installation_can_retire_once_preserving_actions_and_not_cover_next_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_current_installation_can_retire_once_preserving_actions_and_not_cover_next_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005817599594593048,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_current_installation_can_retire_once_preserving_actions_and_not_cover_next_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.13892933167517185,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_current_installation_can_retire_once_preserving_actions_and_not_cover_next_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001620035618543625,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_formal_adopted_recovery_can_retire_once_but_not_a_later_attempt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_formal_adopted_recovery_can_retire_once_but_not_a_later_attempt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005717631429433823,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_formal_adopted_recovery_can_retire_once_but_not_a_later_attempt",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.15734142530709505,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_formal_adopted_recovery_can_retire_once_but_not_a_later_attempt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016661640256643295,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[completed]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[completed]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006401063874363899,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[completed]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1368211917579174,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[completed]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001819208264350891,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[source_attempt]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[source_attempt]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006510866805911064,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[source_attempt]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1354986745864153,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[source_attempt]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001804465427994728,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[envelope_hash]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[envelope_hash]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006467578932642937,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[envelope_hash]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1349210273474455,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[envelope_hash]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017757806926965714,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[directive_digest]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[directive_digest]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006808275356888771,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[directive_digest]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1461570104584098,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_runtime_generation_authority.py::test_typed_recovery_checks_adopted_scope_and_integrity[directive_digest]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001917518675327301,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_actionable_user_decision_stays_separate_from_dependency_block",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_actionable_user_decision_stays_separate_from_dependency_block",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000322156585752964,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_actionable_user_decision_stays_separate_from_dependency_block",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.23176541738212109,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_actionable_user_decision_stays_separate_from_dependency_block",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015929527580738068,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_answered_question_without_materialized_scope_change_cannot_repeat",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_answered_question_without_materialized_scope_change_cannot_repeat",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025851838290691376,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_answered_question_without_materialized_scope_change_cannot_repeat",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11499003507196903,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_answered_question_without_materialized_scope_change_cannot_repeat",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015795323997735977,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_inspection_authorization_rejects_late_result",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_inspection_authorization_rejects_late_result",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022798310965299606,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_inspection_authorization_rejects_late_result",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04789068829268217,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_inspection_authorization_rejects_late_result",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00013544131070375443,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_request_id_does_not_authorize_or_reset_budget",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_request_id_does_not_authorize_or_reset_budget",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020634103566408157,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_request_id_does_not_authorize_or_reset_budget",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.028156979009509087,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_changed_request_id_does_not_authorize_or_reset_budget",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001333225518465042,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_concurrent_same_episode_singleflight",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_concurrent_same_episode_singleflight",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020692870020866394,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_concurrent_same_episode_singleflight",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.09658929891884327,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_concurrent_same_episode_singleflight",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014976505190134048,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_durable_facts_stop_without_inspection",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_durable_facts_stop_without_inspection",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021029356867074966,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_durable_facts_stop_without_inspection",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05376821290701628,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_durable_facts_stop_without_inspection",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001352718099951744,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_probe_records_stop_after_first_receipt",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_probe_records_stop_after_first_receipt",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00020704884082078934,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_probe_records_stop_after_first_receipt",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.06909189466387033,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_conflicting_probe_records_stop_after_first_receipt",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001406148076057434,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00021544843912124634,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.11725386325269938,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_corrupt_durable_episode_fields_return_protocol_diagnostic",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016364548355340958,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_current_approval_reference_drift_rejects_late_acceptance",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_current_approval_reference_drift_rejects_late_acceptance",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00025842897593975067,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_current_approval_reference_drift_rejects_late_acceptance",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.06925057712942362,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_current_approval_reference_drift_rejects_late_acceptance",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016537215560674667,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_dispatch_receipt_exists_before_inspector_runs",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_dispatch_receipt_exists_before_inspector_runs",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022477563470602036,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_dispatch_receipt_exists_before_inspector_runs",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.07660743501037359,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_dispatch_receipt_exists_before_inspector_runs",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001714685931801796,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_durable_restore_is_first_and_has_no_probe_or_budget_cost",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_durable_restore_is_first_and_has_no_probe_or_budget_cost",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023371540009975433,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_durable_restore_is_first_and_has_no_probe_or_budget_cost",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05193281453102827,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_durable_restore_is_first_and_has_no_probe_or_budget_cost",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000151120126247406,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_existing_attempt_cannot_be_faked_as_pregeneration",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_existing_attempt_cannot_be_faked_as_pregeneration",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022315606474876404,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_existing_attempt_cannot_be_faked_as_pregeneration",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.02357388101518154,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_existing_attempt_cannot_be_faked_as_pregeneration",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014684349298477173,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_explicit_complete_negative_establishes_dependency_block",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_explicit_complete_negative_establishes_dependency_block",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023234356194734573,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_explicit_complete_negative_establishes_dependency_block",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.06661004107445478,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_explicit_complete_negative_establishes_dependency_block",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017341692000627518,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_incomplete_output_has_one_attempt_and_internal_explanation",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_incomplete_output_has_one_attempt_and_internal_explanation",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023002922534942627,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_incomplete_output_has_one_attempt_and_internal_explanation",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0632021939381957,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_incomplete_output_has_one_attempt_and_internal_explanation",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016826018691062927,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_inspection_durable_acceptance_and_reloaded_same_step_resume",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_inspection_durable_acceptance_and_reloaded_same_step_resume",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024671386927366257,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_inspection_durable_acceptance_and_reloaded_same_step_resume",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0833191080018878,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_inspection_durable_acceptance_and_reloaded_same_step_resume",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017832964658737183,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_check_not_declared_repeatable_cannot_replay",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_check_not_declared_repeatable_cannot_replay",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022786017507314682,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_check_not_declared_repeatable_cannot_replay",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05442490614950657,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_check_not_declared_repeatable_cannot_replay",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000139663927257061,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_safe_check_cannot_replay_after_original_deadline",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_safe_check_cannot_replay_after_original_deadline",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022246874868869781,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_safe_check_cannot_replay_after_original_deadline",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05330731812864542,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_safe_check_cannot_replay_after_original_deadline",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017183739691972733,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_unknown_inspection_waits_then_safely_replays_once",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_unknown_inspection_waits_then_safely_replays_once",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023325160145759583,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_unknown_inspection_waits_then_safely_replays_once",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.09272962808609009,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_interrupted_unknown_inspection_waits_then_safely_replays_once",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018224120140075684,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_langgraph_control_signal_is_not_an_inspection_failure",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_langgraph_control_signal_is_not_an_inspection_failure",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000242539681494236,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_langgraph_control_signal_is_not_an_inspection_failure",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04040456935763359,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_langgraph_control_signal_is_not_an_inspection_failure",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001479014754295349,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_method_digest_and_complete_inspection_contract_have_distinct_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_method_digest_and_complete_inspection_contract_have_distinct_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023451074957847595,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_method_digest_and_complete_inspection_contract_have_distinct_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.09455807693302631,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_method_digest_and_complete_inspection_contract_have_distinct_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001789964735507965,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_missing_producer_or_unproven_safety_never_dispatches",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_missing_producer_or_unproven_safety_never_dispatches",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023637618869543076,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_missing_producer_or_unproven_safety_never_dispatches",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.039265877567231655,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_missing_producer_or_unproven_safety_never_dispatches",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018744077533483505,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_not_run_preserves_unknown_and_original_reason",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_not_run_preserves_unknown_and_original_reason",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022842735052108765,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_not_run_preserves_unknown_and_original_reason",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0677220718935132,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_not_run_preserves_unknown_and_original_reason",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016358960419893265,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_permission_error_and_generic_exit_never_establish_unavailable",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_permission_error_and_generic_exit_never_establish_unavailable",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002681650221347809,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_permission_error_and_generic_exit_never_establish_unavailable",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.06872360967099667,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_permission_error_and_generic_exit_never_establish_unavailable",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017325952649116516,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_ready_acceptance_archives_only_its_own_stop_diagnostic",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_ready_acceptance_archives_only_its_own_stop_diagnostic",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002385983243584633,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_ready_acceptance_archives_only_its_own_stop_diagnostic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.1403647717088461,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_ready_acceptance_archives_only_its_own_stop_diagnostic",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001784367486834526,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_real_storage_loss_cannot_return_evidence_ready",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_real_storage_loss_cannot_return_evidence_ready",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002446472644805908,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_real_storage_loss_cannot_return_evidence_ready",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.07593050599098206,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_real_storage_loss_cannot_return_evidence_ready",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015636906027793884,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_reopened_episode_keeps_original_wall_deadline",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_reopened_episode_keeps_original_wall_deadline",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002353191375732422,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_reopened_episode_keeps_original_wall_deadline",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.05732006300240755,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_reopened_episode_keeps_original_wall_deadline",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00016540475189685822,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_safety_denied_contract_returns_truthful_unresolved",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_safety_denied_contract_returns_truthful_unresolved",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022872071713209152,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_safety_denied_contract_returns_truthful_unresolved",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03802528604865074,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_safety_denied_contract_returns_truthful_unresolved",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015710853040218353,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_scope_changed_during_probe_rejects_late_acceptance",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_scope_changed_during_probe_rejects_late_acceptance",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0002277875319123268,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_scope_changed_during_probe_rejects_late_acceptance",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04962341394275427,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_scope_changed_during_probe_rejects_late_acceptance",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014673452824354172,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_task_budget_can_stop_inspection_but_not_claim_absence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_task_budget_can_stop_inspection_but_not_claim_absence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00026192888617515564,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_task_budget_can_stop_inspection_but_not_claim_absence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.04645675886422396,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_task_budget_can_stop_inspection_but_not_claim_absence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015593692660331726,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_top_level_approval_record_drift_prevents_dispatch",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_top_level_approval_record_drift_prevents_dispatch",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00023340526968240738,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_top_level_approval_record_drift_prevents_dispatch",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.048497761599719524,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_top_level_approval_record_drift_prevents_dispatch",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014173146337270737,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_transient_retry_can_gain_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_transient_retry_can_gain_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00022328272461891174,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_transient_retry_can_gain_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.15395550336688757,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_transient_retry_can_gain_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017629936337471008,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unknown_timeout_retries_once_and_remains_unknown_after_budget",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unknown_timeout_retries_once_and_remains_unknown_after_budget",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024229846894741058,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unknown_timeout_retries_once_and_remains_unknown_after_budget",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.10983763821423054,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unknown_timeout_retries_once_and_remains_unknown_after_budget",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001792432740330696,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unrelated_durable_change_survives_result_acceptance",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unrelated_durable_change_survives_result_acceptance",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00024168938398361206,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unrelated_durable_change_survives_result_acceptance",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.08355407696217299,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_runtime_evidence_recovery.py::RuntimeEvidenceRecoveryTests::test_unrelated_durable_change_survives_result_acceptance",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00027707498520612717,
+    "failure": ""
+  }
+]

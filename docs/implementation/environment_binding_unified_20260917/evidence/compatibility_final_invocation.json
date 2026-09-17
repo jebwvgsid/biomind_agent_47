@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "/tmp/biomind-unified-cumulative-release/candidate/tests/offline_managed_bootstrap.py",
+    "/tmp/biomind-unified-cumulative-release/candidate",
+    "-q",
+    "tests/test_plan_contract_approval_scope.py",
+    "tests/test_recovery_binding_final_spec.py",
+    "tests/test_runtime_evidence_recovery_production.py",
+    "tests/test_runtime_evidence_transport.py",
+    "tests/test_semantic_completion.py",
+    "tests/test_semantic_completion_workflow.py",
+    "--tb=short"
+  ],
+  "environment": {
+    "PATH": "/usr/bin:/bin",
+    "TMPDIR": "/tmp/biomind-unified-compatibility-release/tmp",
+    "BIOMIND_DISABLE_DOTENV": "1",
+    "BIOMIND_OFFLINE_RESULTS": "/tmp/biomind-unified-compatibility-release/results.json",
+    "BIOMIND_CLI_PROGRESS_ARTIFACTS": "/tmp/biomind-unified-compatibility-release/artifacts"
+  }
+}

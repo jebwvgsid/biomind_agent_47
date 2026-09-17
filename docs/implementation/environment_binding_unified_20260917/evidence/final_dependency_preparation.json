@@ -1,0 +1,211 @@
+{
+  "candidate": "/tmp/biomind-unified-cumulative-release/candidate",
+  "test_sha256": "c57fdd16df56c343ea6815a1f9b4d01708b48e6ce014ff8f2e983ef48260fd0d",
+  "scenarios": [
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/final_validation/artifacts/dependency-preparation-unavailable-choice.json",
+      "sha256": "3b9d36386d905230f1a16b2773cdc5ead4eb5de0d972c7a17b84f81f73b626c8",
+      "initial_availability": "UNAVAILABLE",
+      "installation": false,
+      "provided": false,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 0
+      },
+      "probes": 1,
+      "science_approvals": 0,
+      "science_executions": 0,
+      "installer_models": 0,
+      "installer_executions": 0,
+      "installer_approvals": 0
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/final_validation/artifacts/dependency-preparation-unavailable-install.json",
+      "sha256": "a183aa6b5b52270176e6c9e25573a9bff9628337a71dd51f6e02c486614659ca",
+      "initial_availability": "UNAVAILABLE",
+      "installation": true,
+      "provided": true,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "probes": 2,
+      "science_approvals": 1,
+      "science_executions": 1,
+      "installer_models": 1,
+      "installer_executions": 1,
+      "installer_approvals": 1,
+      "subject_unchanged": true,
+      "epoch_before": 0,
+      "epoch_after": 1,
+      "old_evidence_immutable": true,
+      "supersedes": {
+        "runtime-evidence:sha256:2d022b2afd3bb9e9aa4e712c7ccae9cd7df642b59b31acd32a8886bc81507ede": [
+          "runtime-evidence:sha256:9bb6696ebf54921580b53cb99396aa656ad917deb87fd802d6d36b95c18d129d"
+        ]
+      },
+      "commits": 1,
+      "receipt_status": "available",
+      "registration": {
+        "skill_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-unified-cumulative-release/tmp/biomind-plan-local-graph-f26e5stq/envs/offline_env"
+            }
+          }
+        },
+        "software_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-unified-cumulative-release/tmp/biomind-plan-local-graph-f26e5stq/envs/offline_env"
+            }
+          }
+        }
+      },
+      "terminal_projection": {
+        "runtime_diagnostic": {},
+        "managed_stop": {},
+        "plan_status": "completed"
+      }
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/final_validation/artifacts/dependency-preparation-unavailable-provided.json",
+      "sha256": "7b2a8f1a2132fe12c94f24fe45ae15db4728a980c4e6c3e5358eb90564d30d3b",
+      "initial_availability": "UNAVAILABLE",
+      "installation": false,
+      "provided": true,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "probes": 2,
+      "science_approvals": 1,
+      "science_executions": 1,
+      "installer_models": 0,
+      "installer_executions": 0,
+      "installer_approvals": 0,
+      "subject_unchanged": true,
+      "epoch_before": 0,
+      "epoch_after": 1,
+      "old_evidence_immutable": true,
+      "supersedes": {
+        "runtime-evidence:sha256:c0a191a91c37617e0925da068d651ddd659cde6e016c996ef13b9099b2b3f12d": [
+          "runtime-evidence:sha256:c33eb04e111121864dca94d89d0b5030b14130c5c98c243533f146a21a2c0631"
+        ]
+      },
+      "commits": 1,
+      "receipt_status": "available",
+      "registration": {
+        "skill_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-unified-cumulative-release/tmp/biomind-plan-local-graph-_uar9oo1/envs/offline_env"
+            }
+          }
+        },
+        "software_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-unified-cumulative-release/tmp/biomind-plan-local-graph-_uar9oo1/envs/offline_env"
+            }
+          }
+        }
+      },
+      "terminal_projection": {
+        "runtime_diagnostic": {},
+        "managed_stop": {},
+        "plan_status": "completed"
+      }
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/final_validation/artifacts/dependency-preparation-unknown-choice.json",
+      "sha256": "902f9ca37935fb8b9666f0cc6751763e8fc849913a865115e854b89903efeb42",
+      "initial_availability": "UNKNOWN",
+      "installation": false,
+      "provided": false,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 0
+      },
+      "probes": 1,
+      "science_approvals": 0,
+      "science_executions": 0,
+      "installer_models": 0,
+      "installer_executions": 0,
+      "installer_approvals": 0
+    },
+    {
+      "artifact": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/final_validation/artifacts/dependency-preparation-unknown-provided.json",
+      "sha256": "1169c6f8b8be2530d2083c0729a4fa9288c6b35381448827eaac62e9e62ba064",
+      "initial_availability": "UNKNOWN",
+      "installation": false,
+      "provided": true,
+      "provider_counts": {
+        "consultant": 1,
+        "planner": 1,
+        "generate": 1
+      },
+      "probes": 2,
+      "science_approvals": 1,
+      "science_executions": 1,
+      "installer_models": 0,
+      "installer_executions": 0,
+      "installer_approvals": 0,
+      "subject_unchanged": true,
+      "epoch_before": 0,
+      "epoch_after": 1,
+      "old_evidence_immutable": true,
+      "supersedes": {
+        "runtime-evidence:sha256:d3020a5c6d0dc14c1b0e24b08cfbcaedede30ec38f58540348247125f931a26f": [
+          "runtime-evidence:sha256:ffb48b6c9dd2e789bb7be49951fd996689d5b0d21bead2c14ced433c97cda639"
+        ]
+      },
+      "commits": 1,
+      "receipt_status": "available",
+      "registration": {
+        "skill_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-unified-cumulative-release/tmp/biomind-plan-local-graph-gxro7elk/envs/offline_env"
+            }
+          }
+        },
+        "software_registry": {
+          "ok": true,
+          "items": {
+            "offline/dependency-preparation": {
+              "ok": true,
+              "target_env": "offline_env",
+              "target_prefix": "/tmp/biomind-unified-cumulative-release/tmp/biomind-plan-local-graph-gxro7elk/envs/offline_env"
+            }
+          }
+        }
+      },
+      "terminal_projection": {
+        "runtime_diagnostic": {},
+        "managed_stop": {},
+        "plan_status": "completed"
+      }
+    }
+  ],
+  "boundaries": "Synthetic config/provider/user and installer/inspection/target healthcheck process leaves; optional Consultant seed/preflight and memory sidechannels disabled in graph fixture. Real state, scope, validation, approval, Installer graph, receipt, registration, recovery, Commit and registered actual tiny science runner. Real scientific micro tools separately recorded. No installation/model API/full WGS."
+}

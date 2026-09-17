@@ -1,0 +1,31 @@
+{
+  "suite": "C1/C2 terminal regression with real terminal graph and historical exact-receipt replay",
+  "candidate": "/tmp/biomind-unified-helper-lf1y9l_m/candidate",
+  "test_calls": {
+    "passed": 43
+  },
+  "failed_phases": [],
+  "tested_sources_match_worktree": true,
+  "source_sha256": {
+    "agent_core/workflow/managed_stop.py": "27ba5bc617c811c038e6d872700ea5cb68382e3a4ef352d33e4850b690a755d2",
+    "agent_core/cli_lifecycle.py": "75aea5a0fb5a73926ee1399aad3d70ff77dfb56b5a9fe2540da02d72678ec6fe",
+    "tests/test_unified_terminal_facts.py": "81ec48bd7b2833a3605d00247d3081354c14b337fb389a3868a832eeca0686b4",
+    "memory/__init__.py": "8fc5927d8a469fc88cf071942afbdf87067a6f7c630295a0e3e65c8610c2207c",
+    "memory/artifact_index.py": "2e59fa6f03867b8ce32cc23fdd77763d57569c72f95a5a034a1100dadf5dd40c",
+    "memory/core_store.py": "4c08d070b9ee52e85cb31d52fadaa52863bdfe69960ad8464a424cce32f0fc2e",
+    "memory/patch_validator.py": "b3bab8cf5c55abb3d4d017a84e73ad70437d555d67d564f91e0209c8388449e3",
+    "memory/persistence.py": "fc8cb41759b57e93d34ac35d1b8f28024ddd72777a39e8732643a99d43901a3d",
+    "memory/policy.py": "a3d478c0204daac64138397bc7814c27689fda8c52b9891cb37dacf364134ec0",
+    "memory/session_archive.py": "2ac2b70c6771dff7dd2041c1dd520da2d714628b6b58d24066a15a779c8eb495",
+    "memory/session_archive_writer.py": "14d0c054ddc61d61158cb101ce9509c2bacd91c2930a65a3366659afeb874754",
+    "memory/task_semantics.py": "13b273b90334b5dfb595524b17bcc90038c0579cb31dba60bb00cf762bc1fa54",
+    "memory/task_summary.py": "f758f3416ed9d0f6647e50f2c3d39c194a6d295715d5541faf9441a568eda891",
+    "memory/utils.py": "12d6b9e6c1a175ed7c8140e5a1697b953741f0016b01783b23797c7aa975a01c",
+    "memory/wiki_memory.py": "c919c7ba3faaf7ee14b5cebdbc92bff0ec7abde2c7cee3d364459dcec1e4285d",
+    "tests/fixtures/unified_terminal_recorded.json": "e7c789721cff0b67bd8d61aebae93bd6a5f26a74a0971889301bd2fe2afe8d56"
+  },
+  "bootstrap": "tests/offline_managed_bootstrap.py",
+  "environment": "env -i; config/startup excluded; isolated TMPDIR; network and protected-read guard; 12 memory Python dependencies copied explicitly",
+  "read_only_historical_fixture": "tests/fixtures/unified_terminal_recorded.json",
+  "scope": "Real durable PlanTracker/CAS, terminal graph, writer/publication receipts and CLI projection. Scientific process/model provider fixture boundary substituted; no installation/API/original-session resume."
+}

@@ -1,0 +1,27 @@
+{
+  "suite": "existing action runtime + approval scope after migrating two obsolete SnpEff fixtures",
+  "candidate": "/tmp/biomind-unified-request-zm426q4h/candidate",
+  "test_calls": {
+    "passed": 21
+  },
+  "failed_phases": [],
+  "tested_source_sha256": {
+    "tests/test_action_scoped_runtime_bindings.py": "2dff656a8024cd2f3e3183622f04fa9d4115bbccb59b73e31f44d265dde16fa8",
+    "tests/test_plan_contract_approval_scope.py": "0560e576bc125921fc2f4076d5fa33d09e2a7e7a80d203749bebe795f06dc01a",
+    "agent_core/action_runtime.py": "53ff91ce91ea502b4fb46d63e374ee3e3ad27596a7aea924227cc672b95c3071",
+    "agent_core/skill_manager.py": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+    "agent_core/plan_contract.py": "372acdfa394752782ed4efb967dda6cd782edacb1ab8781ff04ab13b86656fde",
+    "skills/genomics/snpeff-annotation/SKILL.md": "a47c305477c9a1c8e592e0d0187af200b079001bc709e1e6d84983ef2615f43e"
+  },
+  "sources_match_at_recording": {
+    "tests/test_action_scoped_runtime_bindings.py": true,
+    "tests/test_plan_contract_approval_scope.py": true,
+    "agent_core/action_runtime.py": true,
+    "agent_core/skill_manager.py": true,
+    "agent_core/plan_contract.py": true,
+    "skills/genomics/snpeff-annotation/SKILL.md": true
+  },
+  "production_contract": "SnpEff inspect and execute both have required_runtime_binding_ids=[] and optional_runtime_binding_ids=[runtime.java.bin,runtime.snpeff.jar]. Retired names are not restored.",
+  "drift_test": "Valid synthetic contract promotes Java from optional to required while frozen original hash remains unchanged; resolver must reject snapshot drift before any reuse.",
+  "isolation": "existing offline_managed_bootstrap, clean env and isolated TMPDIR; no real config/startup/model/network/install; real contract/approval core"
+}

@@ -1,0 +1,92 @@
+{
+  "export_path": "/public/home/liusiqi/03.毕设/biomind_audit_exports/environment_binding_unified_20260917/d3_micro",
+  "input": "synthetic 384 bp reference (chr1=256, chr2=128) and four read pairs, with one duplicated pair; no original biological input/session",
+  "files": {
+    "source.fa": {
+      "size": 402,
+      "sha256": "cfabfdb9d378d45d9ba555549fc8521315f236170fb94a5383b56935eb05f359"
+    },
+    "reads1.fq": {
+      "size": 692,
+      "sha256": "ecc9014af73978bb2f3e4c517252a32988835b826eb111960db9d55f36f72266"
+    },
+    "reads2.fq": {
+      "size": 692,
+      "sha256": "bbd86793735880839122ea1cb88f52c8cce14480b6f3887a7d97311763c5710b"
+    },
+    "mapped.sam": {
+      "size": 2389,
+      "sha256": "594186b8d083c7274650f1aaf0e684795365aba8e921b98e9cfd1fe1b259ce55"
+    },
+    "sorted.bam": {
+      "size": 616,
+      "sha256": "4f5112a134cb6341f8667fc186f8bf48007de8f988b580316da9e924e3fb19bb"
+    },
+    "marked.bam": {
+      "size": 1185,
+      "sha256": "df00542f9c2bfccfe0aa86477d66efc1c95a79cef9e3de541eef7a2d12798d3c"
+    },
+    "marked.bai": {
+      "size": 104,
+      "sha256": "6bd6309468feb253101f354c88276a83ffafd7dcc79c8461ecd172537cf0a2f9"
+    },
+    "duplicates.txt": {
+      "size": 2733,
+      "sha256": "16ef78b4acf453848c526e2826338812431f71cdf91d13b93b2cf78b58402cd9"
+    },
+    "flagstat.txt": {
+      "size": 379,
+      "sha256": "364bd47f85768c1fd0ea93a7eb5049ab4d559f9da498f0d82eb2d62e0635b950"
+    },
+    "verified-launcher.vcf": {
+      "size": 11302,
+      "sha256": "f9c5bd3405172d1f9880d6da40aaa43b86e01542aabcf73e8239f64eee360363"
+    },
+    "bundle/reference.dict": {
+      "size": 221,
+      "sha256": "35fea23be2ae5a12c9a30631cf4dac6865d568207fbf784bdbfe39515bb4ba0b"
+    },
+    "bundle/reference.fa": {
+      "size": 402,
+      "sha256": "cfabfdb9d378d45d9ba555549fc8521315f236170fb94a5383b56935eb05f359"
+    },
+    "bundle/reference.fa.amb": {
+      "size": 16,
+      "sha256": "ae1b4c5b8d69200a206926e2849902e0a235b4014f6e0f1cc8697f7cae11e33b"
+    },
+    "bundle/reference.fa.ann": {
+      "size": 55,
+      "sha256": "42ecdb6142ffc3c9124977a85caceafbcc6af07b9548a195aab540a7159b56f7"
+    },
+    "bundle/reference.fa.bwt": {
+      "size": 456,
+      "sha256": "5e641e989318c0579acdf5ee5ec469abb3a907ce39bda3fb4afd4309fb546dbe"
+    },
+    "bundle/reference.fa.fai": {
+      "size": 36,
+      "sha256": "a97bd7cbc9143f4926a6b2548c7ec6ee379955224d87eb486b2bc979f6fac0f9"
+    },
+    "bundle/reference.fa.pac": {
+      "size": 98,
+      "sha256": "92e4b5c9079f63a28390795f7bd8b7aa9518a8dc96844bda55d0966ede61a0a1"
+    },
+    "bundle/reference.fa.sa": {
+      "size": 248,
+      "sha256": "07e81af4ff5ee42ddafa5a9e3df4faed6d6191d23e11b03b45f34486227d9906"
+    }
+  },
+  "reference_commands_passed": true,
+  "alignment_sort_markduplicates_flagstat_returncodes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "flagstat": "8 + 0 in total (QC-passed reads + QC-failed reads)\n0 + 0 secondary\n0 + 0 supplementary\n2 + 0 duplicates\n8 + 0 mapped (100.00% : N/A)\n8 + 0 paired in sequencing\n4 + 0 read1\n4 + 0 read2\n0 + 0 properly paired (0.00% : N/A)\n8 + 0 with itself and mate mapped\n0 + 0 singletons (0.00% : N/A)\n0 + 0 with mate mapped to a different chr\n0 + 0 with mate mapped to a different chr (mapQ>=5)\n",
+  "samtools_coverage": "unsupported subcommand, rc1; remains unavailable",
+  "gatk_launcher": "explicit /usr/bin/python3 + declared bio_gatk wrapper + Java21; -Xmx256m -XX:ActiveProcessorCount=1, native PairHMM threads1",
+  "gatk_haplotypecaller_returncode": 0,
+  "vcf_has_header": true,
+  "vcf_record_count": 0,
+  "caller_scope_limit": "No variants expected from exact-reference tiny reads; proves selected HaplotypeCaller actually runs with compatible bundle/BAM, not biological variant sensitivity or full WGS. Prior naked wrapper rc255 and direct Java without ActiveProcessorCount -9 retained in science-command history."
+}

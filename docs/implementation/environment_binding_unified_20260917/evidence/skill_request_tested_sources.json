@@ -1,0 +1,19 @@
+{
+  "candidate": "/tmp/biomind-unified-request-zm426q4h/candidate",
+  "actual_generate_source_sha256": {
+    "bio_agents.py": "087654d050483ee0e6922c6cb0089f9cb7fef32d22b0730b74e7887e150cefbf",
+    "agent_core/skill_manager.py": "814fffa79ea3b8a047246493e8bd03fc7d57418307f3af0f0cccd1207459bd80",
+    "agent_core/skill_resource_binding.py": "d31d00c103d7af4d31ba780e453f8dddf8d35020354294c1136eecbb6039f6ec",
+    "agent_core/skill_script_invocation.py": "3e6652eadc88a1261fcaea59255cb950f755d6d755b7eaf10108780091ff35c3",
+    "agent_core/workflow/runtime_graph.py": "02bf8c2ea54e99ccc22dc2b92dbc10b6d983b3079a2594de7d7892c8d3ac6bde",
+    "agent_core/workflow/execution.py": "af33ee16879a8c1cf64834a77fb885463a6cac70d52f9cebf81ddf87565f6dba",
+    "prompts/manager.py": "505b863ce854e1a478a776b402b556d52642600b6940874a1f322786abc8f416",
+    "tests/test_preflight_mapping_commit.py": "e776e31365e1fcd5f78abe5076bfffe3cbd598daef70744e3ac78740fc318e3e",
+    "tests/test_plan_local_preaction_convergence_v2.py": "47bf63bffa30a70b4e4c05c62fa7d9a63948c4b5b85121a57ebfacce6e040591",
+    "skills/genomics/wgs-short-read-mapping/SKILL.md": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+    "skills/genomics/wgs-short-read-mapping/references/failure-publication.md": "3d52a19903e380c8d3342f82ab12c0c96a186f203584257397f7bb00e8905fcc",
+    "skills/genomics/wgs-short-read-mapping/references/runtime-and-reference.md": "564a16e997341ee7e34cc69f98f7ae6904bf0c5d317611785fbcca2c44f56cd1",
+    "skills/genomics/wgs-short-read-mapping/references/mapping-methods.md": "5d039cd548f32489f3352b30ae5efe3d0813e4e1659ba70af5c0b66b65330506"
+  },
+  "note": "Captured successful R4 request predates B1 graph-edge fix; installation work order tests have separate result evidence. Test source subsequently adds B1 cases without altering R4 measurement method."
+}

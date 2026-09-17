@@ -1,0 +1,27 @@
+[
+  {
+    "nodeid": "tests/test_review_expired_java_derivation.py::test_existing_expired_bin_fact_can_be_derived_from_unexpired_home",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_review_expired_java_derivation.py::test_existing_expired_bin_fact_can_be_derived_from_unexpired_home",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0021072449162602425,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_review_expired_java_derivation.py::test_existing_expired_bin_fact_can_be_derived_from_unexpired_home",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0045726364478468895,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_review_expired_java_derivation.py::test_existing_expired_bin_fact_can_be_derived_from_unexpired_home",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001539299264550209,
+    "failure": ""
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "wgs-short-read-mapping": {
+    "skill_sha256": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+    "description": {
+      "contract_id": "skill-runtime-inspection:genomics/wgs-short-read-mapping",
+      "contract_digest": "sha256:77a30aae1e9676bc6494ffdb539c3328d97e3ad0e1b0cc2065214e0c6d4d2b84",
+      "method_digest": "sha256:13e74d0f9942db97fceb51abfc36d57c5aee1d56ba75e6a005cf339b2b3cf259",
+      "permitted": true,
+      "safe_repeat": true,
+      "coverage_binding_ids": [
+        "runtime.bwa.index.bin",
+        "runtime.bwa.mem.bin",
+        "runtime.java.bin",
+        "runtime.picard.dictionary.bin",
+        "runtime.picard.markduplicates.bin",
+        "runtime.samtools.coverage.bin",
+        "runtime.samtools.faidx.bin",
+        "runtime.samtools.mapping.bin"
+      ],
+      "cache_restore_permitted": false,
+      "deadline_seconds": 60.0,
+      "reason_code": "",
+      "needs_user_decision": false
+    },
+    "result": {
+      "inspection_status": "execution_error",
+      "audit": {},
+      "observed_at": "2026-09-17T11:16:45.262905+00:00",
+      "coverage": {},
+      "transient": false,
+      "reason_code": "RUNTIME_INSPECTION_NONZERO_EXIT",
+      "needs_user_decision": false,
+      "inspection_error": {
+        "exit_code": 1
+      }
+    }
+  },
+  "wgs-gatk-snp-indel": {
+    "skill_sha256": "ab73a4316ca944e889f4c6094a9624f3541dfe1cbf870cd50d571d4b86d2f59e",
+    "description": {
+      "contract_id": "skill-runtime-inspection:genomics/wgs-gatk-snp-indel",
+      "contract_digest": "sha256:c30cc06af2e5b2f6a590843d8655f0df0fefc6863f786ed7213c5af9f8462bdd",
+      "method_digest": "sha256:9ba7ce240f4fb0144433ee725c24e1825775107e2c3faeeba83e402ad256ba91",
+      "permitted": true,
+      "safe_repeat": true,
+      "coverage_binding_ids": [
+        "runtime.bcftools.bin",
+        "runtime.gatk.bin",
+        "runtime.java.bin",
+        "runtime.python.bin",
+        "runtime.samtools.bin"
+      ],
+      "cache_restore_permitted": false,
+      "deadline_seconds": 60.0,
+      "reason_code": "",
+      "needs_user_decision": false
+    },
+    "result": {
+      "inspection_status": "timeout",
+      "audit": {},
+      "observed_at": "2026-09-17T11:17:45.655062+00:00",
+      "coverage": {},
+      "transient": true,
+      "reason_code": "RUNTIME_INSPECTION_TIMEOUT",
+      "needs_user_decision": false
+    }
+  }
+}

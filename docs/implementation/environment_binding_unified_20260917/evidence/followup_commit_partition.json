@@ -1,0 +1,55 @@
+{
+  "head_before": "2e70f28658b8aee0d7cd9451f7f353f4b4121825",
+  "tested_checkpoint": "/tmp/biomind-unified-cumulative-final/candidate",
+  "tested_candidate": "/tmp/biomind-unified-cumulative-release/candidate",
+  "files": [
+    {
+      "path": "agent_core/workflow/early_nodes.py",
+      "partition": "clean_checkpoint",
+      "staged_git_blob": "c2d6ea0075f6d2bd565bf467fb3a5fe713e43f04",
+      "staged_sha256": "1e9042eee7e12536052155944cb35819fdda43834ba85b10433ec23cf040cde8",
+      "working_sha256": "1e9042eee7e12536052155944cb35819fdda43834ba85b10433ec23cf040cde8",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "agent_core/workflow/runtime_evidence_recovery.py",
+      "partition": "clean_checkpoint",
+      "staged_git_blob": "90da03004f99e91db097b4e8457dbfe7404fc2db",
+      "staged_sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620",
+      "working_sha256": "62693f38eb5af7259507b6313dde0c66a95e57d0841085d7057659b3f28bd620",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "bio_agents.py",
+      "partition": "followup_only_three_way",
+      "staged_git_blob": "d4aef48c68c6eac0b7d9cbbc1e98956c4dab157f",
+      "staged_sha256": "e4a9dd994d1ad4b4e9dbfbcd169846b325cf76830ceeeb16eedf2425cef5ba99",
+      "working_sha256": "2074a7b655f4d28d987efb1e3f614bf4db358dfd36b7bf03accae0fe2c630ec9",
+      "retained_prerequisite_difference": true
+    },
+    {
+      "path": "tests/test_unified_dependency_preparation.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "18dd76ee580d129f09c827a6d1f034d51db6c404",
+      "staged_sha256": "c57fdd16df56c343ea6815a1f9b4d01708b48e6ce014ff8f2e983ef48260fd0d",
+      "working_sha256": "c57fdd16df56c343ea6815a1f9b4d01708b48e6ce014ff8f2e983ef48260fd0d",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_installer_boundary.py",
+      "partition": "clean_checkpoint",
+      "staged_git_blob": "f638760f5f036f4d706dd1d91b9023a9615a50e9",
+      "staged_sha256": "de2681dc6a27c17da97b16d4bf559eafc88849970ce8a22e0d3e07c75a0a6966",
+      "working_sha256": "de2681dc6a27c17da97b16d4bf559eafc88849970ce8a22e0d3e07c75a0a6966",
+      "retained_prerequisite_difference": false
+    },
+    {
+      "path": "tests/test_unified_runtime_preparation_install_resume.py",
+      "partition": "new_task_file",
+      "staged_git_blob": "3912960f7ccb102ef3864fad60d93749cbc14197",
+      "staged_sha256": "6872ae70fa406f5ff6ac40e7e53c17c8ea8c2ee43bd0012b75d6682402b27184",
+      "working_sha256": "6872ae70fa406f5ff6ac40e7e53c17c8ea8c2ee43bd0012b75d6682402b27184",
+      "retained_prerequisite_difference": false
+    }
+  ]
+}

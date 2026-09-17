@@ -1,0 +1,46 @@
+{
+  "measurement": "actual provider messages JSON UTF-8; helper subsection compared to legacy raw projection reconstructed from same final selected snapshot, not a historical whole-request/token benchmark",
+  "actual_generate_request_bytes": 52985,
+  "actual_generate_content_bytes": 50305,
+  "actual_helper_catalog_bytes": 5191,
+  "same_snapshot_legacy_helper_catalog_bytes": 7199,
+  "helper_catalog_reduction_bytes": 2008,
+  "dynamic_header_occurrences": 0,
+  "raw_script_invocations_occurrences": 0,
+  "required_phase_reads_heading_occurrences": 0,
+  "snapshot": {
+    "snapshot_id": "skill-snapshot-c0349130232e2174e9b3",
+    "content_hash": "6ef039a31b722cb876bfaa0fc8c5e237417bc77646ab237cfe0d91fffdf4b4fa",
+    "version": "1.2.0"
+  },
+  "provider_messages_sha256": "9404c242601baca2150ffd37129e708f08a50ec6f49f12850c1cdd6ab6f45952",
+  "on_demand_resources": [
+    {
+      "resource_path": "references/mapping-methods.md",
+      "snapshot_id": "skill-snapshot-c0349130232e2174e9b3",
+      "resource_snapshot_id": "skill-resource-5d039cd548f32489",
+      "resource_content_hash": "5d039cd548f32489f3352b30ae5efe3d0813e4e1659ba70af5c0b66b65330506"
+    },
+    {
+      "resource_path": "references/runtime-and-reference.md",
+      "snapshot_id": "skill-snapshot-c0349130232e2174e9b3",
+      "resource_snapshot_id": "skill-resource-564a16e997341ee7",
+      "resource_content_hash": "564a16e997341ee7e34cc69f98f7ae6904bf0c5d317611785fbcca2c44f56cd1"
+    },
+    {
+      "resource_path": "references/failure-publication.md",
+      "snapshot_id": "skill-snapshot-c0349130232e2174e9b3",
+      "resource_snapshot_id": "skill-resource-d055422243efa52e",
+      "resource_content_hash": "d055422243efa52e800c7203f137889b1e08dc325b03834644769678796bffca"
+    }
+  ],
+  "counts": {
+    "consultant": 1,
+    "planner": 1,
+    "generate": 1
+  },
+  "formal_commits": 1,
+  "approved_resource_count": 4,
+  "on_demand_scope": "real selected-snapshot SkillAccessService resource request, after capturing actual Generate request; no fabricated model continuation",
+  "external_boundaries": "inherited preflight harness: model/interaction and readiness adapters replaced; real helper readers, resource binding, approval identity, runner, validation and Commit"
+}

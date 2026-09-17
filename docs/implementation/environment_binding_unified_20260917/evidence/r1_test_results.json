@@ -1,0 +1,752 @@
+[
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_rollback_reload_commit_and_consume_exact_new_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_rollback_reload_commit_and_consume_exact_new_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0021490035578608513,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_rollback_reload_commit_and_consume_exact_new_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.5051128193736076,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_rollback_reload_commit_and_consume_exact_new_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021866429597139359,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_persisted_residue_repaired_and_old_event_preserves_later_commit",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_persisted_residue_repaired_and_old_event_preserves_later_commit",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000642445869743824,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_persisted_residue_repaired_and_old_event_preserves_later_commit",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 1.3082492453977466,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_persisted_residue_repaired_and_old_event_preserves_later_commit",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00021329522132873535,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[plan_revision]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[plan_revision]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006926283240318298,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[plan_revision]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.6481786640360951,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[plan_revision]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00019252393394708633,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[state_generation]",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[state_generation]",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007407553493976593,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[state_generation]",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.7613865714520216,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_ambiguous_legacy_history_diagnosed_without_revoking_acceptance[state_generation]",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000193069688975811,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_actual_limited_rollback_and_plan_scope_are_respected",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_actual_limited_rollback_and_plan_scope_are_respected",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005868058651685715,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_actual_limited_rollback_and_plan_scope_are_respected",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.6547859273850918,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_unified_binding_rollback.py::test_actual_limited_rollback_and_plan_scope_are_respected",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018521584570407867,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00011856108903884888,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00032446347177028656,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_semantic_draft_has_no_machine_authority_and_rejects_spoofed_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.400304406881332e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.647011756896973e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0016772504895925522,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_identity_excludes_prose_and_cannot_be_rebound",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012807920575141907,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000600351020693779,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.001154869794845581,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_finalized_decision_envelope_and_scope_are_identical",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00012507569044828415,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005055917426943779,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.03411977179348469,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_atomic_bundle_commits_one_active_identity_and_budget_once",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018654018640518188,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005531376227736473,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.033223455771803856,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_step_bundle_routes_to_generate_without_active_recovery",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00017933547496795654,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0006247358396649361,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.025081466883420944,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_complete_task_bundle_accepts_last_completed_step_scope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.000161624513566494,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010636448860168457,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0010381527245044708,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_strict_active_state_rejects_old_envelope_before_provider",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0001116851344704628,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00010359007865190506,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001503610983490944,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_scope_projection_never_uses_prior_step_current_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.892733603715897e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.817203342914581e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0006943661719560623,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_step_advance_preserves_history_and_clears_active_refs",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010369997471570969,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001094350591301918,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00023060664534568787,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_candidate_acceptance_requires_success_and_preserves_exact_value",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 9.542424231767654e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.666662663221359e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0005330117419362068,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_binding_ref_injects_exact_value_without_shell_parsing",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010134372860193253,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 9.66610386967659e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.00028390437364578247,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_is_immutable_and_rewind_keeps_stale_history",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.82912427186966e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001008491963148117,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0001207524910569191,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_skill_operation_mismatch_returns_route_free_repair_evidence",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 8.161738514900208e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 8.876528590917587e-05,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.000513371080160141,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_binding_module_contains_no_domain_specific_or_shell_extraction_logic",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00010268855839967728,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005871858447790146,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.025799007155001163,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_lifecycle_and_local_adoption_are_exactly_once",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015126541256904602,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005690576508641243,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 2.1067273002117872,
+    "failure": "tests/test_recovery_binding_final_spec.py:511: in test_recovery_candidate_adoption_rejects_missing_active_recovery\n    from bio_agents import BioAnalystAgent\nbio_agents.py:549: in <module>\n    from agent_core.formal_artifact_resolver import (\nagent_core/formal_artifact_resolver.py:21: in <module>\n    from memory.task_semantics import is_explicit_tad_boundary_artifact_intent\nE   ModuleNotFoundError: No module named 'memory'"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_missing_active_recovery",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00032021384686231613,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007306300103664398,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.887504699639976,
+    "failure": "tests/test_recovery_binding_final_spec.py:535: in test_recovery_candidate_duplicate_adoption_requires_durable_pending_action\n    from bio_agents import BioAnalystAgent\nbio_agents.py:549: in <module>\n    from agent_core.formal_artifact_resolver import (\nagent_core/formal_artifact_resolver.py:21: in <module>\n    from memory.task_semantics import is_explicit_tad_boundary_artifact_intent\nE   ModuleNotFoundError: No module named 'memory'"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_duplicate_adoption_requires_durable_pending_action",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002977680414915085,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0007283920422196388,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.8500748835504055,
+    "failure": "tests/test_recovery_binding_final_spec.py:620: in test_recovery_candidate_adoption_rejects_superseded_dispatch_target\n    from bio_agents import BioAnalystAgent\nbio_agents.py:549: in <module>\n    from agent_core.formal_artifact_resolver import (\nagent_core/formal_artifact_resolver.py:21: in <module>\n    from memory.task_semantics import is_explicit_tad_boundary_artifact_intent\nE   ModuleNotFoundError: No module named 'memory'"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_recovery_candidate_adoption_rejects_superseded_dispatch_target",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0021693073213100433,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0010646749287843704,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0319990199059248,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_candidate_rejection_rolls_generation_claim_without_replacing_recovery_envelope",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00018709246069192886,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001356992870569229,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.0003209412097930908,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_generation_claim_restart_states_fail_closed_or_resume_same_target",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00011029466986656189,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0005961526185274124,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.8494021138176322,
+    "failure": "tests/test_recovery_binding_final_spec.py:810: in test_terminal_chain_preserves_execution_decision_transition_and_blocker\n    from bio_agents import BioAnalystAgent\nbio_agents.py:549: in <module>\n    from agent_core.formal_artifact_resolver import (\nagent_core/formal_artifact_resolver.py:21: in <module>\n    from memory.task_semantics import is_explicit_tad_boundary_artifact_intent\nE   ModuleNotFoundError: No module named 'memory'"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_terminal_chain_preserves_execution_decision_transition_and_blocker",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002725599333643913,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014292728155851364,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.000569075345993042,
+    "failure": "tests/test_recovery_binding_final_spec.py:862: in test_snpeff_skill_declares_typed_producer_build_and_annotation_operations\n    assert \"prepare_database:\" in document\nE   AssertionError: assert 'prepare_database:' in '---\\nname: snpeff-annotation\\ndescription: Annotate VCF SNPs and indels with snpEff using an existing database or a c...pcingola.github.io/SnpEff/snpeff/build_db/),\\n  [ANN format](https://pcingola.github.io/SnpEff/snpeff/inputoutput/).\\n'"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_snpeff_skill_declares_typed_producer_build_and_annotation_operations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00015875324606895447,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.0001177322119474411,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.8626801744103432,
+    "failure": "tests/test_recovery_binding_final_spec.py:871: in test_typed_execute_parser_preserves_binding_declarations\n    from bio_agents import BioAnalystAgent\nbio_agents.py:549: in <module>\n    from agent_core.formal_artifact_resolver import (\nagent_core/formal_artifact_resolver.py:21: in <module>\n    from memory.task_semantics import is_explicit_tad_boundary_artifact_intent\nE   ModuleNotFoundError: No module named 'memory'"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_typed_execute_parser_preserves_binding_declarations",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0002758391201496124,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.00014056731015443802,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "call",
+    "outcome": "passed",
+    "duration": 0.004059324972331524,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_downstream_generate_context_projects_exact_accepted_binding",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.00014349725097417831,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "start"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "setup",
+    "outcome": "passed",
+    "duration": 0.000642336905002594,
+    "failure": ""
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "call",
+    "outcome": "failed",
+    "duration": 0.0007942924275994301,
+    "failure": "tests/test_recovery_binding_final_spec.py:961: in test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity\n    accept_action_binding_candidates(\nagent_core/plan_bindings.py:810: in accept_action_binding_candidates\n    candidates = _candidate_map(action)\n                 ^^^^^^^^^^^^^^^^^^^^^^\nagent_core/plan_bindings.py:789: in _candidate_map\n    raise PlanBindingError(\nE   agent_core.plan_bindings.PlanBindingError: PLAN_BINDING_CANDIDATE_VALUE_SHAPE_INVALID: {\"binding_name\":\"snpeff_db\",\"observed_python_type\":\"str\",\"value_type\":\"artifact_ref\"}"
+  },
+  {
+    "nodeid": "tests/test_recovery_binding_final_spec.py::test_session_1788401254_shaped_replay_preserves_exact_binding_and_recovery_identity",
+    "phase": "teardown",
+    "outcome": "passed",
+    "duration": 0.0003264946863055229,
+    "failure": ""
+  }
+]
