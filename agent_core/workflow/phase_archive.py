@@ -384,7 +384,7 @@ class PhaseArchiveStore:
         }
 
     @staticmethod
-    def _read_mapping(path: Path, *, missing_code: str) -> dict[str, Any]:
+    def _read_mapping(path: Path, *, missing_code: str, max_bytes: int | None = None) -> dict[str, Any]:
         if not _path_is_present(path):
             raise PhaseArchiveIntegrityError(missing_code)
         if path.is_symlink() or not path.is_file():
@@ -392,7 +392,20 @@ class PhaseArchiveStore:
                 f"PHASE_ARCHIVE_PATH_INVALID: {path}"
             )
         try:
-            value = json.loads(path.read_text(encoding="utf-8"))
+            if max_bytes is None:
+                value = json.loads(path.read_text(encoding="utf-8"))
+            else:
+                from agent_core.approved_resource_locator import open_approved_resource
+                if type(max_bytes) is not int or max_bytes < 1:
+                    raise PhaseArchiveValidationError("PHASE_ARCHIVE_BYTE_LIMIT_INVALID")
+                for component in reversed((path, *path.parents)):
+                    if component.is_symlink():
+                        raise PhaseArchiveIntegrityError("PHASE_ARCHIVE_PATH_INVALID")
+                with open_approved_resource(path) as stream:
+                    encoded = stream.read(max_bytes + 1)
+                if len(encoded) > max_bytes:
+                    raise PhaseArchiveIntegrityError("PHASE_ARCHIVE_OBJECT_SIZE_LIMIT")
+                value = json.loads(encoded)
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             raise PhaseArchiveIntegrityError(
                 f"PHASE_ARCHIVE_JSON_UNREADABLE: {path}"
@@ -478,13 +491,14 @@ class PhaseArchiveStore:
             metadata=dict(metadata or {}),
         ))
 
-    def read(self, archive_ref: str) -> PhaseArchiveRecord:
+    def read(self, archive_ref: str, *, max_object_bytes: int | None = None) -> PhaseArchiveRecord:
         """Read a record only after content and invocation verification."""
 
         expected_digest = _parse_archive_ref(archive_ref)
         raw = self._read_mapping(
             self._object_path(expected_digest),
             missing_code="PHASE_ARCHIVE_OBJECT_MISSING",
+            max_bytes=max_object_bytes,
         )
         try:
             record = PhaseArchiveRecord.from_mapping(raw)
@@ -510,6 +524,7 @@ class PhaseArchiveStore:
         anchor = self._read_mapping(
             identity_path,
             missing_code="PHASE_ARCHIVE_IDENTITY_MISSING",
+            max_bytes=max_object_bytes,
         )
         if anchor != self._identity_anchor(record):
             raise PhaseArchiveIntegrityError("PHASE_ARCHIVE_IDENTITY_MISMATCH")

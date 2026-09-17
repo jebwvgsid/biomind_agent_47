@@ -203,7 +203,9 @@ def test_bubblewrap_permission_failure_is_not_tool_absence():
             assert result['inspection_status']=='permission_error'
             assert result['reason_code']=='RUNTIME_INSPECTION_SANDBOX_PERMISSION_DENIED'
             assert not result['audit'] and not result['coverage']
-            assert 'NETLINK_ROUTE' not in json.dumps(result)
+            # GWAS S1 preserves only a bounded, sanitized sandbox reason.
+            assert result['inspection_error']['reason_detail'] == case.leaf.stderr
+            assert len(result['inspection_error']['reason_detail']) <= 384
         finally:
             case.doCleanups()
     asyncio.run(check())

@@ -804,6 +804,7 @@ class Schema2RecoveryNode:
         loop_config: RecoveryAgentLoopConfig | None = None,
         inherited_materials_factory: InheritedMaterialsFactory | None = None,
         compactor: Any | None = None,
+        compactor_model: Any | None = None,
         context_budget_policy: ContextBudgetPolicy | None = None,
         token_estimator: TokenEstimator | None = None,
         context_compaction_enabled: bool = True,
@@ -833,7 +834,9 @@ class Schema2RecoveryNode:
         self.resource_policy_receipt = recovery_policy_receipt(self.resource_policy, explicit=resource_policy is not None)
         self.inherited_materials_factory = inherited_materials_factory
         self.compactor = compactor
-        self.context_budget_policy = context_budget_policy or ContextBudgetPolicy()
+        from agent_core.workflow.recovery_runtime import resolve_recovery_budget_policy
+        self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or ContextBudgetPolicy(),
+            clients=(model, compactor_model), resource_policy=self.resource_policy)
         self.token_estimator = token_estimator or ReferenceTokenEstimator()
         self.context_compaction_enabled = bool(context_compaction_enabled)
         self.provider_invoke = provider_invoke
@@ -1434,6 +1437,14 @@ class Schema2RecoveryNode:
         source_epoch_id: str,
         compaction_request_id: str,
     ) -> Any:
+        from agent_core.workflow.recovery_runtime import recovery_dispatch_budget
+        with recovery_dispatch_budget(self.context_budget_policy, self.token_estimator, stage="context_compaction"):
+            return await self._invoke_compactor_admitted(messages, observability=observability,
+                task_id=task_id, seed_id=seed_id, failure_id=failure_id,
+                source_epoch_id=source_epoch_id, compaction_request_id=compaction_request_id)
+
+    async def _invoke_compactor_admitted(self, messages, *, observability, task_id, seed_id,
+                                         failure_id, source_epoch_id, compaction_request_id):
         target = self.compactor if self.compactor is not None else self.model
         call = getattr(target, "ainvoke", None)
         if call is None and callable(target):
@@ -2243,6 +2254,22 @@ class Schema2RecoveryNode:
                     )
                     linked_previous_archive_ref = archive.archive_ref
                     continue
+                episode["terminal_error"] = {
+                    "code": str(getattr(exc, "code", None) or "RECOVERY_CONTEXT_COMPACTION_FAILED"),
+                    "failure_stage": (
+                        "recovery.compactor_admission" if str(getattr(exc, "code", "")) in {
+                            "COMPACTOR_PROVIDER_INPUT_UNSAFE", "RECOVERY_PROVIDER_INPUT_UNSAFE",
+                            "COMPACTION_PROTECTED_WIRE_UNSAFE_BEFORE_MAP"}
+                        else "recovery.compaction_budget" if str(getattr(exc, "code", "")) in {
+                            "COMPACTION_MAINTENANCE_BUDGET_EXHAUSTED", "HIERARCHICAL_MODEL_CALL_LIMIT_EXCEEDED"}
+                        else "recovery.compactor_response"),
+                    "budget": {**self.context_budget_policy.to_dict(),
+                        "effective_output_limit_tokens": self.context_budget_policy.output_reserve_tokens,
+                        "source_request_budget": boundary_budget,
+                        "capacity_feedback": deepcopy(getattr(exc, "feedback", {}) or {}),
+                        "maintenance": deepcopy(maintenance)},
+                    "detail": _canonical(exc.to_dict()) if isinstance(exc, ContextCompactionError) else str(exc),
+                }
                 return fail(
                     task_id=task_id,
                     durable=durable,

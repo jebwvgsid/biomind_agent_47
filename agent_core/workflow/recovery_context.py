@@ -16,6 +16,10 @@ from typing import Any, Mapping, Sequence
 
 from agent_core.workflow.phase_archive import PhaseArchiveRecord, PhaseArchiveStore
 from agent_core.workflow.stage_contracts import RecoverySeed
+from agent_core.workflow.inspection_evidence import (
+    InspectionEvidenceError, InspectionObjectReader, inspection_scope,
+    read_inspection_authority, bounded_inspection_body_page,
+)
 
 
 RECOVERY_CHECKPOINT_SCHEMA_VERSION = 1
@@ -120,6 +124,9 @@ class RecoveryObservationStore:
                 "failure_id": seed.failure_packet.failure_id,
                 "request_id": request_id,
                 "step_id": seed.failure_packet.step_id,
+                "scope": inspection_scope(seed.failure_packet, seed.seed_id),
+                "object_revision": 1,
+                "allowed_tools": ["evidence.read"],
             },
         )
         serialized = _canonical(payload)
@@ -129,6 +136,72 @@ class RecoveryObservationStore:
             "content_sha256": payload_digest,
             "observed_chars": len(serialized),
             "bounded_excerpt": serialized[: self.excerpt_chars],
+            "reader": "evidence.read",
+            "object_revision": 1,
+            "cursor": {"next_start_line": 1},
+        }
+
+    def resolve(self, *, seed: RecoverySeed, observation_ref: str) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Authorize an immutable observation from the current durable episode.
+
+        The archive's existing invocation anchor is its publication record;
+        the dispatcher admits that exact scoped handle into its existing
+        registry. Historical/ordinary phase archives grant no observation read.
+        """
+        scope = inspection_scope(seed.failure_packet, seed.seed_id)
+        reader = InspectionObjectReader(str(self.phase_store.root.parent), scope=scope)
+        read_inspection_authority(reader.store, scope)
+        from agent_core.workflow.inspection_evidence import MAX_INSPECTION_OBJECT_BYTES
+        from agent_core.workflow.phase_archive import PhaseArchiveIntegrityError
+        try:
+            record = self.phase_store.read(observation_ref, max_object_bytes=MAX_INSPECTION_OBJECT_BYTES)
+        except PhaseArchiveIntegrityError as exc:
+            if str(exc) == "PHASE_ARCHIVE_OBJECT_SIZE_LIMIT":
+                raise InspectionEvidenceError("INSPECTION_OBJECT_SIZE_LIMIT") from exc
+            raise
+        plain = record.to_dict()
+        meta, summary = plain["metadata"], plain["summary"]
+        if record.phase != "recovery-observation" or record.task_id != scope["task_id"] or meta.get("scope") != scope:
+            raise InspectionEvidenceError("INSPECTION_REF_SCOPE_MISMATCH", "observation")
+        if type(meta.get("object_revision")) is not int or meta["object_revision"] != 1:
+            raise InspectionEvidenceError("INSPECTION_OBJECT_REVISION_MISMATCH")
+        if meta.get("allowed_tools") != ["evidence.read"]:
+            raise InspectionEvidenceError("INSPECTION_TOOL_NOT_ALLOWED")
+        if meta.get("seed_id") != seed.seed_id or meta.get("failure_id") != seed.failure_packet.failure_id:
+            raise InspectionEvidenceError("INSPECTION_REF_SCOPE_MISMATCH", "failure")
+        payload = summary.get("result")
+        if summary.get("schema_version") != 1 or not isinstance(payload, Mapping):
+            raise InspectionEvidenceError("INSPECTION_OBJECT_SCHEMA_INVALID")
+        content_hash = _digest(payload)
+        if summary.get("content_sha256") != content_hash:
+            raise InspectionEvidenceError("INSPECTION_OBJECT_DIGEST_MISMATCH")
+        expected_invocation = f"{seed.seed_id}:observation:{meta.get('request_id')}:" + content_hash.removeprefix("sha256:")[:24]
+        if record.invocation_id != expected_invocation:
+            raise InspectionEvidenceError("INSPECTION_OBJECT_IDENTITY_MISMATCH")
+        descriptor = {
+            "ref_id": observation_ref, "kind": "evidence", "task_id": scope["task_id"],
+            "plan_id": scope["plan_id"], "step_id": scope["step_id"],
+            "backend": "recovery_observation", "digest": "sha256:" + record.digest,
+            "size_hint": len(_canonical(payload)),
+            "scope": {**scope, "access": "current_step", "object_revision": 1,
+                "object_kind": "recovery_observation", "source_object_id": meta["request_id"],
+                "allowed_tools": ["evidence.read"], "readable": True, "content_sha256": content_hash},
+        }
+        return descriptor, dict(payload)
+
+    def read(self, *, seed: RecoverySeed, descriptor: Mapping[str, Any], start_line: int = 1,
+             end_line: int | None = None) -> dict[str, Any]:
+        verified, payload = self.resolve(seed=seed, observation_ref=str(descriptor.get("ref_id") or ""))
+        if verified != dict(descriptor):
+            raise InspectionEvidenceError("INSPECTION_REF_INDEX_MISMATCH")
+        return {
+            "tool": "evidence.read", "source_ref": verified["ref_id"],
+            "source_object_id": verified["scope"]["source_object_id"],
+            "object_kind": "recovery_observation", "object_revision": 1,
+            "digest": verified["digest"], "content_sha256": verified["scope"]["content_sha256"],
+            "scope": inspection_scope(seed.failure_packet, seed.seed_id),
+            "authority": "current_inspection", "observation_page": True,
+            **bounded_inspection_body_page(payload, start_line=start_line, end_line=end_line),
         }
 
 

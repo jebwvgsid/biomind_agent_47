@@ -32,8 +32,11 @@ class _Store:
 class _Model:
     def __init__(self):
         self.requests = []
+        self.output_limits = []
 
-    async def ainvoke(self, messages):
+    async def ainvoke(self, messages, *, max_tokens):
+        assert type(max_tokens) is int and max_tokens > 0
+        self.output_limits.append(max_tokens)
         self.requests.append(list(messages))
         if len(self.requests) == 1:
             return AIMessage(content="", tool_calls=[{
@@ -92,6 +95,7 @@ class Schema2RecoveryNodeTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(store.save_count, 1)
             self.assertEqual(len(model.requests), 2)
+            self.assertEqual(model.output_limits, [node.context_budget_policy.output_reserve_tokens] * 2)
             self.assertNotIn("_provider_episode", result)
             self.assertNotIn("recovery_directive", result)
             serialized = json.dumps([

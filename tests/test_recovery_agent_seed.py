@@ -129,15 +129,14 @@ class RecoveryProviderSeedTests(unittest.TestCase):
         self.assertEqual(len(constraints), 1)
         self.assertEqual(constraints[0]["strength"], "hard")
 
-    def test_minimum_seed_over_hard_bound_fails_without_truncation(self) -> None:
+    def test_large_seed_preserves_char_telemetry_without_preempting_complete_budget(self) -> None:
         durable, seed = _fixture(with_skill=False)
         task = copy.deepcopy(durable["current_task"]["task_spec"])
         task["goal"] = "G" * (RECOVERY_SEED_HARD_LIMIT_CHARS + 1)
         _replace_current_task(durable, task)
-        with self.assertRaisesRegex(
-            RecoveryAgentError, "RECOVERY_SEED_CAPACITY_EXCEEDED"
-        ):
-            project_recovery_seed_for_provider(seed, durable)
+        projected = project_recovery_seed_for_provider(seed, durable)
+        self.assertFalse(recovery_seed_capacity(projected)["within_hard_limit"])
+        self.assertIn(task["goal"], json.dumps(projected, ensure_ascii=False))
 
 
 if __name__ == "__main__":

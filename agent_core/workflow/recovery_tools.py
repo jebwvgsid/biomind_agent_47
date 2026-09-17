@@ -541,6 +541,7 @@ class RecoveryLocalToolDispatcher:
                 None,
             ),
         )
+        self.phase_store = phase_store
         self.skill_service = skill_service
         self.evidence_reader = evidence_reader
         self.inspection_reader = inspection_reader or InspectionObjectReader(
@@ -1102,9 +1103,22 @@ class RecoveryLocalToolDispatcher:
         return self._skill_call(skill_id, request)
 
     def _evidence_read(self, args: Mapping[str, Any]) -> dict[str, Any]:
+        requested = str(args.get("evidence_ref") or "")
+        if requested.startswith(PHASE_ARCHIVE_REF_PREFIX):
+            from agent_core.workflow.recovery_context import RecoveryObservationStore
+            observations = RecoveryObservationStore(self.phase_store)
+            descriptor, _body = observations.resolve(seed=self.seed, observation_ref=requested)
+            self.registry.register(InspectionRef(**descriptor), locator={"archive_ref": requested})
         entry, locator = self.registry.resolve(
-            str(args.get("evidence_ref") or ""), kinds=("evidence", "execution", "attempt")
+            requested, kinds=("evidence", "execution", "attempt")
         )
+        if entry.backend == "recovery_observation":
+            from agent_core.workflow.recovery_context import RecoveryObservationStore
+            observations = RecoveryObservationStore(self.phase_store)
+            if args.get("causal_path"):
+                raise RecoveryToolError("CAUSAL_READ_PATH_INVALID")
+            return observations.read(seed=self.seed, descriptor=entry.to_dict(),
+                start_line=args.get("start_line", 1), end_line=args.get("end_line"))
         if entry.backend == INSPECTION_BACKEND:
             return self.inspection_reader.read(
                 entry.to_dict(), locator,

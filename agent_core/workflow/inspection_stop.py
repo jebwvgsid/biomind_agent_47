@@ -53,6 +53,25 @@ def _code(value, default=""):
     return text if _CODE.fullmatch(text) else default
 
 
+def _budget_projection(value, depth=0):
+    """Read bounded numeric receipts; never carry prompt bodies into CLI facts."""
+    if not isinstance(value, Mapping) or depth > 3:
+        return {}
+    numeric = {"estimated_input_tokens", "safe_input_tokens", "effective_output_limit_tokens",
+        "output_reserve_tokens", "application_context_limit_tokens", "estimation_margin_tokens",
+        "safety_headroom_tokens", "compressor_safe_input_tokens", "provider_message_count",
+        "tool_definition_count"}
+    projected = {key: item for key, item in value.items()
+                 if key in numeric and type(item) is int and item >= 0}
+    projected.update({key: _safe(value[key], 180) for key in (
+        "failure_stage", "estimator_name", "estimator_version", "exact_or_estimated") if value.get(key)})
+    for key in ("capacity_feedback", "source_request_budget"):
+        nested = _budget_projection(value.get(key), depth + 1)
+        if nested:
+            projected[key] = nested
+    return projected
+
+
 def _hash(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True,
         separators=(",", ":"), allow_nan=False).encode()).hexdigest()
@@ -291,6 +310,7 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             **({"resource_receipt": deepcopy(episode["resource_receipt"])} if episode.get("resource_receipt") else {}),
             "transport_receipt": deepcopy(_mapping(error.get("transport_receipt"))),
             "failure_stage": _code(error.get("failure_stage")),
+            **({"budget": _budget_projection(error["budget"])} if error.get("budget") else {}),
             **({"dispatch_status": "not_started"} if error.get("dispatch_status") == "not_started" else {}),
             "no_progress_rounds": int(audit.get("no_progress_rounds") or 0),
             "model_turns": int(audit.get("turn_count") or 0), "tool_calls": int(audit.get("tool_call_count") or 0)},

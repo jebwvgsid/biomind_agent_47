@@ -124,3 +124,26 @@ def test_pre_dispatch_zero_has_explicit_scope_and_historical_char_units():
     boundary['outcome']['payload']['recovery_episode_facts']['terminal_error'].pop('dispatch_status')
     unknown = build_managed_stop(durable['task_id'], {}, durable, boundary)
     assert unknown['recovery_usage']['scope'] == 'unknown'
+
+
+@pytest.mark.parametrize('stage,nested', [('recovery_provider_admission', False), ('recovery_compactor_admission', True)])
+def test_actual_dispatch_budget_reaches_cli_without_relabeling_origin(stage, nested):
+    durable, typed, causal = rejected_execution()
+    budget = {'failure_stage': stage, 'estimated_input_tokens': 187086,
+        'safe_input_tokens': 179904, 'effective_output_limit_tokens': 16000,
+        'exact_or_estimated': 'estimated', 'estimator_name': 'reference',
+        'messages': ['private prompt body must not appear']}
+    if nested:
+        budget = {'effective_output_limit_tokens': 4096, 'capacity_feedback': budget,
+                  'source_request_budget': {'estimated_input_tokens': 90000, 'safe_input_tokens': 191808}}
+    stop = build_inspection_stop(seed={'failure_packet': causal['failure_packet'],
+        'seed_id': 'recovery-seed-' + causal['source_fingerprint']}, durable=durable,
+        source=causal['failure_source'], episode={'terminal_error': {
+            'code': 'RECOVERY_PROVIDER_INPUT_UNSAFE', 'detail': 'bounded dispatch receipt',
+            'failure_stage': stage, 'budget': budget}, 'audit': {'turn_count': 1, 'tool_call_count': 0}})
+    assert 'private prompt' not in str(stop)
+    text = terminal_text('failed', stop)
+    assert stage in text and '187086 tokens' in text and '179904 tokens' in text
+    assert '有效输出上限 16000 tokens' in text and '字符' not in text
+    assert stop['origin']['error_code'] == 'OBSERVED_ARTIFACT_CONTENT_INVALID'
+    assert stop['execution']['returncode'] == 0 and not stop['execution']['committed']

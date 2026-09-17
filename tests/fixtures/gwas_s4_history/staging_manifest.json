@@ -1,0 +1,15 @@
+{
+  "source": "prior read-only audit sandbox, no original session execution",
+  "source_plan_sha256": "f94771984c9fad79f37241cec3e6836118134fe6aaad97a8f61897d6fa159ae2",
+  "changes": [
+    "restore producer-approved plan from immutable formal plan body",
+    "remove only post-Recovery terminal/publication metadata in isolated precursor fixture",
+    "restore top-level steps to same approved precursor: check_inputs verification_pending; remove post-stop terminal_reason"
+  ],
+  "removed_keys": [
+    "managed_run_stop",
+    "report_publications"
+  ],
+  "plan_hash": "sha256:4ac35c245b352112e9c1559c41b927dbf6ec4d17373c55f1b1e759014c474ccc",
+  "fixture_plan_sha256": "1367343ed268939b02062bd2406e6ea102bad10349e6e7089e79c0cd0d30fede"
+}

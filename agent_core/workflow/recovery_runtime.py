@@ -17,7 +17,8 @@ import uuid
 import asyncio
 import inspect
 from contextvars import ContextVar
-from dataclasses import asdict, dataclass
+from contextlib import contextmanager
+from dataclasses import asdict, dataclass, replace
 from copy import deepcopy
 from typing import Any, Callable, Mapping
 
@@ -74,6 +75,86 @@ def configured_recovery_policy():
 
 RECOVERY_RESOURCES = ContextVar("biomind_recovery_resources", default=None)
 RECOVERY_POLICY_RECEIPT = ContextVar("biomind_recovery_policy_receipt", default=None)
+RECOVERY_DISPATCH_BUDGET = ContextVar("biomind_recovery_dispatch_budget", default=None)
+
+
+def resolve_recovery_budget_policy(policy, *, clients=(), resource_policy=None):
+    """Choose one explicit local output cap before Recovery request admission."""
+    from agent_core.provider_attempt import output_policy_projection
+    limits = [policy.output_reserve_tokens]
+    if resource_policy is not None:
+        limits.append(resource_policy.max_output_tokens)
+    for client in clients:
+        resolved = output_policy_projection(client)
+        if resolved["configuration_ambiguity"] or resolved["client_parameter"] not in {"UNKNOWN", "max_tokens"}:
+            raise ValueError("RECOVERY_OUTPUT_PARAMETER_CONFLICT")
+        value = resolved["client_resolved_output_limit"]
+        if type(value) is int and value > 0:
+            limits.append(value)
+    if min(limits) <= 0:
+        raise ValueError("RECOVERY_OUTPUT_LIMIT_REQUIRED")
+    return replace(policy, output_reserve_tokens=min(limits))
+
+
+@contextmanager
+def recovery_dispatch_budget(policy, estimator, *, stage, tools=(), inherited_count=0):
+    """Carry the admitted local policy through the existing final adapter."""
+    token = RECOVERY_DISPATCH_BUDGET.set({"policy": policy, "estimator": estimator,
+        "stage": stage, "tools": list(tools), "inherited_count": inherited_count})
+    try:
+        yield
+    finally:
+        RECOVERY_DISPATCH_BUDGET.reset(token)
+
+
+def recovery_dispatch_receipt(messages, *, stage, client=None):
+    """Recheck the complete final wire and explicit cap without vendor claims."""
+    scope = RECOVERY_DISPATCH_BUDGET.get()
+    if scope is None or scope["stage"] != stage:
+        return None
+    from agent_core.provider_attempt import output_policy_projection
+    from agent_core.workflow.context_compaction import measure_provider_input, measure_compactor_wire_tokens, ContextCompactionCapacityError
+    from agent_core.workflow.scoped_context import provider_visible_payload
+    policy, estimator = scope["policy"], scope["estimator"]
+    resolved = output_policy_projection(client)
+    if resolved["configuration_ambiguity"] or resolved["client_parameter"] not in {"UNKNOWN", "max_tokens"}:
+        raise ValueError("RECOVERY_OUTPUT_PARAMETER_CONFLICT")
+    explicit = resolved["client_resolved_output_limit"]
+    if type(explicit) is int and explicit < policy.output_reserve_tokens:
+        raise ValueError("RECOVERY_OUTPUT_POLICY_CHANGED_AFTER_ADMISSION")
+    tools = list(scope["tools"])
+    # The bound client is the source of actual dispatched tool definitions.
+    current, seen = client, set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        kwargs = getattr(current, "kwargs", None)
+        if isinstance(kwargs, Mapping) and "tools" in kwargs:
+            tools = list(kwargs["tools"] or ())
+            break
+        current = getattr(current, "bound", None)
+    if stage == "context_compaction":
+        tokens = measure_compactor_wire_tokens(messages, policy=policy, estimator=estimator)
+        safe = min(policy.safe_input_tokens, policy.compressor_safe_input_tokens or policy.safe_input_tokens)
+        components = {"complete_compactor_wire": tokens}
+    else:
+        wire = [provider_visible_payload(message) for message in messages]
+        inherited = int(scope["inherited_count"])
+        snapshot = measure_provider_input({
+            "system": wire[0] if wire else {}, "frozen_inputs": wire[1] if len(wire) > 1 else {},
+            "inherited_materials": wire[2:2 + inherited], "local_messages": wire[2 + inherited:],
+            "tool_schema": tools, "pending_results": [], "provider_wrappers": {},
+        }, policy=policy, estimator=estimator)
+        tokens, safe = snapshot.estimated_input_tokens, policy.safe_input_tokens
+        components = snapshot.component_token_counts
+    receipt = {**policy.to_dict(), "failure_stage": "recovery_compactor_admission" if stage == "context_compaction" else "recovery_provider_admission",
+        "estimated_input_tokens": tokens, "effective_output_limit_tokens": policy.output_reserve_tokens,
+        "component_token_counts": dict(components), "safe_input_tokens": safe,
+        "provider_message_count": len(messages), "tool_definition_count": len(tools),
+        "estimator_name": estimator.name, "estimator_version": estimator.version,
+        "exact_or_estimated": estimator.exact_or_estimated, "remote_effective_limit": "UNKNOWN"}
+    if tokens > safe:
+        raise ContextCompactionCapacityError("RECOVERY_PROVIDER_INPUT_UNSAFE", json.dumps(receipt, sort_keys=True), feedback=receipt)
+    return receipt
 
 
 def recovery_policy_receipt(policy, *, explicit=False):
@@ -193,6 +274,19 @@ async def recovery_direct_invoke(call, messages, *, stage, call_context=None, ca
     """
     scope = RECOVERY_RESOURCES.get()
     kwargs = dict(call_kwargs or {})
+    client = getattr(call, "__self__", None)
+    receipt = recovery_dispatch_receipt(messages, stage=stage, client=client)
+    if receipt:
+        if hasattr(client, "bind"):
+            call = client.bind(max_tokens=receipt["effective_output_limit_tokens"]).ainvoke
+        else:
+            signature = inspect.signature(call)
+            if "max_tokens" in signature.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values()):
+                kwargs["max_tokens"] = receipt["effective_output_limit_tokens"]
+            else:
+                from agent_core.workflow.context_compaction import ContextCompactionError
+                raise ContextCompactionError("RECOVERY_OUTPUT_CAP_UNSUPPORTED",
+                    "The provider callable cannot receive an explicit max_tokens policy", feedback=receipt)
     if scope is None:
         result = call(messages, **kwargs)
         return await result if inspect.isawaitable(result) else result
@@ -207,7 +301,7 @@ async def recovery_direct_invoke(call, messages, *, stage, call_context=None, ca
     invocation = "recovery-direct-" + hashlib.sha256((scope["incident"]+stage+epoch+wire_hash).encode()).hexdigest()[:24]
     attempt_id = invocation + "-" + uuid.uuid4().hex[:8]
     estimate = recovery_request_estimate(messages, tools=recovery_tool_schemas() if stage == "recovery" else ())
-    output = policy.max_output_tokens if stage == "recovery" else 16000
+    output = receipt["effective_output_limit_tokens"] if receipt else policy.max_output_tokens if stage == "recovery" else 16000
     reserve = lambda aid, locked=False: recovery_reserve(aid, input_tokens=estimate,
         output_tokens=output, stage=stage, locked=locked, invocation_id=invocation,
         wire_fingerprint=wire_hash, context_epoch_id=epoch)
@@ -223,15 +317,16 @@ async def recovery_direct_invoke(call, messages, *, stage, call_context=None, ca
         provider="standalone", model="explicit_adapter", thinking_policy={},
         timeout_policy=ProviderTimeoutPolicy(seconds, seconds, seconds, min(1, seconds)),
         retry_budget_before=0, retry_budget_after=0, sdk_max_retries=0,
-        output_policy={"receive_char_limit": policy.receive_char_limit} if stage == "recovery" else {})
+        output_policy={"max_tokens": output, "recovery_dispatch_budget": receipt,
+            **({"receive_char_limit": policy.receive_char_limit} if stage == "recovery" else {})})
     async def invoke(observer):
         options = dict(kwargs)
         signature = inspect.signature(call)
         flexible = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values())
         if "config" in signature.parameters or flexible:
             options["config"] = {"callbacks": [observer]}
-        if stage == "recovery" and ("max_tokens" in signature.parameters or flexible):
-            options["max_tokens"] = policy.max_output_tokens
+        if (stage == "recovery" or receipt) and ("max_tokens" in signature.parameters or flexible):
+            options["max_tokens"] = output
         response = call(messages, **options)
         return await response if inspect.isawaitable(response) else response
     try:
@@ -332,7 +427,7 @@ def recovery_replay_wire(wire, *, context_epoch_id=""):
     return None
 
 
-def recovery_closure_wire(wire, *, turns, tools, max_turns, max_tools):
+def recovery_closure_wire(wire, *, turns, tools, max_turns, max_tools, commit=True):
     from agent_core.workflow.recovery_agent import recovery_tool_schemas
     scope = RECOVERY_RESOURCES.get()
     if scope is None:
@@ -356,7 +451,8 @@ def recovery_closure_wire(wire, *, turns, tools, max_turns, max_tools):
             row.update(closing=True, decision_sent=True,
                 decision_reservation={"estimated_input_tokens": cost-policy.max_output_tokens,
                     "output_tokens": policy.max_output_tokens, "seconds": min(remaining, policy.decision_seconds), "turns": 1})
-        recovery_resource_update(mark)
+        if commit:
+            recovery_resource_update(mark)
         return decision
     return wire
 

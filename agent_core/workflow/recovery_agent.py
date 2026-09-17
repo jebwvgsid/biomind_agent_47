@@ -23,6 +23,7 @@ from agent_core.cli_display import flush_public, emit as emit_display
 from agent_core.plan_tracker import canonical_task_spec_for_state
 from agent_core.workflow.context_compaction import (
     ContextBudgetPolicy,
+    ContextCompactionError,
     ContextBudgetSnapshot,
     ReferenceTokenEstimator,
     TokenEstimator,
@@ -373,11 +374,8 @@ def project_recovery_seed_for_provider(
     # raw logs, executable streams, and recursive route/controller fields.
     frozen = thaw(freeze(provider_seed))
     encoded = _canonical(frozen)
-    if len(encoded) > RECOVERY_SEED_HARD_LIMIT_CHARS:
-        raise RecoveryAgentError(
-            "RECOVERY_SEED_CAPACITY_EXCEEDED",
-            f"chars={len(encoded)} limit={RECOVERY_SEED_HARD_LIMIT_CHARS}",
-        )
+    # Character size remains telemetry. Complete request token admission owns
+    # dispatch; immutable object, reader and protocol bounds remain separate.
     return frozen
 
 
@@ -707,11 +705,15 @@ def _context_budget_snapshot(
     *,
     policy: ContextBudgetPolicy,
     estimator: TokenEstimator,
+    wire: Sequence[Any] | None = None,
 ) -> ContextBudgetSnapshot:
     system = state.get("system_message")
     seed = state.get("seed_message")
     inherited = list(state.get("inherited_messages") or ())
     local = list(state.get("messages") or ())
+    if wire is not None:
+        system, seed = wire[0], wire[1]
+        inherited, local = list(wire[2:2 + len(inherited)]), list(wire[2 + len(inherited):])
     return measure_provider_input(
         {
             "system": provider_visible_payload(system),
@@ -896,7 +898,10 @@ class RecoveryAgentLoop:
         self.config = config or RecoveryAgentLoopConfig()
         self.dispatcher = dispatcher
         self.observation_store = observation_store
-        self.context_budget_policy = context_budget_policy or ContextBudgetPolicy()
+        from agent_core.workflow.recovery_runtime import resolve_recovery_budget_policy, RECOVERY_RESOURCES
+        resources = RECOVERY_RESOURCES.get()
+        self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or ContextBudgetPolicy(),
+            clients=(model,), resource_policy=resources["policy"] if resources else None)
         self.token_estimator = token_estimator or ReferenceTokenEstimator()
         self.provider_invoke = provider_invoke
         self.event_sink = event_sink
@@ -931,6 +936,12 @@ class RecoveryAgentLoop:
         *,
         call_context: Mapping[str, Any],
     ) -> AIMessage:
+        from agent_core.workflow.recovery_runtime import recovery_dispatch_budget
+        with recovery_dispatch_budget(self.context_budget_policy, self.token_estimator, stage="recovery",
+                tools=recovery_tool_schemas(), inherited_count=call_context.get("inherited_message_count", 0)):
+            return await self._model_invoke_admitted(messages, call_context=call_context)
+
+    async def _model_invoke_admitted(self, messages, *, call_context):
         if self.provider_invoke is not None:
             response = self.provider_invoke(
                 messages,
@@ -976,11 +987,17 @@ class RecoveryAgentLoop:
                     "code": "RECOVERY_LLM_TURN_LIMIT",
                     "detail": str(config.max_llm_turns),
                 }}
+            from agent_core.workflow.recovery_runtime import recovery_closure_wire
+            unclosed_wire = wire
+            if replay is None:
+                wire = recovery_closure_wire(wire, turns=turns, tools=int(state.get("tool_call_count") or 0),
+                    max_turns=config.max_llm_turns, max_tools=config.max_total_tool_calls, commit=False)
             context_chars = _message_chars(wire)
             budget = _context_budget_snapshot(
                 state,
                 policy=self.context_budget_policy,
                 estimator=self.token_estimator,
+                wire=wire,
             )
             budget_checks = [
                 deepcopy(dict(item))
@@ -1024,6 +1041,9 @@ class RecoveryAgentLoop:
                     "context_budget_checks": budget_checks,
                     "terminal_error": {
                         "code": "RECOVERY_FIXED_CONTEXT_TOKEN_LIMIT",
+                        "failure_stage": "recovery_provider_admission",
+                        "budget": budget.to_dict(),
+                        "effective_output_limit_tokens": self.context_budget_policy.output_reserve_tokens,
                         "detail": (
                             f"tokens={budget.estimated_input_tokens}; "
                             f"safe={budget.policy.safe_input_tokens}"
@@ -1044,8 +1064,10 @@ class RecoveryAgentLoop:
                 recovery_closure_wire, recovery_resource_update, RECOVERY_RESOURCES, RecoveryResourceLimit,
             )
             if replay is None:
-                wire = recovery_closure_wire(wire, turns=turns, tools=int(state.get("tool_call_count") or 0),
+                committed_wire = recovery_closure_wire(unclosed_wire, turns=turns, tools=int(state.get("tool_call_count") or 0),
                     max_turns=config.max_llm_turns, max_tools=config.max_total_tool_calls)
+                if _wire_fingerprint(committed_wire) != _wire_fingerprint(wire):
+                    raise RecoveryResourceLimit("Recovery decision boundary changed after admission")
             ordinal = turns + (replay is None)
             if RECOVERY_RESOURCES.get() is not None and replay is None:
                 recovery_resource_update(lambda row: row["business"].update(turn_count=ordinal))
@@ -1061,6 +1083,9 @@ class RecoveryAgentLoop:
                     ),
                     "wire_fingerprint": _wire_fingerprint(wire),
                     "provider_message_count": len(wire),
+                    "inherited_message_count": len(state.get("inherited_messages") or ()),
+                    "context_budget": budget.to_dict(),
+                    "effective_output_limit_tokens": self.context_budget_policy.output_reserve_tokens,
                     "provider_visible_chars": context_chars,
                     "estimated_input_tokens": budget.estimated_input_tokens,
                     "cached_input_tokens": budget.cached_input_tokens,
@@ -1090,6 +1115,9 @@ class RecoveryAgentLoop:
                     "reception_protocol": PROTOCOL,
                     "provider_message_count": len(wire),
                     "effective_resource_policy": policy_receipt,
+                    "inherited_message_count": len(state.get("inherited_messages") or ()),
+                    "context_budget": budget.to_dict(),
+                    "effective_output_limit_tokens": self.context_budget_policy.output_reserve_tokens,
                 }
                 await self._emit_event(
                     "recovery_model_turn_started",
@@ -1126,6 +1154,14 @@ class RecoveryAgentLoop:
                 except Exception as exc:
                     if isinstance(exc, RecoveryResourceLimit):
                         raise
+                    if isinstance(exc, ContextCompactionError):
+                        return {"context_budget_checks": budget_checks,
+                            "provider_request_audit": request_audit,
+                            "terminal_error": {"code": exc.code,
+                                "failure_stage": "recovery_provider_admission",
+                                "budget": deepcopy(getattr(exc, "feedback", None) or budget.to_dict()),
+                                "effective_output_limit_tokens": self.context_budget_policy.output_reserve_tokens,
+                                "detail": exc.detail}}
                     request_record.update({
                         "status": "transport_failed",
                         "error_type": type(exc).__name__,
@@ -1586,6 +1622,7 @@ class RecoveryAgentLoop:
                 should_externalize = bool(
                     not error
                     and self.observation_store is not None
+                    and not result.get("observation_page")
                     and (
                         len(encoded) > config.single_observation_chars
                         or observation_chars + len(encoded)

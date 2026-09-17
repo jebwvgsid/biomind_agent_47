@@ -2944,6 +2944,7 @@ class BioAnalystAgent:
             skill_service=self.skill_access_service,
             compactor=self._schema2_context_compactor_invoke,
             provider_invoke=self._schema2_recovery_provider_invoke,
+            compactor_model=self.recovery_transport_llm,
             event_sink=self._schema2_recovery_event_sink,
             context_compaction_enabled=SCHEMA2_CONTEXT_COMPACTION_ENABLED,
             context_budget_policy=ContextBudgetPolicy(
@@ -18191,19 +18192,25 @@ class BioAnalystAgent:
             recovery_reserve, recovery_settle, recovery_replay_account,
         )
         resources = RECOVERY_RESOURCES.get() if stage in {"recovery", "context_compaction"} else None
+        from agent_core.workflow.recovery_runtime import recovery_dispatch_receipt
+        dispatch_budget = recovery_dispatch_receipt(messages, stage=stage, client=invocation_llm)
         resource_output = 0
-        if resources:
+        if resources or dispatch_budget:
             from agent_core.provider_attempt import output_policy_projection
             resolved = output_policy_projection(invocation_llm)
             if resolved["configuration_ambiguity"] or resolved["client_parameter"] not in {"UNKNOWN", "max_tokens"}:
                 raise ValueError("RECOVERY_OUTPUT_PARAMETER_CONFLICT")
-            resource_output = (resources["policy"].max_output_tokens if stage == "recovery"
+            resource_output = (dispatch_budget["effective_output_limit_tokens"] if dispatch_budget
+                else resources["policy"].max_output_tokens if stage == "recovery"
                 else resolved["client_resolved_output_limit"] if type(resolved["client_resolved_output_limit"]) is int else 16000)
             if type(resolved["client_resolved_output_limit"]) is int and resolved["client_resolved_output_limit"] > 0:
                 resource_output = min(resource_output, resolved["client_resolved_output_limit"])
             invocation_llm = invocation_llm.bind(max_tokens=resource_output) if hasattr(invocation_llm, "bind") else invocation_llm
             provider_policy["max_tokens"] = resource_output
-            trace_metadata["recovery_resource_policy"] = resources["row"]["policy"]
+            if resources:
+                trace_metadata["recovery_resource_policy"] = resources["row"]["policy"]
+            if dispatch_budget:
+                trace_metadata["recovery_dispatch_budget"] = dispatch_budget
         if planner_output_policy:
             base_compactor = getattr(self, "_schema2_phase_compactor", None)
             base_budget = getattr(base_compactor, "policy", None) or ContextBudgetPolicy()
@@ -18522,7 +18529,9 @@ class BioAnalystAgent:
                     sdk_max_retries=sdk_max_retries,
                     prompt_hash=prompt_hash,
                     model_parameter_hash=model_parameter_hash,
-                    output_policy=({"max_tokens": resource_output, "receive_char_limit": resources["policy"].receive_char_limit}
+                    output_policy=({"max_tokens": resource_output, "recovery_dispatch_budget": dispatch_budget,
+                        **({"receive_char_limit": resources["policy"].receive_char_limit} if resources and stage == "recovery" else {})}
+                        if dispatch_budget else {"max_tokens": resource_output, "receive_char_limit": resources["policy"].receive_char_limit}
                         if resources and stage == "recovery" else deepcopy(dict(metadata.get("generate_output_policy") or {}))),
                 )
 
@@ -18542,8 +18551,9 @@ class BioAnalystAgent:
                     }
                     if supports_config(invocation_llm):
                         return await invocation_llm.ainvoke(messages, config=config,
-                            **({"max_tokens": resource_output} if resources and not hasattr(invocation_llm, "bind") else {}))
-                    return await invocation_llm.ainvoke(messages)
+                            **({"max_tokens": resource_output} if (resources or dispatch_budget) and not hasattr(invocation_llm, "bind") else {}))
+                    return await invocation_llm.ainvoke(messages,
+                        **({"max_tokens": resource_output} if (resources or dispatch_budget) and not hasattr(invocation_llm, "bind") else {}))
 
                 try:
                     if stage == "recovery" or resources:

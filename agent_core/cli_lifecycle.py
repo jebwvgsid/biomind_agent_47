@@ -150,7 +150,25 @@ def _stop_text(stop, code):
         amount = ('，' + counts['chars'] + ' / ' + counts['limit'] + ' 字符'
                   if 'chars' in counts and 'limit' in counts else '')
         return 'Recovery 固定 seed 在首次调用前超过字符限制' + amount + '（' + code + '）。'
-    if ('TOKEN_LIMIT' in code or 'COMPACTION' in code or 'CONTEXT' in code):
+    if ('TOKEN_LIMIT' in code or 'COMPACTION' in code or 'CONTEXT' in code
+            or code == 'RECOVERY_PROVIDER_INPUT_UNSAFE'):
+        budget = stop.get('budget') or {}
+        # The failed dispatch's feedback takes precedence over an outer
+        # maintenance policy. A source_request_budget belongs to an earlier
+        # business request and must not label a failed compactor request.
+        for _ in range(4):
+            feedback = budget.get('capacity_feedback') if isinstance(budget, dict) else None
+            if not isinstance(feedback, dict) or not feedback:
+                break
+            budget = feedback
+        if isinstance(budget, dict) and all(type(budget.get(key)) is int
+                for key in ('estimated_input_tokens', 'safe_input_tokens')):
+            stage = _brief(budget.get('failure_stage') or stop.get('failure_stage') or 'recovery.context_budget')
+            output = budget.get('effective_output_limit_tokens', budget.get('output_reserve_tokens'))
+            output_text = '，有效输出上限 ' + str(output) + ' tokens' if type(output) is int else ''
+            return (stage + ' 的完整请求输入估算为 ' + str(budget['estimated_input_tokens'])
+                    + ' tokens，有效输入上限 ' + str(budget['safe_input_tokens']) + ' tokens'
+                    + output_text + '；已停止（' + code + '）。')
         counts = dict(re.findall(r'\b(tokens|safe)=(\d+)\b', detail))
         if 'tokens' in counts and 'safe' in counts:
             stage = _brief(stop.get('failure_stage') or 'recovery.context_budget')

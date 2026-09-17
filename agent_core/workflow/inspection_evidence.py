@@ -496,6 +496,81 @@ def validate_inspection_descriptor(entry: Mapping[str, Any], expected_scope: Map
         raise InspectionEvidenceError("INSPECTION_TOOL_NOT_ALLOWED")
 
 
+def bounded_inspection_body_page(body: Mapping[str, Any], *, start_line: int = 1, end_line: int | None = None) -> dict[str, Any]:
+    """Shared bounded, reversible JSON page; caller owns source authorization."""
+    try:
+        start = int(start_line)
+        end = int(end_line) if end_line is not None else start + MAX_INSPECTION_READ_LINES - 1
+        if start < 1 or end < start:
+            raise ValueError()
+    except (TypeError, ValueError) as exc:
+        raise InspectionEvidenceError("RECOVERY_TOOL_ARGUMENT_INVALID", "inspection line range") from exc
+    # Only structural JSON LF is a page boundary. splitlines() also splits
+    # valid U+2028/U+0085 string contents and would corrupt reconstructed JSON.
+    lines = json.dumps(body, ensure_ascii=False, sort_keys=True, indent=2).split("\n")
+    representation = "json_pretty_lines_v1"
+    if any(len(line) + 1 > MAX_INSPECTION_READ_CHARS for line in lines):
+        # Narrowing line numbers cannot shorten one JSON string containing
+        # a whole script/stdout. Offer a reversible bounded representation
+        # of this same authorized body instead of an unusable retry hint.
+        encoded_body = _canonical(body)
+        representation = "json_chunk_envelope_v1"
+        lines = json.dumps({
+            "representation": representation,
+            "instruction": "Concatenate content_chunks, verify body_json_sha256, then JSON-decode to recover the original scoped object. Line ranges address this representation, not source file lines.",
+            "body_json_sha256": hashlib.sha256(encoded_body.encode()).hexdigest(),
+            "content_chunks": [encoded_body[index:index + 2_000]
+                               for index in range(0, len(encoded_body), 2_000)],
+        }, ensure_ascii=False, sort_keys=True, indent=2).split("\n")
+    end = min(end, start + MAX_INSPECTION_READ_LINES - 1, len(lines))
+    selected, chars, actual_end = [], 0, start - 1
+    for ordinal in range(start - 1, end):
+        line = lines[ordinal]
+        remaining = MAX_INSPECTION_READ_CHARS - chars
+        if len(line) + 1 > remaining:
+            if not selected:
+                raise InspectionEvidenceError(
+                    "INSPECTION_LINE_REQUIRES_NARROWING",
+                    f"line={ordinal + 1}; max_chars={MAX_INSPECTION_READ_CHARS}",
+                )
+            break
+        selected.append(line);chars += len(line) + 1;actual_end = ordinal + 1
+    truncated = actual_end < len(lines) or chars >= MAX_INSPECTION_READ_CHARS
+    return {
+        "content": "\n".join(selected), "format": "application/json",
+        "representation": representation,
+        "start_line": start, "end_line": actual_end, "total_lines": len(lines),
+        "truncated": truncated, "cursor": {"next_start_line": actual_end + 1} if actual_end < len(lines) else {},
+    }
+
+
+def read_inspection_authority(store: StateContractStore, scope: Mapping[str, Any]) -> dict[str, Any]:
+    """Read current durable inspection scope without migration or mutation."""
+    # PlanTracker publishes packet+index in this canonical file under its
+    # CAS lock/atomic replace. Read it without migration or cached state:
+    # load_plan_state can write on read and is inappropriate for a tool.
+    path = store.root.parent / "plan_state.json"
+    _assert_storage_path(store, path)
+    try:
+        if path.stat().st_size > MAX_INSPECTION_AUTHORITY_BYTES:
+            raise InspectionEvidenceError("INSPECTION_AUTHORITY_SIZE_LIMIT")
+        with path.open("rb") as stream:
+            encoded = stream.read(MAX_INSPECTION_AUTHORITY_BYTES + 1)
+        if len(encoded) > MAX_INSPECTION_AUTHORITY_BYTES:
+            raise InspectionEvidenceError("INSPECTION_AUTHORITY_SIZE_LIMIT")
+        durable = json.loads(encoded.decode("utf-8"))
+    except InspectionEvidenceError:
+        raise
+    except OSError as exc:
+        raise InspectionEvidenceError("INSPECTION_OBJECT_IO_ERROR", f"{type(exc).__name__}: {_safe_error_detail(exc)}") from exc
+    except (ValueError, TypeError) as exc:
+        raise InspectionEvidenceError("INSPECTION_AUTHORITY_INVALID") from exc
+    if not isinstance(durable, Mapping):
+        raise InspectionEvidenceError("INSPECTION_AUTHORITY_INVALID")
+    assert_current_inspection_scope(durable, scope)
+    return durable
+
+
 class InspectionObjectReader:
     """Fixed store accessor.  No provider path, remote locator or raw task dump."""
     def __init__(self, data_path: str, *, scope: Mapping[str, Any]) -> None:
@@ -504,27 +579,7 @@ class InspectionObjectReader:
         self.store = StateContractStore(data_path, self.scope["task_id"])
 
     def _assert_current_authority(self, entry: Mapping[str, Any], locator: Mapping[str, Any]) -> None:
-        # PlanTracker publishes packet+index in this canonical file under its
-        # CAS lock/atomic replace. Read it without migration or cached state:
-        # load_plan_state can write on read and is inappropriate for a tool.
-        path = self.store.root.parent / "plan_state.json"
-        _assert_storage_path(self.store, path)
-        try:
-            if path.stat().st_size > MAX_INSPECTION_AUTHORITY_BYTES:
-                raise InspectionEvidenceError("INSPECTION_AUTHORITY_SIZE_LIMIT")
-            with path.open("rb") as stream:
-                encoded = stream.read(MAX_INSPECTION_AUTHORITY_BYTES + 1)
-            if len(encoded) > MAX_INSPECTION_AUTHORITY_BYTES:
-                raise InspectionEvidenceError("INSPECTION_AUTHORITY_SIZE_LIMIT")
-            durable = json.loads(encoded.decode("utf-8"))
-        except InspectionEvidenceError:
-            raise
-        except OSError as exc:
-            raise InspectionEvidenceError("INSPECTION_OBJECT_IO_ERROR", f"{type(exc).__name__}: {_safe_error_detail(exc)}") from exc
-        except (ValueError, TypeError) as exc:
-            raise InspectionEvidenceError("INSPECTION_AUTHORITY_INVALID") from exc
-        if not isinstance(durable, Mapping):
-            raise InspectionEvidenceError("INSPECTION_AUTHORITY_INVALID")
+        durable = read_inspection_authority(self.store, self.scope)
         packet = assert_current_inspection_scope(durable, self.scope)
         ref = str(entry["ref_id"])
         if ref not in set(packet.get("inspection_refs") or ()) | set(packet.get("evidence_refs") or ()):
@@ -645,51 +700,11 @@ class InspectionObjectReader:
             entry = saved
         meta = dict(entry["scope"])
         kind = str(meta["object_kind"])
-        try:
-            start = int(start_line)
-            end = int(end_line) if end_line is not None else start + MAX_INSPECTION_READ_LINES - 1
-            if start < 1 or end < start:
-                raise ValueError()
-        except (TypeError, ValueError) as exc:
-            raise InspectionEvidenceError("RECOVERY_TOOL_ARGUMENT_INVALID", "inspection line range") from exc
-        # Only structural JSON LF is a page boundary. splitlines() also splits
-        # valid U+2028/U+0085 string contents and would corrupt reconstructed JSON.
-        lines = json.dumps(body, ensure_ascii=False, sort_keys=True, indent=2).split("\n")
-        representation = "json_pretty_lines_v1"
-        if any(len(line) + 1 > MAX_INSPECTION_READ_CHARS for line in lines):
-            # Narrowing line numbers cannot shorten one JSON string containing
-            # a whole script/stdout. Offer a reversible bounded representation
-            # of this same authorized body instead of an unusable retry hint.
-            encoded_body = _canonical(body)
-            representation = "json_chunk_envelope_v1"
-            lines = json.dumps({
-                "representation": representation,
-                "instruction": "Concatenate content_chunks, verify body_json_sha256, then JSON-decode to recover the original scoped object. Line ranges address this representation, not source file lines.",
-                "body_json_sha256": hashlib.sha256(encoded_body.encode()).hexdigest(),
-                "content_chunks": [encoded_body[index:index + 2_000]
-                                   for index in range(0, len(encoded_body), 2_000)],
-            }, ensure_ascii=False, sort_keys=True, indent=2).split("\n")
-        end = min(end, start + MAX_INSPECTION_READ_LINES - 1, len(lines))
-        selected, chars, actual_end = [], 0, start - 1
-        for ordinal in range(start - 1, end):
-            line = lines[ordinal]
-            remaining = MAX_INSPECTION_READ_CHARS - chars
-            if len(line) + 1 > remaining:
-                if not selected:
-                    raise InspectionEvidenceError(
-                        "INSPECTION_LINE_REQUIRES_NARROWING",
-                        f"line={ordinal + 1}; max_chars={MAX_INSPECTION_READ_CHARS}",
-                    )
-                break
-            selected.append(line);chars += len(line) + 1;actual_end = ordinal + 1
-        truncated = actual_end < len(lines) or chars >= MAX_INSPECTION_READ_CHARS
+        page = bounded_inspection_body_page(body, start_line=start_line, end_line=end_line)
         return {
             "tool": "evidence.read", "source_ref": entry["ref_id"],
             "source_object_id": meta["source_object_id"], "object_kind": kind,
             "object_revision": 1, "digest": entry["digest"], "scope": {key: meta.get(key, "") for key in INSPECTION_SCOPE_FIELDS},
             "causal_path": list(causal_path), "authority": "historical_diagnostic_only" if causal_path else "current_inspection",
-            "content": "\n".join(selected), "format": "application/json",
-            "representation": representation,
-            "start_line": start, "end_line": actual_end, "total_lines": len(lines),
-            "truncated": truncated, "cursor": {"next_start_line": actual_end + 1} if actual_end < len(lines) else {},
+            **page,
         }

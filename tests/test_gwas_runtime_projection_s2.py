@@ -11,7 +11,7 @@ def test_changed_scope_downgrades_provider_observation_and_ledger_together(disco
     checked = discover(agent)
     assert checked['availability'] == 'AVAILABLE'
     expected = deepcopy(checked['selected_candidate']['runtime_observation_scope'])
-    expected['skill_digest'] = 'sha256:' + '0' * 64
+    expected['skill_document_digest'] = 'sha256:' + '0' * 64
     async def completed_inspection(*args, **kwargs):
         return checked
     with patch.object(agent, '_discover_skill_runtime_candidates', completed_inspection), \
