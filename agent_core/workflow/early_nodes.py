@@ -1148,7 +1148,7 @@ class TypedAskUser(_TypedEarlyNode):
                 )
                 return clean
             semantic = "planning_ready" if str(pending.get("type") or "") == "plan_impact_review" else "consultation_ready"
-            if pending.get("type") == "installation_resolution":
+            if pending.get("type") in {"installation_resolution", "runtime_dependency_preparation"}:
                 request = dict((durable.get("task_state") or {}).get("installation_request") or {})
                 event = dict(request.get("resolution_event") or {})
                 if (event.get("question_id") == pending.get("question_id")

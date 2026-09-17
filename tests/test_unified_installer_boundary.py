@@ -368,6 +368,99 @@ def test_parent_rejects_approved_prefix_mismatch(parent_agent):
     assert not calls["verify"]
 
 
+@pytest.mark.parametrize("unsupported_target", ["/tmp/external-environment", "base"])
+def test_parent_rejects_unsupported_environment_before_verification(parent_agent, unsupported_target):
+    agent, state, calls = parent_agent
+    state["installation_request"]["target_env"] = unsupported_target
+    result = asyncio.run(agent._install_subagent_impl(state))
+    assert result["installation_receipt"]["status"] == "blocked"
+    assert not calls["verify"] and not agent.pm.registry["environments"]
+
+
+def test_parent_prepare_installation_cannot_be_inferred_without_durable_user_event(parent_agent):
+    agent, state, calls = parent_agent
+    state["installation_request"]["resolution"] = "prepare_installation"
+    first = asyncio.run(agent._install_subagent_impl(state))
+    assert first["installation_receipt"]["status"] == "blocked"
+    assert not calls["verify"]
+    assert not first["installation_receipt"].get("human_decisions")
+
+
+def no_install_task_spec():
+    from agent_core.task_spec import create_task_spec, merge_compiled_constraints, validate_compiled_constraints
+    validated = validate_compiled_constraints([{"constraint_id": "no-install",
+        "semantic_key": "forbidden_behavior.runtime_install", "operator": "forbid", "value": True,
+        "strength": "hard", "confidence": 1.0, "source_text": "Use existing tools; do not install runtimes."}])
+    assert validated["valid"], validated["errors"]
+    return merge_compiled_constraints(create_task_spec("Use an existing runtime"), validated["constraints"])
+
+
+@pytest.mark.parametrize("resolution,expected", [("provided_environment", "available"),
+    ("manual_done", "available"), ("registration_retry", "available"),
+    ("quit", "cancelled"), ("reject", "rejected")])
+def test_installation_forbidden_policy_preserves_readonly_resolution_and_stop(parent_agent, resolution, expected):
+    agent, state, calls = parent_agent
+    state["task_spec"] = no_install_task_spec()
+    assert agent._runtime_install_disallowed_by_task_spec(state["task_spec"], "audit_tool")
+    state["installation_request"]["resolution"] = resolution
+    result = asyncio.run(agent._install_subagent_impl(state))
+    assert result["installation_receipt"]["status"] == expected
+    assert len(calls["verify"]) == (1 if expected == "available" else 0)
+    if expected == "available":
+        assert result["installation_receipt"]["registration"]["skill_registry"]["ok"]
+        assert result["installation_receipt"]["registration"]["software_registry"]["ok"]
+        assert result["generate_exit_reason"] == "plan_patch"
+    else:
+        assert not agent.pm.registry["environments"]
+    assert agent.installer_app is None  # Any attempted installation would fail the test.
+
+
+def test_installation_forbidden_policy_still_blocks_required_installation(parent_agent, installer):
+    agent, state, checks = parent_agent
+    inner, calls = installer
+    agent.installer_app = inner.graph
+    state["task_spec"] = no_install_task_spec()
+    state["installation_request"].pop("resolution")
+    checks["returncode"] = 17
+    result = asyncio.run(agent._install_subagent_impl(state))
+    assert result["installation_receipt"]["status"] == "blocked"
+    assert "forbidden by the current task contract" in result["installation_receipt"]["detail"]
+    assert checks["verify"]
+    assert calls["model"] == 0 and not calls["review"] and not calls["runner"]
+    assert not agent.pm.registry["environments"]
+
+
+def test_failed_installation_work_order_does_not_offer_or_accept_another_prepare_event(parent_agent, installer, monkeypatch):
+    import bio_agents
+    from agent_core.plan_tracker import load_plan_state
+    from agent_core.workflow.runtime_graph import route_ask_user_outcome
+    agent, state, checks = parent_agent
+    inner, calls = installer
+    agent.installer_app = inner.graph
+    state["installation_request"].pop("resolution")
+    checks["returncode"] = 17
+    calls["returncode"] = 17
+    calls["content"] = "```bash\nconda install -n new_target audit_tool=1\n```"
+    failed = asyncio.run(agent._install_subagent_impl(state))
+    assert failed["installation_receipt"]["status"] == "execution_failed"
+    assert len(failed["installation_receipt"]["execution"]) == len(calls["runner"]) == 1
+    question = failed["pending_human_question"]
+    assert "prepare_installation" not in question["question"]
+    displayed = []
+    def answer(payload):
+        displayed.append(payload)
+        return "prepare_installation"
+    monkeypatch.setattr(bio_agents, "interrupt", answer)
+    typed_ask = TypedAskUser(data_path=agent.data_path, source=agent._ask_installation_resolution)
+    result = asyncio.run(typed_ask.run({**state, **failed}))
+    assert all("prepare_installation" not in option for option in displayed[0]["options"])
+    assert route_ask_user_outcome(result) == "consultant"
+    durable = load_plan_state(agent.data_path, state["task_id"])
+    assert not durable["task_state"]["installation_request"].get("resolution")
+    assert durable["task_state"]["installation_receipt"] == failed["installation_receipt"]
+    assert len(calls["runner"]) == calls["model"] == 1
+
+
 def test_parent_manual_wait_requires_explicit_completion_event(parent_agent):
     agent, state, calls = parent_agent
     state["installation_request"]["resolution"] = "manual_wait"
@@ -611,3 +704,85 @@ def test_real_structured_target_verifier_keeps_unrequired_unknown_separate(paren
     assert result["coverage"]["runtime.samtools.coverage.bin"]["availability"] == "UNKNOWN"
     assert observed[0]["environment"]["CONDA_PREFIX"] == str(prefix)
     assert not agent.pm.registry["environments"] and not agent.pm.registry_path.exists()
+
+
+@pytest.mark.parametrize("decision,expected", [("y", "available"), ("n", "rejected"), ("q", "cancelled")])
+def test_unknown_runtime_explicit_preparation_still_requires_actual_command_approval(parent_agent, installer, monkeypatch, decision, expected):
+    import json
+    from types import SimpleNamespace
+    import yaml
+    from langgraph.graph import StateGraph, START, END
+    from langgraph.types import Command, interrupt as real_interrupt
+    from agent_core.state import AgentState
+    from agent_core.plan_tracker import load_plan_state, save_plan_state
+    from agent_core.skill_manager import SkillManager
+    from agent_core.workflow.runtime_graph import route_install_outcome, route_ask_user_outcome
+    import agent_core.runtime_probe_contract as probes
+    agent, state, checks = parent_agent
+    inner, calls = installer
+    prefix = Path(agent.pm.conda_root) / "envs" / "new_target"
+    bwa = prefix / "bin" / "bwa"
+    bwa.write_text("isolated executable fixture; all probes use an external process substitute")
+    bwa.chmod(0o755)
+    capability = "audit.reference.prepare"
+    metadata = {"name": "audit_skill", "description": "Structured installation fixture",
+        "runtime": {"default_env": "old_default", "tools": ["bwa"], "install_tool": "audit_tool",
+            "inspection_probes": [{"output": "RESOLVED_BWA_INDEX_BIN", "value": "{prefix}/bin/bwa",
+                "checks": [{"argv": ["{prefix}/bin/bwa", "index"], "success_codes": [1], "contains": ["Usage:"]}]}]},
+        "generate": {"execution_capabilities": [{"capability_id": capability,
+            "required_runtime_binding_ids": ["runtime.bwa.index.bin"], "optional_runtime_binding_ids": [],
+            "required_artifact_binding_ids": [], "supported_tools": ["bash"]}]}}
+    skill_root = agent.skill_manager.skills_root
+    (skill_root / "audit_skill" / "SKILL.md").write_text("---\n" + yaml.safe_dump(metadata) + "---\n# Fixture\n")
+    agent.skill_manager = SkillManager(str(skill_root))
+    durable = load_plan_state(agent.data_path, state["task_id"])
+    durable["steps"][1]["execution_capability_id"] = capability
+    save_plan_state(agent.data_path, state["task_id"], durable)
+    calls["content"] = "```bash\nconda install -n new_target bwa=0.7.17\n```"
+    prepared = {"installed": False, "probes": 0}
+    def probe_process(argv, **kwargs):
+        prepared["probes"] += 1
+        ok = prepared["installed"]
+        outcomes = {"RESOLVED_BWA_INDEX_BIN": {"ok": ok, "reason_code": "" if ok else "RUNTIME_PROBE_COMMAND_MISMATCH"}}
+        return SimpleNamespace(returncode=0, stderr="", stdout=(f"RESOLVED_BWA_INDEX_BIN={bwa}\n" if ok else "")
+            + "BIOMIND_PROBE_RESULTS=" + json.dumps(outcomes))
+    async def install_process(code):
+        calls["runner"].append(code)
+        prepared["installed"] = True
+        return "synthetic installation completed", "", 0
+    monkeypatch.setattr(probes, "_run_probe_driver", probe_process)
+    monkeypatch.setattr(installer_module, "run_bash_script", install_process)
+    monkeypatch.setattr(middleware_module, "interrupt", real_interrupt)
+    agent.installer_app = inner.graph
+    graph = StateGraph(AgentState)
+    graph.add_node("install_subagent", TypedInstallSubagent(data_path=agent.data_path, source=agent._install_subagent_impl).run)
+    graph.add_node("ask_user", TypedAskUser(data_path=agent.data_path, source=agent._ask_installation_resolution).run)
+    graph.add_edge(START, "install_subagent")
+    async def install_route(value):
+        route = route_install_outcome(value)
+        return "ask_user" if route == "ask_user" else END
+    async def ask_route(value):
+        return route_ask_user_outcome(value)
+    graph.add_conditional_edges("install_subagent", install_route, ["ask_user", END])
+    graph.add_conditional_edges("ask_user", ask_route, ["install_subagent", END])
+    app = graph.compile(checkpointer=MemorySaver())
+    config = {"configurable": {"thread_id": "explicit-unknown-preparation"}}
+    async def scenario():
+        await app.ainvoke(state, config=config)
+        initial = app.get_state(config)
+        assert initial.tasks[0].interrupts[0].value["type"] == "installation_resolution"
+        assert calls["model"] == 0 and not calls["runner"]
+        await app.ainvoke(Command(resume="prepare_installation"), config=config)
+        proposed = app.get_state(config)
+        assert proposed.tasks[0].interrupts
+        assert calls["model"] == 1 and not calls["runner"]
+        await app.ainvoke(Command(resume=decision), config=config)
+        return app.get_state(config).values
+    final = asyncio.run(scenario())
+    assert final["installation_receipt"]["status"] == expected
+    assert len(calls["runner"]) == (1 if decision == "y" else 0)
+    if expected == "available":
+        assert final["installation_receipt"]["registration"]["software_registry"]["ok"]
+        assert final["generate_exit_reason"] == "plan_patch"
+    else:
+        assert not agent.pm.registry["environments"]

@@ -19844,6 +19844,24 @@ class BioAnalystAgent:
             }
         stopped = self._runtime_recovery_stop(state, result)
         diagnostic = stopped["runtime_recovery_result"]
+        if (diagnostic.get("execution_status") == "not_dispatched"
+                and diagnostic.get("resolution_disposition") in {"unresolved", "dependency_blocked"}):
+            try:
+                pending = self._publish_runtime_dependency_question(state, request, diagnostic)
+                stopped["pending_human_question"] = pending
+                stopped["recovery_outcome"] = RecoveryOutcome(schema_version=1, type="user_input_required",
+                    summary=diagnostic["explanation"], scope=scope, payload={
+                        "diagnosis": diagnostic["explanation"], "question_id": pending["question_id"],
+                        "question": pending["question"], "owner": "RUNTIME_DEPENDENCY_PREPARATION",
+                        "requires_user_input": True, "source_scope": scope,
+                        "decision_id": request["episode_id"],
+                    }).to_dict()
+                return stopped
+            except Exception as question_error:
+                result = {**result, "status": "internal_error", "reason_code": str(
+                    getattr(question_error, "code", "RUNTIME_QUESTION_PERSISTENCE_FAILED"))}
+                stopped = self._runtime_recovery_stop(state, result)
+                diagnostic = stopped["runtime_recovery_result"]
         if diagnostic.get("resolution_disposition") == "needs_user_decision" and diagnostic.get("user_question"):
             try:
                 durable, _episode, _request = self._runtime_evidence_service()._load_request(state, request)
@@ -21311,16 +21329,12 @@ class BioAnalystAgent:
         if not env:
             return ""
         if Path(env).is_absolute():
-            return str(Path(env).expanduser())
-        if not re.fullmatch(r"[A-Za-z0-9_.-]+", env) or env in {".", ".."}:
+            return ""  # Discovery currently admits named environments under the configured manager root.
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", env) or env in {".", "..", "base"}:
             return ""
         root = getattr(self.pm, "conda_root", None)
-        if root:
-            return str(Path(root) if env == "base" else Path(root) / "envs" / env)
-        record = dict(self.pm.get_environment(env) or {}) if self.pm else {}
-        registered = str(record.get("prefix") or record.get("path") or "")
-        if registered and Path(registered).is_absolute():
-            return registered
+        if root and Path(root).is_absolute():
+            return str(Path(root) / "envs" / env)
         return ""
 
     def _publish_installation_question(self, task_id, request, receipt):
@@ -21336,8 +21350,10 @@ class BioAnalystAgent:
                 f"目标环境 {request['target_env']}（{request['target_prefix']}）尚未就绪。"
                 "请选择明确事件：manual_done＝人工处理完成并重新验证；"
                 "registration_retry＝只补失败的登记；manual_wait＝继续等待人工处理；"
+                + ("prepare_installation＝准备安装提案，具体命令仍需逐项批准；"
+                   if not receipt.get("execution") else "本工单已有执行收据，请人工处理后复验或提供已有环境；") +
                 "quit＝取消；reject＝拒绝。若改用已有环境，请输入 JSON："
-                '{"action":"provided_environment","target_env":"环境名或绝对前缀"}。'
+                '{"action":"provided_environment","target_env":"当前管理根下的环境名"}。'
                 "普通说明文字交由现有咨询流程理解，不会被当作安装完成。"
             ),
             "requested_slots": ["installation_resolution"],
@@ -21352,26 +21368,77 @@ class BioAnalystAgent:
         save_plan_state(self.data_path, task_id, durable)
         return pending
 
+    def _publish_runtime_dependency_question(self, state, runtime_request, diagnostic):
+        """Offer preparation after a real, scoped, undispatched discovery stop."""
+        from agent_core.workflow.runtime_evidence_recovery import runtime_generation_source_scope, _not_dispatched
+        durable, episode, request = self._runtime_evidence_service()._load_request(state, runtime_request)
+        scope = request["scope"]
+        if (episode.get("status") not in {"unresolved", "dependency_blocked"}
+                or not _not_dispatched(durable, scope["step_id"])):
+            raise ValueError("RUNTIME_DEPENDENCY_PREPARATION_SCOPE_INVALID")
+        skill_id = scope["selected_skill_id"]
+        defaults = self._skill_runtime_defaults([skill_id])
+        target = str(defaults.get("env") or "")
+        proposal = {"request_id": "runtime-install:" + stable_digest(request)[:24],
+            "tool": defaults.get("install_tool") or defaults["tool_name"],
+            "target_env": target, "target_prefix": self._installation_target_prefix(target),
+            "selected_skills": [skill_id], "capabilities": [scope["execution_capability_id"]],
+            "generation_source_scope": runtime_generation_source_scope(durable),
+            "requirement_evidence": {"runtime_request_id": request["request_id"],
+                "episode_id": request["episode_id"], "per_binding_status": diagnostic.get("per_binding_status") or {},
+                "reason_code": diagnostic.get("reason_code")}}
+        pending = {"type": "runtime_dependency_preparation", "stage": "recovery",
+            "question_id": "runtime-preparation:" + stable_digest(request)[:24],
+            "request_id": proposal["request_id"], "request_hash": stable_digest(proposal),
+            "runtime_request": deepcopy(request), "installation_proposal": proposal,
+            "question": (
+                "当前步骤的运行证据仍未满足，UNKNOWN 不表示软件不存在，检查或权限错误也不表示缺软件。"
+                f"声明的目标环境为 {target or '尚未选择'}。请选择明确操作："
+                '提供已有环境：{"action":"provided_environment","target_env":"当前管理根下的环境名"}；'
+                "prepare_installation＝准备安装提案，具体来源、目标、版本和命令仍需逐项批准；"
+                '如需指定安装目标：{"action":"prepare_installation","target_env":"当前管理根下的环境名"}；'
+                "quit＝取消。普通说明文字交由咨询处理，不会触发安装或科学执行。"),
+            "requested_slots": ["runtime_dependency_preparation"]}
+        task = dict(durable.get("task_state") or {})
+        existing = dict(task.get("pending_question") or {})
+        if existing and existing.get("question_id") != pending["question_id"]:
+            raise ValueError("INSTALLATION_QUESTION_OTHER_OWNER_PENDING")
+        task["pending_question"] = pending
+        durable["task_state"] = task
+        save_plan_state(self.data_path, str(state["task_id"]), durable)
+        return pending
+
     async def _ask_installation_resolution(self, state):
         """Interpret only explicit choices attached to the exact durable question."""
         task_id = str(state.get("task_id") or "default")
         pending = dict(state.get("pending_human_question") or {})
         durable = load_plan_state(self.data_path, task_id)
         task = dict(durable.get("task_state") or {})
-        request = deepcopy(dict(task.get("installation_request") or {}))
+        preparation = pending.get("type") == "runtime_dependency_preparation"
+        request = deepcopy(dict(pending.get("installation_proposal") if preparation else task.get("installation_request") or {}))
+        may_prepare_installation = preparation or not (task.get("installation_receipt") or {}).get("execution")
         question_id = str(pending.get("question_id") or "")
-        if (not question_id or pending.get("type") != "installation_resolution"
+        if (not question_id or pending.get("type") not in {"installation_resolution", "runtime_dependency_preparation"}
                 or pending != task.get("pending_question")
                 or pending.get("request_id") != request.get("request_id")
                 or pending.get("request_hash") != stable_digest(request)):
             raise ValueError("INSTALLATION_QUESTION_SCOPE_MISMATCH")
+        if preparation:
+            from agent_core.workflow.runtime_evidence_recovery import runtime_generation_source_scope
+            self._runtime_evidence_service()._load_request(state, pending["runtime_request"])
+            if request["generation_source_scope"] != runtime_generation_source_scope(durable):
+                raise ValueError("INSTALLATION_QUESTION_SOURCE_CHANGED")
         self._append_semantic_conversation_turn(task_id, role="consultant_question",
             content=pending["question"], question_id=question_id)
-        answer = interrupt({"type": "installation_resolution", "stage": "installation",
+        options = (["provided_environment：提供已有环境", "prepare_installation：准备提案后逐项批准", "quit：取消"]
+            if preparation else ["manual_done：人工完成后复验", "registration_retry：补登记", "manual_wait：等待人工处理",
+                "provided_environment：提供另一环境", "quit：取消", "reject：拒绝"])
+        if not preparation and may_prepare_installation:
+            options.insert(-2, "prepare_installation：准备提案后逐项批准")
+        answer = interrupt({"type": pending["type"], "stage": pending["stage"],
             "question": pending["question"], "question_id": question_id,
             "requested_slots": ["installation_resolution"],
-            "options": ["manual_done：人工完成后复验", "registration_retry：补登记", "manual_wait：等待人工处理",
-                        "provided_environment：提供另一环境", "quit：取消", "reject：拒绝"]})
+            "options": options})
         text = json.dumps(answer, ensure_ascii=False, sort_keys=True) if isinstance(answer, Mapping) else str(answer or "")
         _, answer_ref = self._append_semantic_conversation_turn(task_id, role="user", content=text, question_id=question_id)
         parsed = dict(answer) if isinstance(answer, Mapping) else {}
@@ -21382,13 +21449,21 @@ class BioAnalystAgent:
             except (ValueError, TypeError):
                 parsed = {}
         action = str(parsed.get("action") or (text.strip() if not parsed else ""))
-        allowed = {"manual_done", "provided_environment", "registration_retry", "manual_wait", "quit", "reject"}
+        allowed = ({"provided_environment", "prepare_installation", "quit", "reject"} if preparation
+            else {"manual_done", "provided_environment", "registration_retry", "manual_wait", "quit", "reject"})
+        if may_prepare_installation:
+            allowed.add("prepare_installation")
         explicit = (action in allowed and not (set(parsed) - {"action", "target_env"})
                     and (action != "provided_environment" or bool(str(parsed.get("target_env") or "").strip())))
         durable = load_plan_state(self.data_path, task_id)
         task = dict(durable.get("task_state") or {})
-        if task.get("pending_question") != pending or stable_digest(task.get("installation_request") or {}) != pending["request_hash"]:
+        current_request = pending.get("installation_proposal") if preparation else task.get("installation_request") or {}
+        if task.get("pending_question") != pending or stable_digest(current_request) != pending["request_hash"]:
             raise ValueError("INSTALLATION_QUESTION_CHANGED_DURING_ANSWER")
+        if preparation:
+            self._runtime_evidence_service()._load_request(state, pending["runtime_request"])
+            if request["generation_source_scope"] != runtime_generation_source_scope(durable):
+                raise ValueError("INSTALLATION_QUESTION_SOURCE_CHANGED")
         answered = {**pending, "status": "answered_pending_interpretation", "answer_turn_ref": answer_ref}
         consultation = deepcopy(dict(state.get("consultation_state") or {}))
         consultation.update(phase="consulting", consultation_status="active", pending_question=answered,
@@ -21399,7 +21474,7 @@ class BioAnalystAgent:
         if explicit:
             event = {"action": action, "question_id": question_id, "answer_turn_ref": answer_ref,
                      "request_id": request["request_id"], "request_hash": pending["request_hash"]}
-            if action == "provided_environment":
+            if action == "provided_environment" or action == "prepare_installation" and parsed.get("target_env"):
                 target_env = str(parsed["target_env"]).strip()
                 event["target_env"] = target_env
                 request["target_env"] = target_env
@@ -21418,7 +21493,7 @@ class BioAnalystAgent:
 
     async def _install_subagent_impl(self, state: AgentState):
         """One work order: execution -> exact-target checks -> registration -> A3."""
-        from agent_core.workflow.runtime_evidence_recovery import runtime_generation_source_scope
+        from agent_core.workflow.runtime_evidence_recovery import runtime_generation_source_scope, installation_generation_replay
         task_id = str(state.get("task_id") or "default")
         durable = load_plan_state(self.data_path, task_id)
         stored = dict(durable.get("task_state") or {})
@@ -21438,8 +21513,12 @@ class BioAnalystAgent:
         defaults = self._skill_runtime_defaults(selected)
         tool = self._install_tool_name(raw.get("tool") or raw.get("tool_or_capability") or defaults.get("tool_name") or "skill_runtime")
         target_env = str(raw.get("target_env") or evidence.get("environment") or evidence.get("env") or defaults.get("env") or "").strip()
+        matches_durable_request = raw == stored.get("installation_request")
         resolution = str(raw.pop("resolution", "") or "")
         resolution_event = deepcopy(dict(raw.pop("resolution_event", {}) or {}))
+        explicit_preparation = bool(resolution == "prepare_installation" and matches_durable_request
+            and resolution_event.get("action") == resolution and resolution_event.get("answer_turn_ref")
+            and resolution_event.get("request_id") == raw.get("request_id"))
         try:
             current_source_scope = runtime_generation_source_scope(durable)
         except ValueError:
@@ -21501,12 +21580,21 @@ class BioAnalystAgent:
             "task_id": task_id, "plan_id": durable.get("plan_id"), "step_id": durable.get("current_step_id"), "scope": scope}))
         request = {**scope, "request_id": origin,
                    "attempt_id": str(raw.get("attempt_id") or "install:" + stable_digest({"request_id": origin, "scope": scope})[:24])}
-        previous = dict(state.get("installation_receipt") or stored.get("installation_receipt") or {})
+        # A resumed outer interrupt still carries its pre-invocation graph
+        # receipt; the inner installer already persisted newer phase evidence.
+        previous = dict(stored.get("installation_receipt") or state.get("installation_receipt") or {})
         receipt_scope = InstallerAgent._receipt_scope(request)
         receipt = deepcopy(previous) if all(previous.get(key) == value for key, value in receipt_scope.items()) else {}
         receipt.update(receipt_scope)
         receipt.setdefault("execution", [])
-        if resolution_event:
+        if (resolution == "prepare_installation" and not explicit_preparation
+                and stored.get("installation_request") == request
+                and resolution_event in (receipt.get("human_decisions") or [])):
+            # The outer LangGraph node re-enters after an inner command HITL
+            # interrupt; only the same already-persisted preparation decision
+            # may resume that exact proposal. It grants no command approval.
+            explicit_preparation = True
+        if resolution_event and (resolution != "prepare_installation" or explicit_preparation):
             decisions = receipt.setdefault("human_decisions", [])
             if resolution_event not in decisions:
                 decisions.append(resolution_event)
@@ -21541,15 +21629,17 @@ class BioAnalystAgent:
             return result
 
         if not current_source_scope or source_scope != current_source_scope:
+            if installation_generation_replay(durable, request, receipt):
+                return await finish("available", "The exact installation receipt already prepared this execution scope; continuing its existing evidence request.")
             return await finish("blocked", "The installation work order belongs to an earlier scientific attempt or approval; a new work order is required.", stage="authorization")
+        if resolution == "prepare_installation" and not explicit_preparation:
+            return await finish("blocked", "Dependency preparation requires an explicit durable answer to the scoped user question.", stage="authorization")
         if not has_work_order or not selected or not target_env or not prefix or not prefix_matches:
             return await finish("blocked", "Installation requires current-step Skills and a confirmed absolute target prefix.", stage="authorization")
         if {target_env, Path(prefix).name} & set(request["install_forbidden_envs"]):
             return await finish("blocked", "The selected runtime contract forbids installation in this target environment.", stage="authorization")
         if tool not in declared_tools | set(capabilities):
             return await finish("blocked", "Requested installation tool is not declared by the selected runtime contract.", stage="authorization")
-        if self._runtime_install_disallowed_by_task_spec(canonical_task_spec_for_state(durable) or state.get("task_spec") or {}, tool):
-            return await finish("blocked", "Installation is forbidden by the current task contract.", stage="authorization")
         if tool == "calder_r_runtime" and not self._calder_runtime_allowed(selected, target_env):
             return await finish("blocked", "CALDER runtime may only be prepared for the selected CALDER Skill and its allowed environment.", stage="authorization")
         if (not set(capabilities) <= set(capability_registry)
@@ -21564,7 +21654,7 @@ class BioAnalystAgent:
                 "preconditions": "Sources, solver and compatibility have not been verified; no installation command is certified runnable.",
                 "resume": "Report manual_done or provide target_env; BioMind must verify it again."}
             return await finish("manual_wait", "Waiting for manual environment preparation; target verification is required before resuming.")
-        if receipt.get("status") in {"cancelled", "rejected", "manual_wait"} and resolution not in {"manual_done", "provided_environment"}:
+        if receipt.get("status") in {"cancelled", "rejected", "manual_wait"} and resolution not in {"manual_done", "provided_environment", "prepare_installation"}:
             return await finish(receipt["status"], str(receipt.get("detail") or "Installation proposal already stopped."), stage="authorization")
 
         def verify_target():
@@ -21587,12 +21677,14 @@ class BioAnalystAgent:
             return bool(verification) and all(row["ok"] is True for row in verification)
 
         target_ok = verify_target()
-        if not target_ok and any(
+        if not target_ok and not explicit_preparation and any(
             fact.get("availability") in {"UNKNOWN", "AMBIGUOUS"}
             for row in receipt["verification"] for fact in row.get("required_coverage", {}).values()
         ):
             return await finish("verification_failed", "Required runtime capability is UNKNOWN or ambiguous; inspect the evidence before proposing installation.", stage="verification")
         if not target_ok and resolution not in {"manual_done", "provided_environment", "registration_retry"} and not receipt["execution"]:
+            if self._runtime_install_disallowed_by_task_spec(canonical_task_spec_for_state(durable) or state.get("task_spec") or {}, tool):
+                return await finish("blocked", "Installation is forbidden by the current task contract.", stage="authorization")
             self._persist_installation_receipt(task_id, request, receipt)
             # Only role-appropriate machine metadata enters the Installer. Skill
             # scientific instructions are available to the scientific actor only.
@@ -38235,7 +38327,7 @@ question. Never guess a scientific or database identity.
             return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
 
         async def ask_user(state: AgentState):
-            if (state.get("pending_human_question") or {}).get("type") == "installation_resolution":
+            if (state.get("pending_human_question") or {}).get("type") in {"installation_resolution", "runtime_dependency_preparation"}:
                 return await self._ask_installation_resolution(state)
             task_id = state.get("task_id", "default")
             pending = state.get("pending_human_question") or {}

@@ -171,6 +171,33 @@ def runtime_generation_source_scope(durable: Mapping[str, Any]) -> dict[str, Any
     }
 
 
+def installation_generation_replay(durable: Mapping[str, Any], request: Mapping[str, Any],
+                                   receipt: Mapping[str, Any]) -> dict[str, Any]:
+    """Recognize an already consumed exact work order without issuing authority."""
+    from agent_core.action_runtime import stable_digest
+    if (not request.get("request_id") or not request.get("attempt_id")
+        or receipt.get("status") != "available" or receipt.get("request_hash") != stable_digest(request)
+        or any(receipt.get(key) != request.get(key) for key in (
+            "request_id", "attempt_id", "target_env", "target_prefix", "selected_skills", "capabilities", "generation_source_scope"))):
+        return {}
+    try:
+        current = runtime_generation_source_scope(durable)
+    except (RuntimeRecoveryError, ValueError, TypeError):
+        return {}
+    if not _not_dispatched(durable, current["step_id"]) or _task_state(durable).get("active_execution"):
+        return {}
+    for event in ((_task_state(durable).get("recovery_state") or {}).get("state_events") or []):
+        source = event.get("source_scope") or {}
+        if (event.get("event_type") == "runtime_generation_prepared"
+            and event.get("authority") == "installation_receipt"
+            and event.get("authority_digest") == receipt["request_hash"]
+            and source == request.get("generation_source_scope")
+            and current == {**source, "execution_epoch": str(event.get("execution_epoch"))}
+            and all(str(event.get(key) or "") == str(current.get(key) or "") for key in ("plan_id", "plan_version", "step_id"))):
+            return deepcopy(dict(event))
+    return {}
+
+
 class RuntimeEvidenceRecovery:
     def __init__(
         self, *, data_path: str, scope_provider: Callable[[str], Mapping[str, Any]],
@@ -219,8 +246,7 @@ class RuntimeEvidenceRecovery:
             or approved.get("capability_contract_hash") != capability_contract_hash(contract)
             or step.get("capability_contract_hash") != capability_contract_hash(contract)):
             raise RuntimeRecoveryError("RUNTIME_RECOVERY_PLAN_REVISION_REQUIRED")
-        if _not_dispatched(durable, sid):
-            return durable
+        not_dispatched = _not_dispatched(durable, sid)
         task = _task_state(durable)
         attempts = [row for row in (durable.get("provenance_state") or {}).get("attempts", {}).values()
                     if row.get("step_id") == sid]
@@ -274,14 +300,37 @@ class RuntimeEvidenceRecovery:
             and all(install.get(key) == request.get(key) for key in (
                 "request_id", "attempt_id", "target_env", "target_prefix", "selected_skills", "capabilities", "generation_source_scope"))
             and not any(event.get("authority_digest") == install_digest for event in events))
+        refresh = {}
+        if not_dispatched:
+            # Preparing an existing prefix may leave the runtime subject
+            # unchanged. Only a new exact verified work order can reopen the
+            # ended inspection scope; ordinary Generate/replay cannot reset it.
+            runtime_recovery = task.get("runtime_recovery") or {}
+            episode = (runtime_recovery.get("episodes") or {}).get(runtime_recovery.get("active_episode_id")) or {}
+            if installed and episode.get("status") in {"unresolved", "dependency_blocked"}:
+                current_scope = self._scope(durable, selected_skill_id, contract)
+                if (episode.get("request", {}).get("scope") == current_scope
+                    and request["target_env"] == current_scope["subject"]["environment_id"]):
+                    required = set(contract["required_runtime_binding_ids"])
+                    refresh = {"prior_episode_id": episode["episode_id"],
+                        "subject": current_scope["subject"], "required_binding_ids": sorted(required),
+                        "target_env": request["target_env"], "target_prefix": request["target_prefix"],
+                        "evidence_ids": sorted(row["evidence_id"] for row in
+                            (task.get("runtime_evidence") or {}).get("records", [])
+                            if row.get("scope") == current_scope["subject"] and required.intersection(row.get("facts") or {}))}
+            if not refresh:
+                return durable
         if not (recovery_authority or revised or installed):
             raise RuntimeRecoveryError("RUNTIME_RECOVERY_GENERATION_AUTHORITY_REQUIRED")
-        authority = "recovery" if recovery_authority else "plan_revision" if revised else "installation_receipt"
-        authority_digest = authority_digest if recovery_authority else digest(source_scope) if revised else install_digest
-        if not attempts or step.get("status") in {"passed", "done", "completed"}:
+        authority = "installation_receipt" if refresh else "recovery" if recovery_authority else "plan_revision" if revised else "installation_receipt"
+        authority_digest = install_digest if refresh else authority_digest if recovery_authority else digest(source_scope) if revised else install_digest
+        if (not attempts and not refresh) or step.get("status") in {"passed", "done", "completed"}:
             raise RuntimeRecoveryError("RUNTIME_RECOVERY_EXECUTION_EVIDENCE_REQUIRED")
-        retired = []
-        for row in attempts:
+        # An undispatched epoch may already contain retired historical
+        # attempts. Carry its proven exclusions forward so a new inspection
+        # epoch does not accidentally revive their execution ownership.
+        retired = [row["attempt_id"] for row in attempts] if not_dispatched else []
+        for row in ([] if not_dispatched else attempts):
             status = str(row.get("status") or "").upper()
             if (status not in {"EVIDENCE_COMMITTED", "VALIDATION_FAILED", "FAILED"}
                 or not row.get("finished_at") or type(row.get("returncode")) is not int
@@ -291,7 +340,7 @@ class RuntimeEvidenceRecovery:
         active_execution = task.get("active_execution") or {}
         if active_execution and active_execution.get("attempt_id") not in retired:
             raise RuntimeRecoveryError("RUNTIME_RECOVERY_OTHER_EXECUTION_OWNER")
-        for aid in retired:
+        for aid in ([] if not_dispatched else retired):
             record_provenance_event(durable, "attempt_state_changed", {"attempt_id": aid, "status": "FAILED"})
         task = _task_state(durable)
         task.update(active_execution={}, current_attempt="", pending_action={}, verification_pending={})
@@ -304,7 +353,8 @@ class RuntimeEvidenceRecovery:
             "plan_version": durable.get("plan_version"), "step_id": sid,
             "execution_epoch": runtime["execution_epoch"], "retired_attempt_ids": sorted(retired),
             "capability_contract_hash": capability_contract_hash(contract), "recorded_at": _stamp(self._now()),
-            "authority": authority, "authority_digest": authority_digest, "source_scope": source_scope}]
+            "authority": authority, "authority_digest": authority_digest, "source_scope": source_scope,
+            **({"runtime_evidence_refresh": refresh} if refresh else {})}]
         task["recovery_state"] = recovery
         durable["task_state"] = task
         durable["execution_cursor_step_id"] = ""
@@ -646,15 +696,31 @@ class RuntimeEvidenceRecovery:
 
     async def _recover(self, state: Mapping[str, Any], pending: Mapping[str, Any]) -> dict[str, Any]:
         durable, episode, request = self._load_request(state, pending)
+        # One prepared installation grant can obtain new observations in the
+        # same environment identity. Its immutable event names only the old
+        # scoped facts eligible for supersession by actual fresh observations.
+        refresh = {}
+        for event in ((_task_state(durable).get("recovery_state") or {}).get("state_events") or []):
+            candidate = event.get("runtime_evidence_refresh") or {}
+            if (event.get("event_type") == "runtime_generation_prepared"
+                and event.get("authority") == "installation_receipt" and event.get("authority_digest")
+                and all(str(event.get(key) or "") == str(request["scope"].get(key) or "")
+                    for key in ("plan_id", "plan_version", "step_id", "execution_epoch"))
+                and event.get("capability_contract_hash") == request["scope"]["capability_contract_digest"]
+                and candidate.get("subject") == request["scope"]["subject"]
+                and candidate.get("required_binding_ids") == sorted(request["required_binding_ids"])
+                and candidate.get("target_env") == request["scope"]["subject"]["environment_id"]):
+                refresh = candidate
+        refresh_pending = bool(refresh) and not any(row.get("status") == "completed" for row in episode.get("receipts") or [])
         assessment = self._assessment(durable, request["scope"], request["capability_contract"])
-        if any(assessment["facts"][binding]["availability"] == "AMBIGUOUS" for binding in request["required_binding_ids"]):
+        if not refresh_pending and any(assessment["facts"][binding]["availability"] == "AMBIGUOUS" for binding in request["required_binding_ids"]):
             return self._finish(durable, episode, "internal_error", "RUNTIME_EVIDENCE_CONFLICT", assessment, "internal_protocol")
-        if assessment["ready"]:
+        if assessment["ready"] and not refresh_pending:
             diagnostic = _task_state(durable).get("runtime_recovery_result") or {}
             if episode.get("status") == "evidence_ready" and diagnostic.get("episode_id") != episode["episode_id"]:
                 return self._result(durable, episode, "evidence_ready", "RUNTIME_EVIDENCE_ACCEPTED", assessment)
             return self._finish(durable, episode, "evidence_ready", "RUNTIME_EVIDENCE_ACCEPTED", assessment, "recovered_runtime_evidence")
-        if any(assessment["facts"][binding]["availability"] == "UNAVAILABLE" for binding in request["required_binding_ids"]):
+        if not refresh_pending and any(assessment["facts"][binding]["availability"] == "UNAVAILABLE" for binding in request["required_binding_ids"]):
             return self._finish(durable, episode, "dependency_blocked", "REQUIRED_RUNTIME_FACT_CONFIRMED_UNAVAILABLE", assessment, "dependency_unavailable")
         if episode.get("status") == "needs_user_decision":
             # The existing AskUser node owns immutable answer persistence.
@@ -754,6 +820,25 @@ class RuntimeEvidenceRecovery:
                         error_code = "RUNTIME_INSPECTION_COMPLETED"
                     task = _task_state(durable)
                     prior_evidence = dict(task.get("runtime_evidence") or {})
+                    if refresh_pending and inspection_status == "succeeded":
+                        refreshed_records = []
+                        for record in records:
+                            covered = {bid for bid, fact in record["facts"].items()
+                                if bid in request["required_binding_ids"] and fact["availability"] != "UNKNOWN"}
+                            supersedes = {row["evidence_id"] for row in prior_evidence.get("records") or []
+                                if row["evidence_id"] in refresh["evidence_ids"]
+                                and row["scope"] == record["scope"] and row["observed_at"] < record["observed_at"]
+                                and covered.intersection(row["facts"])}
+                            if supersedes:
+                                record = make_runtime_evidence(
+                                    {"skill_id": record["scope"]["skill_id"], "env": record["scope"]["environment_id"],
+                                     "resolved_runtime_paths": record["resolved_runtime_paths"]},
+                                    task_id=request["scope"]["task_id"], skill_scope=record["scope"],
+                                    observed_at=record["observed_at"], producer=record["producer"], source_ref=record["source_ref"],
+                                    coverage=record["facts"], inspection_status=record["inspection"]["status"],
+                                    expires_at=record["expires_at"], supersedes=sorted(supersedes | set(record["supersedes"])))
+                            refreshed_records.append(record)
+                        records = refreshed_records
                     accepted = merge_runtime_evidence(prior_evidence.get("records") or [], records, task_id=request["scope"]["task_id"], accepted_at=_stamp(self._now()))
                     task["runtime_evidence"] = runtime_evidence_state(accepted, prior_revision=prior_evidence.get("revision", 0))
                     durable["task_state"] = task
