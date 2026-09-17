@@ -279,7 +279,7 @@ class _FakePackageManager:
                 }
         return best
 
-    def verify_environment(self, env_name, language="", healthcheck=""):
+    def verify_environment(self, env_name, language="", healthcheck="", *, persist=True):
         self.commands.append(healthcheck)
         if "which Rscript" in healthcheck:
             return False, "which: no Rscript in /data0/stu_liusiqi/anaconda3/envs/calder2/bin"

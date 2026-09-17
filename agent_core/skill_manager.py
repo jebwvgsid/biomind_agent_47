@@ -758,7 +758,7 @@ class SkillManager:
                 normalized = re.sub(pattern, abs_script, normalized)
         return normalized
 
-    def get_runtime_requirements(self, skill_id: str, *, target_env: str = "") -> Dict[str, Any]:
+    def get_runtime_requirements(self, skill_id: str, *, target_env: str = "", capability_id: str = "") -> Dict[str, Any]:
         meta = self.get_skill_meta(skill_id)
         runtime = meta.get("runtime") or {}
         canonical_id = meta.get("_skill_id", skill_id)
@@ -783,7 +783,7 @@ class SkillManager:
             or ("prefer-declared" if install_commands or runtime.get("env_file") else "")
         ).strip()
         install_fallbacks = self._runtime_command_list(runtime.get("install_fallbacks")) or self._runtime_command_list(record.get("install_fallbacks"))
-        return {
+        requirements = {
             "skill_id": canonical_id,
             "default_env": runtime.get("default_env", ""),
             "env": env,
@@ -805,6 +805,27 @@ class SkillManager:
             "metadata_present": bool(runtime or record.get("metadata_present")),
             "metadata_status": "present" if runtime or record.get("metadata_present") else "missing",
         }
+        if capability_id:
+            from agent_core.action_runtime import _runtime_binding_identity
+            contract = self.get_execution_capability_registry([canonical_id]).get(capability_id)
+            if not contract or contract.get("selected_skill_id") != canonical_id:
+                raise ValueError("RUNTIME_CAPABILITY_SCOPE_INVALID")
+            required = list(contract.get("required_runtime_binding_ids") or [])
+            probes = [dict(probe) for probe in requirements["inspection_probes"]
+                      if _runtime_binding_identity(str(probe.get("output") or ""))[0] in required]
+            covered = {_runtime_binding_identity(str(probe.get("output") or ""))[0] for probe in probes}
+            # The exact capability is the dependency authority. Never enlarge
+            # a sample-list operation to the entire Skill's package inventory.
+            declared_paths = [str(probe.get("value") or "") for probe in probes]
+            declared_paths.extend(str(arg) for probe in probes for check in probe.get("checks") or []
+                                  for arg in check.get("argv") or [])
+            tools = sorted({Path(value).name for value in declared_paths if value.startswith("{prefix}/bin/")})
+            requirements.update(execution_capability_id=capability_id,
+                operation=str(contract.get("operation") or ""), required_binding_ids=required,
+                inspection_probes=probes, tools=tools, packages=tools, capabilities=[],
+                healthcheck="", runtime_requirement_scope="execution_capability",
+                inspection_contract_complete=set(required) <= covered)
+        return requirements
 
     def controlled_rg_hints(
         self,

@@ -623,6 +623,72 @@ class PackageManager:
             stats["tools"] += 1
         return stats
 
+    def discover_runtime_candidates(self, requirements: Optional[Dict[str, Any]], *,
+                                    target_env: str = "", limit: int = 8) -> List[Dict[str, Any]]:
+        """Read-only, bounded candidates for the *provided* operation contract.
+
+        Presence and metadata only rank candidates. Neither registration nor a
+        executable bit is a successful runtime probe. An explicit target never
+        falls back to another environment, including when it does not exist.
+        """
+        requirements = requirements or {}
+        declared = str(requirements.get("env") or requirements.get("default_env") or "").strip()
+        target = str(target_env or "").strip()
+        if target and (not re.fullmatch(r"[A-Za-z0-9_.-]+", target) or target in {".", ".."}):
+            raise ValueError("RUNTIME_CANDIDATE_TARGET_INVALID")
+        root = Path(str(self.conda_root or "")) if self.conda_root else None
+        if root is None:
+            return []
+        environments = self.registry.get("environments") or {}
+        names: Dict[str, List[str]] = {}
+        def include(name, source):
+            name = str(name or "").strip()
+            if name and name not in {".", ".."} and re.fullmatch(r"[A-Za-z0-9_.-]+", name):
+                origins = names.setdefault(name, [])
+                if source not in origins:
+                    origins.append(source)
+        if target:
+            include(target, "explicit_target")
+        else:
+            include(declared, "skill_runtime_declaration")
+            for name in environments:
+                include(name, "software_registry")
+            for record in (self.registry.get("tools") or {}).values():
+                include(record.get("env") or record.get("env_name"), "registered_tool")
+            directory = root / "envs"
+            if directory.is_dir():
+                # Configured managed root only. Do not recursively search home
+                # or admit external prefixes through a named-env work order.
+                for path in sorted(directory.iterdir())[:128]:
+                    if path.is_dir():
+                        include(path.name, "configured_conda_root")
+        wanted_tools = sorted(set(self._ensure_list(requirements.get("tools"))))
+        packages = set(self._ensure_list(requirements.get("packages")))
+        caps = set(self._ensure_list(requirements.get("capabilities")))
+        rows = []
+        for name, origins in names.items():
+            prefix = root / "envs" / name
+            record = dict(environments.get(name) or {})
+            present = prefix.is_dir()
+            found = {tool: str(prefix / "bin" / tool) for tool in wanted_tools
+                     if re.fullmatch(r"[A-Za-z0-9_.+-]+", tool)
+                     and (prefix / "bin" / tool).is_file()
+                     and os.access(prefix / "bin" / tool, os.X_OK)}
+            matched_packages = packages & set(self._ensure_list(record.get("packages")))
+            matched_caps = caps & set(self._ensure_list(record.get("capabilities")))
+            if not target and name != declared and not (found or matched_packages or matched_caps):
+                continue
+            missing_tools = sorted(set(wanted_tools) - set(found))
+            rows.append({"env": name, "prefix": str(prefix), "provenance": origins,
+                "registered_status": str(record.get("status") or "unregistered"),
+                "prefix_present": present, "tool_candidates": found, "missing_tool_candidates": missing_tools,
+                "matched_packages": sorted(matched_packages), "matched_capabilities": sorted(matched_caps),
+                "availability": "UNKNOWN", "reason_code": "RUNTIME_CANDIDATE_UNVERIFIED" if present else "RUNTIME_CANDIDATE_PREFIX_MISSING",
+                "is_declared": name == declared, "explicit_target": bool(target),
+                "score": len(found) * 20 + len(matched_packages) * 10 + len(matched_caps) * 5})
+        rows.sort(key=lambda row: (not row["is_declared"], not row["prefix_present"], -row["score"], row["env"]))
+        return rows[:max(1, min(16, int(limit)))]
+
     def find_matching_environment(self, requirements: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         requirements = requirements or {}
         req_language = str(requirements.get("language", "") or "").lower()

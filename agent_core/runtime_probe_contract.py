@@ -101,6 +101,8 @@ def build_probe_specification(requirements: Mapping, prefix: Path) -> dict:
                 and all(arg in {"index", "mem", "faidx", "sort", "index", "flagstat", "depth", "quickcheck", "coverage", "dict", "--help", "--version"} for arg in args)
                 and (not args or args[-1] in {"--help", "--version"} or tool == "bwa" and args in [["index"], ["mem"]] or tool == "samtools" and args == ["faidx"])
             ) or (tool in {"java", "python3", "bcftools"} and args in [["-version"], ["--version"], ["stats", "--help"]]) or (
+                tool == "bcftools" and args == ["query", "--help"]
+            ) or (
                 tool == "picard" and args in [["CreateSequenceDictionary", "--help"], ["MarkDuplicates", "--help"]]
             ) or (tool == "gatk" and len(args) == 2 and args[0] in {
                 "HaplotypeCaller", "CombineGVCFs", "GenotypeGVCFs", "SelectVariants", "VariantFiltration", "ValidateVariants"

@@ -302,6 +302,59 @@ class RuntimeInspectionAdapter:
         self.probe = probe or BubblewrapRuntimeProbe()
         self.clock = clock
 
+    async def inspect_candidate(self, skill_id: str, capability_id: str, target_env: str,
+                                *, scope_provider: Callable, receipt_id: str) -> dict[str, Any]:
+        """Inspect one declared operation at a candidate, without registration.
+
+        The view narrows existing Skill contracts; no request can add commands,
+        binding IDs or output authority. The same sandbox/receipt validation as
+        Recovery performs the actual observation and rechecks scope afterwards.
+        """
+        owner = self.skills
+        contract = owner.get_execution_capability_registry([skill_id]).get(capability_id)
+        if not contract or contract.get("selected_skill_id") != skill_id:
+            return self._result("not_run", "RUNTIME_CAPABILITY_SCOPE_INVALID")
+        required = list(contract.get("required_runtime_binding_ids") or [])
+        if not required:
+            return self._result("not_run", "RUNTIME_CAPABILITY_HAS_NO_REQUIRED_BINDINGS")
+
+        class CandidateSkillView:
+            skills_root = owner.skills_root
+
+            def get_runtime_requirements(self, selected):
+                if selected != skill_id:
+                    raise InspectionPolicyError("RUNTIME_CAPABILITY_SCOPE_INVALID")
+                requirements = owner.get_runtime_requirements(selected, target_env=target_env, capability_id=capability_id)
+                if not requirements.get("inspection_contract_complete"):
+                    raise InspectionPolicyError("RUNTIME_OPERATION_INSPECTION_UNDECLARED")
+                return requirements
+
+            def get_skill_meta(self, selected):
+                meta = dict(owner.get_skill_meta(selected))
+                runtime = dict(meta.get("runtime") or {})
+                runtime["inspection_outputs"] = {name: row for name, row in (runtime.get("inspection_outputs") or {}).items()
+                    if isinstance(row, Mapping) and row.get("binding_id") in required}
+                return {**meta, "runtime": runtime}
+
+            def get_execution_capability_registry(self, selected):
+                current = owner.get_execution_capability_registry(selected).get(capability_id)
+                if not current or current.get("selected_skill_id") != skill_id:
+                    raise InspectionPolicyError("RUNTIME_CAPABILITY_SCOPE_INVALID")
+                return {capability_id: current}
+
+        adapter = RuntimeInspectionAdapter(self.pm, CandidateSkillView(), scope_provider=scope_provider,
+            path_validator=self.path_validator, allowed_runtime_roots=self.allowed_runtime_roots,
+            envsafevars=self.envsafevars, healthcheck_provider=self.healthcheck_provider,
+            probe=self.probe, clock=self.clock)
+        description = adapter.describe(skill_id)
+        subject = dict(scope_provider(skill_id))
+        result = await adapter.inspect({"operation": "inspect", "inspection_receipt_id": receipt_id,
+            "scope": {"selected_skill_id": skill_id, "subject": subject, "required_binding_ids": required},
+            "inspection_contract": description, "inspection_deadline_seconds": 60})
+        result["runtime_observation_scope"] = subject
+        result["inspection_contract"] = description
+        return result
+
     def _specification(self, skill_id: str) -> dict[str, Any]:
         subject = dict(self.scope_provider(skill_id))
         if set(subject) != set(SCOPE_FIELDS) or not all(subject.values()) or subject["skill_id"] != skill_id:
@@ -431,6 +484,9 @@ class RuntimeInspectionAdapter:
             result = self._result("permission_error" if sandbox_denied else "execution_error",
                 "RUNTIME_INSPECTION_SANDBOX_PERMISSION_DENIED" if sandbox_denied else "RUNTIME_INSPECTION_NONZERO_EXIT")
             result["inspection_error"] = {"exit_code": outcome.get("returncode")}
+            if sandbox_denied and not _SENSITIVE.search(diagnostic):
+                result["inspection_error"]["reason_detail"] = " ".join(
+                    "".join(char for char in diagnostic if char.isprintable() or char in "\n\t").split())[:384]
             return result
         stdout = str(outcome.get("stdout") or "")
         stderr = str(outcome.get("stderr") or "")

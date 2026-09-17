@@ -19342,6 +19342,71 @@ class BioAnalystAgent:
             return {"resolved_runtime_paths": {}, "coverage": {}, "inspection_status": "execution_error",
                 "reason_code": str(getattr(exc, "code", "RUNTIME_PROBE_EXECUTION_INCOMPLETE"))}
 
+    async def _discover_skill_runtime_candidates(self, skill_id: str, task_id: str, *,
+                                                capability_id: str = "", target_env: str = "",
+                                                use_cache: bool = False) -> Dict[str, Any]:
+        """Fresh, operation-scoped discovery through the controlled Inspector.
+
+        A successful row proves only this capability's declared requirements.
+        It is a candidate observation, not global registration or installation
+        authority. The caller selects/persists task evidence using existing
+        ledger and Plan/action boundaries.
+        """
+        from agent_core.runtime_inspection import RuntimeInspectionAdapter
+        result = {"skill_id": skill_id, "capability_id": capability_id,
+            "candidates": [], "selected_candidate": {}, "decision": "unverified",
+            "availability": "UNKNOWN", "install_required": False}
+        if not capability_id:
+            return {**result, "reason_code": "RUNTIME_OPERATION_REQUIRED"}
+        try:
+            requirements = self.skill_manager.get_runtime_requirements(skill_id, target_env=target_env, capability_id=capability_id)
+        except (KeyError, ValueError) as exc:
+            return {**result, "reason_code": str(exc)}
+        required = list(requirements.get("required_binding_ids") or [])
+        result.update(operation=requirements.get("operation", ""), required_binding_ids=required,
+            declared_env=requirements.get("default_env", ""))
+        if not required:
+            return {**result, "decision": "no_runtime_required", "availability": "NOT_REQUIRED",
+                "reason_code": "RUNTIME_CAPABILITY_HAS_NO_REQUIRED_BINDINGS"}
+        if not requirements.get("inspection_contract_complete"):
+            return {**result, "reason_code": "RUNTIME_OPERATION_INSPECTION_UNDECLARED"}
+        adapter = getattr(self, "runtime_inspection_adapter", None)
+        if adapter is None:
+            adapter = RuntimeInspectionAdapter(self.pm, self.skill_manager, scope_provider=self._runtime_evidence_scope,
+                path_validator=self._verified_runtime_paths, allowed_runtime_roots=self._runtime_inspection_roots,
+                envsafevars=self._runtime_inspection_environment, healthcheck_provider=self._runtime_healthcheck_for_env)
+            self.runtime_inspection_adapter = adapter
+        try:
+            candidates = self.pm.discover_runtime_candidates(requirements, target_env=target_env)
+        except ValueError as exc:
+            return {**result, "reason_code": str(exc)}
+        for candidate in candidates:
+            row = deepcopy(candidate)
+            row.update(inspection_status="not_run", coverage={}, resolved_runtime_paths={})
+            if not row["prefix_present"]:
+                result["candidates"].append(row)
+                continue
+            env = str(row["env"])
+            scope_provider = lambda sid, selected_env=env: self._runtime_evidence_scope(
+                sid, target_env=selected_env, capability_id=capability_id)
+            observed = await adapter.inspect_candidate(skill_id, capability_id, env, scope_provider=scope_provider,
+                receipt_id="candidate-inspection:" + stable_digest({"task_id": task_id,
+                    "capability_id": capability_id, "subject": scope_provider(skill_id)}))
+            row.update(observed)
+            row["resolved_runtime_paths"] = dict((observed.get("audit") or {}).get("resolved_runtime_paths") or {})
+            coverage = dict(observed.get("coverage") or {})
+            ready = observed.get("inspection_status") == "succeeded" and all(
+                coverage.get(binding, {}).get("availability") == "AVAILABLE" for binding in required)
+            row["availability"] = "AVAILABLE" if ready else "UNKNOWN"
+            result["candidates"].append(row)
+            if ready:
+                return {**result, "selected_candidate": row, "decision": "candidate_verified",
+                    "availability": "AVAILABLE", "reason_code": "RUNTIME_OPERATION_VERIFIED"}
+            reason = str(observed.get("reason_code") or "")
+            if "SANDBOX" in reason or observed.get("inspection_status") == "permission_error":
+                return {**result, "decision": "inspection_unavailable", "reason_code": reason}
+        return {**result, "reason_code": "RUNTIME_OPERATION_NOT_VERIFIED"}
+
     def _runtime_audit_for_skill(self, skill_id: str, task_id: str, *, use_cache: bool = True) -> Dict[str, Any]:
         requirements = self._skill_runtime_requirements(skill_id)
         declared_env = str(requirements.get("env") or requirements.get("default_env") or "").strip()
@@ -19481,10 +19546,6 @@ class BioAnalystAgent:
             audit["decision"] = "runtime_ready"
             return finalize()
 
-        if not use_cache:
-            audit["decision"] = "declared_runtime_healthcheck_failed"
-            return finalize()
-
         match = None
         if self.pm and hasattr(self.pm, "find_matching_environment"):
             try:
@@ -19510,6 +19571,7 @@ class BioAnalystAgent:
                     env_name=candidate_env,
                     language=str(requirements.get("language") or ""),
                     healthcheck=candidate_healthcheck,
+                    persist=False,
                 )
                 audit["candidate_healthcheck"] = {
                     "ok": bool(cand_ok),
@@ -19896,7 +19958,7 @@ class BioAnalystAgent:
                 "explanation", "execution_status", "original_error")}).to_dict()
         return stopped
 
-    def _runtime_evidence_scope(self, skill_id: str) -> Dict[str, str]:
+    def _runtime_evidence_scope(self, skill_id: str, *, target_env: str = "", capability_id: str = "") -> Dict[str, str]:
         """Current declared runtime subject; never derived from model output."""
         manager = getattr(self, "skill_manager", None)
         meta = manager.get_skill_meta(skill_id) if manager else {}
@@ -19908,7 +19970,8 @@ class BioAnalystAgent:
                 document_digest = ""  # cached contract no longer describes this document
         except (KeyError, OSError, ValueError, AttributeError):
             document_digest = ""
-        requirements = self._skill_runtime_requirements(skill_id)
+        requirements = (manager.get_runtime_requirements(skill_id, target_env=target_env, capability_id=capability_id)
+                        if target_env or capability_id else self._skill_runtime_requirements(skill_id))
         environment = str(requirements.get("env") or requirements.get("default_env") or "")
         root = str(getattr(getattr(self, "pm", None), "conda_root", "") or "")
         prefix = Path(root) / "envs" / environment if root and environment else None
@@ -21379,9 +21442,13 @@ class BioAnalystAgent:
         skill_id = scope["selected_skill_id"]
         defaults = self._skill_runtime_defaults([skill_id])
         target = str(defaults.get("env") or "")
+        capability_id = str(scope["execution_capability_id"])
+        stage_requirements = self.skill_manager.get_runtime_requirements(skill_id, capability_id=capability_id)
+        target_candidates = (self.pm.discover_runtime_candidates(stage_requirements)
+            if stage_requirements.get("required_binding_ids") else [])
         proposal = {"request_id": "runtime-install:" + stable_digest(request)[:24],
             "tool": defaults.get("install_tool") or defaults["tool_name"],
-            "target_env": target, "target_prefix": self._installation_target_prefix(target),
+            "default_env": target, "target_env": "", "target_prefix": "",
             "selected_skills": [skill_id], "capabilities": [scope["execution_capability_id"]],
             "generation_source_scope": runtime_generation_source_scope(durable),
             "requirement_evidence": {"runtime_request_id": request["request_id"],
@@ -21395,10 +21462,10 @@ class BioAnalystAgent:
                 "当前步骤的运行证据仍未满足，UNKNOWN 不表示软件不存在，检查或权限错误也不表示缺软件。"
                 f"声明的目标环境为 {target or '尚未选择'}。请选择明确操作："
                 '提供已有环境：{"action":"provided_environment","target_env":"当前管理根下的环境名"}；'
-                "prepare_installation＝准备安装提案，具体来源、目标、版本和命令仍需逐项批准；"
+                "prepare_installation＝选用上述声明目标准备提案，具体来源、版本和命令仍需逐项批准；"
                 '如需指定安装目标：{"action":"prepare_installation","target_env":"当前管理根下的环境名"}；'
                 "quit＝取消。普通说明文字交由咨询处理，不会触发安装或科学执行。"),
-            "requested_slots": ["runtime_dependency_preparation"]}
+            "requested_slots": ["runtime_dependency_preparation"], "candidates": target_candidates}
         task = dict(durable.get("task_state") or {})
         existing = dict(task.get("pending_question") or {})
         if existing and existing.get("question_id") != pending["question_id"]:
@@ -21437,6 +21504,7 @@ class BioAnalystAgent:
             options.insert(-2, "prepare_installation：准备提案后逐项批准")
         answer = interrupt({"type": pending["type"], "stage": pending["stage"],
             "question": pending["question"], "question_id": question_id,
+            "candidates": pending.get("candidates") or [],
             "requested_slots": ["installation_resolution"],
             "options": options})
         text = json.dumps(answer, ensure_ascii=False, sort_keys=True) if isinstance(answer, Mapping) else str(answer or "")
@@ -21474,8 +21542,8 @@ class BioAnalystAgent:
         if explicit:
             event = {"action": action, "question_id": question_id, "answer_turn_ref": answer_ref,
                      "request_id": request["request_id"], "request_hash": pending["request_hash"]}
-            if action == "provided_environment" or action == "prepare_installation" and parsed.get("target_env"):
-                target_env = str(parsed["target_env"]).strip()
+            if action == "provided_environment" or action == "prepare_installation" and (parsed.get("target_env") or preparation):
+                target_env = str(parsed.get("target_env") or request.get("default_env") or "").strip()
                 event["target_env"] = target_env
                 request["target_env"] = target_env
                 request["target_prefix"] = self._installation_target_prefix(target_env)
@@ -21512,7 +21580,7 @@ class BioAnalystAgent:
         selected = self._narrow_skills_to_current_plan_step(selected, task_id)
         defaults = self._skill_runtime_defaults(selected)
         tool = self._install_tool_name(raw.get("tool") or raw.get("tool_or_capability") or defaults.get("tool_name") or "skill_runtime")
-        target_env = str(raw.get("target_env") or evidence.get("environment") or evidence.get("env") or defaults.get("env") or "").strip()
+        target_env = str(raw.get("target_env") or evidence.get("environment") or evidence.get("env") or "").strip()
         matches_durable_request = raw == stored.get("installation_request")
         resolution = str(raw.pop("resolution", "") or "")
         resolution_event = deepcopy(dict(raw.pop("resolution_event", {}) or {}))
@@ -21524,15 +21592,38 @@ class BioAnalystAgent:
         except ValueError:
             current_source_scope = {}
         source_scope = deepcopy(raw.get("generation_source_scope", current_source_scope))
-        if not target_env and has_work_order:
+        if not target_env and has_work_order and resolution not in {"quit", "cancel", "cancelled", "reject"}:
+            # Discover before target selection and authorization freezing.
+            # These are presence/registry candidates, never ready claims. The
+            # selected target still receives the parent's exact verification.
+            target_candidates = []
+            step = next((row for row in durable.get("steps") or [] if row.get("step_id") == durable.get("current_step_id")), {})
+            current_caps = list(step.get("execution_capabilities") or [])
+            if step.get("execution_capability_id"):
+                current_caps.append(step["execution_capability_id"])
+            registry = self.skill_manager.get_execution_capability_registry(selected) if self.skill_manager else {}
+            requested_caps = list(raw.get("capabilities") or [cap for cap in current_caps if cap in registry])
+            for sid in selected:
+                scoped = [cap for cap in requested_caps if cap in registry
+                    and registry[cap].get("selected_skill_id") == sid and (not current_caps or cap in current_caps)]
+                for cap in scoped:
+                    requirements = self.skill_manager.get_runtime_requirements(sid, capability_id=cap)
+                    if not requirements.get("required_binding_ids"):
+                        continue
+                    for candidate in self.pm.discover_runtime_candidates(requirements):
+                        target_candidates.append({**candidate, "skill_id": sid, "capability_id": cap,
+                            "required_binding_ids": requirements["required_binding_ids"]})
             choice = interrupt({"type": "env_selection", "tool_name": tool,
                                 "default_env": str(defaults.get("env") or ""),
-                                "reason": "Choose a target; environment selection does not authorize installation."})
+                                "candidates": target_candidates,
+                                "reason": "选择当前管理根下的环境名。候选路径和登记信息尚未证明可用；选定目标后须复验，安装命令另行审批。"})
             if isinstance(choice, Mapping):
                 target_env = str(choice.get("target_env") or "").strip()
                 resolution = str(choice.get("action") or "")
             else:
                 target_env = str(choice or "").strip()
+        if resolution in {"quit", "cancel", "cancelled", "reject"} and not target_env:
+            target_env = str(defaults.get("env") or "").strip()
         prefix = self._installation_target_prefix(target_env)
         declared_prefix = str(raw.get("target_prefix") or "")
         prefix_matches = not declared_prefix or declared_prefix == prefix
