@@ -664,9 +664,13 @@ class PackageManager:
             }
         return best_match
 
-    def verify_environment(self, env_name: str, language: str = "", healthcheck: str = "") -> tuple:
-        info = self.registry.setdefault("environments", {}).get(env_name)
-        if not info:
+    def verify_environment(self, env_name: str, language: str = "", healthcheck: str = "", *, persist: bool = True) -> tuple:
+        info = self.registry.get("environments", {}).get(env_name)
+        if not persist:
+            info = dict(info or {})
+            if not healthcheck:
+                return False, "An explicit target healthcheck is required before registration."
+        elif not info:
             return False, f"Environment '{env_name}' is not registered."
 
         selected_language = str(language or info.get("language", "")).lower()
@@ -696,13 +700,15 @@ class PackageManager:
             combined = "\n".join(part for part in [proc.stdout.strip(), proc.stderr.strip()] if part).strip()
             if combined:
                 info["notes"] = combined[:1000]
-            self._save_registry()
+            if persist:
+                self._save_registry()
             return ok, combined or ("OK" if ok else "Healthcheck failed.")
         except Exception as e:
             info["status"] = "broken"
             info["last_verified_at"] = datetime.now().isoformat()
             info["notes"] = str(e)
-            self._save_registry()
+            if persist:
+                self._save_registry()
             return False, str(e)
 
     def bind_tool_to_environment(self, tool_name: str, env_name: str):

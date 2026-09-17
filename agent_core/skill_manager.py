@@ -758,13 +758,13 @@ class SkillManager:
                 normalized = re.sub(pattern, abs_script, normalized)
         return normalized
 
-    def get_runtime_requirements(self, skill_id: str) -> Dict[str, Any]:
+    def get_runtime_requirements(self, skill_id: str, *, target_env: str = "") -> Dict[str, Any]:
         meta = self.get_skill_meta(skill_id)
         runtime = meta.get("runtime") or {}
         canonical_id = meta.get("_skill_id", skill_id)
         record = self.get_runtime_record(canonical_id)
         default_env = str(runtime.get("default_env", "") or "").strip()
-        env = default_env or self.get_runtime_env(canonical_id)
+        env = target_env or self.get_runtime_env(canonical_id) or default_env
         runtime_packages = self._runtime_packages(runtime)
         packages = runtime_packages or self._ensure_list(record.get("packages"))
         language = self._runtime_language(runtime)
@@ -773,8 +773,8 @@ class SkillManager:
         runtime_capabilities = self._runtime_capabilities(runtime, meta)
         capabilities = runtime_capabilities or self._ensure_list(record.get("capabilities"))
         env_runner = str(runtime.get("env_runner", "") or record.get("env_runner") or "")
-        runtime_healthcheck = self.build_runtime_healthcheck(env or runtime.get("default_env", ""), runtime, meta)
-        healthcheck = runtime_healthcheck or record.get("healthcheck", "")
+        runtime_healthcheck = self.build_runtime_healthcheck(env or runtime.get("default_env", ""), runtime, meta) if not runtime.get("inspection_probes") else ""
+        healthcheck = (runtime_healthcheck or record.get("healthcheck", "")) if not runtime.get("inspection_probes") else ""
         install_commands = self._runtime_install_commands(runtime, record)
         install_command = install_commands[0] if install_commands else ""
         install_policy = str(
@@ -799,6 +799,8 @@ class SkillManager:
             "install_policy": install_policy,
             "env_file": self._runtime_asset_path(runtime, meta, "env_file"),
             "healthcheck": healthcheck,
+            "inspection_probes": runtime.get("inspection_probes", []),
+            "install_forbidden_envs": runtime.get("install_forbidden_envs", []),
             "mode_healthchecks": runtime.get("mode_healthchecks", {}) or record.get("mode_healthchecks", {}) or {},
             "metadata_present": bool(runtime or record.get("metadata_present")),
             "metadata_status": "present" if runtime or record.get("metadata_present") else "missing",
@@ -1767,12 +1769,12 @@ class SkillManager:
     def get_runtime_env(self, skill_id: str) -> str:
         runtime = (self.get_skill_meta(skill_id).get("runtime") or {})
         default_env = str(runtime.get("default_env", "") or "").strip()
-        if default_env:
-            return default_env
         record = self.get_runtime_record(skill_id)
         if record.get("env") and record.get("status") in {"installed", "verified", "success"}:
+            # Registration selects a candidate target, never proves readiness.
+            # Fresh task-scoped evidence still authorizes every formal action.
             return record["env"]
-        return ""
+        return default_env
 
     def get_execution_cards(
         self,

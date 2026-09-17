@@ -55,15 +55,16 @@ def test_installer_runs_bash_inside_source_root():
     assert "cd {shlex.quote(source_root)}" in source
 
 
-def test_installer_contract_healthcheck_registers_declared_runtime():
+def test_installer_registration_is_parent_owned_after_target_verification():
     source = installer_source()
 
-    assert "_verify_and_register_contract_runtime" in source
-    assert "_declared_install_like_command" in source
-    assert "Declared runtime healthcheck passed" in source
-    assert "Environment '{env}' registered successfully via PackageManager" in source
-    assert "Strict runtime healthcheck failed after declared install command" in source
-    assert "No declared fallback install command remains" in source
+    assert "registration_requests" in source
+    assert "parent_target_verifier" in source
+    assert "verification_required" in source
+    assert "INSTALLATION_REGISTRATION_TARGET_MISMATCH" in source
+    assert "self.pm.register_environment(" not in source
+    assert "self.pm.register_existing_tool(" not in source
+    assert "self.pm.bind_tool_to_environment(" not in source
 
 
 def test_installer_uses_step_local_context_after_initial_prompt():

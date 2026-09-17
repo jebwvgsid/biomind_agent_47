@@ -664,6 +664,14 @@ class TypedGenerate:
                 "cancellation_receipt": dict(value["cancellation_receipt"]),
             }
             summary = "Generate stopped on an authoritative cancellation receipt."
+        elif exit_reason == "installation_requested":
+            request = dict(value.get("installation_request") or {})
+            outcome_type = "installation_requested"
+            payload = {"tool_or_capability": str(request.get("tool") or "runtime"),
+                "requirement_evidence": dict(request.get("requirement_evidence") or {}),
+                "approval_policy": str(request.get("approval_policy") or "exact_installation_command_target_review"),
+                "attempt_fingerprint": str(request.get("attempt_fingerprint") or _fingerprint(request))}
+            summary = "A concrete environment work order needs target selection and command approval."
         elif exit_reason == "runtime_evidence_required":
             request = dict(value.get("pending_runtime_evidence_request") or {})
             outcome_type = "runtime_evidence_required"
@@ -1160,9 +1168,10 @@ class TypedGenerate:
             payload=payload,
             evidence_refs=evidence_refs,
         )
-        if outcome_type in {"runtime_evidence_required", "runtime_recovery_stopped"}:
+        if outcome_type in {"runtime_evidence_required", "runtime_recovery_stopped", "installation_requested"}:
             return {
                 "generate_outcome": outcome.to_dict(),
+                "installation_request": dict(value.get("installation_request") or {}),
                 "pending_runtime_evidence_request": dict(value.get("pending_runtime_evidence_request") or {}),
                 "runtime_recovery_result": dict(value.get("runtime_recovery_result") or {}),
                 "messages": list(value.get("messages") or []),

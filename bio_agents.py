@@ -19109,13 +19109,34 @@ class BioAnalystAgent:
             resolved = self.pm._command_with_configured_manager(resolved)
         return f"cd {shlex.quote(str(repo_root))} && {resolved}"
 
-    def _verify_skill_runtime(self, skill_id: str, task_id: str = "default", use_cache: bool = True, code: str = "") -> Tuple[bool, str, str]:
+    def _verify_skill_runtime(self, skill_id: str, task_id: str = "default", use_cache: bool = True, code: str = "", target_env: str = "", capability_ids: Sequence[str] = ()) -> Tuple[bool, str, str]:
         if not self.skill_manager or not self.pm:
             return True, "", ""
-        requirements = self._skill_runtime_requirements(skill_id)
+        requirements = self.skill_manager.get_runtime_requirements(skill_id, target_env=target_env) if target_env else self._skill_runtime_requirements(skill_id)
         env = requirements.get("env") or requirements.get("default_env", "")
         if not env:
             return True, "", ""
+        if requirements.get("inspection_probes"):
+            result = self._inspect_declared_runtime(skill_id, requirements)
+            coverage = result.get("coverage") or {}
+            if capability_ids:
+                registry = self.skill_manager.get_execution_capability_registry([skill_id])
+                if any(cid not in registry or registry[cid].get("selected_skill_id") != skill_id for cid in capability_ids):
+                    return False, "INSTALL_VERIFICATION_CAPABILITY_SCOPE_INVALID", env
+                required = {bid for cid in capability_ids for bid in registry[cid].get("required_runtime_binding_ids") or []}
+                coverage = {bid: coverage.get(bid, {"availability": "UNKNOWN"}) for bid in required}
+            ok = bool(coverage) and all(row["availability"] == "AVAILABLE" for row in coverage.values())
+            result["required_coverage"] = coverage
+            return ok, json.dumps(result, ensure_ascii=False, sort_keys=True), env
+        if target_env:
+            # Target-specific validation is read-only; registry stages belong
+            # to the installation receipt and cannot run before verification.
+            ok, detail = self._verify_conda_env_presence(env)
+            if not ok:
+                return False, detail, env
+            declared = self._skill_runtime_requirements(skill_id)
+            return (*self.pm.verify_environment(env_name=env, language=requirements.get("language", ""),
+                healthcheck=self._runtime_healthcheck_for_env(declared, env), persist=False), env)
         mode, mode_healthchecks = self._mode_healthchecks_for_code(skill_id, requirements, code)
         if not self.pm.get_environment(env):
             self.pm.register_environment(
@@ -19311,6 +19332,16 @@ class BioAnalystAgent:
             })
         return found
 
+    def _inspect_declared_runtime(self, skill_id: str, requirements: Mapping[str, Any]) -> Dict[str, Any]:
+        from agent_core.runtime_probe_contract import inspect_declared_runtime
+        environment = str(requirements.get("env") or requirements.get("default_env") or "")
+        try:
+            result = inspect_declared_runtime(requirements, Path(str(self.pm.conda_root)) / "envs" / environment)
+            return {**result, "inspection_status": "succeeded"}
+        except (OSError, ValueError, subprocess.SubprocessError) as exc:
+            return {"resolved_runtime_paths": {}, "coverage": {}, "inspection_status": "execution_error",
+                "reason_code": str(getattr(exc, "code", "RUNTIME_PROBE_EXECUTION_INCOMPLETE"))}
+
     def _runtime_audit_for_skill(self, skill_id: str, task_id: str, *, use_cache: bool = True) -> Dict[str, Any]:
         requirements = self._skill_runtime_requirements(skill_id)
         declared_env = str(requirements.get("env") or requirements.get("default_env") or "").strip()
@@ -19334,6 +19365,15 @@ class BioAnalystAgent:
             "checked_env": declared_env,
             "decision": "no_runtime_declared",
         }
+
+        if requirements.get("inspection_probes"):
+            result = self._inspect_declared_runtime(skill_id, requirements)
+            complete = bool(result.get("coverage")) and all(row["availability"] == "AVAILABLE" for row in result["coverage"].values())
+            return {**audit, **result, "env": declared_env, "checked_env": declared_env,
+                "status": "ready" if complete else "unknown", "declared_ok": complete,
+                "observed_at": datetime.now().astimezone().isoformat(),
+                "decision": "runtime_ready" if complete else "capability_checks_incomplete",
+                "reason": "See per-binding coverage; path existence alone does not establish subcommand readiness."}
 
         def finalize() -> Dict[str, Any]:
             decision = str(audit.get("decision") or "no_runtime_declared")
@@ -19737,6 +19777,32 @@ class BioAnalystAgent:
             )
         return self.runtime_evidence_recovery
 
+    async def _resume_after_runtime_preparation(self, state: Mapping[str, Any], receipt: Mapping[str, Any]) -> Dict[str, Any]:
+        """Installation and already-present environments rejoin one discovery path."""
+        from agent_core.workflow.runtime_evidence_recovery import RuntimeRecoveryError
+        durable = load_plan_state(self.data_path, str(state.get("task_id") or ""))
+        _, step = current_plan_step_with_index(durable)
+        step = step or {}
+        registry = self.skill_manager.get_execution_capability_registry(step.get("skill_ids") or [])
+        contract = registry.get(str(step.get("execution_capability_id") or "")) or {}
+        skill_id = str(contract.get("selected_skill_id") or "")
+        try:
+            self._runtime_evidence_service().prepare_generation(state,
+                selected_skill_id=skill_id, capability_contract=contract)
+            request = self._runtime_evidence_service().create_request(state,
+                selected_skill_id=skill_id, capability_contract=contract,
+                missing_binding_ids=contract.get("required_runtime_binding_ids") or [],
+                original_error={"code": "RUNTIME_PREPARATION_REQUIRES_SCOPED_EVIDENCE"})
+        except RuntimeRecoveryError as exc:
+            if exc.code == "RUNTIME_RECOVERY_PLAN_REVISION_REQUIRED":
+                return {"pending_action": {}, "generate_exit_reason": "plan_patch",
+                    "validation_issues": [{"code": exc.code, "step_id": step.get("step_id"), "capability_contract_hash": step.get("capability_contract_hash"),
+                        "detail": "Approve a current capability with explicit required runtime facts; the prior action stays immutable."}]}
+            raise
+        return {"pending_runtime_evidence_request": request, "pending_action": {},
+                "runtime_recovery_result": {}, "execution_started": False,
+                "generate_exit_reason": "runtime_evidence_required"}
+
     def _runtime_recovery_stop(self, state: Mapping[str, Any], result: Mapping[str, Any]) -> Dict[str, Any]:
         from agent_core.workflow.runtime_recovery_reporting import finalize_runtime_recovery_result
         finalized = finalize_runtime_recovery_result(
@@ -19839,7 +19905,8 @@ class BioAnalystAgent:
             except OSError:
                 pass
         contract = manager.get_execution_capability_registry([skill_id]) if manager else {}
-        method = self._runtime_healthcheck_for_env(requirements, environment)
+        from agent_core.runtime_probe_contract import probe_method
+        method = probe_method(requirements) if requirements.get("inspection_probes") else self._runtime_healthcheck_for_env(requirements, environment)
         return {
             "skill_id": skill_id,
             "skill_document_digest": "sha256:" + document_digest if document_digest else "",
@@ -19871,13 +19938,37 @@ class BioAnalystAgent:
         selected = list(skill_ids if skill_ids is not None else (
             task_state.get("selected_skills") or durable.get("selected_skill_ids") or []
         ))
-        evaluations = {}
+        evaluations, planning = {}, []
         for skill_id in selected:
-            evaluations.update(evaluate_runtime_evidence(
-                task_state, task_id=task_id, skill_scope=self._runtime_evidence_scope(skill_id)
-            ))
+            contracts = self.skill_manager.get_execution_capability_registry([skill_id])
+            required = sorted({bid for contract in contracts.values()
+                               for bid in contract.get("required_runtime_binding_ids") or []})
+            current = evaluate_runtime_evidence(
+                task_state, task_id=task_id, skill_scope=self._runtime_evidence_scope(skill_id),
+                required_binding_ids=required)
+            evaluations.update(current)
+            observed_audits = self._runtime_audit_projection(task_id, [skill_id])
+            paths = {key: value for audit in observed_audits
+                     for key, value in (audit.get("resolved_runtime_paths") or {}).items()}
+            capabilities = []
+            for cid, contract in contracts.items():
+                if contract.get("selected_skill_id") != skill_id:
+                    continue
+                ids = list(contract.get("required_runtime_binding_ids") or [])
+                statuses = {bid: current.get(bid, {"availability": "UNKNOWN"}) for bid in ids}
+                availability = ("NOT_REQUIRED" if not ids else "AVAILABLE"
+                    if all(v["availability"] == "AVAILABLE" for v in statuses.values()) else "UNKNOWN")
+                capabilities.append({"capability_id": cid, "availability": availability, "bindings": statuses})
+            requirements = self._skill_runtime_requirements(skill_id)
+            planning.append({"skill_id": skill_id,
+                "status": "ready" if required and all(current[bid]["availability"] == "AVAILABLE" for bid in required) else "unknown",
+                "declared_env": requirements.get("default_env", ""),
+                "checked_env": observed_audits[-1].get("checked_env", "") if observed_audits else "",
+                "observed_at": observed_audits[-1].get("observed_at", "") if observed_audits else "",
+                "evidence_ids": sorted({eid for row in current.values() for eid in row.get("evidence_ids", [])}),
+                "resolved_runtime_paths": paths, "capabilities": capabilities})
         return {"runtime_audit": self._runtime_audit_projection(task_id, selected),
-                "runtime_binding_evaluations": evaluations}
+                "runtime_binding_evaluations": evaluations, "runtime_planning_audit": planning}
 
     def _consultant_runtime_seed_evidence(
         self,
@@ -19929,7 +20020,8 @@ class BioAnalystAgent:
                     continue
                 audit["runtime_evidence_record"] = make_runtime_evidence(
                     audit, task_id=task_id, skill_scope=scope,
-                    observed_at=observed_at,
+                    observed_at=observed_at, coverage=audit.get("coverage"),
+                    inspection_status=audit.get("inspection_status"),
                 )
                 evidence[skill_id] = dict(audit)
         return audits, evidence, summary
@@ -21162,39 +21254,388 @@ class BioAnalystAgent:
         runtime = meta.get("runtime") or {}
         return str(runtime.get("default_env", "") or "")
 
-    def _record_installed_skill_environment(self, selected_skills: Optional[List[str]], env: str, final_res: str):
-        if not self.skill_manager or not env:
-            return
-        if not re.search(r"(success|complete|ready|✅)", final_res, re.IGNORECASE):
-            return
-        for sid in self._selected_skill_ids(selected_skills):
-            requirements = self._skill_runtime_requirements(sid)
-            packages = requirements.get("packages", [])
-            capabilities = requirements.get("capabilities", [])
-            install_command = requirements.get("install_command", "")
-            self.skill_manager.record_environment(
-                sid,
-                env=env,
-                packages=packages,
-                install_command=install_command,
-                status="installed",
-                notes=final_res,
-                language=requirements.get("language", ""),
-                capabilities=capabilities,
-                healthcheck=requirements.get("healthcheck", ""),
-            )
-            if self.pm:
-                self.pm.register_environment(
-                    env_name=env,
-                    purpose=f"Runtime for skill {sid}",
-                    packages=packages,
-                    skill_id=sid,
-                    notes=final_res,
-                    language=requirements.get("language", ""),
-                    capabilities=capabilities,
-                    healthcheck=requirements.get("healthcheck", ""),
-                    status="installed",
-                )
+    def _record_installed_skill_environment(
+        self, selected_skills: Optional[List[str]], env: str, final_res: str,
+        *, receipt: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Idempotent registration, only after the current target was verified."""
+        receipt = dict(receipt or {})
+        selected = self._selected_skill_ids(selected_skills)
+        checks = [dict(row) for row in receipt.get("verification") or [] if isinstance(row, Mapping)]
+        if (not env or env != receipt.get("target_env") or not checks
+                or not all(row.get("ok") is True and row.get("target_prefix") == receipt.get("target_prefix") for row in checks)
+                or not set(selected) <= {row.get("skill_id") for row in checks}):
+            return {"skill_registry": {"ok": False, "detail": "TARGET_VERIFICATION_REQUIRED"},
+                    "software_registry": {"ok": False, "detail": "TARGET_VERIFICATION_REQUIRED"}}
+        registration = deepcopy(dict(receipt.get("registration") or {}))
+        for name, owner in (("skill_registry", self.skill_manager), ("software_registry", self.pm)):
+            prior = dict(registration.get(name) or {})
+            items = deepcopy(dict(prior.get("items") or {}))
+            for sid in selected:
+                if (items.get(sid) or {}).get("ok") is True:
+                    continue
+                if owner is None:
+                    items[sid] = {"ok": False, "detail": "Registry owner unavailable"}
+                    continue
+                requirements = self._skill_runtime_requirements(sid)
+                healthcheck = self._adapt_install_command_env(str(requirements.get("healthcheck") or ""), env)
+                kwargs = {"packages": requirements.get("packages", []), "status": "installed",
+                          "notes": final_res, "language": requirements.get("language", ""),
+                          "capabilities": requirements.get("capabilities", []), "healthcheck": healthcheck}
+                try:
+                    if name == "skill_registry":
+                        result = owner.record_environment(sid, env=env,
+                            install_command=requirements.get("install_command", ""), **kwargs)
+                    else:
+                        result = owner.register_environment(env_name=env, purpose=f"Runtime for skill {sid}",
+                            skill_id=sid, **kwargs)
+                    if result is False:
+                        raise RuntimeError("Registry write returned false")
+                    items[sid] = {"ok": True, "target_env": env, "target_prefix": receipt["target_prefix"]}
+                except Exception as exc:
+                    items[sid] = {"ok": False, "detail": str(exc), "failure_stage": "registration"}
+            registration[name] = {"ok": bool(selected) and all((items.get(sid) or {}).get("ok") is True for sid in selected),
+                                  "items": items}
+        return registration
+
+    def _persist_installation_receipt(self, task_id, request, receipt):
+        """Use the existing task persistence; never mutate scientific step status."""
+        durable = load_plan_state(self.data_path, task_id)
+        task_state = deepcopy(dict(durable.get("task_state") or {}))
+        task_state["installation_request"] = deepcopy(request)
+        task_state["installation_receipt"] = deepcopy(receipt)
+        durable["task_state"] = task_state
+        save_plan_state(self.data_path, task_id, durable)
+
+    def _installation_target_prefix(self, env: str) -> str:
+        if not env:
+            return ""
+        if Path(env).is_absolute():
+            return str(Path(env).expanduser())
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", env) or env in {".", ".."}:
+            return ""
+        root = getattr(self.pm, "conda_root", None)
+        if root:
+            return str(Path(root) if env == "base" else Path(root) / "envs" / env)
+        record = dict(self.pm.get_environment(env) or {}) if self.pm else {}
+        registered = str(record.get("prefix") or record.get("path") or "")
+        if registered and Path(registered).is_absolute():
+            return registered
+        return ""
+
+    def _publish_installation_question(self, task_id, request, receipt):
+        """Persist an installation decision in the existing human-question slot."""
+        question_id = "installation-question:" + stable_digest({
+            "request_hash": stable_digest(request), "status": receipt["status"],
+            "execution": receipt.get("execution") or [],
+        })[:24]
+        pending = {
+            "type": "installation_resolution", "stage": "installation", "question_id": question_id,
+            "request_id": request["request_id"], "request_hash": stable_digest(request),
+            "question": (
+                f"目标环境 {request['target_env']}（{request['target_prefix']}）尚未就绪。"
+                "请选择明确事件：manual_done＝人工处理完成并重新验证；"
+                "registration_retry＝只补失败的登记；manual_wait＝继续等待人工处理；"
+                "quit＝取消；reject＝拒绝。若改用已有环境，请输入 JSON："
+                '{"action":"provided_environment","target_env":"环境名或绝对前缀"}。'
+                "普通说明文字交由现有咨询流程理解，不会被当作安装完成。"
+            ),
+            "requested_slots": ["installation_resolution"],
+        }
+        durable = load_plan_state(self.data_path, task_id)
+        task = dict(durable.get("task_state") or {})
+        existing = dict(task.get("pending_question") or {})
+        if existing and existing.get("question_id") != question_id:
+            raise ValueError("INSTALLATION_QUESTION_OTHER_OWNER_PENDING")
+        task["pending_question"] = pending
+        durable["task_state"] = task
+        save_plan_state(self.data_path, task_id, durable)
+        return pending
+
+    async def _ask_installation_resolution(self, state):
+        """Interpret only explicit choices attached to the exact durable question."""
+        task_id = str(state.get("task_id") or "default")
+        pending = dict(state.get("pending_human_question") or {})
+        durable = load_plan_state(self.data_path, task_id)
+        task = dict(durable.get("task_state") or {})
+        request = deepcopy(dict(task.get("installation_request") or {}))
+        question_id = str(pending.get("question_id") or "")
+        if (not question_id or pending.get("type") != "installation_resolution"
+                or pending != task.get("pending_question")
+                or pending.get("request_id") != request.get("request_id")
+                or pending.get("request_hash") != stable_digest(request)):
+            raise ValueError("INSTALLATION_QUESTION_SCOPE_MISMATCH")
+        self._append_semantic_conversation_turn(task_id, role="consultant_question",
+            content=pending["question"], question_id=question_id)
+        answer = interrupt({"type": "installation_resolution", "stage": "installation",
+            "question": pending["question"], "question_id": question_id,
+            "requested_slots": ["installation_resolution"],
+            "options": ["manual_done：人工完成后复验", "registration_retry：补登记", "manual_wait：等待人工处理",
+                        "provided_environment：提供另一环境", "quit：取消", "reject：拒绝"]})
+        text = json.dumps(answer, ensure_ascii=False, sort_keys=True) if isinstance(answer, Mapping) else str(answer or "")
+        _, answer_ref = self._append_semantic_conversation_turn(task_id, role="user", content=text, question_id=question_id)
+        parsed = dict(answer) if isinstance(answer, Mapping) else {}
+        if not parsed and text.strip().startswith("{"):
+            try:
+                value = json.loads(text)
+                parsed = dict(value) if isinstance(value, Mapping) else {}
+            except (ValueError, TypeError):
+                parsed = {}
+        action = str(parsed.get("action") or (text.strip() if not parsed else ""))
+        allowed = {"manual_done", "provided_environment", "registration_retry", "manual_wait", "quit", "reject"}
+        explicit = (action in allowed and not (set(parsed) - {"action", "target_env"})
+                    and (action != "provided_environment" or bool(str(parsed.get("target_env") or "").strip())))
+        durable = load_plan_state(self.data_path, task_id)
+        task = dict(durable.get("task_state") or {})
+        if task.get("pending_question") != pending or stable_digest(task.get("installation_request") or {}) != pending["request_hash"]:
+            raise ValueError("INSTALLATION_QUESTION_CHANGED_DURING_ANSWER")
+        answered = {**pending, "status": "answered_pending_interpretation", "answer_turn_ref": answer_ref}
+        consultation = deepcopy(dict(state.get("consultation_state") or {}))
+        consultation.update(phase="consulting", consultation_status="active", pending_question=answered,
+                            pending_human_question=answered, completion_decision="needs_evidence")
+        update = {"messages": [HumanMessage(content=text, additional_kwargs={"message_origin": "user"})],
+                  "pending_human_question": {}, "consultation_state": consultation,
+                  "conversation_evidence": dict(durable.get("conversation_evidence") or {})}
+        if explicit:
+            event = {"action": action, "question_id": question_id, "answer_turn_ref": answer_ref,
+                     "request_id": request["request_id"], "request_hash": pending["request_hash"]}
+            if action == "provided_environment":
+                target_env = str(parsed["target_env"]).strip()
+                event["target_env"] = target_env
+                request["target_env"] = target_env
+                request["target_prefix"] = self._installation_target_prefix(target_env)
+                for key in ("attempt_id", "sources", "verification_commands", "impact"):
+                    request.pop(key, None)
+            event["event_id"] = "installation-resolution:" + stable_digest(event)[:24]
+            request.update(resolution=action, resolution_event=event)
+            task["installation_request"] = request
+            update["installation_request"] = deepcopy(request)
+        task["pending_question"] = {}
+        task["consultation_state"] = consultation
+        durable["task_state"] = task
+        save_plan_state(self.data_path, task_id, durable)
+        return update
+
+    async def _install_subagent_impl(self, state: AgentState):
+        """One work order: execution -> exact-target checks -> registration -> A3."""
+        from agent_core.workflow.runtime_evidence_recovery import runtime_generation_source_scope
+        task_id = str(state.get("task_id") or "default")
+        durable = load_plan_state(self.data_path, task_id)
+        stored = dict(durable.get("task_state") or {})
+        raw = deepcopy(dict(state.get("installation_request") or stored.get("installation_request") or {}))
+        if not raw:
+            raw_outcome = state.get("execute_outcome") or {}
+            if isinstance(raw_outcome, Mapping) and raw_outcome.get("type") == "installation_requested":
+                raw = deepcopy(dict(raw_outcome.get("payload") or {}))
+        if not raw and self._pending_action_is(state.get("pending_action") or {}, "install_tool"):
+            legacy = dict(state["pending_action"])
+            raw = {"tool": legacy.get("tool"), "target_env": legacy.get("env"),
+                   "selected_skills": state.get("active_skills") or [], "source": "legacy_structured_install_action"}
+        has_work_order = bool(raw)
+        evidence = dict(raw.get("requirement_evidence") or {})
+        selected = self._selected_skill_ids(raw.get("selected_skills") or evidence.get("selected_skills") or state.get("active_skills") or [])
+        selected = self._narrow_skills_to_current_plan_step(selected, task_id)
+        defaults = self._skill_runtime_defaults(selected)
+        tool = self._install_tool_name(raw.get("tool") or raw.get("tool_or_capability") or defaults.get("tool_name") or "skill_runtime")
+        target_env = str(raw.get("target_env") or evidence.get("environment") or evidence.get("env") or defaults.get("env") or "").strip()
+        resolution = str(raw.pop("resolution", "") or "")
+        resolution_event = deepcopy(dict(raw.pop("resolution_event", {}) or {}))
+        try:
+            current_source_scope = runtime_generation_source_scope(durable)
+        except ValueError:
+            current_source_scope = {}
+        source_scope = deepcopy(raw.get("generation_source_scope", current_source_scope))
+        if not target_env and has_work_order:
+            choice = interrupt({"type": "env_selection", "tool_name": tool,
+                                "default_env": str(defaults.get("env") or ""),
+                                "reason": "Choose a target; environment selection does not authorize installation."})
+            if isinstance(choice, Mapping):
+                target_env = str(choice.get("target_env") or "").strip()
+                resolution = str(choice.get("action") or "")
+            else:
+                target_env = str(choice or "").strip()
+        prefix = self._installation_target_prefix(target_env)
+        declared_prefix = str(raw.get("target_prefix") or "")
+        prefix_matches = not declared_prefix or declared_prefix == prefix
+        contracts = {sid: self._skill_runtime_requirements(sid) for sid in selected}
+        declared_tools = {str(defaults.get("tool_name") or ""), str(defaults.get("install_tool") or "")}
+        for contract in contracts.values():
+            declared_tools.add(str(contract.get("install_tool") or ""))
+            declared_tools.update(str(name) for name in contract.get("tools") or [])
+            declared_tools.update(re.split(r"[<>=!~]", str(package), maxsplit=1)[0]
+                                  for package in contract.get("packages") or [])
+        capability_registry = self.skill_manager.get_execution_capability_registry(selected) if self.skill_manager else {}
+        step = next((row for row in durable.get("steps") or [] if row.get("step_id") == durable.get("current_step_id")), {})
+        step_capabilities = list(step.get("execution_capabilities") or [])
+        if step.get("execution_capability_id"):
+            step_capabilities.append(step["execution_capability_id"])
+        capabilities = list(raw.get("capabilities") or [cap for cap in step_capabilities if cap in capability_registry])
+        checks = []
+        for contract in contracts.values():
+            if contract.get("inspection_probes"):
+                for probe in contract["inspection_probes"]:
+                    for check in probe.get("checks") or []:
+                        checks.append({**deepcopy(check), "output": probe.get("output"),
+                            "argv": [str(arg).replace("{prefix}", prefix) for arg in check.get("argv") or []]})
+            elif contract.get("healthcheck"):
+                checks.append(self._adapt_install_command_env(str(contract["healthcheck"]), target_env))
+        scope = {"tool": tool, "target_env": target_env, "target_prefix": prefix,
+                 "generation_source_scope": source_scope,
+                 "selected_skills": selected, "capabilities": capabilities,
+                 "install_policy": str(defaults.get("install_policy") or "prefer-declared"),
+                 "allowed_install_commands": self._strict_runtime_contract_commands(defaults, target_env),
+                 "install_forbidden_envs": sorted({str(env) for contract in contracts.values()
+                                                   for env in contract.get("install_forbidden_envs") or []}),
+                 "sources": raw.get("sources") or {"policy": defaults.get("install_policy") or "proposal_requires_review",
+                     "declared_commands": self._strict_runtime_contract_commands(defaults, target_env),
+                     "status": "Declared sources only; solver/network availability unverified"},
+                 "version_requirements": raw.get("version_requirements") or defaults.get("packages") or ["Version not pinned by selected Skill; exact proposal requires review"],
+                 "impact": raw.get("impact") or {"target_prefix": prefix, "shared_environment": "unknown; review before mutation"},
+                 "verification_commands": checks,
+                 "skill_contracts": {sid: {
+                     "runtime_declaration": (self.skill_manager.get_skill_meta(sid) or {}).get("runtime") or {},
+                     "execution_capabilities": {key: value for key, value in capability_registry.items()
+                                                if value.get("selected_skill_id") == sid},
+                 } for sid in selected}}
+        origin = str(raw.get("request_id") or raw.get("fingerprint") or raw.get("attempt_fingerprint") or stable_digest({
+            "task_id": task_id, "plan_id": durable.get("plan_id"), "step_id": durable.get("current_step_id"), "scope": scope}))
+        request = {**scope, "request_id": origin,
+                   "attempt_id": str(raw.get("attempt_id") or "install:" + stable_digest({"request_id": origin, "scope": scope})[:24])}
+        previous = dict(state.get("installation_receipt") or stored.get("installation_receipt") or {})
+        receipt_scope = InstallerAgent._receipt_scope(request)
+        receipt = deepcopy(previous) if all(previous.get(key) == value for key, value in receipt_scope.items()) else {}
+        receipt.update(receipt_scope)
+        receipt.setdefault("execution", [])
+        if resolution_event:
+            decisions = receipt.setdefault("human_decisions", [])
+            if resolution_event not in decisions:
+                decisions.append(resolution_event)
+
+        async def finish(status, detail, *, stage=""):
+            receipt.update(status=status, detail=detail)
+            if stage:
+                receipt["failure_stage"] = stage
+            if status in {"execution_failed", "verification_failed", "registration_failed"}:
+                receipt["manual_handoff"] = {
+                    "target_prefix": prefix, "sources": request["sources"],
+                    "version_requirements": request["version_requirements"], "impact": request["impact"],
+                    "failure_stage": stage, "failure_category": receipt.get("failure_category", "unknown"),
+                    "failed_commands": [row for row in receipt["execution"] if row.get("returncode") != 0],
+                    "verification_commands": request["verification_commands"],
+                    "preconditions": "Declared sources, solver and compatibility are unverified; failed commands are evidence, not certified retry instructions.",
+                    "resume": "Report manual_done or provide target_env for revalidation; registration_retry only retries incomplete registry writes.",
+                }
+            self._persist_installation_receipt(task_id, request, receipt)
+            result = {"installation_request": request, "installation_receipt": deepcopy(receipt),
+                      "runtime_status": self._runtime_status_for_task(task_id),
+                      "messages": [AIMessage(content=f"<observation>{detail}</observation>")]}
+            if status in {"manual_wait", "execution_failed", "verification_failed", "registration_failed"}:
+                result["pending_human_question"] = self._publish_installation_question(task_id, request, receipt)
+            if status == "available":
+                result["task_status"] = "running"
+                result.update(await self._resume_after_runtime_preparation({**state, **result}, receipt))
+            elif status in {"cancelled", "rejected", "blocked", "manual_wait"}:
+                result["task_status"] = "cancelled" if status == "cancelled" else "blocked"
+            output.print_observation(f"<observation>{detail}</observation>",
+                summary="运行环境目标验证与登记结果", failed=status != "available", task_id=task_id, node="install_subagent")
+            return result
+
+        if not current_source_scope or source_scope != current_source_scope:
+            return await finish("blocked", "The installation work order belongs to an earlier scientific attempt or approval; a new work order is required.", stage="authorization")
+        if not has_work_order or not selected or not target_env or not prefix or not prefix_matches:
+            return await finish("blocked", "Installation requires current-step Skills and a confirmed absolute target prefix.", stage="authorization")
+        if {target_env, Path(prefix).name} & set(request["install_forbidden_envs"]):
+            return await finish("blocked", "The selected runtime contract forbids installation in this target environment.", stage="authorization")
+        if tool not in declared_tools | set(capabilities):
+            return await finish("blocked", "Requested installation tool is not declared by the selected runtime contract.", stage="authorization")
+        if self._runtime_install_disallowed_by_task_spec(canonical_task_spec_for_state(durable) or state.get("task_spec") or {}, tool):
+            return await finish("blocked", "Installation is forbidden by the current task contract.", stage="authorization")
+        if tool == "calder_r_runtime" and not self._calder_runtime_allowed(selected, target_env):
+            return await finish("blocked", "CALDER runtime may only be prepared for the selected CALDER Skill and its allowed environment.", stage="authorization")
+        if (not set(capabilities) <= set(capability_registry)
+                or any(capability_registry[cap].get("selected_skill_id") not in selected for cap in capabilities)
+                or (step_capabilities and not set(capabilities) <= set(step_capabilities))):
+            return await finish("blocked", "Requested installation capabilities are not declared by the selected runtime contract.", stage="verification")
+        if resolution in {"quit", "cancel", "cancelled", "reject"}:
+            return await finish("cancelled" if resolution != "reject" else "rejected", "User stopped installation.", stage="authorization")
+        if resolution in {"manual", "manual_wait"}:
+            receipt["manual_handoff"] = {"target_prefix": prefix, "declared_commands": scope["sources"],
+                "verification_commands": request["verification_commands"],
+                "preconditions": "Sources, solver and compatibility have not been verified; no installation command is certified runnable.",
+                "resume": "Report manual_done or provide target_env; BioMind must verify it again."}
+            return await finish("manual_wait", "Waiting for manual environment preparation; target verification is required before resuming.")
+        if receipt.get("status") in {"cancelled", "rejected", "manual_wait"} and resolution not in {"manual_done", "provided_environment"}:
+            return await finish(receipt["status"], str(receipt.get("detail") or "Installation proposal already stopped."), stage="authorization")
+
+        def verify_target():
+            verification = []
+            for sid in selected:
+                needed = [cap for cap in capabilities if capability_registry[cap].get("selected_skill_id") == sid]
+                ok, detail, verified_env = self._verify_skill_runtime(sid, task_id=task_id, use_cache=False,
+                    target_env=target_env, capability_ids=needed)
+                actual_match = verified_env == target_env and self._installation_target_prefix(verified_env) == prefix
+                try:
+                    structured = json.loads(detail) if isinstance(detail, str) else {}
+                except (ValueError, TypeError):
+                    structured = {}
+                for capability in needed or [""]:
+                    verification.append({"skill_id": sid, "capability_id": capability,
+                        "target_prefix": prefix, "target_env": verified_env, "ok": bool(ok and actual_match),
+                        "detail": detail if actual_match else "Verified environment did not match the approved target.",
+                        "required_coverage": structured.get("required_coverage") or {}})
+            receipt["verification"] = verification
+            return bool(verification) and all(row["ok"] is True for row in verification)
+
+        target_ok = verify_target()
+        if not target_ok and any(
+            fact.get("availability") in {"UNKNOWN", "AMBIGUOUS"}
+            for row in receipt["verification"] for fact in row.get("required_coverage", {}).values()
+        ):
+            return await finish("verification_failed", "Required runtime capability is UNKNOWN or ambiguous; inspect the evidence before proposing installation.", stage="verification")
+        if not target_ok and resolution not in {"manual_done", "provided_environment", "registration_retry"} and not receipt["execution"]:
+            self._persist_installation_receipt(task_id, request, receipt)
+            # Only role-appropriate machine metadata enters the Installer. Skill
+            # scientific instructions are available to the scientific actor only.
+            context = json.dumps({"installation_request": request, "failure_evidence": evidence,
+                                  "verification": receipt["verification"]}, ensure_ascii=False, sort_keys=True)
+            context += self._selected_skill_install_command_context(defaults, target_env)
+            initial = INSTALLER_HANDOVER_TEMPLATE.format(user_context=context, rag_context="", tool_name=tool,
+                target_env=target_env, env_instruction=f"Target prefix: {prefix}")
+            thread_id = f"{task_id}_installer_{stable_digest(request)[:24]}"
+            config = {"configurable": {"thread_id": thread_id}}
+            snapshot = self.installer_app.get_state(config)
+            pending_interrupt = bool(snapshot.tasks and snapshot.tasks[0].interrupts)
+            payload = None if pending_interrupt else {"tool_name": tool, "task_id": task_id,
+                "selected_skills": selected, "installation_request": request,
+                "approval_scope": deepcopy(state.get("approval_scope") or durable.get("approval_scope") or {}),
+                "installation_receipt": receipt, "messages": [HumanMessage(content=initial)]}
+            while True:
+                if payload is not None:
+                    async for event in self.installer_app.astream(payload, config=config):
+                        for update in event.values():
+                            if isinstance(update, Mapping) and isinstance(update.get("installation_receipt"), Mapping):
+                                receipt = deepcopy(dict(update["installation_receipt"]))
+                                self._persist_installation_receipt(task_id, request, receipt)
+                snapshot = self.installer_app.get_state(config)
+                if snapshot.tasks and snapshot.tasks[0].interrupts:
+                    payload = Command(resume=interrupt(snapshot.tasks[0].interrupts[0].value))
+                    continue
+                break
+            receipt = deepcopy(dict(snapshot.values.get("installation_receipt") or receipt))
+            if any(receipt.get(key) != value for key, value in receipt_scope.items()):
+                receipt = {**receipt_scope, "execution": []}
+                return await finish("blocked", "Installer returned a different request or target receipt.", stage="authorization")
+            if receipt.get("status") in {"cancelled", "rejected", "blocked", "execution_failed"}:
+                return await finish(receipt["status"], str(receipt.get("detail") or "Installation stopped."), stage=str(receipt.get("failure_stage") or "execution"))
+            target_ok = verify_target()
+        if not target_ok:
+            return await finish("verification_failed", "The approved target failed required runtime verification; installation success is not runtime availability.", stage="verification")
+        self._persist_installation_receipt(task_id, request, receipt)
+        receipt["registration"] = self._record_installed_skill_environment(selected, target_env,
+            "Current approved target runtime checks passed.", receipt=receipt)
+        if not all((receipt["registration"].get(key) or {}).get("ok") is True for key in ("skill_registry", "software_registry")):
+            return await finish("registration_failed", "Runtime verification passed, but registry write failed. Retry registration without reinstalling.", stage="registration")
+        return await finish("available", "Approved target runtime verified and registered. Resume the original scientific step through runtime preparation recovery.")
 
     def _ensure_skill_runtime_ready(self, selected_skills: Optional[List[str]], task_id: str = "default", code: str = "") -> tuple:
         if not self.skill_manager or not self.pm:
@@ -37794,6 +38235,8 @@ question. Never guess a scientific or database identity.
             return {"messages": [AIMessage(content=content), SystemMessage(content=obs)], "next_step": "consultant"}
 
         async def ask_user(state: AgentState):
+            if (state.get("pending_human_question") or {}).get("type") == "installation_resolution":
+                return await self._ask_installation_resolution(state)
             task_id = state.get("task_id", "default")
             pending = state.get("pending_human_question") or {}
             question = str(pending.get("question") or "").strip()
@@ -38466,7 +38909,7 @@ question. Never guess a scientific or database identity.
                 immutable_consultant_contract
                 or dict(consultation_owner.get("final_contract") or {})
             )
-            runtime_audits = list(self._runtime_binding_source(state).get("runtime_audit") or [])
+            runtime_audits = list(self._runtime_binding_source(state).get("runtime_planning_audit") or [])
             planner_entry_task_state = dict(
                 planner_entry_state.get("task_state") or {}
             )
@@ -41408,6 +41851,17 @@ question. Never guess a scientific or database identity.
             current_plan     = state.get("current_plan", "No plan.")
             task_id          = state.get("task_id", "unknown")
 
+            if state.get("pending_runtime_evidence_request"):
+                return {"pending_runtime_evidence_request": deepcopy(state["pending_runtime_evidence_request"]),
+                    "pending_action": {}, "execution_started": False, "runtime_recovery_result": {},
+                    "generate_exit_reason": "runtime_evidence_required"}
+            revision_issue = next((row for row in state.get("validation_issues") or []
+                if row.get("code") == "RUNTIME_RECOVERY_PLAN_REVISION_REQUIRED"), {})
+            _, revision_step = current_plan_step_with_index(load_plan_state(self.data_path, task_id))
+            if revision_issue and (revision_step or {}).get("capability_contract_hash") == revision_issue.get("capability_contract_hash"):
+                return {"pending_action": {}, "generate_exit_reason": "plan_patch",
+                        "validation_issues": deepcopy(state["validation_issues"])}
+
             generate_validation = self._validate_generate_context(state, task_id)
             if not generate_validation.get("valid"):
                 return self._generate_plan_redirect(state, task_id, generate_validation)
@@ -42328,22 +42782,14 @@ question. Never guess a scientific or database identity.
                     approved_plan_snapshot=generate_approved_snapshot,
                     **generate_semantic_inputs,
                 )
-                from agent_core.skill_resource_binding import script_catalog, bind_skill_resources
-                _resource_catalog = script_catalog(getattr(self, "skill_access_service", None), generate_skill_access,
-                    step_id=current_step_id)
-                for _row in _resource_catalog:
-                    try:
-                        _resolved = bind_skill_resources(self.skill_access_service, generate_skill_access, [_row["handle"]],
-                            step_id=current_step_id, cwd=os.getcwd(), namespace="external" if external_recovery_bundle else "local")[0]
-                        _row.update(availability="AVAILABLE", canonical_path=_resolved["canonical_path"],
-                            registered_root=_resolved["registered_root"], cwd=_resolved["cwd"], namespace=_resolved["namespace"])
-                    except (SkillAccessError, OSError, UnicodeError) as _exc:
-                        _row.update(availability="UNRESOLVED", error_code=str(getattr(_exc, "code", type(_exc).__name__)), detail=str(_exc))
-                for _row in _resource_catalog:
-                    _row.pop("snapshot_id", None)  # Internal revision remains frozen in the binder receipt.
+                from agent_core.skill_resource_binding import project_skill_script_catalog
+                _resource_catalog = project_skill_script_catalog(
+                    getattr(self, "skill_access_service", None), generate_skill_access,
+                    step_id=current_step_id, cwd=os.getcwd(),
+                    namespace="external" if external_recovery_bundle else "local")
                 if _resource_catalog:
                     capability_instructions += "\n<selected_skill_script_bindings>" + json.dumps(_resource_catalog, ensure_ascii=False, sort_keys=True) + "</selected_skill_script_bindings>\n" + (
-                        'Document examples are not runtime paths. To use a listed Skill script in script-block mode, explicitly declare its handle: <shell skill_resources="skill_id#scripts/file.py">...</shell> (semicolon-separated for multiple refs; python/r tags also supported). Use the supplied canonical path or environment variable; never construct an installation root or resolve it from cwd. The binder freezes the selected material before approval and rechecks it at prelaunch. An unresolved binding requires inspection/correction, not a guessed relative path. User-owned scripts remain governed by their existing authorization.'
+                        'Document examples are not runtime paths. To use a listed Skill script in script-block mode, explicitly declare its handle: <shell skill_resources="skill_id#scripts/file.py">...</shell> (semicolon-separated for multiple refs; python/r tags also supported). Use the supplied canonical path or environment variable; never construct an installation root or resolve it from cwd. Use entrypoint.shell_prefix and the declared arguments and carrier. Declare the root handle; its snapshot-declared dependency_handles are bound automatically (legacy explicit handles are also validated); the file path alone is not an executable entrypoint. The binder freezes the selected material before approval and rechecks it at prelaunch. An unresolved binding requires inspection/correction, not a guessed relative path. User-owned scripts remain governed by their existing authorization.'
                     )
                 if any(row["handle"] in {
                     "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
@@ -42858,6 +43304,10 @@ question. Never guess a scientific or database identity.
                         ),
                     )
             except Exception as exc:
+                if isinstance(exc, ActionRuntimeContractError) and exc.code == "RUNTIME_BINDING_SNAPSHOT_DRIFT":
+                    return {"pending_action": {}, "generate_exit_reason": "plan_patch",
+                        "validation_issues": [exc.to_diagnostic()]}
+
                 if (isinstance(exc, ActionRuntimeContractError)
                     and exc.code == "REQUIRED_RUNTIME_BINDING_UNAVAILABLE"
                     and exc.diagnostic.get("failure_scope") == "runtime_fact"
@@ -42866,6 +43316,10 @@ question. Never guess a scientific or database identity.
                     # A lookup miss owns a typed evidence episode, never a
                     # same-input prompt rebuild or an execution failure packet.
                     try:
+                        from agent_core.workflow.runtime_evidence_recovery import _not_dispatched
+                        if not _not_dispatched(generate_plan_state, current_step_id):
+                            self._runtime_evidence_service().prepare_generation(state,
+                                selected_skill_id=generate_selected_skill_id, capability_contract=selected_contract)
                         request = self._runtime_evidence_service().create_request(
                             state, selected_skill_id=generate_selected_skill_id,
                             capability_contract=selected_contract,
@@ -43961,6 +44415,27 @@ question. Never guess a scientific or database identity.
             candidate_check_records: List[Dict[str, Any]] = []
             action_parse_error = deepcopy(structured_parse_result.error)
             provider_candidate = deepcopy(structured_action)
+            # One explicit non-executing handoff uses the existing install_tool
+            # schema in either Generate carrier. Concrete commands still need
+            # Installer's target-bound HITL approval; this is not authorization.
+            if not action_parse_error and structured_action.get("type") == "install_tool":
+                try:
+                    install_declaration = json.loads(str(content or ""))
+                except (TypeError, ValueError):
+                    install_declaration = None
+                if isinstance(install_declaration, dict) and set(install_declaration) <= {"action_type", "type", "tool", "env"}:
+                    request = {"tool": str(structured_action.get("tool") or ""),
+                        "target_env": str(structured_action.get("env") or ""),
+                        "selected_skills": list(generate_step.get("skill_ids") or active_skills),
+                        "capabilities": [execution_capability_id],
+                        "requirement_evidence": {"plan_id": generate_plan_state.get("plan_id"),
+                            "plan_version": generate_plan_state.get("plan_version"), "step_id": current_step_id,
+                            "capability_contract_hash": generate_step.get("capability_contract_hash"),
+                            "required_binding_ids": list(selected_contract.get("required_runtime_binding_ids") or [])},
+                        "approval_policy": "exact_installation_command_target_review"}
+                    request["attempt_fingerprint"] = stable_digest(request)
+                    return {"messages": [response], "pending_action": {},
+                        "installation_request": request, "generate_exit_reason": "installation_requested"}
             # Script mode may request a non-success stop through the existing
             # blocked action. Accept only the whole, bounded public object;
             # never promote JSON extracted from prose or an executable block.
@@ -44348,7 +44823,7 @@ question. Never guess a scientific or database identity.
                             step_id=current_step_id, cwd=os.getcwd(),
                             namespace="external" if external_recovery_bundle else "local")
                     except (SkillAccessError, OSError, UnicodeError) as exc:
-                        raise PlanBindingError(str(getattr(exc, "code", None) or "SKILL_BINDING_UNREADABLE"), detail=str(exc)) from exc
+                        raise PlanBindingError(str(getattr(exc, "code", None) or "SKILL_BINDING_UNREADABLE"), **(getattr(exc, "diagnostic", None) or {"detail": str(exc)})) from exc
                     structured_action, binding_normalization = normalize_public_action_bindings(
                         structured_action, frozen=generate_frozen_binding_input, scope=invocation_audit.scope,
                         workspace_bindings=generate_workspace_bindings, raw_public_candidate=structured_parse_result.candidate)
@@ -44357,8 +44832,9 @@ question. Never guess a scientific or database identity.
                         task_id=task_id, plan_state=generate_invocation_plan_state, approved_plan_snapshot=generate_approved_snapshot,
                         step_id=current_step_id, candidate=candidate_for_repair, candidate_fingerprint="",
                         previous_candidate_fingerprint="", violations=[exc.to_dict()], visible_artifacts=generate_visible_artifacts,
-                        repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value, repair_stage="public_binding_normalization",
-                        validation_source="agent_core.plan_bindings.normalize_public_action_bindings",
+                        repair_domain=PreActionRepairDomain.GENERATED_SEMANTIC.value,
+                        repair_stage=exc.diagnostic.get("repair_stage", "public_binding_normalization"),
+                        validation_source=exc.diagnostic.get("validation_source", "agent_core.plan_bindings.normalize_public_action_bindings"),
                         contract_ref={"requirements": generate_binding_requirements}, exit_reason="public_binding_rejected",
                         candidate_event_id=candidate_event_id, recovery_generated=recovery_generated)}
                 operation_admission = validate_operation_binding_admission(
@@ -52570,528 +53046,7 @@ question. Never guess a scientific or database identity.
         # ════════════════════════════════════════════
         async def install_subagent(state: AgentState):
             output.print_node_header("install_subagent")
-            last_msg = state["messages"][-1].content
-            task_id  = state.get("task_id", "default")
-            pending_action = state.get("pending_action") or {}
-            typed_install_payload: Dict[str, Any] = {}
-            raw_execute_outcome = state.get("execute_outcome")
-            if isinstance(raw_execute_outcome, Mapping):
-                try:
-                    typed_execute_outcome = ExecuteOutcome.from_mapping(
-                        raw_execute_outcome
-                    )
-                except (TypeError, ValueError):
-                    typed_execute_outcome = None
-                if (
-                    typed_execute_outcome is not None
-                    and typed_execute_outcome.type
-                    == "installation_requested"
-                ):
-                    typed_install_payload = dict(
-                        typed_execute_outcome.payload
-                    )
-            context_summary = self._clip_prompt_text(
-                state.get("requirements_summary", "No context."),
-                LLM_STEP_PLAN_CHARS,
-            )
-            current_plan_for_install = self._current_step_prompt_context(
-                task_id,
-                current_plan=str(state.get("current_plan", "") or ""),
-                plan_progress=str(state.get("plan_progress", "") or ""),
-                state=state,
-            )
-            typed_requirement_evidence = dict(
-                typed_install_payload.get("requirement_evidence") or {}
-            )
-            selected_for_install = (
-                state.get("active_skills", [])
-                or typed_requirement_evidence.get("selected_skills")
-                or []
-            )
-            narrowed_for_step = self._narrow_skills_to_current_plan_step(selected_for_install, task_id)
-            if narrowed_for_step != self._selected_skill_ids(selected_for_install):
-                previous_skills = ", ".join(self._selected_skill_ids(selected_for_install)) or "None"
-                selected_for_install = narrowed_for_step
-                if narrowed_for_step:
-                    context_summary += (
-                        "\n\n[INSTALL TARGET STEP GUARD]\n"
-                        f"- Previous active skills: {previous_skills}\n"
-                        f"- Current plan step declared skill(s): {', '.join(narrowed_for_step)}\n"
-                        "- Installation is restricted to the current plan step.\n"
-                    )
-            if not selected_for_install:
-                plan_progress = self._record_plan_current_evidence(
-                    task_id,
-                    "install_without_step_skill",
-                    "Installer refused to fall back from current-step ACTIVE_SKILLS to task-wide SELECTED_SKILLS.",
-                )
-                return {
-                    "messages": [
-                        SystemMessage(
-                            content=(
-                                "Installer has no skill assigned by the current plan step. "
-                                "Return to Planner and add the intended canonical skill to this step's `Skills:` field; "
-                                "do not install from the task-wide selected pool."
-                            )
-                        )
-                    ],
-                    "plan_progress": plan_progress,
-                    "next_step": "generate",
-                }
-            if current_plan_for_install:
-                context_summary += f"\n\nCurrent approved step:\n{current_plan_for_install}"
-            runtime_defaults = self._skill_runtime_defaults(selected_for_install)
-            if self.skill_manager and selected_for_install:
-                skill_ctx = self.skill_manager.load_skills_for_prompt(selected_for_install)
-                cards = self._skill_execution_context(selected_for_install)
-                if skill_ctx or cards:
-                    context_summary += (
-                        "\n\nSelected skill runtime context:\n"
-                        f"{self._clip_prompt_text(cards, 5000)}\n"
-                        f"{self._clip_prompt_text(skill_ctx, 4000)}"
-                    )
-
-            match = re.search(r"<install_tool(?:\s+env=[\"'](.*?)[\"'])?>(.*?)</install_tool>", last_msg, re.DOTALL)
-            if typed_install_payload:
-                specified_env = str(
-                    typed_requirement_evidence.get("environment")
-                    or typed_requirement_evidence.get("env")
-                    or ""
-                ).strip() or None
-                raw_tool_name = str(
-                    typed_install_payload.get("tool_or_capability") or ""
-                ).strip()
-                context_summary += (
-                    "\n\n[TYPED INSTALLATION REQUEST]\n"
-                    + json.dumps(
-                        {
-                            "tool_or_capability": raw_tool_name,
-                            "requirement_evidence": (
-                                typed_requirement_evidence
-                            ),
-                            "approval_policy": str(
-                                typed_install_payload.get(
-                                    "approval_policy"
-                                )
-                                or ""
-                            ),
-                            "attempt_fingerprint": str(
-                                typed_install_payload.get(
-                                    "attempt_fingerprint"
-                                )
-                                or ""
-                            ),
-                        },
-                        ensure_ascii=False,
-                        sort_keys=True,
-                    )
-                )
-            elif self._pending_action_is(pending_action, "install_tool"):
-                specified_env = str(pending_action.get("env") or "").strip() or None
-                raw_tool_name = str(pending_action.get("tool") or "").strip() or runtime_defaults.get("tool_name", "skill_runtime")
-            else:
-                specified_env = match.group(1) if match else None
-                raw_tool_name = match.group(2).strip() if match else runtime_defaults.get("tool_name", "skill_runtime")
-            tool_name, inner_env = self._install_tool_parts(raw_tool_name, specified_env or runtime_defaults.get("env", ""))
-            if inner_env and not specified_env:
-                specified_env = inner_env
-            if not tool_name or tool_name == "unknown":
-                tool_name = runtime_defaults.get("tool_name", "skill_runtime")
-            install_context_text = self._clip_prompt_text(
-                "\n".join(part for part in [last_msg, context_summary] if part),
-                LLM_STEP_CONTEXT_CHARS,
-            )
-            inferred_for_install = self._executable_runtime_skills(
-                self._infer_runtime_skills_from_code(install_context_text, selected_for_install)
-            )
-            if inferred_for_install and inferred_for_install != self._selected_skill_ids(selected_for_install):
-                previous_skills = ", ".join(self._selected_skill_ids(selected_for_install)) or "None"
-                selected_for_install = inferred_for_install
-                runtime_defaults = self._skill_runtime_defaults(selected_for_install)
-                context_summary += (
-                    "\n\n[INSTALL TARGET RESOLUTION]\n"
-                    f"- Previous active/selected skills: {previous_skills}\n"
-                    f"- Resolved executable runtime skill(s) from failed tool/context: {', '.join(inferred_for_install)}\n"
-                    "- Workflow/router skills are not installable runtimes; repair the concrete executable skill runtime.\n"
-                )
-                if self.skill_manager:
-                    resolved_cards = self._skill_execution_context(selected_for_install)
-                    resolved_docs = self.skill_manager.load_skills_for_prompt(selected_for_install)
-                    context_summary += (
-                        "\n\nResolved executable skill runtime context:\n"
-                        f"{self._clip_prompt_text(resolved_cards, 5000)}\n"
-                        f"{self._clip_prompt_text(resolved_docs, 4000)}"
-                    )
-            owner_skill = self._runtime_owner_skill_for_install(tool_name, selected_for_install)
-            if owner_skill:
-                runtime_defaults = self._skill_runtime_defaults([owner_skill])
-            selected_skills = runtime_defaults.get("selected", []) or []
-            tool_name, correction_note = self._sanitize_install_tool_for_selected_runtime(
-                tool_name,
-                selected_skills,
-                runtime_defaults,
-                specified_env or runtime_defaults.get("env", ""),
-            )
-            if correction_note:
-                context_summary += "\n\n" + correction_note
-                last_msg = re.sub(r"\bcalder_r_runtime\b", tool_name, last_msg)
-            explicit_runtime_repair = self._explicit_runtime_repair_kind(tool_name, last_msg)
-            choice_key = self._install_choice_key(task_id, tool_name)
-            static_skill_env = self._skill_static_default_env(selected_skills[0]) if selected_skills else ""
-
-            if static_skill_env:
-                default_env = static_skill_env
-                if specified_env and specified_env not in {static_skill_env, "default"}:
-                    context_summary += (
-                        f"\n\n[INSTALL ENV OVERRIDE NOTICE]\n"
-                        f"- Selected skill default_env: {static_skill_env}\n"
-                        f"- Generated install tag requested env: {specified_env}\n"
-                        f"- Prefer the selected skill default_env unless the user explicitly overrides it.\n"
-                    )
-            else:
-                default_env = specified_env if specified_env and specified_env != "default" else (
-                    runtime_defaults.get("env") or f"bio_{tool_name}"
-                )
-
-            registered_reuse = {}
-            if not explicit_runtime_repair:
-                registered_reuse = self._reuse_registered_runtime_for_install(
-                    selected_skills or selected_for_install,
-                    specified_env,
-                    task_id,
-                )
-            if registered_reuse.get("ok"):
-                final_res = registered_reuse["message"]
-                self.profiler.record_skill_usage(
-                    task_id,
-                    selected_skills or selected_for_install,
-                    usage_type="installed_runtime",
-                    node="install_subagent",
-                    detail=registered_reuse.get("env", ""),
-                )
-                plan_progress = self._mark_plan_current_done(task_id, final_res)
-                self._record_installed_skill_environment(selected_skills or selected_for_install, registered_reuse["env"], final_res)
-                await self._observe_session_memory(
-                    task_id,
-                    "install_subagent",
-                    state.get("messages", []) + [AIMessage(content=f"<observation>{final_res}</observation>")],
-                    {
-                        "tool_name": tool_name,
-                        "target_env": registered_reuse["env"],
-                        "result": final_res,
-                        "plan_progress": plan_progress,
-                        "runtime_status": self._runtime_status_for_task(task_id),
-                    },
-                )
-                return {
-                    "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
-                    "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
-                    "next_step": self._next_step_after_install_result(task_id),
-                }
-            if registered_reuse and registered_reuse.get("env"):
-                default_env = registered_reuse["env"]
-                context_summary += (
-                    f"\n\n[REGISTERED RUNTIME CHECK]\n"
-                    f"- Registered environment: {registered_reuse['env']}\n"
-                    f"- Healthcheck failed: {registered_reuse.get('detail', 'unknown')}\n"
-                    f"- Repair or reinstall this same environment. Do not create a duplicate environment unless the user explicitly overrides the env name.\n"
-                )
-            reuse_match = None
-            if self.pm and not explicit_runtime_repair and any([
-                runtime_defaults.get("packages"),
-                runtime_defaults.get("capabilities"),
-                runtime_defaults.get("language"),
-            ]):
-                reuse_match = self.pm.find_matching_environment({
-                    "language": runtime_defaults.get("language", ""),
-                    "packages": runtime_defaults.get("packages", []),
-                    "capabilities": runtime_defaults.get("capabilities", []),
-                })
-                if reuse_match and reuse_match.get("match_type") == "exact":
-                    ok, detail = self.pm.verify_environment(
-                        env_name=reuse_match["env"],
-                        language=runtime_defaults.get("language", ""),
-                        healthcheck=runtime_defaults.get("healthcheck", ""),
-                    )
-                    if ok:
-                        final_res = (
-                            f"✅ Reusing existing environment '{reuse_match['env']}' for "
-                            f"{', '.join(runtime_defaults.get('selected', []) or [tool_name])}."
-                        )
-                        self.profiler.record_skill_usage(
-                            task_id,
-                            selected_skills or selected_for_install,
-                            usage_type="installed_runtime",
-                            node="install_subagent",
-                            detail=reuse_match.get("env", ""),
-                        )
-                        plan_progress = self._mark_plan_current_done(task_id, final_res)
-                        self._record_installed_skill_environment(selected_skills or selected_for_install, reuse_match["env"], final_res)
-                        await self._observe_session_memory(
-                            task_id,
-                            "install_subagent",
-                            state.get("messages", []) + [AIMessage(content=f"<observation>{final_res}</observation>")],
-                            {
-                                "tool_name": tool_name,
-                                "target_env": reuse_match["env"],
-                                "result": final_res,
-                                "plan_progress": plan_progress,
-                                "runtime_status": self._runtime_status_for_task(task_id),
-                            },
-                        )
-                        return {
-                            "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
-                            "plan_progress": plan_progress,
-                            "runtime_status": self._runtime_status_for_task(task_id),
-                            "next_step": "generate",
-                        }
-                    context_summary += (
-                        f"\n\n[ENVIRONMENT CHECK]\n"
-                        f"- Existing matching environment: {reuse_match['env']}\n"
-                        f"- Healthcheck failed: {detail}\n"
-                        f"- Please repair or reinstall this environment instead of creating a duplicate.\n"
-                    )
-                    default_env = reuse_match["env"]
-                elif reuse_match and reuse_match.get("match_type") == "partial":
-                    missing_packages = ", ".join(reuse_match.get("missing_packages", [])) or "none"
-                    missing_caps = ", ".join(reuse_match.get("missing_capabilities", [])) or "none"
-                    context_summary += (
-                        f"\n\n[ENVIRONMENT REUSE CANDIDATE]\n"
-                        f"- Reuse and extend environment: {reuse_match['env']}\n"
-                        f"- Missing packages: {missing_packages}\n"
-                        f"- Missing capabilities: {missing_caps}\n"
-                        f"- Prefer extending this environment instead of creating a new one.\n"
-                    )
-                    default_env = reuse_match["env"]
-            cached_env = self._install_env_choices.get(choice_key)
-            if cached_env:
-                target_env = cached_env
-            elif specified_env and (not runtime_defaults.get("env") or specified_env == runtime_defaults.get("env")):
-                target_env = specified_env
-            else:
-                display_print(f"\n{Fore.CYAN}❓ Confirm environment for {tool_name}?{Style.RESET_ALL}")
-                user_choice = interrupt({
-                    "type": "env_selection",
-                    "tool_name": tool_name,
-                    "default_env": default_env,
-                    "reason": "Confirm or override the environment before installation.",
-                })
-                target_env = user_choice.strip() if isinstance(user_choice, str) and user_choice.strip() else default_env
-            self._install_env_choices[choice_key] = target_env
-            attempt_key = f"{choice_key}::{target_env}"
-            sub_config = {"configurable": {"thread_id": f"{task_id}_installer_{tool_name}"}}
-            installer_snapshot = self.installer_app.get_state(sub_config)
-            installer_has_pending_interrupt = bool(
-                installer_snapshot.tasks and installer_snapshot.tasks[0].interrupts
-            )
-            if not installer_has_pending_interrupt:
-                self._install_attempt_counts[attempt_key] = self._install_attempt_counts.get(attempt_key, 0) + 1
-            scope_key = ""
-            if explicit_runtime_repair:
-                skill_scope = ",".join(selected_skills or selected_for_install or [tool_name])
-                scope_key = f"{task_id}::runtime_repair::{explicit_runtime_repair}::{target_env}::{skill_scope}"
-                if not installer_has_pending_interrupt:
-                    self._install_scope_attempt_counts[scope_key] = self._install_scope_attempt_counts.get(scope_key, 0) + 1
-                if self._install_scope_attempt_counts.get(scope_key, 0) > 2:
-                    final_res = (
-                        f"blocked: repeated runtime repair loop detected for `{explicit_runtime_repair}` in "
-                        f"`{target_env}` after {self._install_scope_attempt_counts[scope_key]} attempts. "
-                        "The root cause is still unresolved; do not switch to another conda environment or rerun "
-                        "availability checks as a substitute for installation. Repair the selected runtime or ask "
-                        "the user to install/register it explicitly."
-                    )
-                    plan_progress = self._mark_plan_current_blocked(task_id, final_res)
-                    self._install_env_choices.pop(choice_key, None)
-                    await self._observe_session_memory(
-                        task_id,
-                        "install_subagent",
-                        state.get("messages", []) + [AIMessage(content=f"<observation>{final_res}</observation>")],
-                        {
-                            "tool_name": tool_name,
-                            "target_env": target_env,
-                            "result": final_res,
-                            "plan_progress": plan_progress,
-                            "runtime_status": self._runtime_status_for_task(task_id),
-                        },
-                    )
-                    return {
-                        "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
-                        "plan_progress": plan_progress,
-                        "runtime_status": self._runtime_status_for_task(task_id),
-                        "next_step": self._next_step_after_install_result(task_id),
-                    }
-            if self._install_attempt_counts.get(attempt_key, 0) > 2:
-                final_res = (
-                    f"blocked: repeated installation loop detected for `{tool_name}` in environment "
-                    f"`{target_env}` after {self._install_attempt_counts[attempt_key]} attempts. "
-                    "Run the skill runtime healthcheck directly and continue execution if it passes; "
-                    "do not re-enter INSTALL_SUBAGENT for the same target."
-                )
-                plan_progress = self._mark_plan_current_blocked(task_id, final_res)
-                self._install_env_choices.pop(choice_key, None)
-                await self._observe_session_memory(
-                    task_id,
-                    "install_subagent",
-                    state.get("messages", []) + [AIMessage(content=f"<observation>{final_res}</observation>")],
-                    {
-                        "tool_name": tool_name,
-                        "target_env": target_env,
-                        "result": final_res,
-                        "plan_progress": plan_progress,
-                        "runtime_status": self._runtime_status_for_task(task_id),
-                    },
-                )
-                return {
-                    "messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
-                    "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
-                    "next_step": self._next_step_after_install_result(task_id),
-                }
-
-            if explicit_runtime_repair:
-                context_summary += self._runtime_repair_context(explicit_runtime_repair, target_env)
-
-            install_command_context = self._selected_skill_install_command_context(runtime_defaults, target_env)
-            if install_command_context:
-                context_summary += install_command_context
-
-            packages = [] if explicit_runtime_repair else runtime_defaults.get("packages", [])
-            if packages:
-                context_summary += (
-                    f"\n\n[INSTALL TARGET OVERRIDE]\n"
-                    f"- target_env: {target_env}\n"
-                    f"- language: {runtime_defaults.get('language', 'python') or 'python'}\n"
-                    f"- requested packages: {', '.join(packages)}\n"
-                    f"- requested capabilities: {', '.join(runtime_defaults.get('capabilities', []) or []) or 'none'}\n"
-                    f"- The target_env above overrides any default_env written in the skill docs for this installation.\n"
-                    f"- Create/use `{target_env}`, install the packages there, and register the environment before any tool registration.\n"
-                )
-
-            display_print(f"\n{Fore.CYAN}🔧 INSTALLER: {tool_name} → {target_env}{Style.RESET_ALL}")
-
-            initial_msg = INSTALLER_HANDOVER_TEMPLATE.format(
-                user_context=context_summary, rag_context="",
-                tool_name=tool_name, target_env=target_env,
-                env_instruction=f"Target environment: {target_env}",
-            )
-
-            final_res    = "Installation Failed"
-            snapshot     = installer_snapshot
-            current_payload = None if installer_has_pending_interrupt \
-                else {
-                    "tool_name": tool_name,
-                    "task_id": task_id,
-                    "selected_skills": selected_skills or selected_for_install,
-                    "messages": [HumanMessage(content=initial_msg)],
-                }
-
-            while True:
-                if current_payload:
-                    async for event in self.installer_app.astream(current_payload, config=sub_config):
-                        for node_name, update in event.items():
-                            if "messages" in update:
-                                last_m = update["messages"][-1]
-                                if isinstance(last_m, AIMessage):
-                                    output.print_once(f"inst:{last_m.content[:40]}",
-                                                      f"[Installer] {last_m.content[:200]}", Fore.MAGENTA)
-                            if "final_result" in update:
-                                final_res = update["final_result"]
-
-                snapshot = self.installer_app.get_state(sub_config)
-                if not snapshot.next and (not snapshot.tasks or not snapshot.tasks[0].interrupts):
-                    break
-                if snapshot.tasks and snapshot.tasks[0].interrupts:
-                    sub_iv = snapshot.tasks[0].interrupts[0].value
-                    user_resp = interrupt(sub_iv)
-                    current_payload = Command(resume=user_resp)
-                    continue
-                break
-
-            self.profiler.record_skill_usage(
-                task_id,
-                selected_skills or selected_for_install,
-                usage_type="installed_runtime",
-                node="install_subagent",
-                detail=target_env,
-            )
-            final_res_lower = str(final_res).lower()
-            install_success = not any(
-                marker in final_res_lower
-                for marker in ("failed", "❌", "blocked", "loop detected", "exceeded")
-            )
-            if selected_skills or selected_for_install:
-                recheck_failures = []
-                recheck_successes = []
-                for sid in self._selected_skill_ids(selected_skills or selected_for_install):
-                    ok, detail, verified_env = self._verify_skill_runtime(
-                        sid,
-                        task_id=task_id,
-                        use_cache=False,
-                    )
-                    if not ok:
-                        recheck_failures.append(
-                            f"{sid} in `{verified_env or target_env}` failed healthcheck: {detail or 'Healthcheck failed.'}"
-                        )
-                    else:
-                        recheck_successes.append(
-                            f"{sid} in `{verified_env or target_env}` passed healthcheck: {detail or 'Healthcheck passed.'}"
-                        )
-                if recheck_successes and not recheck_failures:
-                    install_success = True
-                    if any(marker in final_res_lower for marker in ("failed", "❌", "blocked", "loop detected", "exceeded")):
-                        final_res = (
-                            "✅ Installation/runtime is usable after direct skill healthcheck.\n"
-                            + "\n".join(f"- {item}" for item in recheck_successes)
-                            + "\n\nOriginal installer final message was overridden because the verified runtime healthcheck passed:\n"
-                            + str(final_res)[:1500]
-                        )
-                elif recheck_failures:
-                    install_success = False
-                    final_res = (
-                        f"{final_res}\n\n"
-                        "Post-install skill runtime healthcheck failed:\n"
-                        + "\n".join(f"- {item}" for item in recheck_failures)
-                    )
-            if install_success:
-                self._install_env_choices.pop(choice_key, None)
-                self._install_attempt_counts.pop(attempt_key, None)
-                if scope_key:
-                    self._install_scope_attempt_counts.pop(scope_key, None)
-            if install_success:
-                self._record_installed_skill_environment(selected_skills or selected_for_install, target_env, final_res)
-                plan_progress = self._mark_plan_current_done(task_id, str(final_res)[:1000])
-            else:
-                install_command = runtime_defaults.get("install_command", "")
-                blocked_note = (
-                    f"{final_res}\n\n"
-                    "blocked: required runtime installation did not complete. "
-                    "Do not retry the same healthcheck or fabricate outputs."
-                )
-                if install_command:
-                    blocked_note += f"\nSuggested install command: {install_command}"
-                final_res = blocked_note
-                plan_progress = self._mark_plan_current_blocked(task_id, f"install_failed: {str(final_res)[:1000]}")
-            await self._observe_session_memory(
-                task_id,
-                "install_subagent",
-                state.get("messages", []) + [AIMessage(content=f"<observation>{final_res}</observation>")],
-                {
-                    "tool_name": tool_name,
-                    "target_env": target_env,
-                    "result": final_res[:3000],
-                    "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
-                },
-            )
-            output.print_observation(f"<observation>{final_res}</observation>",
-                summary=("运行环境安装检查已返回" if install_success else "所需运行环境安装失败，当前步骤已阻塞"),
-                failed=not install_success, task_id=task_id, node="install_subagent")
-
-            return {"messages": [AIMessage(content=f"<observation>{final_res}</observation>")],
-                    "plan_progress": plan_progress,
-                    "runtime_status": self._runtime_status_for_task(task_id),
-                    "next_step": self._next_step_after_install_result(task_id)}
+            return await self._install_subagent_impl(state)
 
         # ════════════════════════════════════════════
         # Node 8: typed StepWorker boundary (explicit opt-in only)

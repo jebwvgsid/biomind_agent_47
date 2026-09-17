@@ -25,6 +25,7 @@ metadata:
   legacy_ids: [calder2-compartment, calder2-subcompartment, calder-subcompartment, sub-compartment, subcompartment-calling, 亚区室鉴定, 层级区室鉴定]
   runtime:
     default_env: calder2
+    install_forbidden_envs: [hicexplore]
     env_runner: conda run -n calder2 python
     language: python
     packages: [cooler, pandas, numpy, scipy, h5py]

@@ -441,13 +441,16 @@ def build_runtime_binding_registry(state_or_audits: Any) -> Dict[str, Dict[str, 
                 value_kind="executable_path",
                 audit=audit,
             )
-    # A derived path never overrules an explicit negative or conflict about
-    # that fact. Apply this rule to every materialized binding, independent of
-    # the tool-specific derivations already supported above.
+    # A derived path never overrules an explicit fact outcome. Expired/future
+    # observations have no eligible evidence_ids, but remain declarations of
+    # this fact; they cannot be renewed by a directory-derived filename.
     for binding_id, evaluation in evaluations.items():
         availability = evaluation.get("availability")
         if availability in {"UNAVAILABLE", "AMBIGUOUS"} or (
-            availability == "UNKNOWN" and evaluation.get("evidence_ids")
+            availability == "UNKNOWN" and (
+                evaluation.get("evidence_ids")
+                or evaluation.get("reason_code") == "evidence_expired_or_future"
+            )
         ):
             registry[binding_id] = {
                 "binding_id": binding_id,

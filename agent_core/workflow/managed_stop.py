@@ -283,7 +283,105 @@ def _matches(durable, stop):
 
 def current_managed_stop(durable):
     stop = _mapping(_mapping(durable.get("task_state")).get("managed_run_stop"))
-    return stop if stop.get("producer") == PRODUCER and stop.get("persistence_status") == "committed" and _matches(durable, stop) else {}
+    if stop.get("producer") == PRODUCER and stop.get("persistence_status") == "committed" and _matches(durable, stop):
+        return _project_current_stop_facts(durable, deepcopy(stop))
+    return {}
+
+
+def _terminal_step_owned(durable, stop):
+    """A terminal process receipt can stop its exact uncommitted step only."""
+    scope = _mapping(stop.get("scope"))
+    attempt_id = str(scope.get("attempt_id") or "")
+    if not attempt_id:
+        return False
+    attempt = _mapping(_mapping(_mapping(durable.get("provenance_state")).get("attempts")).get(attempt_id))
+    if not attempt or any(str(attempt.get(key) or "") != str(scope.get(key) or "")
+                          for key in ("plan_id", "plan_version", "step_id")):
+        return False
+    if str(attempt.get("status") or "").upper() not in {
+        "PROCESS_EXITED", "EVIDENCE_COMMITTED", "VALIDATED", "VALIDATION_PASSED", "VALIDATION_FAILED", "COMPLETED", "FAILED"}:
+        return False
+    task = _mapping(durable.get("task_state"))
+    consumptions = _mapping(task.get("semantic_completion_consumptions"))
+    for receipt in _mapping(task.get("typed_step_commit_receipts")).values():
+        payload = _mapping(_mapping(receipt.get("outcome")).get("payload"))
+        consumed = _mapping(consumptions.get(payload.get("semantic_consumption_ref")))
+        if (payload.get("completed_step_id") == scope.get("step_id") and payload.get("commit_id")
+                and payload["commit_id"] == consumed.get("commit_id")
+                and all(str(_mapping(consumed.get("scope")).get(key) or "") == str(scope.get(key) or "")
+                        for key in ("task_id", "plan_id", "plan_version", "step_id"))):
+            return False
+    owner = _mapping(task.get("active_execution"))
+    if owner or task.get("current_attempt"):
+        return False  # Release is owned by execution/recovery, never this writer.
+    return True
+
+
+def _project_current_stop_facts(durable, stop, observation_batches=()):
+    """Read existing exact receipts; retain historical failures without replay."""
+    task, scope = _mapping(durable.get("task_state")), _mapping(stop.get("scope"))
+    batches = list(observation_batches)
+    for receipt in _mapping(task.get("typed_recovery_receipts")).values():
+        if not scope.get("episode_id") or receipt.get("source_fingerprint") != scope["episode_id"]:
+            continue
+        batches.append(receipt.get("causal_observation_receipts") or
+                       _mapping(receipt.get("business_resume_state")).get("observation_receipts") or [])
+    # Existing stop projections already froze these exact later-read receipts.
+    # A later summary pass need not have the transient episode payload again.
+    resolved = {(row.get("tool_call_id"), row.get("error_code")): deepcopy(row["resolved_by"])
+                for row in stop.get("resolved_inspection_failures") or [] if isinstance(row.get("resolved_by"), Mapping)}
+    for batch in batches:
+        for index, row in enumerate(batch):
+            if not isinstance(row, Mapping) or not row.get("error"):
+                continue
+            reference = str(row.get("source_ref") or "")
+            # Mutable path/name equality cannot establish evidence identity.
+            if not re.fullmatch(r"[a-zA-Z_.-]+:sha256:[0-9a-f]{64}", reference):
+                continue
+            for success in batch[index + 1:]:
+                if (isinstance(success, Mapping) and success.get("source_ref") == reference
+                        and not success.get("error") and success.get("content_sha256")):
+                    resolved[(row.get("request_id"), _mapping(row.get("error")).get("code"))] = {
+                        "request_id": success.get("request_id"), "tool": success.get("tool"),
+                        "source_ref": reference, "content_sha256": success["content_sha256"]}
+                    break
+    current, history = [], []
+    for failure in stop.get("inspection_failures") or []:
+        identity = (failure.get("tool_call_id"), failure.get("error_code"))
+        if identity in resolved:
+            history.append({**deepcopy(failure), "resolution_status": "resolved", "resolved_by": resolved[identity]})
+        else:
+            current.append(deepcopy(failure))
+    stop["current_inspection_failures"], stop["resolved_inspection_failures"] = current, history
+    diagnostics = {}
+    execution = _mapping(stop.get("execution"))
+    # This is a recorded script report, not proof about every installed env.
+    for line in str(execution.get("stdout") or "").splitlines():
+        prefix = "BIOMIND_EFFECT_EVIDENCE_JSON="
+        if not line.startswith(prefix):
+            continue
+        try:
+            emitted = json.loads(line[len(prefix):])
+        except (TypeError, ValueError):
+            continue
+        for effect in _mapping(emitted).get("explicit_side_effects") or []:
+            missing = effect.get("missing_commands") if isinstance(effect, Mapping) else None
+            if isinstance(missing, list) and missing and all(isinstance(item, str) for item in missing):
+                diagnostics.update(missing_commands=list(dict.fromkeys(missing)),
+                    source="recorded_execution_stdout", authority="script_report_only",
+                    failure_stage=_safe(effect.get("identity"), 180), attempt_id=scope.get("attempt_id"))
+    provenance = _mapping(durable.get("provenance_state"))
+    attempt = _mapping(_mapping(provenance.get("attempts")).get(scope.get("attempt_id")))
+    action = _mapping(_mapping(provenance.get("actions")).get(attempt.get("action_id")))
+    if action and all(str(action.get(key) or "") == str(scope.get(key) or "") for key in ("plan_id", "plan_version", "step_id")):
+        normalized = _mapping(action.get("normalized_action"))
+        manifest = normalized.get("runtime_binding_manifest")
+        if isinstance(manifest, Mapping) and isinstance(manifest.get("bindings"), list):
+            diagnostics["runtime_binding_count"] = len(manifest.get("bindings") or [])
+            diagnostics["runtime_manifest_hash"] = normalized.get("runtime_binding_manifest_hash")
+            diagnostics["runtime_manifest_source"] = "exact_attempt_action"
+    stop["runtime_diagnostics"] = diagnostics
+    return stop
 
 
 def _associated_attempts(durable, packet, packet_ref=""):
@@ -510,6 +608,8 @@ def build_managed_stop(task_id, values, durable, boundary):
         # Runtime/report diagnostics are secondary to the frozen causal failure.
     if boundary["node"] == "consultant":
         value["consultant_invocation_id"] = str(_mapping(task.get("consultant_invocation")).get("invocation_id") or "")
+    episode_facts = _mapping(payload.get("recovery_episode_facts"))
+    _project_current_stop_facts(durable, value, [episode_facts.get("_observation_receipts") or []])
     value["stop_id"] = "managed-stop:" + _hash({**({"consultant_invocation_id": value["consultant_invocation_id"]} if "consultant_invocation_id" in value else {}), "scope": value["scope"], "authority": value["authority"], "boundary": boundary,
         "stop_reason": value["stop_reason"]})
     value["explanation"] = explanation(value)
@@ -549,6 +649,10 @@ def explanation(stop):
         parts.append("末次候选：" + _safe(json.dumps(stop["current_candidate"],ensure_ascii=False),2000))
     if stop.get("inspection_count_scope"):
         parts.append("检查计数范围：" + json.dumps(stop["inspection_count_scope"],ensure_ascii=False))
+    if stop.get("resolved_inspection_failures"):
+        parts.append("历史读取失败中已有 " + str(len(stop["resolved_inspection_failures"]))
+                     + " 项由随后同一证据身份的成功读取解决；原始错误和成功回执均保留，当前未解决读取问题="
+                     + str(len(stop.get("current_inspection_failures") or [])) + "。")
     for attempt in stop.get("associated_attempts") or []:
         parts.append(("历史诊断 attempt：" if attempt["use"] == "historical_diagnostic" else "当前故障 attempt：")
             + attempt["attempt_id"] + "；rc=" + str(attempt["returncode"])
@@ -569,6 +673,9 @@ def explanation(stop):
         parts.append("停止策略：" + stop["stop_reason"]["termination_reason"] + "；修正记录：" + json.dumps(stop["stop_reason"].get("budget_receipt", {}), ensure_ascii=False))
     if stop.get("runtime"):
         parts.append("Runtime 事实：" + _safe(json.dumps(stop["runtime"], ensure_ascii=False), 4000))
+    if stop.get("runtime_diagnostics"):
+        parts.append("该次执行的运行诊断（脚本报告不证明所有环境均缺能力）："
+                     + _safe(json.dumps(stop["runtime_diagnostics"], ensure_ascii=False), 1600))
     if stop.get("summary_text"):
         parts.append("AI 辅助说明（不改变上述事实）：\n" + stop["summary_text"])
     if stop.get("internal_diagnostic_delivery"):
@@ -644,6 +751,9 @@ def projection(stop):
          "recovery_usage": deepcopy(stop.get("recovery_usage") or {}),
          "execution": stop["execution"], "causal_execution":stop.get("causal_execution",{}),
          "current_candidate":stop.get("current_candidate",{}), "inspection_count_scope":stop.get("inspection_count_scope",{}), "inspection_failures": stop.get("inspection_failures", []), "stop_reason": stop["stop_reason"],
+         "current_inspection_failures":deepcopy(stop.get("current_inspection_failures", stop.get("inspection_failures", []))),
+         "resolved_inspection_failures":deepcopy(stop.get("resolved_inspection_failures") or []),
+         "runtime_diagnostics":deepcopy(stop.get("runtime_diagnostics") or {}),
          "internal_diagnostic_delivery":deepcopy(stop.get("internal_diagnostic_delivery") or {}),
          "required_output_status":stop.get("required_output_status", "unknown"),
          "scientific_completion":stop.get("scientific_completion", "not_completed"),
@@ -668,9 +778,9 @@ def _save(data_path, value, *, loader, saver, claim=False):
     if claim and prior.get("summary_attempted"):
         raise ValueError("SUMMARY_ALREADY_ATTEMPTED")
     set_task_status(fresh, value["status"], value["stop_reason"]["error_code"])
-    if value.get("candidate_scope_identity"):
-        # A terminal pre-execution decision belongs to this precise step,
-        # including verification_pending after a failed causal execution.
+    if value.get("candidate_scope_identity") or _terminal_step_owned(fresh, value):
+        # _matches excludes a newer attempt. A terminal process receipt also
+        # needs exact ownership release; historical attempts remain immutable.
         target = next((row for row in _steps(fresh) if row.get("step_id") == value["scope"]["step_id"]), None)
         if target and target.get("status") not in {"passed", "done", "completed", "cancelled", "skipped"}:
             target["status"] = value["status"]
@@ -783,6 +893,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         except Exception as exc:
             _secondary(value, "execution.details", "EXECUTION_DETAILS_UNAVAILABLE", exc)
     # Base exists before the first write; failures below never erase it.
+    _project_current_stop_facts(durable, value)
     try:
         value["persistence_status"] = "committed"
         durable = _save(agent.data_path, value, loader=loader, saver=saver)

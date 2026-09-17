@@ -263,23 +263,38 @@ class SnpeffCapabilityContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.manager = SkillManager(str(Path(__file__).parents[1] / "skills"))
 
-    def test_contig_check_and_build_have_distinct_runtime_scope(self):
+    def test_current_inspect_and_execute_keep_explicit_optional_runtime_scope(self):
         registry = self.manager.get_execution_capability_registry([
             "genomics/snpeff-annotation"
         ])
 
-        check = registry[
-            "genomics.snpeff_annotation.check_contig_compatibility"
-        ]
-        build = registry["genomics.snpeff_annotation.build_database"]
+        check = registry["genomics.snpeff_annotation.inspect"]
+        build = registry["genomics.snpeff_annotation.execute"]
         self.assertEqual(check["required_runtime_binding_ids"], [])
-        self.assertEqual(
-            build["required_runtime_binding_ids"],
-            ["runtime.java.bin", "runtime.snpeff.jar"],
-        )
-        self.assertIn("artifact.snpeff_config", build["required_artifact_binding_ids"])
-        self.assertIn("artifact.snpeff_data_dir", build["required_artifact_binding_ids"])
+        self.assertEqual(build["required_runtime_binding_ids"], [])
+        self.assertEqual(check["optional_runtime_binding_ids"], ["runtime.java.bin", "runtime.snpeff.jar"])
+        self.assertEqual(build["optional_runtime_binding_ids"], ["runtime.java.bin", "runtime.snpeff.jar"])
+        self.assertEqual(check["operation"], "inspect")
+        self.assertEqual(build["operation"], "produce_files")
+        self.assertEqual(build["required_artifact_binding_ids"], [])
         self.assertNotIn("runtime.snpeff.config", build["required_runtime_binding_ids"])
+        frozen_hash = capability_contract_hash(build)
+        resolved = resolve_action_runtime_bindings(selected_skill_id="genomics/snpeff-annotation",
+            execution_capability_id=build["capability_id"], approved_capability_contract_hash=frozen_hash,
+            capability_registry=registry, ready_runtime_binding_registry={}, current_action_identity={})
+        self.assertEqual(resolved["effective_runtime_bindings"], {})
+        self.assertEqual(resolved["runtime_binding_manifest"]["bindings"], [])
+        changed = {**registry, build["capability_id"]: {
+            **build,
+            "required_runtime_binding_ids": ["runtime.java.bin"],
+            "optional_runtime_binding_ids": ["runtime.snpeff.jar"],
+        }}
+        with self.assertRaises(ActionRuntimeContractError) as raised:
+            resolve_action_runtime_bindings(selected_skill_id="genomics/snpeff-annotation",
+                execution_capability_id=build["capability_id"], approved_capability_contract_hash=frozen_hash,
+                capability_registry=changed, ready_runtime_binding_registry={}, current_action_identity={})
+        self.assertEqual(raised.exception.code, "RUNTIME_BINDING_SNAPSHOT_DRIFT")
+        self.assertEqual(build["required_runtime_binding_ids"], [])
 
     def test_plan_validation_rejects_unknown_and_missing_capabilities(self):
         base = {
@@ -304,9 +319,11 @@ class SnpeffCapabilityContractTests(unittest.TestCase):
             ["ACTION_CAPABILITY_SCOPE_MISSING", "UNKNOWN_EXECUTION_CAPABILITY"],
         )
         self.assertIn(
-            "genomics.snpeff_annotation.check_contig_compatibility",
+            "genomics.snpeff_annotation.inspect",
             issues[0]["available_capability_ids"],
         )
+        self.assertNotIn("genomics.snpeff_annotation.check_contig_compatibility", issues[0]["available_capability_ids"])
+        self.assertNotIn("genomics.snpeff_annotation.build_database", issues[0]["available_capability_ids"])
 
 
 if __name__ == "__main__":

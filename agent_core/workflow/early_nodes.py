@@ -1148,6 +1148,16 @@ class TypedAskUser(_TypedEarlyNode):
                 )
                 return clean
             semantic = "planning_ready" if str(pending.get("type") or "") == "plan_impact_review" else "consultation_ready"
+            if pending.get("type") == "installation_resolution":
+                request = dict((durable.get("task_state") or {}).get("installation_request") or {})
+                event = dict(request.get("resolution_event") or {})
+                if (event.get("question_id") == pending.get("question_id")
+                        and event.get("answer_turn_ref") == answered.get("answer_turn_ref")
+                        and event.get("request_id") == pending.get("request_id")
+                        and event.get("request_hash") == pending.get("request_hash")
+                        and event.get("action") == request.get("resolution")
+                        and clean.get("installation_request") == request):
+                    semantic = "installation_pending"
             kind = "answer_recorded"
             payload = {
                 "question_id": str(pending.get("question_id") or "semantic-question"),
@@ -1164,44 +1174,64 @@ class TypedInstallSubagent(_TypedEarlyNode):
     contract = InstallSubagentOutcome
 
     def classify(self, before, state, durable):
-        status = str(state.get("task_status") or task_status(durable) or "").lower()
-        if status in {"blocked", "failed", "cancelled"}:
-            return _outcome(self.contract, "terminal", state, durable, {
-                "status": status, "reason_code": "installation_terminal",
-            }, "Installation reached a terminal business state.")
-        runtime = dict(state.get("runtime_status") or {})
-        records = [dict(item) for item in runtime.values() if isinstance(item, Mapping)]
-        current_step_id = str(durable.get("current_step_id") or "")
-        current_step = next(
-            (
-                dict(item)
-                for item in durable.get("steps") or []
-                if isinstance(item, Mapping)
-                and str(item.get("step_id") or "") == current_step_id
-            ),
-            {},
-        )
-        step_status = str(current_step.get("status") or "").lower()
-        if records and any(item.get("ok") is True for item in records):
-            kind, evidence = "capability_available", {"runtime_status": records}
-        elif records and any(item.get("ok") is False for item in records):
-            kind, evidence = "installation_failed", {"runtime_status": records}
-        elif step_status in {"done", "passed", "completed", "success"}:
-            kind, evidence = "capability_available", {"step_id": current_step_id, "step_status": step_status}
-        elif step_status in {"blocked", "failed"}:
-            kind, evidence = "installation_failed", {"step_id": current_step_id, "step_status": step_status}
-        else:
+        from agent_core.action_runtime import stable_digest
+        request = dict(state.get("installation_request") or before.get("installation_request") or {})
+        request_id = str(request.get("request_id") or request.get("fingerprint") or "")
+        receipt = dict(state.get("installation_receipt") or {})
+        receipt_status = str(receipt.get("status") or "").lower()
+        stopped = receipt_status in {"cancelled", "rejected", "blocked", "manual_wait"}
+        identity_fields = ("attempt_id", "target_env", "target_prefix")
+        matches = bool(request_id and receipt.get("request_id") == request_id
+                       and receipt.get("request_hash") == stable_digest(request)
+                       and receipt.get("generation_source_scope") == request.get("generation_source_scope")
+                       and request.get("attempt_id")
+                       and all((stopped or request.get(key)) and receipt.get(key) == request.get(key)
+                               for key in identity_fields)
+                       and all(sorted(receipt.get(key) or []) == sorted(request.get(key) or [])
+                               for key in ("selected_skills", "capabilities")))
+        if not matches:
             return _semantic_harness_error(
-                self.contract,
-                state,
-                durable,
+                self.contract, state, durable,
                 error_code="INSTALLATION_SEMANTIC_RECEIPT_MISSING",
-                detail="Installer returned without runtime healthcheck or durable step status.",
+                detail="Installer returned without a receipt matching the current request, attempt, target and selected capabilities.",
             )
+        pending = dict(state.get("pending_human_question") or {})
+        if (receipt_status in {"manual_wait", "execution_failed", "verification_failed", "registration_failed"}
+                and pending.get("type") == "installation_resolution"
+                and pending.get("request_id") == request_id
+                and pending.get("request_hash") == stable_digest(request)
+                and pending == (durable.get("task_state") or {}).get("pending_question")):
+            return _outcome(self.contract, "user_input_needed", state, durable, {
+                "question_id": pending["question_id"], "question": pending["question"], "evidence": receipt,
+            }, "Installation requires an explicit scoped user decision.")
+        if stopped:
+            return _outcome(self.contract, "terminal", state, durable, {
+                "status": "cancelled" if receipt_status == "cancelled" else "blocked",
+                "reason_code": "installation_" + receipt_status,
+                "evidence": receipt,
+            }, "Installation stopped with a scoped user decision or blocked work order.")
+        required_skills = set(request.get("selected_skills") or [])
+        required_capabilities = set(request.get("capabilities") or [])
+        checks = [dict(row) for row in receipt.get("verification") or []
+                  if isinstance(row, Mapping)
+                  and row.get("target_prefix") == request.get("target_prefix")]
+        verified_skills = {row.get("skill_id") for row in checks if row.get("ok") is True}
+        verified_capabilities = {row.get("capability_id") for row in checks if row.get("ok") is True}
+        registration = dict(receipt.get("registration") or {})
+        complete = bool(
+            receipt_status == "available" and checks
+            and all(row.get("ok") is True for row in checks)
+            and required_skills <= verified_skills
+            and required_capabilities <= verified_capabilities
+            and all(isinstance(registration.get(name), Mapping)
+                    and registration[name].get("ok") is True
+                    for name in ("skill_registry", "software_registry"))
+        )
+        kind = "capability_available" if complete else "installation_failed"
         return _outcome(self.contract, kind, state, durable, {
-            "status": "failed" if kind == "installation_failed" else "available",
-            "evidence": evidence,
-        }, "Installation capability check completed from authoritative receipts.")
+            "status": "available" if complete else "failed",
+            "evidence": receipt,
+        }, "Installation capability check completed from target-bound verification and registration receipts.")
 
 
 async def route_blind_direct_response(source: SourceNode, state: Mapping[str, Any]) -> dict[str, Any]:

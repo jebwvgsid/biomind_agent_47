@@ -253,6 +253,8 @@ class AgentState(TypedDict, total=False):
     plan_review_outcome: dict
     ask_user_outcome: dict
     install_subagent_outcome: dict
+    installation_request: dict
+    installation_receipt: dict
     resume_state: dict
 
 # 安装子智能体状态
@@ -263,3 +265,9 @@ class InstallerState(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
     next_step: Optional[str]
     final_result: Optional[str]
+    # Parent-owned concrete work order; plan approval alone never authorizes
+    # environment mutation. The existing action identity binds each reviewed code.
+    installation_request: dict
+    approval_scope: dict
+    action_approval_identity: dict
+    installation_receipt: dict

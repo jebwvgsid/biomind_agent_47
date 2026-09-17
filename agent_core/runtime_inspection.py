@@ -232,7 +232,9 @@ class BubblewrapRuntimeProbe:
         if not self.available():
             raise InspectionPolicyError("RUNTIME_INSPECTION_SANDBOX_UNAVAILABLE")
         command = list(specification["argv"])
-        if command[:4] != ["/bin/bash", "--noprofile", "--norc", "-c"]:
+        from agent_core.runtime_probe_contract import PROBE_DRIVER
+        fixed_probe = command[:5] == ["/usr/bin/python3", "-I", "-S", "-c", PROBE_DRIVER] and len(command) == 6
+        if not fixed_probe and command[:4] != ["/bin/bash", "--noprofile", "--norc", "-c"]:
             raise InspectionPolicyError("RUNTIME_INSPECTION_SHELL_MODE_UNSUPPORTED")
         argv = [self.bwrap_path, "--unshare-user", "--unshare-ipc", "--unshare-pid", "--unshare-net", "--unshare-uts", "--die-with-parent", "--new-session", "--cap-drop", "ALL"]
         for root in self.SYSTEM_ROOTS:
@@ -314,9 +316,14 @@ class RuntimeInspectionAdapter:
         if any(skills_root.is_relative_to(root) for root in roots):
             raise InspectionPolicyError("RUNTIME_INSPECTION_ROOT_TOO_BROAD")
         command = str(self.healthcheck_provider(requirements, environment) if self.healthcheck_provider else requirements.get("healthcheck") or "")
+        structured = None
+        if requirements.get("inspection_probes"):
+            from agent_core.runtime_probe_contract import build_probe_specification, probe_method, probe_argv
+            structured = build_probe_specification(requirements, prefix)
+            command = probe_method(requirements)
         if digest(command) != subject["inspection_contract_digest"]:
             raise InspectionPolicyError("RUNTIME_INSPECTION_METHOD_DRIFT")
-        argv = admitted_healthcheck(command, environment, set(requirements.get("tools") or []))
+        argv = probe_argv(structured) if structured else admitted_healthcheck(command, environment, set(requirements.get("tools") or []))
         env = {"PATH": str(prefix / "bin") + ":/usr/bin:/bin", "CONDA_PREFIX": str(prefix), "CONDA_DEFAULT_ENV": environment, "LC_ALL": "C", "TMPDIR": "/tmp"}
         for key, value in dict(self.envsafevars(skill_id)).items():
             if key in env or not re.fullmatch(r"[A-Z][A-Z0-9_]*(?:_HOME|_ROOT|_DIR)", key) or _SENSITIVE.search(key) or _SENSITIVE.search(str(value)):
@@ -334,13 +341,15 @@ class RuntimeInspectionAdapter:
         # a regex word boundary would silently lose every following output.
         declared_names = set(re.findall(r"(?<![A-Z0-9_])((?:RESOLVED_)?[A-Z][A-Z0-9_]+)=", command))
         declared_names = {name for name in declared_names if name.startswith("RESOLVED_")} | set(outputs)
+        if structured:
+            declared_names.update(row["output"] for row in structured["probes"])
         if not declared_names:
             raise InspectionPolicyError("RUNTIME_INSPECTION_PRODUCER_UNDECLARED")
         contracts = self.skills.get_execution_capability_registry([skill_id])
         required = sorted({binding for item in contracts.values() for binding in item.get("required_runtime_binding_ids", [])})
         return {"skill_id": skill_id, "subject": subject, "argv": argv,
                 "read_roots": [str(root) for root in roots], "environment": env,
-                "output_names": sorted(declared_names), "output_contracts": outputs,
+                "output_names": sorted(declared_names), "output_contracts": outputs, "structured_probe": structured,
                 "coverage_binding_ids": required, "timeout_seconds": 60.0,
                 "output_limit_bytes": 65536, "method_digest": digest(command)}
 
@@ -415,7 +424,12 @@ class RuntimeInspectionAdapter:
         if not isinstance(outcome, Mapping) or type(outcome.get("returncode")) is not int:
             return self._result("output_invalid", "RUNTIME_INSPECTION_OUTPUT_INVALID")
         if outcome.get("returncode") != 0:
-            result = self._result("execution_error", "RUNTIME_INSPECTION_NONZERO_EXIT")
+            diagnostic = str(outcome.get("stderr") or "")[:4096]
+            sandbox_denied = diagnostic.startswith("bwrap:") and any(
+                token in diagnostic for token in ("Operation not permitted", "Permission denied")
+            )
+            result = self._result("permission_error" if sandbox_denied else "execution_error",
+                "RUNTIME_INSPECTION_SANDBOX_PERMISSION_DENIED" if sandbox_denied else "RUNTIME_INSPECTION_NONZERO_EXIT")
             result["inspection_error"] = {"exit_code": outcome.get("returncode")}
             return result
         stdout = str(outcome.get("stdout") or "")
@@ -447,6 +461,17 @@ class RuntimeInspectionAdapter:
             kind = _runtime_binding_identity(name)[2]
             if not _inside(value, roots) or (kind == "executable_path" and (not value.is_file() or not os.access(value, os.X_OK))):
                 return self._result("output_invalid", "RUNTIME_INSPECTION_OUTPUT_OUT_OF_SCOPE")
+        if specification.get("structured_probe"):
+            from agent_core.runtime_probe_contract import parse_probe_result
+            try:
+                parsed = parse_probe_result(stdout, specification["structured_probe"])
+            except (ValueError, TypeError, KeyError):
+                return self._result("output_invalid", "RUNTIME_PROBE_RESULT_INVALID")
+            coverage = {bid: parsed["coverage"].get(bid, {"availability": "UNKNOWN",
+                "reason_code": "RUNTIME_PROBE_OUTPUT_INCOMPLETE", "conclusion_complete": False}) for bid in requested}
+            return self._result("succeeded", "" if all(row["availability"] == "AVAILABLE" for row in coverage.values()) else "RUNTIME_PROBE_OUTPUT_INCOMPLETE",
+                audit={"skill_id": skill_id, "checked_env": specification["subject"]["environment_id"],
+                    "status": "ready", "resolved_runtime_paths": parsed["resolved_runtime_paths"]}, coverage=coverage)
         audit = {"skill_id": skill_id, "checked_env": specification["subject"]["environment_id"], "status": "ready", "resolved_runtime_paths": paths}
         registry = build_runtime_binding_registry([audit])
         coverage = {}

@@ -3194,11 +3194,17 @@ def _apply_upstream_step_rollback(state: PlanState, value: Dict[str, Any]) -> Di
     )
     from agent_core.plan_bindings import invalidate_producer_bindings
 
-    invalidate_producer_bindings(
-        state,
-        producer_step_id=target_id,
-        reason="upstream producer superseded by Recovery rollback",
-    )
+    affected_producers = {target_id, *affected}
+    prior_binding_ids = set((state.get("task_state") or {}).get("accepted_plan_bindings", {}).values())
+    for producer_step_id in sorted(affected_producers):
+        invalidate_producer_bindings(
+            state,
+            producer_step_id=producer_step_id,
+            reason="upstream producer superseded by Recovery rollback",
+        )
+    invalidated_binding_ids = sorted(prior_binding_ids - set(
+        (state.get("task_state") or {}).get("accepted_plan_bindings", {}).values()
+    ))
     state["current_step_id"] = target_id
     state["current_stage_id"] = ""
     set_task_status(state, TASK_STATUS_REPAIRING, f"rollback to {target_id}")
@@ -3208,6 +3214,7 @@ def _apply_upstream_step_rollback(state: PlanState, value: Dict[str, Any]) -> Di
         "affected_step_ids": sorted(affected | {target_id}),
         "affected_stage_ids": [],
         "invalidated_artifact_ids": invalidated_artifacts,
+        "invalidated_binding_ids": invalidated_binding_ids,
         "rollback_target": target_id,
     }
 
@@ -3848,6 +3855,9 @@ def apply_recovery_decision(
         "affected_steps": list(transition.get("affected_step_ids") or []),
         "affected_stages": list(transition.get("affected_stage_ids") or []),
         "invalidated_artifacts": list(transition.get("invalidated_artifact_ids") or []),
+        "invalidated_binding_ids": list(transition.get("invalidated_binding_ids") or []),
+        "plan_revision": int(state.get("plan_revision") or 0),
+        "state_generation": int(state.get("state_generation") or 0),
         "state_before": state_before,
         "state_after": _recovery_state_snapshot(state),
         "evidence_refs": [str(item)[:500] for item in value.get("evidence_refs") or []][:20],
@@ -8186,6 +8196,11 @@ def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | N
         # V10 retires generic semantic claims/constraint IDs for fresh plans.
         # Historical v9 rows remain readable under compatibility.source_schema_version.
         newly_applied.append("open_world_highlighted_requirements_plan_v10")
+
+    from agent_core.plan_bindings import reconcile_rollback_binding_history
+
+    if reconcile_rollback_binding_history(data):
+        newly_applied.append("reconcile_rollback_plan_bindings")
 
     if json.dumps(data["steps"], ensure_ascii=False, sort_keys=True, default=str) != original_steps:
         newly_applied.append("normalize_plan_step_schema")

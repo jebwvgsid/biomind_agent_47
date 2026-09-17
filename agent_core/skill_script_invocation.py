@@ -15,11 +15,32 @@ import yaml
 from agent_core.skill_access import SkillAccessError
 
 
-def _fail(code, detail):
-    raise SkillAccessError(code, detail)
+def _fail(code, detail, **diagnostic):
+    error = SkillAccessError(code, detail, classification=(
+        "INTERNAL_PROTOCOL" if code in {"SKILL_INVOCATION_CONTRACT_INVALID", "SKILL_INVOCATION_RUNTIME_UNAVAILABLE"}
+        else "ACTION_FORMAT_REPAIR"))
+    error.diagnostic = {
+        "validation_source": "agent_core.skill_script_invocation.validate_skill_script_invocations",
+        "repair_stage": "skill_script_invocation", "detail": detail,
+        "owner": "GENERATED_ACTION", "check_status": "UNVERIFIABLE" if code == "SKILL_INVOCATION_UNVERIFIABLE" else "FAIL",
+        **diagnostic,
+    }
+    raise error
 
 
 def resolve_script_invocation(skill_text, relative_path, script_path):
+    try:
+        return _resolve_script_invocation(skill_text, relative_path, script_path)
+    except SkillAccessError as exc:
+        exc.diagnostic = {**getattr(exc, "diagnostic", {}),
+            "validation_source": "agent_core.skill_script_invocation.resolve_script_invocation",
+            "repair_stage": "skill_script_invocation", "owner": "SKILL_CONTRACT",
+            "field_path": "generate.script_invocations." + str(relative_path),
+            "helper_relative_path": relative_path, "detail": exc.detail}
+        raise
+
+
+def _resolve_script_invocation(skill_text, relative_path, script_path):
     """Resolve only an explicit declaration from the pinned Skill document."""
     frontmatter = re.match(r"^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n", skill_text, re.DOTALL)
     if frontmatter is None:
@@ -91,17 +112,21 @@ def _validate_arguments(invocation, arguments):
         option = arguments[position]
         spec = specs.get(option)
         if spec is None:
-            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"Unknown or positional argument {option!r}; use declared separate option/value tokens")
+            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"Unknown or positional argument {option!r}; use declared separate option/value tokens",
+                  argument_index=position, actual=option, expected=list(specs))
         seen[option] = seen.get(option, 0) + 1
         if seen[option] > 1 and not spec.get("repeatable", False):
-            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{option} is not repeatable")
+            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{option} is not repeatable",
+                  argument_index=position, actual=seen[option], expected=1, argument_name=option)
         values = arguments[position + 1:position + 1 + spec["nargs"]]
         if len(values) != spec["nargs"] or any(not value or value.startswith("--") for value in values):
-            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{option} needs {spec['nargs']} separate nonempty values")
+            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{option} needs {spec['nargs']} separate nonempty values",
+                  argument_index=position, actual=values, expected={"nargs": spec["nargs"], "nonempty_separate_values": True}, argument_name=option)
         position += 1 + spec["nargs"]
     missing = [name for name, spec in specs.items() if spec.get("required", False) and name not in seen]
     if missing:
-        _fail("SKILL_INVOCATION_ARGUMENT_INVALID", "Missing required arguments: " + ", ".join(missing))
+        _fail("SKILL_INVOCATION_ARGUMENT_INVALID", "Missing required arguments: " + ", ".join(missing),
+              actual=list(seen), expected=missing)
 
 
 def build_skill_script_argv(resource, arguments):
@@ -211,12 +236,37 @@ def _simple_commands(source, environment, deferred):
 
 
 def validate_skill_script_invocations(action, resources):
+    """Preserve exact validator evidence for the existing local repair route."""
+    context = {}
+    try:
+        return _validate_skill_script_invocations(action, resources, context)
+    except SkillAccessError as exc:
+        diagnostic = dict(getattr(exc, "diagnostic", {}))
+        exc.diagnostic = {**context, **diagnostic}
+        index = diagnostic.get("argument_index")
+        if index is not None:
+            source = context.get("field_path", "argv")
+            exc.diagnostic["field_path"] = (f"argv[{index + 2}]" if source == "argv" else source)
+        if exc.code == "SKILL_INVOCATION_UNVERIFIABLE":
+            exc.diagnostic["supported_carriers"] = ["direct utility argv when no deferred argument", "newline-separated direct simple-shell calls with quoted bound variables"]
+        raise
+
+
+def _validate_skill_script_invocations(action, resources, context):
     """Validate opt-in utilities before approval, and again without rewriting."""
     contracted = [row for row in resources if row.get("invocation")]
     if not contracted or action.get("type") != "execute":
         return
     from agent_core.step_effects import executable_carrier
     selected = executable_carrier(action)
+    source = selected["source"] if selected["script_available"] else "argv"
+    context.update(carrier={"source": selected["source"], "language": selected["language"],
+                            "script_available": selected["script_available"]},
+                   field_path=source, helper_handles=[row["handle"] for row in contracted],
+                   actual=selected["body"] if selected["script_available"] else action.get("argv"),
+                   expected="declared interpreter + helper + separate option/value tokens",
+                   evidence=[{"handle": row["handle"], "snapshot_id": row.get("snapshot_id"),
+                              "resource_snapshot_id": row.get("resource_snapshot_id")} for row in contracted])
     deferred = {spec["runtime_environment_variable"] for row in contracted
                 for spec in row["invocation"]["arguments"].values() if spec.get("runtime_environment_variable")}
     if selected["script_available"]:
@@ -238,17 +288,31 @@ def validate_skill_script_invocations(action, resources):
             words, command = words[1:], command[1:]
         if not words:
             _fail("SKILL_INVOCATION_UNVERIFIABLE", "Empty invocation")
-        if any(words[0] == row["canonical_path"] for row in contracted):
-            _fail("SKILL_INVOCATION_INTERPRETER_REQUIRED", "Skill source files are not executables; use the published interpreter + script argv_prefix")
+        direct_source = next((row for row in contracted if words[0] == row["canonical_path"]), None)
+        if direct_source:
+            _fail("SKILL_INVOCATION_INTERPRETER_REQUIRED", "Skill source files are not executables; use the published interpreter + script argv_prefix",
+                  helper_handle=direct_source["handle"], actual=words[0], expected=direct_source["invocation"]["argv_prefix"],
+                  field_path="argv[0]" if source == "argv" else source)
         row = next((row for row in contracted if len(words) >= 2 and words[1] == row["canonical_path"]), None)
         if row is None:
             _fail("SKILL_INVOCATION_UNVERIFIABLE", "Only declared direct utility calls and optional set/exec are verified; use the published shell_prefix")
         invocation = row["invocation"]
+        context.update(helper_handle=row["handle"], actual=words, expected=invocation["argv_prefix"])
         if words[0] != invocation["interpreter"]:
-            _fail("SKILL_INVOCATION_INTERPRETER_REQUIRED", f"Use the bound Controller interpreter: {invocation['interpreter']}")
+            _fail("SKILL_INVOCATION_INTERPRETER_REQUIRED", f"Use the bound Controller interpreter: {invocation['interpreter']}",
+                  actual=words[0], expected=invocation["interpreter"], field_path="argv[0]" if source == "argv" else source)
         if any(item[1] for item in command[:2]):
             _fail("SKILL_INVOCATION_UNVERIFIABLE", "The interpreter and script must be bound before approval")
-        _validate_arguments(invocation, words[2:])
+        if not selected["script_available"] and not any(
+                spec.get("runtime_environment_variable") for spec in invocation["arguments"].values()):
+            # The existing public action already supplies argv. Use the builder
+            # to verify that exact argv; never rewrite an approved carrier.
+            expected_argv = build_skill_script_argv(row, words[2:])
+            if words != expected_argv:
+                _fail("SKILL_INVOCATION_ARGUMENT_INVALID", "Direct argv differs from the bound invocation",
+                      actual=words, expected=expected_argv)
+        else:
+            _validate_arguments(invocation, words[2:])
         offset = 2
         while offset < len(words):
             spec = invocation["arguments"][words[offset]]
@@ -256,9 +320,11 @@ def validate_skill_script_invocations(action, resources):
             values = command[offset + 1:offset + 1 + spec["nargs"]]
             if expected:
                 if values != [("${" + expected + "}", frozenset({expected}))]:
-                    _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{words[offset]} requires the quoted runtime binding ${expected}")
+                    _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{words[offset]} requires the quoted runtime binding ${expected}",
+                          actual=[item[0] for item in values], expected={"quoted_runtime_variable": expected}, argument_name=words[offset])
             elif any(item[1] for item in values):
-                _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{words[offset]} cannot consume an unresolved runtime binding")
+                _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{words[offset]} cannot consume an unresolved runtime binding",
+                      actual=[item[0] for item in values], expected="fully bound literal values", argument_name=words[offset])
             offset += 1 + spec["nargs"]
         required = {row["skill_id"] + "#" + path for path in invocation["delegates"]}
         if not required <= handles:

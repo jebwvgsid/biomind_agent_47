@@ -56,6 +56,7 @@ def route_generate_outcome(state: Mapping[str, Any]) -> str:
     return {
         "action_ready": "execute",
         "runtime_evidence_required": "recovery",
+        "installation_requested": "install_subagent",
         "runtime_recovery_stopped": END,
         "completion_claimed": "supervisor",
         "user_input_needed": "ask_user",
@@ -214,7 +215,7 @@ def build_schema2_runtime_graph(
     graph.add_conditional_edges(
         "generate",
         generate_route,
-        ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", "recovery", END],
+        ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", "install_subagent", "recovery", END],
     )
     graph.add_conditional_edges(
         "execute",
@@ -333,6 +334,7 @@ def route_ask_user_outcome(state: Mapping[str, Any]) -> str:
         "step_execution_ready": "generate",
         "verification_pending": "supervisor",
         "recovery_pending": "recovery",
+        "installation_pending": "install_subagent",
     }.get(semantic, END)
 
 
@@ -343,6 +345,7 @@ def route_install_outcome(state: Mapping[str, Any]) -> str:
     return {
         "capability_available": "generate",
         "installation_failed": "recovery",
+        "user_input_needed": "ask_user",
         "terminal": END,
         "harness_error": END,
     }[outcome.type]
@@ -432,10 +435,10 @@ def build_schema2_production_graph(
     )
     graph.add_conditional_edges("planner", planner_route, ["plan_review", "consultant", "planner", END])
     graph.add_conditional_edges("plan_review", plan_review_route, ["generate", "step_worker", "planner", "consultant", "ask_user", END])
-    graph.add_conditional_edges("ask_user", ask_user_route, ["consultant", "planner", "generate", "supervisor", "recovery", END])
-    graph.add_conditional_edges("install_subagent", install_route, ["generate", "recovery", END])
+    graph.add_conditional_edges("ask_user", ask_user_route, ["consultant", "planner", "generate", "supervisor", "recovery", "install_subagent", END])
+    graph.add_conditional_edges("install_subagent", install_route, ["generate", "recovery", "ask_user", END])
     graph.add_conditional_edges("step_worker", step_worker_route, ["supervisor", "planner", END])
-    graph.add_conditional_edges("generate", generate_route, ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", "recovery", END])
+    graph.add_conditional_edges("generate", generate_route, ["generate", "execute", "supervisor", "planner", "consultant", "ask_user", "install_subagent", "recovery", END])
     graph.add_conditional_edges("execute", execute_route, ["supervisor", "recovery", "generate", "planner", "consultant", "ask_user", "install_subagent", END])
     graph.add_conditional_edges(
         "supervisor",

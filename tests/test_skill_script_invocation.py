@@ -276,11 +276,15 @@ def test_delegate_is_pinned_without_requiring_direct_invocation(tmp_path):
     validate_action_skill_resources(bound, service, access, step_id=STEP_ID, cwd=tmp_path)
 
 
-def test_missing_delegate_is_rejected_instead_of_resolved_implicitly(tmp_path):
+def test_root_delegate_closure_is_bound_and_invalid_explicit_ref_still_rejected(tmp_path):
     service, access, _, _ = _fixture(tmp_path, delegates=True)
     row = _receipt(service, access, tmp_path)
     body = shlex.join(build_skill_script_argv(row, _args()))
-    _expect_code("SKILL_INVOCATION_DEPENDENCY_UNBOUND", _shell(body), service, access, tmp_path)
+    bound = _bind(_shell(body), service, access, tmp_path)
+    assert [item["handle"] for item in bound["formal_skill_resources"]] == [HANDLE, CHILD_HANDLE]
+    validate_action_skill_resources(bound, service, access, step_id=STEP_ID, cwd=tmp_path)
+    _expect_code("SKILL_RESOURCE_OUT_OF_SCOPE", _shell(body, (HANDLE, SKILL_ID + "#scripts/absent.py")),
+                 service, access, tmp_path)
 
 
 @pytest.mark.parametrize("change", ["document", "interpreter", "env", "script"])

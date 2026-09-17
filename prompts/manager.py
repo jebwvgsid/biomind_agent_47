@@ -2797,7 +2797,7 @@ repair attempt.
 
 {FILE_PRESERVATION_POLICY}
 
-Return exactly one of these three alternatives:
+Return exactly one of these four alternatives:
 1. One complete raw JSON display envelope:
 {{"response_type":"biomind_generate_display_v1","public_message":"候选已形成，接下来先检查，再提交原有审批。","payload":"<shell>\\nprintf 'fixture\\\\n'\\n</shell>"}}
 The decoded payload is exactly one non-empty executable block using one of
@@ -2828,6 +2828,12 @@ and request this stop instead of changing comments, spacing, or variable names
 just to obtain another attempt. Do not assert that the validator is defective
 or a dependency is absent without evidence. For a real correctable defect,
 continue the substantive correction within the existing bounded budget.
+
+4. For dependency preparation within the selected Skill, one complete JSON work-order request:
+{{"action_type":"install_tool","tool":"declared runtime tool","env":"declared or explicitly chosen environment"}}
+This only asks the Installer to form an exact target/command proposal for separate approval.
+Do not embed installation in a scientific script or claim the scientific step completed.
+Existing usable environments must be inspected first; unknown facts do not prove software absent.
 
 For the executable alternative, the envelope may contain only response_type,
 public_message, and payload. Do not add another action or executable definition.

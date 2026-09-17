@@ -1216,7 +1216,8 @@ def _validate_required_binding_environment(
 
 
 def invalidate_producer_bindings(
-    state: Dict[str, Any], *, producer_step_id: str, reason: str
+    state: Dict[str, Any], *, producer_step_id: str, reason: str,
+    binding_ids: Optional[Sequence[str]] = None,
 ) -> int:
     """Mark producer history stale and clear active refs; never mutate values."""
     task_state = dict(state.get("task_state") or {})
@@ -1230,6 +1231,10 @@ def invalidate_producer_bindings(
         if (
             str(item.get("producer_step_id") or "") == str(producer_step_id or "")
             and str(item.get("status") or "") == "accepted"
+            and str(item.get("producer_plan_id") or "") == str(state.get("plan_id") or "")
+            and str(item.get("producer_plan_version") or "") == str(state.get("plan_version") or "")
+            and int(item.get("producer_plan_revision") or 0) == int(state.get("plan_revision") or 0)
+            and (binding_ids is None or str(item.get("binding_id") or "") in binding_ids)
         ):
             item.update({"status": "stale", "stale_reason": str(reason), "stale_at": _now()})
             history[index] = item
@@ -1240,6 +1245,89 @@ def invalidate_producer_bindings(
     task_state["accepted_plan_bindings"] = accepted
     state["task_state"] = task_state
     return changed
+
+
+def reconcile_rollback_binding_history(state: Dict[str, Any]) -> bool:
+    """Repair legacy rollback residue once at persistence, with proven ordering.
+
+    Step names and present-day statuses cannot identify a historical acceptance.
+    Exact recorded IDs are authoritative; older events need a matching Plan
+    scope plus a Commit generation or unambiguously ordered aware timestamps.
+    Ambiguous history is diagnosed, never used to revoke a newer Commit.
+    """
+    task = dict(state.get("task_state") or {})
+    recovery = dict(task.get("recovery_state") or {})
+    events = [item for item in recovery.get("decision_audit", []) or []
+              if isinstance(item, Mapping)
+              and item.get("decision_kind") == "ROLLBACK_UPSTREAM_STEP"
+              and item.get("apply_status") == "applied"]
+    if not events:
+        return False
+    tracked_keys = ("plan_binding_history", "accepted_plan_bindings", "plan_binding_reconciliation_diagnostics")
+    before = {key: deepcopy(task.get(key)) for key in tracked_keys}
+    diagnostics = []
+    commits = {}
+    for receipt in (task.get("typed_step_commit_receipts") or {}).values():
+        if not isinstance(receipt, Mapping):
+            continue
+        payload = dict((receipt.get("outcome") or {}).get("payload") or {})
+        for binding_id in payload.get("accepted_binding_refs", []) or []:
+            commits[str(binding_id)] = payload.get("after_state_generation")
+
+    def aware_time(value):
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    for event in events:
+        if (str(event.get("plan_id") or "") != str(state.get("plan_id") or "")
+                or str(event.get("plan_version") or "") != str(state.get("plan_version") or "")):
+            continue
+        affected = {str(item) for item in event.get("affected_steps", []) or [] if str(item)}
+        event_revision = event.get("plan_revision")
+        if event_revision is None:
+            decision = next((item for item in recovery.get("decision_history", []) or []
+                             if isinstance(item, Mapping) and item.get("decision_id") == event.get("decision_id")), {})
+            event_revision = (decision.get("source_scope") or {}).get("plan_revision")
+        for binding in list((state.get("task_state") or {}).get("plan_binding_history") or []):
+            if not isinstance(binding, Mapping) or binding.get("status") != "accepted":
+                continue
+            if (str(binding.get("producer_step_id") or "") not in affected
+                    or str(binding.get("producer_plan_id") or "") != str(event.get("plan_id") or "")
+                    or str(binding.get("producer_plan_version") or "") != str(event.get("plan_version") or "")):
+                continue
+            binding_id = str(binding.get("binding_id") or "")
+            diagnostic = {"binding_id": binding_id, "producer_step_id": binding.get("producer_step_id"),
+                          "decision_id": event.get("decision_id")}
+            if event_revision is None:
+                diagnostics.append({**diagnostic, "code": "PLAN_BINDING_ROLLBACK_SCOPE_UNVERIFIABLE"})
+                continue
+            if int(binding.get("producer_plan_revision") or 0) != int(event_revision):
+                continue
+            if "invalidated_binding_ids" in event:
+                superseded = binding_id in (event.get("invalidated_binding_ids") or [])
+            elif isinstance(commits.get(binding_id), int) and isinstance(event.get("state_generation"), int):
+                superseded = commits[binding_id] <= event["state_generation"]
+            else:
+                accepted_at, applied_at = aware_time(binding.get("accepted_at")), aware_time(event.get("applied_at"))
+                if accepted_at is None or applied_at is None or accepted_at == applied_at:
+                    diagnostics.append({**diagnostic, "code": "PLAN_BINDING_ROLLBACK_ORDER_UNVERIFIABLE"})
+                    continue
+                superseded = accepted_at < applied_at
+            if superseded:
+                invalidate_producer_bindings(
+                    state, producer_step_id=str(binding["producer_step_id"]), binding_ids=[binding_id],
+                    reason="persisted Recovery rollback " + str(event.get("decision_id") or "<unknown>"),
+                )
+    task = dict(state.get("task_state") or {})
+    if diagnostics:
+        task["plan_binding_reconciliation_diagnostics"] = diagnostics
+    else:
+        task.pop("plan_binding_reconciliation_diagnostics", None)
+    state["task_state"] = task
+    return {key: task.get(key) for key in tracked_keys} != before
 
 
 def project_accepted_plan_bindings(state: Mapping[str, Any]) -> Sequence[Dict[str, Any]]:

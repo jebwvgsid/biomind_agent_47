@@ -120,15 +120,55 @@ def _current_step(durable: Mapping[str, Any]) -> dict[str, Any]:
 
 def _not_dispatched(durable: Mapping[str, Any], step_id: str) -> bool:
     provenance = dict(durable.get("provenance_state") or {})
+    # A new execution epoch may follow a finished, explicitly retired attempt.
+    # The audit comes from prepare_generation below; old action manifests and
+    # execution history remain immutable. An epoch alone grants no exception.
+    task = durable.get("task_state") or {}
+    epoch = str((durable.get("runtime_state") or {}).get("execution_epoch") or "0")
+    retired = set()
+    for event in (task.get("recovery_state") or {}).get("state_events") or []:
+        if (event.get("event_type") == "runtime_generation_prepared"
+            and event.get("plan_id") == durable.get("plan_id")
+            and event.get("plan_version") == durable.get("plan_version")
+            and event.get("step_id") == step_id and str(event.get("execution_epoch")) == epoch):
+            retired.update(event.get("retired_attempt_ids") or [])
     for row in (provenance.get("attempts") or {}).values():
         if isinstance(row, Mapping) and str(row.get("step_id") or "") == step_id:
+            if (row.get("attempt_id") in retired and str(row.get("status")).upper() == "FAILED"
+                and row.get("finished_at") and type(row.get("returncode")) is int):
+                continue
             # Even a prepared attempt is owned by the existing execution
             # lifecycle. Runtime acquisition must not reclassify it.
             return False
     for row in durable.get("execution_history", []) or []:
         if isinstance(row, Mapping) and str(row.get("step_id") or "") == step_id:
+            if row.get("attempt_id") in retired:
+                continue
             return False
     return True
+
+
+def runtime_generation_source_scope(durable: Mapping[str, Any]) -> dict[str, Any]:
+    """Freeze the scientific owner an installation work order may retire.
+
+    This identity excludes mutable installation progress. A later attempt,
+    epoch, plan, or approval produces a different source and requires a new
+    work order; refreshing an old receipt cannot authorize that transition.
+    """
+    step = _current_step(durable)
+    return {
+        "task_id": str(durable.get("task_id") or ""),
+        "plan_id": str(durable.get("plan_id") or ""),
+        "plan_version": str(durable.get("plan_version") or ""),
+        "plan_revision": int(durable.get("plan_revision") or 0),
+        "step_id": str(step["step_id"]),
+        "execution_epoch": str((durable.get("runtime_state") or {}).get("execution_epoch") or "0"),
+        "approval_scope_digest": runtime_authorization_scope_digest(durable),
+        "approved_plan_snapshot_ref": str((durable.get("current_approval") or {}).get("plan_snapshot_ref") or ""),
+        "source_attempt_ids": sorted(str(row.get("attempt_id") or "")
+            for row in ((durable.get("provenance_state") or {}).get("attempts") or {}).values()
+            if isinstance(row, Mapping) and row.get("step_id") == step["step_id"]),
+    }
 
 
 class RuntimeEvidenceRecovery:
@@ -157,6 +197,120 @@ class RuntimeEvidenceRecovery:
             raise RuntimeRecoveryError("RUNTIME_RECOVERY_SKILL_SCOPE_MISMATCH")
         return subject
 
+    def prepare_generation(self, state: Mapping[str, Any], *, selected_skill_id: str,
+                           capability_contract: Mapping[str, Any]) -> dict[str, Any]:
+        """Retire ended ownership after admitted Recovery or approved revision.
+
+        This does not revise a contract, install, accept bindings, or complete
+        a scientific step. CAS and the existing provenance transition own it.
+        """
+        from agent_core.plan_tracker import load_approved_plan_snapshot, record_provenance_event, _pid_is_alive
+        from agent_core.action_runtime import stable_digest
+        task_id = str(state.get("task_id") or "")
+        durable = load_plan_state(self.data_path, task_id)
+        step = _current_step(durable)
+        sid = step["step_id"]
+        contract = normalize_capability_contract(capability_contract, selected_skill_id=selected_skill_id)
+        if not contract["required_runtime_binding_ids"]:
+            raise RuntimeRecoveryError("RUNTIME_RECOVERY_PLAN_REVISION_REQUIRED")
+        snapshot = load_approved_plan_snapshot(self.data_path, task_id, state=durable)
+        approved = next((row for row in snapshot.get("steps", []) if row.get("step_id") == sid), {})
+        if (approved.get("execution_capability_id") != contract["capability_id"]
+            or approved.get("capability_contract_hash") != capability_contract_hash(contract)
+            or step.get("capability_contract_hash") != capability_contract_hash(contract)):
+            raise RuntimeRecoveryError("RUNTIME_RECOVERY_PLAN_REVISION_REQUIRED")
+        if _not_dispatched(durable, sid):
+            return durable
+        task = _task_state(durable)
+        attempts = [row for row in (durable.get("provenance_state") or {}).get("attempts", {}).values()
+                    if row.get("step_id") == sid]
+        recovery = task.get("recovery_state") or {}
+        events = recovery.get("state_events") or []
+        source_scope = runtime_generation_source_scope(durable)
+        active = recovery.get("active_recovery") or {}
+        receipt = (task.get("typed_recovery_receipts") or {}).get(active.get("recovery_id")) or {}
+        directive = receipt.get("directive") or {}
+        recovery_authority, authority_digest = False, ""
+        if directive.get("action") == "retry_step" and directive.get("evidence_refs"):
+            # Reuse the existing admitted receipt, Generate dispatch and causal
+            # scope checks; a historical directive is not a new retry grant.
+            from agent_core.active_state import generation_provenance_for_dispatch, current_generation_causal_reference
+            from agent_core.recovery import RecoveryExecutionEnvelope
+            from agent_core.workflow.generate_handoff import project_corrective_generate_seed
+            try:
+                dispatch = generation_provenance_for_dispatch(durable, source_route="runtime_preparation")
+                envelope = RecoveryExecutionEnvelope.from_mapping(recovery.get("active_recovery_envelope") or {})
+                project_corrective_generate_seed(receipt.get("outcome") or {}, durable)
+                causal = current_generation_causal_reference(durable)
+                prior_retired = {aid for event in events if event.get("event_type") == "runtime_generation_prepared"
+                                 for aid in event.get("retired_attempt_ids") or []}
+                pending = [row for row in attempts if row.get("attempt_id") not in prior_retired]
+                latest = max(pending, key=lambda row: (str(row.get("created_at") or row.get("started_at") or ""),
+                             str(row.get("attempt_id") or "")), default={})
+                authority_digest = digest({"recovery_id": active.get("recovery_id"),
+                    "envelope_hash": envelope.immutable_hash, "directive_digest": receipt.get("directive_digest"),
+                    "source_attempt_id": active.get("source_attempt_id")})
+                recovery_authority = (
+                    dispatch.mode == "RECOVERY" and causal.get("status") == "verified"
+                    and active.get("source_attempt_id") == latest.get("attempt_id")
+                    and (recovery.get("generation_claim") or {}).get("status") in {"issued", "claimed", "outcome_unknown"}
+                    and not any(event.get("authority_digest") == authority_digest for event in events))
+            except (ValueError, TypeError, KeyError):
+                recovery_authority = False
+        # An approved replacement Plan is another existing authority boundary.
+        revised = bool(attempts) and all(row.get("plan_version")
+            and str(row.get("plan_id") or "") == str(durable.get("plan_id") or "")
+            and str(row["plan_version"]) != str(durable.get("plan_version")) for row in attempts)
+        install = task.get("installation_receipt") or {}
+        request = task.get("installation_request") or {}
+        install_digest = stable_digest(request) if request else ""
+        installed = (bool(request.get("request_id")) and bool(request.get("attempt_id"))
+            and bool(request.get("target_env")) and bool(request.get("target_prefix"))
+            and install.get("status") == "available"
+            and selected_skill_id in (install.get("selected_skills") or [])
+            and contract["capability_id"] in (install.get("capabilities") or [])
+            and request.get("generation_source_scope") == source_scope
+            and install.get("request_hash") == install_digest
+            and all(install.get(key) == request.get(key) for key in (
+                "request_id", "attempt_id", "target_env", "target_prefix", "selected_skills", "capabilities", "generation_source_scope"))
+            and not any(event.get("authority_digest") == install_digest for event in events))
+        if not (recovery_authority or revised or installed):
+            raise RuntimeRecoveryError("RUNTIME_RECOVERY_GENERATION_AUTHORITY_REQUIRED")
+        authority = "recovery" if recovery_authority else "plan_revision" if revised else "installation_receipt"
+        authority_digest = authority_digest if recovery_authority else digest(source_scope) if revised else install_digest
+        if not attempts or step.get("status") in {"passed", "done", "completed"}:
+            raise RuntimeRecoveryError("RUNTIME_RECOVERY_EXECUTION_EVIDENCE_REQUIRED")
+        retired = []
+        for row in attempts:
+            status = str(row.get("status") or "").upper()
+            if (status not in {"EVIDENCE_COMMITTED", "VALIDATION_FAILED", "FAILED"}
+                or not row.get("finished_at") or type(row.get("returncode")) is not int
+                or _pid_is_alive(row.get("pid"))):
+                raise RuntimeRecoveryError("RUNTIME_RECOVERY_PROCESS_NOT_TERMINAL")
+            retired.append(row["attempt_id"])
+        active_execution = task.get("active_execution") or {}
+        if active_execution and active_execution.get("attempt_id") not in retired:
+            raise RuntimeRecoveryError("RUNTIME_RECOVERY_OTHER_EXECUTION_OWNER")
+        for aid in retired:
+            record_provenance_event(durable, "attempt_state_changed", {"attempt_id": aid, "status": "FAILED"})
+        task = _task_state(durable)
+        task.update(active_execution={}, current_attempt="", pending_action={}, verification_pending={})
+        runtime = deepcopy(durable.get("runtime_state") or {})
+        runtime["execution_epoch"] = int(runtime.get("execution_epoch") or 0) + 1
+        durable["runtime_state"] = runtime
+        recovery = deepcopy(task.get("recovery_state") or {})
+        recovery["state_events"] = [*recovery.get("state_events", []), {
+            "event_type": "runtime_generation_prepared", "plan_id": durable.get("plan_id"),
+            "plan_version": durable.get("plan_version"), "step_id": sid,
+            "execution_epoch": runtime["execution_epoch"], "retired_attempt_ids": sorted(retired),
+            "capability_contract_hash": capability_contract_hash(contract), "recorded_at": _stamp(self._now()),
+            "authority": authority, "authority_digest": authority_digest, "source_scope": source_scope}]
+        task["recovery_state"] = recovery
+        durable["task_state"] = task
+        durable["execution_cursor_step_id"] = ""
+        save_plan_state(self.data_path, task_id, durable)
+        return load_plan_state(self.data_path, task_id)
+
     def _scope(self, durable: Mapping[str, Any], skill_id: str, contract: Mapping[str, Any]) -> dict[str, Any]:
         if workflow_routing_schema_version(durable) != 2:
             raise RuntimeRecoveryError("RUNTIME_RECOVERY_REQUIRES_SCHEMA2")
@@ -182,6 +336,7 @@ class RuntimeEvidenceRecovery:
             "task_id": str(durable.get("task_id") or ""),
             "plan_id": str(durable.get("plan_id") or ""),
             "plan_version": str(durable.get("plan_version") or ""),
+            "execution_epoch": str((durable.get("runtime_state") or {}).get("execution_epoch") or "0"),
             "semantic_plan_hash": semantic_plan_hash(durable),
             "step_id": step_id,
             "step_revision": digest({key: step.get(key) for key in (
@@ -223,7 +378,11 @@ class RuntimeEvidenceRecovery:
         # generic: e.g. a negative executable fact cannot be bypassed because a
         # separate home/directory observation can still derive its filename.
         for binding_id, fact in facts.items():
-            if fact["availability"] in {"UNAVAILABLE", "AMBIGUOUS"} or (fact["availability"] == "UNKNOWN" and fact["evidence_ids"]):
+            if fact["availability"] in {"UNAVAILABLE", "AMBIGUOUS"} or (
+                fact["availability"] == "UNKNOWN" and (
+                    fact["evidence_ids"] or fact["reason_code"] == "evidence_expired_or_future"
+                )
+            ):
                 registry.pop(binding_id, None)
         for binding_id in scope["required_binding_ids"]:
             row = registry.get(binding_id) or {}

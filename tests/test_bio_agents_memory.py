@@ -469,11 +469,13 @@ class BioAgentMemoryTests(unittest.TestCase):
 
     def test_installer_success_uses_direct_skill_healthcheck(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
-
-        self.assertIn("recheck_successes = []", source)
-        self.assertIn("Installation/runtime is usable after direct skill healthcheck", source)
-        self.assertIn("Original installer final message was overridden because the verified runtime healthcheck passed", source)
-        self.assertIn("if recheck_successes and not recheck_failures:", source)
+        section = source[source.index("    async def _install_subagent_impl("):source.index("    def _ensure_skill_runtime_ready(")]
+        self.assertIn("use_cache=False,", section)
+        self.assertIn("target_env=target_env, capability_ids=needed", section)
+        self.assertIn('verified_env == target_env', section)
+        self.assertIn('receipt["verification"] = verification', section)
+        self.assertNotIn("_mark_plan_current_done", section)
+        self.assertNotIn("final_res_lower", section)
 
     def test_memory_status_reads_checkpoint_messages(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
@@ -727,50 +729,37 @@ class BioAgentMemoryTests(unittest.TestCase):
         self.assertLess(generate_guard_idx, supervisor_idx)
         self.assertIn('return "generate"', source[generate_guard_idx:supervisor_idx])
 
-    def test_install_subagent_failure_returns_to_legacy_generate_chain(self):
+    def test_install_subagent_uses_scoped_parent_result_and_existing_router(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
-
         self.assertIn("def install_subagent_router(state):", source)
         self.assertIn('workflow.add_conditional_edges("install_subagent", install_subagent_router', source)
         self.assertNotIn('workflow.add_edge("install_subagent", "generate")', source)
-        self.assertIn('return "generate"', source[source.index("def install_subagent_router(state):"):])
-        self.assertIn("def _next_step_after_install_result", source)
-        self.assertIn('"next_step": self._next_step_after_install_result(task_id)', source)
+        self.assertIn("return await self._install_subagent_impl(state)", source)
+        self.assertIn("await self._resume_after_runtime_preparation", source)
 
-    def test_repeated_installation_loop_detection_continues_pending_plan(self):
+    def test_repeated_installation_uses_persisted_execution_receipt(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
+        section = source[source.index("    async def _install_subagent_impl("):source.index("    def _ensure_skill_runtime_ready(")]
+        self.assertIn('and not receipt["execution"]', section)
+        self.assertIn('"registration_retry"', section)
+        self.assertIn("self._persist_installation_receipt", section)
+        self.assertNotIn("_mark_plan_current_done", section)
 
-        loop_idx = source.index("repeated installation loop detected")
-        return_idx = source.index('return {', loop_idx)
-
-        self.assertIn('"next_step": self._next_step_after_install_result(task_id)', source[return_idx:])
-
-    def test_install_subagent_resume_interrupt_does_not_increment_attempt_count(self):
+    def test_install_subagent_resume_interrupt_preserves_work_order(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
-
-        pending_idx = source.index("installer_has_pending_interrupt = bool(")
-        attempt_idx = source.index("self._install_attempt_counts[attempt_key]", pending_idx)
-        guard_idx = source.index("if not installer_has_pending_interrupt:", pending_idx)
-        loop_idx = source.index("repeated installation loop detected", attempt_idx)
-
-        self.assertLess(guard_idx, attempt_idx)
-        self.assertLess(attempt_idx, loop_idx)
-        self.assertIn(
-            "if self._install_attempt_counts.get(attempt_key, 0) > 2:",
-            source[attempt_idx:loop_idx],
-        )
-        self.assertIn(
-            "if not installer_has_pending_interrupt:\n                    self._install_scope_attempt_counts[scope_key]",
-            source[pending_idx:loop_idx],
-        )
+        section = source[source.index("    async def _install_subagent_impl("):source.index("    def _ensure_skill_runtime_ready(")]
+        self.assertIn("payload = None if pending_interrupt else", section)
+        self.assertIn('"installation_request": request', section)
+        self.assertIn('stable_digest(request)[:24]', section)
+        self.assertIn("Command(resume=interrupt(snapshot.tasks[0].interrupts[0].value))", section)
 
     def test_install_subagent_prints_final_observation(self):
         source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
-
-        observe_idx = source.index('await self._observe_session_memory(\n                task_id,\n                "install_subagent"', source.index('final_res_lower = str(final_res).lower()'))
-        print_idx = source.index('output.print_observation(f"<observation>{final_res}</observation>")', observe_idx)
-        return_idx = source.index('return {"messages": [AIMessage(content=f"<observation>{final_res}</observation>")]', print_idx)
-
+        section = source[source.index("    async def _install_subagent_impl("):source.index("    def _ensure_skill_runtime_ready(")]
+        save_idx = section.index("self._persist_installation_receipt(task_id, request, receipt)")
+        print_idx = section.index("output.print_observation(")
+        return_idx = section.index("return result", print_idx)
+        self.assertLess(save_idx, print_idx)
         self.assertLess(print_idx, return_idx)
 
     def test_ctrl_c_exits_interactive_loop(self):

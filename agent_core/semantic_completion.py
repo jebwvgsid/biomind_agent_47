@@ -845,18 +845,26 @@ def evaluate_boolean_predicates(
             reason_code = contract_error
             disposition = "plan_revision_required"
         elif parser_id:
-            if parser_id != CONTIG_PARSER_ID:
+            from agent_core.genomics_reference_bundle import (
+                REFERENCE_BUNDLE_PARSER_ID, ReferenceBundleError, build_reference_bundle_receipt,
+            )
+            if parser_id not in {CONTIG_PARSER_ID, REFERENCE_BUNDLE_PARSER_ID}:
                 status = "contract_error"
                 reason_code = "PREDICATE_PARSER_UNREGISTERED"
                 disposition = "plan_revision_required"
             else:
                 try:
-                    parser_receipt = build_contig_compatibility_receipt(input_paths)
+                    parser_receipt = (build_reference_bundle_receipt(plan_state, step)
+                                      if parser_id == REFERENCE_BUNDLE_PARSER_ID
+                                      else build_contig_compatibility_receipt(input_paths))
                     authoritative_actual = parser_receipt["value"]
-                except ContigParserError as exc:
+                except (ContigParserError, ReferenceBundleError) as exc:
                     status = "incomplete"
                     reason_code = exc.code
                     disposition = missing_disposition
+                    if isinstance(exc, ReferenceBundleError):
+                        parser_receipt = {"parser_id": parser_id, "value": False,
+                                          "error_code": exc.code, "detail": exc.detail}
         if status == "passed" and observed is None:
             status = "incomplete"
             reason_code = "BOOLEAN_PREDICATE_EVIDENCE_MISSING"

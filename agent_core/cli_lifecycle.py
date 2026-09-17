@@ -114,6 +114,14 @@ def _cause_text(facts, origin):
     if code == 'EXECUTION_FAILED':
         rc = origin.get('returncode')
         label = '脚本执行失败' + (f'，退出码 {rc}' if type(rc) is int else '')
+        runtime = facts.get('runtime_diagnostics') or {}
+        if runtime.get('authority') == 'script_report_only' and runtime.get('missing_commands'):
+            label += '；该次脚本报告 missing_commands=[' + _brief(', '.join(runtime['missing_commands'])) + ']'
+            if runtime.get('failure_stage'):
+                label += '，阶段=' + _brief(runtime['failure_stage'])
+            if runtime.get('runtime_manifest_source') == 'exact_attempt_action' and runtime.get('runtime_binding_count') == 0:
+                label += '；该动作正式 runtime bindings 为空'
+            return label + '；已有环境是否能提供所需能力仍待验证（EXECUTION_FAILED）。', False
         return label + '；具体原因尚未定位（EXECUTION_FAILED）。', False
     labels = {'DELIVERY_CONTRACT_UNMET': '交付条件尚未满足',
               'WORKSPACE_MUTATION_NOT_ATTESTED': '工作区变更未通过正式核验',
@@ -156,12 +164,14 @@ def terminal_text(status, facts):
     cause, identity_issue = _cause_text(facts, origin)
     if status != 'completed':
         rows.append('原始问题：' + cause)
-    failures = list(dict.fromkeys(str(r.get('error_code') or 'UNKNOWN') for r in facts.get('inspection_failures', [])))
+    failures = list(dict.fromkeys(str(r.get('error_code') or 'UNKNOWN') for r in facts.get('current_inspection_failures', facts.get('inspection_failures', []))))
     if failures:
         labels = {'ARTIFACT_LOCATOR_MISSING': '未取得产物的可读位置',
                   'ARTIFACT_PERMISSION_DENIED': '读取产物时权限不足',
                   'FILE_NOT_FOUND': '读取时目标文件不存在'}
         rows.append('恢复取证问题：' + '；'.join(labels.get(code, '读取证据失败') + '（' + code + '）' for code in failures))
+    if facts.get('resolved_inspection_failures'):
+        rows.append(f"历史取证错误中 {len(facts['resolved_inspection_failures'])} 项已有后续成功读取，错误记录仍保留。")
     trigger = stop.get('error_code') or facts.get('error_code')
     if trigger:
         rows.append('停止触发：' + _stop_text(stop, str(trigger)))
@@ -176,6 +186,7 @@ def terminal_text(status, facts):
         protection = _OUTPUT_PROTECTION.get(str(origin.get('error_code') or origin.get('reason_code') or ''))
         next_step = (protection[1] if protection else
                      '修正当前步骤证据登记的标识，再按现有流程核验与提交。' if identity_issue else
+                     '验证已声明的环境与所需命令，按正式修订和批准流程重新生成当前未完成步骤。' if (facts.get('runtime_diagnostics') or {}).get('missing_commands') else
                      '先查看当前步骤的执行与核验详情，定位具体问题后再选择修复。')
         rows.append('下一步：' + next_step)
     if facts.get('summary_llm_calls') == 0:
@@ -193,6 +204,20 @@ def delivery_text(facts):
     internal = facts.get('internal_diagnostic_delivery') or {}
     if internal.get('status') not in {None, '', 'not_needed'}:
         text += '；内部诊断归档=' + str(internal['status'])
+    # Only successful current publication receipts expose openable paths. A
+    # failed protected target is never presented as the current report.
+    paths = []
+    for label, locations, publications in (
+        ('本次报告', facts.get('report_paths') or {}, receipts),
+        ('本次内部诊断', internal.get('paths') or {}, internal.get('receipts') or {}),
+    ):
+        for name in ('report.md', 'stage_status.tsv', 'reproduce.sh'):
+            path, receipt = locations.get(name), publications.get(name) or {}
+            if (isinstance(path, str) and path.startswith('/')
+                    and receipt.get('status') in {'created', 'reused', 'unchanged'} and receipt.get('sha256')):
+                paths.append(label + ' ' + name + '：' + path)
+    if paths:
+        text += '\n' + '\n'.join(paths)
     return text
 
 

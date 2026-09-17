@@ -1,6 +1,7 @@
 import re
 import logging
 import shlex
+from copy import deepcopy
 from typing import Any, Dict, Literal
 from pathlib import Path
 from datetime import datetime
@@ -16,6 +17,11 @@ from agent_core.state import InstallerState
 from agent_core.middleware import HITLMiddleware
 from agent_core.llm_safety import is_llm_input_rejected, llm_failure_summary
 from agent_core.context_lineage import ainvoke_with_snapshot
+from agent_core.action_runtime import (
+    build_action_approval_identity,
+    stable_digest,
+    validate_action_approval_identity,
+)
 from package_manager import PackageManager
 from execution.executor import detect_script_language, normalize_script_code, run_bash_script, run_python_repl
 from prompts.manager import PromptManager
@@ -48,7 +54,9 @@ class InstallerAgent:
         else:
             self.pm = PackageManager(work_dir=work_dir)
         self.checkpointer = MemorySaver()
-        self.middleware = HITLMiddleware(auto_approve_safe=True)
+        # Installer commands mutate environments. Generic risk heuristics (in
+        # particular `conda run`) are not installation authorization.
+        self.middleware = HITLMiddleware(auto_approve_safe=False)
 
         # 1. 初始化 RAG
         self.retriever = None
@@ -66,40 +74,73 @@ class InstallerAgent:
         self.graph = self._build_graph()
 
     def _is_low_friction_installer_command(self, code: str, language: str) -> bool:
-        if language != "Bash":
-            return False
-        stripped = code.strip()
-        if not stripped:
-            return False
-        lines = [
-            line.strip() for line in stripped.splitlines()
-            if line.strip() and not line.strip().startswith("#")
-        ]
-        if not lines:
-            return False
-        dangerous_patterns = [
-            r"\brm\b",
-            r"\bmv\b",
-            r"\bchmod\b",
-            r"\bchown\b",
-            r"\bsudo\b",
-            r"\bwget\b",
-            r"\bcurl\b",
-            r"\bgit\s+clone\b",
-            r"\bscp\b",
-            r"\bssh\b",
-        ]
-        if any(re.search(pattern, stripped, re.IGNORECASE) for pattern in dangerous_patterns):
-            return False
-        allowed_prefixes = (
-            "conda run -n ",
-            "mamba run -n ",
-            "echo ",
-            "which ",
-            "pwd",
-            "ls ",
+        # Read-only healthchecks belong to the parent's controlled verifier.
+        # No generated shell prefix is proof that the entire script is read-only.
+        return False
+
+    @staticmethod
+    def _request_scope(state: InstallerState) -> Dict[str, Any]:
+        request = deepcopy(dict(state.get("installation_request") or {}))
+        request["request_id"] = str(request.get("request_id") or request.get("fingerprint") or "")
+        required = ("request_id", "attempt_id", "tool", "target_env", "target_prefix")
+        missing = [name for name in required if not str(request.get(name) or "").strip()]
+        if missing:
+            raise ValueError("INSTALLATION_SCOPE_MISSING: " + ", ".join(missing))
+        prefix = str(request["target_prefix"])
+        if not Path(prefix).is_absolute():
+            raise ValueError("INSTALLATION_TARGET_PREFIX_NOT_ABSOLUTE")
+        if str(state.get("tool_name") or "") != str(request["tool"]):
+            raise ValueError("INSTALLATION_TOOL_SCOPE_MISMATCH")
+        if sorted(state.get("selected_skills") or []) != sorted(request.get("selected_skills") or []):
+            raise ValueError("INSTALLATION_SKILL_SCOPE_MISMATCH")
+        return request
+
+    def _command_identity(self, state, request, code, language):
+        """Use the existing action approval ABI for the complete install proposal."""
+        return build_action_approval_identity(
+            generated_script_sha256=stable_digest({"language": language, "code": code}),
+            capability_contract_hash_value=stable_digest({
+                "selected_skills": request.get("selected_skills", []),
+                "capabilities": request.get("capabilities", []),
+            }),
+            runtime_env_manifest_hash=stable_digest(request),
+            artifact_env_manifest_hash=stable_digest({}),
+            execution_policy_manifest_hash=stable_digest({
+                "approval_scope": state.get("approval_scope") or {},
+                "path_prefix": str(self.pm.get_shim_dir_str()),
+                "registration_owner": "parent_target_verifier",
+            }),
+            working_directory=str(self.pm.source_root),
         )
-        return all(line.startswith(allowed_prefixes) or line == "pwd" for line in lines)
+
+    @staticmethod
+    def _receipt_scope(request):
+        scope = {name: deepcopy(request.get(name)) for name in (
+            "request_id", "attempt_id", "target_env", "target_prefix",
+            "selected_skills", "capabilities",
+            "generation_source_scope",
+        )}
+        scope["request_hash"] = stable_digest(request)
+        return scope
+
+    def _execution_receipt(self, state, request):
+        previous = dict(state.get("installation_receipt") or {})
+        scope = self._receipt_scope(request)
+        if any(previous.get(name) != value for name, value in scope.items()):
+            previous = {}
+        return {**previous, **scope, "execution": list(previous.get("execution") or [])}
+
+    @staticmethod
+    def _execution_failure_category(stderr):
+        # Classification preserves evidence; it never grants a repair or guesses
+        # that a missing package caused an unrecognized process failure.
+        patterns = (
+            ("permission", r"Permission denied|PermissionError|\[Errno 13\]"),
+            ("network", r"Could not resolve host|Temporary failure in name resolution|Connection timed out|Network is unreachable"),
+            ("solver", r"UnsatisfiableError|LibMambaUnsatisfiableError|PackagesNotFoundError|ResolutionImpossible"),
+            ("build", r"CMake Error|Failed building wheel|make(?:\[\d+\])?: \*\*\*"),
+        )
+        return next((category for category, pattern in patterns if re.search(pattern, str(stderr or ""), re.I)), "unknown")
 
     def _installer_generate_turns(self, state: InstallerState) -> int:
         return sum(1 for msg in state.get("messages", []) if isinstance(msg, AIMessage))
@@ -223,7 +264,16 @@ class InstallerAgent:
         return text.rstrip(";")
 
     def _strict_runtime_contract(self, state: InstallerState) -> Dict[str, Any]:
-        text = "\n".join(str(getattr(msg, "content", "") or "") for msg in state.get("messages", []))
+        request = dict(state.get("installation_request") or {})
+        if "install_policy" in request:
+            strict = str(request.get("install_policy") or "").lower() in {"declared-only", "strict", "locked"}
+            return {**request, "active": strict,
+                    "allowed": [self._normalize_install_command_for_contract(command)
+                                for command in request.get("allowed_install_commands") or []]}
+        # Legacy handover compatibility: only the original work order is
+        # authority, never a later model reply or reflected observation.
+        text = next((str(getattr(msg, "content", "") or "") for msg in state.get("messages", [])
+                     if isinstance(msg, HumanMessage)), "")
         matches = re.findall(
             r"\[STRICT SKILL RUNTIME CONTRACT\](.*?)\[/STRICT SKILL RUNTIME CONTRACT\]",
             text,
@@ -278,92 +328,6 @@ class InstallerAgent:
             if line.strip() and not line.strip().startswith("#")
         ]
 
-    def _declared_install_like_command(self, code: str, contract: Dict[str, Any]) -> str:
-        if not contract.get("active"):
-            return ""
-        allowed = set(contract.get("allowed") or [])
-        normalized_code = self._normalize_install_command_for_contract(code)
-        if normalized_code in allowed and self._is_install_like_command(normalized_code):
-            return normalized_code
-        for line in self._command_lines(code):
-            normalized = self._normalize_install_command_for_contract(line)
-            if normalized in allowed and self._is_install_like_command(line):
-                return normalized
-        return ""
-
-    def _verify_and_register_contract_runtime(
-        self,
-        contract: Dict[str, Any],
-        tool_name: str,
-        attempted_command: str,
-    ) -> str:
-        if not contract.get("active"):
-            return ""
-        env = str(contract.get("target_env") or "").strip()
-        healthcheck = str(contract.get("healthcheck") or "").strip()
-        if not env or not healthcheck:
-            return ""
-        selected_skills = list(contract.get("selected_skills") or [])
-        skill_id = selected_skills[0] if selected_skills else None
-        language = str(contract.get("language") or "").strip()
-        packages = contract.get("packages") or []
-        capabilities = contract.get("capabilities") or []
-
-        try:
-            self.pm.register_environment(
-                env_name=env,
-                purpose=f"Runtime for {', '.join(selected_skills) if selected_skills else tool_name}",
-                packages=packages,
-                skill_id=skill_id,
-                notes="Registered from strict skill runtime contract before healthcheck.",
-                language=language,
-                capabilities=capabilities,
-                healthcheck=healthcheck,
-                status="registered",
-                tool_name=tool_name,
-            )
-            ok, detail = self.pm.verify_environment(
-                env_name=env,
-                language=language,
-                healthcheck=healthcheck,
-            )
-        except Exception as exc:
-            return (
-                "<observation>❌ Strict runtime healthcheck could not run after declared install command.\n"
-                f"Command: {attempted_command}\n"
-                f"Healthcheck: {healthcheck}\n"
-                f"Error: {exc}</observation>"
-            )
-
-        if ok:
-            return (
-                "<observation>✅ Declared runtime healthcheck passed.\n"
-                f"Healthcheck: {healthcheck}\n"
-                f"Detail: {str(detail or 'OK')[:500]}\n"
-                f"Environment '{env}' registered successfully via PackageManager.</observation>"
-            )
-        normalized_attempt = self._normalize_install_command_for_contract(attempted_command)
-        remaining = [
-            command for command in contract.get("allowed", [])
-            if self._normalize_install_command_for_contract(command) != normalized_attempt
-        ]
-        if not remaining:
-            return (
-                "<failure>❌ Strict runtime healthcheck failed after its only declared install command.\n"
-                f"Command: {attempted_command}\n"
-                f"Healthcheck: {healthcheck}\n"
-                f"Detail: {str(detail or 'Healthcheck failed.')[:700]}\n"
-                "No declared fallback install command remains. Stop instead of inferring another package, "
-                "environment, channel, or version.</failure>"
-            )
-        return (
-            "<observation>❌ Strict runtime healthcheck failed after declared install command.\n"
-            f"Command: {attempted_command}\n"
-            f"Healthcheck: {healthcheck}\n"
-            f"Detail: {str(detail or 'Healthcheck failed.')[:700]}\n"
-            "A different declared install command remains; use it at most once and then re-run the healthcheck.</observation>"
-        )
-
     def _is_install_like_command(self, line: str) -> bool:
         return bool(re.search(
             r"\b(?:conda|mamba)\s+(?:install|create|env\s+(?:create|update))\b"
@@ -414,6 +378,13 @@ class InstallerAgent:
         # Node 1: Generate (智能 RAG + Prompt)
         # ------------------------------------
         async def inst_generate(state: InstallerState):
+            try:
+                request = self._request_scope(state)
+                receipt = self._execution_receipt(state, request)
+            except ValueError:
+                receipt = {}
+            if receipt.get("status") in {"cancelled", "rejected", "blocked", "execution_failed", "verification_required"}:
+                return {"messages": [HumanMessage(content=str(receipt.get("detail") or "Installation receipt already recorded."))]}
             messages = state["messages"]
             tool_name = state["tool_name"]
             
@@ -548,175 +519,158 @@ class InstallerAgent:
         # Node 2: Execute (执行 + 注册)
         # ------------------------------------
         async def inst_execute(state: InstallerState):
-            last_msg = state["messages"][-1]
-            content = last_msg.content
-            tool_name = state["tool_name"]
+            content = str(state["messages"][-1].content or "")
+            try:
+                request = self._request_scope(state)
+            except ValueError as exc:
+                return {
+                    "installation_receipt": {"status": "blocked", "failure_stage": "authorization", "detail": str(exc)},
+                    "messages": [HumanMessage(content=f"<failure>{exc}</failure>")],
+                }
+            receipt = self._execution_receipt(state, request)
+            if receipt.get("status") in {"rejected", "cancelled"}:
+                return {"installation_receipt": receipt, "messages": [HumanMessage(
+                    content="<failure>This installation proposal was already rejected or cancelled.</failure>"
+                )]}
             observations = []
-            contract = self._strict_runtime_contract(state)
-            registration_found = False
-            
-            # 1. 执行 Shell/Python 代码
+            approved_identity = dict(state.get("action_approval_identity") or {})
             exec_matches = re.findall(r"<execute.*?>(.*?)</execute>", content, re.DOTALL)
-            if not exec_matches: # Markdown 保底
+            if not exec_matches:
                 exec_matches = re.findall(r"```(?:bash|sh|python)?\n(.*?)```", content, re.DOTALL)
 
-            execution_success = False
+            def finish(status, detail, stage=""):
+                receipt.update(status=status, detail=detail)
+                if stage:
+                    receipt["failure_stage"] = stage
+                return {"installation_receipt": receipt,
+                        "action_approval_identity": approved_identity,
+                        "messages": [HumanMessage(content=detail)]}
+
             for original_code in exec_matches:
-                language = detect_script_language(original_code)
-                code = normalize_script_code(original_code)
-                stripped_code = code.strip()
-
-                if re.fullmatch(r"<register_(?:environment|tool)\b.*?/?>", stripped_code, re.DOTALL):
+                code = normalize_script_code(original_code).strip()
+                if re.fullmatch(r"<register_(?:environment|tool)\b.*?/?>", code, re.DOTALL):
                     continue
-
-                if self._is_low_friction_installer_command(stripped_code, language):
-                    final_code = stripped_code
-                else:
-                    contract_violation = self._runtime_contract_violation(stripped_code, language, state)
-                    if contract_violation:
-                        observations.append(f"<observation>❌ Runtime contract violation: {contract_violation}</observation>")
-                        continue
-                    action, final_code = self.middleware.review_code(code, language)
-                    if action == "reject":
-                        observations.append(
-                            "<observation>❌ User rejected execution. "
-                            f"Feedback: {str(final_code or 'No reason provided.')[:500]}</observation>"
-                        )
-                        continue
-                    elif action == "quit":
-                        return {"messages": [HumanMessage(content="Installation terminated.")]}
-                    elif action == "edit":
-                        final_code = normalize_script_code(final_code)
-                        language = detect_script_language(final_code)
-                    else:
-                        final_code = normalize_script_code(final_code)
-
-                contract_violation = self._runtime_contract_violation(final_code, language, state)
+                language = detect_script_language(code)
+                contract_violation = self._runtime_contract_violation(code, language, state)
                 if contract_violation:
-                    observations.append(f"<observation>❌ Runtime contract violation: {contract_violation}</observation>")
+                    return finish("blocked", f"<failure>Runtime contract violation: {contract_violation}</failure>", "authorization")
+                missing = [key for key in ("sources", "version_requirements", "impact", "verification_commands")
+                           if not request.get(key)]
+                if missing:
+                    return finish("blocked", "<failure>INSTALLATION_PROPOSAL_INCOMPLETE: " + ", ".join(missing) + "</failure>", "authorization")
+                identity = self._command_identity(state, request, code, language)
+                completed = next((row for row in receipt["execution"]
+                                  if row.get("action_approval_identity") == identity
+                                  and row.get("returncode") == 0), None)
+                if completed:
+                    observations.append("<observation>Installation command already completed for this request; reusing execution receipt.</observation>")
                     continue
-
-                if language == "Python":
-                    stdout, stderr, rc = await run_python_repl(final_code)
-                else:
-                    shim_path = self.pm.get_shim_dir_str()
-                    source_root = str(self.pm.source_root)
-                    full_code = (
-                        f'export PATH="{shim_path}:$PATH"\n'
-                        f"cd {shlex.quote(source_root)}\n"
-                        f"{final_code}"
-                    )
+                covered = False
+                if approved_identity:
+                    try:
+                        validate_action_approval_identity(approved_identity, identity)
+                        covered = True
+                    except ValueError:
+                        pass
+                if not covered:
+                    provenance = {"schema_version": 1, "sections": [
+                        {"title": "A. INSTALLATION COMMAND", "risk_source": "MODEL_SCRIPT",
+                         "source": "installer", "owner": "model", "scope": "current_action",
+                         "hash": identity["generated_script_sha256"], "content": code},
+                        {"title": "B. EXACT INSTALLATION SCOPE", "risk_source": "EXECUTION_POLICY",
+                         "source": "installation_request", "owner": "parent", "scope": "current_action",
+                         "hash": identity["runtime_env_manifest_hash"],
+                         "content": {"request": request, "approval_scope": state.get("approval_scope") or {},
+                                     "action_approval_identity": identity,
+                                     "cwd": str(self.pm.source_root),
+                                     "env": {"PATH_prefix": str(self.pm.get_shim_dir_str())}}},
+                    ]}
+                    action, final_code = self.middleware.review_code(code, language, provenance=provenance)
+                    if action in {"reject", "quit"}:
+                        receipt["decision"] = {"decision": action, "action_approval_identity": identity,
+                                               "guidance": str(final_code or "No reason provided.")}
+                        if action == "reject":
+                            return finish("rejected", "<failure>User rejected execution. "
+                                          f"Feedback: {str(final_code or 'No reason provided.')[:500]}</failure>", "authorization")
+                        return finish("cancelled", "<failure>Installation cancelled by user.</failure>", "authorization")
+                    if action not in {"approve", "edit"}:
+                        return finish("blocked", "<failure>INSTALLATION_APPROVAL_NOT_GRANTED</failure>", "authorization")
+                    final_code = normalize_script_code(final_code).strip()
+                    # A replacement changes the complete proposal. Expose it for a
+                    # new review instead of running it under the original identity.
+                    if final_code != code:
+                        return finish("proposal_changed", "<observation>Edited proposal requires a new exact review.\n"
+                                      f"```{language.lower()}\n{final_code}\n```</observation>")
+                    approved_identity = identity
+                source_root = str(self.pm.source_root)
+                shim_path = str(self.pm.get_shim_dir_str())
+                row = {"command": code, "language": language, "cwd": source_root,
+                       "env": {"PATH_prefix": shim_path}, "action_approval_identity": identity}
+                try:
+                    if language == "Python":
+                        # The Python REPL has a different implicit cwd/state contract.
+                        # Keep all installation execution in the reviewed Bash carrier.
+                        return finish("blocked", "<failure>INSTALLATION_CARRIER_UNSUPPORTED: use an explicit Bash launcher.</failure>", "authorization")
+                    full_code = (f"export PATH={shlex.quote(shim_path)}:\"$PATH\"\n"
+                                 f"cd {shlex.quote(source_root)}\n{code}")
                     stdout, stderr, rc = await run_bash_script(full_code)
+                except Exception as exc:
+                    row.update(returncode=None, stdout="", stderr=str(exc), failure_stage="execution", cause="unknown")
+                    receipt["execution"].append(row)
+                    return finish("execution_failed", f"<failure>Installation execution failed: {exc}</failure>", "execution")
+                row.update(returncode=rc, stdout=str(stdout), stderr=str(stderr))
+                if rc != 0:
+                    row["failure_category"] = self._execution_failure_category(stderr)
+                    receipt["failure_category"] = row["failure_category"]
+                receipt["execution"].append(row)
+                observations.append(f"<observation>[{language}] {'✅' if rc == 0 else '❌'}\n"
+                                    f"Command:\n{code}\nReturn code: {rc}\nCWD: {source_root}\n"
+                                    f"STDOUT:\n{str(stdout)[:500]}\nSTDERR:\n{str(stderr)[:500]}</observation>")
+                if rc != 0:
+                    return finish("execution_failed", "\n".join(observations), "execution")
 
-                status = "✅" if rc == 0 else "❌"
-                if rc == 0: execution_success = True
-                observations.append(
-                    f"<observation>[{language}] {status}\n"
-                    f"Command:\n{final_code[:500]}\n"
-                    f"STDOUT:\n{stdout[:500]}\n"
-                    f"STDERR:\n{stderr[:500]}</observation>"
-                )
-                declared_command = self._declared_install_like_command(final_code, contract)
-                if declared_command:
-                    runtime_check = self._verify_and_register_contract_runtime(
-                        contract,
-                        tool_name,
-                        declared_command,
-                    )
-                    if runtime_check:
-                        observations.append(runtime_check)
-                        if "registered successfully" in runtime_check:
-                            registration_found = True
-
-            # 2. [核心修复] 注册标签解析与强制校验
-            attr_pattern = re.compile(r'(\w+)=(["\'])(.*?)\2')
-
-            for tag_attrs in re.findall(r"<register_environment\b(.*?)/?>", content, re.DOTALL):
+            # Registration is a parent-owned stage after all target-specific
+            # healthchecks. Model tags are requests, never availability receipts.
+            attr_pattern = re.compile(r"(\w+)=([\"'])(.*?)\2")
+            registrations = []
+            for kind, tag_attrs in re.findall(r"<register_(environment|tool)\b(.*?)/?>", content, re.DOTALL):
                 attrs = {key: value for key, _, value in attr_pattern.findall(tag_attrs)}
-                env = attrs.get("env") or attrs.get("name") or f"bio_{tool_name}"
-                language = attrs.get("language", "")
-                packages = attrs.get("packages", "")
-                capabilities = attrs.get("capabilities", "")
-                healthcheck = attrs.get("healthcheck", "")
-                status = attrs.get("status", "registered")
-                try:
-                    self.pm.register_environment(
-                        env_name=env,
-                        purpose=attrs.get("purpose", f"Runtime for {tool_name}"),
-                        packages=packages,
-                        notes=attrs.get("notes", ""),
-                        language=language,
-                        capabilities=capabilities,
-                        healthcheck=healthcheck,
-                        status=status,
-                    )
-                    observations.append(
-                        f"<observation>✅ Environment '{env}' registered successfully via PackageManager.</observation>"
-                    )
-                    registration_found = True
-                except Exception as e:
-                    observations.append(f"<observation>❌ Environment Registration Failed: {e}</observation>")
-
-            for tag_attrs in re.findall(r"<register_tool\b(.*?)/?>", content, re.DOTALL):
-                attrs = {key: value for key, _, value in attr_pattern.findall(tag_attrs)}
-                cmd = attrs.get("command") or tool_name
-                path = attrs.get("path")
-                inferred_env = self.pm.infer_conda_env_from_path(path) if path else ""
-                env = attrs.get("env") or inferred_env or f"bio_{tool_name}"
-                try:
-                    self.pm.register_existing_tool(
-                        tool_name=cmd,
-                        env_name=env,
-                        source_path=path
-                    )
-                    registered_env = self.pm.registry.get("tools", {}).get(cmd, {}).get("env", env)
-                    self.pm.bind_tool_to_environment(cmd, registered_env)
-                    observations.append(f"<observation>✅ Tool '{cmd}' registered successfully via PackageManager. Shim created.</observation>")
-                    registration_found = True
-                except Exception as e:
-                    observations.append(f"<observation>❌ Registration Failed: {e}</observation>")
-
-            # 3. [关键逻辑] 如果执行成功了，但是没注册，也没有报错，那就是幻觉！
-            # 我们强制添加一条“系统警告”，让 AI 在下一轮必须补上注册标签
-            if not exec_matches and not registration_found:
-                if "ready" in content.lower() or "success" in content.lower():
-                     rejection_msg = """
-<system_error>
-❌ HALLUCINATION DETECTED.
-You claimed "Ready/Success", but you did NOT output any executable code block (```bash)!
-NOTHING WAS INSTALLED.
-
-Action Required:
-1. Write the ACTUAL installation commands inside ```bash ... ``` blocks.
-2. Wait for execution results.
-3. Then register.
-</system_error>
-"""
-                     observations.append(rejection_msg)
-
-            if not observations:
-                observations.append("<observation>❌ No executable code or registration tag found.</observation>")
-            
-            return {"messages": [HumanMessage(content="\n".join(observations))]}
+                env = attrs.get("env") or attrs.get("name") or request["target_env"]
+                if env != request["target_env"]:
+                    return finish("blocked", "<failure>INSTALLATION_REGISTRATION_TARGET_MISMATCH</failure>", "registration")
+                registrations.append({"kind": kind, "attributes": attrs})
+            if registrations:
+                receipt["registration_requests"] = registrations
+            if registrations or receipt["execution"]:
+                return finish("verification_required", "\n".join(observations + [
+                    "<observation>Execution evidence recorded. Parent must verify the approved target and register it before capability availability.</observation>"
+                ]))
+            return finish("proposal_required", "<observation>❌ No executable code or registration tag found. Registration alone cannot certify availability.</observation>")
 
         # ------------------------------------
         # 3. Router
         # ------------------------------------
-        def inst_router(state: InstallerState):
+        async def inst_router(state: InstallerState):
             last_msg = state["messages"][-1]
             content = last_msg.content
+
+            try:
+                request = self._request_scope(state)
+                current_receipt = self._execution_receipt(state, request)
+            except ValueError:
+                current_receipt = dict(state.get("installation_receipt") or {})
+            receipt_status = str(current_receipt.get("status") or "")
+            if receipt_status in {"cancelled", "rejected", "blocked", "execution_failed"}:
+                return "end_failure"
+            if receipt_status == "verification_required":
+                return "end_success"
             
             if isinstance(last_msg, AIMessage):
                 if self._installer_generate_turns(state) > self.MAX_INSTALLER_GENERATE_TURNS:
                     return "end_failure"
                 return "execute"
 
-            if "<success>" in content: return "end_success"
             if "<failure>" in content: return "end_failure"
-             
-            # Observation 中明确注册了环境或工具，才算成功
-            if "Shim created" in content or "registered successfully" in content:
-                return "end_success"
             if self._installer_generate_turns(state) >= self.MAX_INSTALLER_GENERATE_TURNS:
                 return "end_failure"
             if self._repeated_installer_observation_count(state) >= self.MAX_REPEATED_OBSERVATIONS:
@@ -727,10 +681,11 @@ Action Required:
         # ------------------------------------
         # 4. Finish Nodes
         # ------------------------------------
-        def end_success(state: InstallerState):
-            return {"final_result": "✅ Installation & Registration Complete."}
-        def end_failure(state: InstallerState):
-            return {"final_result": f"❌ Installation Failed: {self._installer_failure_reason(state)}"}
+        async def end_success(state: InstallerState):
+            return {"final_result": "Installation execution recorded; approved-target verification and registration pending."}
+        async def end_failure(state: InstallerState):
+            receipt = dict(state.get("installation_receipt") or {})
+            return {"final_result": f"❌ Installation {receipt.get('status') or 'failed'}: {receipt.get('detail') or self._installer_failure_reason(state)}"}
 
         # ------------------------------------
         # 5. Graph Wiring

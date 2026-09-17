@@ -253,7 +253,7 @@ class GenerateOutcome(StrictOutcome):
         "skill_context_needed", "candidate_rejected",
         "provider_failed", "stale_result", "internal_protocol_error", "blocked",
         "cancelled", "harness_error",
-        "runtime_evidence_required", "runtime_recovery_stopped",
+        "runtime_evidence_required", "runtime_recovery_stopped", "installation_requested",
     })
     REQUIRED_PAYLOAD = _requirements(
         action_ready=("action", "action_id", "candidate_fingerprint", "validation_evidence"),
@@ -280,6 +280,7 @@ class GenerateOutcome(StrictOutcome):
         blocked=("owner", "reason", "terminal_receipt"),
         cancelled=("cancellation_source", "cancellation_receipt"),
         harness_error=("error_code", "exception_class", "detail"),
+        installation_requested=("tool_or_capability", "requirement_evidence", "approval_policy", "attempt_fingerprint"),
         runtime_evidence_required=("request_id", "episode_id", "step_id", "missing_binding_ids", "request", "dispatch_state"),
         runtime_recovery_stopped=("reason_code", "resolution_disposition", "explanation", "execution_status", "original_error"),
     )
@@ -483,12 +484,13 @@ class AskUserOutcome(StrictOutcome):
 class InstallSubagentOutcome(StrictOutcome):
     OUTCOME_NAME = "InstallSubagentOutcome"
     ALLOWED_TYPES = frozenset({
-        "capability_available", "installation_failed", "terminal",
+        "capability_available", "installation_failed", "terminal", "user_input_needed",
         "harness_error",
     })
     REQUIRED_PAYLOAD = _requirements(
         capability_available=("status", "evidence"),
         installation_failed=("status", "evidence"),
+        user_input_needed=("question_id", "question", "evidence"),
         terminal=("status", "reason_code"),
         harness_error=("error_code", "exception_class", "detail"),
     )

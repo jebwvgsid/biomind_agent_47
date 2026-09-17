@@ -1578,6 +1578,22 @@ def _compact_planner_runtime_projection(runtime: Mapping[str, Any]) -> Dict[str,
         dict(item) for item in raw.get("input_audit", []) or []
         if isinstance(item, Mapping)
     ]
+    scoped = []
+    for row in rows:
+        if not (row.get("skill_id") or row.get("skill")):
+            continue
+        item = {"skill_id": str(row.get("skill_id") or row.get("skill")),
+                "status": str(row.get("status") or "unknown"),
+                "declared_environment": str(row.get("declared_env") or ""),
+                "checked_environment": str(row.get("checked_env") or row.get("env") or "")}
+        for key in ("resolved_runtime_paths", "capabilities", "reason_code", "reason", "observed_at", "evidence_ids"):
+            if row.get(key) not in (None, "", [], {}):
+                item[key] = deepcopy(row[key])
+        scoped.append(item)
+    if scoped:
+        # Availability is per selected Skill and capability. A ready mapping
+        # runtime cannot erase an unknown calling runtime or subcommand.
+        return _without_control_metadata({"skills": scoped})
     candidates = [raw, *reversed(rows)]
 
     def first(*keys: str) -> Any:
