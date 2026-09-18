@@ -6006,6 +6006,28 @@ class ContextLineageStore:
                 continue
         return sorted(rows, key=lambda row: (str(row.get("timestamp") or ""), str(row.get("call_id") or "")))
 
+    def recovery_boundary_events(self, incident_id: str) -> List[Dict[str, Any]]:
+        """Read strict existing checkpoints for one causal incident only.
+
+        Unlike diagnostic browsing, resumption cannot treat an unreadable or
+        partially corrupt journal as fresh retry allowance.
+        """
+        path = self.root / "events.jsonl"
+        try:
+            with path.open(encoding="utf-8") as handle:
+                rows = [json.loads(line) for line in handle if line.strip()]
+        except FileNotFoundError:
+            return []
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ValueError("RECOVERY_BOUNDARY_EVENT_INVALID: " + type(exc).__name__) from exc
+        if any(not isinstance(row, dict) or not isinstance(row.get("payload"), dict) for row in rows):
+            raise ValueError("RECOVERY_BOUNDARY_EVENT_INVALID: invalid checkpoint record")
+        return [row for row in rows
+            if row["payload"].get("incident_id") == str(incident_id)
+            and row.get("event_kind") in {
+                "recovery_assistant_message_committed", "recovery_tool_observation_committed",
+                "recovery_response_feedback_committed"}]
+
     def record_event(
         self,
         event_kind: str,

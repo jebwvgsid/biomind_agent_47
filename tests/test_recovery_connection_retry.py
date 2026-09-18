@@ -8,7 +8,7 @@ from tests.test_provider_attempt_reliability import _agent
 
 class Model:
     def __init__(self, fail=1, error=None):self.calls=[];self.fail=fail;self.error=error
-    async def ainvoke(self,messages,config=None):
+    async def ainvoke(self,messages,config=None, **provider_kwargs):
         self.calls.append(([m.model_dump() for m in messages],config))
         if len(self.calls)<=self.fail:
             raise self.error or httpx.ConnectError('synthetic unreachable',request=httpx.Request('POST','https://offline.invalid'))
@@ -74,7 +74,7 @@ def test_concurrent_provider_invocations_have_one_outbound_claim(tmp_path):
         class WaitingModel:
             calls=0
             async def ainvoke(self,messages,**kwargs):
-                self.calls+=1;entered.set();await release.wait();return AIMessage(content='complete')
+                self.calls+=1;entered.set();await release.wait();return AIMessage(content='complete', response_metadata={'finish_reason': 'stop'})
         model=WaitingModel();a=_agent(model,data_path=str(tmp_path));a.llm_timeout_seconds=a.llm_total_timeout_seconds=10
         args={'stage':'recovery','task_id':'t','llm_policy':{'sdk_max_retries':0,'application_max_attempts':2},'trace_metadata':{'semantic_invocation_id':'concurrent'}}
         first=asyncio.create_task(a._ainvoke_llm([HumanMessage(content='same')],**args))

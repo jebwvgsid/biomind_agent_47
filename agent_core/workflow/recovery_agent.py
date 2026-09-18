@@ -61,6 +61,7 @@ RECOVERY_CUMULATIVE_OBSERVATION_CHARS = 96_000
 RECOVERY_ASSISTANT_CHECKPOINT_EVENT = "recovery_assistant_message_committed"
 RECOVERY_TOOL_CHECKPOINT_EVENT = "recovery_tool_observation_committed"
 RECOVERY_FEEDBACK_CHECKPOINT_EVENT = "recovery_response_feedback_committed"
+OUTPUT_TRUNCATION_REASONS = frozenset({"length", "max_tokens", "max_output_tokens"})
 
 from agent_core.workflow.recovery_reception import (
     PROTOCOL, SUBMIT_TOOL, MAX_CHARS, ReceptionError, strict_json,
@@ -410,8 +411,11 @@ class RecoveryAgentLoopConfig:
     single_observation_chars: int = RECOVERY_SINGLE_OBSERVATION_CHARS
     cumulative_observation_chars: int = RECOVERY_CUMULATIVE_OBSERVATION_CHARS
     max_overflow_epochs: int = 2
+    max_output_resubmissions: int = 2
 
     def __post_init__(self) -> None:
+        if type(self.max_output_resubmissions) is not int or not 0 <= self.max_output_resubmissions <= 2:
+            raise RecoveryAgentError("RECOVERY_LOOP_CONFIG_INVALID", "max_output_resubmissions")
         integer_fields = (
             "max_llm_turns", "max_total_tool_calls",
             "max_exact_repeated_tool_request",
@@ -529,6 +533,8 @@ class _RecoveryLoopState(TypedDict, total=False):
     directive: dict[str, Any]
     terminal_error: dict[str, Any]
     format_correction_count: int
+    output_resubmission_count: int
+    output_resubmission_exhausted: bool
     response_receipts: list[dict[str, Any]]
     explanations: list[dict[str, Any]]
     turn_count: int
@@ -651,6 +657,14 @@ def recovery_boundary_messages_from_events(
                 "RECOVERY_BOUNDARY_EVENT_INVALID",
                 f"{event_kind} has no complete message",
             )
+        # An incomplete provider frame stays in diagnostic storage only.
+        # Never replay partial tool JSON as a completed assistant tool bundle.
+        if payload.get("diagnostic_only"):
+            feedback = payload.get("incomplete_response_feedback")
+            if isinstance(feedback, Mapping):
+                restored.append(HumanMessage(id=message_id + ":output-feedback",
+                    content=str(feedback["content"])))
+            continue
         canonical_message = deepcopy(dict(message))
         prior = by_id.get(message_id)
         if prior is not None:
@@ -669,10 +683,11 @@ def recovery_boundary_messages_from_events(
             restored_calls = deepcopy(list(canonical_message.get("tool_calls") or ()))
             if any("function" in call for call in restored_calls):
                 restored_message = AIMessage(id=message_id, content=deepcopy(canonical_message.get("content", "")))
-                restored_message = restored_message.model_copy(update={"additional_kwargs": {"tool_calls": restored_calls}})
+                restored_message = restored_message.model_copy(update={"additional_kwargs": {**canonical_message.get("additional_kwargs", {}), "tool_calls": restored_calls}})
             else:
                 restored_message = AIMessage(id=message_id,
-                    content=deepcopy(canonical_message.get("content", "")), tool_calls=restored_calls)
+                    content=deepcopy(canonical_message.get("content", "")), tool_calls=restored_calls,
+                    additional_kwargs=deepcopy(canonical_message.get("additional_kwargs", {})))
         elif event_kind == RECOVERY_FEEDBACK_CHECKPOINT_EVENT and message_type == "human":
             restored_message = HumanMessage(id=message_id, content=deepcopy(canonical_message.get("content", "")))
         else:
@@ -698,6 +713,27 @@ def recovery_boundary_messages_from_events(
         by_id[message_id] = canonical_message
         restored.append(restored_message)
     return restored
+
+
+def recovery_boundary_budget_from_events(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Restore monotone counters from existing atomic model/tool checkpoints.
+
+    Truncation and its legal resubmission feedback are committed in the same
+    event as the raw response. A crash cannot turn an observed truncation into
+    a fresh allowance, even with the optional resource policy disabled.
+    """
+    result: dict[str, Any] = {}
+    monotone = {"turn_count", "tool_call_count", "transport_attempt_count",
+        "format_correction_count", "output_resubmission_count", "observation_chars"}
+    for row in events:
+        payload = row.get("payload", row)
+        for key, value in (payload.get("business_budget_counters") or {}).items():
+            result[key] = max(int(result.get(key) or 0), int(value or 0)) if key in monotone else deepcopy(value)
+        if payload.get("tool_ordinal"):
+            result["tool_call_count"] = max(int(result.get("tool_call_count") or 0), int(payload["tool_ordinal"]))
+        if payload.get("format_correction_count"):
+            result["format_correction_count"] = max(int(result.get("format_correction_count") or 0), int(payload["format_correction_count"]))
+    return result
 
 
 def _context_budget_snapshot(
@@ -898,9 +934,9 @@ class RecoveryAgentLoop:
         self.config = config or RecoveryAgentLoopConfig()
         self.dispatcher = dispatcher
         self.observation_store = observation_store
-        from agent_core.workflow.recovery_runtime import resolve_recovery_budget_policy, RECOVERY_RESOURCES
+        from agent_core.workflow.recovery_runtime import resolve_recovery_budget_policy, configured_recovery_budget_policy, RECOVERY_RESOURCES
         resources = RECOVERY_RESOURCES.get()
-        self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or ContextBudgetPolicy(),
+        self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or configured_recovery_budget_policy(),
             clients=(model,), resource_policy=resources["policy"] if resources else None)
         self.token_estimator = token_estimator or ReferenceTokenEstimator()
         self.provider_invoke = provider_invoke
@@ -927,6 +963,9 @@ class RecoveryAgentLoop:
         except Exception as exc:
             # Tool/response receipts have their own persistence owners. A UI
             # observation failure must not abort the admitted business boundary.
+            if event in {RECOVERY_ASSISTANT_CHECKPOINT_EVENT, RECOVERY_TOOL_CHECKPOINT_EVENT,
+                         RECOVERY_FEEDBACK_CHECKPOINT_EVENT}:
+                raise RecoveryAgentError("RECOVERY_EVENT_PERSISTENCE_FAILED", event) from exc
             import logging
             logging.getLogger(__name__).warning("Recovery observation sink failed: event=%s error=%s", event, type(exc).__name__)
 
@@ -973,6 +1012,9 @@ class RecoveryAgentLoop:
 
         async def call_model(state: _RecoveryLoopState) -> dict[str, Any]:
             from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES, recovery_replay_wire
+            if state.get("output_resubmission_exhausted"):
+                return {"terminal_error": {"code": "RECOVERY_RESPONSE_INCOMPLETE",
+                    "detail": "Output truncation resubmissions exhausted", "output_resubmission_exhausted": True}}
             turns = int(state.get("turn_count") or 0)
             wire = build_provider_messages(state)
             replay = recovery_replay_wire(wire, context_epoch_id=str(state.get("context_epoch_id") or ""))
@@ -1235,20 +1277,41 @@ class RecoveryAgentLoop:
                 assistant = assistant.model_copy(deep=True, update={"tool_calls": [], "invalid_tool_calls": [],
                     "additional_kwargs": {**assistant.additional_kwargs, "tool_calls": raw_calls}})
             assistant_payload = provider_visible_payload(assistant)
+            finish_reason = str((assistant.response_metadata or {}).get("finish_reason") or "UNKNOWN")
+            output_truncated = finish_reason in OUTPUT_TRUNCATION_REASONS
+            retries_used = int(state.get("output_resubmission_count") or 0)
+            can_resubmit = output_truncated and retries_used < config.max_output_resubmissions
+            retry_count = retries_used + int(can_resubmit)
+            from agent_core.context_lineage import _safe_id
+            assistant_event_id = _safe_id(f"recovery:{seed.seed_id}:"
+                f"{call_context['context_epoch_id']}:assistant:{ordinal}:committed")
+            retry_feedback = HumanMessage(id=f"{assistant.id}:output-feedback", content=_canonical({
+                "protocol": PROTOCOL, "error_code": "RECOVERY_RESPONSE_INCOMPLETE",
+                "finish_reason": finish_reason, "directive_adopted": False, "command_started": False,
+                "output_resubmission_count": retry_count,
+                "output_resubmissions_remaining": max(0, config.max_output_resubmissions - retry_count),
+                "diagnostic_event_id": assistant_event_id,
+                "instruction": "The previous response was truncated and is diagnostic only. Submit one complete, concise Recovery directive through the existing submission contract. Do not continue or concatenate the partial draft; use previously verified evidence. No previous truncated command was executed."}))
+            checkpoint_counters = {key: deepcopy(state.get(key)) for key in (
+                "tool_call_count", "tool_request_counts", "progress_signatures", "inspected_refs",
+                "no_progress_rounds", "observation_chars", "format_correction_count") if key in state}
+            checkpoint_counters.update(turn_count=ordinal,
+                transport_attempt_count=int(state.get("transport_attempt_count") or 0) + attempts,
+                output_resubmission_count=retry_count,
+                output_resubmission_exhausted=bool(output_truncated and not can_resubmit))
             await self._emit_event(
                 RECOVERY_ASSISTANT_CHECKPOINT_EVENT,
                 {
                     **call_context,
-                    "event_id": (
-                        f"recovery:{seed.seed_id}:"
-                        f"{call_context['context_epoch_id']}:assistant:"
-                        f"{ordinal}:committed"
-                    ),
+                    "event_id": assistant_event_id,
                     "status": "committed",
                     "message_id": str(assistant.id or ""),
                     "message": assistant_payload,
                     "raw_tool_calls": deepcopy(raw_calls),
-                    "finish_reason": str((assistant.response_metadata or {}).get("finish_reason") or "UNKNOWN"),
+                    "finish_reason": finish_reason,
+                    "diagnostic_only": output_truncated,
+                    "incomplete_response_feedback": provider_visible_payload(retry_feedback) if output_truncated else None,
+                    "business_budget_counters": checkpoint_counters,
                     "message_sha256": hashlib.sha256(
                         _canonical(assistant_payload).encode("utf-8")
                     ).hexdigest(),
@@ -1284,11 +1347,7 @@ class RecoveryAgentLoop:
                     ),
                     "tool_call_count": len(raw_response_calls),
                     "usage": deepcopy(usage),
-                    "assistant_message_event_id": (
-                        f"recovery:{seed.seed_id}:"
-                        f"{call_context['context_epoch_id']}:assistant:"
-                        f"{ordinal}:committed"
-                    ),
+                    "assistant_message_event_id": assistant_event_id,
                 },
             )
             update: dict[str, Any] = {
@@ -1306,6 +1365,26 @@ class RecoveryAgentLoop:
                     or budget.should_compact
                 ),
             }
+            if output_truncated:
+                receipt = {"protocol": PROTOCOL, "response_message_id": assistant.id,
+                    "response_sha256": hashlib.sha256(_canonical(assistant_payload).encode()).hexdigest(),
+                    "finish_reason": finish_reason, "status": "not_accepted",
+                    "error_code": "RECOVERY_RESPONSE_INCOMPLETE", "directive_adopted": False,
+                    "command_started": False, "output_resubmission_count": retry_count,
+                    "output_resubmission_exhausted": not can_resubmit}
+                update.update(messages=[retry_feedback], pending_tool_calls=[],
+                    output_resubmission_count=retry_count,
+                    output_resubmission_exhausted=not can_resubmit,
+                    response_receipts=[*deepcopy(state.get("response_receipts") or []), receipt])
+                await self._emit_event("recovery_response_received", {
+                    **call_context, "event_id": f"{assistant.id}:reception", **receipt,
+                    "public_status": (f"恢复回复达到单次输出上限；准备完整重提（{retry_count}/{config.max_output_resubmissions}）。"
+                        if can_resubmit else "恢复回复仍被截断；完整重提次数已耗尽。"), "explanation": ""})
+                if not can_resubmit:
+                    update["terminal_error"] = {"code": "RECOVERY_RESPONSE_INCOMPLETE",
+                        "detail": finish_reason, "failure_stage": "recovery.response_decode",
+                        "output_resubmission_exhausted": True}
+                return update
             content = _content_text(assistant)
             explanations = deepcopy(list(state.get("explanations") or ()))
             receipts = deepcopy(list(state.get("response_receipts") or ()))
@@ -1319,7 +1398,7 @@ class RecoveryAgentLoop:
             problem = None
             try:
                 finish_reason = receipt["finish_reason"]
-                if finish_reason not in {"UNKNOWN", "stop", "tool_calls", "function_call"}:
+                if finish_reason not in {"stop", "tool_calls", "function_call"}:
                     raise ReceptionError("RECOVERY_RESPONSE_INCOMPLETE", finish_reason)
                 if len(content) > MAX_CHARS:
                     raise ReceptionError("RECOVERY_RESPONSE_SIZE_LIMIT")
@@ -1529,6 +1608,7 @@ class RecoveryAgentLoop:
                     "step_id": seed.failure_packet.step_id,
                     "seed_id": seed.seed_id,
                     "failure_id": seed.failure_packet.failure_id,
+                    "incident_id": seed.failure_packet.incident_id,
                     "context_epoch_id": str(state.get("context_epoch_id") or ""),
                     "tool_ordinal": total,
                     "tool_request_id": str(call["id"]),
@@ -1686,6 +1766,17 @@ class RecoveryAgentLoop:
                     name=tool,
                     content=encoded,
                 )
+                from agent_core.workflow.recovery_runtime import meaningful_inspection_facts
+                progress_facts = meaningful_inspection_facts([{
+                    "source_ref": envelope["source_ref"], "tool": dotted_tool,
+                    "result": envelope.get("result"), "error": envelope.get("error"),
+                }])
+                signature = hashlib.sha256(_canonical(progress_facts).encode("utf-8")).hexdigest()
+                if progress_facts and signature not in known_progress:
+                    known_progress.add(signature)
+                    round_progress = True
+                if not envelope["error"] and str(envelope["source_ref"]):
+                    inspected_refs.add(str(envelope["source_ref"]))
                 tool_message_payload = provider_visible_payload(tool_message)
                 await self._emit_event(
                     RECOVERY_TOOL_CHECKPOINT_EVENT,
@@ -1705,6 +1796,14 @@ class RecoveryAgentLoop:
                         "message_id": str(tool_message.id or ""),
                         "message": tool_message_payload,
                         "observation": deepcopy(envelope),
+                        "business_budget_counters": {
+                            "tool_call_count": total, "tool_request_counts": deepcopy(counts),
+                            "observation_chars": observation_chars,
+                            "output_resubmission_count": int(state.get("output_resubmission_count") or 0),
+                            "no_progress_rounds": (0 if round_progress else no_progress + 1) if call is calls[-1] else no_progress,
+                            "progress_signatures": sorted(known_progress),
+                            "inspected_refs": sorted(inspected_refs),
+                        },
                     },
                 )
                 if not error:
@@ -1726,17 +1825,6 @@ class RecoveryAgentLoop:
                             ),
                         },
                     )
-                from agent_core.workflow.recovery_runtime import meaningful_inspection_facts
-                progress_facts = meaningful_inspection_facts([{
-                    "source_ref": envelope["source_ref"], "tool": dotted_tool,
-                    "result": envelope.get("result"), "error": envelope.get("error"),
-                }])
-                signature = hashlib.sha256(_canonical(progress_facts).encode("utf-8")).hexdigest()
-                if progress_facts and signature not in known_progress:
-                    known_progress.add(signature)
-                    round_progress = True
-                if not envelope["error"] and str(envelope["source_ref"]):
-                    inspected_refs.add(str(envelope["source_ref"]))
                 tool_messages.append(tool_message)
 
             no_progress = 0 if round_progress else no_progress + 1
@@ -1851,6 +1939,8 @@ class RecoveryAgentLoop:
             "messages": local,
             "pending_tool_calls": [],
             "format_correction_count": int(counters.get("format_correction_count") or 0),
+            "output_resubmission_count": int(counters.get("output_resubmission_count") or 0),
+            "output_resubmission_exhausted": bool(counters.get("output_resubmission_exhausted")),
             "response_receipts": deepcopy(list(counters.get("response_receipts") or ())),
             "explanations": deepcopy(list(counters.get("explanations") or ())),
             "turn_count": int(counters.get("turn_count") or 0),
@@ -1910,6 +2000,8 @@ class RecoveryAgentLoop:
             if str(item.get("context_epoch_id") or "") == epoch_id
         ]
         reception_state = {"format_correction_count": int(result.get("format_correction_count") or 0),
+            "output_resubmission_count": int(result.get("output_resubmission_count") or 0),
+            "output_resubmission_exhausted": bool(result.get("output_resubmission_exhausted")),
             "response_receipts": deepcopy(list(result.get("response_receipts") or ())),
             "explanations": deepcopy(list(result.get("explanations") or ()))}
         audit = {

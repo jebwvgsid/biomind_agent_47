@@ -42,7 +42,7 @@ def tag(messages, name):
 
 
 def tool_call(name, args, identity):
-    return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": identity, "type": "tool_call"}])
+    return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": identity, "type": "tool_call"}], response_metadata={"finish_reason": "tool_calls"})
 
 
 def blocked(seed, identity="s4-blocked"):

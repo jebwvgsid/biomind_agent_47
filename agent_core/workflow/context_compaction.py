@@ -473,6 +473,11 @@ class ContextBudgetPolicy:
     )
     known_provider_context_limit_tokens: int | None = None
     output_reserve_tokens: int = 8_192
+    # Explicit Recovery policy overrides inherited local client defaults;
+    # provider capability is a separate fact, not inferred from max_tokens.
+    requested_output_limit_tokens: int | None = None
+    known_provider_output_limit_tokens: int | None = None
+    output_capability_source: str = ""
     estimation_margin_tokens: int = 4_096
     safety_headroom_tokens: int = 2_048
     trigger_ratio: float = DEFAULT_COMPACTION_TRIGGER_RATIO
@@ -520,6 +525,13 @@ class ContextBudgetPolicy:
                 field_name,
                 _require_nonnegative_int(getattr(self, field_name), field_name),
             )
+        for field_name in ("requested_output_limit_tokens", "known_provider_output_limit_tokens"):
+            value = getattr(self, field_name)
+            if value is not None:
+                value = _require_nonnegative_int(value, field_name)
+                if value <= 0:
+                    raise ContextCompactionError("CONTEXT_OUTPUT_LIMIT_INVALID", field_name)
+                object.__setattr__(self, field_name, value)
         if self.compressor_safe_input_tokens is not None:
             compressor_safe = _require_nonnegative_int(
                 self.compressor_safe_input_tokens,
@@ -603,6 +615,9 @@ class ContextBudgetPolicy:
                 self.effective_context_limit_tokens
             ),
             "output_reserve_tokens": self.output_reserve_tokens,
+            "requested_output_limit_tokens": self.requested_output_limit_tokens,
+            "known_provider_output_limit_tokens": self.known_provider_output_limit_tokens,
+            "output_capability_source": self.output_capability_source,
             "estimation_margin_tokens": self.estimation_margin_tokens,
             "safety_headroom_tokens": self.safety_headroom_tokens,
             "safe_input_tokens": self.safe_input_tokens,

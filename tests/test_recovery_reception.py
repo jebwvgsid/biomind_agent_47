@@ -78,9 +78,9 @@ def run_loop(tmp_path, replies, config=None, counters=None):
         def bind_tools(self, schemas):
             assert any(r["function"]["name"] == SUBMIT_TOOL for r in schemas)
             return self
-        async def ainvoke(self, messages):
+        async def ainvoke(self, messages, **kwargs):
             requests.append(deepcopy(messages))
-            return replies[len(requests)-1]
+            return replies[len(requests)-1].model_copy(update={"response_metadata": replies[len(requests)-1].response_metadata or {"finish_reason": "stop"}})
     loop = RecoveryAgentLoop(model=Model(), dispatcher=dispatcher, config=config,
         event_sink=lambda event,payload: events.append(dict(event=event, **payload)))
     result = asyncio.run(loop.ainvoke(seed=seed, durable=durable,
@@ -122,11 +122,11 @@ def test_native_empty_content_uses_summary_once(tmp_path):
 def test_failed_reception_cannot_reset_or_exceed_original_limits(tmp_path, mode):
     response = AIMessage(content="说明保留；尚未正式提交。", response_metadata={"finish_reason":"length"} if mode == "length" else {})
     config = RecoveryAgentLoopConfig(max_llm_turns=1 if mode == "turn_limit" else 12)
-    counters = {"format_correction_count":1} if mode == "exhausted" else {"no_progress_rounds":2} if mode == "no_progress" else {}
+    counters = {"format_correction_count":1} if mode == "exhausted" else {"no_progress_rounds":2} if mode == "no_progress" else {"output_resubmission_count":2} if mode == "length" else {}
     result, requests, _ = run_loop(tmp_path, [response], config, counters)
     assert len(requests) == (0 if mode == "no_progress" else 1) and not result["directive"]
     assert result["terminal_error"]
-    if mode != "no_progress":
+    if mode not in {"no_progress", "length"}:
         assert result["reception"]["explanations"]
     assert result["audit"]["tool_call_count"] == 0
 

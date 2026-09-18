@@ -140,6 +140,15 @@ def provider_visible_payload(message: BaseMessage | Mapping[str, Any]) -> dict[s
     calls = _tool_calls(current)
     if calls:
         payload["tool_calls"] = _json_value(calls, path="tool_calls")
+    # These native protocol fields affect replay and must be budgeted. They
+    # are never public CLI explanation text; typed reasoning blocks in content
+    # are already preserved above.
+    native = getattr(current, "additional_kwargs", {}) or {}
+    protocol_fields = {key: _json_value(native[key], path="additional_kwargs." + key)
+        for key in ("reasoning_content", "reasoning", "thinking", "signature", "redacted_thinking", "function_call")
+        if key in native}
+    if protocol_fields:
+        payload["additional_kwargs"] = protocol_fields
     tool_call_id = str(getattr(current, "tool_call_id", None) or "").strip()
     if tool_call_id:
         payload["tool_call_id"] = tool_call_id

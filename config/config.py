@@ -218,6 +218,17 @@ LLM_STEP_EPHEMERAL_CHARS = _env_int(
     200_000,
     minimum=8_000,
 )
+RECOVERY_OUTPUT_LIMIT_TOKENS = _env_int(
+    "BIOMIND_RECOVERY_OUTPUT_LIMIT_TOKENS", 50_000, minimum=1,
+)
+RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS = (
+    _env_int("BIOMIND_RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS", 50_000, minimum=1)
+    if os.getenv("BIOMIND_RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS", "").strip()
+    else None
+)
+RECOVERY_MAX_OUTPUT_RESUBMISSIONS = _env_int(
+    "BIOMIND_RECOVERY_MAX_OUTPUT_RESUBMISSIONS", 2, minimum=0,
+)
 # Consultant compiles natural-language intent and may need both a substantial
 # conversation/audit history and complete documentation for several candidate
 # skills.  Keep these limits in tokens (rather than reusing the older character

@@ -82,7 +82,7 @@ class _ScenarioLLM:
         self.callback_batches = []
         self.release = asyncio.Event()
 
-    async def ainvoke(self, messages, config=None):
+    async def ainvoke(self, messages, config=None, **provider_kwargs):
         self.calls += 1
         scenario = self.scenarios[min(self.calls - 1, len(self.scenarios) - 1)]
         callbacks = list((config or {}).get("callbacks") or [])
@@ -116,17 +116,17 @@ class _ScenarioLLM:
             raise scenario
 
         if scenario == "success":
-            return AIMessage(content="completed")
+            return AIMessage(content="completed", response_metadata={'finish_reason': 'stop'})
         if scenario == "malformed":
-            return AIMessage(content="not a structured Generate action")
+            return AIMessage(content="not a structured Generate action", response_metadata={'finish_reason': 'stop'})
         if scenario == "empty":
-            return AIMessage(content="")
+            return AIMessage(content="", response_metadata={'finish_reason': 'stop'})
         if scenario == "reasoning_empty":
             reasoning()
-            return AIMessage(content="")
+            return AIMessage(content="", response_metadata={'finish_reason': 'stop'})
         if scenario == "partial_empty":
             content("<execute>discard-me")
-            return AIMessage(content="")
+            return AIMessage(content="", response_metadata={'finish_reason': 'stop'})
         if scenario == "reasoning_read_error":
             reasoning("discarded-reasoning")
             request = httpx.Request("POST", "https://provider.invalid/v1/chat")
@@ -152,7 +152,7 @@ class _ScenarioLLM:
             except asyncio.CancelledError:
                 self.cancelled += 1
                 await self.release.wait()
-                return AIMessage(content="late completion")
+                return AIMessage(content="late completion", response_metadata={'finish_reason': 'stop'})
         if scenario == "partial_then_stall":
             content("<execute>echo partial")
             try:
@@ -178,7 +178,7 @@ class _ScenarioLLM:
             finally:
                 if asyncio.current_task() and asyncio.current_task().cancelling():
                     self.cancelled += 1
-            return AIMessage(content="completed")
+            return AIMessage(content="completed", response_metadata={'finish_reason': 'stop'})
         raise AssertionError(f"unknown scenario: {scenario}")
 
 
@@ -515,7 +515,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_non_generate_sdk_exception_contract_is_unchanged(self):
         class RaisingLLM:
-            async def ainvoke(self, messages, config=None):
+            async def ainvoke(self, messages, config=None, **provider_kwargs):
                 raise ValueError("existing planner sdk error")
 
         agent = _agent(RaisingLLM())
@@ -786,13 +786,15 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
             def __init__(self):
                 self.requests = []
 
-            async def ainvoke(self, messages, config=None):
+            async def ainvoke(self, messages, config=None, **provider_kwargs):
                 self.requests.append(list(messages))
-                return AIMessage(content="recovery response")
+                return AIMessage(content="recovery response", response_metadata={'finish_reason': 'stop'})
 
         with tempfile.TemporaryDirectory(prefix="recovery-provider-adapter-") as root:
             llm = CaptureLLM()
             agent = _agent(llm, data_path=root, attempts=1)
+            # This test checks dispatch/receipt semantics, not a 120 ms preparation deadline.
+            agent.llm_timeout_seconds = agent.llm_total_timeout_seconds = 2.0
             agent.recovery_llm_policy = {}
             messages = [
                 HumanMessage(content="frozen recovery seed"),
@@ -842,6 +844,8 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory(prefix="recovery-tool-partial-") as root:
             llm = _ScenarioLLM(["tool_partial_read_error"])
             agent = _agent(llm, data_path=root, attempts=1)
+            # This test checks dispatch/receipt semantics, not a 120 ms preparation deadline.
+            agent.llm_timeout_seconds = agent.llm_total_timeout_seconds = 2.0
             agent.recovery_llm_policy = {"sdk_max_retries": 0}
             with self.assertRaises(httpx.ReadError):
                 await agent._schema2_recovery_provider_invoke(
@@ -895,7 +899,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
                 self.root = root
                 self.calls = 0
 
-            async def ainvoke(self, _messages, config=None):
+            async def ainvoke(self, _messages, config=None, **provider_kwargs):
                 self.calls += 1
                 store = ContextLineageStore(self.root, "recovery-order")
                 snapshots = store.list_snapshots()
@@ -921,11 +925,13 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
                     started[0]["payload"]["sdk_max_retries"]
                     if started else None
                 )
-                return AIMessage(content="recovery response")
+                return AIMessage(content="recovery response", response_metadata={'finish_reason': 'stop'})
 
         with tempfile.TemporaryDirectory(prefix="recovery-order-") as root:
             llm = InspectingLLM(root)
             agent = _agent(llm, data_path=root, attempts=1)
+            # This test checks dispatch/receipt semantics, not a 120 ms preparation deadline.
+            agent.llm_timeout_seconds = agent.llm_total_timeout_seconds = 2.0
             agent.recovery_llm_policy = {"sdk_max_retries": 0}
             await agent._schema2_recovery_provider_invoke(
                 [HumanMessage(content="frozen recovery seed")],
@@ -954,9 +960,9 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
             def __init__(self):
                 self.calls = 0
 
-            async def ainvoke(self, _messages, config=None):
+            async def ainvoke(self, _messages, config=None, **provider_kwargs):
                 self.calls += 1
-                return AIMessage(content="must not run")
+                return AIMessage(content="must not run", response_metadata={'finish_reason': 'stop'})
 
         with tempfile.TemporaryDirectory(prefix="recovery-event-fail-") as root:
             llm = NeverCalledLLM()
@@ -992,7 +998,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
                 self.calls = 0
                 self.assertions = {}
 
-            async def ainvoke(self, _messages, config=None):
+            async def ainvoke(self, _messages, config=None, **provider_kwargs):
                 self.calls += 1
                 attempt_id = str(
                     ((config or {}).get("metadata") or {}).get(
@@ -1026,7 +1032,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
                         "sdk_max_retries"
                     ),
                 }
-                return AIMessage(content='{"summary":"bounded"}')
+                return AIMessage(content='{"summary":"bounded"}', response_metadata={'finish_reason': 'stop'})
 
         with tempfile.TemporaryDirectory(prefix="recovery-compactor-order-") as root:
             llm = InspectingCompactorLLM(root)

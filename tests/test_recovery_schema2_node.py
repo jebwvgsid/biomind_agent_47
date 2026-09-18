@@ -44,7 +44,7 @@ class _Model:
                 "name": "failure_inspect",
                 "args": {},
                 "type": "tool_call",
-            }])
+            }], response_metadata={'finish_reason': 'tool_calls'})
         return AIMessage(content=json.dumps({
             "schema_version": 1,
             "directive_id": "directive-node",
@@ -55,7 +55,7 @@ class _Model:
             "target_step_id": "step-1",
             "instruction": "Regenerate only the failed action.",
             "evidence_refs": ["execution-1"],
-        }))
+        }), response_metadata={'finish_reason': 'stop'})
 
 
 class Schema2RecoveryNodeTests(unittest.IsolatedAsyncioTestCase):

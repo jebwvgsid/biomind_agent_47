@@ -52,8 +52,8 @@ class RecoveryResourcePolicy:
     hard_tokens: int = 450_000
     soft_seconds: float = 120
     hard_seconds: float = 180
-    max_output_tokens: int = 8192
-    receive_char_limit: int = 131072
+    max_output_tokens: int = 50_000
+    receive_char_limit: int = 1_048_576
     public_char_limit: int = 1200
     decision_seconds: float = 30
 
@@ -81,7 +81,10 @@ RECOVERY_DISPATCH_BUDGET = ContextVar("biomind_recovery_dispatch_budget", defaul
 def resolve_recovery_budget_policy(policy, *, clients=(), resource_policy=None):
     """Choose one explicit local output cap before Recovery request admission."""
     from agent_core.provider_attempt import output_policy_projection
-    limits = [policy.output_reserve_tokens]
+    requested = policy.requested_output_limit_tokens
+    limits = [requested if requested is not None else policy.output_reserve_tokens]
+    if policy.known_provider_output_limit_tokens is not None:
+        limits.append(policy.known_provider_output_limit_tokens)
     if resource_policy is not None:
         limits.append(resource_policy.max_output_tokens)
     for client in clients:
@@ -89,11 +92,23 @@ def resolve_recovery_budget_policy(policy, *, clients=(), resource_policy=None):
         if resolved["configuration_ambiguity"] or resolved["client_parameter"] not in {"UNKNOWN", "max_tokens"}:
             raise ValueError("RECOVERY_OUTPUT_PARAMETER_CONFLICT")
         value = resolved["client_resolved_output_limit"]
-        if type(value) is int and value > 0:
+        # Local inherited defaults do not establish provider capability.
+        if requested is None and type(value) is int and value > 0:
             limits.append(value)
     if min(limits) <= 0:
         raise ValueError("RECOVERY_OUTPUT_LIMIT_REQUIRED")
     return replace(policy, output_reserve_tokens=min(limits))
+
+
+def configured_recovery_budget_policy():
+    """Standalone defaults without loading application credentials."""
+    from agent_core.workflow.context_compaction import ContextBudgetPolicy
+    requested = int(os.getenv("BIOMIND_RECOVERY_OUTPUT_LIMIT_TOKENS", "50000"))
+    raw_cap = os.getenv("BIOMIND_RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS", "").strip()
+    return ContextBudgetPolicy(output_reserve_tokens=requested,
+        requested_output_limit_tokens=requested,
+        known_provider_output_limit_tokens=int(raw_cap) if raw_cap else None,
+        output_capability_source="configured_provider_limit" if raw_cap else "not_verified")
 
 
 @contextmanager
@@ -120,7 +135,7 @@ def recovery_dispatch_receipt(messages, *, stage, client=None):
     if resolved["configuration_ambiguity"] or resolved["client_parameter"] not in {"UNKNOWN", "max_tokens"}:
         raise ValueError("RECOVERY_OUTPUT_PARAMETER_CONFLICT")
     explicit = resolved["client_resolved_output_limit"]
-    if type(explicit) is int and explicit < policy.output_reserve_tokens:
+    if policy.requested_output_limit_tokens is None and type(explicit) is int and explicit < policy.output_reserve_tokens:
         raise ValueError("RECOVERY_OUTPUT_POLICY_CHANGED_AFTER_ADMISSION")
     tools = list(scope["tools"])
     # The bound client is the source of actual dispatched tool definitions.
@@ -151,7 +166,10 @@ def recovery_dispatch_receipt(messages, *, stage, client=None):
         "component_token_counts": dict(components), "safe_input_tokens": safe,
         "provider_message_count": len(messages), "tool_definition_count": len(tools),
         "estimator_name": estimator.name, "estimator_version": estimator.version,
-        "exact_or_estimated": estimator.exact_or_estimated, "remote_effective_limit": "UNKNOWN"}
+        "exact_or_estimated": estimator.exact_or_estimated, "remote_effective_limit": "UNKNOWN",
+        "output_cap_adjustment": ("explicit_provider_or_resource_limit" if
+            policy.requested_output_limit_tokens is not None and policy.output_reserve_tokens < policy.requested_output_limit_tokens
+            else "none"), "wire_output_parameter": "max_tokens", "wire_output_limit": policy.output_reserve_tokens}
     if tokens > safe:
         raise ContextCompactionCapacityError("RECOVERY_PROVIDER_INPUT_UNSAFE", json.dumps(receipt, sort_keys=True), feedback=receipt)
     return receipt
@@ -213,13 +231,13 @@ def recovery_business_checkpoint(values):
     # Resource persistence contains counters/identities only. Full observations
     # remain in the existing phase archive; this is not another history store.
     values = {key: value for key, value in values.items() if key in {
-        "turn_count", "tool_call_count", "transport_attempt_count", "format_correction_count",
+        "turn_count", "tool_call_count", "transport_attempt_count", "format_correction_count", "output_resubmission_count",
         "no_progress_rounds", "tool_request_counts", "progress_signatures", "observation_chars",
         "compaction_maintenance", "compaction_bypass_remaining", "compaction_failures"}}
     def checkpoint(row):
         prior = row["business"]
         counters = {key: max(int(prior.get(key) or 0), int(values.get(key) or 0))
-                    for key in ("turn_count", "tool_call_count", "transport_attempt_count", "format_correction_count")}
+                    for key in ("turn_count", "tool_call_count", "transport_attempt_count", "format_correction_count", "output_resubmission_count")}
         prior.update(deepcopy(values))
         prior.update(counters)
     return recovery_resource_update(checkpoint)

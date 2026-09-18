@@ -658,6 +658,7 @@ def _message_from_provider_payload(
             content=content,
             name=name,
             tool_calls=deepcopy(value.pop("tool_calls", [])),
+            additional_kwargs=deepcopy(value.pop("additional_kwargs", {})),
         )
     if kind == "tool":
         tool_call_id = str(value.pop("tool_call_id", "") or "")
@@ -749,13 +750,14 @@ def _business_resume_state(
         "no_progress_rounds",
         "observation_chars",
         "transport_attempt_count",
-        "format_correction_count",
+        "format_correction_count", "output_resubmission_count",
     )
     result = {
         key: int(source.get(key) or 0)
         for key in scalar_fields
     }
     result.update({
+        "output_resubmission_exhausted": bool(source.get("output_resubmission_exhausted")),
         "explanations": deepcopy(list(source.get("explanations") or ())),
         "response_receipts": deepcopy(list(source.get("response_receipts") or ())),
         "tool_request_counts": deepcopy(dict(
@@ -834,8 +836,8 @@ class Schema2RecoveryNode:
         self.resource_policy_receipt = recovery_policy_receipt(self.resource_policy, explicit=resource_policy is not None)
         self.inherited_materials_factory = inherited_materials_factory
         self.compactor = compactor
-        from agent_core.workflow.recovery_runtime import resolve_recovery_budget_policy
-        self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or ContextBudgetPolicy(),
+        from agent_core.workflow.recovery_runtime import resolve_recovery_budget_policy, configured_recovery_budget_policy
+        self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or configured_recovery_budget_policy(),
             clients=(model, compactor_model), resource_policy=self.resource_policy)
         self.token_estimator = token_estimator or ReferenceTokenEstimator()
         self.context_compaction_enabled = bool(context_compaction_enabled)
@@ -1404,7 +1406,7 @@ class Schema2RecoveryNode:
         )
         counters = dict(source_summary.get("business_budget_counters") or {})
         for field in (
-            "format_correction_count",
+            "format_correction_count", "output_resubmission_count",
             "turn_count",
             "tool_call_count",
             "no_progress_rounds",
@@ -1675,6 +1677,14 @@ class Schema2RecoveryNode:
         token = RECOVERY_POLICY_RECEIPT.set(self.resource_policy_receipt)
         try:
             if state.get("task_id"):
+                from agent_core.context_lineage import ContextLineageStore
+                try:
+                    ContextLineageStore(self.data_path, str(state["task_id"])).recovery_boundary_events("")
+                except ValueError:
+                    # Preserve the damaged journal for the normal scoped
+                    # fail-closed receipt; a diagnostic append must not first
+                    # discard a corrupt suffix and erase retry evidence.
+                    return await self._run_investigation(state)
                 await self._emit_event("recovery_policy_selected", {
                     "task_id": str(state["task_id"]),
                     "effective_resource_policy": deepcopy(self.resource_policy_receipt)})
@@ -1799,6 +1809,22 @@ class Schema2RecoveryNode:
                     code="RECOVERY_CAUSAL_PACKET_MISSING",
                 )
             seed = projection.recovery_seed
+            # Admission already owns idempotency. A process reentry for the
+            # exact same frozen cause must reuse its receipt before contacting
+            # the model, rather than allowing another directive to be minted.
+            task_state = dict(durable.get("task_state") or {})
+            active_ref = str(state.get("active_failure_packet_ref") or task_state.get("active_failure_packet_ref") or "")
+            admitted = [row for row in (task_state.get("typed_recovery_receipts") or {}).values()
+                if isinstance(row, Mapping) and row.get("failure_packet_ref") == active_ref
+                and row.get("source_fingerprint") == projection.source_fingerprint
+                and row.get("directive")]
+            if len(admitted) == 1:
+                return await self.runtime.run({**dict(state),
+                    "recovery_directive": deepcopy(admitted[0]["directive"]),
+                    "recovery_inspected_refs": list((admitted[0].get("business_resume_state") or {}).get("inspected_refs") or ())})
+            if len(admitted) > 1:
+                return fail(task_id=task_id, durable=durable,
+                    code="RECOVERY_DECISION_IDENTITY_CONFLICT", detail="Multiple admitted decisions for the same frozen cause")
             failure_stage = "recovery.context_preparation"
             from agent_core.workflow.recovery_runtime import revalidation_stop_reason
             stop_reason = revalidation_stop_reason(projection, durable, self.runtime.repair_limit)
@@ -1871,11 +1897,72 @@ class Schema2RecoveryNode:
                 budget_state = _business_resume_state(receipt.get("business_resume_state") or {})
                 linked_previous_archive_ref = str(receipt.get("recovery_archive_ref") or "")
             overflow_epoch = 0
+        # Resume output resubmissions from the existing durable event owner,
+        # independent of optional resource-policy activation. Active compacted
+        # epochs keep their own suffix; only the current epoch is replayable.
+        from agent_core.context_lineage import ContextLineageStore
+        from agent_core.workflow.recovery_agent import (
+            recovery_boundary_budget_from_events, recovery_boundary_messages_from_events,
+        )
+        from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES, recovery_resource_update
+        if RECOVERY_RESOURCES.get() is not None:
+            resource_business = recovery_resource_update().get("business", {})
+            for key, value in resource_business.items():
+                if type(value) is int:
+                    budget_state[key] = max(int(budget_state.get(key) or 0), value)
+                elif key not in budget_state or not budget_state[key]:
+                    budget_state[key] = deepcopy(value)
+        try:
+            boundary_events = ContextLineageStore(self.data_path, task_id).recovery_boundary_events(
+                seed.failure_packet.incident_id)
+            restored_counters = recovery_boundary_budget_from_events(boundary_events)
+            for key, value in restored_counters.items():
+                if type(value) is int and key != "no_progress_rounds":
+                    budget_state[key] = max(int(budget_state.get(key) or 0), value)
+                elif key == "output_resubmission_exhausted":
+                    budget_state[key] = bool(budget_state.get(key) or value)
+                elif key == "tool_request_counts":
+                    known = budget_state.setdefault(key, {})
+                    for identity, count in value.items():
+                        known[identity] = max(int(known.get(identity) or 0), int(count))
+                elif key in {"progress_signatures", "inspected_refs"}:
+                    budget_state[key] = list(dict.fromkeys([*budget_state.get(key, []), *value]))
+                else:
+                    budget_state[key] = deepcopy(value)
+            current_events = [row for row in boundary_events
+                if (row.get("payload") or {}).get("context_epoch_id") == context_epoch_id
+                and (row.get("payload") or {}).get("seed_id") == seed.seed_id]
+            assistants = [row for row in current_events
+                if row.get("event_kind") == "recovery_assistant_message_committed"]
+            if assistants:
+                # Complete recorded tool bundles must survive the same restart as
+                # an output retry. Refuse a dangling bundle instead of inventing
+                # an observation or silently executing a previous model call.
+                from agent_core.workflow.scoped_context import strict_append_messages
+                local_messages = strict_append_messages(local_messages,
+                    recovery_boundary_messages_from_events(current_events, seed_id=seed.seed_id,
+                        context_epoch_id=context_epoch_id))
+                pending_ids = set()
+                for message in local_messages:
+                    if isinstance(message, AIMessage):
+                        calls = (message.additional_kwargs or {}).get("tool_calls") or message.tool_calls or []
+                        pending_ids.update(str(call.get("id") or "") for call in calls)
+                    elif isinstance(message, ToolMessage):
+                        pending_ids.discard(str(message.tool_call_id))
+                if pending_ids:
+                    return fail(task_id=task_id, durable=durable,
+                        code="RECOVERY_BOUNDARY_EVENT_INVALID",
+                        detail="Interrupted native bundle has no complete durable observation for: " + ",".join(sorted(pending_ids)),
+                        recovery_archive_ref=linked_previous_archive_ref)
+        except (OSError, ValueError) as exc:
+            return fail(task_id=task_id, durable=durable,
+                code="RECOVERY_BOUNDARY_EVENT_INVALID", detail=str(exc),
+                recovery_archive_ref=linked_previous_archive_ref)
         try:
             await self._emit_event(
                 "recovery_started",
                 {
-                    "event_id": f"recovery:{seed.seed_id}:started",
+                    "event_id": f"recovery:{seed.seed_id}:{context_epoch_id}:started",
                     "task_id": task_id,
                     "step_id": seed.failure_packet.step_id,
                     "seed_id": seed.seed_id,
@@ -1897,8 +1984,6 @@ class Schema2RecoveryNode:
             )
         archive = None
         from agent_core.workflow.recovery_runtime import RECOVERY_RESOURCES, recovery_resource_update, recovery_business_checkpoint
-        if RECOVERY_RESOURCES.get() is not None:
-            budget_state.update(deepcopy(recovery_resource_update().get("business", {})))
         maintenance = deepcopy(dict(budget_state.get("compaction_maintenance") or {}))
 
         while True:

@@ -1,4 +1,9 @@
-"""Uncleaned TAD replies through production graph; science dispatch is offline."""
+"""Uncleaned TAD replies through production graph; science dispatch is offline.
+
+The archived bodies omit transport termination metadata. This explicit provider
+leaf simulates completed replies with stop/tool_calls; it does not establish
+that the historical provider sent those otherwise unknown finish reasons.
+"""
 import asyncio
 from copy import deepcopy
 import hashlib
@@ -51,10 +56,10 @@ class RecoveryModel:
         if ordinal == 1:
             assert 'Wrapper script not found' in text and 'WRAPPER_SCRIPT=' in text
             original=raw('recovery_turn-0008-b0d0045c8fc3')
-            return AIMessage(content=original['content'], tool_calls=original['tool_calls'])
+            return AIMessage(content=original['content'], tool_calls=original['tool_calls'], response_metadata={'finish_reason': 'tool_calls'})
         if ordinal == 2:
             assert any(m.get('type')=='tool' and 'call_tads.py' in str(m['content']) for m in wire)
-            return AIMessage(content=raw('recovery_turn-0009-e0298b577b1e')['content'])
+            return AIMessage(content=raw('recovery_turn-0009-e0298b577b1e')['content'], response_metadata={'finish_reason': 'stop'})
         assert ordinal == 3
         assert raw('recovery_turn-0009-e0298b577b1e')['content'] in [str(m.content) for m in messages]
         assert 'RECOVERY_CANONICAL_RESUBMISSION_REQUIRED' in text
@@ -66,7 +71,7 @@ class RecoveryModel:
             'schema_version':1, 'directive_id':'tad-path-canonical-resubmission', 'task_id':TASK,
             'action':'retry_step', 'target_step_id':'preflight_env_check', 'reason_code':'SCRIPT_BUG',
             'summary':'Wrapper locator must be verified before healthcheck.',
-            'instruction':'Use the selected Skill resource binding for call_tads.py. Preserve the input and wrapper health checks; do not claim that a relative example is a verified path.'}}])
+            'instruction':'Use the selected Skill resource binding for call_tads.py. Preserve the input and wrapper health checks; do not claim that a relative example is a verified path.'}}], response_metadata={'finish_reason': 'tool_calls'})
 
 
 @pytest.mark.parametrize('mode',['success','content_drift','approval_reject','cancel'])
@@ -186,7 +191,7 @@ def test_raw_tad_explanation_to_approved_new_attempt_and_next_step(tmp_path,caps
             state={**initial,**planned,**reviewed,'current_step_id':'preflight_env_check','task_status':'running'}
             state.pop('resume_state',None)
             cfg={'configurable':{'thread_id':TASK},'recursion_limit':35}
-            with patch.object(bio_agents,'run_script_path',new=dispatch):
+            with patch.object(bio_agents,'run_script_path',new=dispatch), patch.object(bio_agents, 'emit_display', wraps=bio_agents.emit_display) as display:
                 for _ in range(4):
                     try: await graph.ainvoke(state,cfg)
                     except asyncio.CancelledError:
@@ -227,9 +232,18 @@ def test_raw_tad_explanation_to_approved_new_attempt_and_next_step(tmp_path,caps
             assert json.dumps(raw('recovery_turn-0009-e0298b577b1e')['content'],ensure_ascii=False)[1:-1] in archived_json
             assert archived['summary']['business_budget_counters']['format_correction_count']==1
             assert str(script) in approvals[1]['content'] and resource_env(HANDLE) in approvals[1]['content']
-            rendered=capsys.readouterr().out
-            assert '模型诊断（未授予执行批准）' in rendered and '指令状态：not_accepted' in rendered
-            assert 'Recovery directive admitted' in rendered
+            # Observe the current production display boundary. The original
+            # print_once wording predates the display-event protocol.
+            responses=receipt['reception']['response_receipts']
+            rejected=next(r for r in responses if r['status']=='not_accepted')
+            assert rejected['error_code']=='RECOVERY_CANONICAL_RESUBMISSION_REQUIRED'
+            assert rejected['directive_adopted'] is False and rejected['command_started'] is False
+            assert receipt['reception']['admission']['status']=='admitted'
+            displayed=[(c.args[0],str(c.args[1]),c.kwargs) for c in display.call_args_list]
+            assert any(kind=='details' and text=='Recovery response status: not_accepted'
+                       for kind,text,_ in displayed)
+            assert any(kind=='message' and '恢复指令已接纳' in text and meta.get('purpose')=='route_change'
+                       for kind,text,meta in displayed)
             assert raw('recovery_turn-0009-e0298b577b1e')['content'] in [r['text'] for r in receipt['reception']['explanations']]
             assert len([e for e in events if e['node']=='commit_step'])==1
             save(output,'acceptance',{'status':'PASS','real_model':'NOT RUN','real_preflight':'NOT RUN','full_TAD':'NOT RUN','receipt':receipt})

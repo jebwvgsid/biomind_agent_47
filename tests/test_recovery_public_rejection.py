@@ -24,13 +24,13 @@ def test_native_rejection_projection_and_history(tmp_path, mode):
         async def provider(messages,**kwargs):
             requests.append([{'type':m.type,'content':deepcopy(m.content)} for m in messages]);n=len(requests)
             if n<=2:
-                return AIMessage(content=safe if n==1 else '',tool_calls=[{'name':'failure_inspect' if n==1 else 'step_inspect','id':f'tool-{n}','args':{}}])
+                return AIMessage(content=safe if n==1 else '',tool_calls=[{'name':'failure_inspect' if n==1 else 'step_inspect','id':f'tool-{n}','args':{}}], response_metadata={'finish_reason': 'tool_calls'})
             directive=json.loads(_directive());directive['summary']=summary
             if n==3:directive.pop('schema_version')
             else:
                 assert n==4 and 'STAGE_FIELD_REQUIRED' in str(requests[-1])
                 assert sum(x['content']==original for x in requests[-1])==1
-            return AIMessage(content=original,tool_calls=[{'name':'submit_recovery_directive','id':f'submit-{n}','args':directive}])
+            return AIMessage(content=original,tool_calls=[{'name':'submit_recovery_directive','id':f'submit-{n}','args':directive}], response_metadata={'finish_reason': 'tool_calls'})
         class Dispatcher:
             def dispatch_full(self,tool,arguments):
                 dispatches.append(tool);return {'status':'ok','tool':tool,'value':{'known':'new synthetic fact'}}

@@ -197,6 +197,7 @@ from agent_core.workflow.candidate_repair import (
 )
 from agent_core.workflow.recovery_runtime import recovery_harness_error
 from agent_core.workflow.recovery_node import Schema2RecoveryNode
+from agent_core.workflow.recovery_agent import RecoveryAgentLoopConfig
 from agent_core.workflow.recovery_projection import (
     CausalFailurePacketBinder,
     bind_causal_failure_node,
@@ -215,6 +216,9 @@ _context_defaults = ContextBudgetPolicy()
 SCHEMA2_CONTEXT_COMPACTION_ENABLED = getattr(_context_configuration, "SCHEMA2_CONTEXT_COMPACTION_ENABLED", False)
 SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS = getattr(_context_configuration, "SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS", _context_defaults.application_context_limit_tokens)
 SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS = getattr(_context_configuration, "SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS", _context_defaults.output_reserve_tokens)
+RECOVERY_OUTPUT_LIMIT_TOKENS = getattr(_context_configuration, "RECOVERY_OUTPUT_LIMIT_TOKENS", 50_000)
+RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS = getattr(_context_configuration, "RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS", None)
+RECOVERY_MAX_OUTPUT_RESUBMISSIONS = getattr(_context_configuration, "RECOVERY_MAX_OUTPUT_RESUBMISSIONS", 2)
 SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS = getattr(_context_configuration, "SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS", _context_defaults.estimation_margin_tokens)
 SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS = getattr(_context_configuration, "SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS", _context_defaults.safety_headroom_tokens)
 del _context_configuration, _context_defaults
@@ -2947,14 +2951,19 @@ class BioAnalystAgent:
             compactor_model=self.recovery_transport_llm,
             event_sink=self._schema2_recovery_event_sink,
             context_compaction_enabled=SCHEMA2_CONTEXT_COMPACTION_ENABLED,
+            loop_config=RecoveryAgentLoopConfig(
+                max_output_resubmissions=int(RECOVERY_MAX_OUTPUT_RESUBMISSIONS)),
             context_budget_policy=ContextBudgetPolicy(
                 application_context_limit_tokens=min(
                     int(SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS),
                     int(getattr(self, "llm_context_limit_tokens", 200_000)),
                 ),
                 output_reserve_tokens=int(
-                    SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS
+                    RECOVERY_OUTPUT_LIMIT_TOKENS
                 ),
+                requested_output_limit_tokens=int(RECOVERY_OUTPUT_LIMIT_TOKENS),
+                known_provider_output_limit_tokens=RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS,
+                output_capability_source=("configured_provider_limit" if RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS else "not_verified"),
                 estimation_margin_tokens=int(
                     SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS
                 ),
@@ -18203,7 +18212,7 @@ class BioAnalystAgent:
             resource_output = (dispatch_budget["effective_output_limit_tokens"] if dispatch_budget
                 else resources["policy"].max_output_tokens if stage == "recovery"
                 else resolved["client_resolved_output_limit"] if type(resolved["client_resolved_output_limit"]) is int else 16000)
-            if type(resolved["client_resolved_output_limit"]) is int and resolved["client_resolved_output_limit"] > 0:
+            if not dispatch_budget and type(resolved["client_resolved_output_limit"]) is int and resolved["client_resolved_output_limit"] > 0:
                 resource_output = min(resource_output, resolved["client_resolved_output_limit"])
             invocation_llm = invocation_llm.bind(max_tokens=resource_output) if hasattr(invocation_llm, "bind") else invocation_llm
             provider_policy["max_tokens"] = resource_output
@@ -18530,7 +18539,7 @@ class BioAnalystAgent:
                     prompt_hash=prompt_hash,
                     model_parameter_hash=model_parameter_hash,
                     output_policy=({"max_tokens": resource_output, "recovery_dispatch_budget": dispatch_budget,
-                        **({"receive_char_limit": resources["policy"].receive_char_limit} if resources and stage == "recovery" else {})}
+                        **({"receive_char_limit": resources["policy"].receive_char_limit if resources else 1_048_576} if stage == "recovery" else {})}
                         if dispatch_budget else {"max_tokens": resource_output, "receive_char_limit": resources["policy"].receive_char_limit}
                         if resources and stage == "recovery" else deepcopy(dict(metadata.get("generate_output_policy") or {}))),
                 )

@@ -45,7 +45,7 @@ class RevisionModel:
         return AIMessage(content="我将基于当前计划提交这项修订。", tool_calls=[{
             "id": "synthetic-native-revision", "name": "submit_recovery_directive",
             "args": deepcopy(self.directive), "type": "tool_call",
-        }])
+        }], response_metadata={"finish_reason": "tool_calls"})
 
 
 async def _scenario(mode):

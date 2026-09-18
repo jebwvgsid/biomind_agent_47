@@ -18,7 +18,7 @@ def test_format_exhaustion_preserves_explanation_in_common_stop(tmp_path,summary
             if len(self.requests)==2:
                 assert any('RECOVERY_SUBMISSION_MISSING' in str(m.content) for m in messages)
             assert len(self.requests)<=2
-            return AIMessage(content='脚本诊断已产生，但正式修复尚未接纳；输入是否不兼容未经独立核验。')
+            return AIMessage(content='脚本诊断已产生，但正式修复尚未接纳；输入是否不兼容未经独立核验。', response_metadata={'finish_reason': 'stop'})
     async def scenario():
         with patch.object(shared,'RecoveryModel',ProseModel):
             f,a,g,c,r,m,result,generates=await shared.run_execution_case(tmp_path,summary_mode)

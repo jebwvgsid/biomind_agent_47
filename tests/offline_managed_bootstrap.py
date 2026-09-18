@@ -112,13 +112,19 @@ class Reporter:
   reports.append({'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'duration':report.duration,'failure':report.longreprtext if report.failed else ''})
   result_path.write_text(json.dumps(reports,indent=2))
 import faulthandler
-faulthandler.dump_traceback_later(70,repeat=False)
+# Optional harness diagnostics are independent of provider absolute deadlines.
+# A scheduled all-thread dump is not a test timeout; enable it explicitly when
+# investigating a stalled test on a host that supports the native dump safely.
+traceback_after=float(os.environ.get('BIOMIND_OFFLINE_TRACEBACK_SECONDS', '0'))
+if traceback_after > 0:
+ faulthandler.dump_traceback_later(traceback_after,repeat=False)
 plugins=[Reporter()]
 if os.environ.get('BIOMIND_OFFLINE_FATAL_FILE'):
  from tests.cli_fatal_plugin import PersistentFatal
  plugins.append(PersistentFatal(Path(os.environ['BIOMIND_OFFLINE_FATAL_FILE'])))
 code=pytest.main(sys.argv[1:],plugins=plugins)
-faulthandler.cancel_dump_traceback_later()
+if traceback_after > 0:
+ faulthandler.cancel_dump_traceback_later()
 os.write(1, ('\nPYTEST_EXIT_CODE='+str(code)+'\nRESULTS='+str(result_path)+'\n').encode())
 after={str(p.relative_to(C)):hashlib.sha256(p.read_bytes()).hexdigest() for p in application_python_sources()}
 print('SOURCE_UNCHANGED',before==after,flush=True)
