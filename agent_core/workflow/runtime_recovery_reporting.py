@@ -150,6 +150,35 @@ def _write_report(path: Path, body: str, *, prior_receipt: Mapping[str, Any] | N
 
 
 
+def _owned_file_matches(parent, name, expected, fingerprint, *, size=None):
+    """Use the same bounded inode/content proof for preflight and publication."""
+    try:
+        row = os.stat(name, dir_fd=parent, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    if (not stat.S_ISREG(row.st_mode) or row.st_size > 1024 * 1024
+            or (size is not None and row.st_size != size)
+            or expected.get("device") != row.st_dev or expected.get("inode") != row.st_ino):
+        return False
+    descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=parent)
+    with os.fdopen(descriptor, "rb") as handle:
+        opened = os.fstat(handle.fileno())
+        if (opened.st_dev, opened.st_ino, opened.st_size) != (row.st_dev, row.st_ino, row.st_size):
+            return False
+        digest = hashlib.sha256(handle.read(1024 * 1024 + 1)).hexdigest()
+        after = os.fstat(handle.fileno())
+    try:
+        current = os.stat(name, dir_fd=parent, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    return (digest == fingerprint
+            and stat.S_ISREG(current.st_mode)
+            and (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns, current.st_ctime_ns)
+            == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+            and (opened.st_size, opened.st_mtime_ns, opened.st_ctime_ns)
+            == (after.st_size, after.st_mtime_ns, after.st_ctime_ns))
+
+
 def _write_owned_report(path, content, fingerprint, publication, record_prepared):
     """Keep a durable prepared hardlink as proof across a lost final receipt.
 
@@ -168,11 +197,7 @@ def _write_owned_report(path, content, fingerprint, publication, record_prepared
         try:return os.stat(name,dir_fd=parent,follow_symlinks=False)
         except FileNotFoundError:return None
     def valid(name, expected):
-        row=info(name)
-        if (row is None or not stat.S_ISREG(row.st_mode) or row.st_size!=len(content)
-                or expected.get("device")!=row.st_dev or expected.get("inode")!=row.st_ino):return False
-        fd=os.open(name,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=parent)
-        with os.fdopen(fd,"rb") as handle:return hashlib.sha256(handle.read(len(content)+1)).hexdigest()==fingerprint
+        return _owned_file_matches(parent, name, expected, fingerprint, size=len(content))
     try:
         target=info(path.name)
         if intent.get("status") == "published":
@@ -336,7 +361,7 @@ def _durable_facts(durable, request):
     return completed, unfinished, deliveries, scripts, runtime
 
 
-def _requested_reports(durable, task_root):
+def _requested_reports(durable, task_root, *, require_approval=True):
     spec = canonical_task_spec_for_state(durable)
     outputs = effective_output_contracts(spec)
     approved = plan_approval_is_current(durable, int((durable.get("current_task") or {}).get("task_revision") or durable.get("task_revision") or 0))
@@ -348,7 +373,7 @@ def _requested_reports(durable, task_root):
         path = Path(raw)
         if path.is_absolute():
             path = _path(path)
-            if not path.is_relative_to(task_root) and not (approved and str(row.get("source") or row.get("source_type")) in {"user_explicit", "user_confirmed"} and row.get("path_policy") == "managed_exact"):
+            if not path.is_relative_to(task_root) and not ((approved or not require_approval) and str(row.get("source") or row.get("source_type")) in {"user_explicit", "user_confirmed"} and row.get("path_policy") == "managed_exact"):
                 raise RuntimeReportError("RUNTIME_REPORT_EXPLICIT_OUTPUT_NOT_APPROVED")
         else:
             if path.parts != (path.name,):
@@ -362,6 +387,88 @@ def _requested_reports(durable, task_root):
             raise RuntimeReportError("RUNTIME_REPORT_OUTPUT_AMBIGUOUS")
         paths[path.name] = path
     return paths
+
+
+def report_publication_preflight(durable, task_root):
+    """Observe exact requested report paths before planning, without writing.
+
+    A ready result is a point-in-time observation, not a publication permit.
+    The existing approved scope and final writer checks remain mandatory. No
+    fallback directory is invented, and equal unowned content is protected.
+    """
+    task_id = str(durable.get("task_id") or "")
+    result = {"schema_version": 1, "producer": "report_publication_preflight_v1",
+        "task_id": task_id, "status": "ready", "targets": [], "conflicts": [],
+        "publication_authorized": False, "final_writer_recheck_required": True}
+    try:
+        paths = _requested_reports(durable, _path(task_root), require_approval=False)
+    except (OSError, ValueError) as exc:
+        result.update(status="unverified", reason_code=getattr(exc, "code", "RUNTIME_REPORT_CONTRACT_FAILED"),
+                      error_type=type(exc).__name__)
+        return result
+    publications = (durable.get("task_state") or {}).get("report_publications") or {}
+    for name, path in paths.items():
+        row = {"name": name, "path": str(path), "status": "absent", "ownership": "not_observed"}
+        parent = None
+        try:
+            parent = _open_directory(path.parent, create=False)
+            try:
+                present = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+            except FileNotFoundError:
+                present = None
+            if present is not None:
+                row.update(status="conflict", ownership="unknown_or_other_task",
+                           reason_code="RUNTIME_REPORT_EXISTING_FILE_PROTECTED")
+                for identity, raw in publications.items():
+                    if not isinstance(raw, Mapping):
+                        continue
+                    intent = dict(raw)
+                    expected_identity = hashlib.sha256(json.dumps(
+                        [task_id, intent.get("owner"), str(path)], ensure_ascii=False).encode()).hexdigest()
+                    if (identity != expected_identity or intent.get("operation_id") != identity
+                            or intent.get("task_id") != task_id or intent.get("path") != str(path)):
+                        continue
+                    prepared = dict(intent.get("prepared") or {})
+                    fingerprint = str(intent.get("sha256") or "")
+                    proof = ".runtime-report-proof-" + identity
+                    valid_prepared = (prepared.get("operation_id") == identity
+                        and prepared.get("path") == str(path) and prepared.get("sha256") == fingerprint
+                        and prepared.get("proof_name") == proof)
+                    if not valid_prepared:
+                        continue
+                    if not _owned_file_matches(parent, path.name, prepared, fingerprint):
+                        row.update(ownership="current_task_changed", reason_code="RUNTIME_REPORT_OWNED_FILE_CHANGED")
+                        continue
+                    if intent.get("status") == "published":
+                        receipt = dict(intent.get("receipt") or {})
+                        owned = (receipt.get("operation_id") == identity and receipt.get("path") == str(path)
+                            and receipt.get("sha256") == fingerprint and receipt.get("ownership") == prepared)
+                    else:
+                        owned = intent.get("status") == "prepared" and _owned_file_matches(parent, proof, prepared, fingerprint)
+                    if owned:
+                        row.update(status="owned_reentry", ownership="current_task", operation_id=identity,
+                                   publication_status=intent["status"], sha256=fingerprint)
+                        row.pop("reason_code", None)
+                        break
+        except FileNotFoundError:
+            # Missing parent/leaf is absence, not permission to create it.
+            pass
+        except (OSError, ValueError) as exc:
+            row.update(status="unverified", ownership="unknown", error_type=type(exc).__name__,
+                       reason_code=getattr(exc, "code", "RUNTIME_REPORT_PATH_UNVERIFIED"))
+        finally:
+            if parent is not None:
+                os.close(parent)
+        result["targets"].append(row)
+        if row["status"] in {"conflict", "unverified"}:
+            result["conflicts"].append(deepcopy(row))
+    if result["conflicts"]:
+        result.update(status="needs_user_decision", reason_code=result["conflicts"][0]["reason_code"],
+            question="指定报告位置已有受保护文件或尚不能确认其归属。请明确另一个获授权的报告位置，或说明是否为原任务续跑；现有文件不会覆盖。",
+            allowed_resolution="Existing task/output-contract decision and Plan approval flow; no automatic path change.")
+    identity_body = {key: value for key, value in result.items() if key != "receipt_id"}
+    result["receipt_id"] = "report-preflight-" + hashlib.sha256(json.dumps(identity_body, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    return result
 
 
 def _explanation(summary):

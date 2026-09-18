@@ -120,6 +120,10 @@ def _cause_text(facts, origin):
         label = f'进程退出码 {rc}；' if type(rc) is int else ''
         detail = '必需产物内容未通过正式核验' if code == 'OBSERVED_ARTIFACT_CONTENT_INVALID' else '正式产物核验失败'
         return label + detail + '（' + code + '）；当前步骤尚未正式提交。', False
+    if facts.get('unresolved_findings'):
+        rc = execution.get('returncode')
+        label = f'进程退出码 {rc}；' if type(rc) is int else ''
+        return label + '当前检查未通过（' + (code or 'UNKNOWN') + '）；具体问题见下方记录，当前步骤尚未正式提交。', False
     if code == 'EXECUTION_FAILED':
         rc = origin.get('returncode')
         if rc == 0:
@@ -139,6 +143,9 @@ def _cause_text(facts, origin):
               'WORKSPACE_MUTATION_RECEIPT_INVALID': '工作区变更核验回执无效'}
     if code in labels:
         return labels[code] + '（' + code + '）。', False
+    recorded = _brief(origin.get('detail') or origin.get('message') or origin.get('summary'), 360)
+    if recorded:
+        return recorded + ('（' + code + '）' if code else '') + '。', False
     return ('尚未定位具体原因（' + code + '）。' if code else '具体原因尚未定位。'), False
 
 
@@ -174,6 +181,19 @@ def _stop_text(stop, code):
             stage = _brief(stop.get('failure_stage') or 'recovery.context_budget')
             return (stage + ' 的输入估算为 ' + counts['tokens'] + ' tokens，有效输入上限 '
                     + counts['safe'] + ' tokens；已停止（' + code + '）。')
+    if code == 'RECOVERY_RESPONSE_INCOMPLETE':
+        finish = str(stop.get('finish_reason') or detail)
+        truncated = finish in {'length', 'max_tokens', 'max_output_tokens'}
+        label = ('Recovery 单次输出达到上限，响应未完整提交' if truncated
+                 else 'Recovery 响应未完整接纳，未提交恢复指令')
+        used = stop.get('output_resubmission_count')
+        if type(used) is int:
+            label += f'；本次因果调查已完整重提 {used} 次'
+        if stop.get('output_resubmission_exhausted') is True:
+            label += '；额外完整重提额度已耗尽'
+        elif type(stop.get('output_resubmissions_remaining')) is int:
+            label += f"；剩余额外重提 {stop['output_resubmissions_remaining']} 次"
+        return label + '（' + code + '）。'
     if code in {'RECOVERY_NO_PROGRESS', 'RECOVERY_NO_PROGRESS_LIMIT'}:
         rounds = stop.get('no_progress_rounds')
         prefix = f'连续 {rounds} 轮' if type(rounds) is int and rounds > 0 else '恢复调查'
@@ -206,6 +226,25 @@ def terminal_text(status, facts):
     cause, identity_issue = _cause_text(facts, origin)
     if status != 'completed':
         rows.append('原始问题：' + cause)
+        for finding in facts.get('unresolved_findings') or []:
+            if not isinstance(finding, dict):
+                continue
+            label = _brief(finding.get('code') or 'UNKNOWN', 160)
+            detail = _brief(finding.get('detail'), 360)
+            source = _brief(finding.get('source') or finding.get('source_pointer'), 180)
+            position = _brief(finding.get('field_path'), 180)
+            rows.append('当前未解决检查：' + label + (' · ' + detail if detail else '')
+                        + ('；来源=' + source if source else '') + ('；位置=' + position if position else '') + '。')
+        candidates = execution.get('candidate_outputs') or []
+        if candidates:
+            count = execution.get('candidate_output_count', len(candidates))
+            rows.append(f'本次候选产物：{count} 项已有物化记录；文件存在不代表核验通过或步骤提交。')
+            for item in candidates[:5]:
+                if isinstance(item, dict):
+                    exists = ('存在' if item.get('exists') is True else '不存在' if item.get('exists') is False else '存在状态未记录')
+                    checked = ('内容检查未通过' if item.get('content_valid') is False else
+                               '局部内容检查通过，正式接纳见步骤状态' if item.get('content_valid') is True else '内容有效性未确认')
+                    rows.append('候选：' + _brief(item.get('path'), 240) + '；' + exists + '；' + checked + '。')
     failures = list(dict.fromkeys(str(r.get('error_code') or 'UNKNOWN') for r in facts.get('current_inspection_failures', facts.get('inspection_failures', []))))
     if failures:
         labels = {'ARTIFACT_LOCATOR_MISSING': '未取得产物的可读位置',
@@ -231,6 +270,7 @@ def terminal_text(status, facts):
         next_step = (protection[1] if protection else
                      '修正当前步骤证据登记的标识，再按现有流程核验与提交。' if identity_issue else
                      '验证已声明的环境与所需命令，按正式修订和批准流程重新生成当前未完成步骤。' if (facts.get('runtime_diagnostics') or {}).get('missing_commands') else
+                     '根据上述具体检查记录修复当前未完成步骤，再走现有核验与提交流程。' if facts.get('unresolved_findings') else
                      '先查看当前步骤的执行与核验详情，定位具体问题后再选择修复。')
         rows.append('下一步：' + next_step)
     if facts.get('summary_llm_calls') == 0:

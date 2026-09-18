@@ -9710,6 +9710,31 @@ class BioAnalystAgent:
         durable_before = load_plan_state(self.data_path, task_id)
         task_state_before = dict(durable_before.get("task_state") or {})
         prior_task = canonical_task_spec_for_state(durable_before)
+        if projected.get("next_step") == "planner":
+            # The validated TaskSpec candidate owns exact output paths. Observe
+            # those paths before its first planning handoff; never infer them
+            # from a generated shell or silently rename the user's directory.
+            from agent_core.workflow.runtime_recovery_reporting import report_publication_preflight
+            inspection_state = deepcopy(durable_before)
+            inspection_state["current_task"] = {
+                "task_spec": deepcopy(proposed_task), "task_revision": task_spec_revision(proposed_task)}
+            preflight = report_publication_preflight(inspection_state,
+                Path(self.data_path).absolute() / "task_outputs" / task_id)
+            consultation = deepcopy(dict(projected.get("consultation_state") or {}))
+            consultation["report_publication_preflight"] = preflight
+            if preflight["status"] != "ready":
+                question = preflight.get("question") or (
+                    "指定报告位置尚未完成路径与归属核验。请确认正式报告目标位置；当前尚不能进入规划。")
+                pending = {"type": "consultant_question", "stage": "consultant",
+                    "question_id": preflight.get("receipt_id") or "report-publication-preflight",
+                    "question": question, "requested_slots": ["expected_outputs"],
+                    "expected_type": "string", "owner": "user", "resume_step": "consultant",
+                    "reason_code": preflight.get("reason_code"), "evidence": preflight}
+                projected.update(pending_human_question=pending, next_step="ask_user")
+                consultation.update(phase="consulting", consultation_status="active",
+                    completion_decision="needs_user_input", completion_reason=preflight.get("reason_code"),
+                    pending_question=deepcopy(pending))
+            projected["consultation_state"] = consultation
         if "pending_human_question" in projected:
             pending_question = projected.get("pending_human_question") or {}
         else:

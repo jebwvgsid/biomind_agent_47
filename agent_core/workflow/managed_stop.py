@@ -750,6 +750,7 @@ def projection(stop):
          "reason": explanation(stop), "detail": explanation(stop), "stop_id": stop["stop_id"], "origin": stop["origin"],
          "primary_cause": stop.get("primary_cause", {}), "latest_failure": stop.get("latest_failure", {}),
          "prior_completed_work": stop.get("prior_completed_work", []),
+         "unresolved_findings": deepcopy(stop.get("unresolved_findings") or []),
          "stages": deepcopy(stop.get("stages") or []),
          "recovery_usage": deepcopy(stop.get("recovery_usage") or {}),
          "execution": stop["execution"], "causal_execution":stop.get("causal_execution",{}),

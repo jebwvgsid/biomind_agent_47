@@ -4,6 +4,7 @@ Only the scientific process boundary and model responses are controlled. Origina
 session files are neither loaded nor modified by these acceptance tests.
 """
 import asyncio
+import io
 import json
 from copy import deepcopy
 from pathlib import Path
@@ -19,6 +20,8 @@ from agent_core.workflow.phase_archive import PhaseArchiveStore
 from agent_core.workflow.managed_stop import current_managed_stop
 from execution.profiling import RunProfiler
 from bio_agents import OutputRouter
+from agent_core.cli_display import bind_terminal
+from agent_core.cli_terminal import PlainTerminal
 from tests.test_inspection_workflow import make_inspection_fixture, _tag_json
 from tests.test_provider_attempt_reliability import _agent
 
@@ -98,8 +101,8 @@ class RecoveryModel:
                 "action":"retry_step", "summary":"The recorded extractor selected ID instead of the chromosome; regenerate the action.",
                 "reason_code":"GENERATED_ACTION_FAILED", "target_step_id":seed["invocation_scope"]["step_id"],
                 "instruction":"Repair the VCF header extractor while preserving the approved comparison method. Require a new action and approval.",
-                "evidence_refs":[seed["failure_packet"]["source_outcome_ref"]]}))
-        return AIMessage(content="", tool_calls=calls)
+                "evidence_refs":[seed["failure_packet"]["source_outcome_ref"]]}), response_metadata={"finish_reason":"stop"})
+        return AIMessage(content="", tool_calls=calls, response_metadata={"finish_reason":"tool_calls"})
 
 async def run_execution_case(tmp_path, summary_mode="ok", *, readable=False, summary_policy=None, inject=None,
                              recovery_transport_failure=False):
@@ -165,7 +168,11 @@ def test_execution_stop_real_outer_provider_and_reports(tmp_path,capsys,mode):
         assert '确定性检查：通过' not in result.reason
         assert set(stop['report_paths'])=={'report.md','stage_status.tsv','reproduce.sh'}
         for path in stop['report_paths'].values(): assert Path(path).is_file()
-        assert 'print $3' in Path(stop['report_paths']['reproduce.sh']).read_text()
+        reproduction = Path(stop['report_paths']['reproduce.sh']).read_text()
+        # This external execution leaf supplies no recorded script file/body.
+        # Arbitrary compatibility code is not a trustworthy reproduction.
+        assert "not available" in reproduction and "not been reconstructed" in reproduction
+        assert "print $3" not in reproduction
         report=Path(stop['report_paths']['report.md']).read_text()
         assert 'read-2' in report and 'returncode=1' in report
         metrics=json.loads((tmp_path/'task_outputs'/f.task_id/'run_metrics.json').read_text())
@@ -173,8 +180,24 @@ def test_execution_stop_real_outer_provider_and_reports(tmp_path,capsys,mode):
         assert metrics['final_result']['terminal_diagnostic']['summary_llm_calls']==0
         commitments=deepcopy(f.reload()['task_state'].get('typed_step_commit_receipts') or {})
         protected_reports={path:Path(path).read_bytes() for path in stop['report_paths'].values()}
-        assert OutputRouter().render_terminal_result(result)
-        output=capsys.readouterr().out
+        stream = io.StringIO()
+        owner = PlainTerminal(stream, verbosity="verbose")
+        previous = bind_terminal(owner)
+        try:
+            router = OutputRouter()
+            assert router.render_terminal_result(result)
+            assert await owner.drain(timeout=1)
+            output = stream.getvalue()
+            # The router acknowledges delivery to the owner; the real display
+            # model owns deduplication by task/stop/delivery identity.
+            assert router.render_terminal_result(result)
+            assert await owner.drain(timeout=1)
+            assert stream.getvalue() == output
+            assert len(owner.model.terminals) == 1
+            assert output.count("任务已停止 · blocked") == 1
+        finally:
+            bind_terminal(previous)
+            owner.close()
         assert 'RECOVERY_NO_PROGRESS_LIMIT' in output and '模型总结未运行' in output
         # Reentry preserves persisted diagnosis, formal commitments and reports.
         await a._finalize_managed_terminal(f.task_id,g.get_state(c))

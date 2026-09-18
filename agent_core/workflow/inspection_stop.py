@@ -182,9 +182,75 @@ def inspection_stop_scope(seed, durable=None):
         "episode_id": _code(seed.get("seed_id"))}
 
 
+def _same_fact_scope(value, scope):
+    """Explicit foreign identities never supply current terminal facts."""
+    row = _mapping(value)
+    return all(not row.get(key) or not scope.get(key) or str(row[key]) == str(scope[key])
+               for key in ("task_id", "plan_id", "plan_version", "step_id", "attempt_id"))
+
+
+def _failure_findings(payload, packet, scope):
+    """Bounded public fields from existing producer records, never log guesses.
+
+    This projection does not determine which check is scientifically correct or
+    mark anything solved. Its source is the current frozen failure packet only.
+    """
+    payload = _mapping(payload)
+    rows, seen = [], set()
+    def add(raw, source_pointer, *, stage="validation"):
+        row = _mapping(raw)
+        if row.get("passed") is True or row.get("status") in {"passed", "satisfied", "resolved"}:
+            return
+        metadata = _mapping(row.get("typed_metadata") or row.get("metadata"))
+        code = _code(row.get("code") or row.get("error_code") or row.get("reason_code")
+                     or metadata.get("code"), "UNKNOWN")
+        parser = _mapping(row.get("parser_receipt"))
+        detail = _safe(row.get("detail") or row.get("message") or row.get("reason") or parser.get("detail")
+                       or metadata.get("detail") or metadata.get("message") or metadata.get("reason"), 1200)
+        field = _safe(row.get("field_path") or row.get("affected_field") or metadata.get("affected_field"), 400)
+        identity = (code, detail, field)
+        if identity in seen or (code == "UNKNOWN" and not detail):
+            return
+        seen.add(identity)
+        rows.append({"code": code, "detail": detail, "field_path": field,
+            "source": _safe(row.get("validation_source") or row.get("source") or row.get("parser_id")
+                            or metadata.get("parser_id") or source_pointer, 400),
+            "source_pointer": _safe(row.get("source_pointer") or source_pointer, 800),
+            "stage": _code(row.get("repair_stage") or row.get("stage"), stage),
+            "evidence_refs": [_safe(ref, 800) for ref in row.get("evidence_refs") or metadata.get("evidence_refs") or []][:8]})
+    index = _mapping(payload.get("producer_failure_index"))
+    if not index:
+        index = next((_mapping(row.get("metadata")) for row in packet.get("diagnostic_facts") or []
+                      if isinstance(row, Mapping) and row.get("kind") == "producer_failure_index"), {})
+    if _same_fact_scope(index.get("scope"), scope):
+        for row in index.get("checks") or []:
+            add(row, "/producer_failure_index/checks")
+    report = _mapping(payload.get("completion_report"))
+    if _same_fact_scope(report.get("scope"), scope):
+        for field in ("predicate_results", "failed_predicates", "findings", "binding_and_receipt_findings"):
+            for number, row in enumerate(report.get(field) or []):
+                if isinstance(row, Mapping):
+                    add(row, f"/completion_report/{field}/{number}", stage="supervisor")
+    for number, row in enumerate(payload.get("contract_violations") or []):
+        if isinstance(row, Mapping):
+            add(row, f"/contract_violations/{number}")
+    # Metadata is already scoped by the immutable packet. Keep only explicit
+    # producer failures, excluding narrative/old tool return codes/model claims.
+    for row in packet.get("diagnostic_facts") or []:
+        if not isinstance(row, Mapping) or row.get("kind") not in {
+                "contract_violation", "completion_predicate", "binding_and_receipt", "missing_effect"}:
+            continue
+        metadata = _mapping(row.get("metadata"))
+        add({**metadata, "message": metadata.get("detail") or metadata.get("message") or row.get("summary")},
+            "/failure_packet/diagnostic_facts/" + str(row.get("fact_id") or ""))
+    return rows[:12]
+
+
 def _execution(durable, source, scope, packet=None):
     payload = _mapping(source.get("payload"))
     report = _mapping(payload.get("completion_report"))
+    if not _same_fact_scope(report.get("scope"), scope):
+        report = {}
     process = _mapping(report.get("process_outcome"))
     validation = _mapping(payload.get("validation_evidence"))
     record = _mapping(payload.get("execution_record"))
@@ -220,7 +286,25 @@ def _execution(durable, source, scope, packet=None):
     script = _safe(attempt.get("executed_script_path"), 1600)
     if script == "[redacted]" or Path(script).name in {"启动.sh", "startup.py"}:
         script = ""
+    candidates = []
+    observed_candidates = record.get("observed_output_records") or []
+    if not observed_candidates:
+        for fact in packet.get("diagnostic_facts") or []:
+            if not isinstance(fact, Mapping) or fact.get("kind") != "result_realizations":
+                continue
+            realizations = _mapping(_mapping(fact.get("metadata")).get("result_realizations"))
+            if _same_fact_scope(realizations.get("scope"), scope):
+                observed_candidates = realizations.get("observed_candidates") or []
+                break
+    for row in observed_candidates:
+        if (not isinstance(row, Mapping) or row.get("attempt_id") != scope["attempt_id"]
+                or row.get("current_attempt_owned") is not True):
+            continue
+        candidates.append({key: _safe(row[key], 800) if isinstance(row[key], str) else row[key]
+            for key in ("path", "exists", "artifact_kind", "size", "content_valid")
+            if key in row and isinstance(row[key], (str, bool, int))})
     return {"attempt_id": scope["attempt_id"], "step_id": scope["step_id"], "executed": executed,
+        "candidate_outputs": candidates[:12], "candidate_output_count": len(candidates),
         "purpose": _code(attempt.get("purpose") or attempt.get("execution_purpose"), "UNKNOWN"),
         "returncode": rc, "deterministic_passed": deterministic,
         "validation_status": _code(validation_status, "unknown"),
@@ -283,6 +367,8 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
     origin["returncode"] = next((value for value in origin_codes if type(value) is int), None)
     origin["attempt_id"] = str(origin_packet.get("attempt_ref") or "")
     origin["process_fact_scope"] = "original causal execution; no scientific validity inferred"
+    current_problem_scope = {**scope, "attempt_id": str(origin_packet.get("attempt_ref") or scope.get("attempt_id") or "")}
+    unresolved_findings = _failure_findings(original_source_payload, origin_packet, current_problem_scope)
     publication_failures = [{"error_code": _code(row.get("code"), "INSPECTION_PUBLICATION_FAILED"),
         "detail": _safe(row.get("detail")), "stage": _code(row.get("stage"), "recovery.inspection_publication"),
         "handle": _safe(row.get("handle"), 800), "source_object_id": _safe(row.get("source_object_id"), 800)}
@@ -299,7 +385,8 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
     stop = {"schema_version": 1, "producer": PRODUCER, "scope": scope,
         "authority": _authority(durable),
         "expected_state_generation": int(durable.get("state_generation") or 0),
-        "origin": origin, "inspection_failures": failures, "publication_failures": publication_failures,
+        "origin": origin, "unresolved_findings": unresolved_findings,
+        "inspection_failures": failures, "publication_failures": publication_failures,
         "latest_failure": deepcopy(failures[-1]) if failures else {},
         "inspection_observations": [{"tool": _code(row.get("tool")), "source_ref": _safe(row.get("source_ref"), 800),
             "content_sha256": _safe(row.get("content_sha256"), 100),
@@ -326,11 +413,24 @@ def build_inspection_stop(*, seed, durable, source, episode, archive_ref=""):
             **({"detail": _safe(row.get("detail"))} if row.get("detail") else {})}
             for row in episode.get("secondary_failures") or [] if isinstance(row, Mapping)]}
     reception = _mapping(episode.get("reception"))
+    for key in ("output_resubmission_count", "output_resubmissions_remaining"):
+        value = audit.get(key, reception.get(key))
+        if type(value) is int and value >= 0:
+            stop["stop_reason"][key] = value
+    exhausted = error.get("output_resubmission_exhausted", audit.get("output_resubmission_exhausted",
+                          reception.get("output_resubmission_exhausted")))
+    if type(exhausted) is bool:
+        stop["stop_reason"]["output_resubmission_exhausted"] = exhausted
+    response_receipts = reception.get("response_receipts") or audit.get("response_receipts") or []
+    if response_receipts and isinstance(response_receipts[-1], Mapping):
+        last = response_receipts[-1]
+        if last.get("error_code") == reason and last.get("status") == "not_accepted":
+            stop["stop_reason"]["finish_reason"] = _code(last.get("finish_reason"), "UNKNOWN")
     stop["model_diagnoses"] = [{"source_message_id": _safe(row.get("source_message_id"), 200),
         "text": _safe(row.get("text"), 4000), "authority": "unverified_model_explanation"}
         for row in reception.get("explanations", []) if isinstance(row, Mapping) and row.get("text")][-12:]
     stop["directive_reception"] = deepcopy(reception.get("response_receipts") or [])
-    identity = {key: stop[key] for key in ("scope", "authority", "origin", "inspection_failures", "publication_failures", "stop_reason", "execution", "archive_ref")}
+    identity = {key: stop[key] for key in ("scope", "authority", "origin", "unresolved_findings", "inspection_failures", "publication_failures", "stop_reason", "execution", "archive_ref")}
     stop["stop_id"] = "inspection-stop:" + _hash(identity)
     stop["explanation"] = inspection_stop_explanation(stop)
     return stop
@@ -349,6 +449,9 @@ def inspection_stop_explanation(stop):
         "确定性检查：" + ("通过" if execution.get("deterministic_passed") else "尚无足够事实确认通过") + "；步骤正式提交：" + ("已提交" if execution.get("committed") else "未提交") + "。"]
     concerns = _mapping(stop.get("origin")).get("concerns") or []
     lines.append("Supervisor 待核实的疑虑：" + ("；".join(_safe(item, 1800) for item in concerns) or _safe(_mapping(stop.get("origin")).get("summary")) or "仍需完成语义复核") + "。")
+    for finding in stop.get("unresolved_findings") or []:
+        lines.append("当前未解决检查：" + _safe(finding.get("code")) + "；" + _safe(finding.get("detail"))
+                     + "；来源=" + _safe(finding.get("source")) + "；位置=" + _safe(finding.get("source_pointer")) + "。")
     failures = stop.get("inspection_failures") or []
     if failures:
         lines.append("实际读取失败：" + "；".join(
@@ -619,6 +722,7 @@ def inspection_terminal_projection(values, durable=None):
         "inspection_failures": deepcopy(stop.get("inspection_failures") or []),
         "stop_reason": deepcopy(reason), "execution": deepcopy(stop.get("execution") or {}),
         "primary_cause": deepcopy(stop.get("origin") or {}),
+        "unresolved_findings": deepcopy(stop.get("unresolved_findings") or []),
         "secondary_causes": deepcopy(stop.get("publication_failures") or []) + deepcopy(stop.get("inspection_failures") or []) + deepcopy(stop.get("secondary_failures") or []),
         "evidence_refs": refs, "report_paths": deepcopy(stop.get("report_paths") or {}),
         "persistence_status": stop.get("persistence_status"), "stop_id": stop.get("stop_id"),

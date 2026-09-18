@@ -632,6 +632,15 @@ def _compact_completion_report(value: Any) -> dict[str, Any]:
         metadata = _compact_failure_metadata(raw)
         if metadata:
             row["typed_metadata"] = metadata
+        parser_receipt = raw.get("parser_receipt")
+        if isinstance(parser_receipt, Mapping):
+            # Registered parser rejection, not a model success claim or full
+            # scientific receipt. Keep the actual format/metadata diagnosis.
+            row["parser_receipt"] = {key: _bounded_fact_value(parser_receipt[key])
+                for key in ("parser_id", "value", "error_code", "detail") if key in parser_receipt}
+        for key in ("detail", "message", "field_path", "source_pointer"):
+            if key in raw:
+                row[key] = _bounded_fact_value(raw[key])
         if row:
             rows.append(row)
         if len(rows) >= 8:
@@ -672,7 +681,7 @@ def _producer_failure_index(payload: Mapping[str, Any]) -> dict[str, Any]:
         rows.append({"source_pointer": pointer, "stage": stage,
             "code": str(raw.get("code") or raw.get("error_code") or raw.get("reason_code") or code or raw.get("message") or "UNKNOWN")[:1200],
             **{("detail" if k == "message" else k): _bounded_fact_value(raw[k]) for k in
-                ("message", "status", "reason", "formal_target_path", "relative_path", "expected", "actual", "observed_state", "failed_invariant", "evidence_refs", "expected_state_generation", "current_state_generation", "no_partial_mutation") if k in raw},
+                ("message", "detail", "status", "reason", "parser_id", "validation_source", "field_path", "repair_stage", "formal_target_path", "relative_path", "expected", "actual", "observed_state", "failed_invariant", "evidence_refs", "expected_state_generation", "current_state_generation", "no_partial_mutation") if k in raw},
             "observation_status": "recorded" if any(k in raw for k in ("observed_state", "actual")) else "unknown"})
     # Explicit rejection lists take priority over process rc/status/background.
     for container, pointer in ((execution.get("validation"), "/execution_record/validation"),
@@ -712,6 +721,15 @@ def _producer_failure_index(payload: Mapping[str, Any]) -> dict[str, Any]:
                 if isinstance(check, Mapping) and check.get("status") not in {"passed", "satisfied"} and check.get("severity") != "warning":
                     prefix = "/execution_record" if key == "runtime_output_reconciliation" else ""
                     add(check, f"{prefix}/{key}/{field}/{i}", stage=key)
+    report = payload.get("completion_report")
+    if isinstance(report, Mapping):
+        for i, check in enumerate(report.get("predicate_results") or []):
+            if not isinstance(check, Mapping) or check.get("passed") is True:
+                continue
+            parser = check.get("parser_receipt")
+            parser = parser if isinstance(parser, Mapping) else {}
+            add({**dict(check), "detail": check.get("detail") or parser.get("detail") or ""},
+                f"/completion_report/predicate_results/{i}", stage="supervisor.predicate")
     evidence = payload.get("evidence") or {}
     if isinstance(evidence, Mapping):
         for i, health in enumerate(evidence.get("runtime_status") or []):
