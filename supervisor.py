@@ -686,7 +686,21 @@ class LLMReviewer:
         )
 
     async def _invoke_review(self, model, messages, *, task_id, data_path, metadata):
+        from agent_core.workflow.phase_compaction import PhaseContextCompactor
+        from agent_core.workflow.phase_archive import PhaseArchiveStore
+        from agent_core.workflow.context_compaction import configured_context_policy
+        manager = PhaseContextCompactor(phase_store=PhaseArchiveStore(data_path or "."),
+            compactor_invoke=self._invoke_context_compactor,
+            policy=self._context_policy or configured_context_policy())
+        metadata = {**metadata, "context_budget_prepared": True}
+        async def prepare(bound, history, ordinal):
+            result = await manager.prepare_messages(history, model=bound, task_id=task_id,
+                phase="supervisor", invocation_id=f"supervisor:{task_id}:review:{ordinal}",
+                enabled=self._context_compaction_enabled)
+            metadata["context_budget"] = dict(result.telemetry)
+            return list(result.messages)
         if self.command_service is None:
+            messages = await prepare(model, messages, 0)
             return await ainvoke_with_snapshot(model, messages, task_id=task_id,
                                                data_path=data_path, metadata=metadata)
         from agent_core.command_tools import invoke_with_command_tools
@@ -694,6 +708,7 @@ class LLMReviewer:
 
         async def invoke(bound_model, history, ordinal):
             nonlocal last_snapshot
+            history = await prepare(bound_model, history, ordinal)
             response, last_snapshot = await ainvoke_with_snapshot(bound_model, history,
                 task_id=task_id, data_path=data_path,
                 metadata={**metadata, "command_tool_round": ordinal})
@@ -1055,6 +1070,8 @@ class LLMReviewer:
         policy = self._context_policy or self._default_context_policy(
             ContextBudgetPolicy
         )
+        from agent_core.workflow.context_compaction import model_context_policy
+        policy = model_context_policy(policy, self.llm)
         if not self._context_compaction_enabled:
             budget = measure_provider_input(
                 {
@@ -1148,31 +1165,8 @@ class LLMReviewer:
     def _default_context_policy(policy_type):
         """Use loaded central config without importing startup/config side effects."""
 
-        loaded = sys.modules.get("config.config")
-        if loaded is None:
-            return policy_type()
-        return policy_type(
-            application_context_limit_tokens=int(getattr(
-                loaded,
-                "SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS",
-                200_000,
-            )),
-            output_reserve_tokens=int(getattr(
-                loaded,
-                "SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS",
-                50_000,
-            )),
-            estimation_margin_tokens=int(getattr(
-                loaded,
-                "SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS",
-                4_096,
-            )),
-            safety_headroom_tokens=int(getattr(
-                loaded,
-                "SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS",
-                2_048,
-            )),
-        )
+        from agent_core.workflow.context_compaction import configured_context_policy
+        return configured_context_policy()
 
     @staticmethod
     def _review_policy_view(row):

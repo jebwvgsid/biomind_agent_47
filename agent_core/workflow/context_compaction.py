@@ -19,6 +19,8 @@ import importlib.metadata
 import inspect
 import json
 import math
+import os
+import sys
 import re
 import time
 from copy import deepcopy
@@ -36,7 +38,8 @@ from prompts.context_compaction import (
 CONTEXT_COMPACTION_SCHEMA_VERSION = 1
 CONTEXT_BUDGET_POLICY_VERSION = "schema2-context-budget-v1"
 DEFAULT_APPLICATION_CONTEXT_LIMIT_TOKENS = 200_000
-DEFAULT_COMPACTION_TRIGGER_RATIO = 0.85
+DEFAULT_INPUT_SOFT_LIMIT_TOKENS = 256_000
+DEFAULT_COMPACTION_TRIGGER_RATIO = 1.0
 DEFAULT_COMPACTION_TARGET_RATIO = 0.65
 DEFAULT_COMPACTION_MAX_ATTEMPTS = 2
 DEFAULT_HIERARCHICAL_MAX_LEVELS = 16
@@ -471,6 +474,9 @@ class ContextBudgetPolicy:
     application_context_limit_tokens: int = (
         DEFAULT_APPLICATION_CONTEXT_LIMIT_TOKENS
     )
+    input_soft_limit_tokens: int = field(default_factory=lambda: int(
+        os.getenv("BIOMIND_INPUT_SOFT_LIMIT_TOKENS", str(DEFAULT_INPUT_SOFT_LIMIT_TOKENS))))
+    context_capability_source: str = "legacy_application_total_window"
     known_provider_context_limit_tokens: int | None = None
     output_reserve_tokens: int = 50_000
     # Explicit Recovery policy overrides inherited local client defaults;
@@ -515,6 +521,7 @@ class ContextBudgetPolicy:
                 self, "known_provider_context_limit_tokens", provider
             )
         for field_name in (
+            "input_soft_limit_tokens",
             "output_reserve_tokens",
             "estimation_margin_tokens",
             "safety_headroom_tokens",
@@ -580,15 +587,12 @@ class ContextBudgetPolicy:
         candidates = [
             math.floor(
                 float(self.trigger_ratio)
-                * self.effective_context_limit_tokens
+                * min(self.input_soft_limit_tokens, self.effective_context_limit_tokens)
             ),
             self.safe_input_tokens - int(self.safety_headroom_tokens),
         ]
-        if self.compressor_safe_input_tokens is not None:
-            candidates.append(
-                int(self.compressor_safe_input_tokens)
-                - int(self.compressor_prompt_overhead_tokens)
-            )
+        # The compactor has its own bounded/segmented request path. Its
+        # smaller window is not a second soft limit on a business node.
         return max(0, min(candidates))
 
     @property
@@ -597,7 +601,7 @@ class ContextBudgetPolicy:
             self.safe_input_tokens,
             math.floor(
                 float(self.target_ratio)
-                * self.effective_context_limit_tokens
+                * min(self.input_soft_limit_tokens, self.safe_input_tokens)
             ),
         )
 
@@ -611,6 +615,11 @@ class ContextBudgetPolicy:
             "known_provider_context_limit_tokens": (
                 self.known_provider_context_limit_tokens
             ),
+            "input_soft_limit_tokens": self.input_soft_limit_tokens,
+            "context_capability_source": self.context_capability_source,
+            "effective_input_limit_tokens": self.trigger_tokens,
+            "compression_constraint": ("input_soft_target" if self.trigger_tokens >= self.input_soft_limit_tokens
+                else "effective_window_or_explicit_earlier_trigger"),
             "effective_context_limit_tokens": (
                 self.effective_context_limit_tokens
             ),
@@ -630,6 +639,72 @@ class ContextBudgetPolicy:
                 self.compressor_prompt_overhead_tokens
             ),
         }
+
+
+def configured_context_policy(*, output_reserve_tokens=None):
+    """One configuration source, without importing credentials/startup effects.
+
+    The legacy application limit remains a TOTAL ceiling, including output.
+    Unknown remote capability never licenses a larger window.
+    """
+    loaded = sys.modules.get("config.config")
+    def setting(name, env, default):
+        return int(getattr(loaded, name, os.getenv(env, default)))
+    return ContextBudgetPolicy(
+        application_context_limit_tokens=setting("SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS",
+            "BIOMIND_SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS", DEFAULT_APPLICATION_CONTEXT_LIMIT_TOKENS),
+        input_soft_limit_tokens=setting("SCHEMA2_INPUT_SOFT_LIMIT_TOKENS",
+            "BIOMIND_INPUT_SOFT_LIMIT_TOKENS", DEFAULT_INPUT_SOFT_LIMIT_TOKENS),
+        output_reserve_tokens=int(output_reserve_tokens if output_reserve_tokens is not None else
+            setting("SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS", "BIOMIND_CONTEXT_OUTPUT_RESERVE_TOKENS", 50_000)),
+        estimation_margin_tokens=setting("SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS",
+            "BIOMIND_SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS", 4096),
+        safety_headroom_tokens=setting("SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS",
+            "BIOMIND_SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS", 2048))
+
+
+def model_context_policy(policy, model, *, resolve_output=True):
+    """Constrain the existing policy by explicit adapter capability facts.
+
+    No model-name guesses, API calls, or inferred larger remote window. An
+    adapter's max_input_tokens is used conservatively as a total ceiling.
+    """
+    from agent_core.provider_attempt import output_policy_projection
+    updates = {}
+    if resolve_output:
+        output = output_policy_projection(model).get("client_resolved_output_limit")
+        if type(output) is int and output > 0:
+            updates["output_reserve_tokens"] = output
+    limits = []; sources = []; seen = set(); current = model
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        for attr in ("context_window", "max_context_tokens"):
+            value = getattr(current, attr, None)
+            if type(value) is int and value > 0:
+                limits.append(value); sources.append("adapter." + attr)
+        profile = getattr(current, "profile", None)
+        if isinstance(profile, Mapping):
+            for key in ("context_window", "max_context_tokens", "max_input_tokens"):
+                value = profile.get(key)
+                if type(value) is int and value > 0:
+                    limits.append(value); sources.append("adapter.profile." + key)
+        current = getattr(current, "bound", None)
+    if limits:
+        if policy.known_provider_context_limit_tokens is not None:
+            limits.append(policy.known_provider_context_limit_tokens)
+        updates.update(known_provider_context_limit_tokens=min(limits),
+            context_capability_source=",".join(sources))
+    return replace(policy, **updates)
+
+
+def model_tool_schema(model):
+    current, seen = model, set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current)); kwargs = getattr(current, "kwargs", None)
+        if isinstance(kwargs, Mapping) and "tools" in kwargs:
+            return deepcopy(list(kwargs["tools"] or ()))
+        current = getattr(current, "bound", None)
+    return []
 
 
 @dataclass(frozen=True)
@@ -1934,11 +2009,13 @@ async def _await_if_needed(value: Any) -> Any:
 def _compactor_wire_safe_tokens(policy: ContextBudgetPolicy) -> int:
     """Return the actual total-input ceiling for one compactor invocation."""
 
-    return int(
+    # The compactor is an independent model node with the shared configured
+    # input target, even when a caller sets an earlier business trigger.
+    return min(configured_context_policy().input_soft_limit_tokens, int(
         policy.compressor_safe_input_tokens
         if policy.compressor_safe_input_tokens is not None
         else policy.safe_input_tokens
-    )
+    ))
 
 
 def measure_compactor_wire_tokens(
@@ -2832,6 +2909,7 @@ async def prepare_compaction(
     estimator: TokenEstimator | None = None,
     max_attempts: int = DEFAULT_COMPACTION_MAX_ATTEMPTS,
     maintenance_state: dict[str, Any] | None = None,
+    maintenance_checkpoint: Callable[[Mapping[str, Any]], Any] | None = None,
 ) -> PreparedCompaction:
     """Run bounded model attempts against one frozen source manifest.
 
@@ -2879,6 +2957,8 @@ async def prepare_compaction(
                   "usage_status": "UNKNOWN", "status": "started"}
         maintenance["calls"].append(record)
         maintenance["charged_tokens"] += reservation
+        if maintenance_checkpoint is not None:
+            await _await_if_needed(maintenance_checkpoint(maintenance))
         started = time.monotonic()
         try:
             response = await asyncio.wait_for(_await_if_needed(original_compactor(messages)),
@@ -2899,17 +2979,20 @@ async def prepare_compaction(
             elapsed = time.monotonic() - started
             record["elapsed_seconds"] = elapsed
             maintenance["elapsed_seconds"] = elapsed_before_transaction + time.monotonic() - transaction_started
+            if maintenance_checkpoint is not None:
+                await _await_if_needed(maintenance_checkpoint(maintenance))
 
     compactor = budgeted_compactor
     selected = tuple(RetainedSourceMaterial(unit=unit, body=resolve_source_body(unit, resolver))
-        for unit in request.source_manifest.units if unit.selected)
+        for unit in request.source_manifest.units if unit.selected or unit.provenance.get("required_exact"))
     policy_plan = CompactionPlan(request.compaction_request_id, request.source_epoch_id,
         request.source_manifest_hash, "normal", tuple(item.unit.unit_id for item in selected),
         (), "", (), (), "selected exact capacity measurement")
     selected_budget = measure_provider_input(_assembled_components(request, selected, policy_plan),
         policy=request.budget_policy, estimator=active_estimator)
     pressure = selected_budget.hard_block
-    protected = () if pressure else selected
+    required = tuple(item for item in selected if item.unit.provenance.get("required_exact"))
+    protected = required if pressure else selected
     if not pressure and all(unit.selected for unit in request.source_manifest.units):
         raise ContextCompactionCapacityError("COMPACTION_NO_REDUCIBLE_SOURCE", feedback={
             "reason": "all source units are protected and fit safely; permit only a measured safe fallback",

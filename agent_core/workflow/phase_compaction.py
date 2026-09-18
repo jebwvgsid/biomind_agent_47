@@ -179,15 +179,17 @@ def _message_from_record(record: Mapping[str, Any]) -> BaseMessage:
     kind = str(payload.pop("type", "") or payload.pop("role", "")).lower()
     content = payload.pop("content", "")
     name = str(payload.pop("name", "") or "") or None
+    native = deepcopy(payload.pop("additional_kwargs", {}))
     if kind in {"system"}:
-        return SystemMessage(id=message_id or None, content=content, name=name)
+        return SystemMessage(id=message_id or None, content=content, name=name, additional_kwargs=native)
     if kind in {"ai", "assistant"}:
-        return AIMessage(
-            id=message_id or None,
-            content=content,
-            name=name,
-            tool_calls=deepcopy(payload.pop("tool_calls", [])),
-        )
+        calls = deepcopy(payload.get("tool_calls", []))
+        message = AIMessage(id=message_id or None, content=content, name=name,
+            tool_calls=[call for call in calls if "args" in call], additional_kwargs=native)
+        if any("function" in call for call in calls):
+            message = message.model_copy(update={"tool_calls": [], "invalid_tool_calls": [],
+                "additional_kwargs": {**native, "tool_calls": calls}})
+        return message
     if kind == "tool":
         tool_call_id = str(payload.pop("tool_call_id", "") or "")
         if not tool_call_id:
@@ -204,7 +206,7 @@ def _message_from_record(record: Mapping[str, Any]) -> BaseMessage:
         raise ContextCompactionError(
             "COMPACTED_MESSAGE_TYPE_INVALID", kind or "<missing>"
         )
-    return HumanMessage(id=message_id or None, content=content, name=name)
+    return HumanMessage(id=message_id or None, content=content, name=name, additional_kwargs=native)
 
 
 def _compactor_messages(
@@ -233,7 +235,7 @@ def _protocol_groups(messages: Sequence[BaseMessage]) -> dict[int, str]:
     for index, message in enumerate(messages):
         if not isinstance(message, AIMessage):
             continue
-        calls = list(getattr(message, "tool_calls", None) or ())
+        calls = list(getattr(message, "tool_calls", None) or (message.additional_kwargs or {}).get("tool_calls") or ())
         if not calls:
             continue
         group = "provider-tool-group-" + _hash_text(
@@ -295,8 +297,66 @@ class PhaseContextCompactor:
     ) -> None:
         self.phase_store = phase_store
         self.compactor_invoke = compactor_invoke
-        self.policy = policy or ContextBudgetPolicy()
+        from agent_core.workflow.context_compaction import configured_context_policy
+        self.policy = policy or configured_context_policy()
+        # The ordinary model and semantic compactor may use different clients.
+        owner = getattr(compactor_invoke, "__self__", None)
+        compactor_model = getattr(owner, "llm", None)
+        if compactor_model is not None:
+            from dataclasses import replace
+            from agent_core.workflow.context_compaction import model_context_policy
+            capacity = model_context_policy(self.policy, compactor_model).safe_input_tokens
+            self.policy = replace(self.policy, compressor_safe_input_tokens=min(
+                capacity, self.policy.compressor_safe_input_tokens or capacity))
         self.estimator = ReferenceTokenEstimator()
+        # Reuse an activated epoch for the append-only suffix of the same node.
+        # The original source remains in PhaseArchiveStore; unrelated seeds or
+        # rewritten histories never inherit another request's working memory.
+        self._request_epochs: dict[tuple[str, str], dict[str, Any]] = {}
+
+    async def prepare_messages(self, messages, *, model, task_id, phase,
+                               invocation_id, enabled=True):
+        """Final request boundary for nodes and local tool/correction rounds.
+
+        Uses the same archive/transaction/selector as typed phases; it does not
+        own business history or reset budgets. Called only before a request.
+        """
+        from agent_core.workflow.context_compaction import model_context_policy, model_tool_schema
+        policy = model_context_policy(self.policy, model)
+        from agent_core.command_execution import command_message_for_model
+        wire = [command_message_for_model(m) for m in messages]
+        source_wire = list(wire)
+        identities = [_hash_text(_canonical(provider_visible_payload(m))) for m in wire]
+        key = (str(task_id), str(phase))
+        cached = self._request_epochs.get(key, {})
+        prefix = cached.get("source_prefix") or []
+        prior = cached.get("state") if prefix and identities[:len(prefix)] == prefix else None
+        if prior:
+            wire = [*wire[:2], *[_message_from_record(m) for m in prior["baseline_messages"]],
+                *wire[2 + int(prior["local_history_offset"]):]]
+        schema = model_tool_schema(model)
+        budget = measure_provider_input({"local_messages": [provider_visible_payload(m) for m in wire],
+            "tool_schema": schema, "provider_wrappers": {"message_count": len(wire)}},
+            policy=policy, estimator=self.estimator)
+        if not budget.should_compact or not enabled:
+            if budget.hard_block:
+                raise ContextCompactionError("PROVIDER_INPUT_UNSAFE", feedback=budget.to_dict())
+            return PhaseCompactionResult(tuple(wire), {}, budget.to_dict(), False)
+        # Existing nodes use System + frozen seed. Preserve that prefix and
+        # never import another node's history. Missing slots are empty only.
+        system = source_wire[0] if source_wire else SystemMessage(content="")
+        seed = source_wire[1] if len(source_wire) > 1 else HumanMessage(content="")
+        scoped = PhaseContextCompactor(phase_store=self.phase_store,
+            compactor_invoke=self.compactor_invoke, policy=policy)
+        scoped.estimator = self.estimator
+        prepared = await scoped.prepare(task_id=task_id or "default", phase=phase,
+            invocation_id=invocation_id, source_epoch_id=invocation_id,
+            system_message=system, seed_message=seed, inherited_messages=[],
+            local_messages=source_wire[2:], tool_schema=schema, prior_state=prior)
+        if prepared.state.get("active_pointer"):
+            self._request_epochs[key] = {"source_prefix": identities,
+                "state": deepcopy(dict(prepared.state))}
+        return prepared
 
     async def prepare(
         self,
@@ -313,6 +373,7 @@ class PhaseContextCompactor:
         material_descriptors: Sequence[Mapping[str, Any]] = (),
         prior_state: Mapping[str, Any] | None = None,
         selected_revision: int = 0,
+        tool_schema: Sequence[Mapping[str, Any]] = (),
     ) -> PhaseCompactionResult:
         prior = deepcopy(dict(prior_state or {}))
         prior_baseline = [
@@ -381,6 +442,10 @@ class PhaseContextCompactor:
             selected_revision=effective_selected_revision,
         )
         groups = _protocol_groups(source_messages[2:])
+        latest_tool = next((i for i in range(len(source_messages) - 3, -1, -1)
+            if isinstance(source_messages[i + 2], ToolMessage)), None)
+        latest_group = groups.get(latest_tool, "")
+
         bodies: dict[str, str] = {}
         units: list[SourceUnit] = []
         for position, message in enumerate(source_messages[2:]):
@@ -440,6 +505,8 @@ class PhaseContextCompactor:
                     "material_ids": material_ids,
                     "material_records": descriptors,
                     "original_position": position,
+                    "required_exact": bool(latest_group and groups.get(position) == latest_group)
+                        or isinstance(message, SystemMessage),
                     "retrieval_ref": source_ref,
                 },
             ))
@@ -456,7 +523,7 @@ class PhaseContextCompactor:
             fixed_components={
                 "system": provider_visible_payload(system_message),
                 "frozen_inputs": provider_visible_payload(seed_message),
-                "tool_schema": [],
+                "tool_schema": list(tool_schema),
                 "provider_wrappers": {
                     "message_count": len(source_messages),
                     "message_protocol": "langchain-provider-visible-v1",
@@ -726,6 +793,7 @@ class PhaseContextCompactor:
                     provider_visible_payload(message)
                     for message in retained_messages
                 ],
+                "tool_schema": list(tool_schema),
                 "provider_wrappers": {
                     "message_count": len(final_messages),
                     "message_protocol": "langchain-provider-visible-v1",

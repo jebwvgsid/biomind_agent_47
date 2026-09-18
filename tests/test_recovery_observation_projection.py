@@ -44,25 +44,27 @@ def test_recovery_budget_counts_evidence_not_scan_telemetry():
     assert all('timing' in r for r in originals)
 
 
-def test_real_observation_exhaustion_stops_with_correct_cause_and_receipt():
+def test_deprecated_observation_limit_does_not_hide_success_or_stop():
     durable, seed = _seed_fixture(); calls=[];requests=[];events=[]
     class Dispatcher:
         def dispatch_full(self, tool, args):
             calls.append(args)
-            return {'tool':'exec_command','status':'completed','exit_code':0,'stdout':'x'*2200,
+            return {'tool':'exec_command','status':'completed','exit_code':0,'stdout':str(len(calls))+'x'*2200,
                 'receipt_ref':'/receipts/persisted.json'}
     async def provider(messages, **kwargs):
-        requests.append(messages);return response_call(len(requests))
+        requests.append(messages)
+        if len(requests)<=3:return response_call(len(requests))
+        return AIMessage(content=_directive(),response_metadata={'finish_reason':'stop'})
     result=asyncio.run(RecoveryAgentLoop(model=object(),dispatcher=Dispatcher(),provider_invoke=provider,
         bind_tools=False,event_sink=lambda event,payload: events.append((event,payload)),
         config=RecoveryAgentLoopConfig(single_observation_chars=4000,
         cumulative_observation_chars=4000)).ainvoke(seed=seed,durable=durable))
-    assert result['terminal_error']['code']=='RECOVERY_OBSERVATION_BUDGET_EXCEEDED',result
-    assert result['terminal_error']['failure_stage']=='recovery.observation_projection'
-    assert len(calls)==2 and len(requests)==2
+    assert not result['terminal_error'],result
+    assert result['audit']['observation_chars']>4000
+    assert len(calls)==3 and len(requests)==4
     observation=next(payload['observation'] for event,payload in reversed(events) if event==RECOVERY_TOOL_CHECKPOINT_EVENT)
     assert observation['source_ref']=='/receipts/persisted.json'
-    assert observation['result']['status']=='RECOVERY_OBSERVATION_BUDGET_EXCEEDED'
+    assert observation['result']['status']=='completed'
 
 
 def test_shared_phase_response_and_history_keep_telemetry_in_local_receipt(tmp_path):

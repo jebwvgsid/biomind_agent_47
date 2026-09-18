@@ -106,7 +106,8 @@ def configured_recovery_budget_policy():
     from agent_core.llm_safety import MODEL_OUTPUT_LIMIT_TOKENS
     requested = min(MODEL_OUTPUT_LIMIT_TOKENS, int(os.getenv("BIOMIND_RECOVERY_OUTPUT_LIMIT_TOKENS", str(MODEL_OUTPUT_LIMIT_TOKENS))))
     raw_cap = os.getenv("BIOMIND_RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS", "").strip()
-    return ContextBudgetPolicy(output_reserve_tokens=requested,
+    from agent_core.workflow.context_compaction import configured_context_policy
+    return replace(configured_context_policy(output_reserve_tokens=requested),
         requested_output_limit_tokens=requested,
         known_provider_output_limit_tokens=int(raw_cap) if raw_cap else None,
         output_capability_source="configured_provider_limit" if raw_cap else "not_verified")

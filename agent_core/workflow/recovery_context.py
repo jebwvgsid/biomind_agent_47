@@ -129,12 +129,15 @@ class RecoveryObservationStore:
                 "allowed_tools": ["evidence.read"],
             },
         )
-        serialized = _canonical(payload)
+        from agent_core.command_execution import command_observation_for_model
+        projected = command_observation_for_model(payload) if tool in {"exec.command", "inspect.paths"} else payload
+        serialized = _canonical(projected)
         return {
             "status": "EXTERNALIZED",
             "observation_ref": record.archive_ref,
             "content_sha256": payload_digest,
-            "observed_chars": len(serialized),
+            "observed_chars": len(_canonical(payload)),
+            "projected_chars": len(serialized),
             "bounded_excerpt": serialized[: self.excerpt_chars],
             "reader": "evidence.read",
             "object_revision": 1,
@@ -194,7 +197,14 @@ class RecoveryObservationStore:
         verified, payload = self.resolve(seed=seed, observation_ref=str(descriptor.get("ref_id") or ""))
         if verified != dict(descriptor):
             raise InspectionEvidenceError("INSPECTION_REF_INDEX_MISMATCH")
+        # This immutable object was created by our observation archive owner.
+        # Preserve full raw data in the archive; default pages use its known
+        # command receipt projection, without traversing scientific stdout.
+        from agent_core.command_execution import command_observation_for_model
+        if payload.get("tool") in {"exec_command", "inspect_paths"} and payload.get("receipt_ref"):
+            payload = command_observation_for_model(payload)
         return {
+            "projection": "execution_evidence_v1",
             "tool": "evidence.read", "source_ref": verified["ref_id"],
             "source_object_id": verified["scope"]["source_object_id"],
             "object_kind": "recovery_observation", "object_revision": 1,

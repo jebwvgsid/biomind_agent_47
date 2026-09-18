@@ -254,7 +254,7 @@ def _protocol_groups(messages: Sequence[BaseMessage]) -> dict[str, str]:
     for ordinal, message in enumerate(messages, start=1):
         if not isinstance(message, AIMessage):
             continue
-        calls = list(getattr(message, "tool_calls", None) or ())
+        calls = list(getattr(message, "tool_calls", None) or (message.additional_kwargs or {}).get("tool_calls") or ())
         if not calls:
             continue
         message_id = _message_id(message, fallback=f"assistant-{ordinal}")
@@ -289,6 +289,8 @@ def _build_compaction_request(
     bodies: dict[str, str] = {}
     originals: dict[str, BaseMessage] = {}
     protocol = _protocol_groups(local_messages)
+    latest_tool = next((m for m in reversed(local_messages) if isinstance(m, ToolMessage)), None)
+    latest_group = protocol.get(str(getattr(latest_tool, "id", "") or ""), "")
     combined = [
         ("inherited", message) for message in inherited_messages
     ] + [("local", message) for message in local_messages]
@@ -304,6 +306,7 @@ def _build_compaction_request(
         descriptor = json.loads(_canonical(dict(
             inherited_descriptors.get(message_id) or {}
         )))
+        required_exact = bool(region == "local" and latest_group and protocol.get(message_id) == latest_group)
         selected = bool(region == "inherited" and descriptor.get("selected"))
         source_ref = str(
             descriptor.get("source_ref")
@@ -350,6 +353,7 @@ def _build_compaction_request(
             ),
             provenance={
                 "region": region,
+                "required_exact": required_exact,
                 "message_id": message_id,
                 "message_type": str(getattr(message, "type", "")),
                 "retrieval_ref": str(
@@ -653,13 +657,14 @@ def _message_from_provider_payload(
     if kind == "system":
         return SystemMessage(id=message_id or None, content=content, name=name)
     if kind in {"ai", "assistant"}:
-        return AIMessage(
-            id=message_id or None,
-            content=content,
-            name=name,
-            tool_calls=deepcopy(value.pop("tool_calls", [])),
-            additional_kwargs=deepcopy(value.pop("additional_kwargs", {})),
-        )
+        calls = deepcopy(value.get("tool_calls", []))
+        native = deepcopy(value.get("additional_kwargs", {}))
+        message = AIMessage(id=message_id or None, content=content, name=name,
+            tool_calls=[call for call in calls if "args" in call], additional_kwargs=native)
+        if any("function" in call for call in calls):
+            message = message.model_copy(update={"tool_calls": [], "invalid_tool_calls": [],
+                "additional_kwargs": {**native, "tool_calls": calls}})
+        return message
     if kind == "tool":
         tool_call_id = str(value.pop("tool_call_id", "") or "")
         if not tool_call_id:
@@ -842,6 +847,14 @@ class Schema2RecoveryNode:
         self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or configured_recovery_budget_policy(),
             clients=(model, compactor_model), resource_policy=self.resource_policy)
         self.token_estimator = token_estimator or ReferenceTokenEstimator()
+        from agent_core.workflow.context_compaction import model_context_policy
+        self.context_budget_policy = model_context_policy(self.context_budget_policy, model, resolve_output=False)
+        from dataclasses import replace
+        compactor_capacity = model_context_policy(self.context_budget_policy,
+            compactor_model or model, resolve_output=False).safe_input_tokens
+        self.context_budget_policy = replace(self.context_budget_policy,
+            compressor_safe_input_tokens=min(compactor_capacity,
+                self.context_budget_policy.compressor_safe_input_tokens or compactor_capacity))
         self.context_compaction_enabled = bool(context_compaction_enabled)
         self.provider_invoke = provider_invoke
         self.event_sink = event_sink
@@ -2186,6 +2199,24 @@ class Schema2RecoveryNode:
                         compaction_request_id=archived_request.compaction_request_id,
                     )
 
+                def checkpoint_maintenance(counters: Mapping[str, Any]) -> None:
+                    # Reuse the boundary journal before provider I/O and after
+                    # settlement. A crash before epoch activation must not grant
+                    # fresh compaction allowance on the next process entry.
+                    calls = counters.get("calls") or ()
+                    status = calls[-1].get("status", "unknown") if calls else "empty"
+                    try:
+                        ContextLineageStore(self.data_path, task_id).record_event(
+                            "recovery_compaction_maintenance_committed",
+                            {"task_id": task_id, "incident_id": seed.failure_packet.incident_id,
+                             "seed_id": seed.seed_id, "context_epoch_id": context_epoch_id,
+                             "business_budget_counters": {"compaction_maintenance": deepcopy(dict(counters))}},
+                            event_id=f"recovery:{seed.seed_id}:{context_epoch_id}:maintenance:{len(calls)}:{status}",
+                        )
+                    except Exception as exc:
+                        raise ContextCompactionError("RECOVERY_EVENT_PERSISTENCE_FAILED",
+                            f"compaction maintenance checkpoint: {type(exc).__name__}") from exc
+
                 prepared = await prepare_compaction(
                     archived_request,
                     bodies,
@@ -2193,6 +2224,7 @@ class Schema2RecoveryNode:
                     estimator=self.token_estimator,
                     max_attempts=2,
                     maintenance_state=maintenance,
+                    maintenance_checkpoint=checkpoint_maintenance,
                 )
                 (
                     candidate_inherited,

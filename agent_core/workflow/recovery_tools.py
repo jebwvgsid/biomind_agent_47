@@ -684,6 +684,15 @@ class RecoveryLocalToolDispatcher:
         )
         if section == "transcript":
             rows = list(view.get("transcript") or [])
+            # Archived tool messages use the same provider projection on reread.
+            from agent_core.command_execution import command_message_for_model
+            from langchain_core.messages import ToolMessage
+            for index, row in enumerate(rows):
+                if isinstance(row, Mapping) and row.get("type", row.get("role")) == "tool" and row.get("tool_call_id"):
+                    msg = ToolMessage(content=row.get("content", ""), name=row.get("name"),
+                        tool_call_id=str(row["tool_call_id"]))
+                    projected = command_message_for_model(msg)
+                    rows[index] = {**row, "content": projected.content}
             event_type = str(args.get("event_type") or "").casefold()
             tool_name = str(args.get("tool") or "").casefold()
             validator = str(args.get("validator") or "").casefold()

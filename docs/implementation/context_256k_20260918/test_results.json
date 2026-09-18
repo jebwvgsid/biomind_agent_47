@@ -1,0 +1,78 @@
+{
+  "workspace": {
+    "summary": "138 passed, 9 subtests passed in 22.64s",
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/context_256k_20260918/workspace.log"
+  },
+  "isolated": {
+    "summary": "138 passed, 9 subtests passed in 15.98s",
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/context_256k_20260918/isolated.log"
+  },
+  "extended_before": {
+    "summary": "16 failed, 33 passed in 8.15s",
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/context_256k_20260918/extended_before.log"
+  },
+  "extended_after": {
+    "summary": "17 failed, 32 passed in 10.50s",
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/context_256k_20260918/extended_after.log"
+  },
+  "invalid_cli_launcher": {
+    "summary": "9 failed, 140 passed, 9 subtests passed in 17.52s",
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/context_256k_20260918/invalid_cli_launcher.log",
+    "acceptance_result": false,
+    "note": "Dedicated exported fixture launcher required; missing OFFLINE_ALLOWED_SCRIPT_PATHS/display setup. Excluded from acceptance count."
+  },
+  "extended_comparison": {
+    "baseline_failures": 16,
+    "after_failures": 17,
+    "new_failure_names": [
+      "tests/test_schema2_context_compaction.py::ContextBudgetTests::test_default_policy_is_200k_and_provider_limit_is_a_minimum"
+    ],
+    "resolved_failure_names": [],
+    "note": "Untracked preexisting suites retained unchanged; the one added assertion expects the obsolete default 0.85 trigger."
+  },
+  "archived_replay": {
+    "archived_responses": 6,
+    "actual_node_requests": 7,
+    "tool_calls": 9,
+    "observation_chars": 77444,
+    "last_two_results_in_next_request": true,
+    "terminal_error": null,
+    "final_response": "offline fixture only"
+  },
+  "baseline_commit": "81f783eb9b4da4d75d5d35d1279839d855167d01",
+  "tested_candidate_tree": "b8ed4cff920c57ebdd0d097543a7342b482a55b8",
+  "not_run": [
+    "real provider/model API",
+    "original session resume",
+    "formal WGS/BWA",
+    "software installation",
+    "interactive CLI PTY acceptance",
+    "git push"
+  ],
+  "source_scope": [
+    "agent_core/command_execution.py",
+    "agent_core/context_lineage.py",
+    "agent_core/installer.py",
+    "agent_core/planner_output_policy.py",
+    "agent_core/tool_loop.py",
+    "agent_core/workflow/context_compaction.py",
+    "agent_core/workflow/inspection_evidence.py",
+    "agent_core/workflow/phase_compaction.py",
+    "agent_core/workflow/recovery_agent.py",
+    "agent_core/workflow/recovery_context.py",
+    "agent_core/workflow/recovery_node.py",
+    "agent_core/workflow/recovery_runtime.py",
+    "agent_core/workflow/recovery_tools.py",
+    "bio_agents.py",
+    "config/config.py",
+    "memory_manager.py",
+    "supervisor.py",
+    "tests/test_recovery_observation_projection.py",
+    "tests/test_context_256k_entrypoints.py",
+    "tests/fixtures/context_256k_recovery_1789728208.json.gz",
+    "docs/implementation/context_256k_20260918/evidence_sizes.json",
+    "docs/implementation/context_256k_20260918/report.md",
+    "docs/implementation/context_256k_20260918/reproduce.sh",
+    "docs/implementation/context_256k_20260918/test_results.json"
+  ]
+}

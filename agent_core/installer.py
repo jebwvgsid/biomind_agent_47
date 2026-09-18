@@ -166,64 +166,8 @@ class InstallerAgent:
         max_messages: int = LLM_STEP_CONTEXT_MESSAGES,
         max_chars: int = LLM_STEP_CONTEXT_CHARS,
     ):
-        """Keep the installer work order and latest evidence, not old logs."""
-        if not messages:
-            return []
-
-        selected = []
-
-        def add(message):
-            if message not in selected:
-                selected.append(message)
-
-        for message in messages:
-            if isinstance(message, SystemMessage):
-                add(message)
-                break
-        for message in messages:
-            if isinstance(message, HumanMessage):
-                add(message)
-                break
-        for message in reversed(messages):
-            content = str(getattr(message, "content", "") or "")
-            if isinstance(message, HumanMessage) and (
-                "<observation>" in content
-                or "<failure>" in content
-                or "Feedback:" in content
-            ):
-                add(message)
-                break
-        for message in reversed(messages):
-            if isinstance(message, AIMessage):
-                add(message)
-                break
-        for message in reversed(messages):
-            if isinstance(message, SystemMessage):
-                add(message)
-                break
-        if not selected:
-            add(messages[-1])
-
-        # System instructions must precede the retained work-order/evidence messages.
-        selected = [
-            *[message for message in selected if isinstance(message, SystemMessage)],
-            *[message for message in selected if not isinstance(message, SystemMessage)],
-        ][:max_messages]
-        if not selected:
-            return []
-
-        per_message_limit = max(800, max_chars // len(selected))
-        clipped = [cls._clip_message_content(message, per_message_limit) for message in selected]
-        total = sum(len(str(getattr(message, "content", "") or "")) for message in clipped)
-        if total > max_chars:
-            clipped[-1] = cls._clip_message_content(
-                clipped[-1],
-                max(400, max_chars - sum(
-                    len(str(getattr(message, "content", "") or ""))
-                    for message in clipped[:-1]
-                )),
-            )
-        return clipped
+        """Compatibility entry: token maintenance owns the active input."""
+        return list(messages or ())
 
     def _installer_observations(self, state: InstallerState) -> list[str]:
         observations = []
@@ -476,7 +420,25 @@ class InstallerAgent:
                     + [message for message in msgs_to_return if not isinstance(message, SystemMessage)]
                 )
 
+            from agent_core.workflow.context_compaction import configured_context_policy
+            from agent_core.workflow.phase_compaction import PhaseContextCompactor
+            from agent_core.workflow.phase_archive import PhaseArchiveStore
+            async def compact(messages, **context):
+                response, _ = await ainvoke_with_snapshot(self.llm, list(messages),
+                    data_path=self.work_dir, task_id=str(state.get("task_id") or tool_name),
+                    metadata={"node_name": "install_subagent", "call_kind": "context_compaction"})
+                return response
+            manager = getattr(self, "_context_compactor", None)
+            if manager is None:
+                manager = PhaseContextCompactor(phase_store=PhaseArchiveStore(self.work_dir),
+                    compactor_invoke=compact, policy=configured_context_policy())
+                self._context_compactor = manager
+            manager.compactor_invoke = compact
             try:
+                prepared = await manager.prepare_messages(full_context, model=self.llm,
+                    task_id=str(state.get("task_id") or tool_name), phase="installer",
+                    invocation_id=str((state.get("installation_request") or {}).get("request_id") or "installer") + ":" + str(self._installer_generate_turns(state)))
+                full_context = list(prepared.messages)
                 response, _ = await ainvoke_with_snapshot(
                     self.llm,
                     full_context,
@@ -484,6 +446,8 @@ class InstallerAgent:
                     task_id=str(state.get("task_id") or tool_name or "installer"),
                     metadata={
                         "node_name": "install_subagent",
+                        "context_budget_prepared": True,
+                        "context_budget": dict(prepared.telemetry),
                         "call_kind": "installer",
                         "selected_skill_ids": list(state.get("selected_skills") or []),
                         "installer_tool_name": tool_name,

@@ -414,7 +414,10 @@ class MemoryManager:
         prompt = self._build_summary_prompt(messages, task_id)
         from langchain_core.messages import HumanMessage
         try:
-            response = await self.llm.ainvoke([HumanMessage(content=prompt)])
+            from agent_core.context_lineage import ainvoke_with_snapshot
+            response, _ = await ainvoke_with_snapshot(self.llm, [HumanMessage(content=prompt)],
+                data_path=self.archive_dir, task_id=task_id,
+                metadata={"node_name": "memory", "call_kind": "memory_summary"})
             return response.content.strip(), prompt
         except Exception as e:
             logger.error(f"Summarization failed: {e}")

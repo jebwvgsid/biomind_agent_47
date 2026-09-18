@@ -571,6 +571,43 @@ def read_inspection_authority(store: StateContractStore, scope: Mapping[str, Any
     return durable
 
 
+def _generation_context_for_model(body: Mapping[str, Any]) -> dict[str, Any]:
+    """Project known archived ToolMessages after integrity/authority checks.
+
+    This reader format encodes content as reversible chunks. Rebuild only that
+    declared field; unrelated scientific JSON and the original object remain
+    intact. The page hash describes the projected body, the object digest the
+    original immutable evidence.
+    """
+    from langchain_core.messages import ToolMessage
+    from agent_core.command_execution import command_message_for_model
+    result = deepcopy(dict(body))
+    rows = [result.get("seed"), *result.get("inherited_materials", ()),
+        *[event.get("message") for event in result.get("candidate_and_feedback", ())]]
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        payload = row.get("payload") or {}
+        if payload.get("type") != "tool" or not payload.get("tool_call_id"):
+            continue
+        chunks = row.get("content_chunks")
+        if not isinstance(chunks, list) or not all(isinstance(part, str) for part in chunks):
+            continue
+        encoded = "".join(chunks)
+        if hashlib.sha256(encoded.encode()).hexdigest() != row.get("content_json_sha256"):
+            raise InspectionEvidenceError("INSPECTION_OBJECT_INTEGRITY_ERROR", "message chunks")
+        content = json.loads(encoded)
+        message = ToolMessage(content=content, tool_call_id=payload["tool_call_id"], name=payload.get("name"))
+        projected = command_message_for_model(message)
+        if projected.content == content:
+            continue
+        text = _canonical(projected.content)
+        row["content_chunks"] = [text[i:i + 2000] for i in range(0, len(text), 2000)]
+        row["content_json_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+        row["projection"] = "execution_evidence_v1"
+    return result
+
+
 class InspectionObjectReader:
     """Fixed store accessor.  No provider path, remote locator or raw task dump."""
     def __init__(self, data_path: str, *, scope: Mapping[str, Any]) -> None:
@@ -700,6 +737,8 @@ class InspectionObjectReader:
             entry = saved
         meta = dict(entry["scope"])
         kind = str(meta["object_kind"])
+        if kind == "generation_context":
+            body = _generation_context_for_model(body)
         page = bounded_inspection_body_page(body, start_line=start_line, end_line=end_line)
         return {
             "tool": "evidence.read", "source_ref": entry["ref_id"],

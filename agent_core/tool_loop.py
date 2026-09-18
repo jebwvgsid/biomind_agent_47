@@ -31,7 +31,7 @@ async def run_tool_loop(*, model, messages, schemas, dispatch, invoke,
     bound = bind_command_tools(model, schemas)
     history = list(messages)
     additions, observations = [], []
-    used, remaining = 0, 48000
+    used = 0
     known = {schema['function']['name'] for schema in schemas}
 
     def append(message):
@@ -56,7 +56,7 @@ async def run_tool_loop(*, model, messages, schemas, dispatch, invoke,
         for call in calls:
             if retry_guard is not None and not retry_guard():
                 raise RuntimeError('TOOL_CONTEXT_STALE')
-            if used >= max_calls or remaining < 2048:
+            if used >= max_calls:
                 used = max_calls
                 outcome = ToolResult({'status': 'not_run', 'error': 'TOOL_BUDGET_EXHAUSTED'})
             elif mixed_terminal:
@@ -69,23 +69,19 @@ async def run_tool_loop(*, model, messages, schemas, dispatch, invoke,
                 used += 1
                 value = await dispatch(call['name'], call.get('args', {}))
                 outcome = value if isinstance(value, ToolResult) else ToolResult(value)
-            remaining -= len(json.dumps(call.get('args', {}), ensure_ascii=False))
             observed = deepcopy(outcome.payload)
             observations.append({'tool': call['name'], 'result': observed})
             displayed = deepcopy(observed)
             displayed.pop('cmd', None)
-            cap = max(256, (min(16000, remaining) - 2048) // 2)
+            cap = 6976  # Existing per-result page size, independent of history.
             for stream in ('stdout', 'stderr', 'content'):
                 if isinstance(displayed.get(stream), str) and len(displayed[stream]) > cap:
                     displayed[stream] = displayed[stream][:cap]
                     displayed.setdefault('truncated', {})[stream] = True
             encoded = json.dumps(displayed, ensure_ascii=False)
-            remaining -= len(encoded)
             append(ToolMessage(content=encoded, tool_call_id=str(call['id']), name=call['name']))
             if outcome.stop:
                 return ToolLoopResult(messages=additions, control=observed, observations=observations)
-        if remaining < 2048:
-            used = max_calls
         if used >= max_calls:
             append(SystemMessage(content=(
                 'Tool budget exhausted. Return your final response with verified facts, '

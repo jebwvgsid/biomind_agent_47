@@ -424,7 +424,7 @@ class RecoveryAgentLoopConfig:
             "max_exact_repeated_tool_request",
             "max_consecutive_no_progress_rounds", "max_transport_attempts",
             "local_context_soft_chars", "local_context_hard_chars",
-            "single_observation_chars", "cumulative_observation_chars",
+            "single_observation_chars",
             "max_overflow_epochs",
         )
         for field_name in integer_fields:
@@ -438,11 +438,9 @@ class RecoveryAgentLoopConfig:
                 "RECOVERY_LOOP_CONFIG_INVALID",
                 "local_context_soft_chars must be below local_context_hard_chars",
             )
-        if self.single_observation_chars > self.cumulative_observation_chars:
-            raise RecoveryAgentError(
-                "RECOVERY_LOOP_CONFIG_INVALID",
-                "single observation bound exceeds cumulative bound",
-            )
+        # Deprecated compatibility input: never controls result delivery, even
+        # when an old configuration/checkpoint supplies 0, None or 96_000.
+
 
 
 def recovery_tool_schemas() -> list[dict[str, Any]]:
@@ -952,6 +950,8 @@ class RecoveryAgentLoop:
         resources = RECOVERY_RESOURCES.get()
         self.context_budget_policy = resolve_recovery_budget_policy(context_budget_policy or configured_recovery_budget_policy(),
             clients=(model,), resource_policy=resources["policy"] if resources else None)
+        from agent_core.workflow.context_compaction import model_context_policy
+        self.context_budget_policy = model_context_policy(self.context_budget_policy, model, resolve_output=False)
         self.token_estimator = token_estimator or ReferenceTokenEstimator()
         self.provider_invoke = provider_invoke
         self.event_sink = event_sink
@@ -1031,7 +1031,8 @@ class RecoveryAgentLoop:
                 return {"terminal_error": {"code": "RECOVERY_RESPONSE_INCOMPLETE",
                     "detail": "Output truncation resubmissions exhausted", "output_resubmission_exhausted": True}}
             turns = int(state.get("turn_count") or 0)
-            wire = build_provider_messages(state)
+            from agent_core.command_execution import command_message_for_model
+            wire = [command_message_for_model(m) for m in build_provider_messages(state)]
             replay = recovery_replay_wire(wire, context_epoch_id=str(state.get("context_epoch_id") or ""))
             if replay is not None:
                 wire = replay
@@ -1593,6 +1594,15 @@ class RecoveryAgentLoop:
                 (message for message in reversed(state.get("messages") or ())
                  if isinstance(message, AIMessage)), None,
             )
+            # A large sibling group can exceed the window even when every
+            # member is below the single-result character page size. Divide
+            # this request's token capacity; never consult lifetime counters.
+            fixed_wire = [state["system_message"], state["seed_message"]]
+            if source_assistant is not None:
+                fixed_wire.append(source_assistant)
+            fixed_tokens = _context_budget_snapshot(state, policy=self.context_budget_policy,
+                estimator=self.token_estimator, wire=fixed_wire).estimated_input_tokens
+            result_share = max(1, (self.context_budget_policy.trigger_tokens - fixed_tokens) // max(1, len(calls)))
 
             for call in calls:
                 tool = str(call["name"])
@@ -1709,19 +1719,19 @@ class RecoveryAgentLoop:
                     seed=seed,
                 )
                 encoded = _canonical(envelope)
+                progress_envelope = envelope
                 # Whole-context pressure belongs to the token-accounted
                 # call_model/compaction boundary.  A legacy character soft
                 # limit (or a sticky prior compaction flag) must not hide a
                 # successfully narrowed reader page from the next request.
-                # Keep the independent per-observation and cumulative limits.
+                # One-result/group paging is bounded; lifetime chars are telemetry.
                 should_externalize = bool(
                     not error
                     and self.observation_store is not None
                     and not result.get("observation_page")
                     and (
                         len(encoded) > config.single_observation_chars
-                        or observation_chars + len(encoded)
-                        > config.cumulative_observation_chars
+                        or self.token_estimator.estimate(encoded).tokens > result_share
                     )
                 )
                 if should_externalize:
@@ -1758,25 +1768,6 @@ class RecoveryAgentLoop:
                         seed=seed,
                     )
                     encoded = _canonical(envelope)
-                if observation_chars + len(encoded) > config.cumulative_observation_chars:
-                    terminal_error = {
-                        "code": "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
-                        "detail": "Tool result was returned but could not fit the cumulative observation budget.",
-                        "failure_stage": "recovery.observation_projection",
-                    }
-                    envelope = _observation_envelope(
-                        request_id=str(call["id"]),
-                        tool=dotted_tool,
-                        arguments=arguments,
-                        result={
-                            "status": "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
-                            "max_chars": config.cumulative_observation_chars,
-                            "receipt_ref": str(envelope.get("source_ref") or ""),
-                        },
-                        error={},
-                        seed=seed,
-                    )
-                    encoded = _canonical(envelope)
                 observation_chars += len(encoded)
                 observation_receipts.append(deepcopy(envelope))
                 projected_result = (
@@ -1791,9 +1782,14 @@ class RecoveryAgentLoop:
                     content=encoded,
                 )
                 from agent_core.workflow.recovery_runtime import meaningful_inspection_facts
+                # Archive/page identities and raw telemetry byte lengths are
+                # maintenance details, not new investigation facts. A delivered
+                # archive reference grants the underlying projected evidence.
+                progress_source = (progress_envelope if
+                    (envelope.get("result") or {}).get("status") == "EXTERNALIZED" else envelope)
                 progress_facts = meaningful_inspection_facts([{
-                    "source_ref": envelope["source_ref"], "tool": dotted_tool,
-                    "result": envelope.get("result"), "error": envelope.get("error"),
+                    "source_ref": progress_source["source_ref"], "tool": dotted_tool,
+                    "result": progress_source.get("result"), "error": progress_source.get("error"),
                 }])
                 signature = hashlib.sha256(_canonical(progress_facts).encode("utf-8")).hexdigest()
                 if progress_facts and signature not in known_progress:

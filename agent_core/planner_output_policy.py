@@ -248,10 +248,10 @@ def planner_context_budget_policy(base: Any, policy: Mapping[str, Any]) -> Any:
         raise PlannerOutputPolicyError("PLANNER_OUTPUT_CONTEXT_CAPACITY_INSUFFICIENT", actual={"input_reserve_used": updates["output_reserve_tokens"], "application_context_limit": updates["application_context_limit_tokens"]}, expected="positive safe input capacity after output reserve") from exc
 
 
-def planner_input_admission(messages: Sequence[Any], policy: Mapping[str, Any], *, base_policy: Any, estimator: Any = None) -> dict[str, Any]:
+def planner_input_admission(messages: Sequence[Any], policy: Mapping[str, Any], *, base_policy: Any, estimator: Any = None, tool_schema: Sequence[Any] = ()) -> dict[str, Any]:
     from agent_core.workflow.context_compaction import measure_provider_input
     from agent_core.workflow.scoped_context import provider_visible_payload
-    budget = measure_provider_input({"system": provider_visible_payload(messages[0]) if messages else {}, "frozen_inputs": provider_visible_payload(messages[1]) if len(messages) > 1 else {}, "local_messages": [provider_visible_payload(message) for message in messages[2:]], "provider_wrappers": {"message_count": len(messages), "message_protocol": "langchain-provider-visible-v1"}}, policy=planner_context_budget_policy(base_policy, policy), estimator=estimator)
+    budget = measure_provider_input({"tool_schema": list(tool_schema), "system": provider_visible_payload(messages[0]) if messages else {}, "frozen_inputs": provider_visible_payload(messages[1]) if len(messages) > 1 else {}, "local_messages": [provider_visible_payload(message) for message in messages[2:]], "provider_wrappers": {"message_count": len(messages), "message_protocol": "langchain-provider-visible-v1"}}, policy=planner_context_budget_policy(base_policy, policy), estimator=estimator)
     if budget.hard_block:
         raise PlannerOutputPolicyError("PLANNER_OUTPUT_CONTEXT_CAPACITY_INSUFFICIENT", actual=budget.to_dict(), expected="input estimate <= safe_input_tokens with this output reserve")
     return budget.to_dict()

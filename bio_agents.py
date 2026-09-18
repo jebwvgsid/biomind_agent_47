@@ -215,6 +215,7 @@ from config import config as _context_configuration
 _context_defaults = ContextBudgetPolicy()
 SCHEMA2_CONTEXT_COMPACTION_ENABLED = getattr(_context_configuration, "SCHEMA2_CONTEXT_COMPACTION_ENABLED", False)
 SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS = getattr(_context_configuration, "SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS", _context_defaults.application_context_limit_tokens)
+SCHEMA2_INPUT_SOFT_LIMIT_TOKENS = getattr(_context_configuration, "SCHEMA2_INPUT_SOFT_LIMIT_TOKENS", _context_defaults.input_soft_limit_tokens)
 SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS = getattr(_context_configuration, "SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS", _context_defaults.output_reserve_tokens)
 RECOVERY_OUTPUT_LIMIT_TOKENS = getattr(_context_configuration, "RECOVERY_OUTPUT_LIMIT_TOKENS", 50_000)
 RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS = getattr(_context_configuration, "RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS", None)
@@ -2926,6 +2927,7 @@ class BioAnalystAgent:
             phase_store=self.phase_archive_store,
             compactor_invoke=self._schema2_context_compactor_invoke,
             policy=ContextBudgetPolicy(
+                input_soft_limit_tokens=SCHEMA2_INPUT_SOFT_LIMIT_TOKENS,
                 application_context_limit_tokens=min(
                     int(SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS),
                     int(getattr(self, "llm_context_limit_tokens", 200_000)),
@@ -2964,6 +2966,7 @@ class BioAnalystAgent:
             loop_config=RecoveryAgentLoopConfig(
                 max_output_resubmissions=int(RECOVERY_MAX_OUTPUT_RESUBMISSIONS)),
             context_budget_policy=ContextBudgetPolicy(
+                input_soft_limit_tokens=SCHEMA2_INPUT_SOFT_LIMIT_TOKENS,
                 application_context_limit_tokens=min(
                     int(SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS),
                     int(getattr(self, "llm_context_limit_tokens", 200_000)),
@@ -18290,10 +18293,6 @@ class BioAnalystAgent:
         if planner_output_policy:
             base_compactor = getattr(self, "_schema2_phase_compactor", None)
             base_budget = getattr(base_compactor, "policy", None) or ContextBudgetPolicy()
-            trace_metadata["planner_output_input_admission"] = planner_input_admission(
-                messages, planner_output_policy, base_policy=base_budget,
-                estimator=getattr(base_compactor, "estimator", None),
-            )
             invocation_llm = bind_planner_output_policy(invocation_llm, planner_output_policy)
             trace_metadata["planner_output_policy"] = deepcopy(planner_output_policy)
             trace_metadata["model_parameter_hash_version"] = PLANNER_MODEL_PARAMETER_HASH_VERSION
@@ -18301,6 +18300,25 @@ class BioAnalystAgent:
             invocation_llm = invocation_llm.bind(
                 temperature=float(effective_temperature)
             )
+
+        # Each completed response/tool group reaches this boundary before the
+        # next request. Recovery and the compactor own their existing admission.
+        if stage not in {"recovery", "context_compaction"}:
+            manager = getattr(self, "_schema2_phase_compactor", None)
+            if manager is not None:
+                prepared_context = await manager.prepare_messages(messages, model=invocation_llm,
+                    task_id=task_id, phase=stage,
+                    invocation_id=str(trace_metadata.get("semantic_invocation_id") or
+                        f"{stage}:dispatch:{hashlib.sha256(str(messages).encode()).hexdigest()[:24]}"),
+                    enabled=SCHEMA2_CONTEXT_COMPACTION_ENABLED)
+                messages = list(prepared_context.messages)
+                trace_metadata["context_budget"] = dict(prepared_context.telemetry)
+        if planner_output_policy:
+            from agent_core.workflow.context_compaction import model_tool_schema
+            trace_metadata["planner_output_input_admission"] = planner_input_admission(
+                messages, planner_output_policy, base_policy=base_budget,
+                estimator=getattr(base_compactor, "estimator", None),
+                tool_schema=model_tool_schema(invocation_llm))
 
         if stage == "generate":
             from agent_core.provider_attempt import output_policy_projection
@@ -25929,7 +25947,10 @@ class BioAnalystAgent:
                     "next_step": "finish",
                     "state_transition_error": f"NODE_RESULT_INVALID:{node_name}",
                 }
-            if isinstance(result, dict) and node_name in {"consultant", "generate"}:
+            # Managed nodes maintain private input at the next request boundary.
+            # Do not run a second global-history compactor after a final answer.
+            if (getattr(self, "_schema2_phase_compactor", None) is None
+                    and isinstance(result, dict) and node_name in {"consultant", "generate"}):
                 combined_messages = add_messages(
                     list(state.get("messages", []) or []),
                     list(result.get("messages", []) or []),

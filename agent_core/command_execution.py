@@ -48,6 +48,37 @@ def command_observation_for_model(result: Mapping[str, Any]) -> dict[str, Any]:
             if key not in {'timing', 'activity_id'}}
 
 
+def command_message_for_model(message):
+    """Project only known framework command ToolMessage shapes, not business JSON.
+
+    stdout/stderr and arbitrary reader bodies are opaque, even if they contain
+    a field named timing/read_paths. Original archives/messages stay unchanged.
+    """
+    from langchain_core.messages import ToolMessage
+    if not isinstance(message, ToolMessage) or not isinstance(message.content, str):
+        return message
+    try:
+        value = json.loads(message.content)
+    except (ValueError, TypeError):
+        return message
+    if not isinstance(value, dict):
+        return message
+    changed = False
+    if value.get("schema_version") == 1 and value.get("request_id") and value.get("tool") in {"exec.command", "inspect.paths"} and isinstance(value.get("result"), dict):
+        projected = command_observation_for_model(value["result"])
+        changed = projected != value["result"]
+        if changed:
+            value = {**value, "result": projected}
+            import hashlib
+            value["content_sha256"] = hashlib.sha256(json.dumps(projected, ensure_ascii=False,
+                sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    elif message.name in {"exec_command", "inspect_paths"} and value.get("tool") in {"exec_command", "inspect_paths"}:
+        projected = command_observation_for_model(value)
+        changed = projected != value; value = projected
+    return message.model_copy(update={"content": json.dumps(value, ensure_ascii=False,
+        sort_keys=True, separators=(",", ":"))}) if changed else message
+
+
 @contextmanager
 def _tracked_process(process):
     ACTIVE_PROCESS_GROUPS.add(process.pid)

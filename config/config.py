@@ -218,6 +218,29 @@ LLM_STEP_EPHEMERAL_CHARS = _env_int(
     200_000,
     minimum=8_000,
 )
+# Input soft target is separate from the legacy total-window ceiling.
+SCHEMA2_CONTEXT_COMPACTION_ENABLED = _env_bool(
+    "BIOMIND_SCHEMA2_CONTEXT_COMPACTION_ENABLED", True
+)
+SCHEMA2_INPUT_SOFT_LIMIT_TOKENS = _env_int(
+    "BIOMIND_INPUT_SOFT_LIMIT_TOKENS", 256_000, minimum=1_000,
+)
+SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS = _env_int(
+    "BIOMIND_SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS",
+    200_000,
+    minimum=1_000,
+)
+SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS = _env_int(
+    "BIOMIND_SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS",
+    4_096,
+    minimum=0,
+)
+SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS = _env_int(
+    "BIOMIND_SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS",
+    2_048,
+    minimum=0,
+)
+
 # One application maximum for generation and its context reservation. A legacy
 # reserve environment variable must not under-reserve the actual wire limit.
 from agent_core.llm_safety import MODEL_OUTPUT_LIMIT_TOKENS
