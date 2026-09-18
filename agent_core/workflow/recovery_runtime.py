@@ -521,7 +521,7 @@ def meaningful_inspection_facts(rows):
     """
     volatile = {"event_id", "receipt_id", "request_id", "tool_call_id", "message_id",
                 "observation_id", "timestamp", "created_at", "updated_at", "duration_seconds",
-                "observed_at", "age_seconds",
+                "observed_at", "age_seconds", "timing", "activity_id",
                 "content_sha256", "observation_ref", "source_message_id", "decision_ref",
                 "receipt_sha256", "archive_ref", "result_chars", "max_result_chars",
                 "receipt_ref", "command_receipt_ref", "log_refs"}
@@ -549,7 +549,7 @@ def meaningful_inspection_facts(rows):
             continue  # A new empty range is not new evidence.
         if not set(body) - volatile - {"status", "start_line", "end_line", "cursor", "truncated"}:
             continue  # Coverage labels without returned facts do not advance.
-        if observation.get("tool") == "exec.command":
+        if observation.get("tool") in {"exec.command", "inspect.paths"}:
             observation = {k: v for k, v in observation.items() if k != "source_ref"}
         result.add(_canonical(facts(observation)))
     return sorted(result)

@@ -20,10 +20,10 @@ def test_provider_activity_uses_payload_fact_and_failure_type():
         record = SimpleNamespace(to_dict=lambda: dict(facts))
         _emit(None, 'attempt_started', record)
         _emit(None, 'attempt_progress', record)
-        assert model.active == '等待模型返回'
+        assert 'generate · 等待模型响应' in model.active
         facts['observed_payload_callback_count'] = 1
         _emit(None, 'stream_active', record)
-        assert model.active == '已接收模型响应活动'
+        assert '暂无可展示正文' in model.active
         _emit(None, 'attempt_failed', record)
         assert any('SyntheticFirstChunkTimeout' in text for text in model.history)
         before = list(model.history), model.active, model.updates

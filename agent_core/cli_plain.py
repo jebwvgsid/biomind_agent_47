@@ -30,6 +30,7 @@ class PlainTerminal:
         self.last_ticket = None
         self.history_cursor = 0
         self.last_stage = None
+        self.last_progress_phase = None
         self.context = ('', 'interactive_prompt', {})
         self.review = None
         self.pending = None
@@ -80,6 +81,13 @@ class PlainTerminal:
                 # Plain output is append-only: preserve the observed start
                 # before its result. Later checks update the same activity.
                 ticket.presentation = 'history'
+            if kind == 'activity' and data.get('progress_phase') and ticket.presentation == 'status':
+                transition = (data.get('task_id'), data.get('node'), data.get('call_id'), data['progress_phase'])
+                if transition != self.last_progress_phase:
+                    self.last_progress_phase = transition
+                    ticket.presentation = 'history'
+                    self.model.items.append(ticket)
+                    self.model.history.append(ticket.text)
             if kind == 'activity' and data.get('purpose') == 'preflight_progress':
                 # Plain has no live status area. Each actual item boundary is
                 # a compact line, still fenced by any pending human approval.

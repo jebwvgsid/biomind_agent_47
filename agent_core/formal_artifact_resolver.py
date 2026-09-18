@@ -108,6 +108,7 @@ def resolve_formal_upstream_artifacts(
     max_candidates: int = 24,
     candidate_search_roles: Sequence[str] = (),
     required_input_roles: Sequence[str] = (),
+    known_inputs: Sequence[Dict[str, Any]] = (),
 ) -> Dict[str, Any]:
     """Search formal project outputs for reusable upstream files.
 
@@ -130,6 +131,7 @@ def resolve_formal_upstream_artifacts(
         max_candidates=max_candidates,
         candidate_search_roles=candidate_search_roles,
         required_input_roles=required_input_roles,
+        known_inputs=known_inputs,
     )
     relevant = spec is not None or bool(generic_discovery.get("relevant"))
     result: Dict[str, Any] = {
@@ -341,6 +343,7 @@ def _discover_local_inputs(
     max_candidates: int = 24,
     candidate_search_roles: Sequence[str] = (),
     required_input_roles: Sequence[str] = (),
+    known_inputs: Sequence[Dict[str, Any]] = (),
 ) -> Dict[str, Any]:
     """Discover generic local input relationships without domain decisions."""
 
@@ -353,7 +356,9 @@ def _discover_local_inputs(
         "ambiguous_roles": [],
         "discovery_log": [],
     }
-    explicit_tokens = _raw_path_tokens(text)
+    declared = [str(row.get('canonical_path') or row.get('resolved_path') or row.get('path') or '')
+                for row in known_inputs if isinstance(row, dict)]
+    explicit_tokens = list(dict.fromkeys(p for p in declared if p)) or _raw_path_tokens(text)
     if not explicit_tokens:
         return result
 
@@ -394,20 +399,6 @@ def _discover_local_inputs(
 
     explicit_dirs = _dedupe_paths(explicit_dirs)
     explicit_files = _dedupe_paths(explicit_files)
-    if invalid_paths and explicit_files:
-        existing_by_name: Dict[str, List[Path]] = {}
-        for path in explicit_files:
-            existing_by_name.setdefault(path.name.lower(), []).append(path)
-        retained_invalid: List[str] = []
-        for value in invalid_paths:
-            matches = existing_by_name.get(Path(value).name.lower(), [])
-            if len(matches) == 1:
-                result["discovery_log"].append(
-                    f"explicit alias resolved: {value} -> {matches[0]}"
-                )
-                continue
-            retained_invalid.append(value)
-        invalid_paths = retained_invalid
     result["relevant"] = bool(explicit_files or explicit_dirs or invalid_paths or excluded)
     if invalid_paths:
         result["missing_roles"].append("explicit_input_path")
@@ -1132,9 +1123,8 @@ def _raw_path_tokens(text: str) -> List[str]:
 
 
 def _expand_path_token(raw: str, work_dir: Path, project_root: Optional[Path]) -> List[Path]:
-    bases = [work_dir]
-    if project_root and project_root not in bases:
-        bases.append(project_root)
+    # An explicit project binding wins even when another cwd has a same-named file.
+    bases = [project_root or work_dir]
     paths: List[Path] = []
     token_path = Path(raw).expanduser()
     if token_path.is_absolute():
@@ -1144,27 +1134,18 @@ def _expand_path_token(raw: str, work_dir: Path, project_root: Optional[Path]) -
         if "*" in str(candidate):
             paths.extend(Path(path).resolve() for path in candidate.parent.glob(candidate.name))
         else:
-            paths.append(candidate.resolve())
+            paths.append(Path(os.path.abspath(candidate)))
     return _dedupe_paths(paths)
 
 
 def _candidate_search_roots(work_dir: Path, project_root: Optional[Path]) -> List[Path]:
-    bases: List[Path] = []
-    for path in [work_dir, project_root]:
-        if path and path not in bases:
-            bases.append(path)
-        if path:
-            for parent in list(path.parents)[:3]:
-                if parent not in bases:
-                    bases.append(parent)
-
+    # Candidate discovery has the same authoritative root as explicit inputs.
+    # Walking parents can import another project's same-named formal outputs.
+    bases = [project_root or work_dir]
     roots: List[Path] = []
     for base in bases:
         for rel in (
             Path("benchmarks/biomind_agent_benchmark/runs"),
-            Path("benchmarks/biomind_agent_benchmark/runs/3d_dna"),
-            Path("../benchmarks/biomind_agent_benchmark/runs"),
-            Path("../benchmarks/biomind_agent_benchmark/runs/3d_dna"),
         ):
             candidate = (base / rel).resolve()
             if _is_dir_safe(candidate) and candidate not in roots:

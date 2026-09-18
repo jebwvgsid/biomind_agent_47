@@ -556,7 +556,7 @@ class Terminal:
                 self.prompt_text = '正在取消；等待清理与状态回执'
             else:
                 self.model.run_state = 'running'
-                self.prompt_text = '运行中可编辑本地草稿；尚未提交'
+                self.prompt_text = '上一条输入已提交；运行中可编辑新草稿（新草稿尚未提交）'
             future.set_result(text)
 
     def submit(self):

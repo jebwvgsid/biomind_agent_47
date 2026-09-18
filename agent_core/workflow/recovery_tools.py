@@ -587,7 +587,7 @@ class RecoveryLocalToolDispatcher:
         before this projection ever replaces it with ``REQUIRES_NARROWING``.
         """
 
-        if str(tool).replace("_", ".") == "exec.command":
+        if str(tool).replace("_", ".") in {"exec.command", "inspect.paths"}:
             return self.dispatch_full(tool, arguments)
         name, result = self._dispatch_complete(tool, arguments)
         return self._bounded(name, result)
@@ -598,10 +598,12 @@ class RecoveryLocalToolDispatcher:
         arguments: Mapping[str, Any] | None = None,
     ) -> Any:
         """Return the complete validated local result to the archive owner."""
-        if str(tool).replace("_", ".") == "exec.command":
+        if str(tool).replace("_", ".") in {"exec.command", "inspect.paths"}:
             if self.command_service is None:
                 return {"tool": "exec_command", "status": "not_run", "error": "COMMAND_SERVICE_UNAVAILABLE"}
-            return self.command_service.run(arguments or {},
+            operation = (self.command_service.inspect_paths if str(tool).replace("_", ".") == "inspect.paths"
+                         else self.command_service.run)
+            return operation(arguments or {},
                 task_id=self.seed.failure_packet.task_id, stage="recovery")
         _name, result = self._dispatch_complete(tool, arguments)
         return result

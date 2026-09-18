@@ -1035,6 +1035,17 @@ class RunProfiler:
             "semantic_effect": "none",
         })
 
+    def record_inspection(self, task_id, result):
+        """Observation costs, separate from approved scientific execution."""
+        self._append_event(task_id, {
+            'id': self._new_event_id('inspection'), 'type': 'inspection',
+            'node': result.get('stage'), 'tool': result.get('tool'),
+            'started_at': result.get('observed_at'), 'status': result.get('status'),
+            'duration_seconds': result.get('duration_seconds', 0),
+            'timing': dict(result.get('timing') or {}), 'receipt_ref': result.get('receipt_ref'),
+        })
+
+
     def record_command(
         self,
         task_id: str,
@@ -1669,6 +1680,7 @@ class RunProfiler:
         if task.get("ended_at"):
             wall = task.get("_ended_wall_seconds", wall)
 
+        inspection_events = [e for e in events if e.get("type") == "inspection"]
         command_events = [e for e in events if e.get("type") == "command"]
         human_events = [e for e in events if e.get("type") == "confirmation" and not e.get("automatic")]
         llm_events = [e for e in events if e.get("type") == "llm"]
@@ -1763,6 +1775,10 @@ class RunProfiler:
             "analysis_planning_overhead_seconds": round(max(0.0, wall - command_total - human_total), 3),
             "llm_calls": len(llm_events),
             "commands": len(command_events),
+            "local_inspections": len(inspection_events),
+            "local_inspection_seconds": sum(float(e.get('duration_seconds') or 0) for e in inspection_events),
+            "local_inspection_timing": {key: sum(float((e.get('timing') or {}).get(key) or 0) for e in inspection_events)
+                for key in ('prepare_seconds', 'scan_seconds', 'command_seconds')},
             "successful_commands": sum(1 for e in command_events if e.get("success")),
             "failed_commands": sum(1 for e in command_events if not e.get("success")),
             "manual_confirmations": len(human_events),
@@ -1890,6 +1906,7 @@ class RunProfiler:
             "",
             f"- LLM calls: {summary['llm_calls']}",
             f"- Commands: {summary['commands']} ({summary['successful_commands']} success, {summary['failed_commands']} failed)",
+            f"- Local inspections (separate from approved Commands): {summary.get('local_inspections', 0)}, {summary.get('local_inspection_seconds', 0):.3f}s; components={summary.get('local_inspection_timing', {})}; scan is included in preparation; inspection is included in node/overhead time, not additive",
             f"- Confirmations: {summary['manual_confirmations']} manual, {summary['auto_confirmations']} automatic",
             f"- Review feedback/rejections: {summary['manual_feedback_or_rejection_count']}",
             f"- Tokens: prompt={summary['tokens']['prompt_tokens']}, completion={summary['tokens']['completion_tokens']}, total={summary['tokens']['total_tokens']} (contains estimates: {token_note})",

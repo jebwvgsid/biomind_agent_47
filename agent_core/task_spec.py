@@ -8,6 +8,7 @@ history. Skill selection and execution state intentionally live elsewhere.
 from __future__ import annotations
 
 import json
+import os
 import hashlib
 import re
 from copy import deepcopy
@@ -893,20 +894,15 @@ def _resolved_binding_path(
     project_root: str | Path | None = None,
 ) -> tuple[str, str]:
     path = Path(_text(raw_path)).expanduser()
+    # Path identity follows the declared project, never a cwd existence search.
+    # Preserve symlink/wrapper spelling; access checks resolve targets separately.
     if path.is_absolute():
-        return str(path.resolve()), "/"
-    bases: List[Path] = []
-    for value in (project_root, base_dir):
-        if value:
-            base = Path(value).expanduser().resolve()
-            if base not in bases:
-                bases.append(base)
-    if not bases:
+        return os.path.abspath(path), "/"
+    base_value = project_root or base_dir
+    if not base_value:
         return str(path), ""
-    candidates = [(base / path).resolve() for base in bases]
-    selected = next((candidate for candidate in candidates if candidate.exists()), candidates[0])
-    selected_base = next((base for base, candidate in zip(bases, candidates) if candidate == selected), bases[0])
-    return str(selected), str(selected_base)
+    base = Path(os.path.abspath(Path(base_value).expanduser()))
+    return os.path.abspath(base / path), str(base)
 
 
 def _artifact_identity(direction: str, role: str, canonical_path: str) -> str:

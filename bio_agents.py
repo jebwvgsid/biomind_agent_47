@@ -672,6 +672,7 @@ from agent_core.plan_tracker import (
 )
 from agent_core.task_spec import (
     InputBindingContractError,
+    artifact_locator,
     apply_task_spec_mutation_proposal,
     validate_input_binding_declaration,
     apply_authorized_task_spec_constraint_repair,
@@ -18124,6 +18125,14 @@ class BioAnalystAgent:
         save_plan_state(self.data_path, task_id, stopped)
         return {"messages": [SystemMessage(content=json.dumps(issue, ensure_ascii=False, sort_keys=True))], "task_status": TASK_STATUS_BLOCKED, "failure_type": error.code, "failure_owner": "planner_output_policy", "validation_issues": [issue], "pending_action": {}, "next_step": "finish"}
 
+    def _task_project_root(self, task_id=""):
+        service = getattr(self, "command_service", None)
+        if service is not None:
+            return service.project_for_task(task_id)
+        from agent_core.command_execution import ProjectContext
+        return ProjectContext.discover().project_dir
+
+
     async def _ainvoke_llm(self, messages: List[BaseMessage], *, stage: str,
                           task_id: str = "", **kwargs) -> BaseMessage:
         service = getattr(self, "command_service", None)
@@ -27910,7 +27919,7 @@ class BioAnalystAgent:
                     constraint_mutation_proposal(
                         durable_compiled.get("constraints") or []
                     ),
-                    project_root=project_root,
+                    project_root=self._task_project_root(task_id),
                 )
                 summary = str(
                     durable_compiled.get("summary")
@@ -28196,7 +28205,7 @@ class BioAnalystAgent:
                 constraint_mutation_proposal(
                     domain_compiled.get("constraints") or []
                 ),
-                project_root=project_root,
+                project_root=self._task_project_root(task_id),
             )
             selected_constraints = semantic_constraints_from_task_spec(
                 compiled_task_spec,
@@ -28205,7 +28214,7 @@ class BioAnalystAgent:
             compiled_task_spec = merge_compiled_constraints(
                 compiled_task_spec,
                 selected_constraints,
-                project_root=project_root,
+                project_root=self._task_project_root(task_id),
                 metrics=semantic_metrics,
             )
             final_constraints = semantic_constraints_from_task_spec(
@@ -30280,13 +30289,13 @@ class BioAnalystAgent:
                 constraint_mutation_proposal(
                     domain_compiled.get("constraints") or []
                 ),
-                project_root=project_root,
+                project_root=self._task_project_root(task_id),
             )
             selected_constraints = required_skill_constraints
             compiled_task_spec = merge_compiled_constraints(
                 compiled_task_spec,
                 selected_constraints,
-                project_root=project_root,
+                project_root=self._task_project_root(task_id),
                 metrics=semantic_metrics,
             )
             active_leaf_decisions: List[Dict[str, Any]] = []
@@ -31991,7 +32000,7 @@ class BioAnalystAgent:
                     constraint_mutation_proposal(
                         [*deterministic_base, *semantic_delta]
                     ),
-                    project_root=project_root,
+                    project_root=self._task_project_root(task_id),
                 )
                 selected_constraints = semantic_constraints_from_task_spec(
                     compiled_task_spec,
@@ -32000,7 +32009,7 @@ class BioAnalystAgent:
                 compiled_task_spec = merge_compiled_constraints(
                     compiled_task_spec,
                     selected_constraints,
-                    project_root=project_root,
+                    project_root=self._task_project_root(task_id),
                     metrics=semantic_metrics,
                 )
                 final_constraints = semantic_constraints_from_task_spec(
@@ -33759,7 +33768,7 @@ question. Never guess a scientific or database identity.
                         repair_payload,
                         allowed_semantic_slots=allowed_slots,
                         provenance_catalog=provenance_catalog,
-                        project_root=project_root,
+                        project_root=self._task_project_root(task_id),
                     )
                     history_entry["status"] = "committed_pending_revalidation"
                     history_entry["new_task_spec_revision"] = task_spec_revision(repaired_task_spec)
@@ -33810,7 +33819,7 @@ question. Never guess a scientific or database identity.
             preprocess_started_at = datetime.now(timezone.utc).isoformat()
             task_id = state.get("task_id", "default")
             project_id = state.get("project_id") or self.default_project_id
-            work_dir = self.pm.work_dir if self.pm else os.getcwd()
+            work_dir = self._task_project_root(task_id)
             durable_preprocess_state = load_plan_state(self.data_path, task_id)
             durable_preprocess_task_state = dict(
                 durable_preprocess_state.get("task_state") or {}
@@ -33988,14 +33997,12 @@ question. Never guess a scientific or database identity.
                     required_candidate_input_roles = list(dict.fromkeys(
                         canonical_input_role(
                             str(item.get("role") or ""),
-                            str(item.get("path") or item.get("resolved_path") or ""),
+                            artifact_locator(item),
                         )
                         for item in task_spec.get("inputs") or []
                         if isinstance(item, Mapping)
                         and bool(item.get("required", True))
-                        and not str(
-                            item.get("path") or item.get("resolved_path") or ""
-                        ).strip()
+                        and not artifact_locator(item)
                     ))
                     consultant_requested_input_roles = list(dict.fromkeys([
                         *required_candidate_input_roles,
@@ -34008,9 +34015,10 @@ question. Never guess a scientific or database identity.
                         consultant_context,
                         work_dir=work_dir,
                         task_id=task_id,
-                        project_root=project_root,
+                        project_root=self._task_project_root(task_id),
                         candidate_search_roles=consultant_requested_input_roles,
                         required_input_roles=required_candidate_input_roles,
+                        known_inputs=task_spec.get("inputs") or [],
                     )
                     phase_stats["candidate_count"] = len(
                         input_resolution_result.get("formal_candidates") or []
@@ -37478,7 +37486,7 @@ question. Never guess a scientific or database identity.
                         renderer_records=renderer_records,
                         input_audit=input_resolution_result,
                         runtime_evidence=candidate_runtime_evidence,
-                        project_root=str(project_root),
+                        project_root=str(self._task_project_root(task_id)),
                     )
                 except InputBindingContractError as exc:
                     diagnostic = exc.to_diagnostic()
@@ -37756,7 +37764,7 @@ question. Never guess a scientific or database identity.
                         input_audit=input_resolution_result,
                         runtime_evidence=candidate_runtime_evidence,
                         pending_question=pending,
-                        project_root=str(project_root),
+                        project_root=str(self._task_project_root(task_id)),
                     )
                     committed_update = commit_candidate_update({
                         "messages": [AIMessage(content=raw_content)],
@@ -38251,7 +38259,7 @@ question. Never guess a scientific or database identity.
                     constraint_mutation_proposal(
                         consultant_semantic_delta
                     ),
-                    project_root=project_root,
+                    project_root=self._task_project_root(task_id),
                 )
                 logger.info(
                     "Consultant constraint extraction: task=%s %s",
@@ -38433,7 +38441,7 @@ question. Never guess a scientific or database identity.
                         compiled_task_spec = merge_compiled_constraints(
                             compiled_task_spec,
                             selected_base_constraints,
-                            project_root=project_root,
+                            project_root=self._task_project_root(task_id),
                             metrics=semantic_metrics,
                         )
                         final_semantic_constraints = semantic_constraints_from_task_spec(
@@ -38498,7 +38506,7 @@ question. Never guess a scientific or database identity.
                 compiled_task_spec = merge_compiled_constraints(
                     compiled_task_spec,
                     selected_base_constraints,
-                    project_root=project_root,
+                    project_root=self._task_project_root(task_id),
                     metrics=semantic_metrics,
                 )
                 final_semantic_constraints = semantic_constraints_from_task_spec(
@@ -39332,7 +39340,7 @@ question. Never guess a scientific or database identity.
             ]
             canonical_output_contracts = effective_output_contracts(
                 task_spec,
-                project_root=project_root,
+                project_root=self._task_project_root(task_id),
             )
             planner_source_state = load_plan_state(self.data_path, task_id)
             planner_task_state = dict(planner_source_state.get("task_state") or {})
@@ -41613,7 +41621,7 @@ question. Never guess a scientific or database identity.
                     persisted_plan,
                     renderer_records=review_renderer_records,
                     output_contracts=effective_output_contracts(
-                        task_spec, project_root=project_root
+                        task_spec, project_root=self._task_project_root(task_id)
                     ),
                     task_spec=task_spec,
                 )

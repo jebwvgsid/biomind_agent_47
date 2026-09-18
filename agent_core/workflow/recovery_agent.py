@@ -518,8 +518,8 @@ def recovery_tool_schemas() -> list[dict[str, Any]]:
                 },
             },
         })
-    from agent_core.command_tools import EXEC_COMMAND_SCHEMA
-    result.append(deepcopy(EXEC_COMMAND_SCHEMA))
+    from agent_core.command_tools import EXEC_COMMAND_SCHEMA, INSPECT_PATHS_SCHEMA
+    result.extend([deepcopy(EXEC_COMMAND_SCHEMA), deepcopy(INSPECT_PATHS_SCHEMA)])
     result.append({"type": "function", "function": {
         "name": SUBMIT_TOOL, "description": "Submit one RecoveryDirective candidate for existing admission. Does not execute commands. Put the user-facing explanation in assistant content or summary. Do not combine with inspection calls.",
         "parameters": directive_schema(),
@@ -820,7 +820,7 @@ def _observation_envelope(
     content_digest = hashlib.sha256(_canonical(payload).encode("utf-8")).hexdigest()
     cursor = deepcopy(payload.get("page") or payload.get("cursor") or {})
     source_ref = _source_ref(arguments)
-    if tool == "exec.command" and not error:
+    if tool in {"exec.command", "inspect.paths"} and not error:
         # The service, never model arguments, owns this persisted observation.
         source_ref = str(payload.get("receipt_ref") or payload.get("command_receipt_ref") or "")
     truncation = payload.get("truncated")
@@ -1729,7 +1729,7 @@ class RecoveryAgentLoop:
                         source_ref=str(envelope.get("source_ref") or ""),
                         result=result,
                     )
-                    if dotted_tool == "exec.command" and result.get("receipt_ref"):
+                    if dotted_tool in {"exec.command", "inspect.paths"} and result.get("receipt_ref"):
                         externalized["command_receipt_ref"] = result["receipt_ref"]
                     envelope = _observation_envelope(
                         request_id=str(call["id"]),
@@ -1741,7 +1741,7 @@ class RecoveryAgentLoop:
                     )
                     encoded = _canonical(envelope)
                 if len(encoded) > config.single_observation_chars:
-                    if dotted_tool == "exec.command" and result.get("receipt_ref"):
+                    if dotted_tool in {"exec.command", "inspect.paths"} and result.get("receipt_ref"):
                         externalized["command_receipt_ref"] = result["receipt_ref"]
                     envelope = _observation_envelope(
                         request_id=str(call["id"]),
@@ -1757,7 +1757,7 @@ class RecoveryAgentLoop:
                     )
                     encoded = _canonical(envelope)
                 if observation_chars + len(encoded) > config.cumulative_observation_chars:
-                    if dotted_tool == "exec.command" and result.get("receipt_ref"):
+                    if dotted_tool in {"exec.command", "inspect.paths"} and result.get("receipt_ref"):
                         externalized["command_receipt_ref"] = result["receipt_ref"]
                     envelope = _observation_envelope(
                         request_id=str(call["id"]),

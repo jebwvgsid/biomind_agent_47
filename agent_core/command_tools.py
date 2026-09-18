@@ -18,10 +18,12 @@ EXEC_COMMAND_SCHEMA = {
         'parameters': {
             'type': 'object',
             'properties': {
+                'read_paths': {'type': 'array', 'items': {'type': 'string'}, 'maxItems': 64,
+                               'description': 'Only the explicit files/subtrees needed by this command; relative to project_dir. Default: cwd immediate entries plus typed task files. Unmounted subtrees are not missing. Do not request the whole project for known files.'},
                 'cmd': {'type': 'string', 'description': 'Bash script to inspect files or the environment.'},
                 'workdir': {'type': 'string', 'description': 'Absolute directory or path relative to project_dir; default project_dir.'},
                 'timeout_ms': {'type': 'integer', 'minimum': 100, 'maximum': 120000,
-                               'description': 'Default 30000. Conda startup on network filesystems may need 60000.'},
+                               'description': 'Total preparation plus execution deadline; default 30000, maximum 120000.'},
                 'max_output_chars': {'type': 'integer', 'minimum': 256, 'maximum': 64000},
             },
             'required': ['cmd'],
@@ -30,9 +32,31 @@ EXEC_COMMAND_SCHEMA = {
     },
 }
 
+INSPECT_PATHS_SCHEMA = {
+    'type': 'function', 'function': {
+        'name': 'inspect_paths',
+        'description': 'Batch stat/type checks of known task paths. Metadata only, no shell or content reads. Two independent stat operations at most in flight; exact per-path errors and absolute paths are returned.',
+        'parameters': {'type': 'object', 'properties': {
+            'paths': {'type': 'array', 'items': {'type': 'string'}, 'minItems': 1, 'maxItems': 64}},
+            'required': ['paths'], 'additionalProperties': False}}}
+
+
 COMMAND_TOOL_INSTRUCTIONS = '''Shared local inspection:
 Use exec_command when filesystem or runtime facts are missing: list directories, search logs with rg,
 read selected lines with sed, inspect data with Python, or run conda env list --json.
+For known input paths use inspect_paths once for the whole group (fixed stat/type checks).
+Use the path_context from the existing TaskSpec: preserve absolute paths; resolve relative data
+paths from project_dir, never from the BioMind installation cwd. A missing exact input is a
+missing observation, never a reason to silently select a different benchmark or search all projects.
+Use read_paths to select only directories/files actually needed by exec_command. An unmounted
+subtree is not proof of absence. Batch related software observations in one bounded command when
+independent; do not repeat facts already covered by current receipts.
+Planner records adopted absolute paths/output locations in the formal plan. Future outputs need
+not exist. Generate/Execute reuse those bindings; Recovery changes them only through existing plan
+revision/approval rules. Resource IDs and ordinary parameters are not filesystem paths.
+Keep confirmed decisions (including ploidy) from TaskSpec. Do not ask again because phase changed.
+Absolute wrapper paths do not replace their environment. Preserve verified PATH/JAVA_HOME and
+interpreter launch paths; do not derive JAVA_HOME by walking dirname chains.
 Commands run on the reported host, in the project directory by default. A workdir applies only to
 that call; cd and environment changes do not persist. Use bounded queries and follow up on truncation.
 HOME/environment variables are sanitized. Writability reported by conda reflects the sandbox,
@@ -100,11 +124,13 @@ async def invoke_with_command_tools(*, model, messages, service, task_id, stage,
     from agent_core.tool_loop import run_tool_loop
 
     async def dispatch(name, arguments):
+        if name == 'inspect_paths':
+            return await service.inspect_paths(arguments, task_id=task_id, stage=stage)
         return await service.run(arguments, task_id=task_id, stage=stage)
 
     result = await run_tool_loop(
         model=model, messages=inspection_messages(messages, service, task_id),
-        schemas=[deepcopy(EXEC_COMMAND_SCHEMA)], dispatch=dispatch, invoke=invoke,
+        schemas=[deepcopy(EXEC_COMMAND_SCHEMA), deepcopy(INSPECT_PATHS_SCHEMA)], dispatch=dispatch, invoke=invoke,
         max_calls=max_calls, retry_guard=retry_guard,
     )
     return result.response

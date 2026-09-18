@@ -1064,14 +1064,40 @@ def _emit(
              "call_id": str(payload.get("call_id") or ""),
              "provider_attempt_id": str(payload.get("provider_attempt_id") or payload.get("attempt_id") or ""),
              "event": event, "source": "runtime_fact"}
+    emit_display("details", json.dumps({k: payload.get(k) for k in (
+        "event", "elapsed_seconds", "content_char_count", "reasoning_char_count",
+        "observed_payload_callback_count", "payload_idle_seconds", "finish_reason",
+        "failure_type", "cancellation_source")}, ensure_ascii=False), purpose="telemetry", **scope)
+    node = str(payload.get("node_name") or "模型")
+    elapsed = float(payload.get("elapsed_seconds") or 0)
+    count = int(payload.get("content_char_count") or 0)
     if event in {"attempt_started", "attempt_progress", "stream_active"}:
-        observed = bool(payload.get("observed_payload_callback_count") or payload.get("first_content_chunk_at")
-                        or payload.get("first_reasoning_chunk_at") or payload.get("last_payload_at"))
-        emit_display("activity", "已接收模型响应活动" if observed else "等待模型返回", **scope)
+        observed = bool(payload.get("observed_payload_callback_count"))
+        if not observed:
+            phase, detail = "model_wait", "等待模型响应"
+        elif count:
+            phase, detail = "model_receiving", f"接收响应 {count} 字符；完整计划尚未就绪" if node.startswith("planner") else f"接收响应 {count} 字符"
+        else:
+            phase, detail = "model_receiving", "接收传输数据；暂无可展示正文"
+        emit_display("activity", f"{node} · {detail} · {elapsed:.1f}s",
+                     purpose="status", progress_phase=phase, **scope)
+    elif event == "attempt_completed":
+        finish = payload.get("finish_reason")
+        if finish == "tool_calls":
+            detail = "模型已返回检查请求"
+        elif finish == "stop":
+            detail = "处理完整计划响应；待解析与校验" if node.startswith("planner") else "处理完整模型响应"
+        else:
+            detail = "响应截断；未形成完整计划" if finish == "length" else "响应结束；完整性尚待核实"
+        emit_display("activity", f"{node} · {detail} · {elapsed:.1f}s",
+                     purpose="status", progress_phase="model_complete", **scope)
     elif event == "attempt_cancelled":
-        emit_display("cancel", f"provider 取消回执：{payload.get('cleanup_result', '未确认')}；工具与任务清理另行确认。", **scope)
+        emit_display("cancel", f"{node} · 请求已取消；已接收 {count} 字符，部分响应未接纳；清理回执：{payload.get('cleanup_result', '未确认')}", **scope)
     elif event == "attempt_failed":
-        emit_display("error", f"provider attempt 失败：{payload.get('failure_type') or 'UNKNOWN'}", **scope)
+        failure = str(payload.get("failure_type") or "UNKNOWN")
+        detail = "连接中断；未取得完整响应" if "CONNECTION" in failure or "TRANSPORT" in failure else f"模型请求失败：{failure}"
+        emit_display("activity", f"{node} · {detail} · {elapsed:.1f}s", purpose="status", progress_phase="model_failed", **scope)
+        emit_display("error", f"{node} · {detail} · {elapsed:.1f}s", **scope)
     if event in {"attempt_completed", "attempt_cancelled", "attempt_failed"}:
         emit_display("provider_fenced", "", **{**scope, "event": "fenced"})
     try:

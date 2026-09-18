@@ -163,7 +163,7 @@ class FormalArtifactResolverTests(unittest.TestCase):
                 changed_record["evidence_fingerprint"],
             )
 
-    def test_short_input_alias_merges_with_unique_verified_formal_path(self):
+    def test_missing_explicit_path_is_not_replaced_by_same_basename(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             root = Path(tmpdir)
             formal = self._write_file(
@@ -175,8 +175,8 @@ class FormalArtifactResolverTests(unittest.TestCase):
 
             result = resolve_formal_upstream_artifacts(query, work_dir=root, project_root=root)
 
-        self.assertNotIn("explicit_input_path", result["missing_roles"])
-        self.assertTrue(any("explicit alias resolved" in item for item in result["discovery_log"]))
+        self.assertIn("explicit_input_path", result["missing_roles"])
+        self.assertFalse(any("explicit alias resolved" in item for item in result["discovery_log"]))
 
     def test_annotation_contig_mismatch_is_warning_not_strong_match(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
