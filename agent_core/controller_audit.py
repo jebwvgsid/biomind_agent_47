@@ -32,6 +32,11 @@ _SCRIPT_BLOCK_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 _ANY_SCRIPT_TAG_RE = re.compile(r"</?[A-Za-z][A-Za-z0-9_-]*\s*>", re.IGNORECASE)
+_RELAXED_SCRIPT_BLOCK_RE = re.compile(
+    r"<(?P<tag>shell|python|r)\b(?P<attrs>[^<>]*)>(?P<body>.*)</(?P=tag)\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
+_SCRIPT_ATTRIBUTE_RE = re.compile(r"\s+(?P<name>[a-z_]+)\s*=\s*(?P<quote>[\"'])(?P<value>[^<>]*?)(?P=quote)", re.IGNORECASE)
 _ENV_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
 _MANAGED_FREE_SOURCE_TOKEN_RE = re.compile(
     r"\{(?:input|output|artifact|operation):[A-Za-z][A-Za-z0-9_.-]*\}"
@@ -43,6 +48,46 @@ class ScriptBlockError(ValueError):
 
     code = "GENERATE_SCRIPT_BLOCK_INVALID"
 
+    def __init__(self, message, *, issues=()):
+        super().__init__(message)
+        self.issues = list(issues)
+
+    def to_dict(self):
+        if not self.issues:
+            return {}
+        return {"field_path": self.issues[0]["field_path"], "format_issues": self.issues,
+                "expected": "one complete canonical script/display response or blocked JSON",
+                "valid_example": "<shell>\n# actual Bash script\n</shell>"}
+
+
+def _script_format_issues(raw):
+    """Collect independent outer-carrier findings without analyzing shell code."""
+    opening = re.search(r"<(?P<tag>shell|python|r)\b(?P<attrs>[^<>]*)>", raw, re.I)
+    if not opening:
+        return []
+    tag = opening.group("tag").lower()
+    closing = list(re.finditer(r"</" + tag + r"\s*>", raw, re.I))
+    issues = []
+    def add(field, position, detail):
+        issues.append({"field_path": field, "line": raw.count("\n", 0, position) + 1,
+                       "message": detail})
+    for attr in _SCRIPT_ATTRIBUTE_RE.finditer(opening.group("attrs")):
+        name = attr.group("name")
+        if name != "skill_resources":
+            add("$.opening_tag." + name, opening.start(),
+                f"Unsupported attribute {name!r}; use <{tag}> or its skill_resources attribute. Remove {name!r}.")
+    if raw[:opening.start()].strip():
+        add("$.prefix", 0, "prose outside the executable block is not allowed; put explanation in public_message.")
+    if closing:
+        end = closing[-1]
+        if raw[end.end():].strip():
+            add("$.suffix", end.end(), "Remove text after the block; put explanation in public_message.")
+        if raw[opening.end():end.start()].lstrip().startswith("<![CDATA["):
+            add("$.body.CDATA", opening.end(), "Remove outer <![CDATA[ and ]]> delimiters; send the raw script body.")
+    else:
+        add("$.closing_tag", len(raw), f"Missing </{tag}>; resubmit the complete response.")
+    return issues
+
 
 @dataclass(frozen=True)
 class ExecutableScriptBlock:
@@ -50,9 +95,11 @@ class ExecutableScriptBlock:
     body: str
     tag: str
     skill_resource_refs: Tuple[str, ...] = ()
+    resource_selection_explicit: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         result = asdict(self)
+        result.pop("resource_selection_explicit")
         if not self.skill_resource_refs:
             result.pop("skill_resource_refs")
         return result
@@ -76,9 +123,79 @@ class ControllerAuditFinding:
         return value
 
 
-def parse_executable_script_block(text: Any) -> ExecutableScriptBlock:
-    """Parse exactly one supported block with no prose outside it."""
+def _relaxed_executable_script_block(raw: str) -> ExecutableScriptBlock:
+    """Ignore display wrappers, retaining one unambiguous executable body."""
+    match = _RELAXED_SCRIPT_BLOCK_RE.search(raw)
+    if not match:
+        raise ScriptBlockError(f"{ScriptBlockError.code}: one complete <shell>, <python>, or <r> block is required")
+    before, after = raw[:match.start()], raw[match.end():]
+    outside = before + after
+    if re.search(r"</?(?:shell|python|r|script)\b", outside, re.IGNORECASE):
+        raise ScriptBlockError(f"{ScriptBlockError.code}: multiple or malformed executable blocks are not allowed")
+    # A single Markdown fence can surround the selected block. Other fenced
+    # code outside it represents an alternative candidate, not display prose.
+    fences_before = re.findall(r"(?m)^\s*(`{3,}|~{3,})[^\r\n]*", before)
+    fences_after = re.findall(r"(?m)^\s*(`{3,}|~{3,})[^\r\n]*", after)
+    if fences_before or fences_after:
+        if (len(fences_before) != 1 or len(fences_after) != 1
+                or fences_before[0] != fences_after[0]
+                or not re.search(r"(?:`{3,}|~{3,})[^\r\n]*\r?\n\s*$", before)
+                or not re.match(r"\s*(?:`{3,}|~{3,})[ \t]*(?:\r?\n|$)", after)):
+            raise ScriptBlockError(f"{ScriptBlockError.code}: additional fenced code outside the executable block is ambiguous")
+    attrs = {}
+    raw_attrs = match.group("attrs")
+    position = 0
+    for attribute in _SCRIPT_ATTRIBUTE_RE.finditer(raw_attrs):
+        if attribute.start() != position:
+            raise ScriptBlockError(f"{ScriptBlockError.code}: malformed executable attributes")
+        name = attribute.group("name").lower()
+        if name not in {"language", "skill_resources"} or name in attrs:
+            raise ScriptBlockError(f"{ScriptBlockError.code}: unsupported or duplicate executable attribute: {name}")
+        attrs[name] = attribute.group("value")
+        position = attribute.end()
+    if raw_attrs[position:].strip():
+        raise ScriptBlockError(f"{ScriptBlockError.code}: malformed executable attributes")
+    tag = match.group("tag").lower()
+    aliases = {"shell": {"shell", "bash", "sh"}, "python": {"python", "python3"}, "r": {"r", "rscript"}}
+    if "language" in attrs and attrs["language"].lower() not in aliases[tag]:
+        raise ScriptBlockError(f"{ScriptBlockError.code}: language attribute conflicts with <{tag}>")
+    body = match.group("body")
+    cdata = re.fullmatch(r"(?P<before>\s*)<!\[CDATA\[(?P<body>.*)\]\]>(?P<after>\s*)", body, re.DOTALL)
+    if cdata:
+        if "]]>" in cdata.group("body"):
+            raise ScriptBlockError(f"{ScriptBlockError.code}: multiple CDATA or executable blocks are ambiguous")
+        body = cdata.group("before") + cdata.group("body") + cdata.group("after")
+    elif re.search(r"</(?:shell|python|r)\s*>\s*<(?:shell|python|r)\b", body, re.IGNORECASE):
+        raise ScriptBlockError(f"{ScriptBlockError.code}: multiple executable blocks are not allowed")
+    elif re.search(r"</(?:shell|python|r)\s*>.*?<(?:shell|python|r)\b", body, re.IGNORECASE | re.DOTALL):
+        raise ScriptBlockError(f"{ScriptBlockError.code}: multiple executable blocks or ambiguous nested wrappers")
+    if not body.strip():
+        raise ScriptBlockError(f"{ScriptBlockError.code}: executable block is empty")
+    if re.match(r"</?(?:script|shell|python|r)(?:\s|>)", body.lstrip(), re.IGNORECASE):
+        raise ScriptBlockError(f"{ScriptBlockError.code}: unsupported nested executable wrapper at body start")
+    return ExecutableScriptBlock(
+        language=SUPPORTED_SCRIPT_TAGS[tag], body=body, tag=tag,
+        skill_resource_refs=tuple(attrs["skill_resources"].split(";")) if attrs.get("skill_resources") else (),
+        resource_selection_explicit="skill_resources" in attrs,
+    )
+
+
+def parse_executable_script_block(text: Any, *, strict: bool = True) -> ExecutableScriptBlock:
+    """Decode one script, optionally tolerating unambiguous display wrappers."""
     raw = str(text or "")
+    if not strict:
+        # Preserve the established decoder for already conforming responses.
+        # CDATA and apparent sibling blocks still need explicit handling.
+        try:
+            original = parse_executable_script_block(raw, strict=True)
+        except ScriptBlockError:
+            pass
+        else:
+            if (not original.body.lstrip().startswith("<![CDATA[")
+                    and not re.search(r"</(?:shell|python|r)\s*>.*?<(?:shell|python|r)\b",
+                                      original.body, re.IGNORECASE | re.DOTALL)):
+                return original
+        return _relaxed_executable_script_block(raw)
     match = _SCRIPT_BLOCK_RE.fullmatch(raw)
     if not match:
         supported_matches = list(_SCRIPT_BLOCK_RE.finditer(raw))
@@ -91,10 +208,15 @@ def parse_executable_script_block(text: Any) -> ExecutableScriptBlock:
             reason = "prose outside the executable block is not allowed"
         else:
             reason = "one <shell>, <python>, or <r> block is required"
-        raise ScriptBlockError(f"{ScriptBlockError.code}: {reason}")
+        issues = _script_format_issues(raw)
+        detail = "; ".join(item["message"] for item in issues) or reason
+        raise ScriptBlockError(f"{ScriptBlockError.code}: {reason}. {detail}", issues=issues)
     body = str(match.group("body") or "")
     if not body.strip():
         raise ScriptBlockError(f"{ScriptBlockError.code}: executable block is empty")
+    if body.lstrip().startswith("<![CDATA["):
+        issues = _script_format_issues(raw)
+        raise ScriptBlockError(f"{ScriptBlockError.code}: remove outer CDATA delimiters; send the raw script body", issues=issues)
     # Only an outer executable protocol is parsed here. XML-like strings and
     # heredoc data inside a script must remain byte-for-byte unchanged. The
     # common pre-approval syntax boundary rejects executable wrapper residue.
@@ -107,6 +229,7 @@ def parse_executable_script_block(text: Any) -> ExecutableScriptBlock:
         body=body,
         tag=tag,
         skill_resource_refs=tuple(match.group("resources").split(";")) if match.group("resources") else (),
+        resource_selection_explicit=match.group("resources") is not None,
     )
 
 
@@ -564,7 +687,7 @@ def adapt_script_block_to_action(
         "env": env,
         "script_adapter": "script_block_v1",
         "referenced_artifact_handles": [],
-        **({"skill_resource_refs": list(block.skill_resource_refs)} if block.skill_resource_refs else {}),
+        **({"skill_resource_refs": list(block.skill_resource_refs)} if block.skill_resource_refs or block.resource_selection_explicit else {}),
     }
     return attach_recovery_execution_authority(
         action,

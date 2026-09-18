@@ -33,11 +33,21 @@ def tool_result_text(tool, observation):
         if type(result.get(key)) is int:
             facts.append(f"返回 {result[key]} 项"); break
     cursor = result.get('cursor') or {}
-    if result.get('truncated') and type(cursor.get('next_start_line')) is int:
+    truncation = result.get('truncated')
+    truncated = any(value is True for value in truncation.values()) if isinstance(truncation, dict) else bool(truncation)
+    if truncated and type(cursor.get('next_start_line')) is int:
         facts.append(f"分页；可从第 {cursor['next_start_line']} 行继续")
-    elif result.get('truncated'):
-        facts.append('工具内容有裁剪；续读位置未提供')
-    if observation.get('truncated') and not result.get('truncated'):
+    elif truncated:
+        logs = result.get('log_refs') or {}
+        readable = [str(logs[key]) for key in ('stdout', 'stderr') if logs.get(key)
+                    and (not isinstance(truncation, dict) or truncation.get(key) is True)]
+        if readable:
+            facts.append('工具内容有裁剪；可用 exec_command 定点分页读取日志：' + '，'.join(readable))
+        elif result.get('observation_ref'):
+            facts.append('工具内容有裁剪；可按 observation_ref 续读')
+        else:
+            facts.append('工具内容有裁剪；续读位置未提供')
+    if observation.get('truncated') and not truncated:
         facts.append('模型可见工具内容已裁剪')
         if result.get('observation_ref'):
             facts.append('完整观测已归档，可按回执引用读取')
@@ -45,7 +55,7 @@ def tool_result_text(tool, observation):
         facts.append('未找到匹配项')
     if not facts:
         facts.append('已返回')
-    return label + '：' + '；'.join(facts), ('partial' if observation.get('truncated') or result.get('truncated') else 'empty' if status == 'NO_MATCH' else 'returned')
+    return label + '：' + '；'.join(facts), ('partial' if observation.get('truncated') or truncated else 'empty' if status == 'NO_MATCH' else 'returned')
 
 
 def _brief(value, limit=180):
@@ -319,3 +329,21 @@ def delivery_text(facts):
 def delivery_identity(facts):
     return json.dumps({key: facts.get(key) for key in (
         'report_receipts', 'required_output_status', 'delivery_status', 'internal_diagnostic_delivery')}, sort_keys=True, default=str)
+
+
+def cancellation_receipt_text(receipt, provider_record, active_process_groups):
+    """Project existing receipts, without asserting unobserved global cleanup."""
+    saved = bool(receipt.get('receipt_id'))
+    parts = ['任务取消已登记' if saved else '任务取消登记未确认']
+    cleanup = provider_record.get('cleanup_result')
+    if cleanup == 'CLEANUP_CONFIRMED':
+        parts.append('末次模型请求本地清理已确认')
+    elif cleanup == 'CLEANUP_NOT_REQUIRED':
+        parts.append('末次模型请求无需本地清理')
+    else:
+        parts.append('末次模型请求本地清理未确认')
+    count = len(active_process_groups)
+    parts.append(f'当前仍登记 {count} 个子进程组' if count else '当前无登记中的子进程组')
+    # An empty local registry is not a receipt for arbitrary remote jobs.
+    parts.append('以上为本地回执，未声明远端任务已终止')
+    return '；'.join(parts) + '。'

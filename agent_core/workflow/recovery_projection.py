@@ -1392,6 +1392,22 @@ def _diagnostic_facts(
     action = dict(action) if isinstance(action, Mapping) else {}
     contracts = action.get("controller_output_bindings")
     candidates = execution.get("observed_output_records")
+    if execution.get("preflight_evidence_binding") and not any(
+            isinstance(r, Mapping) and r.get("evidence_files") for r in candidates or []):
+        # Old checkpoints already own these helper receipts. Expose the same
+        # explicit candidate to Recovery without altering the archived result.
+        from agent_core.workflow.result_resolution import preflight_result_candidate
+        try:
+            candidate = preflight_result_candidate(execution)
+            if candidate:
+                candidates = [*(candidates or []), candidate]
+        except (ValueError, OSError, TypeError) as exc:
+            add_fact(kind="preflight_registration_evidence", summary="Preflight receipt needs inspection before publication.",
+                metadata={"code": str(getattr(exc, "code", "RESULT_PREFLIGHT_EVIDENCE_UNAVAILABLE")), "detail": str(exc)})
+    if return_code == 0 and (execution.get("runtime_output_reconciliation") or {}).get("status") == "recovery":
+        add_fact(kind="result_registration_pending",
+            summary="The command completed with rc=0; formal output acceptance is pending. Inspect current-attempt evidence and prefer result selection/organization plus revalidation over rerunning the helper.",
+            metadata={"stage": "post_execution_reconciliation", "return_code": 0})
     if isinstance(contracts, (list, tuple)) or isinstance(candidates, (list, tuple)):
         realizations = {
             "source": "current_execution_record",
@@ -1632,6 +1648,50 @@ def _failure_incident_id(
     })
 
 
+def _helper_binding_facts(execution, durable):
+    if not isinstance(execution, Mapping):
+        return ()
+    current = execution.get("action_contract") or {}
+    decision = execution.get("recovery_decision_id") or current.get("recovery_decision_id")
+    prior_receipt = ((durable.get("task_state") or {}).get("typed_recovery_receipts") or {}).get(decision) or {}
+    scope = (prior_receipt.get("outcome") or {}).get("scope") or {}
+    provenance = durable.get("provenance_state") or {}
+    previous = (provenance.get("actions") or {}).get(scope.get("action_id")) or {}
+    previous = previous.get("normalized_action") or {}
+    if not current.get("formal_skill_resources") and not previous.get("formal_skill_resources"):
+        return ()
+    def view(action, aid, attempt, binding=None):
+        return {"action_id": aid, "attempt_id": attempt,
+            "helper_handles": list(action.get("skill_resource_refs") or []),
+            "registered_resources": [r.get("handle") for r in action.get("formal_skill_resources") or []],
+            "evidence_binding_declared": bool((action.get("execution_policy_manifest") or {}).get("evidence_binding")),
+            "injected_evidence_directory": (binding or {}).get("canonical_path", ""),
+            "policy_manifest_hash": (action.get("execution_policy_manifest") or {}).get("manifest_hash", "")}
+    metadata = {"current": view(current, execution.get("action_id"), execution.get("attempt_id"), execution.get("preflight_evidence_binding")),
+        "model_source_ref": execution.get("model_source_ref", ""),
+        "approved_source_ref": execution.get("code_path", ""),
+        "source_distinction": "model draft precedes framework materialization; approved source is the executed definition"}
+    if previous:
+        metadata["previous"] = view(previous, scope.get("action_id"), scope.get("attempt_id"))
+        attempt = (provenance.get("attempts") or {}).get(scope.get("attempt_id")) or {}
+        path = (attempt.get("executed_script") or {}).get("path") or attempt.get("executed_script_path")
+        if path:
+            from pathlib import Path
+            ref = Path(path).parent / "preflight_evidence_binding.json"
+            metadata["previous"]["binding_receipt_ref"] = str(ref)
+            try:
+                if not ref.is_symlink() and ref.stat().st_size < 65536:
+                    binding = json.loads(ref.read_text())
+                    if (binding.get("action_id") == scope.get("action_id") and binding.get("attempt_id") == scope.get("attempt_id")
+                            and binding.get("policy_manifest_hash") == metadata["previous"]["policy_manifest_hash"]):
+                        metadata["previous"]["injected_evidence_directory"] = binding.get("canonical_path", "")
+            except (OSError, ValueError):
+                pass
+    return (freeze({"fact_id": "helper-execution-definition", "kind": "helper_binding_comparison",
+        "summary": "Compare the selected helper and actual execution binding before attributing a missing variable to the environment. Resource declarations trigger per-attempt injection; a retry can lose that declaration.",
+        "metadata": metadata}),)
+
+
 def build_causal_failure_record(
     source_kind: str,
     source: Mapping[str, Any],
@@ -1729,6 +1789,7 @@ def build_causal_failure_record(
         failure_fingerprint=fingerprint,
         diagnostic_facts=(
             *_diagnostic_facts(source_kind, raw_source),
+            *_helper_binding_facts(execution, durable),
             *(freeze({
                 "fact_id": "inspection-publication-" + str(index),
                 "kind": "inspection_publication_failure",

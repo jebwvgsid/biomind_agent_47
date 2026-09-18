@@ -756,7 +756,7 @@ class RecoveryRuntime:
             from agent_core.workflow.result_resolution import admit_result_resolution
             try:
                 result_resolution_request = admit_result_resolution(
-                    seed=seed, durable=durable, directive=directive, state=state)
+                    seed=seed, durable=durable, directive=directive, state=state, data_path=self.data_path)
             except StageContractError as exc:
                 return self._internal(scope, exc.code, {"detail": exc.detail,
                     "command_started": False, "directive_id": decision_id})

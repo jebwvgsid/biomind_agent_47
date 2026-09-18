@@ -95,6 +95,11 @@ def bind_skill_resources(service, access, references, *, step_id, cwd, namespace
             "resource_snapshot_id": resource["resource_snapshot_id"], "environment_variable": resource_env(handle),
             "cwd": str(Path(cwd).resolve()), "namespace": namespace, "step_id": step_id,
             "readable": True, "executable_bit_required": False}
+        from agent_core.skill_script_invocation import resolve_script_invocation
+        invocation = resolve_script_invocation(snapshot["exact_text"], declared["relative_path"],
+                                               resource["resource_location"])
+        if invocation is not None:
+            receipt["invocation"] = invocation
         receipt["binding_digest"] = _hash(receipt)
         resolved[handle] = receipt
         return receipt
@@ -152,6 +157,8 @@ def project_skill_script_catalog(service, access, *, step_id, cwd, namespace="lo
                     dependency_handles=[receipt["skill_id"] + "#" + relative for relative in invocation["delegates"]],
                     constraints={"runtime": invocation["runtime"], "scope": invocation["scope"],
                                  "dependency_binding": "automatic explicit-delegate closure before approval"})
+                row["structured_call"] = {"type": "skill_script", "handle": handle,
+                    "arguments": "Array of declared option/value strings; a late-bound value is {runtime_binding: published variable}."}
         except (SkillAccessError, OSError, UnicodeError) as exc:
             row.update(availability="UNRESOLVED", error_code=str(getattr(exc, "code", type(exc).__name__)),
                        detail=str(exc), evidence={"source": "selected_skill_registry", "snapshot_id": declared["snapshot_id"]})
@@ -159,7 +166,75 @@ def project_skill_script_catalog(service, access, *, step_id, cwd, namespace="lo
     return rows
 
 
-def bind_action_skill_resources(action, service, access, *, step_id, cwd, namespace="local"):
+def parse_generate_script_candidate(text, service, access, *, step_id, cwd, namespace="local", strict=True):
+    """Decode a script or assemble a registered helper request before approval."""
+    from agent_core.controller_audit import ExecutableScriptBlock, ScriptBlockError, parse_executable_script_block
+    from agent_core.skill_script_invocation import build_skill_script_shell
+    try:
+        def unique(pairs):
+            result = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError("duplicate JSON member: " + key)
+                result[key] = value
+            return result
+        try:
+            request = json.loads(text, object_pairs_hook=unique)
+        except (ValueError, TypeError):
+            request = None
+        if not isinstance(request, dict) or request.get("type") != "skill_script":
+            return parse_executable_script_block(text, strict=strict)
+        if set(request) != {"type", "handle", "arguments"} or not isinstance(request["handle"], str):
+            raise SkillAccessError("SKILL_INVOCATION_ARGUMENT_INVALID", "Use exactly type, handle and arguments; public_message belongs to the display projection")
+        receipts = bind_skill_resources(service, access, [request["handle"]],
+            step_id=step_id, cwd=cwd, namespace=namespace)
+        resource = next(row for row in receipts if row["handle"] == request["handle"])
+        return ExecutableScriptBlock(language="bash", tag="shell",
+            body=build_skill_script_shell(resource, request["arguments"]) + "\n",
+            skill_resource_refs=(request["handle"],), resource_selection_explicit=True)
+    except SkillAccessError as exc:
+        raise ScriptBlockError(str(exc)) from exc
+
+
+def continue_action_skill_selection(action, durable, service, access, *, step_id, cwd):
+    """Continue a declared helper selection, never infer one from script text.
+
+    A typed retry of the same action keeps its resource selection unless the
+    candidate explicitly replaces it (an empty selection means ordinary code).
+    Only handles survive. Receipts, environment and per-attempt evidence are
+    rebuilt by the ordinary binder before approval.
+    """
+    if "skill_resource_refs" in action or action.get("formal_skill_resources"):
+        return action
+    decision = str(action.get("recovery_decision_id") or
+        (action.get("recovery_execution_envelope") or {}).get("recovery_decision_id") or "")
+    receipt = ((durable.get("task_state") or {}).get("typed_recovery_receipts") or {}).get(decision) or {}
+    if (receipt.get("directive") or {}).get("action") != "retry_step":
+        return action
+    scope = (receipt.get("outcome") or {}).get("scope") or {}
+    if any(str(scope.get(k) or "") != str(v or "") for k, v in
+           (("task_id", durable.get("task_id")), ("plan_id", durable.get("plan_id")),
+            ("plan_version", durable.get("plan_version")), ("step_id", step_id))):
+        raise SkillAccessError("SKILL_BINDING_CONTINUATION_STALE", decision)
+    recorded = ((durable.get("provenance_state") or {}).get("actions") or {}).get(scope.get("action_id")) or {}
+    previous = recorded.get("normalized_action") or recorded.get("raw_action") or recorded
+    references = previous.get("skill_resource_refs") or []
+    if not references or previous.get("execution_capability_id") != action.get("execution_capability_id"):
+        return action
+    # An explicit new selection may use a new approved snapshot. An implicit
+    # continuation must still be the same resource definition, including its
+    # declared delegates. Never copy the old environment or temporary paths.
+    current = bind_skill_resources(service, access, references, step_id=step_id, cwd=cwd)
+    fields = ("handle", "snapshot_id", "content_hash", "resource_snapshot_id", "skill_content_hash")
+    old = previous.get("formal_skill_resources") or []
+    identity = lambda rows: [{k: row.get(k) for k in fields} for row in rows]
+    if not old or identity(old) != identity(current):
+        raise SkillAccessError("SKILL_BINDING_CONTINUATION_CHANGED", "Select the current helper explicitly; its recorded snapshot no longer matches")
+    return {**action, "skill_resource_refs": list(references)}
+
+
+def bind_action_skill_resources(action, service, access, *, step_id, cwd, namespace="local",
+                                enforce_invocation=True):
     result = deepcopy(action)
     references = result.get("skill_resource_refs", [])
     try:
@@ -185,12 +260,16 @@ def bind_action_skill_resources(action, service, access, *, step_id, cwd, namesp
         env[key] = value
     if receipts:
         result.update(env=env, formal_skill_resources=receipts)
+        from agent_core.skill_script_invocation import validate_skill_script_invocations
+        validate_skill_script_invocations(result, receipts, enforce=enforce_invocation)
     return result
 
 
-def validate_action_skill_resources(action, service, access, *, step_id, cwd, namespace="local"):
+def validate_action_skill_resources(action, service, access, *, step_id, cwd, namespace="local",
+                                    enforce_invocation=True):
     if not action.get("skill_resource_refs") and not action.get("formal_skill_resources"):
         return
-    rebound = bind_action_skill_resources(action, service, access, step_id=step_id, cwd=cwd, namespace=namespace)
+    rebound = bind_action_skill_resources(action, service, access, step_id=step_id, cwd=cwd,
+        namespace=namespace, enforce_invocation=enforce_invocation)
     if rebound.get("formal_skill_resources") != action.get("formal_skill_resources") or rebound.get("env") != action.get("env"):
         raise SkillAccessError("SKILL_BINDING_DRIFT", "Binding or execution environment changed after approval")

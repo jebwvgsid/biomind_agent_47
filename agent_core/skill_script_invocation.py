@@ -106,27 +106,36 @@ def _resolve_script_invocation(skill_text, relative_path, script_path):
 
 def _validate_arguments(invocation, arguments):
     specs = invocation["arguments"]
-    seen = {}
+    seen, issues = {}, []
     position = 0
+    def issue(detail, **fields):
+        if len(issues) < 32:
+            issues.append({"detail": detail, **fields})
     while position < len(arguments):
         option = arguments[position]
         spec = specs.get(option)
         if spec is None:
-            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"Unknown or positional argument {option!r}; use declared separate option/value tokens",
+            issue(f"Unknown or positional argument {option!r}; use declared separate option/value tokens",
                   argument_index=position, actual=option, expected=list(specs))
+            position += 1
+            continue
         seen[option] = seen.get(option, 0) + 1
         if seen[option] > 1 and not spec.get("repeatable", False):
-            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{option} is not repeatable",
-                  argument_index=position, actual=seen[option], expected=1, argument_name=option)
+            issue(f"{option} is not repeatable", argument_index=position,
+                  actual=seen[option], expected=1, argument_name=option)
         values = arguments[position + 1:position + 1 + spec["nargs"]]
         if len(values) != spec["nargs"] or any(not value or value.startswith("--") for value in values):
-            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"{option} needs {spec['nargs']} separate nonempty values",
-                  argument_index=position, actual=values, expected={"nargs": spec["nargs"], "nonempty_separate_values": True}, argument_name=option)
-        position += 1 + spec["nargs"]
+            issue(f"{option} needs {spec['nargs']} separate nonempty values", argument_index=position,
+                  actual=values, expected={"nargs": spec["nargs"], "nonempty_separate_values": True}, argument_name=option)
+            position += 1
+        else:
+            position += 1 + spec["nargs"]
     missing = [name for name, spec in specs.items() if spec.get("required", False) and name not in seen]
     if missing:
-        _fail("SKILL_INVOCATION_ARGUMENT_INVALID", "Missing required arguments: " + ", ".join(missing),
-              actual=list(seen), expected=missing)
+        issue("Missing required arguments: " + ", ".join(missing), actual=list(seen), expected=missing)
+    if issues:
+        _fail("SKILL_INVOCATION_ARGUMENT_INVALID", "; ".join(row["detail"] for row in issues),
+              **{key: value for key, value in issues[0].items() if key != "detail"}, argument_issues=issues)
 
 
 def build_skill_script_argv(resource, arguments):
@@ -141,6 +150,45 @@ def build_skill_script_argv(resource, arguments):
         _fail("SKILL_INVOCATION_RUNTIME_ARGUMENT_DEFERRED",
               "This utility needs a runtime argument after approval; use its shell_prefix and quoted runtime variable")
     return [*invocation["argv_prefix"], *arguments]
+
+
+def build_skill_script_shell(resource, arguments):
+    """Serialize explicit arguments; only declared late bindings expand in Bash."""
+    invocation = resource.get("invocation") or {}
+    specs = invocation.get("arguments") or {}
+    if not isinstance(arguments, list):
+        _fail("SKILL_INVOCATION_ARGUMENT_INVALID", "arguments must be an array")
+    flattened, deferred = [], {}
+    for index, value in enumerate(arguments):
+        if isinstance(value, str) and "\x00" not in value:
+            flattened.append(value)
+        elif (isinstance(value, dict) and set(value) == {"runtime_binding"}
+              and isinstance(value["runtime_binding"], str)):
+            deferred[index] = value["runtime_binding"]
+            flattened.append("$" + value["runtime_binding"])
+        else:
+            _fail("SKILL_INVOCATION_ARGUMENT_INVALID", f"Invalid arguments[{index}]", field_path=f"arguments[{index}]")
+    if not invocation:
+        _fail("SKILL_INVOCATION_CONTRACT_REQUIRED", str(resource.get("handle", "")))
+    _validate_arguments(invocation, flattened)
+    position = 0
+    expected_deferred = {}
+    while position < len(flattened):
+        spec = specs[flattened[position]]
+        binding = spec.get("runtime_environment_variable")
+        if binding:
+            for index in range(position + 1, position + 1 + spec["nargs"]):
+                expected_deferred[index] = binding
+        position += 1 + spec["nargs"]
+    if deferred != expected_deferred:
+        _fail("SKILL_INVOCATION_ARGUMENT_INVALID", "Use the exact declared runtime_binding object for late-bound arguments only",
+              actual=deferred, expected=expected_deferred, field_path="arguments")
+    if not expected_deferred:
+        return shlex.join(build_skill_script_argv(resource, flattened))
+    tokens = [shlex.quote(value) for value in invocation["argv_prefix"]]
+    tokens.extend(('"$' + deferred[index] + '"') if index in deferred else shlex.quote(value)
+                  for index, value in enumerate(flattened))
+    return " ".join(tokens)
 
 
 def _simple_commands(source, environment, deferred):
@@ -235,8 +283,16 @@ def _simple_commands(source, environment, deferred):
     return commands
 
 
-def validate_skill_script_invocations(action, resources):
-    """Preserve exact validator evidence for the existing local repair route."""
+def validate_skill_script_invocations(action, resources, *, enforce=True):
+    """Optionally enforce the utility's static invocation contract.
+
+    The caller owns the candidate-validation policy. Disabling this check leaves
+    the candidate untouched; selected-resource binding, snapshot identity and
+    file availability remain the responsibility of the resource-binding layer.
+    Direct callers retain strict validation unless they explicitly opt out.
+    """
+    if not enforce:
+        return
     context = {}
     try:
         return _validate_skill_script_invocations(action, resources, context)

@@ -454,6 +454,10 @@ class CommitStep:
                     return self._rejected(task_id, "EXECUTION_RECORD_SCOPE_MISMATCH", key, validation.validation_id)
 
         semantic_candidate = deepcopy(current)
+        # Bind the completion check to this exact verified execution. The
+        # latest attempt can be a separate result-publication action.
+        semantic_candidate.update(execution_evidence=deepcopy(execution),
+                                  validation_evidence=validation.to_dict())
         if str(attempt.get("status") or "").upper() != ATTEMPT_VALIDATION_PASSED:
             record_provenance_event(semantic_candidate, "validation_recorded", {
                 "attempt_id": validation.attempt_id,

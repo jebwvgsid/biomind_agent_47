@@ -1092,7 +1092,7 @@ def _emit(
         emit_display("activity", f"{node} · {detail} · {elapsed:.1f}s",
                      purpose="status", progress_phase="model_complete", **scope)
     elif event == "attempt_cancelled":
-        emit_display("cancel", f"{node} · 请求已取消；已接收 {count} 字符，部分响应未接纳；清理回执：{payload.get('cleanup_result', '未确认')}", **scope)
+        emit_display("cancel", f"{node} · 请求已取消；已接收 {count} 字符，部分响应未接纳；本次模型请求的本地清理回执（不含其他请求、子进程及任务保存）：{payload.get('cleanup_result', '未确认')}", **scope)
     elif event == "attempt_failed":
         failure = str(payload.get("failure_type") or "UNKNOWN")
         detail = "连接中断；未取得完整响应" if "CONNECTION" in failure or "TRANSPORT" in failure else f"模型请求失败：{failure}"

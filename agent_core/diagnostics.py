@@ -1320,6 +1320,8 @@ def build_recovery_context(
     )
     effective_user_facts.pop("projection_text", None)
 
+    from agent_core.generate_protocol import repair_source_view
+    repair_source = repair_source_view(evidence)
     execution = {
         "execution_id": evidence.get("execution_id"),
         "attempt_id": evidence.get("attempt_id"),
@@ -1330,7 +1332,9 @@ def build_recovery_context(
         # Corrective Generate repairs the immutable model-authored source.  The
         # approved/materialized code remains separately addressable by code_path
         # and script_context for execution forensics.
-        "code": evidence.get("generated_code") or evidence.get("code_summary") or "",
+        "code": repair_source["model_authored_code"],
+        **repair_source,
+        "model_source_ref": deepcopy(evidence.get("model_source_ref") or {}),
         "language": evidence.get("language"),
         "command_role": evidence.get("command_role") or "primary",
         "returncode": evidence.get("returncode", evidence.get("exit_code")),

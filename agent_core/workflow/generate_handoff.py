@@ -963,11 +963,17 @@ def start_generate_after_recovery(
             "GENERATE_RECOVERY_SEED_ID_MISMATCH", basis.recovery_seed_id
         )
     _assert_transcript_free(node_context)
+    from agent_core.generate_protocol import generate_wire_contract
+    context = dict(node_context)
+    current_protocol = dict(context.get("current_generate_output_protocol") or {})
+    current_protocol["wire_contract"] = generate_wire_contract(
+        script_protocol=current_protocol.get("mode", "script_block_v1") == "script_block_v1")
+    context["current_generate_output_protocol"] = current_protocol
     seed_body = {
         "schema_version": 1,
         "kind": "verified_corrective_generate_seed",
         "generate_seed": _provider_generate_seed_view(seed),
-        "node_context": dict(node_context),
+        "node_context": context,
     }
     return _new_episode(
         basis=basis,

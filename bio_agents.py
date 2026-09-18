@@ -67,6 +67,8 @@ from langchain_core.callbacks import BaseCallbackHandler
 
 # ── 本地模块 ──────────────────────────────────────────────────
 from prompts.templates import INSTALLER_HANDOVER_TEMPLATE
+from agent_core.candidate_validation import candidate_validation_enabled
+from agent_core.skill_resource_binding import parse_generate_script_candidate
 from execution.confirmation import ConfirmationUI, RiskLevel, ConfirmationManager, ConfirmationConfig, RiskAnalyzer
 from config.settings import PathManager
 from config.config import (
@@ -12035,10 +12037,10 @@ class BioAnalystAgent:
                 if isinstance(state.get("execution_evidence"), Mapping)
                 else {}
             )
+            from agent_core.generate_protocol import repair_source_view
             previous_script = str(
                 recovery_action.get("previous_script")
-                or execution.get("generated_code")
-                or execution.get("code_summary")
+                or repair_source_view(execution)["model_authored_code"]
                 or ""
             )
             machine_findings = list(
@@ -12413,16 +12415,17 @@ class BioAnalystAgent:
         lines.append("Allowed actions:")
         lines.extend(f"- {item}" for item in protocol.get("allowed_actions") or [])
         if str((contract_error or {}).get("stage") or "") == "script_block":
+            from agent_core.generate_protocol import SCRIPT_OUTPUT_PROTOCOL
             lines.extend([
                 self._corrective_action_repair_instruction(),
-                "Return exactly one non-empty <shell>, <python>, or <r> block.",
-                "Do not provide prose, Markdown fences, JSON, or multiple blocks.",
+                SCRIPT_OUTPUT_PROTOCOL,
                 "</action_format_repair>",
             ])
         else:
+            from agent_core.generate_protocol import generate_wire_contract
             lines.extend([
                 self._corrective_action_repair_instruction(),
-                "Return exactly one <action_json> block with one structured action.",
+                generate_wire_contract(script_protocol=False)["instructions"],
                 "Do not provide a narrative summary or ask whether to continue.",
                 "</action_format_repair>",
             ])
@@ -12677,12 +12680,19 @@ class BioAnalystAgent:
         # Loading and saving a second copy here would advance the generation and
         # make the caller's otherwise valid snapshot stale.
         plan_state = plan_state if plan_state is not None else load_plan_state(self.data_path, task_id)
+        from agent_core.skill_resource_binding import continue_action_skill_selection
+        _, selected_resource_step = current_plan_step_with_index(plan_state)
+        bound = continue_action_skill_selection(bound, plan_state,
+            getattr(self, "skill_access_service", None),
+            (plan_state.get("task_state") or {}).get("skill_access_state") or {},
+            step_id=str((selected_resource_step or {}).get("step_id") or ""), cwd=os.getcwd())
         if bound.get("skill_resource_refs") or bound.get("formal_skill_resources"):
             from agent_core.skill_resource_binding import bind_action_skill_resources
             _resource_index, _resource_step = current_plan_step_with_index(plan_state)
             _resource_access = (plan_state.get("task_state") or {}).get("skill_access_state") or {}
             bound = bind_action_skill_resources(bound, getattr(self, "skill_access_service", None), _resource_access,
                 step_id=str((_resource_step or {}).get("step_id") or ""), cwd=os.getcwd(),
+                enforce_invocation=candidate_validation_enabled(),
                 namespace="external" if str((bound.get("recovery_execution_envelope") or {}).get("execution_mode") or "").upper() == "EXTERNAL_HANDOFF" else "local")
 
         # Mechanical binding uses the durable executable cursor, including a
@@ -43152,7 +43162,7 @@ question. Never guess a scientific or database identity.
                     namespace="external" if external_recovery_bundle else "local")
                 if _resource_catalog:
                     capability_instructions += "\n<selected_skill_script_bindings>" + json.dumps(_resource_catalog, ensure_ascii=False, sort_keys=True) + "</selected_skill_script_bindings>\n" + (
-                        'Document examples are not runtime paths. To use a listed Skill script in script-block mode, explicitly declare its handle: <shell skill_resources="skill_id#scripts/file.py">...</shell> (semicolon-separated for multiple refs; python/r tags also supported). Use the supplied canonical path or environment variable; never construct an installation root or resolve it from cwd. Use entrypoint.shell_prefix and the declared arguments and carrier. Declare the root handle; its snapshot-declared dependency_handles are bound automatically (legacy explicit handles are also validated); the file path alone is not an executable entrypoint. The binder freezes the selected material before approval and rechecks it at prelaunch. An unresolved binding requires inspection/correction, not a guessed relative path. User-owned scripts remain governed by their existing authorization.'
+                        'For a fixed registered helper, prefer the skill_script JSON alternative with handle and arguments; the program supplies the interpreter and script path before approval. Document examples are not runtime paths. To use a listed Skill script in script-block mode, explicitly declare its handle: <shell skill_resources="skill_id#scripts/file.py">...</shell> (semicolon-separated for multiple refs; python/r tags also supported). Use the supplied canonical path or environment variable; never construct an installation root or resolve it from cwd. Use entrypoint.shell_prefix and the declared arguments and carrier. Declare the root handle; its snapshot-declared dependency_handles are bound automatically (legacy explicit handles are also validated); the file path alone is not an executable entrypoint. The binder freezes the selected material before approval and rechecks it at prelaunch. An unresolved binding requires inspection/correction, not a guessed relative path. User-owned scripts remain governed by their existing authorization.'
                     )
                 if any(row["handle"] in {
                     "genomics/wgs-short-read-mapping#scripts/inspect_fastq_batch.py",
@@ -43282,7 +43292,7 @@ question. Never guess a scientific or database identity.
                                 public_evidence = {"coverage": metadata.get("coverage"),
                                     "claim_status": observed.get("claim_status"),
                                     "execution": {key: execution.get(key) for key in (
-                                        "attempt_id", "action_id", "code", "raw_stdout", "raw_stderr",
+                                        "attempt_id", "action_id", "model_authored_code", "model_source_ref", "code_basis", "code_path", "executor_metadata", "executor_resource_evidence", "raw_stdout", "raw_stderr",
                                         "returncode", "execution_status")}}
                                 generate_material_messages.append(HumanMessage(
                                     id=f"generate-recovery-evidence:{basis_fingerprint}:{index}",
@@ -44213,6 +44223,7 @@ question. Never guess a scientific or database identity.
                                                       message="模型返回，正在整理候选")
                     generate_wire = project_generate_response(str(response.content or ""),
                         script_protocol=generate_script_protocol,
+                        strict=candidate_validation_enabled(),
                         response_metadata=provider_response_metadata(response))
                     if candidate_provider_claim and "cached_response" not in candidate_provider_claim:
                         try:
@@ -44239,7 +44250,11 @@ question. Never guess a scientific or database identity.
                             if generate_script_protocol:
                                 try:
                                     cached_structured_action = adapt_script_block_to_action(
-                                        parse_executable_script_block(generate_wire.payload),
+                                        parse_generate_script_candidate(generate_wire.payload,
+                                            getattr(self, "skill_access_service", None), generate_skill_access,
+                                            step_id=current_step_id, cwd=os.getcwd(),
+                                            namespace="external" if external_recovery_bundle else "local",
+                                            strict=candidate_validation_enabled()),
                                         generate_artifact_environment,
                                         execution_envelope=(
                                             recovery_execution_envelope or None
@@ -44683,6 +44698,7 @@ question. Never guess a scientific or database identity.
                     }
             generate_display = project_generate_response(str(response.content or ""),
                 script_protocol=generate_script_protocol,
+                strict=candidate_validation_enabled(),
                 response_metadata=provider_response_metadata(response))
             content = generate_display.payload
             if generate_display.public_message:
@@ -44767,7 +44783,8 @@ question. Never guess a scientific or database identity.
             structured_parse_result = (StructuredActionParseResult(error={
                 "stage": "script_block" if generate_script_protocol else "action_schema",
                 "code": "GENERATE_RESPONSE_INCOMPLETE" if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ScriptBlockError.code,
-                "message": generate_display.error + (" Resubmit one complete executable response within the existing correction budget; never continue or execute this partial response." if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ""),
+                    "message": generate_display.error + (" Resubmit one complete executable response within the existing correction budget; never continue or execute this partial response." if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ""),
+                    **(generate_display.diagnostic or {}),
                 "cause_code": "GENERATE_RESPONSE_INCOMPLETE" if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ScriptBlockError.code,
                 "response_completion": {k:v for k,v in (getattr(response,"response_metadata",{}) or {}).items()
                     if k in {"finish_reason","completion_integrity","provider_attempt_ref"}},
@@ -44821,7 +44838,12 @@ question. Never guess a scientific or database identity.
                 try:
                     if generate_display.error:
                         raise ScriptBlockError(generate_display.error)
-                    script_block = parse_executable_script_block(content)
+                    script_block = parse_generate_script_candidate(content,
+                        getattr(self, "skill_access_service", None), generate_skill_access,
+                        step_id=current_step_id, cwd=os.getcwd(),
+                        namespace="external" if external_recovery_bundle else "local",
+                        strict=candidate_validation_enabled())
+                    model_authored_code = script_block.body
                     candidate_validated_representation_targets.append("executable_block")
                     # Freeze the framework helper into this complete candidate
                     # before adapting argv, hashing, validation or approval.
@@ -44846,6 +44868,7 @@ question. Never guess a scientific or database identity.
                     # task runtime snapshot is neither provider-visible nor an
                     # action authorization fallback.
                     structured_action.update({
+                        "model_authored_code": model_authored_code,
                         "generation_mode": generation_provenance.mode,
                         "generation_provenance": generation_provenance_value,
                         "selected_skill_id": generate_selected_skill_id,
@@ -44993,14 +45016,17 @@ question. Never guess a scientific or database identity.
                         "stage": "script_block",
                         "code": (action_parse_error.get("code") if action_parse_error.get("cause_code") == "GENERATE_RESPONSE_INCOMPLETE" else ScriptBlockError.code),
                         "message": (action_parse_error.get("message") if action_parse_error.get("cause_code") == "GENERATE_RESPONSE_INCOMPLETE" else str(exc)),
+                        **exc.to_dict(),
                         **(exc.__cause__.to_dict() if hasattr(exc.__cause__, "to_dict") else {}),
                     }
             if not generate_script_protocol and structured_action.get("type") == "execute":
                 # Resolve the actual native interpreter operand before any
                 # approval/candidate identity; code and argv share one definition.
-                from agent_core.step_effects import materialize_effect_action
+                from agent_core.step_effects import materialize_effect_action, executable_carrier
                 try:
+                    model_authored_code = executable_carrier(structured_action)["body"]
                     structured_action = materialize_effect_action(structured_action, formal_emission_template)
+                    structured_action["model_authored_code"] = model_authored_code
                     candidate_validated_representation_targets.append("effect_helper_materialization")
                 except ValueError as exc:
                     structured_action = {}
@@ -45184,6 +45210,7 @@ question. Never guess a scientific or database identity.
                         structured_action = bind_action_skill_resources(structured_action,
                             getattr(self, "skill_access_service", None), generate_skill_access,
                             step_id=current_step_id, cwd=os.getcwd(),
+                            enforce_invocation=candidate_validation_enabled(),
                             namespace="external" if external_recovery_bundle else "local")
                     except (SkillAccessError, OSError, UnicodeError) as exc:
                         raise PlanBindingError(str(getattr(exc, "code", None) or "SKILL_BINDING_UNREADABLE"), **(getattr(exc, "diagnostic", None) or {"detail": str(exc)})) from exc
@@ -49678,6 +49705,7 @@ question. Never guess a scientific or database identity.
                     validate_action_skill_resources(pending_action, getattr(self, "skill_access_service", None),
                         (_skill_binding_state.get("task_state") or {}).get("skill_access_state") or {},
                         step_id=str(pending_action.get("step_id") or ""), cwd=os.getcwd(),
+                        enforce_invocation=candidate_validation_enabled(),
                         namespace="external" if str((pending_action.get("recovery_execution_envelope") or {}).get("execution_mode") or "").upper() == "EXTERNAL_HANDOFF" else "local")
                 except (SkillAccessError, OSError, UnicodeError) as exc:
                     return reject_internal_prelaunch(pending_action,
@@ -50072,6 +50100,12 @@ question. Never guess a scientific or database identity.
             stderr_path.touch(exist_ok=True)
             Path(trace_file).touch(exist_ok=True)
             approved_content = code_to_run
+            model_source_ref = {}
+            if pending_action.get("model_authored_code"):
+                model_source_path = attempt_dir / ("model_generated" + {"Python": ".py", "R": ".R"}.get(language, ".sh"))
+                model_source_path.write_text(str(pending_action["model_authored_code"]), encoding="utf-8")
+                model_source_ref = {"path": str(model_source_path), "sha256": hashlib.sha256(
+                    str(pending_action["model_authored_code"]).encode()).hexdigest(), "scope": "before_framework_materialization"}
             approved_ref = self._persist_script_version(
                 task_id,
                 attempt_plan_state,
@@ -50751,6 +50785,24 @@ question. Never guess a scientific or database identity.
                     managed_output_snapshot_before, managed_output_snapshot_after,
                     attempt_id=attempt_id, step_id=str(pending_action.get("step_id") or ""),
                     input_signature=input_signature_before))
+            # Registered preflight evidence is an explicit receipt inventory,
+            # not a filename-based match for the Plan's formal output. Expose
+            # it to the existing result-selection/publisher path; do not rerun
+            # the inspection or silently accept a parent directory.
+            from agent_core.workflow.result_resolution import preflight_result_candidate
+            preflight_candidate_error = ""
+            try:
+                preflight_candidate = preflight_result_candidate({
+                    "action_id": pending_action.get("action_id"), "attempt_id": attempt_id,
+                    "returncode": returncode, "stdout": stdout,
+                    "preflight_evidence_binding": preflight_evidence_binding,
+                    "action_contract": pending_action,
+                    "declared_step_effect": pending_action.get("expected_step_effect") or {},
+                })
+                if preflight_candidate:
+                    observed_candidate_records.append(preflight_candidate)
+            except (ValueError, OSError, TypeError) as exc:
+                preflight_candidate_error = str(exc)
             runtime_output_reconciliation = reconcile_runtime_outputs(
                 managed_output_contracts,
                 observed_candidate_records,
@@ -51297,6 +51349,9 @@ question. Never guess a scientific or database identity.
                 "success_checks": list(pending_action.get("success_checks") or []),
                 "command": execution_command,
                 "code": code_to_run,
+                "model_authored_code": str(pending_action.get("model_authored_code") or ""),
+                "model_source_ref": model_source_ref,
+                "model_authored_code_scope": "before framework materialization; approved code may contain user edits",
                 "generated_code": generated_model_code,
                 "code_path": approved_ref["path"],
                 "argv": execution_argv,
@@ -51305,6 +51360,7 @@ question. Never guess a scientific or database identity.
                 "generated_script": generated_ref,
                 "approved_script": approved_ref,
                 "preflight_evidence_binding": preflight_evidence_binding,
+                "preflight_candidate_error": preflight_candidate_error,
                 "executed_script": executed_ref,
                 "cwd": os.getcwd(),
                 "started_at": started_at,
@@ -51692,7 +51748,7 @@ question. Never guess a scientific or database identity.
                 from agent_core.state_contract_store import StateContractStore
                 from agent_core.context_lineage import redact_text
                 held_execution = {key: execution_evidence[key] for key in
-                    ("task_id", "plan_id", "plan_version", "step_id", "attempt_id", "action_id", "execution_id", "code", "generated_code", "stdout", "stderr", "returncode", "exit_code", "execution_status", "effect_evidence", "validation", "pipeline_statuses") if key in execution_evidence}
+                    ("task_id", "plan_id", "plan_version", "step_id", "attempt_id", "action_id", "execution_id", "code", "model_authored_code", "model_source_ref", "executor_metadata", "generated_code", "stdout", "stderr", "returncode", "exit_code", "execution_status", "effect_evidence", "validation", "pipeline_statuses") if key in execution_evidence}
                 held_execution["schema_version"] = 1
                 held_execution["task_id"] = task_id
                 held_execution["generated_code"] = generated_model_code
@@ -54448,7 +54504,7 @@ question. Never guess a scientific or database identity.
                     )
                 origin = (getattr(self, "_managed_cancellation_requests", None) or {}).pop(asyncio.current_task(), {})
                 try:
-                    self._commit_cancellation(
+                    cancellation_receipt = self._commit_cancellation(
                         task_id,
                         source=(
                             "signal"
@@ -54459,7 +54515,12 @@ question. Never guess a scientific or database identity.
                         active_provider_ref=active_provider_ref,
                         origin=origin,
                     )
-                    emit_display("cancel", "取消状态已记录；provider/子进程清理以各自回执为准，整体安全停止未确认。")
+                    from agent_core.cli_lifecycle import cancellation_receipt_text
+                    from agent_core.process_registry import ACTIVE_PROCESS_GROUPS
+                    provider_history = (getattr(self, "_provider_attempt_history", {}) or {}).get(task_id) or []
+                    emit_display("cancel", cancellation_receipt_text(cancellation_receipt,
+                        provider_history[-1] if provider_history else {}, ACTIVE_PROCESS_GROUPS),
+                        item_id="cancel-receipt:" + str(cancellation_receipt.get("receipt_id") or task_id))
                 except Exception:
                     emit_display("cancel", "取消状态保存未确认；详情见诊断日志。")
                     logger.exception(
@@ -55197,7 +55258,7 @@ question. Never guess a scientific or database identity.
             except asyncio.CancelledError:
                 if interactive_terminal() is None:
                     raise
-                emit_display("cancel", "运行调用已返回取消；整体清理未确认。可继续编辑新输入。")
+                emit_display("cancel", "运行调用已返回取消；组件清理状态见本轮回执。可继续编辑新输入。")
                 _reset_interrupt_signal_guard()
                 current = asyncio.current_task()
                 if hasattr(current, "uncancel"):

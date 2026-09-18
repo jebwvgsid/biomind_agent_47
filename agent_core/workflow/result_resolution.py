@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import shlex
+import sys
 from typing import Any, Mapping
 
 from agent_core.managed_artifacts import (
@@ -58,6 +59,9 @@ def _same_observed_file(record: Mapping[str, Any], contract: Mapping[str, Any] |
         raise StageContractError("RESULT_SELECTED_FILE_CHANGED", str(path))
     if not _content_accepted(record, contract) or not _content_accepted(actual, contract):
         raise StageContractError("RESULT_SELECTED_CONTENT_INVALID", str(path))
+    if record.get("evidence_files"):
+        if _evidence_files(path, record["evidence_files"]) != record["evidence_files"]:
+            raise StageContractError("RESULT_SELECTED_FILE_CHANGED", str(path))
     return actual
 
 
@@ -67,6 +71,119 @@ def _content_digest(path: Path) -> str:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _evidence_files(root, names):
+    """A bounded, explicit helper receipt inventory; never scan input trees."""
+    names = sorted(names)
+    if not names or len(names) > 257 or any(Path(n).name != n for n in names):
+        raise StageContractError("RESULT_EVIDENCE_INVENTORY_INVALID", str(root))
+    if not root.is_dir() or root.is_symlink() or sorted(p.name for p in root.iterdir()) != names:
+        raise StageContractError("RESULT_EVIDENCE_INVENTORY_CHANGED", str(root))
+    result, size = {}, 0
+    for name in names:
+        p = _absolute(root / name)
+        if not p.is_file():
+            raise StageContractError("RESULT_EVIDENCE_FILE_INVALID", str(p))
+        size += p.stat().st_size
+        if size > 32 * 1024 * 1024:
+            raise StageContractError("RESULT_EVIDENCE_INVENTORY_TOO_LARGE", str(root))
+        result[name] = {"size": p.stat().st_size, "sha256": _content_digest(p)}
+    return result
+
+
+def preflight_result_candidate(execution):
+    """Expose an explicitly bound helper receipt for Recovery's selection.
+
+    The helper's observation names exact raw files. This establishes an owned
+    evidence candidate, not its correspondence with any formal Plan output.
+    The existing result_selections admission still owns that choice.
+    """
+    binding = execution.get("preflight_evidence_binding") or {}
+    if not binding or execution.get("returncode") != 0:
+        return None
+    from agent_core.action_runtime import validate_manifest_hash
+    from agent_core.step_effects import extract_structured_effect_evidence, structured_effect_parse_receipt
+    action = execution.get("action_contract") or {}
+    policy = action.get("execution_policy_manifest") or {}
+    validate_manifest_hash(policy)
+    aid, attempt = execution.get("action_id"), execution.get("attempt_id")
+    expected = {**(policy.get("evidence_binding") or {}), "action_id": aid,
+        "attempt_id": attempt, "policy_manifest_hash": policy.get("manifest_hash"),
+        "canonical_path": str(Path(str(binding.get("approved_root") or "")) / str(attempt) / "preflight")}
+    if (binding != expected or policy.get("action_id") != aid
+            or binding.get("purpose") != "internal_execution_evidence"
+            or binding.get("environment_variable") != "BIOMIND_PREFLIGHT_EVIDENCE_DIR"):
+        raise StageContractError("RESULT_PREFLIGHT_BINDING_INVALID", str(attempt))
+    root = _absolute(binding["canonical_path"])
+    raw = str(execution.get("raw_stdout", execution.get("stdout", "")))
+    parser = structured_effect_parse_receipt(raw, execution.get("declared_step_effect") or action.get("expected_step_effect") or {})
+    prior = (execution.get("effect_evidence") or {}).get("parser_receipt") or {}
+    if parser.get("issues") or (prior and prior.get("raw_stdout_sha256") != parser.get("raw_stdout_sha256")):
+        raise StageContractError("RESULT_ORIGINAL_EFFECT_EVIDENCE_CHANGED", str(attempt))
+    observations = extract_structured_effect_evidence(raw).get("produces_observations") or []
+    eligible = [o for o in observations if isinstance(o.get("value"), dict)
+        and o["value"].get("all_checks_passed") is True and o["value"].get("full_file_validated") is False]
+    if len(eligible) != 1:
+        raise StageContractError("RESULT_PREFLIGHT_OBSERVATION_REQUIRED", str(attempt))
+    observation = eligible[0]
+    receipt_path = _absolute(root / "checks.json")
+    if receipt_path.stat().st_size > 2 * 1024 * 1024:
+        raise StageContractError("RESULT_PREFLIGHT_RECEIPT_TOO_LARGE", str(receipt_path))
+    receipt = json.loads(receipt_path.read_text())
+    rows, claimed = receipt.get("checks") or [], observation["value"].get("checks") or []
+    if (not rows or len(rows) > 128 or len(rows) != len(claimed)
+            or receipt.get("status") != "returned" or receipt.get("unstarted") != 0
+            or any(receipt.get(k) != len(rows) for k in ("total", "returned", "passed"))
+            or any(receipt.get(k) != observation["value"].get(k) for k in ("status", "total", "returned", "passed", "unstarted"))):
+        raise StageContractError("RESULT_PREFLIGHT_RECEIPT_MISMATCH", str(receipt_path))
+    names = {"checks.json"}
+    for row, claim in zip(rows, claimed):
+        if (row.get("returncode") != 0 or row.get("passed") is not True
+                or any(row.get(k) != v for k, v in claim.items())):
+            raise StageContractError("RESULT_PREFLIGHT_RECEIPT_MISMATCH", str(receipt_path))
+        raw_refs = row.get("raw") or {}
+        if set(raw_refs) != {"stdout", "stderr"}:
+            raise StageContractError("RESULT_PREFLIGHT_RAW_REQUIRED", str(receipt_path))
+        for p in raw_refs.values():
+            path = _absolute(p)
+            if path.parent != root:
+                raise StageContractError("RESULT_PREFLIGHT_RAW_SCOPE_INVALID", str(path))
+            names.add(path.name)
+    files = _evidence_files(root, names)
+    return {**_observed_file_metadata(root), "attempt_id": attempt, "current_attempt_owned": True,
+        "evidence_binding": deepcopy(binding), "evidence_files": files,
+        "observation_identity": observation["identity"], "evidence_ref": str(receipt_path),
+        "scope": observation["value"].get("scope"), "full_file_validated": False}
+
+
+def _check_source(durable, execution, *, decision_id="", approved_code=""):
+    """Re-entry cannot turn a replaced attempt or changed input into success."""
+    from agent_core.managed_artifacts import managed_input_signature
+    if durable.get("approval_status") not in (None, "", "approved"):
+        raise StageContractError("RESULT_PLAN_APPROVAL_NOT_CURRENT", str(durable.get("approval_status")))
+    provenance = durable.get("provenance_state") or {}
+    source = (provenance.get("attempts") or {}).get(execution.get("attempt_id")) or {}
+    action_record = (provenance.get("actions") or {}).get(execution.get("action_id")) or {}
+    action = action_record.get("normalized_action") or execution.get("action_contract") or action_record
+    if action_record.get("revoked_at") or source.get("status") in {"SUPERSEDED", "REVOKED", "CANCELLED"}:
+        raise StageContractError("RESULT_SOURCE_ATTEMPT_NOT_ACCEPTABLE", str(execution.get("attempt_id")))
+    for other in (provenance.get("attempts") or {}).values():
+        if (other.get("step_id") != source.get("step_id")
+                or int(other.get("attempt_sequence") or 0) <= int(source.get("attempt_sequence") or 0)):
+            continue
+        local_record = (provenance.get("actions") or {}).get(other.get("action_id")) or {}
+        local = local_record.get("normalized_action") or local_record
+        if not (decision_id and local.get("recovery_decision_id") == decision_id
+                and str(local.get("code") or "").strip() == approved_code.strip()):
+            raise StageContractError("RESULT_SOURCE_ATTEMPT_SUPERSEDED", str(execution.get("attempt_id")))
+    held = execution.get("managed_input_signature", source.get("managed_input_signature"))
+    if execution.get("preflight_evidence_binding") and held is None:
+        raise StageContractError("RESULT_SOURCE_INPUT_IDENTITY_REQUIRED", str(execution.get("attempt_id")))
+    if held is not None:
+        if (any(isinstance(v, dict) and v.get("complete") is False for v in held.values())
+                or managed_input_signature(action) != held):
+            raise StageContractError("RESULT_SOURCE_INPUT_CHANGED", str(execution.get("attempt_id")))
 
 
 def _execution_from_state(state: Mapping[str, Any]) -> dict[str, Any]:
@@ -79,9 +196,71 @@ def _execution_from_state(state: Mapping[str, Any]) -> dict[str, Any]:
     return deepcopy(dict(execution))
 
 
+def _directory_copy_code(row):
+    """Materialize the existing local publisher for an explicit receipt set."""
+    payload = {k: row[k] for k in ("observed_path", "target_path", "decision_id", "artifact_id")}
+    payload["files"] = row["observed_record"]["evidence_files"]
+    program = '''import hashlib, json, os, shutil, subprocess
+from pathlib import Path
+spec = SPEC
+source, target = Path(spec['observed_path']), Path(spec['target_path'])
+stage = target.parent / ('.biomind-publish-' + hashlib.sha256(json.dumps(spec, sort_keys=True).encode()).hexdigest()[:24])
+def check(root):
+    assert root.is_dir() and not root.is_symlink(), 'RESULT_PUBLICATION_DIRECTORY_INVALID'
+    assert sorted(p.name for p in root.iterdir()) == sorted(spec['files']), 'RESULT_PUBLICATION_INVENTORY_CHANGED'
+    for name, identity in spec['files'].items():
+        p = root / name
+        assert p.is_file() and not p.is_symlink(), 'RESULT_PUBLICATION_FILE_INVALID'
+        assert p.stat().st_size == identity['size'], 'RESULT_PUBLICATION_CONTENT_CHANGED'
+        assert hashlib.sha256(p.read_bytes()).hexdigest() == identity['sha256'], 'RESULT_PUBLICATION_CONTENT_CHANGED'
+check(source)
+if not stage.exists():
+    assert not target.exists() and not target.is_symlink(), 'RESULT_TARGET_CONFLICT'
+    stage.mkdir()
+    with (stage / 'owner.json').open('x') as f:
+        json.dump(spec, f, sort_keys=True); f.flush(); os.fsync(f.fileno())
+assert not stage.is_symlink() and not (stage / 'owner.json').is_symlink(), 'RESULT_PUBLICATION_OWNER_INVALID'
+assert json.loads((stage / 'owner.json').read_text()) == spec, 'RESULT_PUBLICATION_OWNER_INVALID'
+pending = stage / 'pending'
+assert not pending.is_symlink(), 'RESULT_PUBLICATION_DIRECTORY_INVALID'
+placement = stage / 'placement.json'
+assert not placement.is_symlink(), 'RESULT_PUBLICATION_OWNER_INVALID'
+def identity(path):
+    st = path.stat()
+    return {'device': st.st_dev, 'inode': st.st_ino}
+if target.exists() or target.is_symlink():
+    assert not pending.exists(), 'RESULT_TARGET_CONFLICT'
+    assert placement.is_file() and json.loads(placement.read_text()) == identity(target), 'RESULT_TARGET_OWNER_UNKNOWN'
+    check(target)
+else:
+    pending.mkdir(exist_ok=True)
+    assert not pending.is_symlink(), 'RESULT_PUBLICATION_OWNER_INVALID'
+    for name in spec['files']:
+        p = pending / name
+        assert not p.is_symlink(), 'RESULT_PUBLICATION_FILE_INVALID'
+        shutil.copyfile(source / name, p)
+    check(pending)
+    if placement.exists():
+        assert json.loads(placement.read_text()) == identity(pending), 'RESULT_PUBLICATION_OWNER_INVALID'
+    else:
+        with placement.open('x') as f:
+            json.dump(identity(pending), f); f.flush(); os.fsync(f.fileno())
+    subprocess.run(['/usr/bin/mv', '-T', '--no-clobber', '--', str(pending), str(target)], check=True)
+    assert not pending.exists(), 'RESULT_TARGET_CONFLICT'
+    check(target)
+assert not (stage / 'published.json').is_symlink(), 'RESULT_PUBLICATION_OWNER_INVALID'
+with (stage / 'published.json').open('w') as f:
+    json.dump({'decision_id': spec['decision_id'], 'target_path': str(target)}, f); f.flush(); os.fsync(f.fileno())
+'''.replace('SPEC', repr(payload), 1)
+    return shlex.quote(sys.executable) + " -I -S - <<'BIOMIND_RESULT_PUBLICATION'\n" + program + "BIOMIND_RESULT_PUBLICATION"
+
+
 def _copy_code(rows: list[dict[str, Any]]) -> str:
     lines = ["set -euo pipefail"]
     for row in rows:
+        if row["observed_record"].get("artifact_kind") == "directory":
+            lines.append(_directory_copy_code(row))
+            continue
         source, target = shlex.quote(row["observed_path"]), shlex.quote(row["target_path"])
         # Existing identical targets are checked without overwriting; this is
         # also the response-loss/re-entry path. A conflicting target fails.
@@ -101,7 +280,7 @@ def _copy_code(rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any]:
+def admit_result_resolution(*, seed, durable, directive, state, data_path="") -> dict[str, Any]:
     """Check a model's exact choices against the current approved execution.
 
     All identities, roots and machine fingerprints derive from existing
@@ -114,6 +293,16 @@ def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any
     if not directive.evidence_refs:
         raise StageContractError("RESULT_SELECTION_EVIDENCE_REQUIRED", directive.directive_id)
     execution = _execution_from_state(state)
+    if execution.get("recovery_execution_facts_ref") and data_path:
+        from agent_core.state_contract_store import StateContractStore
+        from agent_core.workflow.inspection_evidence import read_execution_facts
+        facts = read_execution_facts(StateContractStore(data_path, durable["task_id"]), execution["recovery_execution_facts_ref"])
+        for key in ("plan_id", "plan_version", "step_id", "action_id", "attempt_id"):
+            if str(facts.get(key) or "") != str(execution.get(key) or ""):
+                raise StageContractError("RESULT_ORIGINAL_EXECUTION_SCOPE_CHANGED", key)
+        for key in ("raw_stdout", "raw_stderr", "stdout", "stderr", "code"):
+            if key in facts:
+                execution[key] = deepcopy(facts[key])
     packet = seed.failure_packet
     attempt_id = str(packet.attempt_ref or "")
     attempt = ((durable.get("provenance_state") or {}).get("attempts") or {}).get(attempt_id) or {}
@@ -125,6 +314,7 @@ def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any
             or str(execution.get("plan_version") or "") != str(durable.get("plan_version") or "")
             or execution.get("returncode") != 0):
         raise StageContractError("RESULT_SELECTION_SOURCE_SCOPE_INVALID", attempt_id)
+    _check_source(durable, execution)
     base_validation = execution.get("validation_before_output_reconciliation")
     if isinstance(base_validation, Mapping) and base_validation.get("passed") is False:
         raise StageContractError("RESULT_BASE_EXECUTION_INVALID", "The original non-location checks failed; a file selection cannot waive them.")
@@ -132,6 +322,7 @@ def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any
             and not isinstance(base_validation, Mapping)):
         raise StageContractError("RESULT_BASE_VALIDATION_UNKNOWN", "The pre-reconciliation validation record is required before a failed check can be superseded.")
     action = (durable.get("provenance_state") or {}).get("actions", {}).get(packet.action_ref) or {}
+    action = action.get("normalized_action") or action
     contracts = [deepcopy(dict(row)) for row in action.get("controller_output_bindings", [])
                  if isinstance(row, Mapping)]
     if not contracts:
@@ -142,6 +333,10 @@ def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any
     candidates = execution.get("observed_output_records")
     if not isinstance(candidates, list):
         raise StageContractError("RESULT_OBSERVATIONS_UNKNOWN", attempt_id)
+    preflight = preflight_result_candidate(execution)
+    if preflight:
+        candidates = [r for r in candidates if r.get("path") != preflight["path"]] + [preflight]
+        execution["observed_output_records"] = candidates
     inputs = {str(row.get("path") or row.get("canonical_path") or row.get("expected_path") or "")
               for row in action.get("concrete_artifact_bindings", [])
               if isinstance(row, Mapping) and row.get("direction") == "input"}
@@ -157,7 +352,9 @@ def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any
             raise StageContractError("RESULT_SELECTION_CONTRACT_VERSION_MISSING", artifact_id)
         source = _absolute(selection["observed_path"])
         target = _absolute(contract.get("expected_path") or contract.get("path"))
-        if not source.is_relative_to(target.parent) or str(source) in inputs or str(target) in inputs:
+        bound_evidence = bool(preflight and preflight["path"] == str(source))
+        if ((not source.is_relative_to(target.parent) and not bound_evidence)
+                or source == target.parent or str(source) in inputs or str(target) in inputs):
             raise StageContractError("RESULT_PATH_NOT_AUTHORIZED", str(source))
         if str(source) in paths:
             raise StageContractError("RESULT_SELECTION_DUPLICATE_PATH", str(source))
@@ -169,9 +366,11 @@ def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any
         if len(observed) != 1:
             raise StageContractError("RESULT_SELECTED_CANDIDATE_NOT_CURRENT", str(source))
         actual = _same_observed_file(observed[0], contract)
-        if actual.get("artifact_kind") != "file" or contract.get("artifact_kind") != "file":
+        is_evidence_directory = (bound_evidence and actual.get("artifact_kind") == "directory"
+            and contract.get("artifact_kind") == "directory" and contract.get("validation_contract_id") == "directory_exists")
+        if not is_evidence_directory and (actual.get("artifact_kind") != "file" or contract.get("artifact_kind") != "file"):
             raise StageContractError("RESULT_LOCAL_FILE_KIND_UNSUPPORTED", artifact_id)
-        if _format_compatibility(str(contract.get("format") or ""), str(actual.get("format") or ""), "file") == "incompatible":
+        if _format_compatibility(str(contract.get("format") or ""), str(actual.get("format") or ""), actual["artifact_kind"]) == "incompatible":
             raise StageContractError("RESULT_SELECTED_FORMAT_INCOMPATIBLE", artifact_id)
         operation = selection["operation"]
         policy = str(contract.get("path_policy") or "")
@@ -187,7 +386,9 @@ def admit_result_resolution(*, seed, durable, directive, state) -> dict[str, Any
                      "source_attempt_id": attempt_id, "decision_id": directive.directive_id,
                      "contract": contract, "observed_record": deepcopy(observed[0])})
     request = {"schema_version": 1, "decision_id": directive.directive_id,
-               "scope": {key: str(durable.get(key) or "") for key in ("task_id", "plan_id", "plan_version", "current_step_id")},
+               "scope": {key: str(durable.get(key) or "") for key in ("task_id", "plan_id", "plan_version", "current_step_id", "task_revision", "plan_revision")},
+               "approval_identity": _digest({k: durable.get(k) for k in
+                   ("approved_plan_hash", "approval_status", "approval_record_ref", "approval_record")}),
                "source_attempt_id": attempt_id, "source_action_id": packet.action_ref,
                "source_execution": execution, "contracts": contracts, "selections": rows,
                "operation": "copy_to_exact" if directive.action == "organize_result" else "accept_actual"}
@@ -207,6 +408,10 @@ def get_result_resolution_request(durable: Mapping[str, Any], decision_id: str) 
         raise StageContractError("RESULT_RESOLUTION_RECEIPT_INTEGRITY", decision_id)
     if any(str(durable.get(key) or "") != value for key, value in request["scope"].items()):
         raise StageContractError("RESULT_RESOLUTION_SCOPE_STALE", decision_id)
+    if request.get("approval_identity") and request["approval_identity"] != _digest({k: durable.get(k) for k in
+            ("approved_plan_hash", "approval_status", "approval_record_ref", "approval_record")}):
+        raise StageContractError("RESULT_PLAN_APPROVAL_CHANGED", decision_id)
+    _check_source(durable, request["source_execution"], decision_id=decision_id, approved_code=request.get("approved_code", ""))
     request["request_digest"] = expected
     return request
 
@@ -253,10 +458,14 @@ def result_resolution_reconciliation(request, execution=None) -> dict[str, Any]:
         _same_observed_file(row["observed_record"], row["contract"])
         if local_attempt:
             target = _observed_file_metadata(_absolute(row["target_path"]))
-            if (not _content_accepted(target, row["contract"]) or target.get("size") != row["observed_record"].get("size")
+            directory = bool(row["observed_record"].get("evidence_files"))
+            if directory:
+                if _evidence_files(_absolute(row["target_path"]), row["observed_record"]["evidence_files"]) != row["observed_record"]["evidence_files"]:
+                    raise StageContractError("RESULT_LOCAL_COPY_CONTENT_CHANGED", row["artifact_id"])
+            elif (not _content_accepted(target, row["contract"]) or target.get("size") != row["observed_record"].get("size")
                     or target.get("content_prefix_sha256") != row["observed_record"].get("content_prefix_sha256")):
                 raise StageContractError("RESULT_LOCAL_COPY_NOT_VERIFIED", row["artifact_id"])
-            if _content_digest(_absolute(row["observed_path"])) != _content_digest(_absolute(row["target_path"])):
+            if not directory and _content_digest(_absolute(row["observed_path"])) != _content_digest(_absolute(row["target_path"])):
                 raise StageContractError("RESULT_LOCAL_COPY_CONTENT_CHANGED", row["artifact_id"])
             candidates = [item for item in candidates if item.get("path") != target["path"]]
             candidates.append({**target, "attempt_id": request["source_attempt_id"], "current_attempt_owned": True,
@@ -338,8 +547,10 @@ def register_result_resolution(durable, request, receipt, *, data_path="") -> di
             _same_observed_file(row["observed_record"], row["contract"])
             if request["operation"] == "copy_to_exact":
                 target = _observed_file_metadata(_absolute(row["target_path"]))
+                directory = bool(row["observed_record"].get("evidence_files"))
                 if (not _content_accepted(target, row["contract"])
-                        or _content_digest(_absolute(row["observed_path"])) != _content_digest(_absolute(row["target_path"]))):
+                        or (directory and _evidence_files(_absolute(row["target_path"]), row["observed_record"]["evidence_files"]) != row["observed_record"]["evidence_files"])
+                        or (not directory and _content_digest(_absolute(row["observed_path"])) != _content_digest(_absolute(row["target_path"])))):
                     raise StageContractError("RESULT_REGISTERED_COPY_CHANGED", row["artifact_id"])
         return source
     # This updates materialized heads via the already existing registration

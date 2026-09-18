@@ -3363,9 +3363,11 @@ def generate_output_examples(step: Mapping[str, Any], *, script_protocol: bool,
         "code": EFFECT_HELPER_MARKER + "\nitems = [item for item in [1, 2, 3] if item < 0]\n"
             "observed = bool(items)\nprint(emit_effect_evidence({'produces_observations': {'synthetic_demo_matches': {'value': observed, 'items': items}}}))\n",
         "helper_scope": "Materialize this demonstration using only its own step declarations. Actual execution computes False and an empty list; these are not current-step observations."}
+    from agent_core.generate_protocol import generate_wire_contract
     return {"mode": "script_block_v1" if script_protocol else "native_action_json",
+        "wire_contract": generate_wire_contract(script_protocol=script_protocol),
         "top_level": ("Return one supported executable block/display envelope or the complete blocked JSON."
-            if script_protocol else "Return exactly one raw JSON object with action_type; no prose, Markdown, action_json wrapper or multiple actions."),
+            if script_protocol else "Return exactly one raw JSON object with action_type; a single whole unlabelled/json fence is allowed, but no outside prose, action_json wrapper or multiple actions."),
         "action_example": example,
         "binding_value_policies": {name: deepcopy(row["value_policy"])
             for name, row in (requirements.get("produced_bindings") or {}).items() if row.get("value_policy")},

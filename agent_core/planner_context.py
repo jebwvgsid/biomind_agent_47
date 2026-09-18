@@ -4,11 +4,119 @@ from __future__ import annotations
 from copy import deepcopy
 import hashlib
 import json
+import re
 from typing import Any, Mapping, Sequence
 
 from langchain_core.messages import AIMessage, SystemMessage, messages_from_dict, messages_to_dict
 from agent_core.state_contract_store import StateContractStore
 from agent_core.task_spec import task_semantic_hash
+from agent_core.node_context import _without_control_metadata
+from agent_core.provider_message_safety import assert_v2_llm_messages_clean
+
+
+_ISSUE_FIELDS = frozenset({
+    "code", "violation_code", "message", "severity", "disposition",
+    "field_path", "repair_target", "step_key", "affected_step_ids", "affected_fields",
+    "affected_artifact", "affected_output", "expected_identity", "observed_identity",
+    "expected", "actual", "machine_evidence", "violated_invariant",
+    "required_postcondition", "possible_effect_kinds", "normalization_source",
+    "expected_contract", "expected_type", "received_type", "received_excerpt",
+    "parser_message", "line", "column", "offset", "position", "response_excerpt",
+    "diagnostic_source", "position_source", "validator_id", "canonical_resource_id",
+    "constraint_source", "contract_revision", "not_evaluated",
+})
+
+# These paths carry candidate-authored step references, including invalid ones.
+# They are not the runtime step/attempt identity. Keep the exception local to
+# the public resource validator contract; other same-named fields stay private.
+_RESOURCE_DIAGNOSTIC_VALIDATORS = frozenset({
+    "compile_plan_resource_bindings", "plan_resource_bindings",
+})
+_RESOURCE_STEP_REFERENCE_PATHS = (
+    ("actual", "step_id"),
+    ("expected", "step_id"),
+    ("expected", "role_association", "step_id"),
+    ("machine_evidence", "actual", "step_id"),
+    ("machine_evidence", "expected", "step_id"),
+    ("machine_evidence", "expected", "role_association", "step_id"),
+)
+
+
+def provider_correction_feedback(feedback: Mapping[str, Any]) -> dict[str, Any]:
+    """Project controller-authored repair facts; never rewrite model/user text.
+
+    The complete feedback remains in the immutable correction record. Internal
+    references are unnecessary for repairing a candidate and are not provider
+    content. Diagnostic text and business digests are preserved verbatim;
+    their spelling cannot establish that they are controller metadata.
+    """
+    result = {"code": "PLANNER_CANDIDATE_REJECTED", "validation_issues": []}
+    public_step_paths: set[tuple[Any, ...]] = set()
+    for issue in feedback.get("validation_issues") or []:
+        if not isinstance(issue, Mapping):
+            continue
+        row = {key: deepcopy(value) for key, value in issue.items() if key in _ISSUE_FIELDS}
+        # These existing Skill/capability producers use scalar/list business
+        # fields instead of actual/expected. Match their precise public locus;
+        # an unrelated validator does not acquire another metadata exception.
+        code = str(issue.get("code") or "")
+        validator = str(issue.get("validator_id") or "")
+        field_path = str(issue.get("field_path") or "")
+        capability_issue = ((validator == "plan_execution_capabilities"
+                            or (not validator and str(issue.get("owner") or "") == "planner"))
+            and code in {"UNKNOWN_EXECUTION_CAPABILITY", "ACTION_CAPABILITY_SCOPE_MISSING"}
+            and re.fullmatch(r"\$\.steps\[\d+\]\.execution_capability_id", field_path))
+        skill_issue = (validator == "plan_skill_bindings"
+            and code == "PLAN_STEP_SKILL_UNKNOWN"
+            and re.fullmatch(r"\$\.steps\[\d+\]\.skill_ids\[\d+\]", field_path))
+        if capability_issue or skill_issue:
+            for key in ("received_id", "available_capability_ids", "selected_skill_id", "actual_value"):
+                if key in issue:
+                    row[key] = deepcopy(issue[key])
+        if issue.get("step_id"):
+            row["step_key"] = str(issue["step_id"])
+        prefix = ("validation_issues", len(result["validation_issues"]))
+        if str(issue.get("validator_id") or "") in _RESOURCE_DIAGNOSTIC_VALIDATORS:
+            public_step_paths.update(prefix + path for path in _RESOURCE_STEP_REFERENCE_PATHS)
+            if (issue.get("code") == "PLAN_RESOURCE_FIELD_RETIRED"
+                    and str(issue.get("field_path") or "").endswith(".role_associations")):
+                for container in (("actual",), ("machine_evidence", "actual")):
+                    value = row
+                    for part in container:
+                        value = value.get(part) if isinstance(value, Mapping) else None
+                    if isinstance(value, list):
+                        public_step_paths.update(prefix + container + (index, "step_id")
+                                                 for index in range(len(value)))
+        result["validation_issues"].append(row)
+    for key in ("requirements", "correction_budget", "response_completion", "length_recovery"):
+        if key in feedback:
+            result[key] = deepcopy(feedback[key])
+    for index, requirement in enumerate(result.get("requirements") or []):
+        if not isinstance(requirement, Mapping):
+            continue
+        protocol = requirement.get("protocol")
+        if protocol == "plan_resource_protocol_v2":
+            public_step_paths.add(("requirements", index, "new_resource", "role_associations", "item", "step_id"))
+        elif protocol == "plan_resource_protocol_v3":
+            public_step_paths.add(("requirements", index, "legacy_resource_contract_v2", "role_association_item", "step_id"))
+
+    def project_text(value, path=()):
+        if isinstance(value, Mapping):
+            # Reuse the existing control-key policy, retaining semantic empty
+            # lists/nulls (e.g. producer_step_ids=[] explains a missing output).
+            return {key: project_text(item, path + (key,)) for key, item in value.items()
+                    if key in _without_control_metadata({key: True})
+                    or (key == "step_id" and path + (key,) in public_step_paths)}
+        if isinstance(value, (list, tuple)):
+            return [project_text(item, path + (index,)) for index, item in enumerate(value)]
+        return value
+
+    result = project_text(result)
+    assert_v2_llm_messages_clean(
+        [SystemMessage(content=json.dumps(result, ensure_ascii=False, sort_keys=True))],
+        stage="planner.correction_feedback",
+    )
+    return result
 
 
 def correction_feedback(state: Mapping[str, Any]) -> dict[str, Any]:
@@ -62,7 +170,8 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
                                           "response_integrity": deepcopy(integrity)})
         attach_rejection_facts(state, integrity, call_claim or {}, remediation)
     feedback = correction_feedback(state)
-    complete = [*provider_messages, AIMessage(content=raw), SystemMessage(content=json.dumps(feedback, ensure_ascii=False, sort_keys=True))]
+    provider_feedback = provider_correction_feedback(feedback)
+    complete = [*provider_messages, AIMessage(content=raw), SystemMessage(content=json.dumps(provider_feedback, ensure_ascii=False, sort_keys=True))]
     record = {
         "schema_version": 2 if integrity else 1, "task_id": task_id,
         "planning_epoch_id": (state.get("task_state") or {}).get("planning_epoch", {}).get("planning_epoch_id", ""),
@@ -70,6 +179,7 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
         "capability_digest": hashlib.sha256(json.dumps(capabilities, sort_keys=True).encode()).hexdigest(),
         "raw_candidate": raw, "candidate": deepcopy(dict(candidate)),
         "feedback": feedback, "messages": messages_to_dict(complete),
+        "provider_feedback": provider_feedback, "provider_feedback_version": 1,
         "fixed_prefix_count": fixed_prefix_count,
     }
     baselines = [deepcopy(dict(row)) for row in consumption_review_baselines]
@@ -95,7 +205,7 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
     if primary.get("status") == "observed" and int(failure.get("attempt") or 0) == 1:
         failure["primary_context_ref"] = ref
         primary["candidate_source"] = deepcopy(failure["candidate_source"])
-    return feedback
+    return provider_feedback
 
 
 def load_correction_context(data_path: str, task_id: str, state: Mapping[str, Any], *,
@@ -122,6 +232,20 @@ def load_correction_context(data_path: str, task_id: str, state: Mapping[str, An
 
 def restore_correction_messages(context: Any, record: Mapping[str, Any]) -> list[Any]:
     messages = messages_from_dict(record["messages"])
+    # Older immutable records serialized controller feedback directly. Project
+    # only these known SystemMessage envelopes; leave prompts and model replies
+    # intact, and never mutate the historical record to make it appear safe.
+    for index, message in enumerate(messages):
+        if not isinstance(message, SystemMessage):
+            continue
+        try:
+            feedback = json.loads(message.content)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(feedback, dict) and feedback.get("code") == "PLANNER_CANDIDATE_REJECTED":
+            content = json.dumps(provider_correction_feedback(feedback), ensure_ascii=False, sort_keys=True)
+            if content != message.content:
+                messages[index] = message.model_copy(update={"content": content, "id": None})
     # Direct producer callers may not have phase-assigned message IDs. These
     # deterministic transport IDs do not change any provider-visible content.
     for index, message in enumerate(messages):
@@ -131,8 +255,8 @@ def restore_correction_messages(context: Any, record: Mapping[str, Any]) -> list
     if context is not None and not context.messages and context.system_message is None:
         count = int(record["fixed_prefix_count"])
         # A fresh phase has new transport-channel IDs. Rebind only those local
-        # IDs before initializing its fixed channels; provider-visible payload
-        # and the saved immutable context remain byte-for-byte unchanged.
+        # IDs before initializing its fixed channels. Only legacy controller
+        # feedback is projected; the saved immutable context stays unchanged.
         if getattr(context, "epoch_id", None):
             messages[0] = messages[0].model_copy(update={"id": f"{context.epoch_id}:system"})
             messages[1] = messages[1].model_copy(update={"id": f"{context.epoch_id}:seed"})

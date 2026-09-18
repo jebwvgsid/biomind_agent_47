@@ -224,6 +224,10 @@ class TypedSupervisor:
             # consumed by the structured reviewer; it does not route or mutate
             # durable state.
             gate_state = deepcopy(durable)
+            # A result publication has its own attempt. Evaluate the exact
+            # original execution just revalidated, not that latest copy action.
+            gate_state.update(execution_evidence=deepcopy(execution),
+                              validation_evidence=deepcopy(validation_value))
             attempts = dict(
                 ((gate_state.get("provenance_state") or {}).get("attempts"))
                 or {}

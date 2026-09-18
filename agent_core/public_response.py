@@ -6,6 +6,7 @@ or rewriting any business value.
 """
 from dataclasses import dataclass
 import json
+import re
 
 
 @dataclass(frozen=True)
@@ -13,6 +14,7 @@ class ResponseProjection:
     payload: str
     public_message: str | None = None
     error: str = ""
+    diagnostic: dict | None = None
 
 
 def _non_json_constant(value):
@@ -105,11 +107,57 @@ def response_incomplete(metadata: dict) -> bool:
     )
 
 
+def _project_explained_blocked_response(raw: str) -> ResponseProjection | None:
+    """Recognize only a complete, terminal blocked object after display prose.
+
+    This deliberately cannot recover execution JSON, objects embedded in code,
+    or an object followed by another response.
+    """
+    for start in re.finditer(r"(?m)^[ \t]*\{", raw):
+        prefix = raw[:start.start()]
+        if not prefix.strip() or re.search(r"[{}]|`{3}|~{3}", prefix):
+            continue
+        # A mention such as `the <shell> carrier failed` is display text. An
+        # actual script outside the terminal object remains an ambiguity.
+        prose = re.sub(r"`[^`\r\n]*`", "", prefix)
+        if re.search(r"</?(?:shell|python|r|script)\b", prose, re.IGNORECASE):
+            continue
+        candidate = raw[start.start():]
+        try:
+            value, members = _object_members(candidate)
+        except (ValueError, TypeError, IndexError, RecursionError):
+            continue
+        if value.get("type") != "blocked" or [row[0] for row in members].count("type") != 1:
+            continue
+        projected = project_public_json(candidate)
+        return ResponseProjection(projected.payload, projected.public_message or prefix.strip())
+    return None
+
+
 def project_generate_response(raw: str, *, script_protocol: bool,
-                              response_metadata: dict | None = None) -> ResponseProjection:
+                              response_metadata: dict | None = None,
+                              strict: bool = True) -> ResponseProjection:
     """Unwrap one explicit display transport before the original script parser."""
     if response_incomplete(response_metadata or {}):
         return ResponseProjection(raw, error="GENERATE_RESPONSE_INCOMPLETE: provider did not finish a complete response")
+    # A whole JSON fence is presentation only. Never search prose or multiple
+    # blocks for a convenient executable object. The original wire remains in
+    # the provider archive; all normal schema/duplicate checks still follow.
+    fenced = re.fullmatch(r"\s*```(?:json)?[ \t]*\r?\n(?P<body>[\s\S]*?)\r?\n```\s*", raw)
+    if fenced:
+        try:
+            _object_members(fenced["body"])
+        except (ValueError, TypeError, IndexError, RecursionError):
+            # Historical executable-block fences use their existing parser.
+            if raw.lstrip().startswith("```json") or fenced["body"].lstrip().startswith("{"):
+                return ResponseProjection(raw, error="GENERATE_DISPLAY_INVALID_JSON: the whole fence must contain one complete JSON object",
+                    diagnostic={"stage": "response_transport", "field_path": "$", "expected": "one complete JSON object; no competing objects or blocks"})
+        else:
+            raw = fenced["body"]
+    elif re.search(r"```json\b", raw) or re.search(r"```[ \t]*\r?\n\s*\{", raw):
+        return ResponseProjection(raw, error="GENERATE_DISPLAY_AMBIGUOUS_WRAPPER: JSON must occupy the entire response or one whole JSON fence; move explanation into public_message",
+            diagnostic={"stage": "response_transport", "field_path": "$", "actual": "JSON fence with additional outside content",
+                "expected": "one whole raw JSON object or one whole unlabelled/json fence"})
     try:
         value, members = _object_members(raw)
     except (ValueError, TypeError, IndexError, RecursionError):
@@ -117,6 +165,10 @@ def project_generate_response(raw: str, *, script_protocol: bool,
         # as an alternative executable definition or a terminal answer.
         if script_protocol and isinstance(raw, str) and raw.lstrip().startswith("{"):
             return ResponseProjection(raw, error="GENERATE_DISPLAY_INVALID_JSON: one complete JSON response is required")
+        if script_protocol and not strict and isinstance(raw, str):
+            blocked = _project_explained_blocked_response(raw)
+            if blocked is not None:
+                return blocked
         return ResponseProjection(raw)
     if not script_protocol or "response_type" not in value:
         return project_public_json(raw)
@@ -127,17 +179,38 @@ def project_generate_response(raw: str, *, script_protocol: bool,
         return ResponseProjection(raw, error="GENERATE_DISPLAY_CONFLICT: only one payload and the display fields are allowed")
     payload = value.get("payload")
     if not isinstance(payload, str) or not payload:
-        return ResponseProjection(raw, error="GENERATE_DISPLAY_PAYLOAD_REQUIRED: payload must be a non-empty script-block string")
+        diagnostic = {"stage": "response_schema", "field_path": "$.payload",
+            "actual": type(payload).__name__, "expected": "one non-empty script-block string"}
+        if isinstance(payload, dict) and payload.get("type") == "skill_script":
+            from agent_core.generate_protocol import skill_script_example
+            diagnostic.update(correct_branch="top-level skill_script (Generate alternative 2)",
+                              example=skill_script_example(payload))
+        return ResponseProjection(raw, error="GENERATE_DISPLAY_PAYLOAD_REQUIRED: $.payload must be a non-empty script-block string; helper actions use top-level skill_script",
+                                  diagnostic=diagnostic)
     public = value.get("public_message")
     if keys.count("public_message") != 1 or not isinstance(public, str) or not public.strip():
         public = None
-    # The envelope is exclusively a script transport. Use the existing strict
-    # parser before any legacy Skill/tag/final-answer branch can inspect it.
+    try:
+        nested, _ = _object_members(payload)
+    except (ValueError, TypeError, IndexError, RecursionError):
+        nested = None
+    if isinstance(nested, dict) and nested.get("type") == "skill_script":
+        from agent_core.generate_protocol import skill_script_example
+        diagnostic = {"stage": "response_schema", "field_path": "$.payload",
+            "actual": "JSON skill_script action inside a script-block string",
+            "expected": "one <shell>, <python>, or <r> block",
+            "correct_branch": "top-level skill_script (Generate alternative 2)",
+            "example": skill_script_example(nested)}
+        return ResponseProjection(payload, public,
+            error="GENERATE_DISPLAY_PAYLOAD_TYPE: $.payload accepts a script block; submit skill_script as the complete top-level action (alternative 2), without a display envelope",
+            diagnostic=diagnostic)
+    # The envelope is exclusively a script transport. Share the selected
+    # parsing mode with the later executable boundary.
     from agent_core.controller_audit import parse_executable_script_block, ScriptBlockError
     try:
-        parse_executable_script_block(payload)
+        parse_executable_script_block(payload, strict=strict)
     except ScriptBlockError as exc:
         # The sole business payload is known even though it is invalid. Keep
         # its malformed-candidate identity independent of optional prose.
-        return ResponseProjection(payload, public, error=str(exc))
+        return ResponseProjection(payload, public, error=str(exc), diagnostic=exc.to_dict())
     return ResponseProjection(payload, public)

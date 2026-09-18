@@ -683,7 +683,8 @@ class Terminal:
                 self.cancel_callback()
             return
         if self.cancel_requested:
-            self.receive('cancel', '取消仍待确认；Ctrl+D 强制离开，清理未确认。')
+            self.receive('cancel', '取消仍待确认；Ctrl+D 强制离开，清理未确认。',
+                         item_id=f'cancel-wait:{self.context[0]}:{self._request_serial}')
             return
         if self.pending is not None:
             # Existing human-input cancellation path retains its semantics.
