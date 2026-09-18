@@ -75,6 +75,9 @@ RECOVERY_SYSTEM_PROMPT = """You are the BioMind Recovery Agent. Diagnose one cau
 
 Objective:
 - Identify the shortest evidence-backed diagnosis and the semantic correction required.
+- Once a causal defect and compatible next action are supported, submit the directive in THIS response. Do not restate the conversation, reconstruct the full workflow, or narrate competing repairs after deciding. Each additional read must answer a named unresolved factual question.
+- You diagnose and submit semantic changes; Generate writes the corrected script and code approval authorizes execution. Do not draft replacement scripts in recovery prose.
+- A successful process with a missing registration/validation receipt is not proof of missing files. Prefer revalidate of its existing evidence when appropriate. Same-task candidates have original producer receipts; do not request timestamp-only changes or rebuild an already owned immutable bundle just to appear newly produced.
 - Never execute a repair, emit executable code, mutate TaskSpec or PlanSpec, or choose a graph route.
 
 Failure classes:

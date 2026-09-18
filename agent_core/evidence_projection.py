@@ -275,6 +275,8 @@ def artifact_registration_facts(
             "identity": identity, "artifact_id": str(artifact_id),
             "artifact_version_id": str(version_id), "path": str(record.get("path") or ""),
             "status": status, "producer_attempt_id": str(record.get("producer_attempt_id") or ""),
+            "acceptance_attempt_id": str(record.get("acceptance_attempt_id") or record.get("producer_attempt_id") or ""),
+            "realization": str(record.get("realization") or ""),
             "validation_id": str(record.get("validation_id") or ""),
             "registration_state": ("not_registered" if status == "expected"
                                    else "unknown" if not record else "recorded"),

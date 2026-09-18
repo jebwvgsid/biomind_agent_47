@@ -13,10 +13,12 @@ import json
 from typing import Any
 from urllib.parse import urlsplit
 
-INITIAL_OUTPUT_TOKEN_LIMIT = 16_384
-LENGTH_RECOVERY_OUTPUT_TOKEN_LIMIT = 32_768
+from agent_core.llm_safety import MODEL_OUTPUT_LIMIT_TOKENS
+
+INITIAL_OUTPUT_TOKEN_LIMIT = MODEL_OUTPUT_LIMIT_TOKENS
+LENGTH_RECOVERY_OUTPUT_TOKEN_LIMIT = MODEL_OUTPUT_LIMIT_TOKENS
 MAX_LENGTH_CORRECTIVE_CALLS_PER_EPOCH = 1
-OUTPUT_POLICY_VERSION = "planner-output-policy-v1"
+OUTPUT_POLICY_VERSION = "planner-output-policy-v2"
 MODEL_PARAMETER_HASH_VERSION = "planner-model-parameters-v2"
 TOKEN_FIELDS = ("max_tokens", "max_completion_tokens")
 CAPABILITY_VERSION = "deepseek-v4-chat-completions-20260908"
@@ -97,13 +99,15 @@ def planner_client_output_settings(llm: Any) -> dict[str, Any]:
     return {"entries": entries, "limit": entries[0]["value"] if entries else None}
 
 
-def resolve_planner_output_policy(*, model: str, endpoint: str, provider: str = "", settings: Mapping[str, Any] | None = None, task_output_token_limit: int | None = None, recovery: bool = False, legacy_epoch: bool = False, existing_output_settings: Mapping[str, Any] | None = None, application_context_limit: int = 200_000, existing_input_reserve: int = 8192) -> dict[str, Any]:
+def resolve_planner_output_policy(*, model: str, endpoint: str, provider: str = "", settings: Mapping[str, Any] | None = None, task_output_token_limit: int | None = None, recovery: bool = False, legacy_epoch: bool = False, existing_output_settings: Mapping[str, Any] | None = None, application_context_limit: int = 200_000, existing_input_reserve: int = MODEL_OUTPUT_LIMIT_TOKENS) -> dict[str, Any]:
     config = dict(settings or {})
     allowed = {"initial_output_token_limit", "length_recovery_output_token_limit", "max_length_corrective_calls_per_epoch", "provider_capability", "source", "version", "task_output_token_limit"}
     if set(config) - allowed:
         raise PlannerOutputPolicyError("PLANNER_OUTPUT_POLICY_FIELD_UNSUPPORTED", actual=sorted(set(config) - allowed), expected=sorted(allowed))
     initial = _positive(config.get("initial_output_token_limit", INITIAL_OUTPUT_TOKEN_LIMIT), "$.planner_output_policy.initial_output_token_limit")
     corrective = _positive(config.get("length_recovery_output_token_limit", LENGTH_RECOVERY_OUTPUT_TOKEN_LIMIT), "$.planner_output_policy.length_recovery_output_token_limit")
+    initial = min(initial, MODEL_OUTPUT_LIMIT_TOKENS)
+    corrective = min(corrective, MODEL_OUTPUT_LIMIT_TOKENS)
     count = config.get("max_length_corrective_calls_per_epoch", MAX_LENGTH_CORRECTIVE_CALLS_PER_EPOCH)
     if type(count) is not int or count not in (0, 1):
         raise PlannerOutputPolicyError("PLANNER_LENGTH_CORRECTION_LIMIT_INVALID", actual=count, expected="0 or 1 within existing Planner budgets")

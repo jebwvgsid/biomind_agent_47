@@ -859,7 +859,7 @@ def _bounded_candidate_semantic_view(
     allowed_step_fields = (
         "step_id", "title", "action", "purpose", "tool", "inputs", "outputs", "resource_uses",
         "dependencies", "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
-        "execution_capability_id", "operation", "produces_bindings",
+        "execution_capability_id", "operation", "validation_level", "produces_bindings",
         "produces_observations", "workspace_mutations", "explicit_side_effects",
         "step_effect",
     )
@@ -1024,7 +1024,7 @@ def _planning_failure_machine_issue(value: Any) -> Dict[str, Any]:
 _PLANNER_CORRECTION_STRUCTURE_FIELDS = (
     "action", "purpose", "tool", "inputs", "outputs", "resource_uses", "dependencies",
     "skill_ids", "workflow_stage_ids", "batch_id", "risk_level",
-    "execution_capability_id", "operation", "produces_bindings",
+    "execution_capability_id", "operation", "validation_level", "produces_bindings",
     "produces_observations", "workspace_mutations", "explicit_side_effects",
     "step_effect", "parameters", "generate_binding_input_contract",
 )
@@ -2343,6 +2343,11 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "produced_artifact_ids": [],
                 "artifact_version_ids": [],
                 "before_artifacts": before,
+                "managed_reuse_scope": {
+                    "task_id": str(state.get("task_id") or ""),
+                    "task_revision": (state.get("current_task") or {}).get("task_revision"),
+                    "plan_semantic_hash": semantic_plan_hash(state),
+                },
                 "managed_output_contracts": deepcopy(
                     list(value.get("managed_output_contracts") or [])
                 ),
@@ -2757,6 +2762,9 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             "status": ATTEMPT_EVIDENCE_COMMITTED,
             "command_role": role,
         })
+        for key in ("observed_output_records", "managed_output_snapshot_after", "managed_input_signature"):
+            if key in execution:
+                attempt[key] = deepcopy(execution[key])
         # StepEffect completion is evaluated after this graph turn from the
         # durable PlanState.  Keep the immutable expectation separate from the
         # attempt-scoped observed facts and persist both with the concrete
@@ -2830,7 +2838,10 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             allow_probe = (not plan_uses_explicit_results(state)
                            and bool(definition.get("allow_probe_producer"))
                            and not temporary_diagnostic)
-            if path not in produced_paths or not changed or (is_probe and not allow_probe):
+            revalidated = (reconciliation.get("realization") == "revalidated_existing"
+                           and bool(reconciliation.get("source_attempt_id"))
+                           and path in execution.get("adopted_artifacts", []))
+            if (path not in produced_paths and not revalidated) or not changed or (is_probe and not allow_probe):
                 continue
             version_id = f"{artifact_id}@{attempt_id}"
             artifact = {
@@ -2839,8 +2850,9 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "artifact_version_id": version_id,
                 "producer_manifest_id": str(action.get("manifest_id") or ""),
                 "producer_stage_id": str(attempt.get("stage_id") or ""),
-                "producer_action_id": str(attempt.get("action_id") or ""),
-                "producer_attempt_id": attempt_id,
+                "producer_action_id": str((provenance["attempts"].get(reconciliation.get("source_attempt_id")) or attempt).get("action_id") or ""),
+                "producer_attempt_id": str(reconciliation.get("source_attempt_id") or attempt_id),
+                "acceptance_attempt_id": attempt_id,
                 "path": path,
                 "status": "materialized",
                 "validation_status": "unknown",
@@ -2848,7 +2860,7 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                 "created_at": now,
                 "size": int(after.get("size") or 0),
                 "digest_or_signature": after,
-                "source": "execution_observed",
+                "source": "same_task_candidate_revalidated" if revalidated else "execution_observed",
                 "predicted_path": predicted_path,
                 "realization": str(reconciliation.get("realization") or "expected"),
                 "constraint_origin": str(reconciliation.get("constraint_origin") or ""),
@@ -3118,6 +3130,8 @@ def _invalidate_provenance(
         artifact["invalidation_reason"] = "recovery_rollback"
         if str(artifact.get("producer_attempt_id") or ""):
             affected_attempts.add(str(artifact["producer_attempt_id"]))
+        if artifact.get("acceptance_attempt_id"):
+            affected_attempts.add(str(artifact["acceptance_attempt_id"]))
         if old_status != artifact["status"]:
             changed.append(artifact_id)
     for attempt_id in affected_attempts:
@@ -6454,6 +6468,8 @@ def _semantic_step(step: PlanStep) -> Dict[str, Any]:
     payload["selected_skill_id"] = str(normalized.get("selected_skill_id") or "")
     if normalized.get("operation"):
         payload["operation"] = str(normalized.get("operation") or "")
+    if "validation_level" in normalized:
+        payload["validation_level"] = normalized["validation_level"]
     if isinstance(normalized.get("step_effect"), Mapping):
         payload["step_effect"] = deepcopy(dict(normalized.get("step_effect") or {}))
     payload["bound_outputs"] = deepcopy(list(normalized.get("bound_outputs") or []))
@@ -6480,10 +6496,17 @@ def _semantic_step(step: PlanStep) -> Dict[str, Any]:
     return payload
 
 
+def _explicit_artifact_freshness(state: Mapping[str, Any]) -> Dict[str, Any]:
+    policies = {str(key): row["freshness"] for key, row in (state.get("plan_artifacts") or {}).items()
+                if isinstance(row, Mapping) and "freshness" in row}
+    return {"artifact_freshness": policies} if policies else {}
+
+
 def semantic_plan_hash(state: PlanState) -> str:
     """Hash only execution semantics; progress, evidence, timestamps and aliases are excluded."""
     payload = {
         "steps": [_semantic_step(step) for step in state.get("steps", []) if isinstance(step, dict)],
+        **_explicit_artifact_freshness(state),
         "task_output_materializations": deepcopy(
             list(state.get("task_output_materializations") or [])
         ),
@@ -6514,6 +6537,7 @@ def plan_semantic_payload(state: PlanState) -> Dict[str, Any]:
     """Versioned semantic domain used for approval/staleness decisions."""
     return {
         "canonicalization_version": PLAN_CANONICALIZATION_VERSION,
+        **_explicit_artifact_freshness(state),
         "steps": [
             _semantic_step(step)
             for step in state.get("steps", []) or []
@@ -6984,6 +7008,7 @@ def render_structured_plan(state: PlanState) -> str:
             f"  - Purpose: {str(step.get('purpose') or 'analysis').upper()}",
             f"  - Execution capability: {str(step.get('execution_capability_id') or 'none')}",
             f"  - Operation: {str(step.get('operation') or 'none')}",
+            *([f"  - Validation level: {step['validation_level']}"] if "validation_level" in step else []),
             f"  - Skills: [{skills}]",
             "  - Inputs:",
             *([f"    - {item}" for item in step.get("inputs", []) or []] or ["    - []"]),
@@ -8595,6 +8620,12 @@ def build_approval_projection(state: PlanState) -> Dict[str, Any]:
             "skill_ids": list(step.get("skill_ids") or []),
             "inputs": list(step.get("inputs") or []),
             "outputs": list(step.get("outputs") or []),
+            **({"validation_level": step["validation_level"]} if "validation_level" in step else {}),
+            **({"output_freshness": {key: row["freshness"]
+                for key, row in (state.get("plan_artifacts") or {}).items()
+                if key in step.get("outputs", []) and "freshness" in row}}
+               if any(key in step.get("outputs", []) and "freshness" in row
+                      for key, row in (state.get("plan_artifacts") or {}).items()) else {}),
             **(
                 {"operation": str(step.get("operation") or "")}
                 if str(step.get("operation") or "") else {}
@@ -9613,7 +9644,7 @@ def normalize_task_output_materializations(
             **({
                 "required": bool(contract.get("required", True)) if single_task_outputs else bool(raw.get("required", False)),
                 "path_policy": str(contract.get("path_policy") or "") if single_task_outputs else str(raw.get("path_policy") or "model_selectable"),
-                **{key: deepcopy(raw[key]) for key in ("validator", "description", "source_refs") if key in raw},
+                **{key: deepcopy(raw[key]) for key in ("validator", "description", "source_refs", "freshness") if key in raw},
             } if explicit_results else {}),
         })
 

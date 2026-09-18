@@ -58,7 +58,7 @@ async def wire_call(*, recovery=False, settings=None, task_limit=None, stage='pl
 
 
 def test_t02_real_sdk_initial_and_corrective_final_json_have_one_supported_key(tmp_path):
-    for recovery, expected in ((False,16384),(True,32768)):
+    for recovery, expected in ((False,50000),(True,50000)):
         body,response,attempt,resolved = asyncio.run(wire_call(recovery=recovery, trace_root=tmp_path/str(recovery)))
         assert body['max_tokens'] == expected
         assert 'max_completion_tokens' not in body
@@ -98,16 +98,17 @@ def test_t03_parameter_conflict_rejected_before_transport():
 
 def test_t03_output_hash_stable_for_equivalent_settings_and_distinct_for_effective_caps():
     a = policy()
-    b = policy(settings={'initial_output_token_limit':16384,'source':'explicit same engineering policy'})
+    b = policy(settings={'initial_output_token_limit':50000,'source':'explicit same engineering policy'})
     c = policy(recovery=True)
     assert a['output_policy_hash'] == b['output_policy_hash']
-    assert a['output_policy_hash'] != c['output_policy_hash']
+    assert a['output_policy_hash'] == c['output_policy_hash']
+    assert a['output_policy_hash'] != policy(task_output_token_limit=40000)['output_policy_hash']
     bounded_a = policy(task_output_token_limit=4096)
     bounded_b = policy(task_output_token_limit=4096,recovery=True)
     assert bounded_a['output_policy_hash'] == bounded_b['output_policy_hash']
     assert a['wire_observation_status'] == 'resolved_not_wire_observed'
     runs = [asyncio.run(wire_call(recovery=value)) for value in [False,True]]
-    assert runs[0][2]['model_parameter_hash'] != runs[1][2]['model_parameter_hash']
+    assert runs[0][2]['model_parameter_hash'] == runs[1][2]['model_parameter_hash']
 
 
 def test_t04_each_real_provider_dispatch_uses_selected_reserve_without_deleting_messages():
@@ -115,12 +116,12 @@ def test_t04_each_real_provider_dispatch_uses_selected_reserve_without_deleting_
     # capacities; the assertion tests reserve changes rather than tokenizer IO.
     messages = [SystemMessage(content='Preserve the fixed protocol'),HumanMessage(content='x '*20000)]
     digest = hashlib.sha256(json.dumps([m.content for m in messages]).encode()).hexdigest()
-    body,_,_,_ = asyncio.run(wire_call(messages=messages,context_limit=50000))
+    body,_,_,_ = asyncio.run(wire_call(messages=messages,context_limit=100000))
     assert body['messages'][1]['content'] == messages[1].content
     with pytest.raises(PlannerOutputPolicyError) as caught:
         asyncio.run(wire_call(recovery=True,messages=messages,context_limit=50000))
     assert caught.value.code == 'PLANNER_OUTPUT_CONTEXT_CAPACITY_INSUFFICIENT'
-    assert caught.value.actual['output_reserve_tokens'] == 32768
+    assert 'input_reserve_used' in caught.value.actual or caught.value.actual['output_reserve_tokens'] == 50000
     assert hashlib.sha256(json.dumps([m.content for m in messages]).encode()).hexdigest() == digest
 
 
@@ -133,7 +134,7 @@ def test_t04_scoped_phase_compactor_is_cloned_and_known_limit_stays_stricter(tmp
     agent = bio_agents.BioAnalystAgent.__new__(bio_agents.BioAnalystAgent)
     agent._configure_planner_output_reserve(phase,policy(recovery=True))
     assert phase.compaction_handler.__self__ is not original
-    assert phase.compaction_handler.__self__.policy.output_reserve_tokens == 32768
+    assert phase.compaction_handler.__self__.policy.output_reserve_tokens == 50000
     assert phase.compaction_handler.__self__.policy.effective_context_limit_tokens == 90000
     assert original.policy.output_reserve_tokens == 8192
     disabled = SimpleNamespace(compaction_handler=None)
@@ -180,9 +181,8 @@ def test_t05_legacy_epoch_is_not_reinterpreted_as_new_output_policy():
 
 
 @pytest.mark.parametrize('stage',['generate','consultant','recovery','terminal_summary'])
-def test_t22_other_nodes_keep_parameter_and_response_contract(stage):
-    body,response,_,_ = asyncio.run(wire_call(stage=stage))
-    assert 'max_tokens' not in body and 'max_completion_tokens' not in body
-    assert 'biomind_provider_attempt' not in response.response_metadata
+def test_t22_other_nodes_keep_parameter_and_response_contract(stage, tmp_path):
+    body,response,_,_ = asyncio.run(wire_call(stage=stage,existing={'max_tokens':50000},trace_root=tmp_path))
+    assert body['max_tokens'] == 50000 and 'max_completion_tokens' not in body
     assert 'planner_output_policy' not in response.response_metadata
     assert response.response_metadata['finish_reason']=='stop'

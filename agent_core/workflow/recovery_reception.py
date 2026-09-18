@@ -157,7 +157,7 @@ def decode_text(content):
         validate_candidate(raw)
         raise ReceptionError("RECOVERY_CANONICAL_RESUBMISSION_REQUIRED", "Ordinary JSON fence has no submission authority", candidate={
             "start": b.start(), "end": b.end(), "json_sha256": hashlib.sha256(b.group(2).encode()).hexdigest(), "schema_status": "valid"})
-    raise ReceptionError("RECOVERY_SUBMISSION_MISSING", "Explanation saved; submit a directive using the advertised protocol")
+    raise ReceptionError("RECOVERY_SUBMISSION_MISSING", "Explanation saved. Use the evidence already collected and submit the directive now using the advertised protocol; do not repeat the diagnosis or summarize the conversation. If a necessary fact remains unknown, name it and perform only its bounded inspection.")
 
 
 def has_explicit_text_submission(content):

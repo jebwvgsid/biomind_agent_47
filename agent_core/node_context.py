@@ -997,7 +997,7 @@ _LLM_SAFE_STEP_FIELDS = frozenset({
     "constraints", "constraint_ids", "semantic_constraint_ids",
     "requirement_ids", "dependencies", "depends_on", "success_criteria",
     "risk_level", "step_type", "skill_ids", "skills_declared",
-    "command_intent", "execution_capability_id", "operation", "artifacts",
+    "command_intent", "execution_capability_id", "operation", "artifacts", "validation_level",
     "step_effect", "produces_bindings", "produces_observations",
     "workspace_mutations", "explicit_side_effects",
 })
@@ -1703,7 +1703,7 @@ def _planning_failure_focus(
             if key in {
                 "step_key", "action", "purpose", "tool", "inputs", "outputs", "resource_uses",
                 "dependencies", "skill_ids", "workflow_stage_ids", "batch_id",
-                "risk_level", "execution_capability_id", "operation",
+                "risk_level", "execution_capability_id", "operation", "validation_level",
                 "produces_bindings", "produces_observations",
                 "workspace_mutations", "explicit_side_effects", "step_effect",
             }
@@ -1815,7 +1815,7 @@ def _approved_plan_semantic_view(
                     raw.get("materialization_policy_id") or ""
                 ),
                 **{key: deepcopy(raw[key]) for key in (
-                    "required", "path_policy", "validation_contract_id", "source_refs",
+                    "required", "path_policy", "validation_contract_id", "source_refs", "freshness",
                 ) if key in raw},
             },
         })
@@ -1846,7 +1846,7 @@ def _approved_plan_semantic_view(
         row = {
             str(key): deepcopy(value)
             for key, value in raw.items()
-            if str(key) in {"output_ref", "path", "required", "path_policy", "description", "source_refs", "validation_contract_id"}
+            if str(key) in {"output_ref", "path", "required", "path_policy", "description", "source_refs", "validation_contract_id", "freshness"}
             and value not in (None, "", [], {})
         }
         if row:

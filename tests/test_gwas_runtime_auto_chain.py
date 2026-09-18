@@ -117,6 +117,8 @@ def test_operation_discovery_to_actual_provider_and_approved_runner(tmp_path, mo
             class ProviderLeaf:
                 max_tokens = 16000
                 model_name = "offline-boundary"
+                def bind_tools(self, tools, **kwargs):
+                    return self
                 def bind(self, **kwargs):
                     return self
                 def model_copy(self, update=None):
@@ -124,6 +126,9 @@ def test_operation_discovery_to_actual_provider_and_approved_runner(tmp_path, mo
                 async def ainvoke(self, messages, config=None, **kwargs):
                     nonlocal clock_value
                     stage = (config or {}).get("tags", [""])[-1]
+                    if stage == "workspace_agent":
+                        from tests.test_plan_local_preaction_convergence_v2 import workspace_execution_response
+                        return workspace_execution_response(messages)
                     if stage in {"", "router"}:
                         return AIMessage(content=json.dumps({"schema_version": 1, "request_kind": "execute",
                             "execution_scope": "managed", "managed_intent_explicit": True, "retrieval_mode": "kb",

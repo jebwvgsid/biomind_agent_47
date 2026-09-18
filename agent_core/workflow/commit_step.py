@@ -536,10 +536,25 @@ class CommitStep:
 
         for version_id in attempt.get("artifact_version_ids", ()) or ():
             artifact = dict((candidate.get("provenance_state") or {}).get("artifacts", {}).get(str(version_id)) or {})
+            source_attempt = str(artifact.get("producer_attempt_id") or "")
+            source = dict((candidate.get("provenance_state") or {}).get("attempts", {}).get(source_attempt) or {})
+            owned_revalidation = bool(
+                artifact.get("source") == "same_task_candidate_revalidated"
+                and artifact.get("acceptance_attempt_id") == validation.attempt_id
+                and source.get("step_id") == validation.step_id
+                and source.get("action_id") == artifact.get("producer_action_id")
+                and source.get("returncode") == 0
+                and source.get("plan_id") == attempt.get("plan_id")
+                and source.get("plan_version") == attempt.get("plan_version")
+                and any(row.get("path") == artifact.get("path")
+                        and row.get("current_attempt_revalidated")
+                        and row.get("source_attempt_id") == source_attempt
+                        for row in attempt.get("observed_output_records", [])))
             if (
                 not artifact
-                or str(artifact.get("producer_attempt_id") or "") != validation.attempt_id
-                or str(artifact.get("producer_action_id") or "") != validation.action_id
+                or (not owned_revalidation and (
+                    source_attempt != validation.attempt_id
+                    or str(artifact.get("producer_action_id") or "") != validation.action_id))
                 or str(artifact.get("producer_step_id") or "") != validation.step_id
             ):
                 return self._rejected(task_id, "ARTIFACT_OWNERSHIP_MISMATCH", str(version_id), validation.validation_id)

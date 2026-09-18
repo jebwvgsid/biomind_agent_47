@@ -254,7 +254,7 @@ def _binding_from_row(
     validator = str(
         raw.get("validation_contract_id")
         or raw.get("validator")
-        or (f"{raw.get('format')}-output-v1" if raw.get("format") and direction == "output" else "")
+        or ("directory_exists" if raw.get("artifact_kind", raw.get("object_kind")) == "directory" else "file_exists")
     )
     aliases = tuple(
         str(value)
@@ -277,6 +277,7 @@ def _binding_from_row(
         aliases=aliases,
         metadata={
             "source_index": index,
+            "freshness": str(raw.get("freshness") or "owned_candidate"),
             "role": str(role),
             **({"input_instance": deepcopy(dict(raw["input_instance"]))}
                if isinstance(raw.get("input_instance"), Mapping) else {}),
@@ -673,6 +674,8 @@ def build_managed_artifact_bindings(
                             declaration.get("path_policy") or MODEL_SELECTABLE
                         )
                         binding_row["relocatable"] = binding_row["path_policy"] == MODEL_SELECTABLE
+                        if "freshness" in declaration:
+                            binding_row["freshness"] = declaration["freshness"]
                         validator = declaration.get("validation_contract_id") or declaration.get("validator")
                         if validator:
                             binding_row["validation_contract_id"] = str(validator)
@@ -761,6 +764,7 @@ def build_managed_artifact_bindings(
                 ),
                 "source_type": str(ledger_entry.get("source_type") or ""),
                 "declared_path_policy": str(ledger_entry.get("path_policy") or MANAGED_EXACT),
+                "freshness": str(ledger_entry.get("freshness") or "owned_candidate"),
                 "result_contract_version": 1 if explicit_results else 0,
             },
             artifact_kind=artifact_kind,
@@ -838,6 +842,7 @@ def concrete_artifact_provider_view(
             parent = path.parent if path else None
             row.update({
                 "expected_path": str(binding.canonical_path or ""),
+                "freshness": binding.metadata.get("freshness", "owned_candidate"),
                 "parent_exists": bool(parent and parent.exists()),
                 "parent_writable": bool(parent and os.access(parent, os.W_OK)),
             })
@@ -985,6 +990,7 @@ def validate_concrete_action_artifacts(
             "artifact_kind": bindings[handle].artifact_kind,
             "format": bindings[handle].format,
             "validation_contract_id": bindings[handle].validation_contract_id,
+            "freshness": bindings[handle].metadata.get("freshness", "owned_candidate"),
             "required": bindings[handle].required,
             "path_policy": bindings[handle].path_policy,
             "result_contract_version": bindings[handle].metadata.get("result_contract_version", 0),
@@ -1596,6 +1602,7 @@ def materialize_managed_action(
             "artifact_kind": bindings[handle].artifact_kind,
             "format": bindings[handle].format,
             "validation_contract_id": bindings[handle].validation_contract_id,
+            "freshness": bindings[handle].metadata.get("freshness", "owned_candidate"),
             "required": bindings[handle].required,
             "path_policy": bindings[handle].path_policy,
             "result_contract_version": bindings[handle].metadata.get("result_contract_version", 0),
@@ -1894,7 +1901,7 @@ def reconcile_runtime_outputs(
         dict(item) for item in observed_candidates or []
         if isinstance(item, Mapping)
         and str(item.get("attempt_id") or "") == str(attempt_id or "")
-        and bool(item.get("current_attempt_owned", True))
+        and (bool(item.get("current_attempt_owned", True)) or bool(item.get("current_attempt_revalidated")))
     ]
     result: Dict[str, Any] = {
         "status": "accepted",
@@ -1979,12 +1986,9 @@ def reconcile_runtime_outputs(
                     "observed_artifact_kind": observed_kind,
                 })
                 continue
-            explicitly_empty_file = (
-                explicit_results and contract.get("validation_contract_id") == "file_exists"
-                and expected_kind == "file" and expected_format in {"", "file", "text", "data", "output"}
-                and exact.get("size") == 0 and exact.get("exists") is True
-            )
-            if not bool(exact.get("content_valid", False)) and not explicitly_empty_file:
+            basic_contract = str(contract.get("validation_contract_id") or "") in {
+                "", "file_exists", "directory_exists"}
+            if not bool(exact.get("content_valid", False)) and not (basic_contract and exact.get("exists") is True):
                 result["violations"].append({
                     "code": "OBSERVED_ARTIFACT_CONTENT_INVALID",
                     "owner": "ARTIFACT_CONTRACT",
@@ -1997,7 +2001,7 @@ def reconcile_runtime_outputs(
                     "validation_contract_id": str(contract.get("validation_contract_id") or ""),
                 })
                 continue
-            if format_compatibility == "incompatible":
+            if not basic_contract and format_compatibility == "incompatible":
                 result["violations"].append({
                     "code": "OUTPUT_REALIZATION_MISMATCH",
                     "owner": "ARTIFACT_CONTRACT",
@@ -2020,12 +2024,16 @@ def reconcile_runtime_outputs(
                 "observed_path": observed_path,
                 "attempt_id": str(attempt_id or ""),
                 "constraint_origin": constraint_origin,
-                "realization": "model_selected" if observed_path != expected_path else "expected",
+                "realization": "revalidated_existing" if exact.get("current_attempt_revalidated") else "model_selected" if observed_path != expected_path else "expected",
+                **({"source_attempt_id": exact["source_attempt_id"],
+                    "revalidated_from_attempt_id": exact["revalidated_from_attempt_id"]}
+                   if exact.get("current_attempt_revalidated") else {}),
                 **({"selection_decision_id": selected[0].get("decision_id", "")}
                    if selected and observed_path != expected_path else {}),
                 "format": str(exact.get("format") or expected_format),
                 "representation": str(exact.get("representation") or ""),
-                "content_valid": True,
+                "content_valid": bool(exact.get("content_valid")),
+                "validation_scope": "existence_and_kind" if basic_contract else "declared_content_contract",
                 "format_compatibility": format_compatibility,
             })
             continue
@@ -2340,3 +2348,136 @@ def classify_output_mismatch(
             proposed=_canonical_path({"path": observed_path}),
         )
     return None
+
+def prepare_approved_output_parents(output_contracts: Sequence[Mapping[str, Any]]) -> List[str]:
+    """After code approval, create only parents of exact managed outputs.
+
+    The output leaf belongs to the approved program/publication helper. Refuse
+    symlink ancestors so this does not widen the approved physical write scope.
+    """
+    created = []
+    for row in output_contracts:
+        raw = str(row.get("expected_path") or "")
+        if not raw:
+            continue
+        path = Path(raw)
+        if not path.is_absolute() or ".." in path.parts or path.parent == Path("/"):
+            raise ManagedArtifactError("OUTPUT_PARENT_SCOPE_INVALID: " + raw)
+        if any(parent.is_symlink() for parent in (path, *path.parents)):
+            raise ManagedArtifactError("OUTPUT_PARENT_SYMLINK_DENIED: " + raw)
+        missing = [parent for parent in path.parents if not parent.exists()]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        created.extend(str(parent) for parent in reversed(missing))
+    return list(dict.fromkeys(created))
+
+
+def _bounded_reuse_signature(path: Path, *, max_entries=1024, max_depth=5) -> Dict[str, Any]:
+    """Metadata receipt for reuse only; incomplete traversal never proves identity."""
+    entries, stack, complete = {}, [(path, 0)], True
+    while stack and len(entries) < max_entries:
+        item, depth = stack.pop()
+        if item.is_symlink():
+            complete = False
+            continue
+        row = _observed_file_metadata(item)
+        entries[str(item)] = row
+        if not row.get("exists"):
+            complete = False
+        if row.get("artifact_kind") == "directory":
+            try:
+                children = list(item.iterdir())
+            except OSError:
+                complete = False
+                continue
+            if depth >= max_depth and children:
+                complete = False
+            else:
+                stack.extend((child, depth + 1) for child in children)
+    return {"complete": complete and not stack, "entries": entries}
+
+
+def managed_input_signature(action: Mapping[str, Any]) -> Dict[str, Any]:
+    """Include upstream products used as inputs, including directory members."""
+    outputs = {str(row.get("expected_path") or "")
+               for row in action.get("controller_output_bindings", [])}
+    return {str(handle): _bounded_reuse_signature(Path(path))
+            for handle, path in sorted((action.get("materialized_artifacts") or {}).items())
+            if path and (str(handle).startswith("input.") or str(path) not in outputs)}
+
+
+def discover_owned_unchanged_outputs(plan_state: Mapping[str, Any], output_contracts,
+        before, after, *, attempt_id: str, step_id: str, input_signature: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """Revalidate a prior same-step candidate without claiming new production.
+
+    A persisted controller snapshot, exact contract and unchanged input scope
+    are required. Legacy attempts lacking these receipts remain unverified.
+    Explicit per-artifact freshness=current_attempt opts out of reuse.
+    """
+    from agent_core.plan_tracker import semantic_plan_hash
+    if any(isinstance(row, Mapping) and row.get("complete") is False for row in input_signature.values()):
+        return []
+    provenance = plan_state.get("provenance_state") or {}
+    reuse_scope = {"task_id": str(plan_state.get("task_id") or ""),
+                   "task_revision": (plan_state.get("current_task") or {}).get("task_revision"),
+                   "plan_semantic_hash": semantic_plan_hash(dict(plan_state))}
+    def subtree(snapshot, root):
+        return {p: row for p, row in snapshot.items() if p == root or _path_within(p, Path(root))}
+    def contract_key(row):
+        return {k: row.get(k) for k in ("artifact_id", "expected_path", "artifact_kind", "format",
+                                       "validation_contract_id", "path_policy", "freshness")}
+    found = []
+    for contract in output_contracts:
+        if contract.get("freshness") == "current_attempt":
+            continue
+        path = str(contract.get("expected_path") or "")
+        now = subtree(after, path) if path else {}
+        if path not in now or now != subtree(before, path):
+            continue
+        completeness = _bounded_reuse_signature(Path(path))
+        if not completeness["complete"] or completeness["entries"] != now:
+            continue
+        for previous in reversed(list((provenance.get("attempts") or {}).values())):
+            if (previous.get("attempt_id") == attempt_id or previous.get("step_id") != step_id
+                    or previous.get("plan_id") != plan_state.get("plan_id")
+                    or previous.get("plan_version") != plan_state.get("plan_version")
+                    or previous.get("returncode") != 0
+                    or previous.get("invalidated_at")
+                    or str(previous.get("status") or "").lower() in {"invalidated", "stale", "cancelled"}
+                    or previous.get("managed_reuse_scope") != reuse_scope
+                    or previous.get("managed_input_signature") != dict(input_signature)):
+                continue
+            if not any(contract_key(row) == contract_key(contract)
+                       for row in previous.get("managed_output_contracts", [])):
+                continue
+            if now != subtree(previous.get("managed_output_snapshot_after") or {}, path):
+                continue
+            prior = next((row for row in previous.get("observed_output_records", [])
+                          if row.get("path") == path and (row.get("current_attempt_owned")
+                              or row.get("current_attempt_revalidated"))), None)
+            if not prior:
+                continue
+            # Retain the physical producer across multiple acceptance attempts.
+            origin = str(prior.get("source_attempt_id") or previous["attempt_id"])
+            origin_record = (provenance.get("attempts") or {}).get(origin) or {}
+            if origin_record.get("invalidated_at") or str(origin_record.get("status") or "").lower() in {"invalidated", "stale", "cancelled"}:
+                continue
+            found.append({**dict(now[path]), "attempt_id": attempt_id,
+                          "current_attempt_owned": False, "current_attempt_revalidated": True,
+                          "source_attempt_id": origin, "revalidated_from_attempt_id": previous["attempt_id"]})
+            break
+    return found
+
+
+def approved_artifact_emission_identities(output_contracts, effect) -> Dict[str, str]:
+    """Exact approved handle-to-emission identity map for published helpers."""
+    from agent_core.step_effects import canonical_step_effect
+    declared = {str(row if isinstance(row, str) else row.get("identity") or "")
+                for row in canonical_step_effect(effect).get("produces_artifacts", [])}
+    result = {}
+    for row in output_contracts:
+        identities = {str(row.get("artifact_id") or ""), str(row.get("semantic_handle") or "")} - {""}
+        matches = identities & declared
+        if len(matches) == 1:
+            for alias in identities:
+                result[alias] = next(iter(matches))
+    return result

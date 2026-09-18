@@ -148,6 +148,7 @@ def make_inspection_fixture(root: Path, *, task_id="inspection-e2e", resolve_sec
     if observation_contract is not None:
         observation = observation_contract
     first = {"step_id": "step.check_contigs", "title": "Check contig compatibility", "action": "execute", "purpose": "validation", "tool": "bash", "inputs": [f"input.{role}" for role in paths], "outputs": [], "dependencies": [], "success_criteria": ["Emit the contigs_compatible typed boolean; the Controller independently parses the supplied files."], "skill_ids": [], "workflow_stage_ids": [], "batch_id": "", "risk_level": "low", "execution_capability_id": "genomics.snpeff_annotation.check_contig_compatibility", "operation": "check_contig_compatibility", "produces_observations": [observation]}
+    first["validation_level"] = "scientific"
     second = {**deepcopy(first), "step_id": "step.next", "title": "Prepare the next step", "purpose": "analysis", "inputs": [], "outputs": ["output.report", "output.stage_status", "output.reproduce_script"], "dependencies": [first["step_id"]], "success_criteria": ["Write the requested reports."], "execution_capability_id": "fixture.next", "operation": "finalize_outputs", "produces_observations": []}
     plan = build_plan_state(task_id, json.dumps({"steps": [first, second], "validation_checklist": [], "metadata": {"schema_version": 2, "planner_contract": "structured_plan_v2"}}), strict=True)
     for planned_step in plan["steps"]:

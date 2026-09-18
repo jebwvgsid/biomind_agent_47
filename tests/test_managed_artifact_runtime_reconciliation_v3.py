@@ -321,7 +321,8 @@ class RuntimeOutputReconciliationTests(unittest.TestCase):
             "db", "fasta", "gtf",
         ])
         self.assertEqual(argv[3], "_")
-        completed = subprocess.run(argv, check=True, capture_output=True, text=True)
+        completed = subprocess.run(["/bin/bash", "--noprofile", "--norc", "-c", *argv[2:]],
+            check=True, capture_output=True, text=True, env={"PATH":"/usr/bin:/bin", "LC_ALL":"C.UTF-8"})
         self.assertTrue(completed.stdout.endswith("_|db|fasta|gtf"), completed.stdout)
 
 

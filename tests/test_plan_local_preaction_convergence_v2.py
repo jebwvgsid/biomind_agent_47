@@ -502,7 +502,17 @@ class PreActionConvergenceTests(unittest.TestCase):
         self.assertEqual(budgets["generate_attempts_by_step"]["step-1"], 1)
 
 
+def workspace_execution_response(messages):
+    """External model leaf: explicitly hand user execution intent to the workflow."""
+    request = next(str(m.content) for m in reversed(messages) if m.type == "human")
+    return AIMessage(content="", tool_calls=[{"name": "request_execution", "id": "offline-managed-handoff",
+        "args": {"scope": "managed", "request": request, "authorization_quote": request}}])
+
+
 class _GraphRouterLLM:
+    def bind_tools(self, tools, **kwargs):
+        return self
+
     def bind(self, **_kwargs: Any) -> "_GraphRouterLLM":
         return self
 
@@ -511,6 +521,8 @@ class _GraphRouterLLM:
         return self
 
     async def ainvoke(self, _messages: Any, **_kwargs: Any) -> AIMessage:
+        if any("You are BioMind, a bioinformatics agent working" in str(m.content) for m in _messages):
+            return workspace_execution_response(_messages)
         return AIMessage(content=json.dumps({
             "schema_version": 1,
             "request_kind": "execute",

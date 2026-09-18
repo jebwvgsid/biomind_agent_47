@@ -472,7 +472,7 @@ class ContextBudgetPolicy:
         DEFAULT_APPLICATION_CONTEXT_LIMIT_TOKENS
     )
     known_provider_context_limit_tokens: int | None = None
-    output_reserve_tokens: int = 8_192
+    output_reserve_tokens: int = 50_000
     # Explicit Recovery policy overrides inherited local client defaults;
     # provider capability is a separate fact, not inferred from max_tokens.
     requested_output_limit_tokens: int | None = None

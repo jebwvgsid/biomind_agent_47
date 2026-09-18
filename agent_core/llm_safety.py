@@ -6,6 +6,9 @@ import re
 from typing import Any
 
 
+MODEL_OUTPUT_LIMIT_TOKENS = 50_000
+
+
 CONTENT_FILTER_MARKERS = (
     "badrequesterror",
     "data_inspection_failed",

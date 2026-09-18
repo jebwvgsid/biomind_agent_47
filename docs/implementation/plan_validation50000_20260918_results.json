@@ -1,0 +1,178 @@
+{
+  "baseline_head": "a489d0044877a5d73727e6353a95bbeff60514d2",
+  "source_manifest_sha256": "f9f8f5ace69c1da0b4ee3d50d23128d789accc105a6e351cd9315051295f0936",
+  "source_files": 954,
+  "groups": [
+    {
+      "group": "regression-graphs",
+      "returncode": 0,
+      "elapsed_seconds": 97.65342235565186,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 100,
+        "failed": 0,
+        "skipped": 0
+      },
+      "failures": []
+    },
+    {
+      "group": "regression-runtime",
+      "returncode": 0,
+      "elapsed_seconds": 84.26080822944641,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 385,
+        "failed": 0,
+        "skipped": 0
+      },
+      "failures": []
+    },
+    {
+      "group": "regression-recovery",
+      "returncode": 0,
+      "elapsed_seconds": 121.13017582893372,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 68,
+        "failed": 0,
+        "skipped": 0
+      },
+      "failures": []
+    },
+    {
+      "group": "plan-revision",
+      "returncode": 0,
+      "elapsed_seconds": 29.782023191452026,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      "failures": []
+    },
+    {
+      "group": "provider-terminal",
+      "returncode": 0,
+      "elapsed_seconds": 132.6221058368683,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 129,
+        "failed": 0,
+        "skipped": 0
+      },
+      "failures": []
+    },
+    {
+      "group": "workspace-entry-isolated",
+      "returncode": 0,
+      "elapsed_seconds": 11.990676641464233,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 15,
+        "failed": 0,
+        "skipped": 0
+      },
+      "failures": []
+    },
+    {
+      "group": "changes",
+      "returncode": 0,
+      "elapsed_seconds": 127.81937956809998,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 190,
+        "failed": 0,
+        "skipped": 1
+      },
+      "failures": []
+    },
+    {
+      "group": "compaction-regression",
+      "returncode": 0,
+      "elapsed_seconds": 12.980692625045776,
+      "source_unchanged": true,
+      "counts": {
+        "passed": 32,
+        "failed": 0,
+        "skipped": 0
+      },
+      "failures": []
+    }
+  ],
+  "passed_invocations": 924,
+  "unique_passed_tests": 839,
+  "skips": [
+    {
+      "nodeid": "tests/test_recovery50000_reference_helper.py::test_real_tools_production_runner_actual_skill_gate_and_commit",
+      "phase": "setup",
+      "outcome": "skipped",
+      "duration": 0.00014604907482862473,
+      "failure": ""
+    }
+  ],
+  "increment_files": [
+    "agent_core/completion_gate.py",
+    "agent_core/consultant_finalize.py",
+    "agent_core/evidence_projection.py",
+    "agent_core/genomics_reference_bundle.py",
+    "agent_core/llm_safety.py",
+    "agent_core/managed_artifacts.py",
+    "agent_core/node_context.py",
+    "agent_core/plan_contract.py",
+    "agent_core/plan_tracker.py",
+    "agent_core/planner_output_policy.py",
+    "agent_core/workflow/commit_step.py",
+    "agent_core/workflow/context_compaction.py",
+    "agent_core/workflow/managed_stop.py",
+    "agent_core/workflow/recovery_agent.py",
+    "agent_core/workflow/recovery_reception.py",
+    "agent_core/workflow/recovery_runtime.py",
+    "bio_agents.py",
+    "config/config.py",
+    "prompts/manager.py",
+    "skills/genomics/wgs-short-read-mapping/scripts/prepare_reference.py",
+    "supervisor.py",
+    "tests/offline_managed_bootstrap.py",
+    "tests/planner_fix_acceptance/test_planner_recorded_workflow.py",
+    "tests/planner_truncation_acceptance/test_planner_output_policy.py",
+    "tests/test_gwas_input_observation_graph_s3.py",
+    "tests/test_gwas_runtime_auto_chain.py",
+    "tests/test_gwas_s4_recovery_integration.py",
+    "tests/test_inspection_workflow.py",
+    "tests/test_managed_artifact_runtime_reconciliation_v3.py",
+    "tests/test_plan_local_preaction_convergence_v2.py",
+    "tests/test_plan_validation_owned_retry.py",
+    "tests/test_recovery50000_budget_boundary.py",
+    "tests/test_recovery50000_diagnostics_contract.py",
+    "tests/test_recovery50000_local_repair.py",
+    "docs/implementation/plan_validation50000_20260918.md",
+    "docs/implementation/plan_validation50000_20260918_results.json"
+  ],
+  "known_baseline_failures": [
+    "tests/test_schema2_context_compaction.py::AssemblyAndAttemptTests::test_bounded_second_attempt_gets_precise_capacity_feedback",
+    "tests/test_schema2_context_compaction.py::AssemblyAndAttemptTests::test_soft_threshold_noop_and_trigger_paths",
+    "tests/test_phase_context_compaction_runtime.py::PhaseContextCompactionRuntimeTests::test_extreme_input_uses_bounded_lossless_map_merge_before_selector",
+    "tests/test_phase_context_compaction_runtime.py::PhaseContextCompactionRuntimeTests::test_hard_block_with_two_invalid_attempts_raises_exact_failure",
+    "tests/test_phase_context_compaction_runtime.py::PhaseContextCompactionRuntimeTests::test_phase_local_selected_summary_keeps_original_identity_across_epochs",
+    "tests/test_phase_context_compaction_runtime.py::PhaseContextCompactionRuntimeTests::test_tool_call_and_results_are_an_indivisible_protocol_group"
+  ],
+  "prerequisite_overlay_manifest": "/public/home/liusiqi/03.毕设/biomind_audit_exports/plan_validation_20260918/integration-baseline-manifest.json",
+  "final_cumulative_source": "/public/home/liusiqi/03.毕设/biomind_audit_exports/plan_validation_20260918/final_cumulative_source",
+  "unrun": [
+    "real provider/API",
+    "host environment/bwrap acceptance",
+    "full GWAS/WGS",
+    "original-session resume",
+    "software installation/upgrade",
+    "workspace availability smoke test requiring external controlled execution",
+    "workspace private-file fixture incompatible with blanket .env audit guard"
+  ],
+  "substitutions": [
+    "model replies and human approval",
+    "runtime Inspector process leaf",
+    "native BWA/samtools/Picard subprocess leaves",
+    "provider HTTP transport"
+  ],
+  "real_local_execution": "Registered synthetic bash fixtures in sterile environment under /tmp; helper main/publication/validators and middle workflow chain are real."
+}

@@ -382,7 +382,7 @@ def _formal_paths(plan_state, step):
             bundles[binding.artifact_id] = binding.canonical_path
     for artifact_id, row in (plan_state.get("plan_artifacts") or {}).items():
         if str(artifact_id) in outputs:
-            if allow_evidence_output and row.get("role") == "reference_preparation_evidence":
+            if allow_evidence_output and (row.get("semantic_view") or {}).get("role", row.get("role")) == "reference_preparation_evidence":
                 continue
             _require(row.get("object_kind") == "directory" and row.get("resource_kind", "immutable_artifact") == "immutable_artifact",
                      "REFERENCE_BUNDLE_OUTPUT_NOT_IMMUTABLE_DIRECTORY", str(artifact_id))

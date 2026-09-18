@@ -2075,6 +2075,18 @@ reports, reproducibility scripts, statistics and stage status. If a real depende
 blocks computation, use the existing authorized stop/report path to state what
 was and was not executed; do not invent scientific results or call it scientific
 success merely because failure reporting completed.
+Validation belongs to this approved Plan. Steps default to validation_level="basic":
+process exit, declared path kind/existence, ownership and explicit predicates.
+Use artifact validators or StepEffect predicates only for task-required checks;
+selecting a Skill alone does not require deep validation. Set the optional step
+field validation_level="scientific" only when this step needs model scientific
+review; "artifact" enables additional deterministic process checks. Existing
+same-task, same-step candidates may be revalidated with their original producer
+record; do not modify or recompute valid files merely to change their timestamp.
+Only when a particular artifact must be newly produced on this attempt, set its
+artifact_contract.freshness="current_attempt"; the default is "owned_candidate".
+Observation-only steps require no output file. User hard constraints, required
+sample checks, and unknown scientific mappings must remain explicit predicates.
 For every execute step, explicitly choose one supported execution path:
 (1) a domain execution_capability_id enumerated by the step's selected Skill,
 with that capability's canonical operation and actual helper interfaces; or

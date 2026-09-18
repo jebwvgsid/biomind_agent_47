@@ -2493,7 +2493,8 @@ class CompletionGate:
             producer_attempt = str(artifact.get("producer_attempt_id") or "")
             if not producer_step and not producer_attempt:
                 unknown_producers.append(artifact_id)
-            attempt = provenance.get("attempts", {}).get(producer_attempt, {}) if producer_attempt else {}
+            acceptance_attempt = str(artifact.get("acceptance_attempt_id") or producer_attempt)
+            attempt = provenance.get("attempts", {}).get(acceptance_attempt, {}) if acceptance_attempt else {}
             if producer_attempt and str(attempt.get("status") or "").lower() not in {
                 "succeeded", "passed", "valid", "completed",
             }:
@@ -2611,8 +2612,7 @@ class CompletionGate:
                     or (physical_path.is_file() and (
                         physical_path.stat().st_size > 0
                         or (
-                            plan_uses_explicit_results(plan_state)
-                            and str(artifact.get("validator") or artifact.get("validation_contract_id") or "") == "file_exists"
+                            str(artifact.get("validator") or artifact.get("validation_contract_id") or "") == "file_exists"
                         )
                     ))
                 )
@@ -2630,7 +2630,7 @@ class CompletionGate:
                         invalid.append(artifact_id)
                         failed_criteria.append("exact_result_path_mismatch:" + str(artifact.get("logical_artifact_id") or artifact_id))
             if str(artifact.get("producer_attempt_id") or ""):
-                attempts.append(str(artifact["producer_attempt_id"]))
+                attempts.append(str(artifact.get("acceptance_attempt_id") or artifact["producer_attempt_id"]))
             if version_id:
                 versions.append(version_id)
             if str(artifact.get("validation_id") or ""):

@@ -169,7 +169,8 @@ def test_real_node_externalizes_reads_pages_and_does_not_reexternalize(tmp_path)
         final = next(r for r in archives if r["phase"] == "recovery")
         assert final["summary"]["business_budget_counters"]["no_progress_rounds"] == 1
         assert final["summary"]["business_budget_counters"]["tool_call_count"] == 3
-        assert all(c["stage"] == "recovery" and len(c["tools"]) == 11 for c in model.calls)
+        from agent_core.workflow.recovery_agent import recovery_tool_schemas
+        assert all(c["stage"] == "recovery" and len(c["tools"]) == len(recovery_tool_schemas()) for c in model.calls)
         (tmp_path / "dispatch_receipts.json").write_text(json.dumps(model.calls, indent=2))
     asyncio.run(scenario())
 

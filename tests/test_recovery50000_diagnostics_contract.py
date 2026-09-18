@@ -82,12 +82,16 @@ def test_rejected_helper_reaches_actual_next_provider_then_real_observation_comm
                 command += " " + flag + " " + shlex.quote(str(path))
             command += " --observation-id gwas_input_structure"
             class ProviderLeaf:
-                max_tokens = 16000
+                def bind_tools(self, tools, **kwargs): return self
+                max_tokens = 50000
                 model_name = "offline-helper-correction"
                 def bind(self, **kwargs): return self
                 def model_copy(self, update=None): return self
                 async def ainvoke(self, messages, config=None, **kwargs):
                     stage = (config or {}).get("tags", [""])[-1]
+                    if stage == "workspace_agent":
+                        from tests.test_plan_local_preaction_convergence_v2 import workspace_execution_response
+                        return workspace_execution_response(messages)
                     if stage in {"", "router"}:
                         return AIMessage(content=json.dumps({"schema_version": 1, "request_kind": "execute", "execution_scope": "managed",
                             "managed_intent_explicit": True, "retrieval_mode": "kb", "confidence": 1.0, "reason": "explicit isolated inspection"}))

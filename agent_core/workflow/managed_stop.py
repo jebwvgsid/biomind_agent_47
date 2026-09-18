@@ -946,7 +946,8 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
     frozen["associated_attempts"] = deepcopy(value.get("associated_attempts") or [])
     frozen["inspection_observations"] = deepcopy(value.get("inspection_observations") or [])
     wire = json.dumps(frozen, ensure_ascii=False)
-    reserve = len(wire.encode()) + 1500
+    from agent_core.llm_safety import MODEL_OUTPUT_LIMIT_TOKENS
+    reserve = len(wire.encode()) + MODEL_OUTPUT_LIMIT_TOKENS
     if len(wire) > 20000: skip = skip or "FACT_BUDGET_EXCEEDED"
     if int(policy.get("remaining_tokens", reserve)) < reserve: skip = skip or "GLOBAL_TOKEN_BUDGET_INSUFFICIENT"
     if "max_total_tokens" in policy:

@@ -98,7 +98,9 @@ def test_a3_complete_118554_input_does_not_compact_and_adapter_dispatches_50000(
         assert not complete.should_compact
         assert dispatched["max_tokens"] == receipt["effective_output_limit_tokens"] == 50000
         assert complete.estimated_input_tokens + 50000 + policy.estimation_margin_tokens <= 200000
-        assert len(dispatched["tools"]) == 11
+        from agent_core.workflow.recovery_agent import recovery_tool_schemas
+        assert len(dispatched["tools"]) == len(recovery_tool_schemas())
+        assert any(row["function"]["name"] == "exec_command" for row in dispatched["tools"])
         assert all(complete.component_token_counts[key] > 0 for key in
                    ("system", "frozen_inputs", "inherited_materials", "tool_schema"))
         (tmp_path / "a3_complete_budget_receipt.json").write_text(json.dumps({

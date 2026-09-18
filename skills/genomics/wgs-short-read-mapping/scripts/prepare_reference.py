@@ -307,13 +307,16 @@ def main(argv=None):
         # portable failure code never claims a native signal or inferred OOM.
         rc = getattr(exc, "returncode", 2)
         return rc if 0 < rc < 256 else 1
+    # Execute supplies an exact approved mapping. Resource refs in ownership
+    # journals stay unchanged; emitted facts use the frozen StepEffect identity.
+    identities = json.loads(os.environ.get("BIOMIND_ARTIFACT_IDENTITIES_JSON", "{}"))
     facts = {"schema_version": 1,
-        "produces_artifacts": [{"identity": args.artifact_ref, "path": args.output},
-                               {"identity": args.evidence_artifact_ref, "path": args.work_dir}],
+        "produces_artifacts": [{"identity": identities.get(args.artifact_ref, args.artifact_ref), "path": args.output},
+                               {"identity": identities.get(args.evidence_artifact_ref, args.evidence_artifact_ref), "path": args.work_dir}],
         "produces_observations": [{"identity": "reference_bundle_valid", "value": True,
                                    "helper_receipt": result}],
         "explicit_side_effects": [{"identity": "create_reference_indexes",
-             "reference_resource_ref": args.reference_ref, "index_artifacts": [args.artifact_ref],
+             "reference_resource_ref": args.reference_ref, "index_artifacts": [identities.get(args.artifact_ref, args.artifact_ref)],
              "journal_path": result["journal_path"]}]}
     print(STRUCTURED_EFFECT_EVIDENCE_PREFIX + json.dumps(facts, ensure_ascii=False, separators=(",", ":")))
     return 0

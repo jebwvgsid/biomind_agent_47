@@ -82,6 +82,7 @@ STRUCTURED_PLAN_STEP_SCALAR_FIELDS = frozenset({
     "risk_level",
 })
 STRUCTURED_PLAN_STEP_OPTIONAL_SCALAR_FIELDS = frozenset({
+    "validation_level",
     "execution_capability_id",
     "operation",
 })
@@ -534,6 +535,9 @@ def structured_plan_candidate_diagnostics(
                     "field_path": f"$.steps[{index}].{field}",
                     "message": "must be a string",
                 })
+        if "validation_level" in step and step["validation_level"] not in ("basic", "artifact", "scientific"):
+            diagnostics.append({"field_path": f"$.steps[{index}].validation_level",
+                                "message": "must be basic, artifact, or scientific"})
         unexpected_step_fields = sorted(
             set(step) - (
                 STRUCTURED_PLAN_STEP_SCALAR_FIELDS
@@ -657,7 +661,7 @@ def structured_plan_candidate_diagnostics(
                         "message": "must be an object",
                     })
                     continue
-                result_fields = {"validator", "description", "source_refs"} if uses_v3 else {"required", "path_policy", "validator", "description", "source_refs"}
+                result_fields = {"validator", "description", "source_refs", "freshness"} if uses_v3 else {"required", "path_policy", "validator", "description", "source_refs", "freshness"}
                 unexpected = set(row) - (
                     {"output_ref", "path"}
                     | (result_fields if plan_uses_explicit_results(payload) else set())
@@ -686,6 +690,8 @@ def structured_plan_candidate_diagnostics(
         for field_path, contract in result_rows:
             if not isinstance(contract, Mapping):
                 continue
+            if "freshness" in contract and contract["freshness"] not in ("owned_candidate", "current_attempt"):
+                diagnostics.append({"field_path": field_path + ".freshness", "message": "must be owned_candidate or current_attempt"})
             if "required" in contract and type(contract["required"]) is not bool:
                 diagnostics.append({"field_path": field_path + ".required", "message": "must be a boolean"})
             if "path_policy" in contract and (
@@ -1808,6 +1814,8 @@ def prepare_allocation_intent(
                     "received_excerpt": _canonical_json(contract)[:500],
                 },
             )
+        if "freshness" in contract and contract["freshness"] not in ("owned_candidate", "current_attempt"):
+            raise PlannerCandidateError("ARTIFACT_FRESHNESS_INVALID", f"$.proposed_artifacts[{index}].artifact_contract.freshness", "must be owned_candidate or current_attempt")
         object_kind = str(contract.get("object_kind") or "")
         lifecycle = str(contract.get("lifecycle") or "")
         policy_id = str(contract.get("materialization_policy_id") or "")
@@ -1906,6 +1914,8 @@ def promote_allocation_intent(
         logical_id = f"plan-artifact-{digest}"
         contract = dict(declaration.get("artifact_contract") or {})
         resource_binding = dict(declaration.get("resource_binding") or {})
+        if "freshness" in contract and contract["freshness"] not in ("owned_candidate", "current_attempt"):
+            raise PlannerCandidateError("ARTIFACT_FRESHNESS_INVALID", f"$.proposed_artifacts[{index}].artifact_contract.freshness", "must be owned_candidate or current_attempt")
         object_kind = str(contract.get("object_kind") or "")
         canonical_path = f"{str(managed_root).rstrip('/')}/{logical_id}"
         if (intent.get("result_contract_version") == PLAN_RESULT_CONTRACT_VERSION
@@ -1933,6 +1943,7 @@ def promote_allocation_intent(
                 or logical_id
             ),
             "resource_binding": deepcopy(resource_binding),
+            **({"freshness": contract["freshness"]} if "freshness" in contract else {}),
             **({"role_associations": deepcopy(declaration["role_associations"]), "role_association_version": 1}
                if declaration.get("role_associations") else {}),
             "semantic_view": deepcopy(dict(declaration.get("semantic_view") or {})),
@@ -2348,3 +2359,15 @@ def typed_task_plan_traceability(
         edges,
         key=lambda item: (item["relation"], item["source_id"], item["target_id"]),
     )
+
+
+def approved_step_validation_level(plan_state: Mapping[str, Any], step_id: str = "") -> str:
+    """Optional review policy is part of the approved step's semantic hash."""
+    from agent_core.plan_tracker import current_plan_step_with_index
+    if step_id:
+        step = next((row for row in plan_state.get("steps", [])
+                     if row.get("step_id") == step_id), {})
+    else:
+        _, step = current_plan_step_with_index(dict(plan_state))
+    level = str((step or {}).get("validation_level") or "basic")
+    return level if level in {"basic", "artifact", "scientific"} else "basic"

@@ -1147,7 +1147,7 @@ def canonical_finalize_request_hash(
         raise TypeError("provider_response_options.extra_body_allowlist must be a mapping")
     normalized_parameters = {
         "top_p": float(parameters.get("top_p", 1.0)),
-        "max_output_tokens": int(parameters.get("max_output_tokens", 4096)),
+        "max_output_tokens": int(parameters.get("max_output_tokens", 50000)),
         "schema_id": str(parameters.get("schema_id") or ""),
         "schema_hash": str(parameters.get("schema_hash") or ""),
         "provider_response_options": {

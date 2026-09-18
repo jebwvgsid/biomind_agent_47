@@ -103,7 +103,8 @@ def resolve_recovery_budget_policy(policy, *, clients=(), resource_policy=None):
 def configured_recovery_budget_policy():
     """Standalone defaults without loading application credentials."""
     from agent_core.workflow.context_compaction import ContextBudgetPolicy
-    requested = int(os.getenv("BIOMIND_RECOVERY_OUTPUT_LIMIT_TOKENS", "50000"))
+    from agent_core.llm_safety import MODEL_OUTPUT_LIMIT_TOKENS
+    requested = min(MODEL_OUTPUT_LIMIT_TOKENS, int(os.getenv("BIOMIND_RECOVERY_OUTPUT_LIMIT_TOKENS", str(MODEL_OUTPUT_LIMIT_TOKENS))))
     raw_cap = os.getenv("BIOMIND_RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS", "").strip()
     return ContextBudgetPolicy(output_reserve_tokens=requested,
         requested_output_limit_tokens=requested,
@@ -319,7 +320,7 @@ async def recovery_direct_invoke(call, messages, *, stage, call_context=None, ca
     invocation = "recovery-direct-" + hashlib.sha256((scope["incident"]+stage+epoch+wire_hash).encode()).hexdigest()[:24]
     attempt_id = invocation + "-" + uuid.uuid4().hex[:8]
     estimate = recovery_request_estimate(messages, tools=recovery_tool_schemas() if stage == "recovery" else ())
-    output = receipt["effective_output_limit_tokens"] if receipt else policy.max_output_tokens if stage == "recovery" else 16000
+    output = receipt["effective_output_limit_tokens"] if receipt else policy.max_output_tokens if stage == "recovery" else 50000
     reserve = lambda aid, locked=False: recovery_reserve(aid, input_tokens=estimate,
         output_tokens=output, stage=stage, locked=locked, invocation_id=invocation,
         wire_fingerprint=wire_hash, context_epoch_id=epoch)

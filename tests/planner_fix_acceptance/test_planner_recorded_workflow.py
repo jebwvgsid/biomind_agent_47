@@ -25,6 +25,7 @@ SKILLS=['genomics/wgs-short-read-mapping','genomics/wgs-gatk-snp-indel']
 
 class RecordedModel:
  def __init__(self,responses):self.responses=list(responses);self.calls=[];self.binds=[];self.observe=None;self.observed=[];self.cancel_target=None
+ def bind_tools(self,tools,**kwargs):return self
  def bind(self,**kwargs):self.binds.append(kwargs);return self
  def model_copy(self,update=None):return self
  async def ainvoke(self,messages,**kwargs):

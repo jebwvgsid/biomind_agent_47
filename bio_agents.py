@@ -2644,7 +2644,9 @@ class BioAnalystAgent:
         self.llm_provider_is_deepseek = _is_deepseek_target(
             llm_model, LLM_BASE_URL
         )
+        from agent_core.llm_safety import MODEL_OUTPUT_LIMIT_TOKENS
         llm_kwargs: dict[str, Any] = {
+            "max_tokens": MODEL_OUTPUT_LIMIT_TOKENS,
             "model": llm_model,
             "model_provider": model_provider,
             "base_url": LLM_BASE_URL,
@@ -2710,7 +2712,7 @@ class BioAnalystAgent:
         self.recovery_transport_llm = recovery_transport_llm
         # Separate unbound, no-tools client; recovery_client_kwargs fixes SDK
         # retries at zero. No summary call is made until outer terminalization.
-        self.terminal_summary_llm = recovery_transport_llm.bind(max_tokens=1500)
+        self.terminal_summary_llm = recovery_transport_llm.bind(max_tokens=MODEL_OUTPUT_LIMIT_TOKENS)
         self.terminal_summary_policy = {"enabled": True, "timeout_seconds": 30}
         self.recovery_llm, self.recovery_llm_policy = bind_recovery_llm(
             self.recovery_transport_llm,
@@ -18236,7 +18238,7 @@ class BioAnalystAgent:
                 raise ValueError("RECOVERY_OUTPUT_PARAMETER_CONFLICT")
             resource_output = (dispatch_budget["effective_output_limit_tokens"] if dispatch_budget
                 else resources["policy"].max_output_tokens if stage == "recovery"
-                else resolved["client_resolved_output_limit"] if type(resolved["client_resolved_output_limit"]) is int else 16000)
+                else resolved["client_resolved_output_limit"] if type(resolved["client_resolved_output_limit"]) is int else 50000)
             if not dispatch_budget and type(resolved["client_resolved_output_limit"]) is int and resolved["client_resolved_output_limit"] > 0:
                 resource_output = min(resource_output, resolved["client_resolved_output_limit"])
             invocation_llm = invocation_llm.bind(max_tokens=resource_output) if hasattr(invocation_llm, "bind") else invocation_llm
@@ -18938,20 +18940,11 @@ class BioAnalystAgent:
         )
 
     def _execution_validation_level(self, state: AgentState, code: str) -> str:
-        explicit = str(state.get("validation_level") or "").strip().lower()
-        if explicit in {"none", "basic", "artifact", "scientific"}:
-            return explicit
-        if state.get("active_skills") or state.get("selected_skills") or state.get("workflow_id"):
-            return "scientific"
-        plan_text = str(state.get("current_plan") or state.get("plan_progress") or "").lower()
-        code_text = str(code or "").lower()
-        analysis_terms = (
-            "analysis", "workflow", "pipeline", "qc", "align", "mapping",
-            "cluster", "differential", "tad", "variant", "fastqc", "seurat",
-        )
-        if any(term in plan_text or term in code_text for term in analysis_terms):
-            return "artifact"
-        return "basic"
+        # Approval, not skill names, task keywords, or triage guesses, owns
+        # optional deep review. Deterministic Plan predicates always run.
+        from agent_core.plan_contract import approved_step_validation_level
+        durable = load_plan_state(self.data_path, str(state.get("task_id") or "default"))
+        return approved_step_validation_level(durable)
 
     def _validate_execution_result(
         self,
@@ -18964,7 +18957,10 @@ class BioAnalystAgent:
         level = self._execution_validation_level(state, code)
         if level == "none" or not self.validator:
             return {}, "", level
-        validation = self.validator.validate(stdout, stderr, code, returncode)
+        validation = ({"passed": returncode == 0,
+            "critical_failures": [] if returncode == 0 else [f"Process exited with error code: {returncode}"],
+            "warnings": [], "info": [], "suggestions": [], "benign_nonzero_readonly_preview": False}
+            if level == "basic" else self.validator.validate(stdout, stderr, code, returncode))
         status = "failed"
         if validation.get("passed"):
             status = "warning" if validation.get("warnings") else "passed"
@@ -44725,8 +44721,8 @@ question. Never guess a scientific or database identity.
             activate_match = re.search(r"<activate_batch\s+batch_id=[\"']?([^\"'\s>/]+)[\"']?\s*/?>", parse_content, re.DOTALL)
             structured_parse_result = (StructuredActionParseResult(error={
                 "stage": "script_block" if generate_script_protocol else "action_schema",
-                "code": ScriptBlockError.code,
-                "message": generate_display.error,
+                "code": "GENERATE_RESPONSE_INCOMPLETE" if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ScriptBlockError.code,
+                "message": generate_display.error + (" Resubmit one complete executable response within the existing correction budget; never continue or execute this partial response." if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ""),
                 "cause_code": "GENERATE_RESPONSE_INCOMPLETE" if generate_display.error.startswith("GENERATE_RESPONSE_INCOMPLETE:") else ScriptBlockError.code,
                 "response_completion": {k:v for k,v in (getattr(response,"response_metadata",{}) or {}).items()
                     if k in {"finish_reason","completion_integrity","provider_attempt_ref"}},
@@ -44950,8 +44946,8 @@ question. Never guess a scientific or database identity.
                     structured_action = {}
                     action_parse_error = {**dict(action_parse_error or {}),
                         "stage": "script_block",
-                        "code": ScriptBlockError.code,
-                        "message": str(exc),
+                        "code": (action_parse_error.get("code") if action_parse_error.get("cause_code") == "GENERATE_RESPONSE_INCOMPLETE" else ScriptBlockError.code),
+                        "message": (action_parse_error.get("message") if action_parse_error.get("cause_code") == "GENERATE_RESPONSE_INCOMPLETE" else str(exc)),
                         **(exc.__cause__.to_dict() if hasattr(exc.__cause__, "to_dict") else {}),
                     }
             if not generate_script_protocol and structured_action.get("type") == "execute":
@@ -49741,6 +49737,11 @@ question. Never guess a scientific or database identity.
                 RecoveryResultContract.EXECUTION_BUNDLE.value,
             }:
                 managed_output_contracts = []
+            from agent_core.managed_artifacts import (
+                prepare_approved_output_parents, managed_input_signature,
+                discover_owned_unchanged_outputs, approved_artifact_emission_identities,
+            )
+            input_signature_before = managed_input_signature(pending_action)
             managed_output_snapshot_before = capture_managed_output_snapshot(
                 managed_output_contracts
             )
@@ -49775,6 +49776,10 @@ question. Never guess a scientific or database identity.
             })
             attempt_id = str(attempt_record.get("attempt_id") or "")
             effective_execution_env["BIOMIND_ATTEMPT_ID"] = attempt_id
+            effective_execution_env["BIOMIND_ARTIFACT_IDENTITIES_JSON"] = json.dumps(
+                approved_artifact_emission_identities(managed_output_contracts,
+                    pending_action.get("expected_step_effect") or (self._running_plan_step(attempt_plan_state) or {}).get("step_effect") or {}), sort_keys=True)
+            prepared_output_parents = []
             advance_preparation_boundary(
                 "mutation_intent_journal",
                 "agent_core.workspace_attestation.persist_mutation_journal",
@@ -50355,7 +50360,11 @@ question. Never guess a scientific or database identity.
                         json.dump({**output_write_receipt, "attempt_id": attempt_id}, receipt_file,
                                   ensure_ascii=False, sort_keys=True)
                     validate_output_write_guard(output_guard)
-            except (ActionRuntimeContractError, OSError) as exc:
+                # Preserve/check reviewed old files first. Creating a missing
+                # approved parent is a controller effect and would otherwise
+                # invalidate the reviewed ancestor snapshot itself.
+                prepared_output_parents = prepare_approved_output_parents(managed_output_contracts)
+            except (ActionRuntimeContractError, ManagedArtifactError, OSError) as exc:
                 return reject_internal_prelaunch(pending_action,
                     error_code=getattr(exc, "code", "OUTPUT_BACKUP_OR_RECEIPT_FAILED"),
                     stage="execute.output_preservation", detail=str(exc))
@@ -50691,6 +50700,12 @@ question. Never guess a scientific or database identity.
                 managed_output_snapshot_after,
                 attempt_id=attempt_id,
             )
+            if managed_input_signature(pending_action) == input_signature_before:
+                observed_candidate_records.extend(discover_owned_unchanged_outputs(
+                    attempt_plan_state, managed_output_contracts,
+                    managed_output_snapshot_before, managed_output_snapshot_after,
+                    attempt_id=attempt_id, step_id=str(pending_action.get("step_id") or ""),
+                    input_signature=input_signature_before))
             runtime_output_reconciliation = reconcile_runtime_outputs(
                 managed_output_contracts,
                 observed_candidate_records,
@@ -50839,10 +50854,6 @@ question. Never guess a scientific or database identity.
                 validation_result["errors"] = [*list(validation_result.get("errors") or []), "EXECUTION_LOG_OBSERVATION_INCOMPLETE"]
                 validation_level = "execution_evidence_persistence"
             validation_failed = bool(validation_result and not validation_result.get("passed", True))
-            if validation_failed:
-                emit_display("error", "执行结果核验未通过；步骤尚未提交", source="runtime_fact",
-                             task_id=task_id, node="execute", execution_attempt_id=attempt_id,
-                             action_id=str(pending_action.get("action_id") or ""))
             benign_nonzero_preview = bool(
                 validation_result
                 and validation_result.get("benign_nonzero_readonly_preview")
@@ -50918,7 +50929,7 @@ question. Never guess a scientific or database identity.
 
             output.print_observation(obs, item_id=f"execution-observation:{attempt_id}",
                 summary=("执行环境检查未通过：" + str(runtime_install_redirect) if runtime_missing else
-                         "局部执行检查未通过；等待正式核验与恢复处理" if validation_failed else
+                         "执行核验未通过，步骤未提交：" + str((validation_result.get("errors") or validation_result.get("critical_failures") or ["详见执行详情"])[0])[:240] if validation_failed else
                          "进程已退出；正式核验与提交尚未确认" if effective_success else
                          "进程执行失败；等待后端恢复处理"),
                 failed=bool(runtime_missing or validation_failed or not effective_success),
@@ -51278,7 +51289,11 @@ question. Never guess a scientific or database identity.
                 "candidate_artifacts": observed_outputs,
                 "validated_artifacts": validated_formal_artifacts,
                 "adopted_artifacts": validated_formal_artifacts,
-                "produced_artifacts": validated_formal_artifacts,
+                "produced_artifacts": [path for path in validated_formal_artifacts
+                    if not any(row.get("observed_path") == path and row.get("realization") == "revalidated_existing"
+                               for row in reconciled_outputs)],
+                "revalidated_artifacts": [row for row in reconciled_outputs
+                    if row.get("realization") == "revalidated_existing"],
                 "declared_step_effect": declared_step_effect,
                 "effect_evidence": effect_evidence,
                 "produced_bindings": produced_binding_receipts,
@@ -51293,6 +51308,9 @@ question. Never guess a scientific or database identity.
                 ),
                 "explicit_side_effects": side_effect_receipts,
                 "observed_output_records": observed_candidate_records,
+                "managed_output_snapshot_after": managed_output_snapshot_after,
+                "managed_input_signature": input_signature_before,
+                "prepared_output_parents": prepared_output_parents,
                 "runtime_output_reconciliation": runtime_output_reconciliation,
                 "reconciled_outputs": reconciled_outputs,
                 "output_reconciliation_status": str(

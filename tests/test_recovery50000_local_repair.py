@@ -17,7 +17,10 @@ from agent_core.plan_tracker import load_plan_state
 from tests.ger_fixture_support import configure_protocol
 
 
-def test_script_block_failure_reaches_next_request_correction_and_approval():
+import pytest
+
+@pytest.mark.parametrize("truncated", [False, True])
+def test_script_block_failure_reaches_next_request_correction_and_approval(truncated):
     async def scenario():
         import bio_agents
         from tests.test_plan_local_preaction_convergence_v2 import PlanLocalRealGraphTests
@@ -31,6 +34,8 @@ def test_script_block_failure_reaches_next_request_correction_and_approval():
         task_id = "recovery50000-local-script-repair"
         bad = 'Malformed prose outside the block.\n<shell>printf "approved\\n"</shell>'
         fixed = '<shell>printf "approved\\n"</shell>'
+        if truncated: bad = fixed
+        expected_code = "GENERATE_RESPONSE_INCOMPLETE" if truncated else "GENERATE_SCRIPT_BLOCK_INVALID"
         requests, approvals, executions, events = [], [], [], []
 
         async def provider(messages, *, stage, node_context=None, **_kwargs):
@@ -43,7 +48,7 @@ def test_script_block_failure_reaches_next_request_correction_and_approval():
             requests.append({"wire": wire, "payload": node_context.llm_payload.to_dict()})
             assert not approvals and not executions, "A rejected candidate must not reach approval or execution"
             if len(requests) == 1:
-                return AIMessage(content=bad)
+                return AIMessage(content=bad, response_metadata={"finish_reason": "length" if truncated else "stop"})
             assert len(requests) == 2
             # The production local correction retains the exact earlier
             # request, complete bad candidate and machine feedback.
@@ -53,7 +58,7 @@ def test_script_block_failure_reaches_next_request_correction_and_approval():
                 "<semantic_history>", "<capability_instructions>",
                 "sequence/search/local-blast", "Run one approved command",
                 '"kind":"generate_validator_feedback"', '"action_repair":{',
-                '"repair_stage":"script_block"', '"code":"GENERATE_SCRIPT_BLOCK_INVALID"',
+                 '"repair_stage":"script_block"', '"code":"' + expected_code + '"',
                 '"previous_candidate"', "Repair the previous generated action instead of regenerating",
             ):
                 assert marker in text, marker
@@ -106,7 +111,7 @@ def test_script_block_failure_reaches_next_request_correction_and_approval():
             generated = [event["generate"]["generate_outcome"] for event in events if "generate" in event]
             assert [row["type"] for row in generated] == ["candidate_rejected", "action_ready"]
             assert generated[0]["payload"]["budget_receipt"]["ordinal"] == 1
-            assert "GENERATE_SCRIPT_BLOCK_INVALID" in json.dumps(generated[0])
+            assert expected_code in json.dumps(generated[0])
             assert len(requests) == 2 and len(approvals) == len(executions) == 1
             assert routes.count("execute") == 1 and "recovery" not in routes
             assert events[-1]["execute"]["execute_outcome"]["type"] == "execution_succeeded"

@@ -477,6 +477,7 @@ class RuleEngine:
         expect_stdout: bool = False,
         ai_claim_text: str = "",
         approved_explicit_result_plan: bool = False,
+        approved_basic_plan: bool = False,
     ) -> List[CheckResult]:
         results: List[CheckResult] = []
         combined_text = stdout + "\n" + stderr
@@ -518,6 +519,11 @@ class RuleEngine:
                 severity="info",
                 message="Exit code 0 ✓",
             ))
+
+        if approved_basic_plan:
+            # The Plan's artifact/predicate validators run independently. Log
+            # keywords and tool names cannot add scientific obligations.
+            return results
 
         # ── Rule 2b: 硬失败输出检测，即使退出码为 0 ────────────
         for pattern, hint in cls.HARD_FAILURE_PATTERNS:
@@ -1134,7 +1140,7 @@ class LLMReviewer:
             output_reserve_tokens=int(getattr(
                 loaded,
                 "SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS",
-                8_192,
+                50_000,
             )),
             estimation_margin_tokens=int(getattr(
                 loaded,
@@ -2197,6 +2203,8 @@ class SupervisorNode:
         authority_state = load_plan_state(self._llm_reviewer.data_path, task_id)
         formal_execution = is_approved_step_execution(authority_state, execution)
         approved_explicit_result_plan = formal_execution and plan_uses_explicit_results(authority_state)
+        from agent_core.plan_contract import approved_step_validation_level
+        approved_basic_plan = formal_execution and approved_step_validation_level(authority_state, step_id) == "basic"
 
         identity = ValidationEvidence.from_mapping({
             "task_id": task_id,
@@ -2226,6 +2234,7 @@ class SupervisorNode:
                 expect_stdout=bool(execution.get("expect_stdout")),
                 ai_claim_text=str(state.get("completion_claim") or ""),
                 approved_explicit_result_plan=approved_explicit_result_plan,
+                approved_basic_plan=approved_basic_plan,
             )
             rule_results.extend(self._root_cause_check_results(state))
             rule_results.extend(self._knowledge_conflict_check_results(state))
@@ -2361,8 +2370,9 @@ class SupervisorNode:
             advisory: Optional[Dict[str, Any]] = None
             advisory_conflict = False
             scientific_checks: List[Dict[str, Any]] = []
-            validation_level = str(state.get("validation_level") or "").lower()
-            review_requested = validation_level in {"scientific", "artifact"}
+            from agent_core.plan_contract import approved_step_validation_level
+            validation_level = approved_step_validation_level(authority_state, step_id)
+            review_requested = validation_level == "scientific"
             if self.use_llm_review and (formal_execution or role not in {"probe", "capability_probe"}):
                 try:
                     review_plan_state = load_plan_state(
