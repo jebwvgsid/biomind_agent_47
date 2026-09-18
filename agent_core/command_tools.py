@@ -124,9 +124,12 @@ async def invoke_with_command_tools(*, model, messages, service, task_id, stage,
     from agent_core.tool_loop import run_tool_loop
 
     async def dispatch(name, arguments):
+        from agent_core.command_execution import command_observation_for_model
         if name == 'inspect_paths':
-            return await service.inspect_paths(arguments, task_id=task_id, stage=stage)
-        return await service.run(arguments, task_id=task_id, stage=stage)
+            result = await service.inspect_paths(arguments, task_id=task_id, stage=stage)
+        else:
+            result = await service.run(arguments, task_id=task_id, stage=stage)
+        return command_observation_for_model(result)
 
     result = await run_tool_loop(
         model=model, messages=inspection_messages(messages, service, task_id),

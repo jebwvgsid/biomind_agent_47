@@ -1,0 +1,105 @@
+{
+  "session": "session_1789728208",
+  "original_stop": {
+    "error_code": "RECOVERY_NO_PROGRESS_LIMIT",
+    "detail": "2",
+    "transport_receipt": {},
+    "failure_stage": "",
+    "no_progress_rounds": 2,
+    "model_turns": 6,
+    "tool_calls": 9,
+    "output_resubmission_count": 0,
+    "output_resubmission_exhausted": false,
+    "termination_reason": "",
+    "budget_receipt": {
+      "error_code": "RECOVERY_NO_PROGRESS_LIMIT",
+      "detail": "2",
+      "transport_receipt": {},
+      "failure_stage": "",
+      "no_progress_rounds": 2,
+      "model_turns": 6,
+      "tool_calls": 9,
+      "output_resubmission_count": 0,
+      "output_resubmission_exhausted": false
+    }
+  },
+  "primary_command_returncode": 137,
+  "observation_limit_chars": 96000,
+  "accepted_before_last_two_chars": 94388,
+  "remaining_before_last_two_chars": 1612,
+  "timing_details_chars": 25009,
+  "tool_envelopes": [
+    {
+      "tool": "failure.inspect",
+      "envelope_chars": 17383,
+      "status": null,
+      "timing_chars": 0,
+      "stdout_chars": 0,
+      "source_ref": "outcome:sha256:5d908141995d13ba18fc8812574408887295433ebd9771e7c12fcce418ffe32f"
+    },
+    {
+      "tool": "exec.command",
+      "envelope_chars": 6560,
+      "status": "completed",
+      "timing_chars": 3147,
+      "stdout_chars": 1295,
+      "source_ref": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789728208/command_inspection/0c8237992460419a93a46ef1b409eb36/receipt.json"
+    },
+    {
+      "tool": "exec.command",
+      "envelope_chars": 9841,
+      "status": "completed",
+      "timing_chars": 4145,
+      "stdout_chars": 3162,
+      "source_ref": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789728208/command_inspection/6c5ffd60e75d48d893bb8267e058358a/receipt.json"
+    },
+    {
+      "tool": "exec.command",
+      "envelope_chars": 9603,
+      "status": "completed",
+      "timing_chars": 4089,
+      "stdout_chars": 3225,
+      "source_ref": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789728208/command_inspection/01d49955580e481d9beb3376149e66fe/receipt.json"
+    },
+    {
+      "tool": "exec.command",
+      "envelope_chars": 19462,
+      "status": "completed",
+      "timing_chars": 4834,
+      "stdout_chars": 12000,
+      "source_ref": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789728208/command_inspection/2624d334c6f5482f8204fb1dc42ab18f/receipt.json"
+    },
+    {
+      "tool": "exec.command",
+      "envelope_chars": 18399,
+      "status": "completed",
+      "timing_chars": 4143,
+      "stdout_chars": 11137,
+      "source_ref": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789728208/command_inspection/90dff571957f41abaaf426555fe20a16/receipt.json"
+    },
+    {
+      "tool": "exec.command",
+      "envelope_chars": 13140,
+      "status": "completed",
+      "timing_chars": 4651,
+      "stdout_chars": 6001,
+      "source_ref": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789728208/command_inspection/a4a8da3bafe6400da479503e12126d8d/receipt.json"
+    },
+    {
+      "tool": "exec.command",
+      "envelope_chars": 414,
+      "status": "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
+      "timing_chars": 0,
+      "stdout_chars": 0,
+      "source_ref": ""
+    }
+  ],
+  "original_session_modified": false,
+  "real_model_or_workflow_run": false,
+  "scope": [
+    "agent_core/command_execution.py",
+    "agent_core/command_tools.py",
+    "agent_core/workflow/recovery_agent.py",
+    "tests/test_recovery_observation_projection.py"
+  ]
+}

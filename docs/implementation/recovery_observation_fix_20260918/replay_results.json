@@ -1,0 +1,23 @@
+{
+  "before": {
+    "terminal_error": {
+      "code": "RECOVERY_NO_PROGRESS_LIMIT",
+      "detail": "2"
+    },
+    "model_turns": 6,
+    "tools": 9,
+    "observation_chars": 95063,
+    "synthetic_final_reached": false,
+    "directive_returned": false,
+    "source": "actual archived six responses and nine raw observations; fixture causal seed; no dispatch/model I/O"
+  },
+  "after": {
+    "terminal_error": {},
+    "model_turns": 7,
+    "tools": 9,
+    "observation_chars": 77444,
+    "synthetic_final_reached": true,
+    "directive_returned": true,
+    "source": "actual archived six responses and nine raw observations; fixture causal seed; no dispatch/model I/O"
+  }
+}

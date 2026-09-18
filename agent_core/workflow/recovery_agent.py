@@ -817,6 +817,9 @@ def _observation_envelope(
 ) -> dict[str, Any]:
     from execution.preflight_progress import model_copy_without_progress
     payload = model_copy_without_progress(deepcopy(dict(result or {})))
+    if tool in {"exec.command", "inspect.paths"}:
+        from agent_core.command_execution import command_observation_for_model
+        payload = command_observation_for_model(payload)
     content_digest = hashlib.sha256(_canonical(payload).encode("utf-8")).hexdigest()
     cursor = deepcopy(payload.get("page") or payload.get("cursor") or {})
     source_ref = _source_ref(arguments)
@@ -1741,8 +1744,6 @@ class RecoveryAgentLoop:
                     )
                     encoded = _canonical(envelope)
                 if len(encoded) > config.single_observation_chars:
-                    if dotted_tool in {"exec.command", "inspect.paths"} and result.get("receipt_ref"):
-                        externalized["command_receipt_ref"] = result["receipt_ref"]
                     envelope = _observation_envelope(
                         request_id=str(call["id"]),
                         tool=dotted_tool,
@@ -1751,14 +1752,18 @@ class RecoveryAgentLoop:
                             "status": "REQUIRES_NARROWING",
                             "observed_chars": len(encoded),
                             "max_chars": config.single_observation_chars,
+                            "receipt_ref": str(envelope.get("source_ref") or ""),
                         },
                         error={},
                         seed=seed,
                     )
                     encoded = _canonical(envelope)
                 if observation_chars + len(encoded) > config.cumulative_observation_chars:
-                    if dotted_tool in {"exec.command", "inspect.paths"} and result.get("receipt_ref"):
-                        externalized["command_receipt_ref"] = result["receipt_ref"]
+                    terminal_error = {
+                        "code": "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
+                        "detail": "Tool result was returned but could not fit the cumulative observation budget.",
+                        "failure_stage": "recovery.observation_projection",
+                    }
                     envelope = _observation_envelope(
                         request_id=str(call["id"]),
                         tool=dotted_tool,
@@ -1766,6 +1771,7 @@ class RecoveryAgentLoop:
                         result={
                             "status": "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
                             "max_chars": config.cumulative_observation_chars,
+                            "receipt_ref": str(envelope.get("source_ref") or ""),
                         },
                         error={},
                         seed=seed,

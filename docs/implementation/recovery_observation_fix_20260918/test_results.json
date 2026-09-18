@@ -1,0 +1,19 @@
+{
+  "worktree": {
+    "passed": 75,
+    "subtests_passed": 8,
+    "seconds": 5.23,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery_observation_fix_1789728208/recovery_observation_targeted_final.log"
+  },
+  "isolated": {
+    "passed": 74,
+    "subtests_passed": 8,
+    "seconds": 5.02,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery_observation_fix_1789728208/recovery_observation_isolated_tests.log"
+  },
+  "expanded_existing_failures": {
+    "count": 15,
+    "same_failure_set_in_before_snapshot": true,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery_observation_fix_1789728208/recovery_observation_baseline_tests.log"
+  }
+}

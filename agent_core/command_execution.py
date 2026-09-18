@@ -37,6 +37,17 @@ class CommandInspectionError(ValueError):
     pass
 
 
+def command_observation_for_model(result: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep inspection evidence in model context; detailed telemetry stays local.
+
+    The durable receipt and F2/profiler still retain the full scan roots/timings.
+    Those repeated operational details must not consume Recovery's observation
+    budget or displace the stdout/stderr needed for a decision.
+    """
+    return {key: value for key, value in result.items()
+            if key not in {'timing', 'activity_id'}}
+
+
 @contextmanager
 def _tracked_process(process):
     ACTIVE_PROCESS_GROUPS.add(process.pid)
@@ -351,7 +362,7 @@ class CommandExecutionService:
                     continue
                 if value.get('hostname') != socket.gethostname() or value.get('tool') not in {'exec_command', 'inspect_paths'}:
                     continue
-                fields = ('tool', 'paths', 'timing', 'stage', 'status', 'cmd', 'cwd', 'project_dir', 'hostname',
+                fields = ('tool', 'paths', 'stage', 'status', 'cmd', 'cwd', 'project_dir', 'hostname',
                           'environment_scope', 'exit_code', 'stdout', 'stderr', 'error',
                           'timed_out', 'truncated', 'log_refs', 'duration_seconds')
                 record = {key: value[key] for key in fields if key in value}
