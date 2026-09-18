@@ -1,0 +1,8 @@
+{
+  "initial_head": "40ec47e8cf5d4117e3192a1b68b35878e53d7c22",
+  "unrelated_tracked_patch_blocks_unchanged": 96,
+  "initial_untracked_paths_still_present": 96,
+  "missing_initial_untracked": [],
+  "index_staged_empty": true,
+  "note": "Compared only original changed paths outside the 22 scoped files. No checkout/reset of worktree."
+}

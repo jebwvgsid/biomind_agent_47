@@ -1,0 +1,100 @@
+{
+  "worktree_extended": {
+    "passed": 196,
+    "failed": 3,
+    "subtests_passed": 15,
+    "seconds": 21.39,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/planner_latency_fix_20260918/planner_latency_final_tests.log",
+    "failures": [
+      "tests/test_task_spec_integration.py::TaskSpecIntegrationTests::test_pending_action_and_supervisor_feedback_are_revision_bound",
+      "tests/test_task_spec_integration.py::TaskSpecIntegrationTests::test_task_feedback_makes_older_plan_stale",
+      "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical"
+    ]
+  },
+  "before_edit_replay_same_three_failures": {
+    "failed": 3,
+    "seconds": 4.16,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/planner_latency_fix_20260918/planner_latency_baseline_known_failures.log"
+  },
+  "new_acceptance": {
+    "passed": 14,
+    "seconds": 2.69,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/planner_latency_fix_20260918/planner_latency_acceptance.log"
+  },
+  "isolated_committed_scope": {
+    "passed": 69,
+    "subtests_passed": 8,
+    "seconds": 4.56,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/planner_latency_fix_20260918/planner_latency_isolated_final.log"
+  },
+  "isolated_extended": {
+    "passed": 92,
+    "failed": 38,
+    "subtests_passed": 7,
+    "seconds": 16.15,
+    "failures": [
+      "tests/test_task_spec_integration.py::TaskSpecIntegrationTests::test_pending_action_and_supervisor_feedback_are_revision_bound",
+      "tests/test_task_spec_integration.py::TaskSpecIntegrationTests::test_task_feedback_makes_older_plan_stale",
+      "tests/test_cli_model_progress_integration.py::test_cli1_actual_recovery_loop_plain_off_and_display_failure_are_business_identical",
+      "tests/test_recovery_tools.py::RecoveryToolsTests::test_registry_manifest_is_typed_and_hides_locators",
+      "tests/test_skill_script_invocation.py::test_receipt_exposes_explicit_controller_invocation_and_exact_contract",
+      "tests/test_skill_script_invocation.py::test_controller_interpreter_retains_virtualenv_launcher_path",
+      "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[installed]",
+      "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[\\u4e2d\\u6587 \\u5b89\\u88c5]",
+      "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[dollar$literal`text`]",
+      "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[literal]",
+      "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[env]",
+      "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[exec_continuation]",
+      "tests/test_skill_script_invocation.py::test_direct_argv_has_same_contract_without_shell_reparsing",
+      "tests/test_skill_script_invocation.py::test_validation_checks_the_argv_carrier_actually_executed",
+      "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[None]",
+      "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[python]",
+      "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[/bin/sh]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments0]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments1]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments2]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments3]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments4]",
+      "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments5]",
+      "tests/test_skill_script_invocation.py::test_repeated_multi_value_argument_preserves_distinct_label_path_arguments",
+      "tests/test_skill_script_invocation.py::test_single_quoted_env_variable_is_not_mistaken_for_resource_expansion",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[comment_only]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[echo_only]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[conditional]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[eval]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[heredoc]",
+      "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[env_assignment]",
+      "tests/test_skill_script_invocation.py::test_delegate_is_pinned_without_requiring_direct_invocation",
+      "tests/test_skill_script_invocation.py::test_root_delegate_closure_is_bound_and_invalid_explicit_ref_still_rejected",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[document]",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[interpreter]",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[env]",
+      "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[script]",
+      "tests/test_skill_script_invocation.py::test_deferred_argument_keeps_runtime_identity_and_does_not_claim_direct_argv"
+    ]
+  },
+  "isolated_head_baseline_same_failure_set": {
+    "passed": 92,
+    "failed": 38,
+    "subtests_passed": 7,
+    "seconds": 17.19
+  },
+  "fixture_note": "Bounded source export included unchanged benchmark tasks.yaml and matrix.mtx size fixture; initial missing-fixture failure was fixed in export only.",
+  "worktree_reproduce_script": {
+    "passed": 70,
+    "subtests_passed": 8,
+    "seconds": 10.91,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/planner_latency_fix_20260918/planner_latency_reproduce.log"
+  },
+  "worktree_reproduce_script_final": {
+    "passed": 71,
+    "subtests_passed": 8,
+    "seconds": 13.24,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/planner_latency_fix_20260918/planner_latency_reproduce_final.log"
+  },
+  "isolated_committed_scope_final": {
+    "passed": 70,
+    "subtests_passed": 8,
+    "log": "/public/home/liusiqi/03.毕设/biomind_audit_exports/planner_latency_fix_20260918/planner_latency_isolated_final2.log"
+  }
+}

@@ -1,0 +1,2359 @@
+{
+  "measurement": "same eight archived shell commands; sequential; only read_paths differs",
+  "cache": "uncontrolled OS cache, sequential before/after, no cold-cache assertion; after has prior measurement receipts",
+  "timing": "scan included in preparation; command includes subprocess launch/reaping; spawn included in command; no model/API replay",
+  "baseline_commit": "c33a9478258d97e24b8d3f01e7bd059253df6481",
+  "fix_commit": "573f72c406c306e401a7f2c949be438036f20925",
+  "checks": [
+    {
+      "mode": "before",
+      "check": 1,
+      "hostname": "ln02",
+      "cmd": "ls -la /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium 2>&1; echo \"---PARENT---\"; ls -la /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005 2>&1",
+      "historical_seconds": 42.248,
+      "prepare_seconds": 7.6265327064320445,
+      "scan_seconds": 7.419732886366546,
+      "command_seconds": 0.567819801159203,
+      "spawn_seconds": null,
+      "duration_seconds": 8.272,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 534,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "8d1dc33ae0c1597ac4a10aa27fbe1007508c8129effe3181f150ce794a6a0a62",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/2290a69cea7b49968334ca5d42b2b784/receipt.json"
+    },
+    {
+      "mode": "before",
+      "check": 2,
+      "hostname": "ln02",
+      "cmd": "ls -la /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data 2>&1",
+      "historical_seconds": 9.546,
+      "prepare_seconds": 7.305708767846227,
+      "scan_seconds": 7.193247179500759,
+      "command_seconds": 0.5670385137200356,
+      "spawn_seconds": null,
+      "duration_seconds": 7.896,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 1162,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "0b7ad0d470c1192e2c105ab37866a7dcba82562f0264211bd2ae7a560bbcb4ef",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/72e8b498c6aa47119b2386fce9cf4547/receipt.json"
+    },
+    {
+      "mode": "before",
+      "check": 3,
+      "hostname": "ln02",
+      "cmd": "cd /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium; echo \"=== report.md ===\"; cat report.md; echo \"=== stage_status.tsv ===\"; cat stage_status.tsv; echo \"=== logs ===\"; find logs -maxdepth 3 | head -50",
+      "historical_seconds": 10.02,
+      "prepare_seconds": 7.978334576822817,
+      "scan_seconds": 7.867256725206971,
+      "command_seconds": 0.6494308095425367,
+      "spawn_seconds": null,
+      "duration_seconds": 8.676,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 5890,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "29b0765bf20110658f295a2b0f6932495021d05bb3b52bd0efc9e0ae2cd308a0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/b67c230ce4f8400dbbd04407864a83f0/receipt.json"
+    },
+    {
+      "mode": "before",
+      "check": 4,
+      "hostname": "ln02",
+      "cmd": "for e in bio_wgs bio_gatk bio_bcftools; do p=/public/home/liusiqi/anaconda3/envs/$e; echo \"=== $e ===\"; ls $p/bin 2>/dev/null | grep -E '^(bwa|samtools|bcftools|gatk|picard|java|python3?)$'; done; echo \"=== base ===\"; ls /public/home/liusiqi/anaconda3/bin | grep -E '^(bwa|samtools|bcftools|gatk|picard|java)$'",
+      "historical_seconds": 9.977,
+      "prepare_seconds": 7.955738566815853,
+      "scan_seconds": 7.841128669679165,
+      "command_seconds": 0.5802336884662509,
+      "spawn_seconds": null,
+      "duration_seconds": 8.578,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 157,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 1,
+      "stdout_sha256": "7bc5310189e8efac590e78f9cd4593a7c47cda61a9827a79bcddc494dc5325d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/51063ab11c9a4489b73d7f523f67c7d4/receipt.json"
+    },
+    {
+      "mode": "before",
+      "check": 5,
+      "hostname": "ln02",
+      "cmd": "cd /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data; for f in S1_1.fq.gz S1_2.fq.gz S2_1.fq.gz S2_2.fq.gz; do echo \"=== $f ===\"; python3 -c \"\nimport gzip,sys\np='$f'\ntry:\n    with gzip.open(p,'rt') as fh:\n        for i in range(4):\n            print(fh.readline().rstrip()[:80])\nexcept Exception as e:\n    print('ERR',type(e).__name__,e)\n\"; done; echo \"=== genome.fasta head ===\"; head -c 300 genome.fasta; echo; grep -c '^>' genome.fasta; grep '^>' genome.fasta | head",
+      "historical_seconds": 10.384,
+      "prepare_seconds": 8.073232043534517,
+      "scan_seconds": 7.963726628571749,
+      "command_seconds": 1.6232262421399355,
+      "spawn_seconds": null,
+      "duration_seconds": 9.727,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 1311,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "3cf438b2bb9fd598959752fbf53cb6a764a6f5e2169c47855a798a2e1864c016",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/091468912a9047d3924bc8b2058ed460/receipt.json"
+    },
+    {
+      "mode": "before",
+      "check": 6,
+      "hostname": "ln02",
+      "cmd": "cd /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data; cat sample.list; echo \"--- chr.list ---\"; cat chr.list; echo \"--- fai ---\"; cat genome.fasta.fai; echo \"--- md5 ---\"; md5sum genome.fasta genome1.fasta 2>/dev/null",
+      "historical_seconds": 10.937,
+      "prepare_seconds": 8.145681938156486,
+      "scan_seconds": 8.029757502488792,
+      "command_seconds": 0.9717116402462125,
+      "spawn_seconds": null,
+      "duration_seconds": 9.255,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 264,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "6e852c8733ac1341b631affea8c96ff1fcbe34ce35c1fd97a21b48b4ce620cf2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/77db2912e2ae45e1850f60dd362c4e26/receipt.json"
+    },
+    {
+      "mode": "before",
+      "check": 7,
+      "hostname": "ln02",
+      "cmd": "P=/public/home/liusiqi/anaconda3/envs/bio_gatk; echo \"=== gatk ===\"; head -1 $P/bin/gatk; /usr/bin/python3 $P/bin/gatk HaplotypeCaller --help 2>&1 | head -5; echo \"rc=$?\"; echo \"=== java ===\"; $P/bin/java -version 2>&1 | head -3; echo \"=== bcftools ===\"; $P/bin/bcftools --version 2>&1 | head -2; echo \"=== samtools ===\"; $P/bin/samtools --version 2>&1 | head -2",
+      "historical_seconds": 13.563,
+      "prepare_seconds": 7.857387784868479,
+      "scan_seconds": 7.743521191179752,
+      "command_seconds": 4.147564576007426,
+      "spawn_seconds": null,
+      "duration_seconds": 12.033,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 889,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "13f04e9d7eaf964a71956307e7e13d82def4271f1ab553bf46a2c78f1e293ed0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/4023b9c6bb0d48d3b5d2182711dcc4ec/receipt.json"
+    },
+    {
+      "mode": "before",
+      "check": 8,
+      "hostname": "ln02",
+      "cmd": "P=/public/home/liusiqi/anaconda3/envs/bio_wgs; echo \"=== bwa ===\"; $P/bin/bwa 2>&1 | head -4; echo \"=== samtools ===\"; $P/bin/samtools --version 2>&1|head -2; echo \"=== picard ===\"; head -1 $P/bin/picard; $P/bin/picard MarkDuplicates --help 2>&1 | head -3; echo \"=== java ===\"; $P/bin/java -version 2>&1|head -2; echo \"=== python ===\"; $P/bin/python3 --version",
+      "historical_seconds": 14.322,
+      "prepare_seconds": 8.182322166860104,
+      "scan_seconds": 8.066510231234133,
+      "command_seconds": 4.491189512424171,
+      "spawn_seconds": null,
+      "duration_seconds": 12.825,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": true
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_scrna_core",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_sequence_search_local_blast_runtime",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/jcvi",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-before",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/porec_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/gene_pav",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_gatk",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/samtools",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain_fix",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder2_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/calder_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/assembly",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/dmr_r",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mamba",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/eggnog_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/compartment",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/diffdomain",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_manta",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_cnvnator",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/biomind",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_wgs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_longread_sv",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/mustache",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3/envs/bio_lumpy",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 2,
+      "shallow_scans": 38,
+      "stream_bytes": {
+        "stdout": 664,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "9526da648d13214e886c25403d2f778eddb09efb18de8e21d5aa5ba61cfdffe7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": null,
+      "receipt_ref": "/tmp/biomind-latency-before/task_outputs/measurement/command_inspection/2a4424accaab42078c463f1df53ad3d7/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 1,
+      "hostname": "ln02",
+      "cmd": "ls -la /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium 2>&1; echo \"---PARENT---\"; ls -la /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005 2>&1",
+      "historical_seconds": 42.248,
+      "prepare_seconds": 0.09235046152025461,
+      "scan_seconds": 0.017423040233552456,
+      "command_seconds": 0.060485091991722584,
+      "spawn_seconds": 0.0005972106009721756,
+      "duration_seconds": 0.15319877862930298,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/c9dc1bf1824947a1ac51b3f0f1f19eb5",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/4500b03e500347e78475102074ba39a1",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/45ff43382c4e4f5493f9646ae6a440e5",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/6b78a58384f847db94e09b2d8f1230a8",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 1,
+      "shallow_scans": 22,
+      "stream_bytes": {
+        "stdout": 534,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "6a037f8c006523ba93cf1590fb2ca9454864eb26757bf880707418b39db4e8af",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": false,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/6bd0005280b04f959599dfb819068e30/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 2,
+      "hostname": "ln02",
+      "cmd": "ls -la /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data 2>&1",
+      "historical_seconds": 9.546,
+      "prepare_seconds": 0.06505627557635307,
+      "scan_seconds": 0.01012207567691803,
+      "command_seconds": 0.040303755551576614,
+      "spawn_seconds": 0.00047403573989868164,
+      "duration_seconds": 0.10565444640815258,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/c9dc1bf1824947a1ac51b3f0f1f19eb5",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/a103b07bdc944d4bb33509f8f4133b89",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/45ff43382c4e4f5493f9646ae6a440e5",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/6bd0005280b04f959599dfb819068e30",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 1,
+      "shallow_scans": 22,
+      "stream_bytes": {
+        "stdout": 1162,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "6b4049d31e6e5894e87c1b586d1bcbd093de83e70dba6ef26c322ee30f7cfe48",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": true,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/74b8cad3c69e43fb91bb7d5b17b70571/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 3,
+      "hostname": "ln02",
+      "cmd": "cd /public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium; echo \"=== report.md ===\"; cat report.md; echo \"=== stage_status.tsv ===\"; cat stage_status.tsv; echo \"=== logs ===\"; find logs -maxdepth 3 | head -50",
+      "historical_seconds": 10.02,
+      "prepare_seconds": 0.06525150407105684,
+      "scan_seconds": 0.011785350739955902,
+      "command_seconds": 0.08052946906536818,
+      "spawn_seconds": 0.0004753824323415756,
+      "duration_seconds": 0.14613630902022123,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/74b8cad3c69e43fb91bb7d5b17b70571",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/45ff43382c4e4f5493f9646ae6a440e5",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/6bd0005280b04f959599dfb819068e30",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 1,
+      "shallow_scans": 22,
+      "stream_bytes": {
+        "stdout": 5890,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "29b0765bf20110658f295a2b0f6932495021d05bb3b52bd0efc9e0ae2cd308a0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": true,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/191eee6e5a87436e9d1b88b67b9e9c63/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 4,
+      "hostname": "ln02",
+      "cmd": "for e in bio_wgs bio_gatk bio_bcftools; do p=/public/home/liusiqi/anaconda3/envs/$e; echo \"=== $e ===\"; ls $p/bin 2>/dev/null | grep -E '^(bwa|samtools|bcftools|gatk|picard|java|python3?)$'; done; echo \"=== base ===\"; ls /public/home/liusiqi/anaconda3/bin | grep -E '^(bwa|samtools|bcftools|gatk|picard|java)$'",
+      "historical_seconds": 9.977,
+      "prepare_seconds": 0.04515238665044308,
+      "scan_seconds": 0.007306208834052086,
+      "command_seconds": 0.06038533616811037,
+      "spawn_seconds": 0.0004748944193124771,
+      "duration_seconds": 0.10585595108568668,
+      "scans": [
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/74b8cad3c69e43fb91bb7d5b17b70571",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/191eee6e5a87436e9d1b88b67b9e9c63",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 0,
+      "shallow_scans": 16,
+      "stream_bytes": {
+        "stdout": 157,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 1,
+      "stdout_sha256": "7bc5310189e8efac590e78f9cd4593a7c47cda61a9827a79bcddc494dc5325d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": true,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/a712aa2db9564e8e8fa072b3197f4693/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 5,
+      "hostname": "ln02",
+      "cmd": "cd /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data; for f in S1_1.fq.gz S1_2.fq.gz S2_1.fq.gz S2_2.fq.gz; do echo \"=== $f ===\"; python3 -c \"\nimport gzip,sys\np='$f'\ntry:\n    with gzip.open(p,'rt') as fh:\n        for i in range(4):\n            print(fh.readline().rstrip()[:80])\nexcept Exception as e:\n    print('ERR',type(e).__name__,e)\n\"; done; echo \"=== genome.fasta head ===\"; head -c 300 genome.fasta; echo; grep -c '^>' genome.fasta; grep '^>' genome.fasta | head",
+      "historical_seconds": 10.384,
+      "prepare_seconds": 0.06587597448378801,
+      "scan_seconds": 0.010392768308520317,
+      "command_seconds": 0.36218595411628485,
+      "spawn_seconds": 0.0004880102351307869,
+      "duration_seconds": 0.42844109516590834,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/a712aa2db9564e8e8fa072b3197f4693",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/45ff43382c4e4f5493f9646ae6a440e5",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/191eee6e5a87436e9d1b88b67b9e9c63",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 1,
+      "shallow_scans": 21,
+      "stream_bytes": {
+        "stdout": 1311,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "3cf438b2bb9fd598959752fbf53cb6a764a6f5e2169c47855a798a2e1864c016",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": true,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/9d1a2acbe4e8440ab81ced16d40d41fe/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 6,
+      "hostname": "ln02",
+      "cmd": "cd /public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data; cat sample.list; echo \"--- chr.list ---\"; cat chr.list; echo \"--- fai ---\"; cat genome.fasta.fai; echo \"--- md5 ---\"; md5sum genome.fasta genome1.fasta 2>/dev/null",
+      "historical_seconds": 10.937,
+      "prepare_seconds": 0.06593288481235504,
+      "scan_seconds": 0.00967290997505188,
+      "command_seconds": 0.2213122472167015,
+      "spawn_seconds": 0.0004834868013858795,
+      "duration_seconds": 0.28760896250605583,
+      "scans": [
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling/data",
+          "recursive": true
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/a712aa2db9564e8e8fa072b3197f4693",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/9d1a2acbe4e8440ab81ced16d40d41fe",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/6bd0005280b04f959599dfb819068e30",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part1.variant_calling",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设/benchmarks",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 1,
+      "shallow_scans": 21,
+      "stream_bytes": {
+        "stdout": 264,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "6e852c8733ac1341b631affea8c96ff1fcbe34ce35c1fd97a21b48b4ce620cf2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": true,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/c7c15b60985043f48117e5b1b21b98e3/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 7,
+      "hostname": "ln02",
+      "cmd": "P=/public/home/liusiqi/anaconda3/envs/bio_gatk; echo \"=== gatk ===\"; head -1 $P/bin/gatk; /usr/bin/python3 $P/bin/gatk HaplotypeCaller --help 2>&1 | head -5; echo \"rc=$?\"; echo \"=== java ===\"; $P/bin/java -version 2>&1 | head -3; echo \"=== bcftools ===\"; $P/bin/bcftools --version 2>&1 | head -2; echo \"=== samtools ===\"; $P/bin/samtools --version 2>&1 | head -2",
+      "historical_seconds": 13.563,
+      "prepare_seconds": 0.04554499685764313,
+      "scan_seconds": 0.0064985183998942375,
+      "command_seconds": 1.5469866832718253,
+      "spawn_seconds": 0.000432831235229969,
+      "duration_seconds": 1.592911441810429,
+      "scans": [
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/9d1a2acbe4e8440ab81ced16d40d41fe",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/a712aa2db9564e8e8fa072b3197f4693",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/c7c15b60985043f48117e5b1b21b98e3",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 0,
+      "shallow_scans": 17,
+      "stream_bytes": {
+        "stdout": 889,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "13f04e9d7eaf964a71956307e7e13d82def4271f1ab553bf46a2c78f1e293ed0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": true,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/b78f4c18d59d4931939cd830301e4511/receipt.json"
+    },
+    {
+      "mode": "after",
+      "check": 8,
+      "hostname": "ln02",
+      "cmd": "P=/public/home/liusiqi/anaconda3/envs/bio_wgs; echo \"=== bwa ===\"; $P/bin/bwa 2>&1 | head -4; echo \"=== samtools ===\"; $P/bin/samtools --version 2>&1|head -2; echo \"=== picard ===\"; head -1 $P/bin/picard; $P/bin/picard MarkDuplicates --help 2>&1 | head -3; echo \"=== java ===\"; $P/bin/java -version 2>&1|head -2; echo \"=== python ===\"; $P/bin/python3 --version",
+      "historical_seconds": 14.322,
+      "prepare_seconds": 0.04567146021872759,
+      "scan_seconds": 0.006351085379719734,
+      "command_seconds": 2.99493355024606,
+      "spawn_seconds": 0.0005224226042628288,
+      "duration_seconds": 3.041013744659722,
+      "scans": [
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/b78f4c18d59d4931939cd830301e4511",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/bin",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoseq3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/pybigwig_env",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/packages/standalone/releases/0.153.4-x86_64-unknown-linux-musl/codex-path",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg03aOuen",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/anaconda3",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/jcvi_so_ss",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.local/share/mamba/envs/isoquant_env",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/03.毕设",
+          "recursive": false
+        },
+        {
+          "root": "/public/home/liusiqi/.codex/tmp/arg0/codex-arg0GSh1of",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/a712aa2db9564e8e8fa072b3197f4693",
+          "recursive": false
+        },
+        {
+          "root": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/c7c15b60985043f48117e5b1b21b98e3",
+          "recursive": false
+        }
+      ],
+      "recursive_scans": 0,
+      "shallow_scans": 17,
+      "stream_bytes": {
+        "stdout": 664,
+        "stderr": 0
+      },
+      "status": "completed",
+      "exit_code": 0,
+      "stdout_sha256": "cc9ebb32768ac0423bf558db03ec7ab839d968de0c8b1acd80206f316ccbac0e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "static_config_reused": true,
+      "receipt_ref": "/tmp/biomind-latency-after/task_outputs/measurement/command_inspection/564eed0cb4bf4f80b3b52fe183ee5c82/receipt.json"
+    }
+  ],
+  "measured_fix_commit": "70a7a9bfd37c30875aa497d7e6d019e1b41b81c4",
+  "final_note": "Final fix additionally retains partial scan time on cancellation; normal completed-path measurements above were taken before that timing-finally change."
+}

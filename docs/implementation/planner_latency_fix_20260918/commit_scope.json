@@ -1,0 +1,44 @@
+[
+  {
+    "hash": "c33a9478258d97e24b8d3f01e7bd059253df6481",
+    "tree": "0138d6542e1e8b2689b9564c4c192fddde775cc3",
+    "title": "refactor: isolate shared read-only inspection entry points",
+    "files": [
+      "agent_core/command_execution.py",
+      "agent_core/command_tools.py",
+      "agent_core/process_registry.py",
+      "agent_core/tool_loop.py",
+      "agent_core/workflow/recovery_agent.py",
+      "agent_core/workflow/recovery_node.py",
+      "agent_core/workflow/recovery_runtime.py",
+      "agent_core/workflow/recovery_tools.py",
+      "bio_agents.py",
+      "execution/executor.py",
+      "supervisor.py",
+      "tests/test_command_execution.py",
+      "tests/test_command_phase_integration.py"
+    ]
+  },
+  {
+    "hash": "573f72c406c306e401a7f2c949be438036f20925",
+    "tree": "7a44691c4e1877c9a2868ede97bd0a8217bb04bd",
+    "title": "fix: scope planner inspection and report real progress",
+    "files": [
+      "agent_core/cli_plain.py",
+      "agent_core/cli_terminal.py",
+      "agent_core/command_execution.py",
+      "agent_core/command_tools.py",
+      "agent_core/formal_artifact_resolver.py",
+      "agent_core/provider_attempt.py",
+      "agent_core/task_spec.py",
+      "agent_core/workflow/recovery_agent.py",
+      "agent_core/workflow/recovery_runtime.py",
+      "agent_core/workflow/recovery_tools.py",
+      "bio_agents.py",
+      "execution/profiling.py",
+      "tests/test_cli_model_progress.py",
+      "tests/test_formal_artifact_resolver.py",
+      "tests/test_planner_inspection_latency.py"
+    ]
+  }
+]
