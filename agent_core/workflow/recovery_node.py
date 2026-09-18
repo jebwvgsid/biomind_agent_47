@@ -814,8 +814,10 @@ class Schema2RecoveryNode:
         event_sink: Callable[[str, Mapping[str, Any]], Any] | None = None,
         runtime_recovery: Callable | None = None,
         resource_policy: Any = None,
+        command_service: Any = None,
     ) -> None:
         self.data_path = str(data_path)
+        self.command_service = command_service
         self.model = model
         self.phase_store = phase_store or PhaseArchiveStore(self.data_path)
         self.skill_service = skill_service
@@ -1841,6 +1843,7 @@ class Schema2RecoveryNode:
                 phase_store=self.phase_store,
                 skill_service=self.skill_service,
                 evidence_reader=self.evidence_reader,
+                command_service=self.command_service,
             )
             context_epoch_id = f"{seed.seed_id}:context-epoch:0"
             inherited_messages, inherited_descriptors = (

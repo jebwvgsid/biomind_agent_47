@@ -521,8 +521,10 @@ def meaningful_inspection_facts(rows):
     """
     volatile = {"event_id", "receipt_id", "request_id", "tool_call_id", "message_id",
                 "observation_id", "timestamp", "created_at", "updated_at", "duration_seconds",
+                "observed_at", "age_seconds",
                 "content_sha256", "observation_ref", "source_message_id", "decision_ref",
-                "receipt_sha256", "archive_ref", "result_chars", "max_result_chars"}
+                "receipt_sha256", "archive_ref", "result_chars", "max_result_chars",
+                "receipt_ref", "command_receipt_ref", "log_refs"}
     def facts(value):
         if isinstance(value, Mapping):
             return {k: facts(v) for k, v in value.items() if k not in volatile}
@@ -539,6 +541,7 @@ def meaningful_inspection_facts(rows):
         body = observation.get("result", observation)
         if not isinstance(body, Mapping) or body.get("status") in {
             "failed", "error", "not_dispatched", "REQUIRES_NARROWING",
+            "not_run", "sandbox_error", "cancelled", "timed_out",
             "NO_MATCH", "RECOVERY_OBSERVATION_BUDGET_EXCEEDED",
             "body_not_projected_budget_requires_targeted_read"}:
             continue
@@ -546,6 +549,8 @@ def meaningful_inspection_facts(rows):
             continue  # A new empty range is not new evidence.
         if not set(body) - volatile - {"status", "start_line", "end_line", "cursor", "truncated"}:
             continue  # Coverage labels without returned facts do not advance.
+        if observation.get("tool") == "exec.command":
+            observation = {k: v for k, v in observation.items() if k != "source_ref"}
         result.add(_canonical(facts(observation)))
     return sorted(result)
 

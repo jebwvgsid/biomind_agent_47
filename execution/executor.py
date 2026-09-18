@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # Shell commands run in their own process groups so tools that spawn workers can
 # be cleaned up as one unit. Keep their leaders here so Ctrl-C can also stop a
 # command that no longer shares the interactive terminal's process group.
-_ACTIVE_PROCESS_GROUPS: set[int] = set()
+from agent_core.process_registry import ACTIVE_PROCESS_GROUPS as _ACTIVE_PROCESS_GROUPS
 _LAST_EXECUTION_METADATA: Dict[str, Any] = {}
 
 # 全局变量：用于保持 Python REPL 的上下文记忆 (变量、导入库等)

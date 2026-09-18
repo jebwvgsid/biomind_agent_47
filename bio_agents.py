@@ -2600,8 +2600,14 @@ class BioAnalystAgent:
         step_worker_backend_name: Optional[str] = None,
         step_worker_backend: Optional[StepWorkerBackend] = None,
         planner_output_policy_settings: Optional[Mapping[str, Any]] = None,
+        project_dir: Optional[str] = None,
+        command_service: Any = None,
     ):
         self.data_path = data_path
+        from agent_core.command_execution import CommandExecutionService
+        self.command_service = command_service or CommandExecutionService(
+            data_path=data_path, project_dir=project_dir,
+        )
         self.planner_output_policy_settings = deepcopy(dict(planner_output_policy_settings or {}))
         self.step_worker_backend_name = resolve_step_worker_backend_name(
             BIOMIND_STEP_WORKER_BACKEND
@@ -2884,6 +2890,7 @@ class BioAnalystAgent:
             output_dir=os.path.join(data_path, "task_outputs"),
             max_retries=2,
             use_llm_review=use_llm_supervisor,
+            command_service=self.command_service,
         )
         self._install_env_choices: Dict[str, str] = {}
         self._install_attempt_counts: Dict[str, int] = {}
@@ -2947,6 +2954,7 @@ class BioAnalystAgent:
             model=self.recovery_llm,
             phase_store=self.phase_archive_store,
             skill_service=self.skill_access_service,
+            command_service=self.command_service,
             compactor=self._schema2_context_compactor_invoke,
             provider_invoke=self._schema2_recovery_provider_invoke,
             compactor_model=self.recovery_transport_llm,
@@ -18116,7 +18124,31 @@ class BioAnalystAgent:
         save_plan_state(self.data_path, task_id, stopped)
         return {"messages": [SystemMessage(content=json.dumps(issue, ensure_ascii=False, sort_keys=True))], "task_status": TASK_STATUS_BLOCKED, "failure_type": error.code, "failure_owner": "planner_output_policy", "validation_issues": [issue], "pending_action": {}, "next_step": "finish"}
 
-    async def _ainvoke_llm(
+    async def _ainvoke_llm(self, messages: List[BaseMessage], *, stage: str,
+                          task_id: str = "", **kwargs) -> BaseMessage:
+        service = getattr(self, "command_service", None)
+        if service is None or stage not in {"consultant", "planner", "planner_repair", "generate"}:
+            return await self._ainvoke_llm_once(messages, stage=stage, task_id=task_id, **kwargs)
+        model = kwargs.get("llm_override") or (
+            getattr(self, "planner_llm", self.llm) if stage in {"planner", "planner_repair"} else self.llm)
+        if not callable(getattr(model, "bind_tools", None)):
+            raise RuntimeError(f"{stage}: model adapter must support bind_tools for exec_command")
+        from agent_core.command_tools import invoke_with_command_tools
+
+        async def invoke(bound_model, history, ordinal):
+            options = dict(kwargs)
+            metadata = dict(options.get("trace_metadata") or {})
+            metadata["command_tool_round"] = ordinal
+            if metadata.get("semantic_invocation_id"):
+                metadata["semantic_invocation_id"] += f":inspection:{ordinal}"
+            options.update(llm_override=bound_model, trace_metadata=metadata)
+            return await self._ainvoke_llm_once(history, stage=stage, task_id=task_id, **options)
+
+        return await invoke_with_command_tools(model=model, messages=messages, service=service,
+            task_id=task_id, stage=stage, invoke=invoke, retry_guard=kwargs.get("retry_guard"))
+
+
+    async def _ainvoke_llm_once(
         self,
         messages: List[BaseMessage],
         *,
@@ -18614,7 +18646,7 @@ class BioAnalystAgent:
                             else 0.0
                         ),
                     )
-                    if stage == "generate" and not response_has_final_content(response):
+                    if stage == "generate" and not response_has_final_content(response) and not getattr(response, "tool_calls", None):
                         attempt_record.failure_type = EMPTY_FINAL_CONTENT
                         attempt_record.failure_detail = (
                             "provider stream ended normally without final content"
@@ -55252,7 +55284,12 @@ def _handle_interrupt(signum, frame):
 
 
 async def _runtime_main():
-    command   = sys.argv[1] if len(sys.argv) > 1 else "interactive"
+    import argparse
+    parser = argparse.ArgumentParser(description="BioMind")
+    parser.add_argument("command", nargs="?", default="interactive", choices=("interactive", "demo"))
+    parser.add_argument("--project-dir", help="Project directory for local inspection (or BIOMIND_PROJECT_DIR)")
+    args = parser.parse_args()
+    command = args.command
     data_path = str(PathManager.WORK_DIR)
     if command == "interactive" and not sys.stdin.isatty():
         display_print("BioMind：非 TTY 模式不等待交互输入。请在终端运行 interactive。")
@@ -55260,6 +55297,7 @@ async def _runtime_main():
 
     agent = BioAnalystAgent(
         data_path=data_path,
+        project_dir=args.project_dir,
         llm_model=LLM_DEFAULT_MODEL,
         model_provider="openai",
         max_memory_tokens=200_000,

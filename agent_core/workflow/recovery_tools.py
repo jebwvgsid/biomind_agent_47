@@ -512,7 +512,7 @@ def build_recovery_inspection_registry(
 
 
 class RecoveryLocalToolDispatcher:
-    """Dispatch the bounded provider tools without accepting filesystem paths."""
+    """Typed ref readers plus optional shared sandboxed command inspection."""
 
     def __init__(
         self,
@@ -525,7 +525,9 @@ class RecoveryLocalToolDispatcher:
         evidence_reader: RecoveryEvidenceReader | None = None,
         max_result_chars: int = MAX_TOOL_RESULT_CHARS,
         inspection_reader: InspectionObjectReader | None = None,
+        command_service: Any = None,
     ) -> None:
+        self.command_service = command_service
         self.seed = seed if isinstance(seed, RecoverySeed) else RecoverySeed.from_mapping(seed)
         self.durable = deepcopy(dict(durable))
         self.registry = registry
@@ -585,6 +587,8 @@ class RecoveryLocalToolDispatcher:
         before this projection ever replaces it with ``REQUIRES_NARROWING``.
         """
 
+        if str(tool).replace("_", ".") == "exec.command":
+            return self.dispatch_full(tool, arguments)
         name, result = self._dispatch_complete(tool, arguments)
         return self._bounded(name, result)
 
@@ -592,9 +596,13 @@ class RecoveryLocalToolDispatcher:
         self,
         tool: str,
         arguments: Mapping[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> Any:
         """Return the complete validated local result to the archive owner."""
-
+        if str(tool).replace("_", ".") == "exec.command":
+            if self.command_service is None:
+                return {"tool": "exec_command", "status": "not_run", "error": "COMMAND_SERVICE_UNAVAILABLE"}
+            return self.command_service.run(arguments or {},
+                task_id=self.seed.failure_packet.task_id, stage="recovery")
         _name, result = self._dispatch_complete(tool, arguments)
         return result
 

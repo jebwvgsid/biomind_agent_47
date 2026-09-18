@@ -656,8 +656,10 @@ class LLMReviewer:
         compactor_invoke=None,
         compaction_activation_recorder=None,
         context_compaction_enabled: Optional[bool] = None,
+        command_service=None,
     ):
         self.llm = llm
+        self.command_service = command_service
         self._review_receipts: Dict[str, Any] = {}
         self.data_path = str(data_path or "")
         self._invocations = InvocationRegistry(max_entries=128, max_stale_signatures=128)
@@ -682,6 +684,24 @@ class LLMReviewer:
         self._compaction_activation_recorder_override = (
             compaction_activation_recorder
         )
+
+    async def _invoke_review(self, model, messages, *, task_id, data_path, metadata):
+        if self.command_service is None:
+            return await ainvoke_with_snapshot(model, messages, task_id=task_id,
+                                               data_path=data_path, metadata=metadata)
+        from agent_core.command_tools import invoke_with_command_tools
+        last_snapshot = None
+
+        async def invoke(bound_model, history, ordinal):
+            nonlocal last_snapshot
+            response, last_snapshot = await ainvoke_with_snapshot(bound_model, history,
+                task_id=task_id, data_path=data_path,
+                metadata={**metadata, "command_tool_round": ordinal})
+            return response
+
+        response = await invoke_with_command_tools(model=model, messages=messages,
+            service=self.command_service, task_id=task_id, stage="supervisor", invoke=invoke)
+        return response, last_snapshot
 
     @staticmethod
     def _parse_decision(
@@ -1382,7 +1402,7 @@ class LLMReviewer:
                             'report_id':expected_report_id,'issue_dispositions':[], 'concerns':[reason],
                             'suggestions':[],'confidence':None,'parse_status':'automatic_review_stopped',
                             'review_error':{'code':reason},'review_policy_receipt':{**receipt,'automatic_review_stopped':True}},ensure_ascii=False,sort_keys=True)
-                r, first_snapshot = await ainvoke_with_snapshot(
+                r, first_snapshot = await self._invoke_review(
                     self.llm,
                     call_messages,
                     data_path=self.data_path,
@@ -1612,6 +1632,7 @@ class SupervisorNode:
         output_dir: str = "./task_outputs",
         max_retries: int = 2,
         use_llm_review: bool = True,
+        command_service=None,
     ):
         self.llm = llm
         self.output_dir = output_dir
@@ -1619,7 +1640,7 @@ class SupervisorNode:
         self.use_llm_review = use_llm_review
         output_path = Path(output_dir).expanduser()
         trace_data_path = output_path.parent if output_path.name == "task_outputs" else output_path
-        self._llm_reviewer = LLMReviewer(llm, data_path=str(trace_data_path))
+        self._llm_reviewer = LLMReviewer(llm, data_path=str(trace_data_path), command_service=command_service)
         self._cot_loggers: Dict[str, ChainOfThoughtLogger] = {}
 
     def _get_cot(self, task_id: str) -> ChainOfThoughtLogger:
