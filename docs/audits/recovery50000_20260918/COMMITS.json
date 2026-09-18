@@ -1,0 +1,207 @@
+{
+  "baseline": "4cacc8f7ddd30dfe5334380c7fef52d859b76eae",
+  "implementation_head": "cb0cb45ee169107d4a456afbe08aed91d48cc3e4",
+  "branch": "refactor/consultant-controller-authority",
+  "source_manifest": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery50000_20260918/final_source_manifest.json",
+  "required_overlay_source": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery50000_20260918/baseline.json",
+  "commits": [
+    {
+      "slice": "P2_P5",
+      "commit": "b721681f2b22e0b61f6fe237dea8c56ce67c7a32",
+      "parent": "4cacc8f7ddd30dfe5334380c7fef52d859b76eae",
+      "production_files": [
+        "agent_core/completion_gate.py",
+        "agent_core/controller_audit.py",
+        "agent_core/genomics_reference_bundle.py",
+        "agent_core/semantic_completion.py",
+        "bio_agents.py"
+      ],
+      "skill_helper_files": [
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/references/reference-helper.md",
+        "skills/genomics/wgs-short-read-mapping/references/runtime-and-reference.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/prepare_reference.py",
+        "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+        "skills/population-genetics/popgen-gwas-workflow/SKILL.md"
+      ],
+      "test_files": [
+        "tests/offline_managed_bootstrap.py",
+        "tests/test_recovery50000_diagnostics_contract.py",
+        "tests/test_recovery50000_dictionary.py",
+        "tests/test_recovery50000_reference_helper.py",
+        "tests/test_unified_reference_bundle.py"
+      ],
+      "exact_files": [
+        "agent_core/completion_gate.py",
+        "agent_core/controller_audit.py",
+        "agent_core/genomics_reference_bundle.py",
+        "agent_core/semantic_completion.py",
+        "bio_agents.py",
+        "skills/genomics/wgs-short-read-mapping/SKILL.md",
+        "skills/genomics/wgs-short-read-mapping/references/reference-helper.md",
+        "skills/genomics/wgs-short-read-mapping/references/runtime-and-reference.md",
+        "skills/genomics/wgs-short-read-mapping/scripts/prepare_reference.py",
+        "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+        "skills/population-genetics/popgen-gwas-workflow/SKILL.md",
+        "tests/offline_managed_bootstrap.py",
+        "tests/test_recovery50000_diagnostics_contract.py",
+        "tests/test_recovery50000_dictionary.py",
+        "tests/test_recovery50000_reference_helper.py",
+        "tests/test_unified_reference_bundle.py"
+      ],
+      "partition_receipt": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery50000_20260918/p2_p5_commit.json",
+      "overlay_files": [
+        "agent_core/semantic_completion.py",
+        "bio_agents.py"
+      ],
+      "adopted_related_test_baselines": []
+    },
+    {
+      "slice": "P1",
+      "commit": "14ecdfebd050d9eb7304477c1598124bde78631c",
+      "parent": "b721681f2b22e0b61f6fe237dea8c56ce67c7a32",
+      "production_files": [
+        "agent_core/context_lineage.py",
+        "agent_core/deepseek_stream.py",
+        "agent_core/workflow/context_compaction.py",
+        "agent_core/workflow/recovery_agent.py",
+        "agent_core/workflow/recovery_context.py",
+        "agent_core/workflow/recovery_node.py",
+        "agent_core/workflow/recovery_runtime.py",
+        "agent_core/workflow/scoped_context.py",
+        "bio_agents.py",
+        "config/config.py"
+      ],
+      "skill_helper_files": [],
+      "test_files": [
+        "tests/test_gwas_s4_recovery_integration.py",
+        "tests/test_provider_attempt_reliability.py",
+        "tests/test_recovery50000_budget_retry.py",
+        "tests/test_recovery50000_native_provider.py",
+        "tests/test_recovery_connection_retry.py",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_recovery_reception.py",
+        "tests/test_recovery_reception_stop.py",
+        "tests/test_recovery_schema2_node.py",
+        "tests/test_tad_recovery_reception_workflow.py",
+        "tests/test_plan_revision_handoff.py",
+        "tests/test_recovery50000_budget_boundary.py",
+        "tests/offline_managed_bootstrap.py"
+      ],
+      "exact_files": [
+        "agent_core/context_lineage.py",
+        "agent_core/deepseek_stream.py",
+        "agent_core/workflow/context_compaction.py",
+        "agent_core/workflow/recovery_agent.py",
+        "agent_core/workflow/recovery_context.py",
+        "agent_core/workflow/recovery_node.py",
+        "agent_core/workflow/recovery_runtime.py",
+        "agent_core/workflow/scoped_context.py",
+        "bio_agents.py",
+        "config/config.py",
+        "tests/test_gwas_s4_recovery_integration.py",
+        "tests/test_provider_attempt_reliability.py",
+        "tests/test_recovery50000_budget_retry.py",
+        "tests/test_recovery50000_native_provider.py",
+        "tests/test_recovery_connection_retry.py",
+        "tests/test_recovery_public_rejection.py",
+        "tests/test_recovery_reception.py",
+        "tests/test_recovery_reception_stop.py",
+        "tests/test_recovery_schema2_node.py",
+        "tests/test_tad_recovery_reception_workflow.py",
+        "tests/test_plan_revision_handoff.py",
+        "tests/test_recovery50000_budget_boundary.py",
+        "tests/offline_managed_bootstrap.py"
+      ],
+      "partition_receipt": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery50000_20260918/p1_commit.json",
+      "overlay_files": [
+        "bio_agents.py",
+        "config/config.py",
+        "tests/test_recovery_schema2_node.py"
+      ],
+      "adopted_related_test_baselines": []
+    },
+    {
+      "slice": "P6",
+      "commit": "1ed8b72c14980f53476e5e3ab66eade92d09b6f0",
+      "parent": "14ecdfebd050d9eb7304477c1598124bde78631c",
+      "production_files": [
+        "agent_core/cli_lifecycle.py",
+        "agent_core/workflow/inspection_stop.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/workflow/recovery_projection.py",
+        "agent_core/workflow/runtime_recovery_reporting.py",
+        "bio_agents.py"
+      ],
+      "skill_helper_files": [],
+      "test_files": [
+        "tests/test_common_finalization_workflow.py",
+        "tests/test_inspection_terminal_workflow.py",
+        "tests/test_recovery50000_report_handoff.py",
+        "tests/test_recovery50000_report_preflight.py",
+        "tests/test_recovery50000_terminal_projection.py"
+      ],
+      "exact_files": [
+        "agent_core/cli_lifecycle.py",
+        "agent_core/workflow/inspection_stop.py",
+        "agent_core/workflow/managed_stop.py",
+        "agent_core/workflow/recovery_projection.py",
+        "agent_core/workflow/runtime_recovery_reporting.py",
+        "bio_agents.py",
+        "tests/test_common_finalization_workflow.py",
+        "tests/test_inspection_terminal_workflow.py",
+        "tests/test_recovery50000_report_handoff.py",
+        "tests/test_recovery50000_report_preflight.py",
+        "tests/test_recovery50000_terminal_projection.py"
+      ],
+      "partition_receipt": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery50000_20260918/p6_commit.json",
+      "overlay_files": [
+        "agent_core/workflow/managed_stop.py",
+        "bio_agents.py"
+      ],
+      "adopted_related_test_baselines": [
+        "tests/test_inspection_terminal_workflow.py"
+      ]
+    },
+    {
+      "slice": "TEST_BOUNDARIES",
+      "commit": "34ffa3f0576a5402a00d5b06cd89ddc9571ad2cb",
+      "parent": "1ed8b72c14980f53476e5e3ab66eade92d09b6f0",
+      "production_files": [],
+      "skill_helper_files": [],
+      "test_files": [
+        "tests/test_provider_attempt_reliability.py",
+        "tests/test_recovery_connection_retry.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "exact_files": [
+        "tests/test_provider_attempt_reliability.py",
+        "tests/test_recovery_connection_retry.py",
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "partition_receipt": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery50000_20260918/test_boundaries_commit.json",
+      "overlay_files": [
+        "tests/test_preflight_mapping_commit.py"
+      ],
+      "adopted_related_test_baselines": []
+    },
+    {
+      "slice": "A13_FIXTURE",
+      "commit": "cb0cb45ee169107d4a456afbe08aed91d48cc3e4",
+      "parent": "34ffa3f0576a5402a00d5b06cd89ddc9571ad2cb",
+      "production_files": [],
+      "skill_helper_files": [],
+      "test_files": [
+        "tests/test_recovery50000_local_repair.py"
+      ],
+      "exact_files": [
+        "tests/test_recovery50000_local_repair.py"
+      ],
+      "partition_receipt": "/public/home/liusiqi/03.毕设/biomind_audit_exports/recovery50000_20260918/a13_fixture_commit.json",
+      "overlay_files": [],
+      "adopted_related_test_baselines": []
+    }
+  ],
+  "pushed": false,
+  "documentation_commit": "See external final_receipt.json to avoid self-referential commit hash."
+}
