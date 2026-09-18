@@ -1168,6 +1168,12 @@ class TypedGenerate:
             payload=payload,
             evidence_refs=evidence_refs,
         )
+        if outcome_type == "user_input_needed":
+            return {
+                "generate_outcome": outcome.to_dict(),
+                "pending_human_question": route_blind_state_projection(question),
+                "pending_action": {},
+            }
         if outcome_type in {"runtime_evidence_required", "runtime_recovery_stopped", "installation_requested"}:
             return {
                 "generate_outcome": outcome.to_dict(),

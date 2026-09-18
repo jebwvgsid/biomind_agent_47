@@ -3495,6 +3495,8 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> tuple[s
             break
         executable = args[0].rsplit("/", 1)[-1] if args else ""
         closing = next((j for j in range(i + 1, len(lines)) if lines[j] == match[2]), None)
+        if args and "$" in args[0] and closing is not None and i < marker_index < closing:
+            raise ValueError("EFFECT_HELPER_PYTHON_EXECUTABLE_NOT_LITERAL")
         if (re.fullmatch(r"(?:python|pypy)(?:\d+(?:\.\d+)*)?", executable)
                 and _python_stdin_selector(args) and closing is not None and i < marker_index < closing):
             source = "\n".join(lines[i + 1:closing]) + "\n"
@@ -3522,8 +3524,11 @@ def _helper_diagnostic(body, template, language, *, carrier_source="code"):
         try:
             _assert_helper_scope(body, language, line - 1)
             scope = "python_comment"
-        except ValueError:
+        except ValueError as exc:
             scope = "outside_supported_python_scope"
+            scopes.append({"source": carrier_source, "line": line, "scope": scope,
+                           "reason_code": str(exc)})
+            continue
         scopes.append({"source": carrier_source, "line": line, "scope": scope})
     return {"language": language or "UNKNOWN", "carrier_source": carrier_source,
         "marker_count": len(positions), "marker_positions": scopes,
@@ -3556,6 +3561,13 @@ def materialize_effect_template(body: str, template: Mapping[str, Any], *, langu
     try:
         _assert_helper_scope(body, language, markers[0])
     except ValueError as exc:
+        if str(exc) == "EFFECT_HELPER_PYTHON_EXECUTABLE_NOT_LITERAL":
+            fail(str(exc),
+                 "The single-quoted heredoc is present, but its executable is a shell variable "
+                 "and cannot be verified as Python without interpreting the shell. Keep the "
+                 "approved Bash carrier and use the explicit Python executable path followed "
+                 "by - <<'PY'; place the marker on its own Python comment line inside it. "
+                 "Do not change the approved tool to a Python script block.")
         fail(str(exc), "The unique marker is outside the supported Python comment scope for the declared carrier.")
     code = str(template.get("python_template") or "")
     if not code or hashlib.sha256(code.encode()).hexdigest() != template.get("template_sha256"):

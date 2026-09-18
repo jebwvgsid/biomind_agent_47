@@ -1168,6 +1168,28 @@ def recovery_client_kwargs(shared_kwargs: Mapping[str, Any]) -> Dict[str, Any]:
     return result
 
 
+_GENERATE_NON_EXECUTION_ACTIONS = frozenset({
+    "ask_user", "install", "install_tool", "search", "finish",
+    "solution", "blocked", "plan_patch",
+})
+
+
+def _generate_human_question(task_id: str, action: Mapping[str, Any]) -> Dict[str, Any]:
+    """One step-bound question shared by durable state and the graph handoff."""
+    scope = {key: action.get(key) for key in (
+        "plan_id", "plan_version", "plan_revision", "step_id", "action_id",
+    )}
+    question = str(action.get("question") or "").strip()
+    identity = {"task_id": task_id, **scope, "question": question}
+    return {
+        "type": "generate_question", "stage": "generate",
+        "question_id": "Q-" + hashlib.sha256(json.dumps(
+            identity, sort_keys=True).encode("utf-8")).hexdigest()[:20],
+        **scope, "plan_step_id": str(action.get("step_id") or ""),
+        "question": question, "resume_step": "generate",
+    }
+
+
 def _generate_requires_semantic_action_protocol(
     step: Mapping[str, Any],
     capability_contract: Mapping[str, Any],
@@ -8818,6 +8840,10 @@ class BioAnalystAgent:
         pending: Mapping[str, Any],
     ) -> Dict[str, Any]:
         """Run and transactionally apply the restricted Planner impact mode."""
+        from agent_core.planner_recovery import (
+            PlannerCallError, claim_planner_call, complete_planner_claim,
+            response_integrity, unsettled_call,
+        )
         task_spec = canonical_task_spec_for_state(durable)
         task_revision = task_spec_revision(task_spec)
         plan_revision = int(durable.get("plan_revision") or 0)
@@ -9114,6 +9140,48 @@ class BioAnalystAgent:
                 skill_projection.get("relevant_skill_excerpts") or []
             )),
         }
+        typed_impact = (
+            workflow_routing_schema_version(durable, state)
+            == WORKFLOW_ROUTING_SCHEMA_TYPED
+        )
+        impact_policy: Dict[str, Any] = {}
+        impact_claim: Dict[str, Any] = {}
+        if typed_impact:
+            # Impact review is a Planner request. Use its existing claim and
+            # review protocol, bound to the updated task, rather than borrowing
+            # the claim/submission of the previously approved Plan.
+            durable = deepcopy(dict(durable))
+            task_state = durable.setdefault("task_state", {})
+            prior_epoch = dict(task_state.get("planning_epoch") or {})
+            if unsettled_call(durable):
+                raise PlannerCallError(
+                    "PLANNER_CALL_RESULT_UNKNOWN",
+                    "A prior Planner request has no durable accepted result.",
+                )
+            if int(prior_epoch.get("base_task_revision") or 0) != task_revision or prior_epoch.get("status") not in {"active", "candidate_rejected"}:
+                committed = dict(durable.get("current_plan") or {})
+                epoch = start_planning_epoch(
+                    task_revision=task_revision,
+                    task_semantic_identity=task_semantic_hash(task_spec),
+                    base_plan_revision=plan_revision,
+                    base_plan_snapshot_id=str(committed.get("plan_snapshot_ref") or ""),
+                    base_plan_semantic_identity=str(committed.get("plan_semantic_hash") or ""),
+                    parent_epoch_id=str(prior_epoch.get("planning_epoch_id") or ""),
+                    start_reason="plan_impact_review",
+                    planner_feedback_revision=int((task_state.get("planner_feedback") or {}).get("revision") or 0),
+                )
+                # Follow normal Planner semantics: a genuinely new TaskSpec
+                # starts a new epoch. Rebinding the same semantic task cannot
+                # refund calls already consumed while correcting its Plan.
+                if prior_epoch.get("base_task_semantic_identity") == task_semantic_hash(task_spec):
+                    for counter in ("planner_calls_total", "candidate_repairs", "stale_redispatches"):
+                        epoch[counter] = int(prior_epoch.get(counter) or 0)
+                task_state["planning_epoch"] = epoch
+                save_plan_state(self.data_path, task_id, durable)
+                durable = load_plan_state(self.data_path, task_id)
+            impact_policy = self._resolve_planner_output_policy(
+                task_output_token_limit=(task_state.get("budgets") or {}).get("max_planner_output_tokens"),
+            )
         planner_context = build_node_context(
             node_type="planner",
             task_spec=task_spec,
@@ -9137,10 +9205,28 @@ class BioAnalystAgent:
             separators=(",", ":"),
             default=str,
         ).encode("utf-8")).hexdigest()
+        impact_messages = [HumanMessage(content=PromptManager.get_plan_impact_review_prompt(impact_payload))]
+        impact_failure = dict((durable.get("task_state") or {}).get("planning_failure") or {})
+        if (impact_failure.get("validation_source") == "plan_impact_review"
+                and impact_failure.get("status") == "unresolved"
+                and int(impact_failure.get("task_spec_revision") or 0) == task_revision):
+            impact_messages.append(SystemMessage(content=json.dumps({
+                "plan_impact_validation_feedback": impact_failure.get("validation_issues") or [],
+            }, ensure_ascii=False, default=str)))
+        if typed_impact:
+            impact_scope = {
+                "task_id": task_id, "task_revision": task_revision,
+                "planning_epoch_id": str((durable["task_state"].get("planning_epoch") or {}).get("planning_epoch_id") or ""),
+                "invocation_id": planner_context.binding.invocation_id,
+                "candidate_scope_id": planner_context.binding.candidate_scope_id,
+            }
+            planner_input_admission(impact_messages, impact_policy,
+                base_policy=getattr(getattr(self, "_schema2_phase_compactor", None), "policy", None) or ContextBudgetPolicy())
+            _, impact_claim = claim_planner_call(
+                self.data_path, task_id, durable, impact_scope, impact_policy,
+            )
         response = await self._ainvoke_node_llm(
-            [HumanMessage(content=PromptManager.get_plan_impact_review_prompt(
-                impact_payload
-            ))],
+            impact_messages,
             node_context=planner_context,
             stage="planner_plan_impact_review",
             task_id=task_id,
@@ -9148,6 +9234,7 @@ class BioAnalystAgent:
             temperature=0.0,
             trace_metadata={
                 "call_kind": "planner_plan_impact_review",
+                "planner_output_policy": impact_policy,
                 "proposal_id": str(pending.get("proposal_id") or ""),
                 "task_spec_revision": task_revision,
                 "plan_revision": plan_revision,
@@ -9218,6 +9305,13 @@ class BioAnalystAgent:
                     "consultant" if transaction_changed else "planner"
                 ),
             }
+        impact_integrity = response_integrity(response, scope=impact_scope, claim=impact_claim, policy=impact_policy) if typed_impact else {}
+        if typed_impact:
+            latest["task_state"]["planning_epoch"]["call_claim"].update(
+                status="response_received", response_integrity=deepcopy(impact_integrity),
+            )
+            save_plan_state(self.data_path, task_id, latest)
+            latest = load_plan_state(self.data_path, task_id)
         decision = validate_plan_impact_decision(
             parse_strict_json_object(
                 str(response.content or ""),
@@ -9230,6 +9324,8 @@ class BioAnalystAgent:
             base_plan_revision=plan_revision,
         )
         kind = str(decision["decision"])
+        if typed_impact and kind in {"NEED_USER_INPUT", "REJECT_PROPOSAL"}:
+            complete_planner_claim(latest, impact_claim, impact_integrity, outcome=kind.lower())
         latest_task_state = dict(latest.get("task_state") or {})
         access = normalize_skill_access_state(
             latest_task_state.get("skill_access_state")
@@ -9536,6 +9632,10 @@ class BioAnalystAgent:
             value: Mapping[str, Any],
         ) -> Dict[str, Any]:
             step_row = deepcopy(dict(value or {}))
+            if isinstance(step_row.get("skill_ids"), list) or isinstance(step_row.get("skill_refs"), list):
+                # An explicit empty list is a valid no-Skill declaration,
+                # including replacement steps accepted through impact review.
+                step_row["skills_declared"] = True
             raw_refs = step_row.get("skill_refs")
             if raw_refs is None:
                 return step_row
@@ -9673,7 +9773,32 @@ class BioAnalystAgent:
         updated["skill_access_state"] = deepcopy(updated_access)
         updated["selected_skill_refs"] = deepcopy(updated_refs)
         updated["selected_skill_ids"] = list(updated_ids)
+        if typed_impact:
+            updated = self._bind_plan_execution_capability_contracts(updated, updated_ids)
+            updated, _ = migrate_plan_state(updated, task_id, self.data_path)
+            bind_plan_to_task_revision(updated, task_revision)
+            registry = self.skill_manager.get_execution_capability_registry(updated_ids) if self.skill_manager else {}
+            bindings = deepcopy(dict(updated.get("plan_resource_bindings") or {}))
+            updated, receipt, issues = compile_plan_step_effects(
+                updated, registry, allow_legacy_untyped=False, resource_bindings=bindings,
+            )
+            updated["plan_compilation_receipt"] = receipt
+            updated, receipt, dataflow_issues = compile_plan_dataflow(
+                updated, registry, resource_bindings=bindings, compile_effect_contracts=False,
+                validate_dependencies=True, allow_legacy_untyped=False,
+            )
+            if issues or dataflow_issues:
+                raise SkillAccessError("PLAN_IMPACT_COMPILATION_REJECTED", json.dumps(issues + dataflow_issues, ensure_ascii=False, default=str))
+            updated["plan_dataflow_receipt"] = receipt
+            updated["semantic_plan_hash"] = semantic_plan_hash(updated)
+            updated = resolve_planning_failure(updated)
+            complete_planner_claim(updated, impact_claim, impact_integrity, outcome="candidate_ready_for_review")
         save_plan_state(self.data_path, task_id, updated)
+        if typed_impact:
+            updated = load_plan_state(self.data_path, task_id)
+            updated = self._commit_plan_review_submission(
+                task_id, expected_claim_id=impact_claim["claim_id"], expected_identity=plan_identity(updated),
+            )
         plan_text = render_structured_plan(updated)
         plan_file = str(
             updated.get("plan_file")
@@ -12605,6 +12730,9 @@ class BioAnalystAgent:
             key: value for key, value in bound.items()
             if key not in {"code", "messages", "raw_response"}
         }
+        if str(bound.get("type") or "") == "ask_user":
+            task_state["pending_question"] = _generate_human_question(task_id, bound)
+            task_state["pending_action"] = {}
         plan_state["task_state"] = task_state
         from agent_core.workflow.candidate_repair import resolve_admitted_candidate_repairs
         resolve_admitted_candidate_repairs(plan_state, bound)
@@ -12987,6 +13115,15 @@ class BioAnalystAgent:
                         approved_tool=approved_tool,
                         actual_language=action_language,
                         step_id=step_id,
+                        json_pointer="$.language",
+                        message=(
+                            "Keep the approved tool when repairing a candidate. "
+                            "For tool=bash, use a <shell> block; Python helper code "
+                            "may be inside a single-quoted heredoc invoked with an "
+                            "explicit Python executable path and stdin operand '-'. "
+                            "For tool=python, use a <python> block. Changing the "
+                            "approved tool requires a Plan revision."
+                        ),
                     )
             action_identity = {
                 "action_id": action_id,
@@ -18152,7 +18289,7 @@ class BioAnalystAgent:
         if service is None or stage not in {"consultant", "planner", "planner_repair", "generate"}:
             return await self._ainvoke_llm_once(messages, stage=stage, task_id=task_id, **kwargs)
         model = kwargs.get("llm_override") or (
-            getattr(self, "planner_llm", self.llm) if stage in {"planner", "planner_repair"} else self.llm)
+            getattr(self, "planner_llm", self.llm) if stage in {"planner", "planner_repair", "planner_plan_impact_review"} else self.llm)
         if not callable(getattr(model, "bind_tools", None)):
             raise RuntimeError(f"{stage}: model adapter must support bind_tools for exec_command")
         from agent_core.command_tools import invoke_with_command_tools
@@ -18201,7 +18338,7 @@ class BioAnalystAgent:
         provider_policy = dict(llm_policy or {})
         planner_output_policy = (
             deepcopy(dict(trace_metadata.get("planner_output_policy") or {}))
-            if stage in {"planner", "planner_repair"} else {}
+            if stage in {"planner", "planner_repair", "planner_plan_impact_review"} else {}
         )
         recovery_single_attempt = bool(
             stage in {"recovery", "terminal_summary"}
@@ -18217,12 +18354,12 @@ class BioAnalystAgent:
                 getattr(
                     self,
                     "generate_llm_sdk_max_retries" if stage == "generate" else
-                    "planner_llm_sdk_max_retries" if stage in {"planner", "planner_repair"} else "llm_max_retries",
+                    "planner_llm_sdk_max_retries" if stage in {"planner", "planner_repair", "planner_plan_impact_review"} else "llm_max_retries",
                     0,
                 ),
             )
         )
-        if stage in {"planner", "planner_repair"} and sdk_max_retries != 0:
+        if stage in {"planner", "planner_repair", "planner_plan_impact_review"} and sdk_max_retries != 0:
             raise RuntimeError("PLANNER_SDK_RETRY_POLICY_VIOLATION")
         if stage == "generate" and sdk_max_retries != 0:
             raise RuntimeError("GENERATE_SDK_RETRY_POLICY_VIOLATION")
@@ -18275,7 +18412,7 @@ class BioAnalystAgent:
         trace_data_path = str(getattr(self, "data_path", "") or "")
         trace_store = ContextLineageStore(trace_data_path, task_id) if task_id and trace_data_path else None
         invocation_llm = llm_override or (
-            getattr(self, "planner_llm", self.llm) if stage in {"planner", "planner_repair"} else self.llm)
+            getattr(self, "planner_llm", self.llm) if stage in {"planner", "planner_repair", "planner_plan_impact_review"} else self.llm)
         from agent_core.workflow.recovery_runtime import (
             RECOVERY_RESOURCES, recovery_seconds_remaining, recovery_dispatch_seconds, recovery_request_estimate,
             recovery_reserve, recovery_settle, recovery_replay_account,
@@ -18476,7 +18613,7 @@ class BioAnalystAgent:
                         event,
                         exc_info=True,
                     )
-            if stage in {"planner", "planner_repair"}:
+            if stage in {"planner", "planner_repair", "planner_plan_impact_review"}:
                 observed = dict(trace_metadata.get("planner_observation") or {})
                 observed.update({key: payload.get(key) for key in (
                     "attempt_id", "attempt_ordinal", "state", "observation_at", "elapsed_seconds",
@@ -18640,7 +18777,7 @@ class BioAnalystAgent:
                 )
 
                 async def invoke(observer: ProviderStreamObserver) -> Any:
-                    if stage in {"planner", "planner_repair"} and task_id and trace_data_path:
+                    if stage in {"planner", "planner_repair", "planner_plan_impact_review"} and task_id and trace_data_path:
                         from agent_core.plan_tracker import planner_admission_closed_reason, PlannerAdmissionClosed
                         closed = planner_admission_closed_reason(load_plan_state(trace_data_path, task_id))
                         if closed:
@@ -18679,7 +18816,7 @@ class BioAnalystAgent:
                         progress_start_fail_closed=recovery_single_attempt,
                         observation_interval_seconds=(
                             float(getattr(self, "planner_progress_interval_seconds", 5.0))
-                            if stage in {"planner", "planner_repair"} and getattr(self, "planner_progress_enabled", True)
+                            if stage in {"planner", "planner_repair", "planner_plan_impact_review"} and getattr(self, "planner_progress_enabled", True)
                             else 0.0
                         ),
                     )
@@ -18928,7 +19065,7 @@ class BioAnalystAgent:
                                 "finish_reason": str(attempt_record.finish_reason or ""),
                             },
                         }
-                    if stage in {"planner", "planner_repair"}:
+                    if stage in {"planner", "planner_repair", "planner_plan_impact_review"}:
                         trusted_attempt = attempt_record.to_dict()
                         scoped_metadata = {key: deepcopy(trusted_attempt.get(key)) for key in (
                             "call_id", "attempt_id", "provider_attempt_id", "semantic_invocation_id",
@@ -38705,6 +38842,8 @@ question. Never guess a scientific or database identity.
                 plan_progress = self._mark_plan_current_done(
                     task_id,
                     f"user_answered: {str(user_answer or '')[:500]}",
+                    expected_step_id=pending_step_id,
+                    transition_id=f"user-answer:{question_id}:{answer_turn_ref}",
                 )
             else:
                 plan_progress = self._record_plan_current_evidence(
@@ -38913,6 +39052,23 @@ question. Never guess a scientific or database identity.
                         durable=planner_entry_state,
                         pending=pending_plan_impact,
                     )
+                except PlannerAdmissionClosed:
+                    return planner_closed_update(load_plan_state(self.data_path, task_id), "plan_impact_claim")
+                except (PlannerCallError, PlannerOutputPolicyError) as exc:
+                    diagnostic = exc.to_diagnostic()
+                    diagnostic.setdefault("error_code", exc.code)
+                    current = load_plan_state(self.data_path, task_id)
+                    stopped = terminalize_planning_failure(
+                        current,
+                        planning_epoch_id=str((current.get("task_state", {}).get("planning_epoch") or {}).get("planning_epoch_id") or ""),
+                        task_spec_revision_value=task_spec_revision(canonical_task_spec_for_state(current)),
+                        terminal_diagnostic=diagnostic,
+                    )
+                    set_task_status(stopped, TASK_STATUS_FAILED, str(diagnostic.get("detail") or exc.code))
+                    save_plan_state(self.data_path, task_id, stopped)
+                    return {"messages": [SystemMessage(content=json.dumps(diagnostic, ensure_ascii=False))],
+                            "task_status": "failed", "failure_type": exc.code,
+                            "pending_action": {}, "next_step": "finish"}
                 except StateCASConflict as exc:
                     stale = {
                         "decision_result": "STALE_NODE_RESULT",
@@ -38937,6 +39093,19 @@ question. Never guess a scientific or database identity.
                         "next_step": "planner",
                     }
                 except SkillAccessError as exc:
+                    current = load_plan_state(self.data_path, task_id)
+                    epoch = dict((current.get("task_state") or {}).get("planning_epoch") or {})
+                    claim = dict(epoch.get("call_claim") or {})
+                    if claim.get("status") == "response_received" and claim.get("response_integrity"):
+                        from agent_core.planner_recovery import attach_rejection_facts
+                        rejected = record_planning_failure(
+                            current, validation_issues=[exc.to_dict()],
+                            planning_epoch_id=str(epoch.get("planning_epoch_id") or ""),
+                            task_spec_revision_value=task_spec_revision(canonical_task_spec_for_state(current)),
+                            validation_source="plan_impact_review",
+                        )
+                        attach_rejection_facts(rejected, claim["response_integrity"], claim)
+                        save_plan_state(self.data_path, task_id, rejected)
                     return {
                         "messages": [SystemMessage(content=json.dumps(
                             exc.to_dict(), ensure_ascii=False, sort_keys=True,
@@ -42816,6 +42985,9 @@ question. Never guess a scientific or database identity.
                 execution_capability_id = str(
                     generate_step.get("execution_capability_id") or ""
                 ).strip()
+                generate_step_action = str(
+                    generate_step.get("action") or "execute"
+                ).strip().lower()
                 capability_registry = (
                     self.skill_manager.get_execution_capability_registry(active_skills)
                     if self.skill_manager
@@ -42843,32 +43015,46 @@ question. Never guess a scientific or database identity.
                         raise PlanBindingError("BINDING_INPUT_CAPABILITY_SCOPE_MISMATCH")
                     generate_frozen_binding_input["operation"] = str(selected_contract.get("operation") or "")
                     generate_binding_contract = deepcopy(generate_frozen_binding_input["binding_contract"])
-                generate_runtime_resolution = resolve_action_runtime_bindings(
-                    selected_skill_id=generate_selected_skill_id,
-                    execution_capability_id=execution_capability_id,
-                    approved_capability_contract_hash=str(
-                        generate_step.get("capability_contract_hash") or ""
-                    ),
-                    capability_registry=capability_registry,
-                    ready_runtime_binding_registry=build_runtime_binding_registry(self._runtime_binding_source(state, [generate_selected_skill_id])),
-                    current_action_identity={
-                        "plan_id": str(generate_plan_state.get("plan_id") or ""),
-                        "step_id": current_step_id,
-                    },
+                # Built-in interactions have no executor to resolve. Keep
+                # explicit domain capabilities and every executable/unknown
+                # action on the normal fail-closed runtime-binding path.
+                generate_has_execution_scope = bool(
+                    execution_capability_id
+                    or generate_step_action not in _GENERATE_NON_EXECUTION_ACTIONS
                 )
-                generate_runtime_audit_view = {
-                    "status": "passed",
-                    "bindings": dict(
-                        generate_runtime_resolution.get(
-                            "effective_runtime_bindings"
-                        ) or {}
-                    ),
-                    "runtime_snapshot_digest": str(
-                        generate_runtime_resolution.get(
-                            "runtime_binding_manifest_hash"
-                        ) or ""
-                    ),
-                }
+                if generate_has_execution_scope:
+                    generate_runtime_resolution = resolve_action_runtime_bindings(
+                        selected_skill_id=generate_selected_skill_id,
+                        execution_capability_id=execution_capability_id,
+                        approved_capability_contract_hash=str(
+                            generate_step.get("capability_contract_hash") or ""
+                        ),
+                        capability_registry=capability_registry,
+                        ready_runtime_binding_registry=build_runtime_binding_registry(self._runtime_binding_source(state, [generate_selected_skill_id])),
+                        current_action_identity={
+                            "plan_id": str(generate_plan_state.get("plan_id") or ""),
+                            "step_id": current_step_id,
+                        },
+                    )
+                    generate_runtime_audit_view = {
+                        "status": "passed",
+                        "bindings": dict(
+                            generate_runtime_resolution.get(
+                                "effective_runtime_bindings"
+                            ) or {}
+                        ),
+                        "runtime_snapshot_digest": str(
+                            generate_runtime_resolution.get(
+                                "runtime_binding_manifest_hash"
+                            ) or ""
+                        ),
+                    }
+                else:
+                    generate_runtime_audit_view = {
+                        "status": "not_applicable",
+                        "reason": "builtin_action_without_execution_capability",
+                        "action": generate_step_action,
+                    }
                 generate_visible_artifacts = build_approved_visible_artifact_set(
                     generate_task_spec,
                     plan_state=generate_plan_state,
@@ -42906,14 +43092,11 @@ question. Never guess a scientific or database identity.
                             )
                             or {}
                         ),
-                    )
+                    ) if generate_has_execution_scope else []
                 )
                 if generate_frozen_binding_input:
                     generate_binding_requirements = public_binding_requirements(generate_frozen_binding_input,
                         operation=str(selected_contract.get("operation") or ""), workspace_bindings=generate_workspace_bindings)
-                generate_step_action = str(
-                    generate_step.get("action") or "execute"
-                ).strip().lower()
                 generate_requires_semantic_action = (
                     _generate_requires_semantic_action_protocol(
                         generate_step,
@@ -42953,10 +43136,7 @@ question. Never guess a scientific or database identity.
                     external_recovery_script_protocol
                     or (
                         not external_recovery_bundle
-                        and generate_step_action not in {
-                            "ask_user", "install", "install_tool", "search", "finish",
-                            "solution", "blocked", "plan_patch",
-                        }
+                        and generate_step_action not in _GENERATE_NON_EXECUTION_ACTIONS
                         and not generate_semantic_action_protocol
                     )
                 )
@@ -46029,8 +46209,7 @@ question. Never guess a scientific or database identity.
                     # and parser/helper checkpoints used by other candidates.
                     violation = {**exc.to_diagnostic(), "field_path": "$.language",
                         "expected": str(generate_step.get("tool") or ""),
-                        "actual": str(structured_action.get("language") or ""),
-                        "message": "The action language must match the explicitly approved generic tool."}
+                        "actual": str(structured_action.get("language") or "")}
                     return {"messages": [response], **self._candidate_admission_rejection_update(
                         validated_representation_targets=candidate_validated_representation_targets, check_records=candidate_check_records,
                         task_id=task_id, plan_state=generate_invocation_plan_state,
@@ -46756,16 +46935,14 @@ question. Never guess a scientific or database identity.
                     )
                 return {
                     "messages": [response],
-                    "pending_human_question": {
-                        "type": "generate_question",
-                        "stage": "generate",
-                        "question": question,
-                        "context": str(current_plan)[:1200],
-                        "resume_step": "generate",
-                    },
+                    "pending_human_question": _generate_human_question(task_id, structured_action),
                     "plan_progress": plan_progress,
                     "next_step": "ask_user",
-                    "pending_action": structured_action if structured_action else {},
+                    # The admitted question is an interaction, not an action
+                    # ready for Execute. Preserve its identity in the question.
+                    "pending_action": {},
+                    "generate_result": "USER_INPUT_REQUIRED",
+                    "generate_exit_reason": "user_input_required",
                 }
 
             # Active RAG
