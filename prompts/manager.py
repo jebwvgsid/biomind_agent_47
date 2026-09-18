@@ -1898,11 +1898,23 @@ remains version 2). Each step declares resource_uses exactly once:
 resource_ref identifies the resource; access declares this step's use. Omit role
 when no selected domain helper requires it. A read must have a real initial or
 reachable producer/state source. A mutate use needs a declared mutable workspace
-and its separate workspace_mutations transition/evidence facts. outputs remains
+and a state/evidence transition. When the exact selected role already defines
+that transition, omit the duplicate workspace_mutations; the compiler supplies
+the frozen capability facts. Otherwise declare the actual transition. outputs remains
 the sole immutable-artifact producer declaration. Dependencies order steps;
 they do not supply missing resources, access, or runtime evidence.
 Do not also write steps[].inputs, its legacy aliases, or resource-side
 role_associations in version 3. These are not independently editable copies.
+Put a newly created file or directory bundle only in outputs. Do not declare
+it as mutate because creating it writes bytes. A destination/parent-directory
+writability or collision probe describes the output path as its target, not a
+READ of the future output's contents. A real content READ must have a producer.
+Unknown biological parameters require ask_user before their FIRST use. In WGS,
+read-group fields affecting sample/library/platform may be needed before mapping;
+ploidy is needed before calling and filter choices before filtering. Do not put
+unresolved placeholder text in executable parameter values or assume defaults.
+An explicit selected calling route may use justified auxiliary tools; a missing
+tool from an unselected alternative does not block independent selected stages.
 The runtime may derive read-only compatibility views from resource_uses; those
 views do not authorize new resources and are not fields to return in a Plan.
 
@@ -1957,7 +1969,10 @@ a file. `outputs` describes only immutable-artifact production. Use `operation`
 plus one or more of `produces_bindings`, `produces_observations`,
 `workspace_mutations`, or `explicit_side_effects` for legitimate non-artifact
 effects. An empty `outputs` array is valid when another effect is declared.
-When selecting a domain capability, use its exact operation/effect interfaces.
+When selecting a domain capability, its unique operation and fixed effects may
+be omitted: the compiler derives them before approval. Do not copy produced
+artifacts, observations, or side effects simply to repeat that capability.
+Explicit conflicting declarations are rejected, never silently rewritten.
 For explicit framework.generic.execute, operation is execute and tool is python
 or bash; declare the actual observable effects needed by this approved step.
 Generic checks need no invented domain capability, helper role or output file.
@@ -2031,10 +2046,6 @@ SUBMIT_PLAN_FOR_REVIEW schema placeholders:
     "operation": "<selected-domain-operation-or-execute-for-generic>",
     "resource_uses": [{"resource_ref":"<exact-resource-handle>","access":"read|mutate"}],
     "outputs": ["<existing-output-or-plan-handle>"],
-    "produces_bindings": ["<declared-semantic-binding-id>"],
-    "produces_observations": ["<declared-observation-id>"],
-    "workspace_mutations": [{"workspace_ref": "<declared-mutable-workspace-id>", "mutation": "<selected-capability-mutation>", "requires_available": false, "requires_state": "<required-prior-state-or-empty>", "available_after_success": true, "establishes_state": "<state-after-success>", "contract_source": "<selected-capability-contract-source>", "contract_revision": "<exact-capability-contract-revision>"}],
-    "explicit_side_effects": ["<declared-supported-side-effect-id>"],
     "dependencies": ["<task-specific-step-id>"],
     "success_criteria": ["<task-specific-criterion>"],
     "skill_ids": ["<canonical-selected-skill-id; may be empty for explicit generic execution>"],

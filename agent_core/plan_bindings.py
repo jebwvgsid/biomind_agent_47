@@ -169,7 +169,14 @@ def planner_resource_requirements(authoritative_bindings: Mapping[str, Any], cap
         "resource_contract_version": PLAN_RESOURCE_USES_VERSION,
         "step_resource_uses": {
             "item": {"resource_ref": "exact current input/output/plan handle", "access": "read|mutate", "role": "optional exact selected helper role"},
-            "meaning": "Declare each actual resource use once on its step. inputs and resource-side role_associations are retired in v3. Mutation state/evidence and immutable outputs remain distinct facts.",
+            "meaning": "Declare actual upstream reads and genuine workspace mutation once. New products appear only in outputs, never as mutate merely because creation writes files. inputs and resource-side role_associations are retired in v3.",
+            "capability_owned_facts": "Omit duplicate workspace_mutations when an exact selected mutate role already uniquely defines its state/evidence transition. Keep explicit declarations for genuinely different or otherwise undeclared transitions; conflicts are errors.",
+        },
+        "new_outputs": {
+            "authority": "steps[].outputs selects the new products; it is not necessary to repeat them in resource_uses or produces_artifacts",
+            "mechanical_facts": "The existing compiler derives produced-artifact records and fixed capability effects before approval. Omit operation when uniquely supplied by the selected capability; omit repeated observations/side effects if the selected capability fully specifies them.",
+            "directory": "A newly produced directory bundle can be immutable_artifact. Staging writes do not authorize mutation of an existing workspace.",
+            "ambiguity": "Keep explicit choices for multiple valid interfaces; never choose a workspace by matching its name or directory shape.",
         },
         "legacy_resource_contract_v2": {
             "role_association_item": {"step_id": "one declared step", "capability_id": "that step's selected capability", "role": "one declared workspace role"},
@@ -179,7 +186,7 @@ def planner_resource_requirements(authoritative_bindings: Mapping[str, Any], cap
             "local_ref": "plan.<candidate-local-name>",
             "artifact_contract": {
                 "object_kind": ["file", "directory"], "lifecycle": "plan_local",
-                "resource_kind": sorted(_RESOURCE_KINDS),
+                "resource_kind": "optional; defaults to immutable_artifact for new products. Explicit mutable_workspace is reserved for actual stateful workspaces",
                 "materialization_policy_id": "managed_intermediate_v1",
             },
             "resource_binding": "omit for a new resource; the binder creates identity",
@@ -624,71 +631,138 @@ def compile_plan_resource_bindings(
             by_alias[str(alias)] = row
         # The canonical ID is always an exact alias, never a guessed one.
         by_alias[identity] = row
+    use_issues = []
     if uses_v3:
         for step_index, step in enumerate(candidate.get("steps", []) or []):
             if not isinstance(step, Mapping):
                 continue
-            uses = step.get("resource_uses")
-            root = f"$.steps[{step_index}].resource_uses"
-            if not isinstance(uses, list):
-                raise PlanBindingError("PLAN_RESOURCE_USES_INVALID", field_path=root, expected="array", actual=uses)
+            root = f"$.steps[{step_index}]"
             cap_id = str(step.get("execution_capability_id") or "")
             cap = dict((capability_registry or {}).get(cap_id) or {})
             roles = capability_workspace_roles(cap)
             for role in cap.get("required_artifact_binding_ids", []) or []:
                 roles.setdefault(str(role), {"resource_kind": "immutable_artifact", "access": "read"})
-            seen = set()
+            produced = list(cap.get("produces_artifacts") or [])
+            kinds = {item.get("resource_kind", "immutable_artifact") if isinstance(item, Mapping)
+                     else "immutable_artifact" for item in produced}
+            immutable_outputs = kinds == {"immutable_artifact"}
+            mutations = list(step.get("workspace_mutations") or [])
+            outputs = set(step.get("outputs") or [])
+            # An absent effect field is open/legacy; only an explicitly empty
+            # closed capability denies mutation. Never infer this from a name.
+            mutation_forbidden = "workspace_mutations" in cap and cap["workspace_mutations"] == []
+            source = {"capability_id": cap_id, "selected_skill_id": cap.get("selected_skill_id"),
+                      "contract_source": cap.get("contract_source"), "contract_revision": cap.get("contract_revision")}
+            def add(code, path, actual, expected, message, ref="", **extra):
+                use_issues.append({"code": code, "owner": "planner", "severity": "error",
+                    "disposition": "PROTOCOL_INVALID", "validator_id": "compile_plan_resource_bindings",
+                    "step_id": str(step.get("step_id") or ""), "resource_ref": ref,
+                    "field_path": path, "repair_target": path, "actual": deepcopy(actual),
+                    "expected": deepcopy(expected), "message": message, **source, **extra})
+            def output_expectation(ref):
+                return {**source, "output_interfaces": deepcopy(produced) or "steps[].outputs (plan_resource_protocol_v3)",
+                    "declaration": {"outputs": [ref], "resource_kind": "immutable_artifact"},
+                    "resource_uses": "read upstream inputs; do not mutate the new output",
+                    "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"}
+            uses = step.get("resource_uses")
+            if not isinstance(uses, list):
+                add("PLAN_RESOURCE_USES_INVALID", root + ".resource_uses", uses, "array", "Declare actual reads and existing workspace uses in an array.")
+                continue
+            seen, conflicts = set(), set()
             for use_index, use in enumerate(uses):
-                path = f"{root}[{use_index}]"
+                path = f"{root}.resource_uses[{use_index}]"
                 if (not isinstance(use, Mapping) or set(use) - {"resource_ref", "access", "role"}
                         or not isinstance(use.get("resource_ref"), str) or not use["resource_ref"]
                         or use.get("access") not in ("read", "mutate")
                         or ("role" in use and (not isinstance(use["role"], str) or not use["role"]))):
-                    raise PlanBindingError("PLAN_RESOURCE_USE_INVALID", field_path=path, actual=use,
-                        expected={"resource_ref": "exact declared resource", "access": "read|mutate", "role": "optional selected helper role"})
+                    add("PLAN_RESOURCE_USE_INVALID", path, use,
+                        {"resource_ref": "exact declared resource", "access": "read|mutate", "role": "optional declared input/workspace role"},
+                        "Invalid resource use shape; dependent resource checks cannot run.")
+                    continue
                 ref, access, role = use["resource_ref"], use["access"], str(use.get("role") or "")
                 row = by_alias.get(ref)
                 if not row:
-                    raise PlanBindingError("PLAN_RESOURCE_REFERENCE_NOT_DECLARED", field_path=path + ".resource_ref", actual=ref,
-                        expected={"declared_handles": sorted(by_alias)})
+                    add("PLAN_RESOURCE_REFERENCE_NOT_DECLARED", path + ".resource_ref", ref,
+                        {"declared_handles": sorted(by_alias)}, "Resolve the exact reference before checking its type or effects.", ref,
+                        not_evaluated=["resource_kind", "resource_effect", "workspace_state"])
+                    continue
                 marker = (ref, role)
                 if marker in seen:
-                    raise PlanBindingError("PLAN_RESOURCE_USE_CONFLICT", field_path=path, actual=use, expected="one declaration per resource/role")
+                    add("PLAN_RESOURCE_USE_CONFLICT", path, use, "one declaration per resource/role", "Duplicate resource use.", ref)
                 seen.add(marker)
-                if role:
-                    required = roles.get(role)
-                    if not required or (cap.get("selected_skill_id") and cap["selected_skill_id"] not in (step.get("skill_ids") or [])):
-                        raise PlanBindingError("PLAN_RESOURCE_USE_ROLE_INVALID", field_path=path + ".role", actual=use,
-                            expected={"capability_id": cap_id, "selected_skill_id": cap.get("selected_skill_id"), "roles": roles})
+                required = roles.get(role) if role else None
+                if role and (not required or (cap.get("selected_skill_id") and cap["selected_skill_id"] not in (step.get("skill_ids") or []))):
+                    add("PLAN_RESOURCE_USE_ROLE_INVALID", path + ".role", use,
+                        {**source, "available_roles": roles or "none declared for resource_uses", "output_interfaces": produced,
+                         "output_location": root + ".outputs"},
+                        "This is not a declared input/workspace role. Output interfaces belong in outputs, not resource_uses.role.", ref)
+                elif required:
                     if access != required["access"]:
-                        raise PlanBindingError("PLAN_RESOURCE_USE_ACCESS_MISMATCH", field_path=path + ".access", actual=access, expected=required["access"])
+                        add("PLAN_RESOURCE_USE_ACCESS_MISMATCH", path + ".access", access, required, "Use the capability's declared access for this role.", ref)
                     if row["resource_kind"] != required["resource_kind"]:
-                        raise PlanBindingError("PLAN_RESOURCE_KIND_INVALID", field_path=path, actual=row["resource_kind"], expected=required["resource_kind"])
+                        add("PLAN_RESOURCE_KIND_INVALID", path, row["resource_kind"], required, "Resource kind conflicts with the exact capability role.", ref)
                     row.setdefault("role_associations", []).append({"step_id": step.get("step_id"), "capability_id": cap_id, "role": role})
                     row["role_association_version"] = PLAN_RESOURCE_ROLE_VERSION
                 row["resource_use_projection_version"] = PLAN_RESOURCE_USES_VERSION
                 if access == "mutate":
-                    if row["resource_kind"] != "mutable_workspace":
-                        raise PlanBindingError("PLAN_RESOURCE_KIND_INVALID", field_path=path, actual=row["resource_kind"], expected="mutable_workspace")
-                    if not any(isinstance(m, Mapping) and str(m.get("workspace_ref") or m.get("identity") or "") in {ref, role} - {""}
-                               for m in step.get("workspace_mutations", []) or []):
-                        raise PlanBindingError("PLAN_RESOURCE_MUTATION_DECLARATION_MISSING", field_path=path,
-                            actual=use, expected="explicit workspace_mutations state/evidence declaration for this resource or exact role")
+                    related_mutations = [(i, m) for i, m in enumerate(mutations)
+                               if isinstance(m, Mapping) and str(m.get("workspace_ref") or m.get("identity") or "") in {ref, role} - {""}]
+                    related = [f"{root}.workspace_mutations[{i}]" for i, _ in related_mutations]
+                    if mutation_forbidden or ref in outputs:
+                        conflicts.add(ref)
+                        add("PLAN_RESOURCE_USE_EFFECT_CONFLICT", path, {"use": use, "resource_kind": row["resource_kind"],
+                            "declared_output": ref in outputs, "workspace_mutations": [m for _, m in related_mutations]},
+                            output_expectation(ref) if immutable_outputs or ref in outputs else {**source, "workspace_mutations": "capability declares none"},
+                            "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource."
+                            if immutable_outputs or ref in outputs else "Selected capability explicitly declares no workspace mutation; choose a supporting capability for an actual mutation intent.",
+                            ref, related_field_paths=[root + ".outputs", *related],
+                            not_evaluated=["dependent_step_effect", "dependent_workspace_coverage"])
+                    elif row["resource_kind"] != "mutable_workspace":
+                        add("PLAN_RESOURCE_KIND_INVALID", path, row["resource_kind"], {**source, "resource_kind": "mutable_workspace", "intent": "an actual existing-state mutation, not creation of a new output"},
+                            "Explicit mutation requires a declared workspace. If this is a new product, declare outputs under a producing capability instead of changing its type.", ref)
+                    elif not related and not (required and required.get("access") == "mutate"):
+                        add("PLAN_RESOURCE_MUTATION_DECLARATION_MISSING", path, use,
+                            "explicit workspace state/evidence transition, or a selected role with a capability-owned transition",
+                            "Mutation has no declared state/evidence contract.", ref)
                 row["binding_id"] = _resource_binding_id(row)
-            for mutation_index, mutation in enumerate(step.get("workspace_mutations", []) or []):
+            # Outputs are the sole production declaration. Check their kinds
+            # even when no duplicated resource_uses write was supplied.
+            for output_index, ref in enumerate(step.get("outputs") or []):
+                row = by_alias.get(ref)
+                if row and row["resource_kind"] != "immutable_artifact" and ref not in conflicts:
+                    add("PLAN_RESOURCE_OUTPUT_KIND_CONFLICT", f"{root}.outputs[{output_index}]", row["resource_kind"], output_expectation(ref),
+                        "This output interface produces an immutable artifact, including directory bundles; it cannot be supplied as a mutable workspace.", ref)
+            for mutation_index, mutation in enumerate(mutations):
                 if isinstance(mutation, Mapping):
                     ref = str(mutation.get("workspace_ref") or mutation.get("identity") or "")
-                    if not any(use.get("access") == "mutate" and ref in {use.get("resource_ref"), use.get("role")} for use in uses):
-                        raise PlanBindingError("PLAN_RESOURCE_MUTATION_USE_MISSING", field_path=f"$.steps[{step_index}].workspace_mutations[{mutation_index}]",
-                            actual=ref, expected="an explicit mutate resource_uses declaration on this step")
-    role_issues = []
+                    if not any(isinstance(use, Mapping) and use.get("access") == "mutate" and ref in {use.get("resource_ref"), use.get("role")} for use in uses):
+                        add("PLAN_RESOURCE_MUTATION_USE_MISSING", f"{root}.workspace_mutations[{mutation_index}]", mutation,
+                            "an explicit mutate resource_uses declaration on this step", "State mutation needs an explicit resource selection; it does not select a resource by itself.", ref)
+    role_issues = list(use_issues)
     if capability_registry is not None:
         for step_index, step in enumerate(candidate.get("steps", []) or []):
             if not isinstance(step, Mapping):
                 continue
             capability_id = str(step.get("execution_capability_id") or "")
-            scoped = resource_bindings_for_step(by_alias, step)
-            for role, requirement in capability_workspace_roles(dict(capability_registry.get(capability_id) or {})).items():
+            requirements = capability_workspace_roles(dict(capability_registry.get(capability_id) or {}))
+            if not requirements:
+                continue
+            role_step = step
+            if uses_v3:
+                # Invalid output-as-role declarations already have primary
+                # diagnostics. They cannot create secondary workspace alias
+                # conflicts. This temporary lookup never changes the candidate.
+                role_step = {**step, "resource_uses": [use for use in step.get("resource_uses") or []
+                    if isinstance(use, Mapping) and use.get("role") in requirements]}
+            try:
+                scoped = resource_bindings_for_step(by_alias, role_step)
+            except PlanBindingError as exc:
+                # The per-use pass already locates unknown refs. Continue other
+                # steps; do not invent a missing role from an unresolved use.
+                if exc.code != "PLAN_RESOURCE_REFERENCE_NOT_DECLARED":
+                    role_issues.append({**exc.to_dict(), "field_path": f"$.steps[{step_index}].resource_uses", "owner": "planner"})
+                continue
+            for role, requirement in requirements.items():
                 target = scoped.get(role) or {}
                 code = ""
                 if not target:

@@ -1662,6 +1662,7 @@ def validate_planner_candidate_deterministically(
     require_declared_references: bool = False,
     capability_ids: Sequence[str] = (),
     capability_registry: Optional[Mapping[str, Any]] = None,
+    resource_bindings_out: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Run the shared schema/identity path and, by default, dataflow admission.
 
@@ -1671,6 +1672,8 @@ def validate_planner_candidate_deterministically(
     once over that compiled view.  The default remains ``True`` for callers
     that intentionally use this function as the complete compatibility gate.
     """
+    if resource_bindings_out is not None:
+        resource_bindings_out.clear()
     structure = structured_plan_candidate_diagnostics(candidate)
     if structure:
         return {}, [], [
@@ -1740,6 +1743,8 @@ def validate_planner_candidate_deterministically(
         diagnostic.setdefault("repair_target", diagnostic["field_path"])
         diagnostic.setdefault("disposition", "PROTOCOL_INVALID")
         return ref_keys, usage, [diagnostic]
+    if resource_bindings_out is not None:
+        resource_bindings_out.update(deepcopy(resource_bindings))
     issues = (
         validate_candidate_graph_and_flow(
             candidate,

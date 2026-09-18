@@ -817,7 +817,6 @@ from agent_core.plan_bindings import (
     OperationBindingAdmission,
     PlanBindingError,
     accept_action_binding_candidates,
-    compile_plan_resource_bindings,
     resolve_action_binding_environment,
     normalize_public_action_bindings, public_binding_requirements, binding_input_progress_facts,
     validate_declared_binding_operation,
@@ -40643,6 +40642,7 @@ question. Never guess a scientific or database identity.
                             require_declared_references=True,
                             capability_ids=tuple(planner_effect_registry),
                             capability_registry=planner_effect_registry,
+                            resource_bindings_out=candidate_resource_bindings,
                         )
                         if not deterministic_issues and restored_planner_context:
                             from agent_core.plan_contract import validate_planner_consumption_correction
@@ -40667,24 +40667,8 @@ question. Never guess a scientific or database identity.
                                 for issue in blocking_deterministic
                             ]
                         else:
-                            candidate_resource_bindings = (
-                                self._planner_observed_call(task_id, planner_observation, "compile_resource_bindings", compile_plan_resource_bindings,
-                                    plan_proposal,
-                                    require_declared_references=True,
-                                    capability_registry=planner_effect_registry,
-                                    candidate_scope_id=(
-                                        planner_node_context.binding.candidate_scope_id
-                                    ),
-                                    authoritative_handles=artifact_handles,
-                                    availability_origins=availability_origins,
-                                    authoritative_bindings={
-                                        str(handle): dict(item)
-                                        for handle, item in planner_node_context.binding.semantic_handle_map.items()
-                                        if isinstance(item, Mapping)
-                                        and item.get("object_type") == "artifact"
-                                    },
-                                )
-                            )
+                            # Reuse the exact successful admission compilation;
+                            # no external state changed between these two local operations.
                             allocation_intent = self._planner_observed_call(task_id, planner_observation, "normalize_allocation_intent", prepare_allocation_intent,
                                 plan_proposal,
                                 candidate_scope_id=(
