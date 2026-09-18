@@ -510,6 +510,58 @@ def _secondary(stop, stage, code, exc=None):
         stop["secondary_failures"].append(row)
 
 
+def _planning_report_targets(durable, task_root):
+    """Only explicit TaskSpec stop documents; rejected Plan paths confer no authority.
+
+    These are failure explanations, not approved scientific outputs. The normal
+    publisher still enforces ownership and protects every unowned existing file.
+    """
+    spec = canonical_task_spec_for_state(durable)
+    outputs = effective_output_contracts(spec)
+    by_ref = {str(row.get(k)): row for row in outputs for k in ("artifact_id", "output_id", "semantic_handle") if row.get(k)}
+    authorized = {"user_explicit", "user_confirmed"}
+    names = {"report": "report.md", "reproduce_script": "reproduce.sh", "stage_status": "stage_status.tsv"}
+    result = {}
+    for row in outputs:
+        name = names.get(row.get("role")) or row.get("required_basename") or row.get("filename")
+        if name not in _REPORT_NAMES:
+            continue
+        if str(row.get("source") or row.get("source_type")) not in authorized:
+            raise ValueError("PLANNING_REPORT_USER_AUTHORITY_MISSING")
+        if row.get("path_policy") == "managed_exact" and row.get("canonical_path"):
+            target = _path(row["canonical_path"])
+            if target.name != name:
+                raise ValueError("PLANNING_REPORT_FILENAME_CONFLICT")
+        elif row.get("path_policy") == "planner_materialized":
+            root = by_ref.get(str(row.get("root_ref") or "")) or {}
+            if (str(root.get("source") or root.get("source_type")) not in authorized
+                    or root.get("artifact_kind") != "directory" or root.get("path_policy") != "managed_exact"
+                    or not root.get("canonical_path")):
+                raise ValueError("PLANNING_REPORT_ROOT_NOT_AUTHORIZED")
+            directory = _path(root["canonical_path"])
+            target = _path(directory / name)
+            if target.parent != directory:
+                raise ValueError("PLANNING_REPORT_PATH_ESCAPE")
+        else:
+            raise ValueError("PLANNING_REPORT_LOCATION_UNRESOLVED")
+        if name in result and result[name] != target:
+            raise ValueError("PLANNING_REPORT_OUTPUT_AMBIGUOUS")
+        result[name] = target
+    if not result:
+        # Preserve the existing session-local diagnostic delivery for tasks
+        # without any explicit report output. Never substitute it for a known
+        # but unauthorized/ambiguous requested location.
+        result = {name: _path(task_root / name) for name in _REPORT_NAMES}
+    for row in spec.get("inputs", []) or []:
+        raw = row.get("canonical_path") or row.get("path")
+        if raw:
+            input_path = _path(raw)
+            if any(target == input_path or (row.get("artifact_kind") == "directory" and target.is_relative_to(input_path))
+                   for target in result.values()):
+                raise ValueError("PLANNING_REPORT_INPUT_OVERLAP")
+    return result
+
+
 def _report_targets(durable, task_root):
     """Resolve only declared, approved output contracts and materializations."""
     spec = canonical_task_spec_for_state(durable)

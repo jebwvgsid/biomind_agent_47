@@ -17,7 +17,7 @@ from agent_core.plan_tracker import (load_plan_state, save_plan_state, set_task_
     canonical_task_spec_for_state, plan_approval_is_current, has_materialized_plan)
 from agent_core.workflow.inspection_stop import (
     _mapping, _safe, _code, _hash, _authority, _active_packet, _steps,
-    _report_targets, _internal_report_targets, _report_bodies, _write_report, _secondary, _terminal_packet,
+    _report_targets, _planning_report_targets, _internal_report_targets, _report_bodies, _write_report, _secondary, _terminal_packet,
     build_inspection_stop, inspection_stop_explanation,
 )
 from agent_core.workflow.runtime_recovery_reporting import _path, publish_report
@@ -170,6 +170,15 @@ def _build_planning_stop(task_id, durable, boundary, planning):
     latest["response_integrity"] = deepcopy(_mapping(planning.get("response_integrity")))
     remediation = deepcopy(planning.get("attempted_remediation") or latest["response_integrity"].get("attempted_remediation") or [])
     epoch = _mapping(planning.get("planning_epoch"))
+    budget = deepcopy(terminal.get("machine_evidence") or {})
+    if type(epoch.get("planner_calls_total")) is int:
+        budget.setdefault("planner_calls_total", epoch["planner_calls_total"])
+    recorded_limit = _mapping(_mapping(durable.get("task_state")).get("budgets")).get("max_planner_calls_per_epoch")
+    if type(recorded_limit) is int:
+        from agent_core.planner_recovery import planner_call_limit
+        budget.setdefault("max_planner_calls_per_epoch", planner_call_limit(durable))
+    budget.setdefault("last_validation_codes", list(dict.fromkeys(str(row.get("code") or row.get("violation_code") or "UNKNOWN")
+        for row in planning.get("validation_issues", []) if isinstance(row, Mapping))))
     value = {"schema_version": 1, "producer": PRODUCER, "status": boundary["status"],
         "scope": scope, "authority": _authority(durable), "boundary": deepcopy(boundary),
         "planning": planning, "primary_cause": primary_summary, "latest_failure": latest,
@@ -182,8 +191,8 @@ def _build_planning_stop(task_id, durable, boundary, planning):
             "evidence_refs": [str(planning["primary_context_ref"])] if planning.get("primary_context_ref") else []},
         "task_summary": _safe(planning.get("task_summary"), 1800),
         "stage": "planner", "stop_reason": {"error_code": code, "detail": _safe(terminal.get("detail") or boundary["outcome"].get("summary")),
-            "budget_receipt": deepcopy(terminal.get("machine_evidence") or {}),
-            "model_turns": int(epoch.get("planner_calls_total") or 0), "repeat_count": int(planning.get("repeat_count") or 0)},
+            "budget_receipt": budget,
+            "model_turns": epoch.get("planner_calls_total"), "repeat_count": int(planning.get("repeat_count") or 0)},
         "execution": {"step_id": "", "attempt_id": "", "executed": False, "returncode": None,
             "deterministic_passed": False, "validation_status": "not_performed", "reviewer_disposition": "not_performed",
             "committed": False, "step_status": "not_started", "command_body_available": False},
@@ -191,7 +200,7 @@ def _build_planning_stop(task_id, durable, boundary, planning):
         "resolution": "unresolved", "automatic_actions_stopped": True, "technical_classification": "planning_unresolved",
         "summary_status": "IMPLEMENTED", "summary_skip_reason": "", "summary_llm_calls": 0,
         "persistence_status": "unconfirmed", "reports_status": "not_attempted", "report_paths": {},
-        "report_receipts": {"reproduce.sh": {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}},
+        "report_receipts": {},
         "secondary_failures": []}
     value["scope"]["task_id"] = task_id
     value["stop_id"] = "managed-stop:" + _hash({"scope": scope, "authority": value["authority"], "stop_reason": value["stop_reason"]})
@@ -699,7 +708,7 @@ def _planning_explanation(stop):
         "停止原因：" + str(reason.get("error_code") or "UNKNOWN") + "。",
         "最初拒绝：" + str(primary.get("error_code") or "PLANNER_ORIGIN_NOT_PERSISTED") + "；" + _safe(primary.get("message")),
         "末次拒绝：" + str(latest.get("error_code") or "UNKNOWN") + "；" + _safe(latest.get("message")),
-        "本轮已发起 Planner 请求：" + str(reason.get("model_turns", 0)) + "；当前连续结构无进展记录：" + str(reason.get("repeat_count", 0)) + "。",
+        "本轮已发起 Planner 请求：" + str(reason.get("model_turns") if reason.get("model_turns") is not None else "未知") + " / 上限 " + str(_mapping(reason.get("budget_receipt")).get("max_planner_calls_per_epoch", "未知")) + "；当前连续结构无进展记录：" + str(reason.get("repeat_count", 0)) + "。",
         "任务 revision=" + str(scope.get("task_revision", "unknown")) + "；planning epoch=" + str(scope.get("planning_epoch_id") or "unknown") + "。"]
     issues = facts.get("validation_issues") or []
     parts.append(_planning_response_explanation("最初", primary.get("response_integrity")))
@@ -738,7 +747,7 @@ def _planning_explanation(stop):
         name + "=" + str(_mapping(receipts.get(name)).get("status") or "not_attempted")
         + " / " + str(_mapping(receipts.get(name)).get("reason") or ("WRITER_NOT_RUN" if name not in receipts else "receipt recorded"))
         for name in ("report.md", "stage_status.tsv", "reproduce.sh")))
-    parts.append("没有科学执行 attempt，不生成科学复现脚本；原任务的科学交付尚未完成。")
+    parts.append("没有科学执行 attempt；reproduce.sh 仅记录规划未接纳且未运行，不包含科学复现命令。原任务的科学交付尚未完成。")
     if stop.get("secondary_failures"):
         parts.append("附加问题：" + "；".join(str(i.get("error_code") or "UNKNOWN") for i in stop["secondary_failures"]))
     return "\n\n".join(parts)
@@ -1025,6 +1034,10 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
         rows.append("run\t" + value["status"] + "\tstopped\tfalse\t" + value["stop_reason"]["error_code"])
         bodies["stage_status.tsv"] = "\n".join(rows) + "\n"
         bodies["report.md"] = "# BioMind managed run stop\n\nStop identity: " + value["stop_id"] + "\n\n" + explanation(value) + "\n"
+        if value.get("planning"):
+            bodies["reproduce.sh"] = ("#!/bin/sh\n# Planning was not accepted; no scientific commands were executed.\n"
+                "# This is a stop record, not a runnable WGS reproduction.\n# Stop: " + value["stop_id"]
+                + "\n# Inspect the rejected Plan and planning feedback before a new submission.\nexit 1\n")
         if execution.get("command_body_available"):
             # Preserve the actual command as commented evidence. A failed
             # action is never silently turned into a runnable success recipe.
@@ -1040,12 +1053,7 @@ async def finalize_managed_stop(agent, task_id, values, boundary, *, loader=load
             if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,159}", str(task_id)):
                 raise ValueError("MANAGED_STOP_TASK_ID_REJECTED")
             task_root = _path(Path(agent.data_path).absolute() / "task_outputs" / task_id)
-            targets = {name: _path(task_root / name) for name in ("report.md", "stage_status.tsv")}
-            spec = canonical_task_spec_for_state(durable)
-            inputs = {str(i.get("canonical_path") or i.get("path") or "") for i in spec.get("inputs") or [] if isinstance(i, Mapping)}
-            if any(str(target) in inputs for target in targets.values()):
-                raise ValueError("MANAGED_STOP_REPORT_INPUT_OVERLAP")
-            value["report_receipts"]["reproduce.sh"] = {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}
+            targets = _planning_report_targets(durable, task_root)
         else:
             targets = _report_targets(durable, Path(agent.data_path).absolute() / "task_outputs" / task_id)
         for name in ("stage_status.tsv", "reproduce.sh", "report.md"):

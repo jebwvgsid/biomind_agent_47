@@ -150,6 +150,15 @@ def _cause_text(facts, origin):
 
 
 def _stop_text(stop, code):
+    if code == 'PLANNING_EPOCH_EXHAUSTED':
+        budget = stop.get('budget_receipt') or {}
+        used = budget.get('planner_calls_total', stop.get('model_turns'))
+        limit = budget.get('max_planner_calls_per_epoch')
+        count = (str(used) if type(used) is int else '未知') + '/' + (str(limit) if type(limit) is int else '未知')
+        last = budget.get('last_validation_codes') or []
+        return ('Planner 请求额度已耗尽（已用/上限：' + count + '）；尚未形成可批准计划。'
+                + ('最后阻塞：' + '、'.join(_brief(item, 120) for item in last[:6]) + '。' if last else '')
+                + '（' + code + '）。')
     detail = str(stop.get('detail') or '')
     if code == 'RECOVERY_SEED_CAPACITY_EXCEEDED':
         # Historical receipts retain their original units and admission stage.
@@ -262,12 +271,14 @@ def terminal_text(status, facts):
     elif usage.get('scope') in {'last_admitted_episode', 'current_episode'}:
         label = '最近已记录调查' if usage['scope'] == 'last_admitted_episode' else '本次调查'
         rows.append(f"{label}：{usage.get('turn_count', '未知')} 次模型请求，{usage.get('tool_call_count', '未知')} 次工具调用；不是全会话累计。")
-    else:
+    elif facts.get('stage') != 'planner':
         rows.append('调查累计次数：未知（现有回执未提供完整范围）。')
     rows.append(delivery_text(facts))
     if status != 'completed':
         protection = _OUTPUT_PROTECTION.get(str(origin.get('error_code') or origin.get('reason_code') or ''))
-        next_step = (protection[1] if protection else
+        next_step = ('查看被拒绝的 Plan 候选、上述资源字段冲突及规划反馈，修正完整计划后重新提交；本轮尚未执行科学步骤。'
+                     if facts.get('stage') == 'planner' and execution.get('executed') is False else
+                     protection[1] if protection else
                      '修正当前步骤证据登记的标识，再按现有流程核验与提交。' if identity_issue else
                      '验证已声明的环境与所需命令，按正式修订和批准流程重新生成当前未完成步骤。' if (facts.get('runtime_diagnostics') or {}).get('missing_commands') else
                      '根据上述具体检查记录修复当前未完成步骤，再走现有核验与提交流程。' if facts.get('unresolved_findings') else

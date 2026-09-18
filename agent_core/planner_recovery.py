@@ -239,7 +239,12 @@ def attach_rejection_facts(state: dict[str, Any], integrity: Mapping[str, Any],
                     "detail": "A new accounted Planner call repeated the same semantic rejection without an unused effective remediation. This is repeated failure, not replay of the previous request."}
     if terminal is None and int(_epoch(state).get("planner_calls_total") or 0) >= planner_call_limit(state):
         terminal = {"error_code": "PLANNING_EPOCH_EXHAUSTED", "error_owner": "planner",
-                    "detail": "The last allowed Planner response was rejected. The budget is exhausted; no further request is authorized."}
+                    "detail": "The last allowed Planner response was rejected. The budget is exhausted; no further request is authorized.",
+                    "machine_evidence": {"planner_calls_total": _epoch(state).get("planner_calls_total"),
+                        "max_planner_calls_per_epoch": planner_call_limit(state),
+                        "last_validation_codes": list(dict.fromkeys(str(row.get("code") or row.get("violation_code") or "UNKNOWN")
+                            for row in failure.get("validation_issues", []) if isinstance(row, Mapping))),
+                        "source": "durable_planning_epoch_and_effective_call_limit"}}
     if terminal:
         updated = terminalize_planning_failure(state,
             planning_epoch_id=str(failure.get("planning_epoch_id") or ""),
