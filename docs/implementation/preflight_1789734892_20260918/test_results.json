@@ -1,0 +1,1948 @@
+{
+  "schema_version": 1,
+  "scope": "offline framework tests; no real model/API, input preflight, WGS, original session recovery or scientific success",
+  "baseline_head": "6b52faed41e0c9e7efedf959aaf4f5ff264f37b0",
+  "production_commit": "20654c99c62890dff0c7587e5e287d85071ea740",
+  "validated_code_tree": "d3fe9c068eade916290442aea4bec8322585bfdc",
+  "source_signature": "7612261dee00b1a1db4a21d382b6be66a779bcedf4059090223265f581138df9",
+  "counts": {
+    "passed_unique": 315,
+    "failed_final": 0,
+    "targeted": 64
+  },
+  "test_selection": "reproduce.sh",
+  "results": [
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_four_original_rejected_candidates[0016-False]",
+      "outcome": "passed",
+      "duration": 0.001031694933772087,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_four_original_rejected_candidates[0026-False]",
+      "outcome": "passed",
+      "duration": 0.0006738854572176933,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_four_original_rejected_candidates[0027-True]",
+      "outcome": "passed",
+      "duration": 0.0012113815173506737,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_four_original_rejected_candidates[0028-True]",
+      "outcome": "passed",
+      "duration": 0.0008433535695075989,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_archive_requests_had_same_complete_protocol_before_fix",
+      "outcome": "passed",
+      "duration": 0.0006630606949329376,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_whole_json_fence_matches_raw_projection[payload0-]",
+      "outcome": "passed",
+      "duration": 0.0003612590953707695,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_whole_json_fence_matches_raw_projection[payload0-json]",
+      "outcome": "passed",
+      "duration": 0.0002305125817656517,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_whole_json_fence_matches_raw_projection[payload1-]",
+      "outcome": "passed",
+      "duration": 0.00018614623695611954,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_whole_json_fence_matches_raw_projection[payload1-json]",
+      "outcome": "passed",
+      "duration": 0.000164874829351902,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_whole_json_fence_matches_raw_projection[payload2-]",
+      "outcome": "passed",
+      "duration": 0.00017930194735527039,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_whole_json_fence_matches_raw_projection[payload2-json]",
+      "outcome": "passed",
+      "duration": 0.00018848199397325516,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_ambiguous_json_never_selectively_extracts_action[prose\\n```json\\n{\"type\":\"blocked\",\"reason\":\"x\"}\\n```]",
+      "outcome": "passed",
+      "duration": 0.0001341281458735466,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_ambiguous_json_never_selectively_extracts_action[```json\\n{\"type\":\"blocked\",\"reason\":\"x\"}\\n```\\nextra]",
+      "outcome": "passed",
+      "duration": 0.00013015791773796082,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_ambiguous_json_never_selectively_extracts_action[```json\\n{} {}\\n```]",
+      "outcome": "passed",
+      "duration": 0.0001259399577975273,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_ambiguous_json_never_selectively_extracts_action[```json\\n{}\\n```\\n```json\\n{}\\n```]",
+      "outcome": "passed",
+      "duration": 0.00012781936675310135,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_ambiguous_json_never_selectively_extracts_action[```json\\n{\"payload\": NaN}\\n```]",
+      "outcome": "passed",
+      "duration": 0.00014038849622011185,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_ambiguous_json_never_selectively_extracts_action[```\\n{}\\n```\\n<shell>echo second</shell>]",
+      "outcome": "passed",
+      "duration": 0.00012855511158704758,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_nested_helper_feedback_is_field_specific_and_does_not_move_action",
+      "outcome": "passed",
+      "duration": 0.0007392549887299538,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_duplicate_members_and_negative_provider_completion_still_fail",
+      "outcome": "passed",
+      "duration": 0.00015733949840068817,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_explicit_empty_selection_survives_script_adapter",
+      "outcome": "passed",
+      "duration": 0.0002065589651465416,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_protocol.py::test_object_payload_gets_the_same_top_level_helper_example",
+      "outcome": "passed",
+      "duration": 0.00016680825501680374,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_preflight_receipt_is_visible_in_real_seed_and_selectable",
+      "outcome": "passed",
+      "duration": 0.13085251487791538,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_actual_local_publication_keeps_original_attempt_and_reenters",
+      "outcome": "passed",
+      "duration": 0.2697194591164589,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[parent]",
+      "outcome": "passed",
+      "duration": 0.01662023365497589,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[missing_raw]",
+      "outcome": "passed",
+      "duration": 0.015993990935385227,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[extra_file]",
+      "outcome": "passed",
+      "duration": 0.01594455074518919,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[input_changed]",
+      "outcome": "passed",
+      "duration": 0.015933241695165634,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[superseded]",
+      "outcome": "passed",
+      "duration": 0.01468881219625473,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[receipt_changed]",
+      "outcome": "passed",
+      "duration": 0.015706961043179035,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[binding_changed]",
+      "outcome": "passed",
+      "duration": 0.014874935150146484,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[unknown_target]",
+      "outcome": "passed",
+      "duration": 0.016836912371218204,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[wrong_observation]",
+      "outcome": "passed",
+      "duration": 0.015116694383323193,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[plan_revision]",
+      "outcome": "passed",
+      "duration": 0.017629667185246944,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_unacceptable_evidence_never_becomes_a_formal_output[approval_changed]",
+      "outcome": "passed",
+      "duration": 0.01770009845495224,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_seed_compares_prior_injected_binding_with_current_missing_declaration",
+      "outcome": "passed",
+      "duration": 0.009555405005812645,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_archived_five_checks_form_an_explicit_finite_scope_candidate",
+      "outcome": "passed",
+      "duration": 0.028510795906186104,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[observation_only]",
+      "outcome": "passed",
+      "duration": 3.13544187694788,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish]",
+      "outcome": "passed",
+      "duration": 7.923230666667223,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish_interrupt]",
+      "outcome": "passed",
+      "duration": 7.945473402738571,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish_archive]",
+      "outcome": "passed",
+      "duration": 8.33388451859355,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[retry_python]",
+      "outcome": "passed",
+      "duration": 9.305011649616063,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[retry_shell]",
+      "outcome": "passed",
+      "duration": 9.159783663228154,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[ordinary]",
+      "outcome": "passed",
+      "duration": 7.941185717470944,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0016]",
+      "outcome": "passed",
+      "duration": 1.5873370179906487,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0026]",
+      "outcome": "passed",
+      "duration": 1.580130704678595,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0027]",
+      "outcome": "passed",
+      "duration": 1.5172633733600378,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0028]",
+      "outcome": "passed",
+      "duration": 1.514871814288199,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_archived_exec_truncation_flags_do_not_claim_missing_cursor[1156]",
+      "outcome": "passed",
+      "duration": 0.00016493257135152817,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_archived_exec_truncation_flags_do_not_claim_missing_cursor[3814]",
+      "outcome": "passed",
+      "duration": 0.00013403967022895813,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_archived_exec_truncation_flags_do_not_claim_missing_cursor[1126]",
+      "outcome": "passed",
+      "duration": 0.0001369984820485115,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_truncated_exec_receipt_preserves_a_readable_exact_log_reference",
+      "outcome": "passed",
+      "duration": 0.0001383945345878601,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_repeated_cancel_wait_is_deduplicated_per_actual_input_cycle",
+      "outcome": "passed",
+      "duration": 0.000636320561170578,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_local_cleanup_receipt_never_claims_global_or_remote_cleanup",
+      "outcome": "passed",
+      "duration": 0.00013972725719213486,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_public_english_is_not_keyword_filtered_and_internal_events_stay_in_details",
+      "outcome": "passed",
+      "duration": 0.0002590930089354515,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_same_helper_selection_is_scoped_and_permissions_are_rebuilt[none]",
+      "outcome": "passed",
+      "duration": 0.020460271276533604,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_same_helper_selection_is_scoped_and_permissions_are_rebuilt[explicit_new]",
+      "outcome": "passed",
+      "duration": 0.015300273895263672,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_same_helper_selection_is_scoped_and_permissions_are_rebuilt[ordinary]",
+      "outcome": "passed",
+      "duration": 0.010122307576239109,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_same_helper_selection_is_scoped_and_permissions_are_rebuilt[snapshot]",
+      "outcome": "passed",
+      "duration": 0.015102398581802845,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_same_helper_selection_is_scoped_and_permissions_are_rebuilt[stale]",
+      "outcome": "passed",
+      "duration": 0.009982870891690254,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_auxiliary.py::test_same_helper_selection_is_scoped_and_permissions_are_rebuilt[capability]",
+      "outcome": "passed",
+      "duration": 0.010249573737382889,
+      "run": "final"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[accept_actual]",
+      "outcome": "passed",
+      "duration": 0.41765819303691387,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_actual_recovery_selection_and_local_executor_keep_scope_and_original_evidence[copy_to_exact]",
+      "outcome": "passed",
+      "duration": 0.5169171504676342,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[old_attempt]",
+      "outcome": "passed",
+      "duration": 0.009479892440140247,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_logical]",
+      "outcome": "passed",
+      "duration": 0.009365099482238293,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[outside]",
+      "outcome": "passed",
+      "duration": 0.009488008916378021,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[changed_content]",
+      "outcome": "passed",
+      "duration": 0.009954995475709438,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[exact_accept]",
+      "outcome": "passed",
+      "duration": 0.00950714386999607,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[target_conflict]",
+      "outcome": "passed",
+      "duration": 0.009875527583062649,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[input_path]",
+      "outcome": "passed",
+      "duration": 0.009388831444084644,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[wrong_format]",
+      "outcome": "passed",
+      "duration": 0.010067746043205261,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_admission_rejects_untrusted_or_conflicting_choices[scientific_failure]",
+      "outcome": "passed",
+      "duration": 0.009234759956598282,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_name_schema_is_typed_and_cannot_carry_code_or_route",
+      "outcome": "passed",
+      "duration": 0.004188540391623974,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_new_reconciliation_never_guesses_unique_or_ambiguous_name",
+      "outcome": "passed",
+      "duration": 0.004719956777989864,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_exact_name_with_bad_content_and_nonzero_exit_stays_failure",
+      "outcome": "passed",
+      "duration": 0.021109504625201225,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-compact-True]",
+      "outcome": "passed",
+      "duration": 6.133482659235597,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-verbose-True]",
+      "outcome": "passed",
+      "duration": 6.209259614348412,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-True]",
+      "outcome": "passed",
+      "duration": 6.454764629714191,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-compact-True]",
+      "outcome": "passed",
+      "duration": 9.812142645940185,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-verbose-True]",
+      "outcome": "passed",
+      "duration": 9.752114178612828,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-True]",
+      "outcome": "passed",
+      "duration": 9.985590697266161,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[accept_actual-off-False]",
+      "outcome": "passed",
+      "duration": 3.092092724516988,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_managed_name_resolution_commits_original_computation_and_feeds_downstream[copy_to_exact-off-False]",
+      "outcome": "passed",
+      "duration": 6.4327337956056,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-accept_actual]",
+      "outcome": "passed",
+      "duration": 0.010922946035861969,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[text-copy_to_exact]",
+      "outcome": "passed",
+      "duration": 0.05240980815142393,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-accept_actual]",
+      "outcome": "passed",
+      "duration": 0.01046935934573412,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[file-copy_to_exact]",
+      "outcome": "passed",
+      "duration": 0.01700652576982975,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-accept_actual]",
+      "outcome": "passed",
+      "duration": 0.010358273983001709,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[data-copy_to_exact]",
+      "outcome": "passed",
+      "duration": 0.016886774450540543,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-accept_actual]",
+      "outcome": "passed",
+      "duration": 0.010485420003533363,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_explicit_file_exists_allows_empty_name_resolution_without_accepting_broken_format[output-copy_to_exact]",
+      "outcome": "passed",
+      "duration": 0.018273129127919674,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_plan_results_name.py::test_local_copy_conflict_and_response_loss_never_overwrite_or_register_early",
+      "outcome": "passed",
+      "duration": 0.03661911189556122,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_recovery_node_old_lifetime_counter_does_not_block[96000]",
+      "outcome": "passed",
+      "duration": 0.11203218437731266,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_recovery_node_old_lifetime_counter_does_not_block[1]",
+      "outcome": "passed",
+      "duration": 0.061402504332363605,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_recovery_node_old_lifetime_counter_does_not_block[0]",
+      "outcome": "passed",
+      "duration": 0.060949050821363926,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_recovery_node_old_lifetime_counter_does_not_block[None]",
+      "outcome": "passed",
+      "duration": 0.1152947973459959,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_archived_six_turns_nine_tools_reach_actual_node_next_request",
+      "outcome": "passed",
+      "duration": 0.2311848234385252,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_tool_bundle_closed_before_compaction_and_latest_facts_retained[None]",
+      "outcome": "passed",
+      "duration": 0.23805513326078653,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_tool_bundle_closed_before_compaction_and_latest_facts_retained[before_activation]",
+      "outcome": "passed",
+      "duration": 0.25985382683575153,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_tool_bundle_closed_before_compaction_and_latest_facts_retained[after_activation]",
+      "outcome": "passed",
+      "duration": 0.20873974449932575,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_complete_final_response_does_not_trigger_compaction",
+      "outcome": "passed",
+      "duration": 0.1166307209059596,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_recovery_actual_model_receives_50k_and_does_not_accept_truncated_final",
+      "outcome": "passed",
+      "duration": 0.06098086293786764,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_compaction_failure_keeps_receipts_and_has_maintenance_cause[False]",
+      "outcome": "passed",
+      "duration": 0.1249751690775156,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_compaction_failure_keeps_receipts_and_has_maintenance_cause[True]",
+      "outcome": "passed",
+      "duration": 0.06688495259732008,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_persisted_tool_event_resumes_without_reexecution",
+      "outcome": "passed",
+      "duration": 0.11743353120982647,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_huge_tool_group_externalizes_without_dropping_sibling_results",
+      "outcome": "passed",
+      "duration": 0.10706024337559938,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_soft_target_and_smaller_adapter_window_reach_request_compaction",
+      "outcome": "passed",
+      "duration": 0.10205151326954365,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_shared_tool_loop_over_48k_keeps_all_siblings_and_next_request",
+      "outcome": "passed",
+      "duration": 0.004107174463570118,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[consultant]",
+      "outcome": "passed",
+      "duration": 0.6461042519658804,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[consultant_skill_resolution]",
+      "outcome": "passed",
+      "duration": 0.4960822993889451,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[consultant_task_spec_repair]",
+      "outcome": "passed",
+      "duration": 0.5229461081326008,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[planner]",
+      "outcome": "passed",
+      "duration": 0.4972182074561715,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[planner_repair]",
+      "outcome": "passed",
+      "duration": 0.5721341213211417,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[planner_plan_impact_review]",
+      "outcome": "passed",
+      "duration": 0.5069908713921905,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[generate]",
+      "outcome": "passed",
+      "duration": 0.5022406997159123,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[finalize]",
+      "outcome": "passed",
+      "duration": 0.5176684772595763,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[direct_chat]",
+      "outcome": "passed",
+      "duration": 0.5025423411279917,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[direct_response]",
+      "outcome": "passed",
+      "duration": 0.5037451609969139,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_application_transport_uses_shared_input_policy[recovery_judge]",
+      "outcome": "passed",
+      "duration": 0.49213127605617046,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_default_config_is_real_256k_input_and_legacy_total_is_not_reinterpreted",
+      "outcome": "passed",
+      "duration": 0.0002186298370361328,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_telemetry_projection_keeps_business_json_errors_and_old_message_evidence",
+      "outcome": "passed",
+      "duration": 0.00037966761738061905,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_archived_generate_context_reader_projects_after_real_authority_checks",
+      "outcome": "passed",
+      "duration": 0.00673349853605032,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_large_result_archive_default_page_and_original_business_data",
+      "outcome": "passed",
+      "duration": 0.13928119465708733,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_real_repeated_evidence_still_stops_without_timing_fake_progress[100]",
+      "outcome": "passed",
+      "duration": 0.06783865671604872,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_real_repeated_evidence_still_stops_without_timing_fake_progress[30000]",
+      "outcome": "passed",
+      "duration": 0.10367640852928162,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_actual_auxiliary_router_next_request_is_budgeted",
+      "outcome": "passed",
+      "duration": 0.04512560926377773,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_native_protocol_fields_roundtrip_through_both_compacted_epoch_readers",
+      "outcome": "passed",
+      "duration": 0.00048258062452077866,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_supervisor_actual_inspection_rounds_use_budget_and_schema",
+      "outcome": "passed",
+      "duration": 0.021640765480697155,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_context_256k_entrypoints.py::test_installer_actual_generate_node_uses_input_policy_without_execution",
+      "outcome": "passed",
+      "duration": 0.017991296015679836,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":\"\\u5148\\u8bfb\\u53d6\\u5408\\u6210\\u6587\\u4ef6\\uff0c\\u518d\\u67e5\\u770b\\u8fd4\\u56de\\u7ed3\\u679c\\u3002\",]",
+      "outcome": "passed",
+      "duration": 0.00020245183259248734,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":null,]",
+      "outcome": "passed",
+      "duration": 0.00018897373229265213,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":\"\",]",
+      "outcome": "passed",
+      "duration": 0.00017834454774856567,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":\"   \",]",
+      "outcome": "passed",
+      "duration": 0.0001777270808815956,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":41,]",
+      "outcome": "passed",
+      "duration": 0.00018471665680408478,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":true,]",
+      "outcome": "passed",
+      "duration": 0.00018598604947328568,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":[\"not\",\"public\"],]",
+      "outcome": "passed",
+      "duration": 0.00017975177615880966,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_optional_public_field_never_changes_action_bytes[\"public_message\":{\"text\":\"not public\"},]",
+      "outcome": "passed",
+      "duration": 0.00018317438662052155,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_field_order_is_not_a_business_constraint[{\"public_message\":\"\\u8bf4\\u660e\",\"decision\":\"SEARCH_SKILLS\",\"query\":\"fixture\"}-{\"decision\":\"SEARCH_SKILLS\",\"query\":\"fixture\"}]",
+      "outcome": "passed",
+      "duration": 0.00016047991812229156,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_field_order_is_not_a_business_constraint[{\"decision\":\"SEARCH_SKILLS\",\"public_message\":\"\\u8bf4\\u660e\",\"query\":\"fixture\"}-{\"decision\":\"SEARCH_SKILLS\",\"query\":\"fixture\"}]",
+      "outcome": "passed",
+      "duration": 0.00016638170927762985,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_field_order_is_not_a_business_constraint[{\"decision\":\"SEARCH_SKILLS\",\"query\":\"fixture\",\"public_message\":\"\\u8bf4\\u660e\"}-{\"decision\":\"SEARCH_SKILLS\",\"query\":\"fixture\"}]",
+      "outcome": "passed",
+      "duration": 0.00016448833048343658,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_field_order_is_not_a_business_constraint[\\r\\n{\"public_message\":\"\\u8bf4\\u660e\",\"decision\" : \"SEARCH_SKILLS\", \"query\" : \"fixture\"}\\r\\n-\\r\\n{\"decision\" : \"SEARCH_SKILLS\", \"query\" : \"fixture\"}\\r\\n]",
+      "outcome": "passed",
+      "duration": 0.00016815122216939926,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_legacy_json_without_top_public_is_byte_identical[ {\"type\":\"answer\",\"answer\":\"\\u65e7\\u56de\\u7b54\"}\\n]",
+      "outcome": "passed",
+      "duration": 0.000174056738615036,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_legacy_json_without_top_public_is_byte_identical[{\"plan\":{\"public_message\":\"literal business field\",\"steps\":[]}}]",
+      "outcome": "passed",
+      "duration": 0.00017043109983205795,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_legacy_json_without_top_public_is_byte_identical[{\"text\":\"braces { } commas , escaped \\\\\"public_message\\\\\": and slash \\\\\\\\\"}]",
+      "outcome": "passed",
+      "duration": 0.000165499746799469,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_legacy_json_without_top_public_is_byte_identical[{\"unknown_business_key\":[{\"public_message\":\"must survive\"}]}]",
+      "outcome": "passed",
+      "duration": 0.00017040874809026718,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_json_strings_cannot_impersonate_top_level_boundaries",
+      "outcome": "passed",
+      "duration": 0.00019248388707637787,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_broken_whole_json_does_not_publish_or_repair_business[{\"public_message\":\"\\u4e0d\\u5f97\\u4ece\\u574fJSON\\u62a2\\u6551\",\"type\":]",
+      "outcome": "passed",
+      "duration": 0.0002126600593328476,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_broken_whole_json_does_not_publish_or_repair_business[{\"public_message\":\"trailing\", \"type\":\"answer\"} trailing]",
+      "outcome": "passed",
+      "duration": 0.0001935996115207672,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_broken_whole_json_does_not_publish_or_repair_business[{\"public_message\":\"one\"}{\"type\":\"answer\"}]",
+      "outcome": "passed",
+      "duration": 0.00018995068967342377,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_broken_whole_json_does_not_publish_or_repair_business[prefix {\"public_message\":\"invalid\",\"type\":\"answer\"}]",
+      "outcome": "passed",
+      "duration": 0.00018983706831932068,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_broken_whole_json_does_not_publish_or_repair_business[```json\\n{\"public_message\":\"fenced\", \"type\":\"answer\"}\\n```]",
+      "outcome": "passed",
+      "duration": 0.0001866668462753296,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_projection_does_not_mutate_and_does_not_normalize_business",
+      "outcome": "passed",
+      "duration": 0.00020413286983966827,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_current_consultant_planner_prompts_enable_public_field",
+      "outcome": "passed",
+      "duration": 0.00040042679756879807,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_duplicate_public_fields_do_not_publish_an_ambiguous_message",
+      "outcome": "passed",
+      "duration": 0.00016845017671585083,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_non_json_constants_do_not_enable_public_projection",
+      "outcome": "passed",
+      "duration": 0.0001569325104355812,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_wrapper_preserves_real_parser_body_utf8_and_hash[<shell>\\n  printf 'fixture\\\\n'  \\n</shell>\\n]",
+      "outcome": "passed",
+      "duration": 0.0005157077684998512,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_wrapper_preserves_real_parser_body_utf8_and_hash[\\t<shell>\\r\\nprintf 'CRLF\\\\r\\\\n'\\r\\n</shell>\\r\\n]",
+      "outcome": "passed",
+      "duration": 0.0004916861653327942,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_wrapper_preserves_real_parser_body_utf8_and_hash[<shell>\\ncat <<'FIXTURE'\\n\\u4e2d\\u6587 \"quotes\" \\\\slashes\\\\\\n<xml>literal data</xml>\\nFIXTURE\\n</shell>]",
+      "outcome": "passed",
+      "duration": 0.00047788769006729126,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_wrapper_preserves_real_parser_body_utf8_and_hash[<python>\\ntext = \"\\u4e2d\\u6587\\\\n\\\\\\\\quote\\\\\"\"\\nfor value in [text]:\\n    print(value)\\n\\n</python>]",
+      "outcome": "passed",
+      "duration": 0.0004605613648891449,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_wrapper_preserves_real_parser_body_utf8_and_hash[<r>\\nx <- \"\\u4e2d\\u6587\\\\n\"\\nfor (i in 1:2) {\\n  cat(x)\\n}\\n</r>]",
+      "outcome": "passed",
+      "duration": 0.0005040159448981285,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_wrapper_preserves_real_parser_body_utf8_and_hash[<shell skill_resources=\"fixture-a;fixture-b\">\\nprintf 'fixture\\\\n'\\n</shell>]",
+      "outcome": "passed",
+      "duration": 0.00047529488801956177,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_bad_optional_display_still_unwraps_legal_payload[None]",
+      "outcome": "passed",
+      "duration": 0.00022780057042837143,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_bad_optional_display_still_unwraps_legal_payload[]",
+      "outcome": "passed",
+      "duration": 0.0002298569306731224,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_bad_optional_display_still_unwraps_legal_payload[ ]",
+      "outcome": "passed",
+      "duration": 0.0002348627895116806,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_bad_optional_display_still_unwraps_legal_payload[0]",
+      "outcome": "passed",
+      "duration": 0.00022673606872558594,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_bad_optional_display_still_unwraps_legal_payload[public4]",
+      "outcome": "passed",
+      "duration": 0.00022743083536624908,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_bad_optional_display_still_unwraps_legal_payload[public5]",
+      "outcome": "passed",
+      "duration": 0.00023445114493370056,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_recognized_invalid_payload_is_not_guessed[None]",
+      "outcome": "passed",
+      "duration": 0.00018459651619195938,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_recognized_invalid_payload_is_not_guessed[]",
+      "outcome": "passed",
+      "duration": 0.00017972011119127274,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_recognized_invalid_payload_is_not_guessed[3]",
+      "outcome": "passed",
+      "duration": 0.0001771608367562294,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_recognized_invalid_payload_is_not_guessed[value3]",
+      "outcome": "passed",
+      "duration": 0.0001807473599910736,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_recognized_invalid_payload_is_not_guessed[value4]",
+      "outcome": "passed",
+      "duration": 0.00018293410539627075,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_recognized_invalid_payload_is_not_guessed[True]",
+      "outcome": "passed",
+      "duration": 0.00018044840544462204,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_conflicting_transport_fields_are_rejected[extra0]",
+      "outcome": "passed",
+      "duration": 0.00018549151718616486,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_conflicting_transport_fields_are_rejected[extra1]",
+      "outcome": "passed",
+      "duration": 0.00018579978495836258,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_conflicting_transport_fields_are_rejected[extra2]",
+      "outcome": "passed",
+      "duration": 0.00018571969121694565,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_missing_payload_is_an_explicit_error",
+      "outcome": "passed",
+      "duration": 0.00018318463116884232,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_unwrap_does_not_relax_existing_script_rejection[<shell><script>printf fixture</script></shell>]",
+      "outcome": "passed",
+      "duration": 0.00026667769998311996,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_unwrap_does_not_relax_existing_script_rejection[<script>printf fixture</script>]",
+      "outcome": "passed",
+      "duration": 0.0004546353593468666,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_unwrap_does_not_relax_existing_script_rejection[prose <shell>printf fixture</shell>]",
+      "outcome": "passed",
+      "duration": 0.00038895849138498306,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_unwrap_does_not_relax_existing_script_rejection[<shell>printf fixture</shell><python>print(\"fixture\")</python>]",
+      "outcome": "passed",
+      "duration": 0.00028419308364391327,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_unwrap_does_not_relax_existing_script_rejection[<shell>\\n   \\n</shell>]",
+      "outcome": "passed",
+      "duration": 0.00041824113577604294,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_script_envelope_cannot_enter_other_early_return_branches[{\"decision\":\"SEARCH_SKILLS\",\"query\":\"fixture\"}]",
+      "outcome": "passed",
+      "duration": 0.0002590753138065338,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_script_envelope_cannot_enter_other_early_return_branches[{\"type\":\"blocked\",\"reason\":\"fixture stopping reason\"}]",
+      "outcome": "passed",
+      "duration": 0.00027464330196380615,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_script_envelope_cannot_enter_other_early_return_branches[<solution>\\u8fd9\\u662f\\u5408\\u6210\\u7ed3\\u675f\\u8bf4\\u660e\\u3002</solution>]",
+      "outcome": "passed",
+      "duration": 0.00026449188590049744,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_script_envelope_cannot_enter_other_early_return_branches[\\u8fd9\\u662f\\u4e0d\\u5e26\\u811a\\u672c\\u5757\\u7684\\u5408\\u6210\\u6700\\u7ec8\\u56de\\u7b54\\u3002]",
+      "outcome": "passed",
+      "duration": 0.0002645868808031082,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_invalid_known_payload_identity_is_independent_of_public_words[<shell><script>printf fixture</script></shell>]",
+      "outcome": "passed",
+      "duration": 0.0003220662474632263,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_invalid_known_payload_identity_is_independent_of_public_words[{\"decision\":\"SEARCH_SKILLS\",\"query\":\"fixture\"}]",
+      "outcome": "passed",
+      "duration": 0.00031298957765102386,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_envelope_is_gated_and_unknown_versions_stay_business_input",
+      "outcome": "passed",
+      "duration": 0.0002697361633181572,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[False-decision0]",
+      "outcome": "passed",
+      "duration": 0.0015293434262275696,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[False-decision1]",
+      "outcome": "passed",
+      "duration": 0.0002012290060520172,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[False-decision2]",
+      "outcome": "passed",
+      "duration": 0.0001961914822459221,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[False-decision3]",
+      "outcome": "passed",
+      "duration": 0.00020257383584976196,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[True-decision0]",
+      "outcome": "passed",
+      "duration": 0.00020783953368663788,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[True-decision1]",
+      "outcome": "passed",
+      "duration": 0.00021473504602909088,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[True-decision2]",
+      "outcome": "passed",
+      "duration": 0.0002005966380238533,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_native_json_and_early_decision_fields_are_separated[True-decision3]",
+      "outcome": "passed",
+      "duration": 0.0002212822437286377,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_active_v2_prompts_enable_public_transport_at_actual_prompt_functions",
+      "outcome": "passed",
+      "duration": 0.0013010324910283089,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity[metadata0]",
+      "outcome": "passed",
+      "duration": 0.00016601383686065674,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity[metadata1]",
+      "outcome": "passed",
+      "duration": 0.0001610051840543747,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity[metadata2]",
+      "outcome": "passed",
+      "duration": 0.00015762075781822205,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity[metadata3]",
+      "outcome": "passed",
+      "duration": 0.00015711504966020584,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity[metadata4]",
+      "outcome": "passed",
+      "duration": 0.00015988852828741074,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity[metadata5]",
+      "outcome": "passed",
+      "duration": 0.00015978701412677765,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_valid_json_cannot_override_negative_provider_integrity[metadata6]",
+      "outcome": "passed",
+      "duration": 0.0001721372827887535,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_duplicate_public_is_display_only_degradation",
+      "outcome": "passed",
+      "duration": 0.00021170079708099365,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_duplicate_business_transport_is_rejected[{\"response_type\":\"biomind_generate_display_v1\",\"payload\":\"<shell>printf fixture</shell>\",\"payload\":\"<shell>printf second</shell>\"}]",
+      "outcome": "passed",
+      "duration": 0.00017308909446001053,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_generate_duplicate_business_transport_is_rejected[{\"response_type\":\"biomind_generate_display_v1\",\"response_type\":\"biomind_generate_display_v1\",\"payload\":\"<shell>printf fixture</shell>\"}]",
+      "outcome": "passed",
+      "duration": 0.0001769615337252617,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_public_response.py::test_original_consultant_and_planner_parsers_keep_business_rejection",
+      "outcome": "passed",
+      "duration": 0.0011496050283312798,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[relocated installation]",
+      "outcome": "passed",
+      "duration": 0.015909478068351746,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[\\u4e2d\\u6587 \\u6839]",
+      "outcome": "passed",
+      "duration": 0.015834064222872257,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_registry_binding_is_independent_of_install_name_and_cwd[external-install-root]",
+      "outcome": "passed",
+      "duration": 0.015366122126579285,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[script]",
+      "outcome": "passed",
+      "duration": 0.015138693153858185,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[document]",
+      "outcome": "passed",
+      "duration": 0.012723072431981564,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[cwd]",
+      "outcome": "passed",
+      "duration": 0.015254783444106579,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[namespace]",
+      "outcome": "passed",
+      "duration": 0.010041817091405392,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[env]",
+      "outcome": "passed",
+      "duration": 0.015324046835303307,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[scope]",
+      "outcome": "passed",
+      "duration": 0.015213076025247574,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[missing]",
+      "outcome": "passed",
+      "duration": 0.012310377322137356,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_approval_drift_and_access_failures_are_not_silently_rebound[symlink_escape]",
+      "outcome": "passed",
+      "duration": 0.012809228152036667,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[other/skill#scripts/call_tads.py]",
+      "outcome": "passed",
+      "duration": 0.00626770406961441,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#../call_tads.py]",
+      "outcome": "passed",
+      "duration": 0.00649543572217226,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[3d-dna/tad-calling#/etc/passwd]",
+      "outcome": "passed",
+      "duration": 0.006222781725227833,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_reference_requires_exact_selected_registered_identity[call_tads.py]",
+      "outcome": "passed",
+      "duration": 0.006661406718194485,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_same_basename_is_resolved_by_skill_identity",
+      "outcome": "passed",
+      "duration": 0.019572793506085873,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_undeclared_user_script_does_not_gain_a_global_skill_gate",
+      "outcome": "passed",
+      "duration": 0.00016390811651945114,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_resource_binding.py::test_unreadable_declared_script_is_permission_failure",
+      "outcome": "passed",
+      "duration": 0.008181443437933922,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_receipt_exposes_explicit_controller_invocation_and_exact_contract",
+      "outcome": "passed",
+      "duration": 0.007092317566275597,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_controller_interpreter_retains_virtualenv_launcher_path",
+      "outcome": "passed",
+      "duration": 0.007039126940071583,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[installed]",
+      "outcome": "passed",
+      "duration": 0.1954116877168417,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[\\u4e2d\\u6587 \\u5b89\\u88c5]",
+      "outcome": "passed",
+      "duration": 0.03915242291986942,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_0644_helper_executes_through_bound_interpreter_with_exact_argv[dollar$literal`text`]",
+      "outcome": "passed",
+      "duration": 0.03765743412077427,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[literal]",
+      "outcome": "passed",
+      "duration": 0.012798148207366467,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[env]",
+      "outcome": "passed",
+      "duration": 0.013266838155686855,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_valid_shell_keeps_exact_approved_source_and_argv[exec_continuation]",
+      "outcome": "passed",
+      "duration": 0.012873360887169838,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_direct_argv_has_same_contract_without_shell_reparsing",
+      "outcome": "passed",
+      "duration": 0.00940448883920908,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_validation_checks_the_argv_carrier_actually_executed",
+      "outcome": "passed",
+      "duration": 0.009822466410696507,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[None]",
+      "outcome": "passed",
+      "duration": 0.009408801794052124,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[python]",
+      "outcome": "passed",
+      "duration": 0.00979208666831255,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_missing_or_wrong_interpreter_rejected_before_approval[/bin/sh]",
+      "outcome": "passed",
+      "duration": 0.009664490818977356,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments0]",
+      "outcome": "passed",
+      "duration": 0.009498784318566322,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments1]",
+      "outcome": "passed",
+      "duration": 0.009924517013132572,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments2]",
+      "outcome": "passed",
+      "duration": 0.009913191199302673,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments3]",
+      "outcome": "passed",
+      "duration": 0.00968264788389206,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments4]",
+      "outcome": "passed",
+      "duration": 0.009507732465863228,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_argument_contract_rejects_missing_arity_duplicate_and_unknown_options[arguments5]",
+      "outcome": "passed",
+      "duration": 0.010103439912199974,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_repeated_multi_value_argument_preserves_distinct_label_path_arguments",
+      "outcome": "passed",
+      "duration": 0.009802826680243015,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_single_quoted_env_variable_is_not_mistaken_for_resource_expansion",
+      "outcome": "passed",
+      "duration": 0.009452836588025093,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[comment_only]",
+      "outcome": "passed",
+      "duration": 0.009827264584600925,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[echo_only]",
+      "outcome": "passed",
+      "duration": 0.009563969448208809,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[conditional]",
+      "outcome": "passed",
+      "duration": 0.00939689576625824,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[eval]",
+      "outcome": "passed",
+      "duration": 0.011033065617084503,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[heredoc]",
+      "outcome": "passed",
+      "duration": 0.009643645025789738,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_textual_mentions_and_complex_shell_do_not_establish_valid_invocation[env_assignment]",
+      "outcome": "passed",
+      "duration": 0.009464615024626255,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_delegate_is_pinned_without_requiring_direct_invocation",
+      "outcome": "passed",
+      "duration": 0.022222232073545456,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_root_delegate_closure_is_bound_and_invalid_explicit_ref_still_rejected",
+      "outcome": "passed",
+      "duration": 0.02770589105784893,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[document]",
+      "outcome": "passed",
+      "duration": 0.010720236226916313,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[interpreter]",
+      "outcome": "passed",
+      "duration": 0.01234864629805088,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[env]",
+      "outcome": "passed",
+      "duration": 0.01247675996273756,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_invocation_approval_drift_is_rejected_without_rewriting_source[script]",
+      "outcome": "passed",
+      "duration": 0.012612546794116497,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_uncontracted_skill_resource_preserves_existing_binding_behavior",
+      "outcome": "passed",
+      "duration": 0.0055721234530210495,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_user_owned_script_has_no_new_skill_invocation_gate",
+      "outcome": "passed",
+      "duration": 0.00017813686281442642,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_frontmatter_delimiters_and_metadata_generate_are_preserved",
+      "outcome": "passed",
+      "duration": 0.01079772599041462,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[invalid]",
+      "outcome": "passed",
+      "duration": 0.000545118935406208,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate1]",
+      "outcome": "passed",
+      "duration": 0.000646526925265789,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_malformed_invocation_contract_has_typed_failure[generate2]",
+      "outcome": "passed",
+      "duration": 0.000870581716299057,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_skill_script_invocation.py::test_deferred_argument_keeps_runtime_identity_and_does_not_claim_direct_argv",
+      "outcome": "passed",
+      "duration": 0.02698126994073391,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_binder_persists_install_packet_for_resume",
+      "outcome": "passed",
+      "duration": 0.019781886599957943,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_failure_packet_carries_step_archive_inspection_ref",
+      "outcome": "passed",
+      "duration": 0.06783002149313688,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_completion_gate_and_commit_have_exact_causal_packets",
+      "outcome": "passed",
+      "duration": 0.010162980295717716,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_cross_step_and_wrong_plan_packets_are_rejected",
+      "outcome": "passed",
+      "duration": 0.0017939507961273193,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_execution_failure_becomes_compact_recovery_seed",
+      "outcome": "passed",
+      "duration": 0.004829170182347298,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_nested_conversation_payload_fails_closed",
+      "outcome": "passed",
+      "duration": 0.0015883445739746094,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_packet_plan_record_identity_is_revalidated",
+      "outcome": "passed",
+      "duration": 0.0032981447875499725,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_pre_execution_rejection_has_unambiguous_identity",
+      "outcome": "passed",
+      "duration": 0.0039372919127345085,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_outcome_without_packet_is_not_authority",
+      "outcome": "passed",
+      "duration": 0.00093048345297575,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_retained_same_step_outcomes_cannot_override_packet",
+      "outcome": "passed",
+      "duration": 0.004354349337518215,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_skill_projection_is_manifest_only",
+      "outcome": "passed",
+      "duration": 0.004263751208782196,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryProjectionTests::test_stale_edge_packet_cannot_override_new_active_packet",
+      "outcome": "passed",
+      "duration": 0.0035994332283735275,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_commit_requests_plan_revision",
+      "outcome": "passed",
+      "duration": 0.13670785166323185,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_completion_gate_requests_plan_revision",
+      "outcome": "passed",
+      "duration": 0.00995209813117981,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_execute_semantics_do_not_regress",
+      "outcome": "passed",
+      "duration": 0.007932407781481743,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_install_failure_enters_bounded_repair",
+      "outcome": "passed",
+      "duration": 0.0077548036351799965,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_missing_packet_fails_closed",
+      "outcome": "passed",
+      "duration": 0.0031308019533753395,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_recovery_projection.py::RecoveryRuntimeProjectionIntegrationTests::test_resume_valid_packet_and_consumed_replay_are_idempotent",
+      "outcome": "passed",
+      "duration": 0.01048134732991457,
+      "run": "projection"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[compact]",
+      "outcome": "passed",
+      "duration": 0.0010167984291911125,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[verbose]",
+      "outcome": "passed",
+      "duration": 0.0011877119541168213,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[compact]",
+      "outcome": "passed",
+      "duration": 0.024343309924006462,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[verbose]",
+      "outcome": "passed",
+      "duration": 0.0029995981603860855,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_details_and_verbose_redact_only_synthetic_secrets",
+      "outcome": "passed",
+      "duration": 0.00023411773145198822,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-compact-False]",
+      "outcome": "passed",
+      "duration": 0.002251172438263893,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-verbose-True]",
+      "outcome": "passed",
+      "duration": 0.0018599387258291245,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[off-verbose-False]",
+      "outcome": "passed",
+      "duration": 0.0007373979315161705,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_groups_count_receipts_not_targets_and_stop_at_public",
+      "outcome": "passed",
+      "duration": 0.0005095237866044044,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_scopeless_diagnostics_do_not_retire_current_model_tool_round",
+      "outcome": "passed",
+      "duration": 0.0011383481323719025,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[failed]",
+      "outcome": "passed",
+      "duration": 0.00036506447941064835,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[unknown]",
+      "outcome": "passed",
+      "duration": 0.00036504771560430527,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[partial]",
+      "outcome": "passed",
+      "duration": 0.00035784393548965454,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[cancelled]",
+      "outcome": "passed",
+      "duration": 0.0005025807768106461,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[not_dispatched]",
+      "outcome": "passed",
+      "duration": 0.00036957766860723495,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_old_tool_return_keeps_receipt_without_replacing_approval",
+      "outcome": "passed",
+      "duration": 0.00036977604031562805,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_process_group_only_asserts_exit_and_keeps_failure",
+      "outcome": "passed",
+      "duration": 0.0003882627934217453,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_final_group_and_long_review_are_available",
+      "outcome": "passed",
+      "duration": 0.026072951033711433,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_long_documents_and_narrow_chinese_columns",
+      "outcome": "passed",
+      "duration": 2.095760829746723,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close",
+      "outcome": "passed",
+      "duration": 0.2374233128502965,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_group_boundary_still_flushes_public_before_next_real_dispatch",
+      "outcome": "passed",
+      "duration": 0.002104927785694599,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_twenty_column_approval_keeps_full_prompt_in_details",
+      "outcome": "passed",
+      "duration": 0.12033033464103937,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_logs_lists_synthetic_handler_path_without_reading_body",
+      "outcome": "passed",
+      "duration": 0.004834889434278011,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_output_attributes_reset_before_following_public",
+      "outcome": "passed",
+      "duration": 0.0062108347192406654,
+      "run": "remaining"
+    },
+    {
+      "nodeid": "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_a8b_external_cancellation_emits_terminal_record_and_drains",
+      "outcome": "passed",
+      "duration": 0.2646632883697748,
+      "run": "cancel"
+    },
+    {
+      "nodeid": "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_a8c_provider_self_cancellation_is_typed_transport_failure",
+      "outcome": "passed",
+      "duration": 0.013497534207999706,
+      "run": "cancel"
+    },
+    {
+      "nodeid": "tests/test_provider_attempt_reliability.py::ProviderAttemptReliabilityTests::test_p10b_external_cancel_closes_context_manifest_as_cancelled",
+      "outcome": "passed",
+      "duration": 0.23411174304783344,
+      "run": "cancel"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_partial_directory_publication_resumes_only_its_owned_staging[partial]",
+      "outcome": "passed",
+      "duration": 0.07539461087435484,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_partial_directory_publication_resumes_only_its_owned_staging[symlink]",
+      "outcome": "passed",
+      "duration": 0.07039916142821312,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_partial_directory_publication_resumes_only_its_owned_staging[unknown_target]",
+      "outcome": "passed",
+      "duration": 0.07181385438889265,
+      "run": "publication-final"
+    },
+    {
+      "nodeid": "tests/test_preflight_incremental_results.py::test_partial_directory_publication_resumes_only_its_owned_staging[after_rename]",
+      "outcome": "passed",
+      "duration": 0.07367559615522623,
+      "run": "publication-final"
+    }
+  ],
+  "resolved_fixture_failures": [
+    "native fake provider omitted finish_reason",
+    "existence-only tests incorrectly asserted content validity",
+    "legacy fixture attempted to persist under /fixture; moved to TemporaryDirectory"
+  ],
+  "checks": {
+    "working_index_unchanged_before_commit": true,
+    "candidate_export_exact_files": 30,
+    "network_and_original_workspace_guard_enabled": true
+  },
+  "source_files": {
+    "agent_core/candidate_validation.py": "094ca9ccaab014c5e992c80dad250697c066e690aeabdb15f5dd650fd4367b54",
+    "agent_core/cli_lifecycle.py": "10eeeeb9863aa0138c6fe4e4b534e9b052b482d6f7898caea7d0f4cdeefb8310",
+    "agent_core/cli_terminal.py": "65408106bd6d80a03a69aba9fa0fbe2c32bb3e04c38e46337fc2405fc58e419d",
+    "agent_core/controller_audit.py": "59d55000bb633631d00a8a38841165429720878b88e24b24781564bb6f3d585e",
+    "agent_core/diagnostics.py": "60385c778e588c09570898f445042b5ed3d9c37641301fcc7de213bf911a25bf",
+    "agent_core/generate_protocol.py": "0722dd7075e832f165bfbe098067acff2dae605fa766b8a297a325c3c1eab8f6",
+    "agent_core/planner_context.py": "b8cd592aed7ea30e5d831dd56facb23e8ec47671caf02cd922747f7b6847c51a",
+    "agent_core/provider_attempt.py": "9bf020f8be38dc572452520fdff2ee35f468b2e6b0c8158fe65652f0e61a8eda",
+    "agent_core/public_response.py": "6b2fee0d254c3fccb3fc41febb3d956673e142cda4a027b53f69942b8be25878",
+    "agent_core/skill_resource_binding.py": "c72f42397818a0b09bcf748b301b680f35adb4150ad08ec146d7ecadae795079",
+    "agent_core/skill_script_invocation.py": "6bde28a2b8020b5f15de265860729ca0032df7dca652a85b85900fbc01cbbe71",
+    "agent_core/step_effects.py": "a861ee9f8f95aeace0a04107ad83edaa65f5fdeac8bb99076938521975ad02a2",
+    "agent_core/workflow/commit_step.py": "2ef917e29aacd799c9798890b570a83a793bc0ff17839edff26d329d5147d8a2",
+    "agent_core/workflow/generate_handoff.py": "a5eb31e2a3064d402097338e1c97f5fedcf4c91d61cae48c0a575e114898a3da",
+    "agent_core/workflow/recovery_agent.py": "be77d2f322b5023b8979ff052e69c904235c641d661c1eb5ee5da669aa1bab4f",
+    "agent_core/workflow/recovery_projection.py": "dd4349a1c83b291da321c4e5e3979a573803ecb2cf949d3a2e8def1eff987f28",
+    "agent_core/workflow/recovery_runtime.py": "3a06afde51b9f29299f6393de23dc909f159ee8ff67b23c0e582d14101c3280a",
+    "agent_core/workflow/result_resolution.py": "82ca7b5d3647dd82562182dae26bab8bcdc85b75538d647d2ebf9cfe009487dc",
+    "agent_core/workflow/verifier.py": "c7988d3cd7627f82ebfdca7049cdb34613dbbe878a2501c483cbaf1becab1596",
+    "bio_agents.py": "0844de7b08859e3a4246a18723c1fa573c55a940c4a0e6d0b3625dd10df7394d",
+    "tests/export_preflight_incremental.py": "4ad828a3182344829241d0d7628de07b92122aa9658ccb9c5ed5ae7d0a11763b",
+    "tests/fixtures/preflight_1789734892_candidates.json.gz": "1fdad592a620a65be883379f96f498f2d31c41b8e35190867fe91fbdc8f1216f",
+    "tests/fixtures/preflight_1789734892_receipt.json.gz": "4a9ed4123b13cc3bb27cbe8460299711b9e9f31562d2f745059901c20bd1685c",
+    "tests/offline_managed_bootstrap.py": "b2b08fb88bc681371c9d56d44835cfe2edf231411fd4eeaa2ac9603275fae24e",
+    "tests/test_plan_results_name.py": "898a08c8f00f509ee740b49e7179bdd99ec29ff28858049bf0a946cc157e2a9b",
+    "tests/test_preflight_incremental_auxiliary.py": "60127c928237dcc01387817917ca4f261857f51f93cc1b5b3c6cb3fff5265838",
+    "tests/test_preflight_incremental_graph.py": "bed7c084dbd6a44933bedfb2c0a675b56b593b58b18a07157d28abd678a5c6d2",
+    "tests/test_preflight_incremental_protocol.py": "cf7fa8799f873185b4445637c7574f104d056e6142c81d20fd2a1539748cc2e5",
+    "tests/test_preflight_incremental_results.py": "64e00176c83f51e2f19ab9eb452cf52c8e7f9422f1b38e41bd01854aead6935a",
+    "tests/test_recovery_projection.py": "b3cf61075836568f996085dd4332f6832e7409d3103bbf36f61c050ce079e302"
+  }
+}

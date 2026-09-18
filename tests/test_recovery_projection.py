@@ -338,9 +338,12 @@ class RecoveryProjectionTests(unittest.TestCase):
             project_recovery_seed(old_state, durable)
 
     def test_binder_persists_install_packet_for_resume(self) -> None:
+        import tempfile
+        temporary = tempfile.TemporaryDirectory(prefix="recovery-projection-")
+        self.addCleanup(temporary.cleanup)
         store = _MemoryStore(_durable())
         update = CausalFailurePacketBinder(
-            data_path="/fixture", loader=store.load, saver=store.save
+            data_path=temporary.name, loader=store.load, saver=store.save
         ).bind(
             {"task_id": "task-recovery"},
             "install_subagent_outcome",
@@ -373,10 +376,13 @@ class RecoveryProjectionTests(unittest.TestCase):
         self.assertEqual(commit.failure_packet.error_code, "COMMIT_CONFLICT")
 
     def test_completion_failure_packet_carries_step_archive_inspection_ref(self) -> None:
+        import tempfile
+        temporary = tempfile.TemporaryDirectory(prefix="recovery-projection-")
+        self.addCleanup(temporary.cleanup)
         store = _MemoryStore(_durable())
         archive_ref = "phase-archive:sha256:" + "c" * 64
         update = CausalFailurePacketBinder(
-            data_path="/fixture", loader=store.load, saver=store.save
+            data_path=temporary.name, loader=store.load, saver=store.save
         ).bind(
             {
                 "task_id": "task-recovery",

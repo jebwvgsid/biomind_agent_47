@@ -56,6 +56,7 @@ exports.update({
  'LLM_MAX_RETRIES':0,'GENERATE_PROVIDER_MAX_ATTEMPTS':3,'GENERATE_PROVIDER_RETRY_BASE_SECONDS':0,'GENERATE_PROVIDER_RETRY_CAP_SECONDS':0,
  'LLM_MAX_HISTORY_MESSAGES':100,'LLM_MAX_HISTORY_CHARS':500000,'LLM_STEP_CONTEXT_MESSAGES':100,'LLM_STEP_CONTEXT_CHARS':500000,
  'LLM_STEP_PLAN_CHARS':100000,'LLM_STEP_SKILL_DOC_CHARS':200000,'LLM_STEP_EPHEMERAL_CHARS':50000,
+ 'SCHEMA2_INPUT_SOFT_LIMIT_TOKENS':256000,
  'SCHEMA2_CONTEXT_COMPACTION_ENABLED':False,'SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS':200000,
  'SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS':50000,'SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS':2048,'SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS':2048,
  'CONSULTANT_FINALIZE_MAX_OUTPUT_TOKENS':50000,'CONSULTANT_FINALIZE_PROVIDER_OUTPUT_CAP_TOKENS':50000,'CONSULTANT_FINALIZE_CONTEXT_LIMIT_TOKENS':200000,
@@ -103,7 +104,7 @@ class Reporter:
  def pytest_exception_interact(self,node,call,report):
   facts=[]
   for entry in call.excinfo.traceback:
-   for key in ("events","update","generated","recovery_outcome","recovery_update"):
+   for key in ("events","update","generated","recovery_outcome","recovery_update","result"):
     if key in entry.frame.f_locals:
      facts.append({"name":key,"value":entry.frame.f_locals[key]})
   (result_path.parent/(result_path.stem+"-"+node.name+"-facts.json")).write_text(json.dumps(facts,indent=2,default=str))

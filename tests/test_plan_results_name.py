@@ -88,7 +88,7 @@ class SelectionProvider:
         self.requests.append(deepcopy(messages))
         if len(self.requests) == 1:
             return AIMessage(content="我先核对本次执行的结果记录。", tool_calls=[{
-                "id": "name-failure-read", "name": "failure_inspect", "args": {}, "type": "tool_call"}])
+                "id": "name-failure-read", "name": "failure_inspect", "args": {}, "type": "tool_call"}], response_metadata={"finish_reason":"tool_calls"})
         assert len(self.requests) == 2, [str(m.content) for m in messages[-3:]]
         # The production projection/tool must make these choices visible;
         # this fake provider does not add records to messages or runtime state.
@@ -96,7 +96,7 @@ class SelectionProvider:
         for row in self.directive["result_selections"]:
             assert row["artifact_id"] in wire and row["observed_path"] in wire
         return AIMessage(content="结果记录已核对，我会提交当前步骤的局部处理。", tool_calls=[{
-            "id": "name-submit", "name": "submit_recovery_directive", "args": deepcopy(self.directive), "type": "tool_call"}])
+            "id": "name-submit", "name": "submit_recovery_directive", "args": deepcopy(self.directive), "type": "tool_call"}], response_metadata={"finish_reason":"tool_calls"})
 
 
 async def tiny_copy(root, request, durable):
@@ -229,6 +229,8 @@ def test_exact_name_with_bad_content_and_nonzero_exit_stays_failure(tmp_path):
     _, state, _ = name_fixture(tmp_path, "copy_to_exact")
     execution = state["execute_outcome"]["payload"]["execution_record"]
     contracts = execution["action_contract"]["controller_output_bindings"]
+    # An existence-only contract cannot promise compressed-content validity.
+    contracts[0]["validation_contract_id"] = "file_nonempty"
     broken = tmp_path / "required-result-0.txt"
     broken.write_bytes(b"\x1f\x8btruncated")
     rows = [{**_observed_file_metadata(broken), "attempt_id": "attempt-1", "current_attempt_owned": True}]
@@ -434,7 +436,10 @@ def test_explicit_file_exists_allows_empty_name_resolution_without_accepting_bro
         local = await tiny_copy(root, request, durable) if operation == 'copy_to_exact' else None
         receipt = result_resolution_reconciliation(request, local)
         assert receipt['reconciliation']['status'] == 'accepted'
-        assert receipt['reconciliation']['bindings'][0]['content_valid'] is True
+        # Acceptance proves this explicit existence contract only. Keep the
+        # empty-file content observation truthful instead of promoting it.
+        assert receipt['reconciliation']['bindings'][0]['content_valid'] is False
+        assert receipt['reconciliation']['bindings'][0]['validation_scope'] == 'existence_and_kind'
         assert execution['observed_output_records'][0]['content_valid'] is False
     asyncio.run(run())
 
