@@ -45518,6 +45518,7 @@ question. Never guess a scientific or database identity.
                     "BIOMIND_TASK_ID",
                     "BIOMIND_ACTION_ID",
                     "BIOMIND_STEP_ID",
+                    "BIOMIND_ATTEMPT_ID",
                 }
                 conflicting_env_keys = sorted(
                     set((materialized_action.get("env") or {}).keys())
@@ -49739,6 +49740,7 @@ question. Never guess a scientific or database identity.
                 "managed_output_snapshot_before": managed_output_snapshot_before,
             })
             attempt_id = str(attempt_record.get("attempt_id") or "")
+            effective_execution_env["BIOMIND_ATTEMPT_ID"] = attempt_id
             advance_preparation_boundary(
                 "mutation_intent_journal",
                 "agent_core.workspace_attestation.persist_mutation_journal",

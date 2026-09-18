@@ -83,7 +83,14 @@ The router should produce:
 - threshold and covariate policy.
 - blocked status if sample IDs, phenotype, or dependencies are not ready.
 
-Recommended layout:
+Optional layout for stages that actually declare and produce files. This is not
+a list of mandatory artifacts: initial `inspect_inputs` has `outputs=[]` and
+publishes `gwas_input_structure`; it does not create `00.input_check/`. When a
+sample-list file is needed, choose the file-producing capability and declare
+that real file explicitly. Never create empty directories or sample files to
+make an observation step pass. An already approved required output can change
+only through the existing Plan revision and approval flow, not by dropping it
+after execution. Keep the requested task-level reports as explicit Plan results.
 
 ```text
 outdir/
@@ -96,6 +103,7 @@ outdir/
   logs/
   report.md
   reproduce.sh
+  stage_status.tsv
 ```
 
 ## 常见错误及解决办法

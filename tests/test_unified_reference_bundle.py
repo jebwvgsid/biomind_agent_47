@@ -12,7 +12,8 @@ import json
 
 import pytest
 
-from agent_core.genomics_reference_bundle import REFERENCE_BUNDLE_PARSER_ID, ReferenceBundleError, build_reference_bundle_receipt
+from agent_core.genomics_reference_bundle import (REFERENCE_BUNDLE_FINAL_URI_PARSER_ID,
+    REFERENCE_BUNDLE_PARSER_ID, ReferenceBundleError, build_reference_bundle_receipt)
 from agent_core.plan_tracker import (approve_plan_state, build_plan_state, load_plan_state,
     mark_step_verification_pending, record_provenance_event, save_plan_state)
 from agent_core.step_effects import canonical_step_effect
@@ -229,6 +230,6 @@ def test_final_skill_declares_parser_and_compiles_into_formal_step(tmp_path):
         "outputs": ["plan.reference_indexes"]}, registry)
     assert not compiled["issues"], compiled
     predicate = compiled["effect"]["produces_observations"][0]["predicate"]
-    assert predicate["parser_id"] == REFERENCE_BUNDLE_PARSER_ID and predicate["expected"] is True
+    assert predicate["parser_id"] == REFERENCE_BUNDLE_FINAL_URI_PARSER_ID and predicate["expected"] is True
     assert set(registry[capability_id]["required_runtime_binding_ids"]) == {
         "runtime.bwa.index.bin", "runtime.samtools.faidx.bin", "runtime.picard.dictionary.bin", "runtime.java.bin"}

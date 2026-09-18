@@ -5,7 +5,7 @@ description: Map paired-end short-read WGS resequencing FASTQ to a reference gen
   indexed BAMs for downstream SNP/InDel, SV, and CNV calling. Use before WGS variant
   calling when users provide FASTQ rather than ready BAM files. Do not use for RNA-seq,
   long-read, or assembly comparison data.
-version: 1.2.0
+version: 1.3.0
 tags:
 - WGS
 - resequencing
@@ -43,6 +43,40 @@ outputs:
 - bam_list
 generate:
   script_invocations:
+    scripts/prepare_reference.py:
+      schema_version: 1
+      runtime: controller_python
+      arguments:
+        --source:
+          nargs: 1
+          required: true
+        --output:
+          nargs: 1
+          required: true
+        --work-dir:
+          nargs: 1
+          required: true
+        --reference-ref:
+          nargs: 1
+          required: true
+        --evidence-artifact-ref:
+          nargs: 1
+          required: true
+        --artifact-ref:
+          nargs: 1
+          required: true
+        --bwa:
+          nargs: 1
+          required: true
+        --samtools:
+          nargs: 1
+          required: true
+        --picard:
+          nargs: 1
+          required: true
+        --java:
+          nargs: 1
+          required: true
     scripts/inspect_wgs_inputs.py:
       schema_version: 1
       runtime: controller_python
@@ -164,7 +198,7 @@ generate:
   - capability_id: genomics.wgs.short.read.mapping.execute
     operation: produce_files
     contract_source: skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities
-    contract_revision: wgs-short-read-mapping-effects-v2
+    contract_revision: wgs-short-read-mapping-effects-v3
     required_runtime_binding_ids:
     - runtime.bwa.mem.bin
     - runtime.samtools.mapping.bin
@@ -198,7 +232,7 @@ generate:
   - capability_id: genomics.wgs.short.read.mapping.inspect
     operation: inspect
     contract_source: skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities
-    contract_revision: wgs-short-read-mapping-effects-v2
+    contract_revision: wgs-short-read-mapping-effects-v3
     required_runtime_binding_ids: []
     optional_runtime_binding_ids: &id001 []
     required_artifact_binding_ids: &id002 []
@@ -232,7 +266,7 @@ generate:
   - capability_id: genomics.wgs.short.read.mapping.prepare_reference
     operation: prepare_reference
     contract_source: skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities
-    contract_revision: wgs-short-read-mapping-effects-v2
+    contract_revision: wgs-short-read-mapping-effects-v3
     required_runtime_binding_ids:
     - runtime.bwa.index.bin
     - runtime.samtools.faidx.bin
@@ -243,6 +277,8 @@ generate:
     produces_artifacts:
     - artifact_id: reference_indexes
       resource_kind: immutable_artifact
+    - artifact_id: reference_preparation_evidence
+      resource_kind: immutable_artifact
     produces_bindings: []
     produces_observations:
     - observation_id: reference_bundle_valid
@@ -250,7 +286,7 @@ generate:
         predicate_id: genomics.wgs.reference_bundle.v1
         operator: boolean_equals
         expected: true
-        parser_id: biomind.genomics.reference_bundle.v1
+        parser_id: biomind.genomics.reference_bundle.v2
         failure_disposition: correction_required
         missing_disposition: inspection_required
       evidence_contract:
@@ -268,6 +304,13 @@ generate:
     - Declare the reference index files or index bundle in step.outputs and the exact
       source reference in step.inputs. Keep the approved input immutable and place
       new index products only at approved output locations.
+    - Use the registered scripts/prepare_reference.py direct argv helper for stable reference construction.
+      Pass exact approved source/output paths, current input/output resource references,
+      and bound BWA/samtools/Picard/Java paths. Declare its --work-dir as a second
+      formal output with role reference_preparation_evidence, and pass that identity
+      as --evidence-artifact-ref. It is an engineering journal/log directory, not
+      a second scientific bundle. Controller supplies task/step/action/attempt
+      identity. Read references/reference-helper.md before generating this operation.
     - Report create_reference_indexes with reference_resource_ref and index_artifacts
       identifying the actual products. Planning is a promise; execution, artifact
       validation, and approval still must establish completion.
@@ -275,7 +318,8 @@ generate:
       side fact with index_artifacts=[] and status=blocked; omit the artifact row.
       Do not create an empty bundle to satisfy publication. This never completes the
       step.
-    - Produce exactly one immutable directory artifact containing reference.fa (byte-identical
+    - Produce one scientific immutable bundle plus its explicitly declared
+      reference_preparation_evidence control directory. The bundle contains reference.fa (byte-identical
       copy of the formal reference_fasta input), reference.fa.fai, reference.fa.amb/.ann/.bwt/.pac/.sa
       and reference.dict. The source input is never mutated. Emit reference_bundle_valid.value;
       the deterministic parser independently validates complete indexes, contig lengths
@@ -289,7 +333,7 @@ generate:
   - capability_id: genomics.wgs.short.read.mapping.coverage
     operation: inspect
     contract_source: skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities
-    contract_revision: wgs-short-read-mapping-effects-v2
+    contract_revision: wgs-short-read-mapping-effects-v3
     required_runtime_binding_ids:
     - runtime.samtools.coverage.bin
     optional_runtime_binding_ids: *id001

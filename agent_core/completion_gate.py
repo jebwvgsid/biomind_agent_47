@@ -439,7 +439,9 @@ def _effect_items(value: Any) -> List[Any]:
     return [value]
 
 
-def _effect_result_satisfied(kind: str, value: Any) -> bool:
+def _effect_result_satisfied(
+    kind: str, value: Any, *, declared_fields_satisfied: bool = False
+) -> bool:
     if isinstance(value, str):
         return bool(value.strip())
     if not isinstance(value, Mapping):
@@ -463,7 +465,8 @@ def _effect_result_satisfied(kind: str, value: Any) -> bool:
         )
     if kind == "explicit_side_effects":
         return bool(
-            row.get("receipt_id") or row.get("evidence_ref") or "evidence" in row
+            declared_fields_satisfied
+            or row.get("receipt_id") or row.get("evidence_ref") or "evidence" in row
         )
     if kind == "produces_observations":
         return any(key in row for key in ("value", "result", "observed_value", "evidence")) or bool(
@@ -641,6 +644,14 @@ def _evaluate_non_artifact_effects(
     invalid_observed = {kind: set() for kind in _NON_ARTIFACT_EFFECT_KEYS}
     refs_by_identity: Dict[Tuple[str, str], str] = {}
     sources, source_refs = _current_effect_sources(plan_state, step_id)
+    declared_evidence_fields = {
+        (kind, _effect_identity(kind, item))
+        for kind in _NON_ARTIFACT_EFFECT_KEYS
+        for item in declared_contract.get(kind, ())
+        if isinstance(item, Mapping)
+        and isinstance(item.get("evidence_contract"), Mapping)
+        and item["evidence_contract"].get("required_fields")
+    }
     accepted_payloads = [payload for payload, source_valid in sources if source_valid]
     contract_match = match_step_effect_evidence(
         declared_contract,
@@ -684,7 +695,18 @@ def _evaluate_non_artifact_effects(
                 satisfied = (
                     source_valid
                     and contract_allows
-                    and _effect_result_satisfied(kind, item)
+                    and _effect_result_satisfied(
+                        kind, item,
+                        # The compiled contract, not a second model-authored
+                        # passed/receipt field, defines the evidence shape.
+                        # This is only effect-shape acceptance. Attempt scope,
+                        # artifact provenance and independent predicates still
+                        # veto completion in Supervisor and CommitStep.
+                        declared_fields_satisfied=(
+                            (kind, contract_identity) in declared_evidence_fields
+                            and contract_identity in contract_matched[kind]
+                        ),
+                    )
                 )
                 target = observed if satisfied else invalid_observed
                 target[kind].add(identity)

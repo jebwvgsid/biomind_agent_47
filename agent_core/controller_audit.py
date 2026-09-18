@@ -14,6 +14,7 @@ import json
 import os
 import re
 import tokenize
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
@@ -296,7 +297,12 @@ def project_script_artifact_repair_violations(
     *,
     language: str,
 ) -> List[Dict[str, Any]]:
-    """Translate internal artifact violations into script-provider repairs."""
+    """Project artifact syntax repairs without reclassifying other issues.
+
+    The Generate correction path also carries invocation, schema and unknown
+    validator issues.  Their original facts are authoritative: an absent
+    artifact match is not evidence of an invalid artifact reference.
+    """
     rows = [dict(raw) for raw in artifact_environment if isinstance(raw, Mapping)]
     by_handle = {
         str(row.get("semantic_handle") or ""): row
@@ -310,7 +316,7 @@ def project_script_artifact_repair_violations(
     }
     projected: List[Dict[str, Any]] = []
     for raw in violations:
-        violation = dict(raw)
+        violation = deepcopy(dict(raw))
         matches: List[Dict[str, Any]] = []
         handle = str(violation.get("artifact_handle") or "")
         if handle and handle in by_handle:
@@ -323,37 +329,16 @@ def project_script_artifact_repair_violations(
         if proposed_row is not None and proposed_row not in matches:
             matches.append(proposed_row)
 
-        base = {
-            key: violation[key]
-            for key in (
-                "code",
-                "owner",
-                "route",
-                "failure_stage",
-            )
-            if violation.get(key) not in (None, "")
-        }
+        # Preserve source/field/detail/supported forms and any future optional
+        # diagnostic fields.  Presentation hints may supplement these facts,
+        # never replace the original issue with a different category.
+        base = violation
         if not matches:
-            projected.append({
-                **base,
-                "field_path": "script",
-                "artifact_handle": handle,
-                "message": (
-                    "The script contains an invalid artifact reference. Use the matching "
-                    "concrete path from current_action_artifact_bindings directly."
-                ),
-                "repair_hint": {
-                    "protocol": "script_block_v1",
-                    "strategy": "use_supplied_concrete_path",
-                    "rule": (
-                        "Preserve unrelated script logic and replace only the reported "
-                        "artifact reference."
-                    ),
-                },
-            })
+            projected.append(base)
             continue
 
         code = str(violation.get("code") or "")
+        projected_count = len(projected)
         for row in matches:
             concrete_path = str(
                 row.get("path") or row.get("expected_path")
@@ -372,9 +357,9 @@ def project_script_artifact_repair_violations(
             )
             projected.append({
                 **base,
-                "field_path": "script",
+                "provider_field_path": "script",
                 "artifact_handle": semantic_handle,
-                "message": (
+                "provider_repair_message": (
                     f"Use the supplied concrete path for {semantic_handle} directly; "
                     "remove the unresolved reference or invalid fallback."
                 ),
@@ -388,6 +373,10 @@ def project_script_artifact_repair_violations(
                     ),
                 },
             })
+        if len(projected) == projected_count:
+            # A binding without a concrete path is still an unresolved issue;
+            # it must not disappear from the repair/terminal evidence.
+            projected.append(base)
     return projected
 
 

@@ -74,8 +74,11 @@ generate:
     explicit_side_effects: []
     execution_guidance:
     - Run the selected scripts/inspect_inputs.py with explicit VCF, phenotype, optional Q/GFF3, and observation-id gwas_input_structure. It uses controller Python and bounded standard-library input reads; this inspection requires no scientific runtime binding or output file.
+    - Declare outputs=[] for this observation-only initial check. The workflow's recommended 00.input_check layout does not declare an output, and this helper does not create that directory. Do not create an empty directory to satisfy a Plan. If an already approved Plan requires it, request a Plan revision and approval, or use a separately declared real file-producing action; never delete the requirement after execution.
+    - Use the published direct argv or supported simple shell invocation. Do not wrap this fixed helper in if/then/fi or add existence-test compound shell; helper validation reports actual missing input files. This restriction belongs to this helper invocation contract, not all scientific shell scripts.
     - Read references/input-identity.md before interpreting the observation. Preserve source hashes and read scopes, phenotype header/columns and alignment, and Q mapping status. A header/prefix inspection does not validate the complete VCF/GFF3.
     - A numeric Q with no sample IDs remains unknown even when all row counts equal 215. Report a valid initial observation, but block Q covariate preparation and association_using_q until explicit row correspondence is version-checked. Do not create a map from equal counts or silently omit Q.
+    - Keep the task-level report.md, reproduce.sh and stage_status.tsv deliverables as explicit later Plan results. An observation-only step does not remove final reporting obligations.
   - capability_id: population.genetics.gwas.vcf.prep.qc.inspect_vcf_samples
     operation: inspect_vcf_samples
     contract_revision: gwas-vcf-prep-qc-v1.1.0

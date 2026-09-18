@@ -12,6 +12,7 @@ import hashlib
 import json
 from copy import deepcopy
 from dataclasses import dataclass
+from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -768,6 +769,73 @@ def _predicate_applicability(
     }
 
 
+def _validate_reference_effect_scope(
+    plan_state: Mapping[str, Any], step: Mapping[str, Any],
+    scope: Mapping[str, Any], attempt: Mapping[str, Any],
+    receipt: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Bind declared reference facts to the independently read formal bundle.
+
+    Facts come from the persisted current attempt, never a model-supplied
+    passed flag or a second receipt vocabulary.  Existing artifact provenance
+    and the content parser remain separate necessary completion checks.
+    """
+    from agent_core.genomics_reference_bundle import ReferenceBundleError
+    from agent_core.managed_artifacts import build_managed_artifact_bindings
+
+    declared = canonical_step_effect(step).get("explicit_side_effects") or []
+    if not any(row.get("identity") == "create_reference_indexes" for row in declared):
+        return {}
+
+    def require(ok: bool, code: str, detail: str) -> None:
+        if not ok:
+            raise ReferenceBundleError(code, detail)
+
+    require(bool(attempt) and bool(scope.get("attempt_id")),
+            "REFERENCE_EFFECT_ATTEMPT_MISSING", "No persisted current execution attempt.")
+    for key in ("task_id", "plan_id", "plan_version", "step_id", "action_id", "attempt_id"):
+        if attempt.get(key) not in (None, "") and scope.get(key) not in (None, ""):
+            require(str(attempt[key]) == str(scope[key]), "REFERENCE_EFFECT_ATTEMPT_MISMATCH", key)
+    require(attempt.get("returncode") == 0, "REFERENCE_EFFECT_ATTEMPT_NOT_SUCCESSFUL",
+            "The reference effect must belong to a completed successful process attempt.")
+    facts = canonical_execution_effect_evidence(attempt)
+    rows = [row for row in facts.get("explicit_side_effects", [])
+            if row.get("identity") == "create_reference_indexes"]
+    require(len(rows) == 1, "REFERENCE_EFFECT_EVIDENCE_MISSING",
+            "Current attempt must publish create_reference_indexes exactly once.")
+    row = rows[0]
+    body = row.get("evidence") if isinstance(row.get("evidence"), Mapping) else row
+    require(not any(row.get(key) is False or body.get(key) is False
+                    for key in ("passed", "verified", "accepted", "valid")),
+            "REFERENCE_EFFECT_EVIDENCE_REJECTED", "The current attempt reported an adverse reference effect.")
+    task = dict((plan_state.get("current_task") or {}).get("task_spec") or {})
+    bindings = build_managed_artifact_bindings(task, plan_state=plan_state)
+    source_aliases = {str(receipt["source_artifact_id"]), str(receipt["source_path"])}
+    bundle_aliases = {str(receipt["bundle_artifact_id"]), str(receipt["bundle_path"])}
+    for binding in bindings.values():
+        if binding.artifact_id == receipt["source_artifact_id"]:
+            source_aliases.update([binding.semantic_handle, *binding.aliases])
+        if binding.artifact_id == receipt["bundle_artifact_id"]:
+            bundle_aliases.update([binding.semantic_handle, *binding.aliases])
+    require(isinstance(body.get("reference_resource_ref"), str)
+            and body["reference_resource_ref"] in source_aliases,
+            "REFERENCE_EFFECT_SOURCE_MISMATCH", "reference_resource_ref must identify the exact approved source FASTA.")
+    indexes = body.get("index_artifacts")
+    require(isinstance(indexes, list) and bool(indexes)
+            and all(isinstance(value, str) and value for value in indexes)
+            and len(indexes) == len(set(indexes)), "REFERENCE_EFFECT_ARTIFACTS_INVALID",
+            "index_artifacts must identify actual approved products without duplicates.")
+    members = {str(Path(str(receipt["bundle_path"])) / name) for name in receipt["files"]}
+    require((len(indexes) == 1 and indexes[0] in bundle_aliases) or set(indexes) == members,
+            "REFERENCE_EFFECT_ARTIFACTS_MISMATCH",
+            "index_artifacts must name the formal bundle or its complete independently verified members.")
+    return {"attempt_id": str(scope["attempt_id"]), "action_id": str(scope.get("action_id") or ""),
+            "reference_resource_ref": body["reference_resource_ref"],
+            "index_artifacts": list(indexes), "source_artifact_id": receipt["source_artifact_id"],
+            "bundle_artifact_id": receipt["bundle_artifact_id"],
+            "content_receipt_id": receipt["receipt_id"]}
+
+
 def evaluate_boolean_predicates(
     *,
     plan_state: Mapping[str, Any],
@@ -837,6 +905,7 @@ def evaluate_boolean_predicates(
         claimed_actual = observed.get("value") if isinstance(observed, Mapping) else None
         authoritative_actual: Any = claimed_actual
         parser_receipt: Dict[str, Any] = {}
+        effect_scope: Dict[str, Any] = {}
         status = "passed"
         reason_code = "BOOLEAN_PREDICATE_SATISFIED"
         disposition = COMPLETION_ACCEPTED
@@ -846,17 +915,23 @@ def evaluate_boolean_predicates(
             disposition = "plan_revision_required"
         elif parser_id:
             from agent_core.genomics_reference_bundle import (
-                REFERENCE_BUNDLE_PARSER_ID, ReferenceBundleError, build_reference_bundle_receipt,
+                REFERENCE_BUNDLE_PARSER_ID, REFERENCE_BUNDLE_FINAL_URI_PARSER_ID,
+                ReferenceBundleError, build_reference_bundle_receipt,
             )
-            if parser_id not in {CONTIG_PARSER_ID, REFERENCE_BUNDLE_PARSER_ID}:
+            reference_parsers = {REFERENCE_BUNDLE_PARSER_ID, REFERENCE_BUNDLE_FINAL_URI_PARSER_ID}
+            if parser_id not in {CONTIG_PARSER_ID, *reference_parsers}:
                 status = "contract_error"
                 reason_code = "PREDICATE_PARSER_UNREGISTERED"
                 disposition = "plan_revision_required"
             else:
                 try:
                     parser_receipt = (build_reference_bundle_receipt(plan_state, step)
-                                      if parser_id == REFERENCE_BUNDLE_PARSER_ID
+                                      if parser_id in reference_parsers
                                       else build_contig_compatibility_receipt(input_paths))
+                    if parser_id in reference_parsers:
+                        effect_scope = _validate_reference_effect_scope(
+                            plan_state, step, scope, attempt, parser_receipt,
+                        )
                     authoritative_actual = parser_receipt["value"]
                 except (ContigParserError, ReferenceBundleError) as exc:
                     status = "incomplete"
@@ -904,6 +979,7 @@ def evaluate_boolean_predicates(
             "evaluator_id": SEMANTIC_COMPLETION_EVALUATOR_ID,
             "parser_id": parser_id,
             "parser_receipt": parser_receipt,
+            "producer_scope_receipt": effect_scope,
             "applicable": applicable,
             "applicability_receipt": applicability_receipt,
         }

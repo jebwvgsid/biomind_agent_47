@@ -35,7 +35,11 @@ def guard(event,args):
   if not str(Path(os.fsdecode(args[0])).absolute()).startswith('/tmp/'):raise RuntimeError('OFFLINE_MUTATION_DENIED')
 sys.addaudithook(guard)
 exports={}
-for p in C.rglob('*.py'):
+# Configuration source may be present for outer manifest verification. It is
+# never inspected/imported inside the guarded application test interpreter.
+def application_python_sources():
+ return sorted(p for p in C.rglob('*.py') if not p.relative_to(C).parts[0]=='config')
+for p in application_python_sources():
  for n in ast.walk(ast.parse(p.read_text())):
   if isinstance(n,ast.ImportFrom) and n.module and n.module.startswith('config'):
    for a in n.names:
@@ -53,6 +57,7 @@ exports.update({
  'LLM_STEP_PLAN_CHARS':100000,'LLM_STEP_SKILL_DOC_CHARS':200000,'LLM_STEP_EPHEMERAL_CHARS':50000,
  'SCHEMA2_CONTEXT_COMPACTION_ENABLED':False,'SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS':200000,
  'SCHEMA2_CONTEXT_OUTPUT_RESERVE_TOKENS':16000,'SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS':2048,'SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS':2048,
+ 'RECOVERY_OUTPUT_LIMIT_TOKENS':50000,'RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS':None,'RECOVERY_MAX_OUTPUT_RESUBMISSIONS':2,
  'SKILL_FULL_READ_MAX_CHARS':200000,'SKILL_EXCERPT_MAX_CHARS':24000,'MAX_SKILL_BINDING_PROPOSALS_PER_STEP':4,
  'MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION':4,'MAX_SKILL_SEARCH_ROUNDS_PER_STEP':4,'SKILL_CONTEXT_MAX_REQUESTS_PER_ROUND':4,
  'SESSION_ARCHIVE_OBSERVATION_QUEUE_SIZE':1024,'SESSION_ARCHIVE_WRITER_MAX_ATTEMPTS':3,'SESSION_ARCHIVE_SHUTDOWN_DRAIN_SECONDS':1,
@@ -85,7 +90,7 @@ import package_manager
 # Prevent the environment inspection constructor from executing commands.
 package_manager.PackageManager._detect_manager=lambda self:None
 package_manager.PackageManager._get_conda_root=lambda self:None
-before={str(p.relative_to(C)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(C.rglob('*.py'))}
+before={str(p.relative_to(C)):hashlib.sha256(p.read_bytes()).hexdigest() for p in application_python_sources()}
 identity=hashlib.sha256(json.dumps(before,sort_keys=True).encode()).hexdigest()
 print('SOURCE_IDENTITY',identity,flush=True)
 print('SYNTHETIC_CONFIG',json.dumps(exports,sort_keys=True),flush=True)
@@ -115,7 +120,7 @@ if os.environ.get('BIOMIND_OFFLINE_FATAL_FILE'):
 code=pytest.main(sys.argv[1:],plugins=plugins)
 faulthandler.cancel_dump_traceback_later()
 os.write(1, ('\nPYTEST_EXIT_CODE='+str(code)+'\nRESULTS='+str(result_path)+'\n').encode())
-after={str(p.relative_to(C)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(C.rglob('*.py'))}
+after={str(p.relative_to(C)):hashlib.sha256(p.read_bytes()).hexdigest() for p in application_python_sources()}
 print('SOURCE_UNCHANGED',before==after,flush=True)
 print('IMPORTED_SOURCES',json.dumps({n:str(m.__file__) for n,m in list(sys.modules.items()) if getattr(m,'__file__',None) and str(m.__file__).startswith(str(C))},sort_keys=True),flush=True)
 sys.exit(code if before==after else 3)
