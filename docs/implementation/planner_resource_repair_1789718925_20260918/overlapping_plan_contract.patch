@@ -1,0 +1,38 @@
+--- a/agent_core/plan_contract.py
++++ b/agent_core/plan_contract.py
+@@ -1761,7 +1761,10 @@
+         independent_issues.append(diagnostic)
+     from agent_core.step_effects import independent_step_effect_diagnostics
+     independent_issues.extend(independent_step_effect_diagnostics(candidate, capability_registry))
+-    if independent_issues:
++    # Invalid declarations cannot supply a trustworthy resource registry. An
++    # unknown use, however, does not invalidate other declared resources: let
++    # the binding pass diagnose those independent uses in the same response.
++    if any(exc.code != "ARTIFACT_REFERENCE_UNKNOWN" for exc in ref_errors):
+         return {}, [], independent_issues
+     try:
+         from agent_core.plan_bindings import (
+@@ -1787,13 +1790,21 @@
+             }
+         )
+         if diagnostic.get("validation_issues"):
+-            return ref_keys, usage, list(diagnostic["validation_issues"])
++            resource_issues = list(diagnostic["validation_issues"])
++            # Resource lookup independently knows the exact use location. Keep
++            # its richer diagnostic once rather than duplicating an unknown-ref
++            # error from the identity pass at that same field.
++            covered = {row.get("field_path") for row in resource_issues}
++            return ref_keys, usage, [row for row in independent_issues
++                if row.get("field_path") not in covered] + resource_issues
+         diagnostic.setdefault("owner", "planner")
+         diagnostic.setdefault("validator_id", "plan_resource_bindings")
+         diagnostic.setdefault("field_path", "$.proposed_artifacts")
+         diagnostic.setdefault("repair_target", diagnostic["field_path"])
+         diagnostic.setdefault("disposition", "PROTOCOL_INVALID")
+-        return ref_keys, usage, [diagnostic]
++        return ref_keys, usage, independent_issues + [diagnostic]
++    if independent_issues:
++        return {}, [], independent_issues
+     if resource_bindings_out is not None:
+         resource_bindings_out.update(deepcopy(resource_bindings))
+     issues = (

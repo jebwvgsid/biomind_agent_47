@@ -1,0 +1,163 @@
+{
+  "rejection": [
+    {
+      "code": "PLAN_RESOURCE_MUTATION_DECLARATION_MISSING",
+      "violation_code": "PLAN_RESOURCE_MUTATION_DECLARATION_MISSING",
+      "message": "Mutation has no declared state/evidence contract.",
+      "severity": "error",
+      "disposition": "PROTOCOL_INVALID",
+      "field_path": "$.steps[15].resource_uses[0]",
+      "repair_target": "$.steps[15].resource_uses[0]",
+      "step_id": "update_work_state",
+      "resource_ref": "plan.analysis_workspace",
+      "affected_step_ids": [
+        "update_work_state"
+      ],
+      "machine_evidence": {
+        "validator_id": "compile_plan_resource_bindings",
+        "expected": "explicit workspace state/evidence transition, or a selected role with a capability-owned transition",
+        "actual": {
+          "access": "mutate",
+          "resource_ref": "plan.analysis_workspace"
+        },
+        "capability_id": "framework.generic.execute",
+        "violation_code": "PLAN_RESOURCE_MUTATION_DECLARATION_MISSING"
+      },
+      "validator_id": "compile_plan_resource_bindings",
+      "expected": "explicit workspace state/evidence transition, or a selected role with a capability-owned transition",
+      "actual": {
+        "access": "mutate",
+        "resource_ref": "plan.analysis_workspace"
+      },
+      "capability_id": "framework.generic.execute",
+      "owner": "planner",
+      "contract_source": "framework.controlled_executor",
+      "affected_artifact": {},
+      "affected_output": {},
+      "contract_revision": "generic-execution-v1"
+    }
+  ],
+  "accepted": true,
+  "planner_calls": 2,
+  "compiled_step": {
+    "action": "execute",
+    "dependencies": [
+      "prepare_work_state"
+    ],
+    "execution_capability_id": "framework.generic.execute",
+    "operation": "execute",
+    "outputs": [],
+    "produces_observations": [
+      {
+        "identity": "output_dir_conflict_observation",
+        "evidence_contract": {
+          "required_fields": [
+            "value"
+          ]
+        },
+        "value_type": "object"
+      }
+    ],
+    "purpose": "validation",
+    "resource_uses": [
+      {
+        "access": "mutate",
+        "resource_ref": "plan-artifact-c8606765f535b4fbd8bcb142"
+      }
+    ],
+    "risk_level": "low",
+    "skill_ids": [],
+    "step_id": "update_work_state",
+    "success_criteria": [
+      "The explicit workspace state transition is attested."
+    ],
+    "title": "update_work_state",
+    "tool": "python",
+    "workspace_mutations": [
+      {
+        "identity": "plan-artifact-c8606765f535b4fbd8bcb142",
+        "available_after_success": true,
+        "declared_resource_ref": "plan.analysis_workspace",
+        "establishes_state": "updated",
+        "evidence_contract": {
+          "collector": "bounded_filesystem_snapshot_v1",
+          "postconditions": [
+            {
+              "kind": "file_nonempty",
+              "relative_path": "manifest.txt"
+            }
+          ],
+          "schema_version": 1
+        },
+        "mutation": "update",
+        "requires_available": true,
+        "requires_state": "ready"
+      }
+    ],
+    "skills_declared": true,
+    "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+    "workflow_stage_ids": [],
+    "batch_id": "",
+    "inputs": [],
+    "produces_bindings": [],
+    "explicit_side_effects": [],
+    "depends_on": [
+      "prepare_work_state"
+    ],
+    "step_type": "atomic",
+    "renderer_id": "",
+    "input_artifact_ids": [],
+    "output_artifact_ids": [],
+    "dependency_sources": {
+      "prepare_work_state": "planner_declared"
+    },
+    "status": "pending",
+    "artifacts": [],
+    "artifact_contract_revision": 0,
+    "artifact_reconciliation_history": [],
+    "renderer_execution": {},
+    "input_contracts": [],
+    "output_contracts": [],
+    "evidence": [],
+    "updated_at": "2026-09-18T16:54:38",
+    "step_effect": {
+      "schema_version": 1,
+      "produces_artifacts": [],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "identity": "output_dir_conflict_observation",
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          },
+          "value_type": "object"
+        }
+      ],
+      "workspace_mutations": [
+        {
+          "identity": "plan-artifact-c8606765f535b4fbd8bcb142",
+          "available_after_success": true,
+          "declared_resource_ref": "plan.analysis_workspace",
+          "establishes_state": "updated",
+          "evidence_contract": {
+            "collector": "bounded_filesystem_snapshot_v1",
+            "postconditions": [
+              {
+                "kind": "file_nonempty",
+                "relative_path": "manifest.txt"
+              }
+            ],
+            "schema_version": 1
+          },
+          "mutation": "update",
+          "requires_available": true,
+          "requires_state": "ready"
+        }
+      ],
+      "explicit_side_effects": []
+    },
+    "generated_from_task_revision": 1
+  }
+}

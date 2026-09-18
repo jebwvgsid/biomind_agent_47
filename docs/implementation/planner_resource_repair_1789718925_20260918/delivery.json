@@ -1,0 +1,910 @@
+{
+  "actual_requested_directory": "/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/remaining/BM-REMAIN-WGS-005/medium",
+  "actual_session_resumed": false,
+  "actual_directory_writes": 0,
+  "actual_existing_files": [
+    {
+      "name": "report.md",
+      "sha256": "56e0281f8a28b6489e425638801329371d9e90b71c3d7b8405028a97bf430153",
+      "ownership": "other task, not overwritten"
+    },
+    {
+      "name": "stage_status.tsv",
+      "sha256": "e161ee9d2326b6c95c19a985486287e7aee8df9cbb8e669440b8fd39950ef21d",
+      "ownership": "other task, not overwritten"
+    },
+    {
+      "name": "reproduce.sh",
+      "sha256": "5aef1f18531a47157c20e82ce20b1b813f2b1b3f92a01cd8584b83ac0073848d",
+      "ownership": "other task, not overwritten"
+    }
+  ],
+  "offline_writer_checks": [
+    {
+      "destination_case": "empty",
+      "terminal_text": "任务已停止 · failed\n已有 0 步正式提交，完成事实保留。\n原始问题：This is not a declared input/workspace role. Output interfaces belong in outputs, not resource_uses.role.（PLAN_RESOURCE_USE_ROLE_INVALID）。\n当前修复障碍：PLAN_RESOURCE_USE_EFFECT_CONFLICT。\n停止触发：Planner 请求额度已耗尽（已用/上限：4/4）；尚未形成可批准计划。最后阻塞：PLAN_RESOURCE_USE_EFFECT_CONFLICT。（PLANNING_EPOCH_EXHAUSTED）。\n文件交付：complete\n本次报告 report.md：/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/report.md\n本次报告 stage_status.tsv：/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/stage_status.tsv\n本次报告 reproduce.sh：/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/reproduce.sh\n下一步：查看被拒绝的 Plan 候选、上述资源字段冲突及规划反馈，修正完整计划后重新提交；本轮尚未执行科学步骤。\n系统事实摘要；模型总结未运行。",
+      "planner_calls": 4,
+      "stop": {
+        "status": "failed",
+        "scope": {
+          "task_id": "session_1789718925",
+          "plan_id": "",
+          "plan_version": "",
+          "step_id": "",
+          "attempt_id": "",
+          "task_revision": 1,
+          "planning_epoch_id": "planning-epoch-abef0b68-6f98-46ff-a8f3-646291b4a595",
+          "failure_fingerprint": "c207cc25127eb9260a472ff71c2476bc0afa78247357c293828f2486a8e38942",
+          "candidate_context_ref": "object:sha256:3a49232ff233461409704369593ad450e77f22c2d8f361f3ba98a6ae37bb0866"
+        },
+        "stop_id": "managed-stop:0095fb69e09bed06bbd9cab0f9e35c2a222e906bbfc77e7c6271dc3dfd11e237",
+        "stop_reason": {
+          "error_code": "PLANNING_EPOCH_EXHAUSTED",
+          "detail": "The last allowed Planner response was rejected. The budget is exhausted; no further request is authorized.",
+          "budget_receipt": {
+            "planner_calls_total": 4,
+            "max_planner_calls_per_epoch": 4,
+            "last_validation_codes": [
+              "PLAN_RESOURCE_USE_EFFECT_CONFLICT"
+            ],
+            "source": "durable_planning_epoch_and_effective_call_limit"
+          },
+          "model_turns": 4,
+          "repeat_count": 0
+        },
+        "origin": {
+          "source_stage": "planner",
+          "source_owner": "planner",
+          "failure_type": "planning_candidate_rejected",
+          "error_code": "PLAN_RESOURCE_USE_ROLE_INVALID",
+          "summary": "This is not a declared input/workspace role. Output interfaces belong in outputs, not resource_uses.role.",
+          "evidence_refs": [
+            "object:sha256:5a428f97a8c9f5ca901bae9ae17a56d47f1dcf2fa7f1e021e8e0065126b254b8"
+          ]
+        },
+        "latest_failure": {
+          "error_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+          "message": "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource.",
+          "validation_issues": [
+            {
+              "code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "message": "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[2].resource_uses[1]",
+              "repair_target": "$.steps[2].resource_uses[1]",
+              "step_id": "prepare_reference",
+              "resource_ref": "plan.reference_bundle",
+              "affected_step_ids": [
+                "prepare_reference"
+              ],
+              "machine_evidence": {
+                "not_evaluated": [
+                  "dependent_step_effect",
+                  "dependent_workspace_coverage"
+                ],
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "validator_id": "compile_plan_resource_bindings",
+                "expected": {
+                  "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                  "selected_skill_id": "genomics/wgs-short-read-mapping",
+                  "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                  "contract_revision": "wgs-short-read-mapping-effects-v3",
+                  "output_interfaces": [
+                    {
+                      "artifact_id": "reference_indexes",
+                      "resource_kind": "immutable_artifact"
+                    },
+                    {
+                      "artifact_id": "reference_preparation_evidence",
+                      "resource_kind": "immutable_artifact"
+                    }
+                  ],
+                  "declaration": {
+                    "outputs": [
+                      "plan.reference_bundle"
+                    ],
+                    "resource_kind": "immutable_artifact"
+                  },
+                  "resource_uses": "read upstream inputs; do not mutate the new output",
+                  "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+                },
+                "actual": {
+                  "use": {
+                    "access": "mutate",
+                    "resource_ref": "plan.reference_bundle"
+                  },
+                  "resource_kind": "mutable_workspace",
+                  "declared_output": false,
+                  "workspace_mutations": [
+                    {
+                      "available_after_success": true,
+                      "contract_revision": "wgs-short-read-mapping-effects-v3",
+                      "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                      "establishes_state": "reference_indexes_complete",
+                      "mutation": "prepare_reference",
+                      "requires_available": false,
+                      "workspace_ref": "plan.reference_bundle"
+                    }
+                  ]
+                },
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT"
+              },
+              "validator_id": "compile_plan_resource_bindings",
+              "expected": {
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                "contract_revision": "wgs-short-read-mapping-effects-v3",
+                "output_interfaces": [
+                  {
+                    "artifact_id": "reference_indexes",
+                    "resource_kind": "immutable_artifact"
+                  },
+                  {
+                    "artifact_id": "reference_preparation_evidence",
+                    "resource_kind": "immutable_artifact"
+                  }
+                ],
+                "declaration": {
+                  "outputs": [
+                    "plan.reference_bundle"
+                  ],
+                  "resource_kind": "immutable_artifact"
+                },
+                "resource_uses": "read upstream inputs; do not mutate the new output",
+                "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+              },
+              "actual": {
+                "use": {
+                  "access": "mutate",
+                  "resource_ref": "plan.reference_bundle"
+                },
+                "resource_kind": "mutable_workspace",
+                "declared_output": false,
+                "workspace_mutations": [
+                  {
+                    "available_after_success": true,
+                    "contract_revision": "wgs-short-read-mapping-effects-v3",
+                    "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                    "establishes_state": "reference_indexes_complete",
+                    "mutation": "prepare_reference",
+                    "requires_available": false,
+                    "workspace_ref": "plan.reference_bundle"
+                  }
+                ]
+              },
+              "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+              "owner": "planner",
+              "selected_skill_id": "genomics/wgs-short-read-mapping",
+              "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+              "affected_artifact": {},
+              "affected_output": {},
+              "not_evaluated": [
+                "dependent_step_effect",
+                "dependent_workspace_coverage"
+              ],
+              "contract_revision": "wgs-short-read-mapping-effects-v3"
+            },
+            {
+              "code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "message": "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[2].resource_uses[2]",
+              "repair_target": "$.steps[2].resource_uses[2]",
+              "step_id": "prepare_reference",
+              "resource_ref": "plan.reference_prep_evidence",
+              "affected_step_ids": [
+                "prepare_reference"
+              ],
+              "machine_evidence": {
+                "not_evaluated": [
+                  "dependent_step_effect",
+                  "dependent_workspace_coverage"
+                ],
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "validator_id": "compile_plan_resource_bindings",
+                "expected": {
+                  "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                  "selected_skill_id": "genomics/wgs-short-read-mapping",
+                  "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                  "contract_revision": "wgs-short-read-mapping-effects-v3",
+                  "output_interfaces": [
+                    {
+                      "artifact_id": "reference_indexes",
+                      "resource_kind": "immutable_artifact"
+                    },
+                    {
+                      "artifact_id": "reference_preparation_evidence",
+                      "resource_kind": "immutable_artifact"
+                    }
+                  ],
+                  "declaration": {
+                    "outputs": [
+                      "plan.reference_prep_evidence"
+                    ],
+                    "resource_kind": "immutable_artifact"
+                  },
+                  "resource_uses": "read upstream inputs; do not mutate the new output",
+                  "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+                },
+                "actual": {
+                  "use": {
+                    "access": "mutate",
+                    "resource_ref": "plan.reference_prep_evidence"
+                  },
+                  "resource_kind": "mutable_workspace",
+                  "declared_output": false,
+                  "workspace_mutations": [
+                    {
+                      "available_after_success": true,
+                      "contract_revision": "wgs-short-read-mapping-effects-v3",
+                      "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                      "establishes_state": "reference_prep_evidence_written",
+                      "mutation": "prepare_reference",
+                      "requires_available": false,
+                      "workspace_ref": "plan.reference_prep_evidence"
+                    }
+                  ]
+                },
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT"
+              },
+              "validator_id": "compile_plan_resource_bindings",
+              "expected": {
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                "contract_revision": "wgs-short-read-mapping-effects-v3",
+                "output_interfaces": [
+                  {
+                    "artifact_id": "reference_indexes",
+                    "resource_kind": "immutable_artifact"
+                  },
+                  {
+                    "artifact_id": "reference_preparation_evidence",
+                    "resource_kind": "immutable_artifact"
+                  }
+                ],
+                "declaration": {
+                  "outputs": [
+                    "plan.reference_prep_evidence"
+                  ],
+                  "resource_kind": "immutable_artifact"
+                },
+                "resource_uses": "read upstream inputs; do not mutate the new output",
+                "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+              },
+              "actual": {
+                "use": {
+                  "access": "mutate",
+                  "resource_ref": "plan.reference_prep_evidence"
+                },
+                "resource_kind": "mutable_workspace",
+                "declared_output": false,
+                "workspace_mutations": [
+                  {
+                    "available_after_success": true,
+                    "contract_revision": "wgs-short-read-mapping-effects-v3",
+                    "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                    "establishes_state": "reference_prep_evidence_written",
+                    "mutation": "prepare_reference",
+                    "requires_available": false,
+                    "workspace_ref": "plan.reference_prep_evidence"
+                  }
+                ]
+              },
+              "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+              "owner": "planner",
+              "selected_skill_id": "genomics/wgs-short-read-mapping",
+              "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+              "affected_artifact": {},
+              "affected_output": {},
+              "not_evaluated": [
+                "dependent_step_effect",
+                "dependent_workspace_coverage"
+              ],
+              "contract_revision": "wgs-short-read-mapping-effects-v3"
+            }
+          ],
+          "candidate_source": {
+            "context_ref": "object:sha256:3a49232ff233461409704369593ad450e77f22c2d8f361f3ba98a6ae37bb0866",
+            "raw_candidate_sha256": "45ee7d195500830649b6b72e0b0685f9119284f391c81617d7e3cd55a10178c2",
+            "planning_epoch_id": "planning-epoch-abef0b68-6f98-46ff-a8f3-646291b4a595",
+            "candidate_ordinal": 4
+          },
+          "response_integrity": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "session_1789718925",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-abef0b68-6f98-46ff-a8f3-646291b4a595",
+              "invocation_id": "inv-da8113b8-33dc-4134-b081-4d15dadc792a",
+              "candidate_scope_id": "candidate-scope-62cd589a-4b2a-4404-a605-565f48b757c2"
+            },
+            "claim_id": "planner-call:e01df9e8d3c010517994e9d5b4090b33fee34a8194877806fd995bc3e6bd83c9",
+            "call_id": "",
+            "provider_attempt_id": "",
+            "provider_request_id": "",
+            "raw_digest": "45ee7d195500830649b6b72e0b0685f9119284f391c81617d7e3cd55a10178c2",
+            "raw_ref": "object:sha256:599feba0375fc917870ae9e408826df4a7f20d2fcefa265484b463ba0ac281c5",
+            "finish_reason": "UNKNOWN",
+            "reported_usage": {
+              "status": "UNKNOWN"
+            },
+            "usage_source": "UNKNOWN",
+            "usage_status": "UNKNOWN",
+            "transport_status": "UNKNOWN",
+            "content_status": "UNKNOWN",
+            "parser_diagnostic": {
+              "status": "passed",
+              "source": "live_planner_envelope_parser"
+            },
+            "resolved_output_policy": {
+              "schema_version": 1,
+              "output_policy_source": "unknown_existing_provider_default",
+              "output_policy_version": "planner-output-policy-v2",
+              "provider_capability_source": "UNKNOWN",
+              "provider_capability_version": "UNKNOWN",
+              "provider_capability_evidence_level": "UNKNOWN",
+              "provider_documented_output_ceiling": null,
+              "provider_documented_output_ceiling_label": null,
+              "provider_documented_context_limit": null,
+              "requested_output_limit": null,
+              "wire_output_parameter_key": null,
+              "wire_output_parameter_value": null,
+              "wire_observation_status": "resolved_not_wire_observed",
+              "server_effective_output_limit": null,
+              "application_context_limit": 200000,
+              "input_reserve_used": 50000,
+              "initial_output_token_limit": null,
+              "length_recovery_output_token_limit": null,
+              "max_length_corrective_calls_per_epoch": 1,
+              "can_increase": false,
+              "apply_output_binding": false,
+              "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+              "recovery": false,
+              "legacy_epoch": false,
+              "restrictions": [],
+              "model_parameter_hash_version": "planner-model-parameters-v2",
+              "output_policy_hash": "sha256:5f7835c27a906d49cd58509abc03fb902ce7f0d7f4a60b5a34b207e326edc14d"
+            },
+            "attempted_remediation": {}
+          }
+        },
+        "execution": {
+          "step_id": "",
+          "attempt_id": "",
+          "executed": false,
+          "returncode": null,
+          "deterministic_passed": false,
+          "validation_status": "not_performed",
+          "reviewer_disposition": "not_performed",
+          "committed": false,
+          "step_status": "not_started",
+          "command_body_available": false
+        },
+        "required_output_status": "complete",
+        "scientific_completion": "not_completed",
+        "report_paths": {
+          "stage_status.tsv": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/stage_status.tsv",
+          "reproduce.sh": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/reproduce.sh",
+          "report.md": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/report.md"
+        },
+        "report_receipts": {
+          "stage_status.tsv": {
+            "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/stage_status.tsv",
+            "sha256": "efc784f7dea78a6a2a3f3292300552b2e09a6d42cb414ae09ff03d9e06c10234",
+            "operation_id": "6ad64094d92e9d42228059195be81493e39cdb9c64770e5f74a63e9b5fe1c7ad",
+            "ownership": {
+              "operation_id": "6ad64094d92e9d42228059195be81493e39cdb9c64770e5f74a63e9b5fe1c7ad",
+              "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/stage_status.tsv",
+              "sha256": "efc784f7dea78a6a2a3f3292300552b2e09a6d42cb414ae09ff03d9e06c10234",
+              "proof_name": ".runtime-report-proof-6ad64094d92e9d42228059195be81493e39cdb9c64770e5f74a63e9b5fe1c7ad",
+              "device": 2051,
+              "inode": 8681480
+            },
+            "status": "created",
+            "stop_id": "managed-stop:0095fb69e09bed06bbd9cab0f9e35c2a222e906bbfc77e7c6271dc3dfd11e237",
+            "task_id": "session_1789718925"
+          },
+          "reproduce.sh": {
+            "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/reproduce.sh",
+            "sha256": "85077b2625ae741487c7f1587a67b3613d75c25a3898ff767a87ed0d57b78841",
+            "operation_id": "66f36c621fea68b40ab9924727c98039f46b1dac3625206ce8b4ef6ea23eeaef",
+            "ownership": {
+              "operation_id": "66f36c621fea68b40ab9924727c98039f46b1dac3625206ce8b4ef6ea23eeaef",
+              "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/reproduce.sh",
+              "sha256": "85077b2625ae741487c7f1587a67b3613d75c25a3898ff767a87ed0d57b78841",
+              "proof_name": ".runtime-report-proof-66f36c621fea68b40ab9924727c98039f46b1dac3625206ce8b4ef6ea23eeaef",
+              "device": 2051,
+              "inode": 8681482
+            },
+            "status": "created",
+            "stop_id": "managed-stop:0095fb69e09bed06bbd9cab0f9e35c2a222e906bbfc77e7c6271dc3dfd11e237",
+            "task_id": "session_1789718925"
+          },
+          "report.md": {
+            "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/report.md",
+            "sha256": "ec5ede655fa946c6400b54771fc35a3deb0ffd3b0652eb6c62576c075538239b",
+            "operation_id": "2ec5bae65668b15502655838b61321346445f9c5b9e06bddd117b9665ffce575",
+            "ownership": {
+              "operation_id": "2ec5bae65668b15502655838b61321346445f9c5b9e06bddd117b9665ffce575",
+              "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ0/requested/report.md",
+              "sha256": "ec5ede655fa946c6400b54771fc35a3deb0ffd3b0652eb6c62576c075538239b",
+              "proof_name": ".runtime-report-proof-2ec5bae65668b15502655838b61321346445f9c5b9e06bddd117b9665ffce575",
+              "device": 2051,
+              "inode": 8681485
+            },
+            "status": "created",
+            "stop_id": "managed-stop:0095fb69e09bed06bbd9cab0f9e35c2a222e906bbfc77e7c6271dc3dfd11e237",
+            "task_id": "session_1789718925"
+          }
+        },
+        "internal_diagnostic_delivery": {
+          "status": "not_needed",
+          "paths": {},
+          "receipts": {},
+          "scope": "internal_terminal_trace_only; not fixed-path delivery or scientific completion"
+        },
+        "summary_llm_calls": 0,
+        "persistence_status": "committed"
+      }
+    },
+    {
+      "destination_case": "protected",
+      "terminal_text": "任务已停止 · failed\n已有 0 步正式提交，完成事实保留。\n原始问题：This is not a declared input/workspace role. Output interfaces belong in outputs, not resource_uses.role.（PLAN_RESOURCE_USE_ROLE_INVALID）。\n当前修复障碍：PLAN_RESOURCE_USE_EFFECT_CONFLICT。\n停止触发：Planner 请求额度已耗尽（已用/上限：4/4）；尚未形成可批准计划。最后阻塞：PLAN_RESOURCE_USE_EFFECT_CONFLICT。（PLANNING_EPOCH_EXHAUSTED）。\n文件交付：conflict；目标文件受保护，未覆盖；内部诊断归档=complete\n本次内部诊断 report.md：/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/report.md\n本次内部诊断 stage_status.tsv：/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/stage_status.tsv\n本次内部诊断 reproduce.sh：/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/reproduce.sh\n下一步：查看被拒绝的 Plan 候选、上述资源字段冲突及规划反馈，修正完整计划后重新提交；本轮尚未执行科学步骤。\n系统事实摘要；模型总结未运行。",
+      "planner_calls": 4,
+      "stop": {
+        "status": "failed",
+        "scope": {
+          "task_id": "session_1789718925",
+          "plan_id": "",
+          "plan_version": "",
+          "step_id": "",
+          "attempt_id": "",
+          "task_revision": 1,
+          "planning_epoch_id": "planning-epoch-ba39e51a-360b-48de-bfc2-b6eb2866abdf",
+          "failure_fingerprint": "813e8aee0544242fd71fa4b0facd1f59d1111763bfb90a8d2afbb028cbb24ad6",
+          "candidate_context_ref": "object:sha256:f325c6f9bd94ce2bae708d9287ac337f555d62bc77122acb07ba66b0923e8fa3"
+        },
+        "stop_id": "managed-stop:4c65e295119649c7215c52ef267f7f2c27d3d37bd7791bf142a44cd2d65e86f0",
+        "stop_reason": {
+          "error_code": "PLANNING_EPOCH_EXHAUSTED",
+          "detail": "The last allowed Planner response was rejected. The budget is exhausted; no further request is authorized.",
+          "budget_receipt": {
+            "planner_calls_total": 4,
+            "max_planner_calls_per_epoch": 4,
+            "last_validation_codes": [
+              "PLAN_RESOURCE_USE_EFFECT_CONFLICT"
+            ],
+            "source": "durable_planning_epoch_and_effective_call_limit"
+          },
+          "model_turns": 4,
+          "repeat_count": 0
+        },
+        "origin": {
+          "source_stage": "planner",
+          "source_owner": "planner",
+          "failure_type": "planning_candidate_rejected",
+          "error_code": "PLAN_RESOURCE_USE_ROLE_INVALID",
+          "summary": "This is not a declared input/workspace role. Output interfaces belong in outputs, not resource_uses.role.",
+          "evidence_refs": [
+            "object:sha256:c4778ceb5b40616eee54e10daa4bc8bd18ba7b46dcae4d2212b0c46fbf3431d4"
+          ]
+        },
+        "latest_failure": {
+          "error_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+          "message": "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource.",
+          "validation_issues": [
+            {
+              "code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "message": "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[2].resource_uses[1]",
+              "repair_target": "$.steps[2].resource_uses[1]",
+              "step_id": "prepare_reference",
+              "resource_ref": "plan.reference_bundle",
+              "affected_step_ids": [
+                "prepare_reference"
+              ],
+              "machine_evidence": {
+                "not_evaluated": [
+                  "dependent_step_effect",
+                  "dependent_workspace_coverage"
+                ],
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "validator_id": "compile_plan_resource_bindings",
+                "expected": {
+                  "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                  "selected_skill_id": "genomics/wgs-short-read-mapping",
+                  "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                  "contract_revision": "wgs-short-read-mapping-effects-v3",
+                  "output_interfaces": [
+                    {
+                      "artifact_id": "reference_indexes",
+                      "resource_kind": "immutable_artifact"
+                    },
+                    {
+                      "artifact_id": "reference_preparation_evidence",
+                      "resource_kind": "immutable_artifact"
+                    }
+                  ],
+                  "declaration": {
+                    "outputs": [
+                      "plan.reference_bundle"
+                    ],
+                    "resource_kind": "immutable_artifact"
+                  },
+                  "resource_uses": "read upstream inputs; do not mutate the new output",
+                  "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+                },
+                "actual": {
+                  "use": {
+                    "access": "mutate",
+                    "resource_ref": "plan.reference_bundle"
+                  },
+                  "resource_kind": "mutable_workspace",
+                  "declared_output": false,
+                  "workspace_mutations": [
+                    {
+                      "available_after_success": true,
+                      "contract_revision": "wgs-short-read-mapping-effects-v3",
+                      "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                      "establishes_state": "reference_indexes_complete",
+                      "mutation": "prepare_reference",
+                      "requires_available": false,
+                      "workspace_ref": "plan.reference_bundle"
+                    }
+                  ]
+                },
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT"
+              },
+              "validator_id": "compile_plan_resource_bindings",
+              "expected": {
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                "contract_revision": "wgs-short-read-mapping-effects-v3",
+                "output_interfaces": [
+                  {
+                    "artifact_id": "reference_indexes",
+                    "resource_kind": "immutable_artifact"
+                  },
+                  {
+                    "artifact_id": "reference_preparation_evidence",
+                    "resource_kind": "immutable_artifact"
+                  }
+                ],
+                "declaration": {
+                  "outputs": [
+                    "plan.reference_bundle"
+                  ],
+                  "resource_kind": "immutable_artifact"
+                },
+                "resource_uses": "read upstream inputs; do not mutate the new output",
+                "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+              },
+              "actual": {
+                "use": {
+                  "access": "mutate",
+                  "resource_ref": "plan.reference_bundle"
+                },
+                "resource_kind": "mutable_workspace",
+                "declared_output": false,
+                "workspace_mutations": [
+                  {
+                    "available_after_success": true,
+                    "contract_revision": "wgs-short-read-mapping-effects-v3",
+                    "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                    "establishes_state": "reference_indexes_complete",
+                    "mutation": "prepare_reference",
+                    "requires_available": false,
+                    "workspace_ref": "plan.reference_bundle"
+                  }
+                ]
+              },
+              "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+              "owner": "planner",
+              "selected_skill_id": "genomics/wgs-short-read-mapping",
+              "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+              "affected_artifact": {},
+              "affected_output": {},
+              "not_evaluated": [
+                "dependent_step_effect",
+                "dependent_workspace_coverage"
+              ],
+              "contract_revision": "wgs-short-read-mapping-effects-v3"
+            },
+            {
+              "code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT",
+              "message": "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource.",
+              "severity": "error",
+              "disposition": "PROTOCOL_INVALID",
+              "field_path": "$.steps[2].resource_uses[2]",
+              "repair_target": "$.steps[2].resource_uses[2]",
+              "step_id": "prepare_reference",
+              "resource_ref": "plan.reference_prep_evidence",
+              "affected_step_ids": [
+                "prepare_reference"
+              ],
+              "machine_evidence": {
+                "not_evaluated": [
+                  "dependent_step_effect",
+                  "dependent_workspace_coverage"
+                ],
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "validator_id": "compile_plan_resource_bindings",
+                "expected": {
+                  "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                  "selected_skill_id": "genomics/wgs-short-read-mapping",
+                  "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                  "contract_revision": "wgs-short-read-mapping-effects-v3",
+                  "output_interfaces": [
+                    {
+                      "artifact_id": "reference_indexes",
+                      "resource_kind": "immutable_artifact"
+                    },
+                    {
+                      "artifact_id": "reference_preparation_evidence",
+                      "resource_kind": "immutable_artifact"
+                    }
+                  ],
+                  "declaration": {
+                    "outputs": [
+                      "plan.reference_prep_evidence"
+                    ],
+                    "resource_kind": "immutable_artifact"
+                  },
+                  "resource_uses": "read upstream inputs; do not mutate the new output",
+                  "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+                },
+                "actual": {
+                  "use": {
+                    "access": "mutate",
+                    "resource_ref": "plan.reference_prep_evidence"
+                  },
+                  "resource_kind": "mutable_workspace",
+                  "declared_output": false,
+                  "workspace_mutations": [
+                    {
+                      "available_after_success": true,
+                      "contract_revision": "wgs-short-read-mapping-effects-v3",
+                      "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                      "establishes_state": "reference_prep_evidence_written",
+                      "mutation": "prepare_reference",
+                      "requires_available": false,
+                      "workspace_ref": "plan.reference_prep_evidence"
+                    }
+                  ]
+                },
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "violation_code": "PLAN_RESOURCE_USE_EFFECT_CONFLICT"
+              },
+              "validator_id": "compile_plan_resource_bindings",
+              "expected": {
+                "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+                "selected_skill_id": "genomics/wgs-short-read-mapping",
+                "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                "contract_revision": "wgs-short-read-mapping-effects-v3",
+                "output_interfaces": [
+                  {
+                    "artifact_id": "reference_indexes",
+                    "resource_kind": "immutable_artifact"
+                  },
+                  {
+                    "artifact_id": "reference_preparation_evidence",
+                    "resource_kind": "immutable_artifact"
+                  }
+                ],
+                "declaration": {
+                  "outputs": [
+                    "plan.reference_prep_evidence"
+                  ],
+                  "resource_kind": "immutable_artifact"
+                },
+                "resource_uses": "read upstream inputs; do not mutate the new output",
+                "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"
+              },
+              "actual": {
+                "use": {
+                  "access": "mutate",
+                  "resource_ref": "plan.reference_prep_evidence"
+                },
+                "resource_kind": "mutable_workspace",
+                "declared_output": false,
+                "workspace_mutations": [
+                  {
+                    "available_after_success": true,
+                    "contract_revision": "wgs-short-read-mapping-effects-v3",
+                    "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+                    "establishes_state": "reference_prep_evidence_written",
+                    "mutation": "prepare_reference",
+                    "requires_available": false,
+                    "workspace_ref": "plan.reference_prep_evidence"
+                  }
+                ]
+              },
+              "capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+              "owner": "planner",
+              "selected_skill_id": "genomics/wgs-short-read-mapping",
+              "contract_source": "skills/genomics/wgs-short-read-mapping/SKILL.md#generate.execution_capabilities",
+              "affected_artifact": {},
+              "affected_output": {},
+              "not_evaluated": [
+                "dependent_step_effect",
+                "dependent_workspace_coverage"
+              ],
+              "contract_revision": "wgs-short-read-mapping-effects-v3"
+            }
+          ],
+          "candidate_source": {
+            "context_ref": "object:sha256:f325c6f9bd94ce2bae708d9287ac337f555d62bc77122acb07ba66b0923e8fa3",
+            "raw_candidate_sha256": "45ee7d195500830649b6b72e0b0685f9119284f391c81617d7e3cd55a10178c2",
+            "planning_epoch_id": "planning-epoch-ba39e51a-360b-48de-bfc2-b6eb2866abdf",
+            "candidate_ordinal": 4
+          },
+          "response_integrity": {
+            "schema_version": 1,
+            "scope": {
+              "task_id": "session_1789718925",
+              "task_revision": 1,
+              "planning_epoch_id": "planning-epoch-ba39e51a-360b-48de-bfc2-b6eb2866abdf",
+              "invocation_id": "inv-17319766-09a1-4e5f-94b0-7a10427a64d9",
+              "candidate_scope_id": "candidate-scope-7051fbbc-58e6-4375-a273-05f0838cd67f"
+            },
+            "claim_id": "planner-call:df74c3aebb8329f372e1c2bd55fe9fd089df5121fc5f70485dab5e1f7c07cc28",
+            "call_id": "",
+            "provider_attempt_id": "",
+            "provider_request_id": "",
+            "raw_digest": "45ee7d195500830649b6b72e0b0685f9119284f391c81617d7e3cd55a10178c2",
+            "raw_ref": "object:sha256:34b0de88a44f18d46ca5d1afde079b2c06d7cb5f6677433af1657c8d1cb7eaf4",
+            "finish_reason": "UNKNOWN",
+            "reported_usage": {
+              "status": "UNKNOWN"
+            },
+            "usage_source": "UNKNOWN",
+            "usage_status": "UNKNOWN",
+            "transport_status": "UNKNOWN",
+            "content_status": "UNKNOWN",
+            "parser_diagnostic": {
+              "status": "passed",
+              "source": "live_planner_envelope_parser"
+            },
+            "resolved_output_policy": {
+              "schema_version": 1,
+              "output_policy_source": "unknown_existing_provider_default",
+              "output_policy_version": "planner-output-policy-v2",
+              "provider_capability_source": "UNKNOWN",
+              "provider_capability_version": "UNKNOWN",
+              "provider_capability_evidence_level": "UNKNOWN",
+              "provider_documented_output_ceiling": null,
+              "provider_documented_output_ceiling_label": null,
+              "provider_documented_context_limit": null,
+              "requested_output_limit": null,
+              "wire_output_parameter_key": null,
+              "wire_output_parameter_value": null,
+              "wire_observation_status": "resolved_not_wire_observed",
+              "server_effective_output_limit": null,
+              "application_context_limit": 200000,
+              "input_reserve_used": 50000,
+              "initial_output_token_limit": null,
+              "length_recovery_output_token_limit": null,
+              "max_length_corrective_calls_per_epoch": 1,
+              "can_increase": false,
+              "apply_output_binding": false,
+              "policy_reason": "PROVIDER_CAPABILITY_UNKNOWN",
+              "recovery": false,
+              "legacy_epoch": false,
+              "restrictions": [],
+              "model_parameter_hash_version": "planner-model-parameters-v2",
+              "output_policy_hash": "sha256:5f7835c27a906d49cd58509abc03fb902ce7f0d7f4a60b5a34b207e326edc14d"
+            },
+            "attempted_remediation": {}
+          }
+        },
+        "execution": {
+          "step_id": "",
+          "attempt_id": "",
+          "executed": false,
+          "returncode": null,
+          "deterministic_passed": false,
+          "validation_status": "not_performed",
+          "reviewer_disposition": "not_performed",
+          "committed": false,
+          "step_status": "not_started",
+          "command_body_available": false
+        },
+        "required_output_status": "conflict",
+        "scientific_completion": "not_completed",
+        "report_paths": {},
+        "report_receipts": {
+          "stage_status.tsv": {
+            "status": "failed",
+            "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ1/requested/stage_status.tsv",
+            "task_id": "session_1789718925",
+            "stop_id": "managed-stop:4c65e295119649c7215c52ef267f7f2c27d3d37bd7791bf142a44cd2d65e86f0",
+            "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+          },
+          "reproduce.sh": {
+            "status": "failed",
+            "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ1/requested/reproduce.sh",
+            "task_id": "session_1789718925",
+            "stop_id": "managed-stop:4c65e295119649c7215c52ef267f7f2c27d3d37bd7791bf142a44cd2d65e86f0",
+            "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+          },
+          "report.md": {
+            "status": "failed",
+            "path": "/tmp/pytest-of-liusiqi/pytest-382/test_actual_planning_stop_publ1/requested/report.md",
+            "task_id": "session_1789718925",
+            "stop_id": "managed-stop:4c65e295119649c7215c52ef267f7f2c27d3d37bd7791bf142a44cd2d65e86f0",
+            "reason": "RUNTIME_REPORT_EXISTING_FILE_PROTECTED"
+          }
+        },
+        "internal_diagnostic_delivery": {
+          "status": "complete",
+          "paths": {
+            "report.md": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/report.md",
+            "stage_status.tsv": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/stage_status.tsv",
+            "reproduce.sh": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/reproduce.sh"
+          },
+          "receipts": {
+            "report.md": {
+              "path": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/report.md",
+              "sha256": "6867fd02136f45218b74df406606c5a7024f4ad125cf1d2b52c644cd3605cbc3",
+              "operation_id": "094be8b8c80bfbe485b7d2e6af10b41bb2570afc8a4eca52b33e6d14b980c8fa",
+              "ownership": {
+                "operation_id": "094be8b8c80bfbe485b7d2e6af10b41bb2570afc8a4eca52b33e6d14b980c8fa",
+                "path": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/report.md",
+                "sha256": "6867fd02136f45218b74df406606c5a7024f4ad125cf1d2b52c644cd3605cbc3",
+                "proof_name": ".runtime-report-proof-094be8b8c80bfbe485b7d2e6af10b41bb2570afc8a4eca52b33e6d14b980c8fa",
+                "device": 2051,
+                "inode": 8681715
+              },
+              "status": "created"
+            },
+            "stage_status.tsv": {
+              "path": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/stage_status.tsv",
+              "sha256": "efc784f7dea78a6a2a3f3292300552b2e09a6d42cb414ae09ff03d9e06c10234",
+              "operation_id": "ddf555183475dfcfb6c6f3ec1e2b9a5a2c5877fe6dd1e459b97f9cf09b4b88be",
+              "ownership": {
+                "operation_id": "ddf555183475dfcfb6c6f3ec1e2b9a5a2c5877fe6dd1e459b97f9cf09b4b88be",
+                "path": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/stage_status.tsv",
+                "sha256": "efc784f7dea78a6a2a3f3292300552b2e09a6d42cb414ae09ff03d9e06c10234",
+                "proof_name": ".runtime-report-proof-ddf555183475dfcfb6c6f3ec1e2b9a5a2c5877fe6dd1e459b97f9cf09b4b88be",
+                "device": 2051,
+                "inode": 8681719
+              },
+              "status": "created"
+            },
+            "reproduce.sh": {
+              "path": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/reproduce.sh",
+              "sha256": "4fff50ba6c7994f050574facffd09036c89e8104da8b82b732639ae12a5b62ec",
+              "operation_id": "1f11ee6814e2145876690ce130fa699f8509187b24972d6af77004d0073c7643",
+              "ownership": {
+                "operation_id": "1f11ee6814e2145876690ce130fa699f8509187b24972d6af77004d0073c7643",
+                "path": "/tmp/biomind-v21-graph-n9y530jj/task_outputs/session_1789718925/state_contract/terminal_diagnostics/6d4622e171d81264ad7ef502b231870552ae974792fdbfb746416641df4e7e47/reproduce.sh",
+                "sha256": "4fff50ba6c7994f050574facffd09036c89e8104da8b82b732639ae12a5b62ec",
+                "proof_name": ".runtime-report-proof-1f11ee6814e2145876690ce130fa699f8509187b24972d6af77004d0073c7643",
+                "device": 2051,
+                "inode": 8681726
+              },
+              "status": "created"
+            }
+          },
+          "scope": "internal_terminal_trace_only; not fixed-path delivery or scientific completion"
+        },
+        "summary_llm_calls": 0,
+        "persistence_status": "committed"
+      }
+    }
+  ]
+}

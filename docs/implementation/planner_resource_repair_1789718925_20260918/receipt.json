@@ -1,0 +1,90 @@
+{
+  "baseline_head": "29c7b3ace09dcf6c62c647c6bcbb89273479265d",
+  "branch": "refactor/consultant-controller-authority",
+  "baseline_status_counts": {
+    "modified": 68,
+    "deleted": 36,
+    "untracked_entries": 96
+  },
+  "initial_index_empty": true,
+  "commits": [
+    {
+      "hash": "7f11f3ce756ff9d6bfd8d717a12dd25340806687",
+      "subject": "fix(planner): batch resource conflicts and reuse output bindings",
+      "files": [
+        "agent_core/plan_bindings.py",
+        "agent_core/plan_contract.py",
+        "bio_agents.py",
+        "prompts/manager.py",
+        "tests/test_planner_wgs_resource_repair.py"
+      ]
+    },
+    {
+      "hash": "14a9e08ce7853e4807235cec478732c40c60e032",
+      "subject": "fix(planner): report real budget usage and protect stop delivery",
+      "files": [
+        "agent_core/cli_lifecycle.py",
+        "agent_core/planner_recovery.py",
+        "agent_core/workflow/inspection_stop.py",
+        "agent_core/workflow/managed_stop.py"
+      ]
+    }
+  ],
+  "preserved_prior_working_tree_deltas": {
+    "agent_core/plan_bindings.py": true,
+    "bio_agents.py": true,
+    "prompts/manager.py": true,
+    "agent_core/planner_recovery.py": true,
+    "agent_core/cli_lifecycle.py": true,
+    "agent_core/workflow/inspection_stop.py": true,
+    "agent_core/workflow/managed_stop.py": true
+  },
+  "remaining_current_task_overlap": {
+    "file": "agent_core/plan_contract.py",
+    "reason": "Batching integrates with pre-existing uncommitted identity/action diagnostics. The five-line resource_bindings_out API change was isolated in git; the dependent diagnostic integration remains in the working tree.",
+    "patch": "overlapping_plan_contract.patch",
+    "base": "baseline working tree with isolated API change, not plain git HEAD"
+  },
+  "validation_scope": "current workspace including pre-existing changes; not a clean-HEAD or fresh-checkout test",
+  "tests": [
+    {
+      "suite": "core",
+      "junit_suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "168",
+          "time": "68.019",
+          "timestamp": "2026-09-18T16:56:53.050077+08:00",
+          "hostname": "ln02"
+        }
+      ]
+    },
+    {
+      "suite": "common",
+      "junit_suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "19",
+          "time": "39.493",
+          "timestamp": "2026-09-18T16:56:53.050239+08:00",
+          "hostname": "ln02"
+        }
+      ]
+    }
+  ],
+  "related_tests_passed": 181,
+  "subtests_passed": 6,
+  "known_baseline_test_deselected": 1,
+  "new_tests_passed": 11,
+  "additional_legacy_baseline_failures": 18,
+  "live_model_api_calls": 0,
+  "scientific_commands_executed": 0,
+  "original_session_resumed": false,
+  "pushed": false
+}

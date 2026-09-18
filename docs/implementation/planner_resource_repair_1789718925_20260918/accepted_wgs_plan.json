@@ -1,0 +1,2201 @@
+{
+  "candidate": {
+    "public_message": "已按校验反馈修正：mapping 步骤中作为产物的 BAM/索引/指标文件改为不可变产物（immutable_artifact），不再以 mutate 使用；参考索引包与证据目录保持可变工作区并保留其状态转移。",
+    "outcome_type": "SUBMIT_PLAN_FOR_REVIEW",
+    "proposed_artifacts": [
+      {
+        "local_ref": "plan.reference_bundle",
+        "semantic_view": {
+          "role": "reference_indexes",
+          "format": "directory",
+          "description": "由 genome.fasta 生成的完整 BWA/samtools/Picard 参考索引包（reference.fa 及 .fai/.amb/.ann/.bwt/.pac/.sa 与 reference.dict），源参考文件保持不可变"
+        },
+        "artifact_contract": {
+          "object_kind": "directory",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "01.ref/reference_bundle",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.reference_prep_evidence",
+        "semantic_view": {
+          "role": "reference_preparation_evidence",
+          "format": "directory",
+          "description": "prepare_reference 的工程日志/证据目录，非第二份科学产物"
+        },
+        "artifact_contract": {
+          "object_kind": "directory",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "01.ref/prep_evidence",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s1_sorted_markdup_bam",
+        "semantic_view": {
+          "role": "sorted_markdup_bam",
+          "format": "bam",
+          "description": "S1 经 BWA-MEM 比对、坐标排序并标记重复后的 BAM"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "02.mapping/S1.sorted.markdup.bam",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s1_bam_index",
+        "semantic_view": {
+          "role": "bam_index",
+          "format": "bai",
+          "description": "S1 去重排序 BAM 的坐标索引"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "02.mapping/S1.sorted.markdup.bam.bai",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s1_duplicate_metrics",
+        "semantic_view": {
+          "role": "duplicate_metrics",
+          "format": "txt",
+          "description": "S1 Picard MarkDuplicates 重复率指标"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "02.mapping/S1.markdup.metrics.txt",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s2_sorted_markdup_bam",
+        "semantic_view": {
+          "role": "sorted_markdup_bam",
+          "format": "bam",
+          "description": "S2 经 BWA-MEM 比对、坐标排序并标记重复后的 BAM"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "02.mapping/S2.sorted.markdup.bam",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s2_bam_index",
+        "semantic_view": {
+          "role": "bam_index",
+          "format": "bai",
+          "description": "S2 去重排序 BAM 的坐标索引"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "02.mapping/S2.sorted.markdup.bam.bai",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s2_duplicate_metrics",
+        "semantic_view": {
+          "role": "duplicate_metrics",
+          "format": "txt",
+          "description": "S2 Picard MarkDuplicates 重复率指标"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "02.mapping/S2.markdup.metrics.txt",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s1_raw_variants",
+        "semantic_view": {
+          "role": "raw_variants_vcf",
+          "format": "gvcf.gz",
+          "description": "Per-sample GATK gVCF intermediate before joint genotyping"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "03.variant_calling/S1.raw.vcf.gz",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-3d4ecba6758734811868"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s2_raw_variants",
+        "semantic_view": {
+          "role": "raw_variants_vcf",
+          "format": "gvcf.gz",
+          "description": "Per-sample GATK gVCF intermediate before joint genotyping"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "03.variant_calling/S2.raw.vcf.gz",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-3d4ecba6758734811868"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s1_flagstat",
+        "semantic_view": {
+          "role": "flagstat",
+          "format": "txt",
+          "description": "S1 去重排序 BAM 的 samtools flagstat 统计"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "05.summary/S1.flagstat.txt",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.s2_flagstat",
+        "semantic_view": {
+          "role": "flagstat",
+          "format": "txt",
+          "description": "S2 去重排序 BAM 的 samtools flagstat 统计"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "managed_exact",
+          "path": "05.summary/S2.flagstat.txt",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-45620bcd6b06d304d8a6"
+          ]
+        }
+      },
+      {
+        "local_ref": "plan.joint_raw_vcf",
+        "semantic_view": {
+          "role": "joint_raw_vcf",
+          "format": "vcf.gz",
+          "description": "Joint GATK genotype VCF"
+        },
+        "artifact_contract": {
+          "object_kind": "file",
+          "lifecycle": "plan_local",
+          "materialization_policy_id": "managed_intermediate_v1",
+          "required": true,
+          "path_policy": "model_selectable",
+          "source_refs": [
+            "skill-snapshot:skill-snapshot-3d4ecba6758734811868"
+          ]
+        }
+      }
+    ],
+    "steps": [
+      {
+        "step_id": "inspect_inputs",
+        "title": "只读检查 S1/S2 双端 FASTQ 与 genome.fasta 的存在性、格式与配对关系",
+        "action": "execute",
+        "purpose": "validation",
+        "tool": "python",
+        "execution_capability_id": "genomics.wgs.short.read.mapping.inspect",
+        "operation": "inspect",
+        "resource_uses": [
+          {
+            "resource_ref": "input.reference_fasta",
+            "access": "read"
+          },
+          {
+            "resource_ref": "input.paired_fastq.5098db34c069bcbe",
+            "access": "read"
+          },
+          {
+            "resource_ref": "input.paired_fastq.1be29ca24b12a6b9",
+            "access": "read"
+          },
+          {
+            "resource_ref": "input.paired_fastq.fc7a073f66b2681a",
+            "access": "read"
+          },
+          {
+            "resource_ref": "input.paired_fastq.522b093ee24e479c",
+            "access": "read"
+          }
+        ],
+        "outputs": [],
+        "produces_observations": [
+          {
+            "observation_id": "validation_observation",
+            "value_type": "object",
+            "evidence_contract": {
+              "required_fields": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "dependencies": [],
+        "skill_ids": [
+          "genomics/wgs-short-read-mapping"
+        ],
+        "success_criteria": [
+          "使用注册的 inspect_wgs_inputs.py 组合（显式 --fastq/--reference，BIOMIND_PREFLIGHT_EVIDENCE_DIR）对 5 个声明输入做有界只读检查，输出单个 validation_observation",
+          "如实报告每个输入的存在性、可读性、格式与 S1/S2 R1/R2 配对一致性；文件缺失或不可读时给出 adverse value，不得声称已验证成功",
+          "检查范围仅为前缀/头部与有限记录，不构成全文件校验；不读取或复用 Part1 旧 zip/genomeDB 产物"
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "check_output_dir_conflicts",
+        "title": "检查固定输出目录内是否已存在同名结果文件（只读，不覆盖）",
+        "action": "execute",
+        "purpose": "validation",
+        "tool": "python",
+        "execution_capability_id": "framework.generic.execute",
+        "operation": "execute",
+        "resource_uses": [],
+        "outputs": [],
+        "produces_observations": [
+          {
+            "observation_id": "output_dir_conflict_observation",
+            "value_type": "object",
+            "evidence_contract": {
+              "required_fields": [
+                "value"
+              ]
+            }
+          }
+        ],
+        "dependencies": [],
+        "skill_ids": [],
+        "success_criteria": [
+          "Inspect the declared output directory location/parent for writability and filename collisions without consuming future result contents.",
+          "Preserve existing files; on a collision ask the user before any affected write. No scientific output is asserted to exist."
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "prepare_reference",
+        "title": "用 genome.fasta 构建完整 BWA/samtools/Picard 参考索引包",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+        "resource_uses": [
+          {
+            "resource_ref": "input.reference_fasta",
+            "access": "read"
+          }
+        ],
+        "outputs": [
+          "plan.reference_bundle",
+          "plan.reference_prep_evidence"
+        ],
+        "dependencies": [
+          "inspect_inputs",
+          "check_output_dir_conflicts"
+        ],
+        "skill_ids": [
+          "genomics/wgs-short-read-mapping"
+        ],
+        "success_criteria": [
+          "使用注册的 scripts/prepare_reference.py 直接 argv 助手，传入精确的源/输出路径、资源引用与绑定的 bwa/samtools/picard/java 路径；--work-dir 指向 plan.reference_prep_evidence 并作为 --evidence-artifact-ref",
+          "产出完整索引包：reference.fa（与输入字节一致的副本）、.fai、.amb/.ann/.bwt/.pac/.sa 与 reference.dict；源参考文件不被修改",
+          "reference_bundle_valid.value 必须为 true 且通过确定性解析器校验；若索引未产出，仅发布 create_reference_indexes 且 index_artifacts=[]、status=blocked，不创建空包"
+        ],
+        "risk_level": "medium"
+      },
+      {
+        "step_id": "confirm_read_groups",
+        "title": "Confirm read groups before mapping",
+        "action": "ask_user",
+        "purpose": "user_input",
+        "tool": "human",
+        "resource_uses": [],
+        "outputs": [],
+        "dependencies": [
+          "inspect_inputs"
+        ],
+        "skill_ids": [],
+        "success_criteria": [
+          "Ask for sample identity, platform, library and platform unit/read-group values from official metadata or the user.",
+          "Do not infer PL/LB/PU from S1/S2 filenames. Mapping must wait; no unresolved placeholder is an executable value."
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "map_s1",
+        "title": "S1 双端 FASTQ 经 BWA-MEM 比对、坐标排序并标记重复",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+        "operation": "produce_files",
+        "resource_uses": [
+          {
+            "resource_ref": "input.paired_fastq.5098db34c069bcbe",
+            "access": "read"
+          },
+          {
+            "resource_ref": "input.paired_fastq.1be29ca24b12a6b9",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.reference_bundle",
+            "access": "read"
+          }
+        ],
+        "outputs": [
+          "plan.s1_sorted_markdup_bam",
+          "plan.s1_bam_index",
+          "plan.s1_duplicate_metrics"
+        ],
+        "dependencies": [
+          "prepare_reference",
+          "confirm_read_groups"
+        ],
+        "skill_ids": [
+          "genomics/wgs-short-read-mapping"
+        ],
+        "success_criteria": [
+          "Use BWA-MEM, coordinate sorting and duplicate marking; use only read-group values confirmed by confirm_read_groups. Missing selected-stage tools means stage_blocked.",
+          "产出坐标排序、标记重复的 BAM 及其 .bai 索引与 MarkDuplicates 指标文件；保留重复标记（mark and keep duplicates）供下游 calling",
+          "使用精确绑定的可执行路径；Picard 的 JAVA_HOME 设为 JAVA_BIN 上两级目录，不依赖环境变量；不修改参考与 FASTQ"
+        ],
+        "risk_level": "medium"
+      },
+      {
+        "step_id": "map_s2",
+        "title": "S2 双端 FASTQ 经 BWA-MEM 比对、坐标排序并标记重复",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+        "operation": "produce_files",
+        "resource_uses": [
+          {
+            "resource_ref": "input.paired_fastq.fc7a073f66b2681a",
+            "access": "read"
+          },
+          {
+            "resource_ref": "input.paired_fastq.522b093ee24e479c",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.reference_bundle",
+            "access": "read"
+          }
+        ],
+        "outputs": [
+          "plan.s2_sorted_markdup_bam",
+          "plan.s2_bam_index",
+          "plan.s2_duplicate_metrics"
+        ],
+        "dependencies": [
+          "prepare_reference",
+          "confirm_read_groups"
+        ],
+        "skill_ids": [
+          "genomics/wgs-short-read-mapping"
+        ],
+        "success_criteria": [
+          "Use BWA-MEM, coordinate sorting and duplicate marking; use only read-group values confirmed by confirm_read_groups. Missing selected-stage tools means stage_blocked.",
+          "产出坐标排序、标记重复的 BAM 及其 .bai 索引与 MarkDuplicates 指标文件；保留重复标记供下游 calling",
+          "使用精确绑定的可执行路径；Picard 的 JAVA_HOME 设为 JAVA_BIN 上两级目录；不修改参考与 FASTQ"
+        ],
+        "risk_level": "medium"
+      },
+      {
+        "step_id": "confirm_ploidy",
+        "title": "向用户确认样本倍性（PLOIDY），calling 与过滤必须等待该答案",
+        "action": "ask_user",
+        "purpose": "user_input",
+        "tool": "human",
+        "resource_uses": [],
+        "outputs": [],
+        "dependencies": [
+          "map_s1",
+          "map_s2"
+        ],
+        "skill_ids": [],
+        "success_criteria": [
+          "询问 S1/S2 样本的倍性（例如二倍体/单倍体/多倍体），说明该值将决定 GATK HaplotypeCaller 的 --sample-ploidy 与基因型/过滤假设",
+          "不得从文件名、物种标签或 Plan 批准推断二倍体；未获确认前不得执行 calling 与过滤步骤",
+          "依赖此步骤的 calling/过滤步骤必须等待用户明确回答后才可执行"
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "call_variants",
+        "title": "GATK per-sample HaplotypeCaller gVCFs then joint GenotypeGVCFs",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "operation": "produce_files",
+        "resource_uses": [
+          {
+            "resource_ref": "plan.reference_bundle",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.s1_sorted_markdup_bam",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.s1_bam_index",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.s2_sorted_markdup_bam",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.s2_bam_index",
+            "access": "read"
+          }
+        ],
+        "outputs": [
+          "plan.s1_raw_variants",
+          "plan.s2_raw_variants",
+          "plan.joint_raw_vcf"
+        ],
+        "dependencies": [
+          "confirm_ploidy"
+        ],
+        "skill_ids": [
+          "genomics/wgs-gatk-snp-indel"
+        ],
+        "success_criteria": [
+          "Select the GATK workflow: HaplotypeCaller per sample in gVCF mode, then combine and joint genotype with GenotypeGVCFs. No alternative bcftools calling chain.",
+          "Use only confirmed sample ploidy. Wait for confirm_ploidy; no default diploidy and no unresolved executable argument.",
+          "Record missing GATK or its selected-stage dependencies as stage_blocked with affected downstream stages. A tool used only by the unselected caller cannot block mapping."
+        ],
+        "risk_level": "high"
+      },
+      {
+        "step_id": "confirm_filters",
+        "title": "Confirm filtering assumptions and thresholds",
+        "action": "ask_user",
+        "purpose": "user_input",
+        "tool": "human",
+        "resource_uses": [],
+        "outputs": [],
+        "dependencies": [
+          "call_variants"
+        ],
+        "skill_ids": [],
+        "success_criteria": [
+          "Ask the user to confirm scientifically applicable SNP/InDel filtering criteria and thresholds after reviewing available official evidence.",
+          "No QUAL/DP/QD/FS/MQ constants have been authorized yet; filtering waits for an explicit decision."
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "filter_variants",
+        "title": "按显式声明的阈值过滤并拆分 SNP/InDel",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "bash",
+        "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+        "operation": "produce_files",
+        "resource_uses": [
+          {
+            "resource_ref": "plan.joint_raw_vcf",
+            "access": "read"
+          }
+        ],
+        "outputs": [
+          "output.filtered_vcf"
+        ],
+        "dependencies": [
+          "call_variants",
+          "confirm_filters"
+        ],
+        "skill_ids": [
+          "genomics/wgs-gatk-snp-indel"
+        ],
+        "success_criteria": [
+          "Use the selected GATK filtering workflow with explicitly confirmed SNP/InDel criteria; publish the filtered joint VCF with sample genotypes retained.",
+          "Record exact filters, tool roles and provenance. Block this stage if upstream calling or the decision is missing; never fabricate VCF."
+        ],
+        "risk_level": "medium"
+      },
+      {
+        "step_id": "summarize_variants",
+        "title": "统计过滤后 SNP/InDel 数量并生成 variant_stats",
+        "action": "execute",
+        "purpose": "validation",
+        "tool": "bash",
+        "execution_capability_id": "framework.generic.execute",
+        "operation": "execute",
+        "resource_uses": [
+          {
+            "resource_ref": "output.filtered_vcf",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.s1_sorted_markdup_bam",
+            "access": "read"
+          },
+          {
+            "resource_ref": "plan.s2_sorted_markdup_bam",
+            "access": "read"
+          }
+        ],
+        "outputs": [
+          "output.variant_stats",
+          "plan.s1_flagstat",
+          "plan.s2_flagstat"
+        ],
+        "dependencies": [
+          "filter_variants"
+        ],
+        "skill_ids": [
+          "genomics/reseq-variant-workflow"
+        ],
+        "success_criteria": [
+          "Use bcftools only for auxiliary VCF statistics and samtools flagstat for mapping metrics; record this division of work with GATK as the sole caller.",
+          "variant_stats 写入固定输出目录，内容与过滤后 VCF 实际记录一致；零记录结果与未执行/损坏结果必须区分说明",
+          "若上游 blocked，则记录 stage_blocked 与缺失依赖，不伪造统计数字"
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "write_stage_status",
+        "title": "生成 stage_status.tsv 记录各阶段执行/blocked 状态",
+        "action": "execute",
+        "purpose": "validation",
+        "tool": "python",
+        "execution_capability_id": "framework.generic.execute",
+        "operation": "execute",
+        "resource_uses": [],
+        "outputs": [
+          "output.stage_status"
+        ],
+        "dependencies": [
+          "summarize_variants"
+        ],
+        "skill_ids": [],
+        "success_criteria": [
+          "按 stage 记录 input_check / ref_prep / mapping / calling / filter / summary / report 的状态（completed 或 blocked）",
+          "对 blocked 阶段写明确切缺失命令/依赖与受影响范围；不得把未执行或未验证的工作标记为 completed",
+          "stage_status.tsv 写入固定输出目录"
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "write_report",
+        "title": "生成 report.md，说明 skill/流程选择理由与各阶段结果",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "python",
+        "execution_capability_id": "framework.generic.execute",
+        "operation": "execute",
+        "resource_uses": [],
+        "outputs": [
+          "output.report"
+        ],
+        "dependencies": [
+          "write_stage_status"
+        ],
+        "skill_ids": [
+          "genomics/reseq-variant-workflow"
+        ],
+        "success_criteria": [
+          "Explain mapping Skill selection and the GATK gVCF/joint-calling route; identify bcftools as auxiliary statistics only.",
+          "汇总输入检查观察、参考索引、mapping 指标、calling/过滤阈值与统计结果；对 blocked 阶段写明原因与确切缺失依赖",
+          "不得伪造 VCF 或统计结果；report.md 写入固定输出目录"
+        ],
+        "risk_level": "low"
+      },
+      {
+        "step_id": "write_reproduce_script",
+        "title": "生成 reproduce.sh 复现脚本",
+        "action": "execute",
+        "purpose": "analysis",
+        "tool": "python",
+        "execution_capability_id": "framework.generic.execute",
+        "operation": "execute",
+        "resource_uses": [],
+        "outputs": [
+          "output.reproduce_script"
+        ],
+        "dependencies": [
+          "write_report"
+        ],
+        "skill_ids": [],
+        "success_criteria": [
+          "reproduce.sh 记录实际使用的命令、参数（含 read group、倍性、过滤阈值）与输入/输出路径，可重跑已执行阶段",
+          "脚本不得包含覆盖已有文件的危险操作；reproduce.sh 写入固定输出目录"
+        ],
+        "risk_level": "low"
+      }
+    ],
+    "validation_checklist": [
+      {
+        "check_id": "no_old_part1_reuse",
+        "description": "计划不读取或复用 Part1 旧 zip/genomeDB 产物，仅使用用户声明的 5 个正式输入"
+      },
+      {
+        "check_id": "mapping_before_calling",
+        "description": "calling 步骤依赖 mapping 产物（去重排序 BAM），不存在从 FASTQ 直接 call variants 的路径"
+      },
+      {
+        "check_id": "single_calling_method",
+        "description": "calling 阶段只选择 GATK 或 bcftools 之一，禁止并行运行或混用，选择依据写入 report.md"
+      },
+      {
+        "check_id": "ploidy_user_confirmed",
+        "description": "ask_user 步骤在 calling/过滤之前，倍性未确认前不执行 HaplotypeCaller；不得默认二倍体或从文件名推断"
+      },
+      {
+        "check_id": "explicit_thresholds_and_rg",
+        "description": "过滤阈值与 read group 在步骤中显式声明并说明来源，不使用静默默认值"
+      },
+      {
+        "check_id": "sample_table_declared",
+        "description": "样本表显式声明为 S1/S2 与各自 fq1/fq2，不推断其他样本属性"
+      },
+      {
+        "check_id": "output_dir_no_overwrite",
+        "description": "生成前只读检查固定输出目录同名冲突，发现冲突保留旧文件并请求用户决定，不覆盖"
+      },
+      {
+        "check_id": "inputs_unverified",
+        "description": "输入仅为用户声明，输入检查步骤保留未验证状态说明，不声称已验证成功"
+      },
+      {
+        "check_id": "blocked_not_faked",
+        "description": "依赖缺失时按 stage 记录 blocked 与确切缺失命令，继续可执行步骤，不伪造 VCF"
+      },
+      {
+        "check_id": "required_deliverables",
+        "description": "report.md、reproduce.sh、stage_status.tsv、过滤后 VCF 与 variant_stats 均保留为交付物"
+      }
+    ],
+    "metadata": {
+      "schema_version": 2,
+      "planner_contract": "structured_plan_v2",
+      "resource_contract_version": 3,
+      "result_contract_version": 1
+    },
+    "task_output_materializations": [
+      {
+        "output_ref": "output.filtered_vcf",
+        "path": "filtered.vcf.gz",
+        "description": "过滤后 SNP/InDel VCF 的最终交付文件名，位于用户固定的输出目录内"
+      },
+      {
+        "output_ref": "output.variant_stats",
+        "path": "variant_stats.txt",
+        "description": "过滤后变异统计文件名，位于用户固定的输出目录内"
+      },
+      {
+        "output_ref": "output.report",
+        "path": "report.md",
+        "description": "流程与结果说明报告文件名，位于用户固定的输出目录内"
+      },
+      {
+        "output_ref": "output.reproduce_script",
+        "path": "reproduce.sh",
+        "description": "复现脚本文件名，位于用户固定的输出目录内"
+      },
+      {
+        "output_ref": "output.stage_status",
+        "path": "stage_status.tsv",
+        "description": "阶段状态表文件名，位于用户固定的输出目录内"
+      }
+    ]
+  },
+  "approval": {
+    "approval_id": "approval-803ab5f6aa78288e8bdf328c",
+    "approval_record_ref": "object:sha256:263b44128ef9fa715cc0e972f43ccead6096b3d08fb3741b09c8f75d31635404",
+    "plan_snapshot_ref": "object:sha256:50558c019a67edd47fe297ed2c0f2fc0939d6c3f5a5611e1e5774292155b942e",
+    "status": "pending"
+  },
+  "compiled_steps": [
+    {
+      "action": "execute",
+      "dependencies": [],
+      "execution_capability_id": "genomics.wgs.short.read.mapping.inspect",
+      "operation": "inspect",
+      "outputs": [],
+      "produces_observations": [
+        {
+          "identity": "validation_observation",
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          },
+          "value_type": "object"
+        }
+      ],
+      "purpose": "validation",
+      "resource_uses": [
+        {
+          "access": "read",
+          "resource_ref": "artifact-a9a97d180ef458548099"
+        },
+        {
+          "access": "read",
+          "resource_ref": "artifact-f45ed785f84d81e9cfab"
+        },
+        {
+          "access": "read",
+          "resource_ref": "artifact-2faee33f0d19e7f0dab4"
+        },
+        {
+          "access": "read",
+          "resource_ref": "artifact-431c5cce92b5b261677e"
+        },
+        {
+          "access": "read",
+          "resource_ref": "artifact-97f64b37bb55399a6d4e"
+        }
+      ],
+      "risk_level": "low",
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "step_id": "inspect_inputs",
+      "success_criteria": [
+        "使用注册的 inspect_wgs_inputs.py 组合（显式 --fastq/--reference，BIOMIND_PREFLIGHT_EVIDENCE_DIR）对 5 个声明输入做有界只读检查，输出单个 validation_observation",
+        "如实报告每个输入的存在性、可读性、格式与 S1/S2 R1/R2 配对一致性；文件缺失或不可读时给出 adverse value，不得声称已验证成功",
+        "检查范围仅为前缀/头部与有限记录，不构成全文件校验；不读取或复用 Part1 旧 zip/genomeDB 产物"
+      ],
+      "title": "只读检查 S1/S2 双端 FASTQ 与 genome.fasta 的存在性、格式与配对关系",
+      "tool": "python",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:2ef6ff55971c588d117a7b4e6953db2ae8f27769b1b1241f7c2f667f41747ff7",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [
+        "artifact-a9a97d180ef458548099",
+        "artifact-f45ed785f84d81e9cfab",
+        "artifact-2faee33f0d19e7f0dab4",
+        "artifact-431c5cce92b5b261677e",
+        "artifact-97f64b37bb55399a6d4e"
+      ],
+      "produces_bindings": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "dependency_sources": {},
+      "status": "pending",
+      "artifacts": [],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [
+        "artifact-a9a97d180ef458548099",
+        "artifact-f45ed785f84d81e9cfab",
+        "artifact-2faee33f0d19e7f0dab4",
+        "artifact-431c5cce92b5b261677e",
+        "artifact-97f64b37bb55399a6d4e"
+      ],
+      "output_contracts": [],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [
+          {
+            "identity": "validation_observation",
+            "evidence_contract": {
+              "required_fields": [
+                "value"
+              ]
+            },
+            "value_type": "object"
+          }
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "execute",
+      "dependencies": [],
+      "execution_capability_id": "framework.generic.execute",
+      "operation": "execute",
+      "outputs": [],
+      "produces_observations": [
+        {
+          "identity": "output_dir_conflict_observation",
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          },
+          "value_type": "object"
+        }
+      ],
+      "purpose": "validation",
+      "resource_uses": [],
+      "risk_level": "low",
+      "skill_ids": [],
+      "step_id": "check_output_dir_conflicts",
+      "success_criteria": [
+        "Inspect the declared output directory location/parent for writability and filename collisions without consuming future result contents.",
+        "Preserve existing files; on a collision ask the user before any affected write. No scientific output is asserted to exist."
+      ],
+      "title": "检查固定输出目录内是否已存在同名结果文件（只读，不覆盖）",
+      "tool": "python",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [],
+      "produces_bindings": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "dependency_sources": {},
+      "status": "pending",
+      "artifacts": [],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [],
+      "output_contracts": [],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [
+          {
+            "identity": "output_dir_conflict_observation",
+            "evidence_contract": {
+              "required_fields": [
+                "value"
+              ]
+            },
+            "value_type": "object"
+          }
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "inspect_inputs",
+        "check_output_dir_conflicts"
+      ],
+      "execution_capability_id": "genomics.wgs.short.read.mapping.prepare_reference",
+      "outputs": [
+        "plan-artifact-e39730f78afd36409b28792c",
+        "plan-artifact-2e0b9ad0ef36d1331dcfc28c"
+      ],
+      "purpose": "analysis",
+      "resource_uses": [
+        {
+          "access": "read",
+          "resource_ref": "artifact-a9a97d180ef458548099"
+        }
+      ],
+      "risk_level": "medium",
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "step_id": "prepare_reference",
+      "success_criteria": [
+        "使用注册的 scripts/prepare_reference.py 直接 argv 助手，传入精确的源/输出路径、资源引用与绑定的 bwa/samtools/picard/java 路径；--work-dir 指向 plan.reference_prep_evidence 并作为 --evidence-artifact-ref",
+        "产出完整索引包：reference.fa（与输入字节一致的副本）、.fai、.amb/.ann/.bwt/.pac/.sa 与 reference.dict；源参考文件不被修改",
+        "reference_bundle_valid.value 必须为 true 且通过确定性解析器校验；若索引未产出，仅发布 create_reference_indexes 且 index_artifacts=[]、status=blocked，不创建空包"
+      ],
+      "title": "用 genome.fasta 构建完整 BWA/samtools/Picard 参考索引包",
+      "tool": "bash",
+      "skills_declared": true,
+      "operation": "prepare_reference",
+      "capability_contract_hash": "sha256:ef4e542e139bed13fc099b803791f71a230eff33595efa13f9bbebb69b1c3b8c",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [
+        "artifact-a9a97d180ef458548099"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [
+        {
+          "identity": "reference_bundle_valid",
+          "evidence_contract": {
+            "required_fields": [
+              "value"
+            ]
+          },
+          "predicate": {
+            "expected": true,
+            "failure_disposition": "correction_required",
+            "missing_disposition": "inspection_required",
+            "operator": "boolean_equals",
+            "parser_id": "biomind.genomics.reference_bundle.v2",
+            "predicate_id": "genomics.wgs.reference_bundle.v1"
+          }
+        }
+      ],
+      "explicit_side_effects": [
+        {
+          "identity": "create_reference_indexes",
+          "evidence_contract": {
+            "required_fields": [
+              "reference_resource_ref",
+              "index_artifacts"
+            ]
+          }
+        }
+      ],
+      "workspace_mutations": [],
+      "depends_on": [
+        "inspect_inputs",
+        "check_output_dir_conflicts"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [
+        "artifact_6dacc0c6e4723c4f6fb3",
+        "artifact_382d83117fe93ba8e026"
+      ],
+      "dependency_sources": {
+        "inspect_inputs": "planner_declared",
+        "check_output_dir_conflicts": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "plan.reference_bundle",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "prepare_reference",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.reference_prep_evidence",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "prepare_reference",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [
+        "artifact-a9a97d180ef458548099"
+      ],
+      "output_contracts": [
+        "plan-artifact-e39730f78afd36409b28792c",
+        "plan-artifact-2e0b9ad0ef36d1331dcfc28c"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "plan-artifact-2e0b9ad0ef36d1331dcfc28c",
+          "plan-artifact-e39730f78afd36409b28792c"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [
+          {
+            "identity": "reference_bundle_valid",
+            "evidence_contract": {
+              "required_fields": [
+                "value"
+              ]
+            },
+            "predicate": {
+              "expected": true,
+              "failure_disposition": "correction_required",
+              "missing_disposition": "inspection_required",
+              "operator": "boolean_equals",
+              "parser_id": "biomind.genomics.reference_bundle.v2",
+              "predicate_id": "genomics.wgs.reference_bundle.v1"
+            }
+          }
+        ],
+        "workspace_mutations": [],
+        "explicit_side_effects": [
+          {
+            "identity": "create_reference_indexes",
+            "evidence_contract": {
+              "required_fields": [
+                "reference_resource_ref",
+                "index_artifacts"
+              ]
+            }
+          }
+        ]
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "ask_user",
+      "dependencies": [
+        "inspect_inputs"
+      ],
+      "outputs": [],
+      "purpose": "user_input",
+      "resource_uses": [],
+      "risk_level": "low",
+      "skill_ids": [],
+      "step_id": "confirm_read_groups",
+      "success_criteria": [
+        "Ask for sample identity, platform, library and platform unit/read-group values from official metadata or the user.",
+        "Do not infer PL/LB/PU from S1/S2 filenames. Mapping must wait; no unresolved placeholder is an executable value."
+      ],
+      "title": "Confirm read groups before mapping",
+      "tool": "human",
+      "skills_declared": true,
+      "execution_capability_id": "",
+      "operation": "",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [
+        "user_input_requested"
+      ],
+      "workspace_mutations": [],
+      "depends_on": [
+        "inspect_inputs"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "dependency_sources": {
+        "inspect_inputs": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [],
+      "output_contracts": [],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": [
+          "user_input_requested"
+        ]
+      },
+      "generated_from_task_revision": 1,
+      "capability_contract_hash": ""
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "prepare_reference",
+        "confirm_read_groups"
+      ],
+      "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+      "operation": "produce_files",
+      "outputs": [
+        "plan-artifact-fa5eb57bba3439fa2db19639",
+        "plan-artifact-85c7c6a458c3a4efdb680f5a",
+        "plan-artifact-a7e5c46848a754cf45613cf9"
+      ],
+      "purpose": "analysis",
+      "resource_uses": [
+        {
+          "access": "read",
+          "resource_ref": "artifact-f45ed785f84d81e9cfab"
+        },
+        {
+          "access": "read",
+          "resource_ref": "artifact-2faee33f0d19e7f0dab4"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-e39730f78afd36409b28792c"
+        }
+      ],
+      "risk_level": "medium",
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "step_id": "map_s1",
+      "success_criteria": [
+        "Use BWA-MEM, coordinate sorting and duplicate marking; use only read-group values confirmed by confirm_read_groups. Missing selected-stage tools means stage_blocked.",
+        "产出坐标排序、标记重复的 BAM 及其 .bai 索引与 MarkDuplicates 指标文件；保留重复标记（mark and keep duplicates）供下游 calling",
+        "使用精确绑定的可执行路径；Picard 的 JAVA_HOME 设为 JAVA_BIN 上两级目录，不依赖环境变量；不修改参考与 FASTQ"
+      ],
+      "title": "S1 双端 FASTQ 经 BWA-MEM 比对、坐标排序并标记重复",
+      "tool": "bash",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:07676e1b9ca0968f5dfdb2cbd9d8951041da205762308230de3f59755199679d",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [
+        "artifact-f45ed785f84d81e9cfab",
+        "artifact-2faee33f0d19e7f0dab4",
+        "plan-artifact-e39730f78afd36409b28792c"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "prepare_reference",
+        "confirm_read_groups"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [
+        "artifact_6dacc0c6e4723c4f6fb3"
+      ],
+      "output_artifact_ids": [
+        "artifact_faf7aaed2c83e2e2e469",
+        "artifact_9f09feaeeb1a8b17b092",
+        "artifact_071dac3292c9d99e310d"
+      ],
+      "dependency_sources": {
+        "prepare_reference": "planner_declared",
+        "confirm_read_groups": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "plan.s1_sorted_markdup_bam",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "map_s1",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.s1_bam_index",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "map_s1",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.s1_duplicate_metrics",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "map_s1",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [
+        "artifact-f45ed785f84d81e9cfab",
+        "artifact-2faee33f0d19e7f0dab4",
+        "plan-artifact-e39730f78afd36409b28792c"
+      ],
+      "output_contracts": [
+        "plan-artifact-fa5eb57bba3439fa2db19639",
+        "plan-artifact-85c7c6a458c3a4efdb680f5a",
+        "plan-artifact-a7e5c46848a754cf45613cf9"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "plan-artifact-85c7c6a458c3a4efdb680f5a",
+          "plan-artifact-a7e5c46848a754cf45613cf9",
+          "plan-artifact-fa5eb57bba3439fa2db19639"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "prepare_reference",
+        "confirm_read_groups"
+      ],
+      "execution_capability_id": "genomics.wgs.short.read.mapping.execute",
+      "operation": "produce_files",
+      "outputs": [
+        "plan-artifact-0ee57d41f267f9578e6c51e9",
+        "plan-artifact-3183e34e03032af7ae07785f",
+        "plan-artifact-71cd8d72ca5e02f9235a61cf"
+      ],
+      "purpose": "analysis",
+      "resource_uses": [
+        {
+          "access": "read",
+          "resource_ref": "artifact-431c5cce92b5b261677e"
+        },
+        {
+          "access": "read",
+          "resource_ref": "artifact-97f64b37bb55399a6d4e"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-e39730f78afd36409b28792c"
+        }
+      ],
+      "risk_level": "medium",
+      "skill_ids": [
+        "genomics/wgs-short-read-mapping"
+      ],
+      "step_id": "map_s2",
+      "success_criteria": [
+        "Use BWA-MEM, coordinate sorting and duplicate marking; use only read-group values confirmed by confirm_read_groups. Missing selected-stage tools means stage_blocked.",
+        "产出坐标排序、标记重复的 BAM 及其 .bai 索引与 MarkDuplicates 指标文件；保留重复标记供下游 calling",
+        "使用精确绑定的可执行路径；Picard 的 JAVA_HOME 设为 JAVA_BIN 上两级目录；不修改参考与 FASTQ"
+      ],
+      "title": "S2 双端 FASTQ 经 BWA-MEM 比对、坐标排序并标记重复",
+      "tool": "bash",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:07676e1b9ca0968f5dfdb2cbd9d8951041da205762308230de3f59755199679d",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [
+        "artifact-431c5cce92b5b261677e",
+        "artifact-97f64b37bb55399a6d4e",
+        "plan-artifact-e39730f78afd36409b28792c"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "prepare_reference",
+        "confirm_read_groups"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [
+        "artifact_6dacc0c6e4723c4f6fb3"
+      ],
+      "output_artifact_ids": [
+        "artifact_97143b89d8427f3ba1e5",
+        "artifact_172c5b8e1877969dac9e",
+        "artifact_4ca10305428e21ec14ba"
+      ],
+      "dependency_sources": {
+        "prepare_reference": "planner_declared",
+        "confirm_read_groups": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "plan.s2_sorted_markdup_bam",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "map_s2",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.s2_bam_index",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "map_s2",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.s2_duplicate_metrics",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "map_s2",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [
+        "artifact-431c5cce92b5b261677e",
+        "artifact-97f64b37bb55399a6d4e",
+        "plan-artifact-e39730f78afd36409b28792c"
+      ],
+      "output_contracts": [
+        "plan-artifact-0ee57d41f267f9578e6c51e9",
+        "plan-artifact-3183e34e03032af7ae07785f",
+        "plan-artifact-71cd8d72ca5e02f9235a61cf"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "plan-artifact-0ee57d41f267f9578e6c51e9",
+          "plan-artifact-3183e34e03032af7ae07785f",
+          "plan-artifact-71cd8d72ca5e02f9235a61cf"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "ask_user",
+      "dependencies": [
+        "map_s1",
+        "map_s2"
+      ],
+      "outputs": [],
+      "purpose": "user_input",
+      "resource_uses": [],
+      "risk_level": "low",
+      "skill_ids": [],
+      "step_id": "confirm_ploidy",
+      "success_criteria": [
+        "询问 S1/S2 样本的倍性（例如二倍体/单倍体/多倍体），说明该值将决定 GATK HaplotypeCaller 的 --sample-ploidy 与基因型/过滤假设",
+        "不得从文件名、物种标签或 Plan 批准推断二倍体；未获确认前不得执行 calling 与过滤步骤",
+        "依赖此步骤的 calling/过滤步骤必须等待用户明确回答后才可执行"
+      ],
+      "title": "向用户确认样本倍性（PLOIDY），calling 与过滤必须等待该答案",
+      "tool": "human",
+      "skills_declared": true,
+      "execution_capability_id": "",
+      "operation": "",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [
+        "user_input_requested"
+      ],
+      "workspace_mutations": [],
+      "depends_on": [
+        "map_s1",
+        "map_s2"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "dependency_sources": {
+        "map_s1": "planner_declared",
+        "map_s2": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [],
+      "output_contracts": [],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": [
+          "user_input_requested"
+        ]
+      },
+      "generated_from_task_revision": 1,
+      "capability_contract_hash": ""
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "confirm_ploidy",
+        "prepare_reference",
+        "map_s1",
+        "map_s2"
+      ],
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "outputs": [
+        "plan-artifact-85631bcb7581addec6c6bc98",
+        "plan-artifact-76290589286aaa849f6c6719",
+        "plan-artifact-38869c5c306323218614bc08"
+      ],
+      "purpose": "analysis",
+      "resource_uses": [
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-e39730f78afd36409b28792c"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-fa5eb57bba3439fa2db19639"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-85c7c6a458c3a4efdb680f5a"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-0ee57d41f267f9578e6c51e9"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-3183e34e03032af7ae07785f"
+        }
+      ],
+      "risk_level": "high",
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "step_id": "call_variants",
+      "success_criteria": [
+        "Select the GATK workflow: HaplotypeCaller per sample in gVCF mode, then combine and joint genotype with GenotypeGVCFs. No alternative bcftools calling chain.",
+        "Use only confirmed sample ploidy. Wait for confirm_ploidy; no default diploidy and no unresolved executable argument.",
+        "Record missing GATK or its selected-stage dependencies as stage_blocked with affected downstream stages. A tool used only by the unselected caller cannot block mapping."
+      ],
+      "title": "GATK per-sample HaplotypeCaller gVCFs then joint GenotypeGVCFs",
+      "tool": "bash",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:4a98510c7db73fc8abda12ea197e24709ee390f4f45d0a76716e7b635b858c1e",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [
+        "plan-artifact-e39730f78afd36409b28792c",
+        "plan-artifact-fa5eb57bba3439fa2db19639",
+        "plan-artifact-85c7c6a458c3a4efdb680f5a",
+        "plan-artifact-0ee57d41f267f9578e6c51e9",
+        "plan-artifact-3183e34e03032af7ae07785f"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "confirm_ploidy",
+        "prepare_reference",
+        "map_s1",
+        "map_s2"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [
+        "artifact_6dacc0c6e4723c4f6fb3",
+        "artifact_faf7aaed2c83e2e2e469",
+        "artifact_9f09feaeeb1a8b17b092",
+        "artifact_97143b89d8427f3ba1e5",
+        "artifact_172c5b8e1877969dac9e"
+      ],
+      "output_artifact_ids": [
+        "artifact_de7dc9e917e12a0cd1fc",
+        "artifact_4d2740c60ef1a6ef7c5c",
+        "artifact_90f1ef35052c60afef61"
+      ],
+      "dependency_sources": {
+        "confirm_ploidy": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "plan.s1_raw_variants",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "call_variants",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.s2_raw_variants",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "call_variants",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.joint_raw_vcf",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "call_variants",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [
+        "plan-artifact-e39730f78afd36409b28792c",
+        "plan-artifact-fa5eb57bba3439fa2db19639",
+        "plan-artifact-85c7c6a458c3a4efdb680f5a",
+        "plan-artifact-0ee57d41f267f9578e6c51e9",
+        "plan-artifact-3183e34e03032af7ae07785f"
+      ],
+      "output_contracts": [
+        "plan-artifact-85631bcb7581addec6c6bc98",
+        "plan-artifact-76290589286aaa849f6c6719",
+        "plan-artifact-38869c5c306323218614bc08"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "plan-artifact-38869c5c306323218614bc08",
+          "plan-artifact-76290589286aaa849f6c6719",
+          "plan-artifact-85631bcb7581addec6c6bc98"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "ask_user",
+      "dependencies": [
+        "call_variants"
+      ],
+      "outputs": [],
+      "purpose": "user_input",
+      "resource_uses": [],
+      "risk_level": "low",
+      "skill_ids": [],
+      "step_id": "confirm_filters",
+      "success_criteria": [
+        "Ask the user to confirm scientifically applicable SNP/InDel filtering criteria and thresholds after reviewing available official evidence.",
+        "No QUAL/DP/QD/FS/MQ constants have been authorized yet; filtering waits for an explicit decision."
+      ],
+      "title": "Confirm filtering assumptions and thresholds",
+      "tool": "human",
+      "skills_declared": true,
+      "execution_capability_id": "",
+      "operation": "",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [
+        "user_input_requested"
+      ],
+      "workspace_mutations": [],
+      "depends_on": [
+        "call_variants"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [],
+      "dependency_sources": {
+        "call_variants": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [],
+      "output_contracts": [],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": [
+          "user_input_requested"
+        ]
+      },
+      "generated_from_task_revision": 1,
+      "capability_contract_hash": ""
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "call_variants",
+        "confirm_filters"
+      ],
+      "execution_capability_id": "genomics.wgs.gatk.snp.indel.execute",
+      "operation": "produce_files",
+      "outputs": [
+        "filtered_vcf"
+      ],
+      "purpose": "analysis",
+      "resource_uses": [
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-38869c5c306323218614bc08"
+        }
+      ],
+      "risk_level": "medium",
+      "skill_ids": [
+        "genomics/wgs-gatk-snp-indel"
+      ],
+      "step_id": "filter_variants",
+      "success_criteria": [
+        "Use the selected GATK filtering workflow with explicitly confirmed SNP/InDel criteria; publish the filtered joint VCF with sample genotypes retained.",
+        "Record exact filters, tool roles and provenance. Block this stage if upstream calling or the decision is missing; never fabricate VCF."
+      ],
+      "title": "按显式声明的阈值过滤并拆分 SNP/InDel",
+      "tool": "bash",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:4a98510c7db73fc8abda12ea197e24709ee390f4f45d0a76716e7b635b858c1e",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [
+        "plan-artifact-38869c5c306323218614bc08"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "call_variants",
+        "confirm_filters"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [
+        "artifact_90f1ef35052c60afef61"
+      ],
+      "output_artifact_ids": [
+        "artifact_a65507b7cbb22d31cea5"
+      ],
+      "dependency_sources": {
+        "call_variants": "planner_declared",
+        "confirm_filters": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "filtered_vcf",
+          "artifact_id": "filtered_vcf_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "filter_variants",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [
+        "plan-artifact-38869c5c306323218614bc08"
+      ],
+      "output_contracts": [
+        "filtered_vcf"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "filtered_vcf"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "filter_variants",
+        "map_s1",
+        "map_s2"
+      ],
+      "execution_capability_id": "framework.generic.execute",
+      "operation": "execute",
+      "outputs": [
+        "variant_stats",
+        "plan-artifact-aab44f8ca9a3cb3e677673a1",
+        "plan-artifact-a5eb2f5e18795ca384bc3dff"
+      ],
+      "purpose": "validation",
+      "resource_uses": [
+        {
+          "access": "read",
+          "resource_ref": "filtered_vcf"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-fa5eb57bba3439fa2db19639"
+        },
+        {
+          "access": "read",
+          "resource_ref": "plan-artifact-0ee57d41f267f9578e6c51e9"
+        }
+      ],
+      "risk_level": "low",
+      "skill_ids": [
+        "genomics/reseq-variant-workflow"
+      ],
+      "step_id": "summarize_variants",
+      "success_criteria": [
+        "Use bcftools only for auxiliary VCF statistics and samtools flagstat for mapping metrics; record this division of work with GATK as the sole caller.",
+        "variant_stats 写入固定输出目录，内容与过滤后 VCF 实际记录一致；零记录结果与未执行/损坏结果必须区分说明",
+        "若上游 blocked，则记录 stage_blocked 与缺失依赖，不伪造统计数字"
+      ],
+      "title": "统计过滤后 SNP/InDel 数量并生成 variant_stats",
+      "tool": "bash",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [
+        "filtered_vcf",
+        "plan-artifact-fa5eb57bba3439fa2db19639",
+        "plan-artifact-0ee57d41f267f9578e6c51e9"
+      ],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "filter_variants",
+        "map_s1",
+        "map_s2"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [
+        "artifact_a65507b7cbb22d31cea5",
+        "artifact_faf7aaed2c83e2e2e469",
+        "artifact_97143b89d8427f3ba1e5"
+      ],
+      "output_artifact_ids": [
+        "artifact_4089686ac45dff89ac80",
+        "artifact_6dc159ac13a4d4e58887",
+        "artifact_43aab1c0ce3decd21f27"
+      ],
+      "dependency_sources": {
+        "filter_variants": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "variant_stats",
+          "artifact_id": "stats_variant_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "summarize_variants",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.s1_flagstat",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "summarize_variants",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        },
+        {
+          "path": "plan.s2_flagstat",
+          "artifact_id": "plan_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "summarize_variants",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [
+        "filtered_vcf",
+        "plan-artifact-fa5eb57bba3439fa2db19639",
+        "plan-artifact-0ee57d41f267f9578e6c51e9"
+      ],
+      "output_contracts": [
+        "variant_stats",
+        "plan-artifact-aab44f8ca9a3cb3e677673a1",
+        "plan-artifact-a5eb2f5e18795ca384bc3dff"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "plan-artifact-a5eb2f5e18795ca384bc3dff",
+          "plan-artifact-aab44f8ca9a3cb3e677673a1",
+          "variant_stats"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "summarize_variants"
+      ],
+      "execution_capability_id": "framework.generic.execute",
+      "operation": "execute",
+      "outputs": [
+        "stage_status"
+      ],
+      "purpose": "validation",
+      "resource_uses": [],
+      "risk_level": "low",
+      "skill_ids": [],
+      "step_id": "write_stage_status",
+      "success_criteria": [
+        "按 stage 记录 input_check / ref_prep / mapping / calling / filter / summary / report 的状态（completed 或 blocked）",
+        "对 blocked 阶段写明确切缺失命令/依赖与受影响范围；不得把未执行或未验证的工作标记为 completed",
+        "stage_status.tsv 写入固定输出目录"
+      ],
+      "title": "生成 stage_status.tsv 记录各阶段执行/blocked 状态",
+      "tool": "python",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "summarize_variants"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [
+        "artifact_cff04bdacdbc4e6c45dc"
+      ],
+      "dependency_sources": {
+        "summarize_variants": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "stage_status",
+          "artifact_id": "stage_status_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "write_stage_status",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [],
+      "output_contracts": [
+        "stage_status"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "stage_status"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "write_stage_status"
+      ],
+      "execution_capability_id": "framework.generic.execute",
+      "operation": "execute",
+      "outputs": [
+        "report"
+      ],
+      "purpose": "analysis",
+      "resource_uses": [],
+      "risk_level": "low",
+      "skill_ids": [
+        "genomics/reseq-variant-workflow"
+      ],
+      "step_id": "write_report",
+      "success_criteria": [
+        "Explain mapping Skill selection and the GATK gVCF/joint-calling route; identify bcftools as auxiliary statistics only.",
+        "汇总输入检查观察、参考索引、mapping 指标、calling/过滤阈值与统计结果；对 blocked 阶段写明原因与确切缺失依赖",
+        "不得伪造 VCF 或统计结果；report.md 写入固定输出目录"
+      ],
+      "title": "生成 report.md，说明 skill/流程选择理由与各阶段结果",
+      "tool": "python",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "write_stage_status"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [
+        "artifact_2c84d41b730e41b4743e"
+      ],
+      "dependency_sources": {
+        "write_stage_status": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "report",
+          "artifact_id": "report_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "write_report",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [],
+      "output_contracts": [
+        "report"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "report"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    },
+    {
+      "action": "execute",
+      "dependencies": [
+        "write_report"
+      ],
+      "execution_capability_id": "framework.generic.execute",
+      "operation": "execute",
+      "outputs": [
+        "reproduce_script"
+      ],
+      "purpose": "analysis",
+      "resource_uses": [],
+      "risk_level": "low",
+      "skill_ids": [],
+      "step_id": "write_reproduce_script",
+      "success_criteria": [
+        "reproduce.sh 记录实际使用的命令、参数（含 read group、倍性、过滤阈值）与输入/输出路径，可重跑已执行阶段",
+        "脚本不得包含覆盖已有文件的危险操作；reproduce.sh 写入固定输出目录"
+      ],
+      "title": "生成 reproduce.sh 复现脚本",
+      "tool": "python",
+      "skills_declared": true,
+      "capability_contract_hash": "sha256:4906d1412e454e0f141a171e229f54d46ee53dd397fb8d4b4796f344c8c34661",
+      "workflow_stage_ids": [],
+      "batch_id": "",
+      "inputs": [],
+      "produces_bindings": [],
+      "produces_observations": [],
+      "explicit_side_effects": [],
+      "workspace_mutations": [],
+      "depends_on": [
+        "write_report"
+      ],
+      "step_type": "atomic",
+      "renderer_id": "",
+      "input_artifact_ids": [],
+      "output_artifact_ids": [
+        "artifact_967790d6bbb86a3a028b"
+      ],
+      "dependency_sources": {
+        "write_report": "planner_declared"
+      },
+      "status": "pending",
+      "artifacts": [
+        {
+          "path": "reproduce_script",
+          "artifact_id": "reproduce_file",
+          "role": "",
+          "artifact_type": "file",
+          "required": true,
+          "producer_step_id": "write_reproduce_script",
+          "producer": "",
+          "validator": "nonempty_file",
+          "source": "structured_plan"
+        }
+      ],
+      "artifact_contract_revision": 0,
+      "artifact_reconciliation_history": [],
+      "renderer_execution": {},
+      "input_contracts": [],
+      "output_contracts": [
+        "reproduce_script"
+      ],
+      "evidence": [],
+      "updated_at": "2026-09-18T16:57:22",
+      "step_effect": {
+        "schema_version": 1,
+        "produces_artifacts": [
+          "reproduce_script"
+        ],
+        "produces_bindings": [],
+        "produces_observations": [],
+        "workspace_mutations": [],
+        "explicit_side_effects": []
+      },
+      "generated_from_task_revision": 1
+    }
+  ],
+  "planner_calls": 1,
+  "scientific_commands_executed": 0,
+  "live_model_calls": 0
+}

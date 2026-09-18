@@ -1,0 +1,551 @@
+--- a/bio_agents.py
++++ b/bio_agents.py
+@@ -819,7 +819,6 @@
+     OperationBindingAdmission,
+     PlanBindingError,
+     accept_action_binding_candidates,
+-    compile_plan_resource_bindings,
+     resolve_action_binding_environment,
+     normalize_public_action_bindings, public_binding_requirements, binding_input_progress_facts,
+     validate_declared_binding_operation,
+@@ -40791,6 +40790,7 @@
+                             require_declared_references=True,
+                             capability_ids=tuple(planner_effect_registry),
+                             capability_registry=planner_effect_registry,
++                            resource_bindings_out=candidate_resource_bindings,
+                         )
+                         if not deterministic_issues and restored_planner_context:
+                             from agent_core.plan_contract import validate_planner_consumption_correction
+@@ -40815,24 +40815,8 @@
+                                 for issue in blocking_deterministic
+                             ]
+                         else:
+-                            candidate_resource_bindings = (
+-                                self._planner_observed_call(task_id, planner_observation, "compile_resource_bindings", compile_plan_resource_bindings,
+-                                    plan_proposal,
+-                                    require_declared_references=True,
+-                                    capability_registry=planner_effect_registry,
+-                                    candidate_scope_id=(
+-                                        planner_node_context.binding.candidate_scope_id
+-                                    ),
+-                                    authoritative_handles=artifact_handles,
+-                                    availability_origins=availability_origins,
+-                                    authoritative_bindings={
+-                                        str(handle): dict(item)
+-                                        for handle, item in planner_node_context.binding.semantic_handle_map.items()
+-                                        if isinstance(item, Mapping)
+-                                        and item.get("object_type") == "artifact"
+-                                    },
+-                                )
+-                            )
++                            # Reuse the exact successful admission compilation;
++                            # no external state changed between these two local operations.
+                             allocation_intent = self._planner_observed_call(task_id, planner_observation, "normalize_allocation_intent", prepare_allocation_intent,
+                                 plan_proposal,
+                                 candidate_scope_id=(
+--- a/agent_core/plan_contract.py
++++ b/agent_core/plan_contract.py
+@@ -1707,6 +1707,7 @@
+     require_declared_references: bool = False,
+     capability_ids: Sequence[str] = (),
+     capability_registry: Optional[Mapping[str, Any]] = None,
++    resource_bindings_out: Optional[Dict[str, Any]] = None,
+ ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[Dict[str, Any]]]:
+     """Run the shared schema/identity path and, by default, dataflow admission.
+ 
+@@ -1718,6 +1719,8 @@
+     once over that compiled view.  The default remains ``True`` for callers
+     that intentionally use this function as the complete compatibility gate.
+     """
++    if resource_bindings_out is not None:
++        resource_bindings_out.clear()
+     structure = structured_plan_candidate_diagnostics(candidate)
+     if structure:
+         return {}, [], [
+@@ -1758,7 +1761,10 @@
+         independent_issues.append(diagnostic)
+     from agent_core.step_effects import independent_step_effect_diagnostics
+     independent_issues.extend(independent_step_effect_diagnostics(candidate, capability_registry))
+-    if independent_issues:
++    # Invalid declarations cannot supply a trustworthy resource registry. An
++    # unknown use, however, does not invalidate other declared resources: let
++    # the binding pass diagnose those independent uses in the same response.
++    if any(exc.code != "ARTIFACT_REFERENCE_UNKNOWN" for exc in ref_errors):
+         return {}, [], independent_issues
+     try:
+         from agent_core.plan_bindings import (
+@@ -1784,13 +1790,23 @@
+             }
+         )
+         if diagnostic.get("validation_issues"):
+-            return ref_keys, usage, list(diagnostic["validation_issues"])
++            resource_issues = list(diagnostic["validation_issues"])
++            # Resource lookup independently knows the exact use location. Keep
++            # its richer diagnostic once rather than duplicating an unknown-ref
++            # error from the identity pass at that same field.
++            covered = {row.get("field_path") for row in resource_issues}
++            return ref_keys, usage, [row for row in independent_issues
++                if row.get("field_path") not in covered] + resource_issues
+         diagnostic.setdefault("owner", "planner")
+         diagnostic.setdefault("validator_id", "plan_resource_bindings")
+         diagnostic.setdefault("field_path", "$.proposed_artifacts")
+         diagnostic.setdefault("repair_target", diagnostic["field_path"])
+         diagnostic.setdefault("disposition", "PROTOCOL_INVALID")
+-        return ref_keys, usage, [diagnostic]
++        return ref_keys, usage, independent_issues + [diagnostic]
++    if independent_issues:
++        return {}, [], independent_issues
++    if resource_bindings_out is not None:
++        resource_bindings_out.update(deepcopy(resource_bindings))
+     issues = (
+         validate_candidate_graph_and_flow(
+             candidate,
+--- a/agent_core/plan_bindings.py
++++ b/agent_core/plan_bindings.py
+@@ -169,7 +169,14 @@
+         "resource_contract_version": PLAN_RESOURCE_USES_VERSION,
+         "step_resource_uses": {
+             "item": {"resource_ref": "exact current input/output/plan handle", "access": "read|mutate", "role": "optional exact selected helper role"},
+-            "meaning": "Declare each actual resource use once on its step. inputs and resource-side role_associations are retired in v3. Mutation state/evidence and immutable outputs remain distinct facts.",
++            "meaning": "Declare actual upstream reads and genuine workspace mutation once. New products appear only in outputs, never as mutate merely because creation writes files. inputs and resource-side role_associations are retired in v3.",
++            "capability_owned_facts": "Omit duplicate workspace_mutations when an exact selected mutate role already uniquely defines its state/evidence transition. Keep explicit declarations for genuinely different or otherwise undeclared transitions; conflicts are errors.",
++        },
++        "new_outputs": {
++            "authority": "steps[].outputs selects the new products; it is not necessary to repeat them in resource_uses or produces_artifacts",
++            "mechanical_facts": "The existing compiler derives produced-artifact records and fixed capability effects before approval. Omit operation when uniquely supplied by the selected capability; omit repeated observations/side effects if the selected capability fully specifies them.",
++            "directory": "A newly produced directory bundle can be immutable_artifact. Staging writes do not authorize mutation of an existing workspace.",
++            "ambiguity": "Keep explicit choices for multiple valid interfaces; never choose a workspace by matching its name or directory shape.",
+         },
+         "legacy_resource_contract_v2": {
+             "role_association_item": {"step_id": "one declared step", "capability_id": "that step's selected capability", "role": "one declared workspace role"},
+@@ -179,7 +186,7 @@
+             "local_ref": "plan.<candidate-local-name>",
+             "artifact_contract": {
+                 "object_kind": ["file", "directory"], "lifecycle": "plan_local",
+-                "resource_kind": sorted(_RESOURCE_KINDS),
++                "resource_kind": "optional; defaults to immutable_artifact for new products. Explicit mutable_workspace is reserved for actual stateful workspaces",
+                 "materialization_policy_id": "managed_intermediate_v1",
+             },
+             "resource_binding": "omit for a new resource; the binder creates identity",
+@@ -624,71 +631,138 @@
+             by_alias[str(alias)] = row
+         # The canonical ID is always an exact alias, never a guessed one.
+         by_alias[identity] = row
++    use_issues = []
+     if uses_v3:
+         for step_index, step in enumerate(candidate.get("steps", []) or []):
+             if not isinstance(step, Mapping):
+                 continue
+-            uses = step.get("resource_uses")
+-            root = f"$.steps[{step_index}].resource_uses"
+-            if not isinstance(uses, list):
+-                raise PlanBindingError("PLAN_RESOURCE_USES_INVALID", field_path=root, expected="array", actual=uses)
++            root = f"$.steps[{step_index}]"
+             cap_id = str(step.get("execution_capability_id") or "")
+             cap = dict((capability_registry or {}).get(cap_id) or {})
+             roles = capability_workspace_roles(cap)
+             for role in cap.get("required_artifact_binding_ids", []) or []:
+                 roles.setdefault(str(role), {"resource_kind": "immutable_artifact", "access": "read"})
+-            seen = set()
++            produced = list(cap.get("produces_artifacts") or [])
++            kinds = {item.get("resource_kind", "immutable_artifact") if isinstance(item, Mapping)
++                     else "immutable_artifact" for item in produced}
++            immutable_outputs = kinds == {"immutable_artifact"}
++            mutations = list(step.get("workspace_mutations") or [])
++            outputs = set(step.get("outputs") or [])
++            # An absent effect field is open/legacy; only an explicitly empty
++            # closed capability denies mutation. Never infer this from a name.
++            mutation_forbidden = "workspace_mutations" in cap and cap["workspace_mutations"] == []
++            source = {"capability_id": cap_id, "selected_skill_id": cap.get("selected_skill_id"),
++                      "contract_source": cap.get("contract_source"), "contract_revision": cap.get("contract_revision")}
++            def add(code, path, actual, expected, message, ref="", **extra):
++                use_issues.append({"code": code, "owner": "planner", "severity": "error",
++                    "disposition": "PROTOCOL_INVALID", "validator_id": "compile_plan_resource_bindings",
++                    "step_id": str(step.get("step_id") or ""), "resource_ref": ref,
++                    "field_path": path, "repair_target": path, "actual": deepcopy(actual),
++                    "expected": deepcopy(expected), "message": message, **source, **extra})
++            def output_expectation(ref):
++                return {**source, "output_interfaces": deepcopy(produced) or "steps[].outputs (plan_resource_protocol_v3)",
++                    "declaration": {"outputs": [ref], "resource_kind": "immutable_artifact"},
++                    "resource_uses": "read upstream inputs; do not mutate the new output",
++                    "workspace_mutations": "none for this new output; use an explicitly supporting capability for a different existing-workspace intent"}
++            uses = step.get("resource_uses")
++            if not isinstance(uses, list):
++                add("PLAN_RESOURCE_USES_INVALID", root + ".resource_uses", uses, "array", "Declare actual reads and existing workspace uses in an array.")
++                continue
++            seen, conflicts = set(), set()
+             for use_index, use in enumerate(uses):
+-                path = f"{root}[{use_index}]"
++                path = f"{root}.resource_uses[{use_index}]"
+                 if (not isinstance(use, Mapping) or set(use) - {"resource_ref", "access", "role"}
+                         or not isinstance(use.get("resource_ref"), str) or not use["resource_ref"]
+                         or use.get("access") not in ("read", "mutate")
+                         or ("role" in use and (not isinstance(use["role"], str) or not use["role"]))):
+-                    raise PlanBindingError("PLAN_RESOURCE_USE_INVALID", field_path=path, actual=use,
+-                        expected={"resource_ref": "exact declared resource", "access": "read|mutate", "role": "optional selected helper role"})
++                    add("PLAN_RESOURCE_USE_INVALID", path, use,
++                        {"resource_ref": "exact declared resource", "access": "read|mutate", "role": "optional declared input/workspace role"},
++                        "Invalid resource use shape; dependent resource checks cannot run.")
++                    continue
+                 ref, access, role = use["resource_ref"], use["access"], str(use.get("role") or "")
+                 row = by_alias.get(ref)
+                 if not row:
+-                    raise PlanBindingError("PLAN_RESOURCE_REFERENCE_NOT_DECLARED", field_path=path + ".resource_ref", actual=ref,
+-                        expected={"declared_handles": sorted(by_alias)})
++                    add("PLAN_RESOURCE_REFERENCE_NOT_DECLARED", path + ".resource_ref", ref,
++                        {"declared_handles": sorted(by_alias)}, "Resolve the exact reference before checking its type or effects.", ref,
++                        not_evaluated=["resource_kind", "resource_effect", "workspace_state"])
++                    continue
+                 marker = (ref, role)
+                 if marker in seen:
+-                    raise PlanBindingError("PLAN_RESOURCE_USE_CONFLICT", field_path=path, actual=use, expected="one declaration per resource/role")
++                    add("PLAN_RESOURCE_USE_CONFLICT", path, use, "one declaration per resource/role", "Duplicate resource use.", ref)
+                 seen.add(marker)
+-                if role:
+-                    required = roles.get(role)
+-                    if not required or (cap.get("selected_skill_id") and cap["selected_skill_id"] not in (step.get("skill_ids") or [])):
+-                        raise PlanBindingError("PLAN_RESOURCE_USE_ROLE_INVALID", field_path=path + ".role", actual=use,
+-                            expected={"capability_id": cap_id, "selected_skill_id": cap.get("selected_skill_id"), "roles": roles})
++                required = roles.get(role) if role else None
++                if role and (not required or (cap.get("selected_skill_id") and cap["selected_skill_id"] not in (step.get("skill_ids") or []))):
++                    add("PLAN_RESOURCE_USE_ROLE_INVALID", path + ".role", use,
++                        {**source, "available_roles": roles or "none declared for resource_uses", "output_interfaces": produced,
++                         "output_location": root + ".outputs"},
++                        "This is not a declared input/workspace role. Output interfaces belong in outputs, not resource_uses.role.", ref)
++                elif required:
+                     if access != required["access"]:
+-                        raise PlanBindingError("PLAN_RESOURCE_USE_ACCESS_MISMATCH", field_path=path + ".access", actual=access, expected=required["access"])
++                        add("PLAN_RESOURCE_USE_ACCESS_MISMATCH", path + ".access", access, required, "Use the capability's declared access for this role.", ref)
+                     if row["resource_kind"] != required["resource_kind"]:
+-                        raise PlanBindingError("PLAN_RESOURCE_KIND_INVALID", field_path=path, actual=row["resource_kind"], expected=required["resource_kind"])
++                        add("PLAN_RESOURCE_KIND_INVALID", path, row["resource_kind"], required, "Resource kind conflicts with the exact capability role.", ref)
+                     row.setdefault("role_associations", []).append({"step_id": step.get("step_id"), "capability_id": cap_id, "role": role})
+                     row["role_association_version"] = PLAN_RESOURCE_ROLE_VERSION
+                 row["resource_use_projection_version"] = PLAN_RESOURCE_USES_VERSION
+                 if access == "mutate":
+-                    if row["resource_kind"] != "mutable_workspace":
+-                        raise PlanBindingError("PLAN_RESOURCE_KIND_INVALID", field_path=path, actual=row["resource_kind"], expected="mutable_workspace")
+-                    if not any(isinstance(m, Mapping) and str(m.get("workspace_ref") or m.get("identity") or "") in {ref, role} - {""}
+-                               for m in step.get("workspace_mutations", []) or []):
+-                        raise PlanBindingError("PLAN_RESOURCE_MUTATION_DECLARATION_MISSING", field_path=path,
+-                            actual=use, expected="explicit workspace_mutations state/evidence declaration for this resource or exact role")
++                    related_mutations = [(i, m) for i, m in enumerate(mutations)
++                               if isinstance(m, Mapping) and str(m.get("workspace_ref") or m.get("identity") or "") in {ref, role} - {""}]
++                    related = [f"{root}.workspace_mutations[{i}]" for i, _ in related_mutations]
++                    if mutation_forbidden or ref in outputs:
++                        conflicts.add(ref)
++                        add("PLAN_RESOURCE_USE_EFFECT_CONFLICT", path, {"use": use, "resource_kind": row["resource_kind"],
++                            "declared_output": ref in outputs, "workspace_mutations": [m for _, m in related_mutations]},
++                            output_expectation(ref) if immutable_outputs or ref in outputs else {**source, "workspace_mutations": "capability declares none"},
++                            "The selected output interface declares new immutable products, not mutation of this resource. Keep/add the intended output; remove its conflicting mutate/state declarations. Directory shape or creation-time writes do not make an existing workspace. A different mutation intent requires an explicit supporting capability and resource."
++                            if immutable_outputs or ref in outputs else "Selected capability explicitly declares no workspace mutation; choose a supporting capability for an actual mutation intent.",
++                            ref, related_field_paths=[root + ".outputs", *related],
++                            not_evaluated=["dependent_step_effect", "dependent_workspace_coverage"])
++                    elif row["resource_kind"] != "mutable_workspace":
++                        add("PLAN_RESOURCE_KIND_INVALID", path, row["resource_kind"], {**source, "resource_kind": "mutable_workspace", "intent": "an actual existing-state mutation, not creation of a new output"},
++                            "Explicit mutation requires a declared workspace. If this is a new product, declare outputs under a producing capability instead of changing its type.", ref)
++                    elif not related and not (required and required.get("access") == "mutate"):
++                        add("PLAN_RESOURCE_MUTATION_DECLARATION_MISSING", path, use,
++                            "explicit workspace state/evidence transition, or a selected role with a capability-owned transition",
++                            "Mutation has no declared state/evidence contract.", ref)
+                 row["binding_id"] = _resource_binding_id(row)
+-            for mutation_index, mutation in enumerate(step.get("workspace_mutations", []) or []):
++            # Outputs are the sole production declaration. Check their kinds
++            # even when no duplicated resource_uses write was supplied.
++            for output_index, ref in enumerate(step.get("outputs") or []):
++                row = by_alias.get(ref)
++                if row and row["resource_kind"] != "immutable_artifact" and ref not in conflicts:
++                    add("PLAN_RESOURCE_OUTPUT_KIND_CONFLICT", f"{root}.outputs[{output_index}]", row["resource_kind"], output_expectation(ref),
++                        "This output interface produces an immutable artifact, including directory bundles; it cannot be supplied as a mutable workspace.", ref)
++            for mutation_index, mutation in enumerate(mutations):
+                 if isinstance(mutation, Mapping):
+                     ref = str(mutation.get("workspace_ref") or mutation.get("identity") or "")
+-                    if not any(use.get("access") == "mutate" and ref in {use.get("resource_ref"), use.get("role")} for use in uses):
+-                        raise PlanBindingError("PLAN_RESOURCE_MUTATION_USE_MISSING", field_path=f"$.steps[{step_index}].workspace_mutations[{mutation_index}]",
+-                            actual=ref, expected="an explicit mutate resource_uses declaration on this step")
+-    role_issues = []
++                    if not any(isinstance(use, Mapping) and use.get("access") == "mutate" and ref in {use.get("resource_ref"), use.get("role")} for use in uses):
++                        add("PLAN_RESOURCE_MUTATION_USE_MISSING", f"{root}.workspace_mutations[{mutation_index}]", mutation,
++                            "an explicit mutate resource_uses declaration on this step", "State mutation needs an explicit resource selection; it does not select a resource by itself.", ref)
++    role_issues = list(use_issues)
+     if capability_registry is not None:
+         for step_index, step in enumerate(candidate.get("steps", []) or []):
+             if not isinstance(step, Mapping):
+                 continue
+             capability_id = str(step.get("execution_capability_id") or "")
+-            scoped = resource_bindings_for_step(by_alias, step)
+-            for role, requirement in capability_workspace_roles(dict(capability_registry.get(capability_id) or {})).items():
++            requirements = capability_workspace_roles(dict(capability_registry.get(capability_id) or {}))
++            if not requirements:
++                continue
++            role_step = step
++            if uses_v3:
++                # Invalid output-as-role declarations already have primary
++                # diagnostics. They cannot create secondary workspace alias
++                # conflicts. This temporary lookup never changes the candidate.
++                role_step = {**step, "resource_uses": [use for use in step.get("resource_uses") or []
++                    if isinstance(use, Mapping) and use.get("role") in requirements]}
++            try:
++                scoped = resource_bindings_for_step(by_alias, role_step)
++            except PlanBindingError as exc:
++                # The per-use pass already locates unknown refs. Continue other
++                # steps; do not invent a missing role from an unresolved use.
++                if exc.code != "PLAN_RESOURCE_REFERENCE_NOT_DECLARED":
++                    role_issues.append({**exc.to_dict(), "field_path": f"$.steps[{step_index}].resource_uses", "owner": "planner"})
++                continue
++            for role, requirement in requirements.items():
+                 target = scoped.get(role) or {}
+                 code = ""
+                 if not target:
+--- a/agent_core/planner_recovery.py
++++ b/agent_core/planner_recovery.py
+@@ -239,7 +239,12 @@
+                     "detail": "A new accounted Planner call repeated the same semantic rejection without an unused effective remediation. This is repeated failure, not replay of the previous request."}
+     if terminal is None and int(_epoch(state).get("planner_calls_total") or 0) >= planner_call_limit(state):
+         terminal = {"error_code": "PLANNING_EPOCH_EXHAUSTED", "error_owner": "planner",
+-                    "detail": "The last allowed Planner response was rejected. The budget is exhausted; no further request is authorized."}
++                    "detail": "The last allowed Planner response was rejected. The budget is exhausted; no further request is authorized.",
++                    "machine_evidence": {"planner_calls_total": _epoch(state).get("planner_calls_total"),
++                        "max_planner_calls_per_epoch": planner_call_limit(state),
++                        "last_validation_codes": list(dict.fromkeys(str(row.get("code") or row.get("violation_code") or "UNKNOWN")
++                            for row in failure.get("validation_issues", []) if isinstance(row, Mapping))),
++                        "source": "durable_planning_epoch_and_effective_call_limit"}}
+     if terminal:
+         updated = terminalize_planning_failure(state,
+             planning_epoch_id=str(failure.get("planning_epoch_id") or ""),
+--- a/agent_core/cli_lifecycle.py
++++ b/agent_core/cli_lifecycle.py
+@@ -150,6 +150,15 @@
+ 
+ 
+ def _stop_text(stop, code):
++    if code == 'PLANNING_EPOCH_EXHAUSTED':
++        budget = stop.get('budget_receipt') or {}
++        used = budget.get('planner_calls_total', stop.get('model_turns'))
++        limit = budget.get('max_planner_calls_per_epoch')
++        count = (str(used) if type(used) is int else '未知') + '/' + (str(limit) if type(limit) is int else '未知')
++        last = budget.get('last_validation_codes') or []
++        return ('Planner 请求额度已耗尽（已用/上限：' + count + '）；尚未形成可批准计划。'
++                + ('最后阻塞：' + '、'.join(_brief(item, 120) for item in last[:6]) + '。' if last else '')
++                + '（' + code + '）。')
+     detail = str(stop.get('detail') or '')
+     if code == 'RECOVERY_SEED_CAPACITY_EXCEEDED':
+         # Historical receipts retain their original units and admission stage.
+@@ -275,12 +284,14 @@
+     elif usage.get('scope') in {'last_admitted_episode', 'current_episode'}:
+         label = '最近已记录调查' if usage['scope'] == 'last_admitted_episode' else '本次调查'
+         rows.append(f"{label}：{usage.get('turn_count', '未知')} 次模型请求，{usage.get('tool_call_count', '未知')} 次工具调用；不是全会话累计。")
+-    else:
++    elif facts.get('stage') != 'planner':
+         rows.append('调查累计次数：未知（现有回执未提供完整范围）。')
+     rows.append(delivery_text(facts))
+     if status != 'completed':
+         protection = _OUTPUT_PROTECTION.get(str(origin.get('error_code') or origin.get('reason_code') or ''))
+-        next_step = (protection[1] if protection else
++        next_step = ('查看被拒绝的 Plan 候选、上述资源字段冲突及规划反馈，修正完整计划后重新提交；本轮尚未执行科学步骤。'
++                     if facts.get('stage') == 'planner' and execution.get('executed') is False else
++                     protection[1] if protection else
+                      '修正当前步骤证据登记的标识，再按现有流程核验与提交。' if identity_issue else
+                      '验证已声明的环境与所需命令，按正式修订和批准流程重新生成当前未完成步骤。' if (facts.get('runtime_diagnostics') or {}).get('missing_commands') else
+                      '根据上述具体检查记录修复当前未完成步骤，再走现有核验与提交流程。' if facts.get('unresolved_findings') else
+--- a/prompts/manager.py
++++ b/prompts/manager.py
+@@ -1915,11 +1915,23 @@
+ resource_ref identifies the resource; access declares this step's use. Omit role
+ when no selected domain helper requires it. A read must have a real initial or
+ reachable producer/state source. A mutate use needs a declared mutable workspace
+-and its separate workspace_mutations transition/evidence facts. outputs remains
++and a state/evidence transition. When the exact selected role already defines
++that transition, omit the duplicate workspace_mutations; the compiler supplies
++the frozen capability facts. Otherwise declare the actual transition. outputs remains
+ the sole immutable-artifact producer declaration. Dependencies order steps;
+ they do not supply missing resources, access, or runtime evidence.
+ Do not also write steps[].inputs, its legacy aliases, or resource-side
+ role_associations in version 3. These are not independently editable copies.
++Put a newly created file or directory bundle only in outputs. Do not declare
++it as mutate because creating it writes bytes. A destination/parent-directory
++writability or collision probe describes the output path as its target, not a
++READ of the future output's contents. A real content READ must have a producer.
++Unknown biological parameters require ask_user before their FIRST use. In WGS,
++read-group fields affecting sample/library/platform may be needed before mapping;
++ploidy is needed before calling and filter choices before filtering. Do not put
++unresolved placeholder text in executable parameter values or assume defaults.
++An explicit selected calling route may use justified auxiliary tools; a missing
++tool from an unselected alternative does not block independent selected stages.
+ The runtime may derive read-only compatibility views from resource_uses; those
+ views do not authorize new resources and are not fields to return in a Plan.
+ 
+@@ -1974,7 +1986,10 @@
+ plus one or more of `produces_bindings`, `produces_observations`,
+ `workspace_mutations`, or `explicit_side_effects` for legitimate non-artifact
+ effects. An empty `outputs` array is valid when another effect is declared.
+-When selecting a domain capability, use its exact operation/effect interfaces.
++When selecting a domain capability, its unique operation and fixed effects may
++be omitted: the compiler derives them before approval. Do not copy produced
++artifacts, observations, or side effects simply to repeat that capability.
++Explicit conflicting declarations are rejected, never silently rewritten.
+ For explicit framework.generic.execute, operation is execute and tool is python
+ or bash; declare the actual observable effects needed by this approved step.
+ Generic checks need no invented domain capability, helper role or output file.
+@@ -2097,10 +2112,6 @@
+     "operation": "<selected-domain-operation-or-execute-for-generic>",
+     "resource_uses": [{"resource_ref":"<exact-resource-handle>","access":"read|mutate"}],
+     "outputs": ["<existing-output-or-plan-handle>"],
+-    "produces_bindings": ["<declared-semantic-binding-id>"],
+-    "produces_observations": ["<declared-observation-id>"],
+-    "workspace_mutations": [{"workspace_ref": "<declared-mutable-workspace-id>", "mutation": "<selected-capability-mutation>", "requires_available": false, "requires_state": "<required-prior-state-or-empty>", "available_after_success": true, "establishes_state": "<state-after-success>", "contract_source": "<selected-capability-contract-source>", "contract_revision": "<exact-capability-contract-revision>"}],
+-    "explicit_side_effects": ["<declared-supported-side-effect-id>"],
+     "dependencies": ["<task-specific-step-id>"],
+     "success_criteria": ["<task-specific-criterion>"],
+     "skill_ids": ["<canonical-selected-skill-id; may be empty for explicit generic execution>"],
+--- a/agent_core/workflow/managed_stop.py
++++ b/agent_core/workflow/managed_stop.py
+@@ -17,7 +17,7 @@
+     canonical_task_spec_for_state, plan_approval_is_current, has_materialized_plan)
+ from agent_core.workflow.inspection_stop import (
+     _mapping, _safe, _code, _hash, _authority, _active_packet, _steps,
+-    _report_targets, _internal_report_targets, _report_bodies, _write_report, _secondary, _terminal_packet,
++    _report_targets, _planning_report_targets, _internal_report_targets, _report_bodies, _write_report, _secondary, _terminal_packet,
+     build_inspection_stop, inspection_stop_explanation,
+ )
+ from agent_core.workflow.runtime_recovery_reporting import _path, publish_report
+@@ -170,6 +170,15 @@
+     latest["response_integrity"] = deepcopy(_mapping(planning.get("response_integrity")))
+     remediation = deepcopy(planning.get("attempted_remediation") or latest["response_integrity"].get("attempted_remediation") or [])
+     epoch = _mapping(planning.get("planning_epoch"))
++    budget = deepcopy(terminal.get("machine_evidence") or {})
++    if type(epoch.get("planner_calls_total")) is int:
++        budget.setdefault("planner_calls_total", epoch["planner_calls_total"])
++    recorded_limit = _mapping(_mapping(durable.get("task_state")).get("budgets")).get("max_planner_calls_per_epoch")
++    if type(recorded_limit) is int:
++        from agent_core.planner_recovery import planner_call_limit
++        budget.setdefault("max_planner_calls_per_epoch", planner_call_limit(durable))
++    budget.setdefault("last_validation_codes", list(dict.fromkeys(str(row.get("code") or row.get("violation_code") or "UNKNOWN")
++        for row in planning.get("validation_issues", []) if isinstance(row, Mapping))))
+     value = {"schema_version": 1, "producer": PRODUCER, "status": boundary["status"],
+         "scope": scope, "authority": _authority(durable), "boundary": deepcopy(boundary),
+         "planning": planning, "primary_cause": primary_summary, "latest_failure": latest,
+@@ -182,8 +191,8 @@
+             "evidence_refs": [str(planning["primary_context_ref"])] if planning.get("primary_context_ref") else []},
+         "task_summary": _safe(planning.get("task_summary"), 1800),
+         "stage": "planner", "stop_reason": {"error_code": code, "detail": _safe(terminal.get("detail") or boundary["outcome"].get("summary")),
+-            "budget_receipt": deepcopy(terminal.get("machine_evidence") or {}),
+-            "model_turns": int(epoch.get("planner_calls_total") or 0), "repeat_count": int(planning.get("repeat_count") or 0)},
++            "budget_receipt": budget,
++            "model_turns": epoch.get("planner_calls_total"), "repeat_count": int(planning.get("repeat_count") or 0)},
+         "execution": {"step_id": "", "attempt_id": "", "executed": False, "returncode": None,
+             "deterministic_passed": False, "validation_status": "not_performed", "reviewer_disposition": "not_performed",
+             "committed": False, "step_status": "not_started", "command_body_available": False},
+@@ -191,7 +200,7 @@
+         "resolution": "unresolved", "automatic_actions_stopped": True, "technical_classification": "planning_unresolved",
+         "summary_status": "IMPLEMENTED", "summary_skip_reason": "", "summary_llm_calls": 0,
+         "persistence_status": "unconfirmed", "reports_status": "not_attempted", "report_paths": {},
+-        "report_receipts": {"reproduce.sh": {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}},
++        "report_receipts": {},
+         "secondary_failures": []}
+     value["scope"]["task_id"] = task_id
+     value["stop_id"] = "managed-stop:" + _hash({"scope": scope, "authority": value["authority"], "stop_reason": value["stop_reason"]})
+@@ -717,7 +726,7 @@
+         "停止原因：" + str(reason.get("error_code") or "UNKNOWN") + "。",
+         "最初拒绝：" + str(primary.get("error_code") or "PLANNER_ORIGIN_NOT_PERSISTED") + "；" + _safe(primary.get("message")),
+         "末次拒绝：" + str(latest.get("error_code") or "UNKNOWN") + "；" + _safe(latest.get("message")),
+-        "本轮已发起 Planner 请求：" + str(reason.get("model_turns", 0)) + "；当前连续结构无进展记录：" + str(reason.get("repeat_count", 0)) + "。",
++        "本轮已发起 Planner 请求：" + str(reason.get("model_turns") if reason.get("model_turns") is not None else "未知") + " / 上限 " + str(_mapping(reason.get("budget_receipt")).get("max_planner_calls_per_epoch", "未知")) + "；当前连续结构无进展记录：" + str(reason.get("repeat_count", 0)) + "。",
+         "任务 revision=" + str(scope.get("task_revision", "unknown")) + "；planning epoch=" + str(scope.get("planning_epoch_id") or "unknown") + "。"]
+     issues = facts.get("validation_issues") or []
+     parts.append(_planning_response_explanation("最初", primary.get("response_integrity")))
+@@ -757,7 +766,7 @@
+         name + "=" + str(_mapping(receipts.get(name)).get("status") or "not_attempted")
+         + " / " + str(_mapping(receipts.get(name)).get("reason") or ("WRITER_NOT_RUN" if name not in receipts else "receipt recorded"))
+         for name in ("report.md", "stage_status.tsv", "reproduce.sh")))
+-    parts.append("没有科学执行 attempt，不生成科学复现脚本；原任务的科学交付尚未完成。")
++    parts.append("没有科学执行 attempt；reproduce.sh 仅记录规划未接纳且未运行，不包含科学复现命令。原任务的科学交付尚未完成。")
+     if stop.get("secondary_failures"):
+         parts.append("附加问题：" + "；".join(str(i.get("error_code") or "UNKNOWN") for i in stop["secondary_failures"]))
+     return "\n\n".join(parts)
+@@ -1044,6 +1053,10 @@
+         rows.append("run\t" + value["status"] + "\tstopped\tfalse\t" + value["stop_reason"]["error_code"])
+         bodies["stage_status.tsv"] = "\n".join(rows) + "\n"
+         bodies["report.md"] = "# BioMind managed run stop\n\nStop identity: " + value["stop_id"] + "\n\n" + explanation(value) + "\n"
++        if value.get("planning"):
++            bodies["reproduce.sh"] = ("#!/bin/sh\n# Planning was not accepted; no scientific commands were executed.\n"
++                "# This is a stop record, not a runnable WGS reproduction.\n# Stop: " + value["stop_id"]
++                + "\n# Inspect the rejected Plan and planning feedback before a new submission.\nexit 1\n")
+         if execution.get("command_body_available"):
+             # Preserve the actual command as commented evidence. A failed
+             # action is never silently turned into a runnable success recipe.
+@@ -1059,12 +1072,7 @@
+             if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,159}", str(task_id)):
+                 raise ValueError("MANAGED_STOP_TASK_ID_REJECTED")
+             task_root = _path(Path(agent.data_path).absolute() / "task_outputs" / task_id)
+-            targets = {name: _path(task_root / name) for name in ("report.md", "stage_status.tsv")}
+-            spec = canonical_task_spec_for_state(durable)
+-            inputs = {str(i.get("canonical_path") or i.get("path") or "") for i in spec.get("inputs") or [] if isinstance(i, Mapping)}
+-            if any(str(target) in inputs for target in targets.values()):
+-                raise ValueError("MANAGED_STOP_REPORT_INPUT_OVERLAP")
+-            value["report_receipts"]["reproduce.sh"] = {"status": "skipped", "reason": "NO_EXECUTION_ATTEMPT"}
++            targets = _planning_report_targets(durable, task_root)
+         else:
+             targets = _report_targets(durable, Path(agent.data_path).absolute() / "task_outputs" / task_id)
+         for name in ("stage_status.tsv", "reproduce.sh", "report.md"):
+--- a/agent_core/workflow/inspection_stop.py
++++ b/agent_core/workflow/inspection_stop.py
+@@ -510,6 +510,58 @@
+         stop["secondary_failures"].append(row)
+ 
+ 
++def _planning_report_targets(durable, task_root):
++    """Only explicit TaskSpec stop documents; rejected Plan paths confer no authority.
++
++    These are failure explanations, not approved scientific outputs. The normal
++    publisher still enforces ownership and protects every unowned existing file.
++    """
++    spec = canonical_task_spec_for_state(durable)
++    outputs = effective_output_contracts(spec)
++    by_ref = {str(row.get(k)): row for row in outputs for k in ("artifact_id", "output_id", "semantic_handle") if row.get(k)}
++    authorized = {"user_explicit", "user_confirmed"}
++    names = {"report": "report.md", "reproduce_script": "reproduce.sh", "stage_status": "stage_status.tsv"}
++    result = {}
++    for row in outputs:
++        name = names.get(row.get("role")) or row.get("required_basename") or row.get("filename")
++        if name not in _REPORT_NAMES:
++            continue
++        if str(row.get("source") or row.get("source_type")) not in authorized:
++            raise ValueError("PLANNING_REPORT_USER_AUTHORITY_MISSING")
++        if row.get("path_policy") == "managed_exact" and row.get("canonical_path"):
++            target = _path(row["canonical_path"])
++            if target.name != name:
++                raise ValueError("PLANNING_REPORT_FILENAME_CONFLICT")
++        elif row.get("path_policy") == "planner_materialized":
++            root = by_ref.get(str(row.get("root_ref") or "")) or {}
++            if (str(root.get("source") or root.get("source_type")) not in authorized
++                    or root.get("artifact_kind") != "directory" or root.get("path_policy") != "managed_exact"
++                    or not root.get("canonical_path")):
++                raise ValueError("PLANNING_REPORT_ROOT_NOT_AUTHORIZED")
++            directory = _path(root["canonical_path"])
++            target = _path(directory / name)
++            if target.parent != directory:
++                raise ValueError("PLANNING_REPORT_PATH_ESCAPE")
++        else:
++            raise ValueError("PLANNING_REPORT_LOCATION_UNRESOLVED")
++        if name in result and result[name] != target:
++            raise ValueError("PLANNING_REPORT_OUTPUT_AMBIGUOUS")
++        result[name] = target
++    if not result:
++        # Preserve the existing session-local diagnostic delivery for tasks
++        # without any explicit report output. Never substitute it for a known
++        # but unauthorized/ambiguous requested location.
++        result = {name: _path(task_root / name) for name in _REPORT_NAMES}
++    for row in spec.get("inputs", []) or []:
++        raw = row.get("canonical_path") or row.get("path")
++        if raw:
++            input_path = _path(raw)
++            if any(target == input_path or (row.get("artifact_kind") == "directory" and target.is_relative_to(input_path))
++                   for target in result.values()):
++                raise ValueError("PLANNING_REPORT_INPUT_OVERLAP")
++    return result
++
++
+ def _report_targets(durable, task_root):
+     """Resolve only declared, approved output contracts and materializations."""
+     spec = canonical_task_spec_for_state(durable)

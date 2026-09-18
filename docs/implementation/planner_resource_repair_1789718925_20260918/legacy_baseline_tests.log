@@ -1,0 +1,164 @@
+F...........FFFFF.FFF.FFF.FFFFF..F                                       [100%]
+=================================== FAILURES ===================================
+__________________________ test_c_fix_full_admission ___________________________
+tests/test_plan_resource_fix.py:32: in test_c_fix_full_admission
+    assert not result['states'], [s['task_state'].get('planning_failure') for s in result['states']]
+E   AssertionError: [{'schema_version': 1, 'status': 'unresolved', 'attempt': 1, 'repeat_count': 0, ...}]
+E   assert not [{'task_id': 'synthetic-resource-cycle-FIX_C', 'plan_id': 'plan_445e583700d04141bd95', 'schema_version': 10, 'plan_schema_version': 10, ...}]
+___________________ test_freeze_reload_and_artifact_binding ____________________
+tests/test_plan_resource_fix.py:118: in test_freeze_reload_and_artifact_binding
+    result = asyncio.run(scenario([c_fix()], 'FIX_frozen', after_plan=freeze_and_consume))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/plan_resource_fix_support.py:159: in scenario
+    result['after_plan'] = await after_plan(case, task, final_states[-1], runner)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_plan_resource_fix.py:73: in freeze_and_consume
+    with pytest.raises(ValueError, match='NOT_APPROVED'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+____________________ test_independent_process_frozen_reload ____________________
+tests/test_plan_resource_fix.py:124: in test_independent_process_frozen_reload
+    pointer = json.loads((Path(os.environ['BIOMIND_RESOURCE_AUDIT_RESULTS'])/'FIX_reload_pointer.json').read_text())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/biomind-resource-baseline-results/FIX_reload_pointer.json'
+____________ test_actual_generate_request_and_binding_normalization ____________
+tests/test_plan_resource_fix.py:195: in test_actual_generate_request_and_binding_normalization
+    asyncio.run(scenario([c_fix()], 'FIX_generate', after_plan=generate_binding_request))
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/plan_resource_fix_support.py:159: in scenario
+    result['after_plan'] = await after_plan(case, task, final_states[-1], runner)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_plan_resource_fix.py:137: in generate_binding_request
+    frozen_result = await freeze_and_consume(case, task, state, runner)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_plan_resource_fix.py:73: in freeze_and_consume
+    with pytest.raises(ValueError, match='NOT_APPROVED'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+___________________ test_two_scoped_workspaces_do_not_alias ____________________
+tests/test_plan_resource_fix.py:252: in test_two_scoped_workspaces_do_not_alias
+    asyncio.run(scenario([dual_workspace_candidate()], 'FIX_dual', after_plan=dual_projection))
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/plan_resource_fix_support.py:159: in scenario
+    result['after_plan'] = await after_plan(case, task, final_states[-1], runner)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_plan_resource_fix.py:233: in dual_projection
+    for step in snapshot['steps']:
+                ^^^^^^^^^^^^^^^^^
+E   KeyError: 'steps'
+____________ test_annotation_cannot_read_other_associated_workspace ____________
+tests/test_plan_resource_fix.py:259: in test_annotation_cannot_read_other_associated_workspace
+    assert 'PLAN_RESOURCE_ROLE_READ_MISSING' in [x['code'] for x in result['states'][-1]['task_state']['planning_failure']['validation_issues']]
+E   AssertionError: assert 'PLAN_RESOURCE_ROLE_READ_MISSING' in ['PLAN_RESOURCE_ROLE_SCOPE_INVALID']
+_______ test_existing_formal_resource_retains_explicit_role_associations _______
+tests/test_plan_resource_fix.py:277: in test_existing_formal_resource_retains_explicit_role_associations
+    bindings=compile_plan_resource_bindings(c,candidate_scope_id='synthetic-reuse',
+agent_core/plan_bindings.py:550: in compile_plan_resource_bindings
+    not_evaluated=["step_effects", "dataflow", "required_workspace_coverage"])
+E   agent_core.plan_bindings.PlanBindingError: PLAN_RESOURCE_ROLE_SCOPE_INVALID: {"actual":{"capability_id":"genomics.snpeff_annotation.prepare_database","role":"artifact.snpeff_data_dir","step_id":"prepare_database"},"expected":{"capability_id":"genomics.snpeff_annotation.prepare_database","resource_kind":"mutable_workspace","roles":{}},"field_path":"$.proposed_artifacts[1].role_associations[0]","machine_evidence":{"declared_step_ids":["annotate_variants","build_database","check_contig_compatibility","finalize_outputs","prepare_database","summarize_ann"],"failed_conditions":{"capability_mismatch":false,"parent_resource_kind_mismatch":false,"role_not_declared":true,"selected_skill_mismatch":true,"step_not_declared":false},"parent_local_ref":"plan.snpeff_data_dir","parent_resource_kind":"mutable_workspace","referenced_step_id":"prepare_database","selected_skill_id":null,"step_lookup_found":true},"not_evaluated":["step_effects","dataflow","required_workspace_coverage"]}
+____________________ test_original_loop_and_actual_feedback ____________________
+tests/test_plan_resource_cycle_audit.py:152: in test_original_loop_and_actual_feedback
+    assert r['counts']['planner']==7
+E   assert 4 == 7
+_______________________ test_public_c_expression_gap[C] ________________________
+tests/test_plan_resource_cycle_audit.py:175: in test_public_c_expression_gap
+    assert 'PLAN_RESOURCE_BINDING_MISSING' in codes(r)
+E   AssertionError: assert 'PLAN_RESOURCE_BINDING_MISSING' in ['UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY']
+E    +  where ['UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY'] = codes({'counts': {'consultant': 1, 'planner': 1}, 'states': [{'task_id': 'synthetic-resource-cycle-C', 'plan_id': 'plan_2a35...UNKNOWN_EXECUTION_CAPABILITY', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', ...}]), 'kwargs': {}, ...}], ...})
+___________________ test_public_c_expression_gap[inherited] ____________________
+tests/test_plan_resource_cycle_audit.py:175: in test_public_c_expression_gap
+    assert 'PLAN_RESOURCE_BINDING_MISSING' in codes(r)
+E   AssertionError: assert 'PLAN_RESOURCE_BINDING_MISSING' in ['REQUIRED_WORKSPACE_UNCOVERED', 'PLAN_RESOURCE_UNAVAILABLE', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', ...]
+E    +  where ['REQUIRED_WORKSPACE_UNCOVERED', 'PLAN_RESOURCE_UNAVAILABLE', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', ...] = codes({'counts': {'consultant': 1, 'planner': 1}, 'states': [{'task_id': 'synthetic-resource-cycle-inherited', 'plan_id': 'p...WN_EXECUTION_CAPABILITY', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', ...}, ...]), 'kwargs': {}, ...}], ...})
+____________________ test_public_c_expression_gap[renamed] _____________________
+tests/test_plan_resource_cycle_audit.py:175: in test_public_c_expression_gap
+    assert 'PLAN_RESOURCE_BINDING_MISSING' in codes(r)
+E   AssertionError: assert 'PLAN_RESOURCE_BINDING_MISSING' in ['UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY']
+E    +  where ['UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY'] = codes({'counts': {'consultant': 1, 'planner': 1}, 'states': [{'task_id': 'synthetic-resource-cycle-renamed', 'plan_id': 'pla...UNKNOWN_EXECUTION_CAPABILITY', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', ...}]), 'kwargs': {}, ...}], ...})
+______________ test_public_c_expression_gap[new_protocol_example] ______________
+tests/test_plan_resource_cycle_audit.py:175: in test_public_c_expression_gap
+    assert 'PLAN_RESOURCE_BINDING_MISSING' in codes(r)
+E   AssertionError: assert 'PLAN_RESOURCE_BINDING_MISSING' in ['UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY']
+E    +  where ['UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY', 'UNKNOWN_EXECUTION_CAPABILITY'] = codes({'counts': {'consultant': 1, 'planner': 1}, 'states': [{'task_id': 'synthetic-resource-cycle-new_protocol_example', 'p...UNKNOWN_EXECUTION_CAPABILITY', 'severity': 'error', 'disposition': 'REPAIR_REQUIRED', ...}]), 'kwargs': {}, ...}], ...})
+_________ test_compiled_candidate_uuid_is_spurious_structure_progress __________
+tests/test_plan_resource_cycle_audit.py:193: in test_compiled_candidate_uuid_is_spurious_structure_progress
+    assert len(failures)==3 and r['external_stop']
+E   AssertionError: assert (2 == 3)
+E    +  where 2 = len([{'schema_version': 1, 'status': 'unresolved', 'attempt': 1, 'repeat_count': 0, ...}, {'schema_version': 1, 'status': 'terminal', 'attempt': 2, 'repeat_count': 1, ...}])
+__________________________ test_late_cancel_response ___________________________
+tests/test_plan_resource_cycle_audit.py:201: in test_late_cancel_response
+    assert not r['states'][-1]['steps'] and not r['states'][-1]['plan_artifacts']
+               ^^^^^^^^^^^^^^^
+E   IndexError: list index out of range
+__________________ test_readonly_capability_positive_control ___________________
+tests/test_plan_resource_cycle_audit.py:212: in test_readonly_capability_positive_control
+    assert s['steps'] and not r['states']
+E   assert ([])
+_______________ test_late_valid_candidate_does_not_gain_approval _______________
+tests/test_plan_resource_cycle_audit.py:220: in test_late_valid_candidate_does_not_gain_approval
+    assert s['current_approval']['status']=='pending'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'status'
+___________ test_rejection_keeps_old_plan_without_review_eligibility ___________
+tests/test_plan_resource_cycle_audit.py:234: in test_rejection_keeps_old_plan_without_review_eligibility
+    assert rejected['task_state']['plan_review_submission']==old['task_state']['plan_review_submission']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'plan_review_submission'
+_______________ test_formal_path_text_parser_and_admission_seams _______________
+tests/test_plan_resource_cycle_audit.py:299: in test_formal_path_text_parser_and_admission_seams
+    assert [x['violation_code'] for x in effect_errors]==['STEP_EFFECT_CAPABILITY_MISMATCH']*2
+E   AssertionError: assert [] == ['STEP_EFFECT...ITY_MISMATCH']
+E
+E     Right contains 2 more items, first extra item: 'STEP_EFFECT_CAPABILITY_MISMATCH'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_plan_resource_fix.py::test_c_fix_full_admission - Assertion...
+FAILED tests/test_plan_resource_fix.py::test_freeze_reload_and_artifact_binding
+FAILED tests/test_plan_resource_fix.py::test_independent_process_frozen_reload
+FAILED tests/test_plan_resource_fix.py::test_actual_generate_request_and_binding_normalization
+FAILED tests/test_plan_resource_fix.py::test_two_scoped_workspaces_do_not_alias
+FAILED tests/test_plan_resource_fix.py::test_annotation_cannot_read_other_associated_workspace
+FAILED tests/test_plan_resource_fix.py::test_existing_formal_resource_retains_explicit_role_associations
+FAILED tests/test_plan_resource_cycle_audit.py::test_original_loop_and_actual_feedback
+FAILED tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[C]
+FAILED tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[inherited]
+FAILED tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[renamed]
+FAILED tests/test_plan_resource_cycle_audit.py::test_public_c_expression_gap[new_protocol_example]
+FAILED tests/test_plan_resource_cycle_audit.py::test_compiled_candidate_uuid_is_spurious_structure_progress
+FAILED tests/test_plan_resource_cycle_audit.py::test_late_cancel_response - I...
+FAILED tests/test_plan_resource_cycle_audit.py::test_readonly_capability_positive_control
+FAILED tests/test_plan_resource_cycle_audit.py::test_late_valid_candidate_does_not_gain_approval
+FAILED tests/test_plan_resource_cycle_audit.py::test_rejection_keeps_old_plan_without_review_eligibility
+FAILED tests/test_plan_resource_cycle_audit.py::test_formal_path_text_parser_and_admission_seams
+18 failed, 16 passed in 95.51s (0:01:35)

@@ -1,0 +1,20 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_secondary_faults_preserve_outer_base[writer_one] _____________
+tests/test_common_finalization_faults.py:50: in test_secondary_faults_preserve_outer_base
+    asyncio.run(scenario())
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:195: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+tests/test_common_finalization_faults.py:47: in scenario
+    assert 'report.md' not in a._managed_terminal_results[f.task_id]['terminal_diagnostic']['report_paths']
+E   AssertionError: assert 'report.md' not in {'stage_status.tsv': '/tmp/pytest-of-liusiqi/pytest-379/test_secondary_faults_preserve0/task_outputs/inspection-e2e/st...'report.md': '/tmp/pytest-of-liusiqi/pytest-379/test_secondary_faults_preserve0/task_outputs/inspection-e2e/report.md'}
+=========================== short test summary info ============================
+FAILED tests/test_common_finalization_faults.py::test_secondary_faults_preserve_outer_base[writer_one]
+1 failed in 13.86s
