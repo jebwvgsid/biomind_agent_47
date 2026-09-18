@@ -102,7 +102,8 @@ async def mapping_scenario(mode, retry=False, adverse=False):
                     assert 'error: unrecognized arguments: S1' in str(recovery_requests[-1]);directive.pop('schema_version')
                 else:assert len(recovery_requests)==2 and 'STAGE_FIELD_REQUIRED' in str(recovery_requests[-1])
                 return AIMessage(content='SYNTHETIC_RECOVERY_DIAGNOSTIC ' * 300,
-                    tool_calls=[{'name':'submit_recovery_directive','id':'submit-'+str(len(recovery_requests)),'args':directive}])
+                    tool_calls=[{'name':'submit_recovery_directive','id':'submit-'+str(len(recovery_requests)),'args':directive}],
+                    response_metadata={'finish_reason':'tool_calls'})
         def sink(event,payload):
             if event=='recovery_response_received':receptions.append(deepcopy(payload))
             case.agent._schema2_recovery_event_sink(event,payload)

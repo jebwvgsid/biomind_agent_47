@@ -203,19 +203,27 @@ def _envelope(policy: ProviderTimeoutPolicy, ordinal: int = 1) -> ProviderAttemp
     )
 
 
-def _agent(llm, *, data_path="", attempts=2):
+def _agent(llm, *, data_path="", attempts=2, timeout_policy=None):
     agent = BioAnalystAgent.__new__(BioAnalystAgent)
-    agent.data_path = data_path
+    if not data_path:
+        # Trace/identity code may materialize task state. Keep each fixture's
+        # cache and journal outside the candidate tree and other test cases.
+        agent._test_data_root = tempfile.TemporaryDirectory(prefix="provider-fixture-")
+        data_path = agent._test_data_root.name
+    agent.data_path = str(data_path)
+    # Ordinary taxonomy/receipt tests must not race a 20 ms watchdog while
+    # persisting real trace records. Timing tests pass an explicit short policy.
+    policy = timeout_policy or ProviderTimeoutPolicy(2.0, 2.0, 2.0, 2.0)
     agent.llm = llm
     agent.llm_provider_is_deepseek = False
     agent.llm_provider_id = "fake"
     agent.llm_model_id = "fake-model"
-    agent.llm_timeout_seconds = 0.12
-    agent.llm_readonly_timeout_seconds = 0.12
-    agent.llm_total_timeout_seconds = 0.12
-    agent.llm_first_chunk_timeout_seconds = 0.02
-    agent.llm_stream_idle_timeout_seconds = 0.02
-    agent.llm_cancel_cleanup_timeout_seconds = 0.02
+    agent.llm_timeout_seconds = policy.total_seconds
+    agent.llm_readonly_timeout_seconds = policy.total_seconds
+    agent.llm_total_timeout_seconds = policy.total_seconds
+    agent.llm_first_chunk_timeout_seconds = policy.first_chunk_seconds
+    agent.llm_stream_idle_timeout_seconds = policy.idle_seconds
+    agent.llm_cancel_cleanup_timeout_seconds = policy.cleanup_seconds
     agent.generate_provider_max_attempts = attempts
     agent.generate_provider_retry_base_seconds = 0.5
     agent.generate_provider_retry_cap_seconds = 8.0
@@ -247,7 +255,7 @@ def _http_status_error(status: int, *, retry_after: str = "") -> httpx.HTTPStatu
 class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_a1_first_attempt_timeout_then_retry_success(self):
         llm = _ScenarioLLM(["no_chunks", "success"])
-        agent = _agent(llm)
+        agent = _agent(llm, timeout_policy=ProviderTimeoutPolicy(0.2, 0.2, 2.0, 0.02))
         response = await agent._ainvoke_llm(
             [HumanMessage(content="same request")],
             stage="generate",
@@ -260,7 +268,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_a2_two_timeouts_are_terminal_without_third_attempt(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             llm = _ScenarioLLM(["no_chunks", "no_chunks"])
-            agent = _agent(llm, data_path=tmpdir)
+            agent = _agent(llm, data_path=tmpdir, timeout_policy=ProviderTimeoutPolicy(0.2, 0.2, 2.0, 0.02))
             with self.assertRaises(ProviderAttemptFailure) as caught:
                 await agent._ainvoke_llm(
                     [HumanMessage(content="same request")],
@@ -350,7 +358,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
             lambda observer: _ScenarioLLM(["success"]).ainvoke(
                 [], {"callbacks": [observer]}
             ),
-            _envelope(ProviderTimeoutPolicy(0.02, 0.02, 0.08, 0.02)),
+            _envelope(ProviderTimeoutPolicy(2.0, 2.0, 2.0, 2.0)),
         )
         self.assertEqual(response.content, "completed")
         self.assertEqual(record.usage_status, "UNKNOWN")
@@ -431,7 +439,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_a9_cleanup_unknown_never_retries(self):
         llm = _ScenarioLLM(["ignore_cancel", "success"])
-        agent = _agent(llm)
+        agent = _agent(llm, timeout_policy=ProviderTimeoutPolicy(0.2, 0.2, 2.0, 0.02))
         agent.llm_cancel_cleanup_timeout_seconds = 0.005
         try:
             with self.assertRaises(ProviderAttemptFailure) as caught:
@@ -462,7 +470,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
     async def test_a11_partial_response_is_diagnostic_never_executable(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             llm = _ScenarioLLM(["partial_then_stall"])
-            agent = _agent(llm, data_path=tmpdir, attempts=1)
+            agent = _agent(llm, data_path=tmpdir, attempts=1, timeout_policy=ProviderTimeoutPolicy(0.2, 0.2, 2.0, 0.02))
             with self.assertRaises(ProviderAttemptFailure):
                 await agent._ainvoke_llm(
                     [HumanMessage(content="produce action")],
@@ -528,7 +536,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_a14_retry_keeps_semantic_and_context_hashes(self):
         llm = _ScenarioLLM(["no_chunks", "success"])
-        agent = _agent(llm)
+        agent = _agent(llm, timeout_policy=ProviderTimeoutPolicy(0.2, 0.2, 2.0, 0.02))
         await agent._ainvoke_llm(
             [HumanMessage(content="same immutable request")],
             stage="generate",
@@ -543,7 +551,7 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_a15_canonical_change_fences_stale_retry(self):
         llm = _ScenarioLLM(["no_chunks", "success"])
-        agent = _agent(llm)
+        agent = _agent(llm, timeout_policy=ProviderTimeoutPolicy(0.2, 0.2, 2.0, 0.02))
         with self.assertRaises(ProviderAttemptFailure) as caught:
             await agent._ainvoke_llm(
                 [HumanMessage(content="same request")],
@@ -793,8 +801,6 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory(prefix="recovery-provider-adapter-") as root:
             llm = CaptureLLM()
             agent = _agent(llm, data_path=root, attempts=1)
-            # This test checks dispatch/receipt semantics, not a 120 ms preparation deadline.
-            agent.llm_timeout_seconds = agent.llm_total_timeout_seconds = 2.0
             agent.recovery_llm_policy = {}
             messages = [
                 HumanMessage(content="frozen recovery seed"),
@@ -844,8 +850,6 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory(prefix="recovery-tool-partial-") as root:
             llm = _ScenarioLLM(["tool_partial_read_error"])
             agent = _agent(llm, data_path=root, attempts=1)
-            # This test checks dispatch/receipt semantics, not a 120 ms preparation deadline.
-            agent.llm_timeout_seconds = agent.llm_total_timeout_seconds = 2.0
             agent.recovery_llm_policy = {"sdk_max_retries": 0}
             with self.assertRaises(httpx.ReadError):
                 await agent._schema2_recovery_provider_invoke(
@@ -930,8 +934,6 @@ class ProviderAttemptReliabilityTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory(prefix="recovery-order-") as root:
             llm = InspectingLLM(root)
             agent = _agent(llm, data_path=root, attempts=1)
-            # This test checks dispatch/receipt semantics, not a 120 ms preparation deadline.
-            agent.llm_timeout_seconds = agent.llm_total_timeout_seconds = 2.0
             agent.recovery_llm_policy = {"sdk_max_retries": 0}
             await agent._schema2_recovery_provider_invoke(
                 [HumanMessage(content="frozen recovery seed")],

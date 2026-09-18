@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 import httpx
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
@@ -54,18 +55,35 @@ def test_unknown_send_and_concurrent_claim_never_reset(tmp_path):
 def test_backoff_does_not_reset_deadline_or_ignore_cancellation(tmp_path,mode):
     async def scenario():
         m=Model(fail=10);a=_agent(m,data_path=str(tmp_path))
-        a.llm_timeout_seconds=a.llm_total_timeout_seconds=0.2 if mode=='deadline' else 10
-        waiting=asyncio.Event()
+        # Leave a preparation window, then force the retry sleep to exceed the
+        # same absolute request deadline. No production timeout is replaced.
+        a.llm_timeout_seconds=a.llm_total_timeout_seconds=2.0 if mode=='deadline' else 10
+        waiting=asyncio.Event();sleep_cancelled=asyncio.Event();before={}
+        def transport():
+            path=next((tmp_path/'task_outputs/t/context_trace/recovery_transport').glob('*.json'))
+            return json.loads(path.read_text())
         async def sleep(delay):
-            waiting.set();await asyncio.sleep(5)
+            before.update(transport())
+            assert len(m.calls)==1 and len(before['attempts'])==1
+            assert before['status']=='retry_ready' and before['deadline']>time.time()
+            waiting.set()
+            try:
+                await asyncio.sleep(5 if mode=='deadline' else 20)
+            except asyncio.CancelledError:
+                sleep_cancelled.set()
+                raise
         a._provider_retry_sleep=sleep
         task=asyncio.create_task(a._ainvoke_llm([HumanMessage(content='same')],stage='recovery',task_id='t',llm_policy={'sdk_max_retries':0,'application_max_attempts':2}))
+        await asyncio.wait_for(waiting.wait(),timeout=5)
         if mode=='cancel':
-            await waiting.wait();task.cancel()
+            task.cancel()
             with pytest.raises(asyncio.CancelledError):await task
         else:
-            with pytest.raises(Exception):await task
-        assert len(m.calls)==1
+            with pytest.raises(asyncio.TimeoutError):await task
+            assert time.time()>=before['deadline']
+        assert sleep_cancelled.is_set() and len(m.calls)==1
+        after=transport()
+        assert after['deadline']==before['deadline'] and len(after['attempts'])==1
     asyncio.run(scenario())
 
 def test_concurrent_provider_invocations_have_one_outbound_claim(tmp_path):
