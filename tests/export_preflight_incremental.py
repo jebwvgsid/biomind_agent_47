@@ -18,8 +18,10 @@ def main():
     # not an expansion of the executed test selection.
     base.TEST_FILES += tuple(str(p.relative_to(root)) for p in (root/'tests').glob('*.py'))
     base.RESOURCE_FILES += ('tests/fixtures/preflight_1789734892_candidates.json.gz',
+        'tests/fixtures/generate_interaction_1789741049.json.gz',
         'tests/fixtures/context_256k_recovery_1789728208.json.gz',
         'tests/fixtures/preflight_1789734892_receipt.json.gz',
+        'skills/genomics/snpeff-annotation/SKILL.md',
         'skills/3d-dna/tad-calling/SKILL.md')
     skill = 'skills/genomics/wgs-short-read-mapping/'
     base.RESOURCE_FILES += tuple(skill + n for n in ['SKILL.md', 'scripts/inspect_wgs_inputs.py',

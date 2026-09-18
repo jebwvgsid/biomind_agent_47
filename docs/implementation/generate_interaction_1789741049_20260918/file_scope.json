@@ -1,0 +1,55 @@
+{
+  "base_head": "5c95895114dc17f1b649255f13117c72c27edc7e",
+  "production_commit": "155f20a4f3a735f3485398ed9bb965fac40ab3b1",
+  "files": [
+    {
+      "path": "bio_agents.py",
+      "kind": "production",
+      "committed_content_sha256": "facb843d57942efb862537981da818a1071e6d0d4886ceb50e5256c7306fb2b9",
+      "worktree_sha256": "c0338d0580162c202c2a9de414d6889266a2e54a6149ba9ba3d17fd3bbd8f63f",
+      "before_worktree_sha256": "06fe12430ce003705dc39bbe6524d18ba16bcb4289b7798fe6bfae8394e5e499"
+    },
+    {
+      "path": "agent_core/step_effects.py",
+      "kind": "production",
+      "committed_content_sha256": "3e261eff6da61fb259e5ccc3c6dce98e5076011a15225359e6b4fe13f63d79c9",
+      "worktree_sha256": "97e65e4d75b6e715dd20681fd873e687611ff3d4ba558aed1b05eb9b7cd17cec",
+      "before_worktree_sha256": "1e6de64f26ce0d50b8648a1f7966d6bdd4b1b9ea4fabd0c0455d83d36401baba"
+    },
+    {
+      "path": "agent_core/workflow/execution.py",
+      "kind": "production",
+      "committed_content_sha256": "ea664b8aae07ab8f4c015924d3a2e9cb74a2059275c9ff242b3fdcc877d8545c",
+      "worktree_sha256": "ea664b8aae07ab8f4c015924d3a2e9cb74a2059275c9ff242b3fdcc877d8545c",
+      "before_worktree_sha256": "a12de786b26392b80cf57ca03fe232d0cfd0800ff9f2ec70ac1abfffd47ac5f4"
+    },
+    {
+      "path": "tests/test_generate_interaction_entrypoints.py",
+      "kind": "test_or_fixture",
+      "committed_content_sha256": "003264ae1ea69cb83679192688f66c661862ace9e8c743b0e01a1561dcd3caea",
+      "worktree_sha256": "003264ae1ea69cb83679192688f66c661862ace9e8c743b0e01a1561dcd3caea"
+    },
+    {
+      "path": "tests/export_preflight_incremental.py",
+      "kind": "test_or_fixture",
+      "committed_content_sha256": "f53d023aae4f473b99acaff6238f373a9e27f657e45eadaa20e5872d93c6b6c2",
+      "worktree_sha256": "f53d023aae4f473b99acaff6238f373a9e27f657e45eadaa20e5872d93c6b6c2",
+      "before_worktree_sha256": "4ad828a3182344829241d0d7628de07b92122aa9658ccb9c5ed5ae7d0a11763b"
+    },
+    {
+      "path": "tests/fixtures/generate_interaction_1789741049.json.gz",
+      "kind": "test_or_fixture",
+      "committed_content_sha256": "7bab8ae6694044dea6747a93740c586cd2357950f9015598762bdf8216f99cfb",
+      "worktree_sha256": "7bab8ae6694044dea6747a93740c586cd2357950f9015598762bdf8216f99cfb"
+    }
+  ],
+  "documentation": [
+    "docs/implementation/generate_interaction_1789741049_20260918/report.md",
+    "docs/implementation/generate_interaction_1789741049_20260918/reproduce.sh",
+    "docs/implementation/generate_interaction_1789741049_20260918/test_results.json",
+    "docs/implementation/generate_interaction_1789741049_20260918/file_scope.json"
+  ],
+  "protected_preexisting_edits": "Incremental patch from initial worktree snapshots, separately applied and tested on HEAD; no worktree restoration.",
+  "git_index_lock_backup": ".git/codex-session-1789741049.index-lock.bak",
+  "pushed": false
+}

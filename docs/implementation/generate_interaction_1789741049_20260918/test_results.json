@@ -1,0 +1,2003 @@
+{
+  "base_head": "5c95895114dc17f1b649255f13117c72c27edc7e",
+  "production_commit": "155f20a4f3a735f3485398ed9bb965fac40ab3b1",
+  "validated_final_code_and_tests_tree": "c8c7ebe4016b350430f06dc471b154877dc9329d",
+  "validation_kind": "offline production entrypoints, fake providers and synthetic executor leaf",
+  "real_api_calls": 0,
+  "real_scientific_commands": 0,
+  "original_session_restored": false,
+  "final_acceptance": {
+    "name": "final-acceptance-results",
+    "pytest_summary": "59 passed in 109.44s (0:01:49)",
+    "source_identity": "0c79bf3b9fede605ffcd23020893a487e77d5393b406c1b9ad36b4601a982ecf",
+    "source_unchanged": true,
+    "cases": [
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_three_commits_then_question_answer_and_next_execution[False]",
+        "outcome": "passed",
+        "duration": 28.200181238353252
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_three_commits_then_question_answer_and_next_execution[True]",
+        "outcome": "passed",
+        "duration": 17.66091611981392
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_local_carrier_repair_preserves_approved_bash_and_reaches_next_request",
+        "outcome": "passed",
+        "duration": 21.716928839683533
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_plan_impact_keeps_existing_rejection_and_call_limit[invalid_then_valid]",
+        "outcome": "passed",
+        "duration": 17.860793758183718
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_plan_impact_keeps_existing_rejection_and_call_limit[budget]",
+        "outcome": "passed",
+        "duration": 12.502195075154305
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[0]",
+        "outcome": "passed",
+        "duration": 0.022897913120687008
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[1]",
+        "outcome": "passed",
+        "duration": 0.0027135154232382774
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[2]",
+        "outcome": "passed",
+        "duration": 0.0014083199203014374
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[3]",
+        "outcome": "passed",
+        "duration": 0.002761012874543667
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user--{\"type\":\"ask_user\",\"question\":\"\\u786e\\u8ba4\\u53c2\\u6570\\uff1f\"}-]",
+        "outcome": "passed",
+        "duration": 0.7710702121257782
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[execute--<shell>printf synthetic</shell>-ACTION_CAPABILITY_SCOPE_MISSING]",
+        "outcome": "passed",
+        "duration": 0.5030961036682129
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user-unknown.capability-{\"type\":\"ask_user\",\"question\":\"\\u786e\\u8ba4\\u53c2\\u6570\\uff1f\"}-UNKNOWN_EXECUTION_CAPABILITY]",
+        "outcome": "passed",
+        "duration": 0.4529627449810505
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[execute-unknown.capability-<shell>printf synthetic</shell>-UNKNOWN_EXECUTION_CAPABILITY]",
+        "outcome": "passed",
+        "duration": 0.6072194958105683
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user--<shell>printf synthetic</shell>-]",
+        "outcome": "passed",
+        "duration": 0.6009681895375252
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_impact_uses_planner_provider_and_single_transport_attempt[False]",
+        "outcome": "passed",
+        "duration": 0.4699793476611376
+      },
+      {
+        "nodeid": "tests/test_generate_interaction_entrypoints.py::test_impact_uses_planner_provider_and_single_transport_attempt[True]",
+        "outcome": "passed",
+        "duration": 0.45604841876775026
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[compact]",
+        "outcome": "passed",
+        "duration": 0.0009942008182406425
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_explicit_telemetry_routing_keeps_public_and_errors[verbose]",
+        "outcome": "passed",
+        "duration": 0.0011025406420230865
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[compact]",
+        "outcome": "passed",
+        "duration": 0.003740807995200157
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_owner_uses_same_selection_and_real_public_flush[verbose]",
+        "outcome": "passed",
+        "duration": 0.0029690200462937355
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_details_and_verbose_redact_only_synthetic_secrets",
+        "outcome": "passed",
+        "duration": 0.00018633157014846802
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-compact-False]",
+        "outcome": "passed",
+        "duration": 0.002015063539147377
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[plain-verbose-True]",
+        "outcome": "passed",
+        "duration": 0.0018181484192609787
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_entry_selects_verbosity_without_changing_runtime[off-verbose-False]",
+        "outcome": "passed",
+        "duration": 0.0006843535229563713
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_groups_count_receipts_not_targets_and_stop_at_public",
+        "outcome": "passed",
+        "duration": 0.0004934342578053474
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_scopeless_diagnostics_do_not_retire_current_model_tool_round",
+        "outcome": "passed",
+        "duration": 0.0010274099186062813
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[failed]",
+        "outcome": "passed",
+        "duration": 0.00032332073897123337
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[unknown]",
+        "outcome": "passed",
+        "duration": 0.0003244485706090927
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[partial]",
+        "outcome": "passed",
+        "duration": 0.0003205053508281708
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[cancelled]",
+        "outcome": "passed",
+        "duration": 0.0004379507154226303
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_unsuccessful_receipt_is_visible_and_never_counted[not_dispatched]",
+        "outcome": "passed",
+        "duration": 0.000322478823363781
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_old_tool_return_keeps_receipt_without_replacing_approval",
+        "outcome": "passed",
+        "duration": 0.0003312230110168457
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_process_group_only_asserts_exit_and_keeps_failure",
+        "outcome": "passed",
+        "duration": 0.0003526201471686363
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_plain_final_group_and_long_review_are_available",
+        "outcome": "passed",
+        "duration": 0.02607590053230524
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_long_documents_and_narrow_chinese_columns",
+        "outcome": "passed",
+        "duration": 1.9226324381306767
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_terminal_modal_keeps_pending_and_draft_until_close",
+        "outcome": "passed",
+        "duration": 0.5539441965520382
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_group_boundary_still_flushes_public_before_next_real_dispatch",
+        "outcome": "passed",
+        "duration": 0.001971583813428879
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_twenty_column_approval_keeps_full_prompt_in_details",
+        "outcome": "passed",
+        "duration": 0.16525040660053492
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_logs_lists_synthetic_handler_path_without_reading_body",
+        "outcome": "passed",
+        "duration": 0.005419807508587837
+      },
+      {
+        "nodeid": "tests/test_cli_v2_display.py::test_v2_actual_output_attributes_reset_before_following_public",
+        "outcome": "passed",
+        "duration": 0.007236454635858536
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_known_incomplete_finish_survives_safe_metadata_projection[length]",
+        "outcome": "passed",
+        "duration": 0.000305764377117157
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_known_incomplete_finish_survives_safe_metadata_projection[max_tokens]",
+        "outcome": "passed",
+        "duration": 0.0002407226711511612
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_known_incomplete_finish_survives_safe_metadata_projection[content_filter]",
+        "outcome": "passed",
+        "duration": 0.00021875090897083282
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_explicit_negative_integrity_is_not_erased_by_parseable_content[truncated]",
+        "outcome": "passed",
+        "duration": 0.00015139300376176834
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_explicit_negative_integrity_is_not_erased_by_parseable_content[interrupted]",
+        "outcome": "passed",
+        "duration": 0.00016822852194309235
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_explicit_negative_integrity_is_not_erased_by_parseable_content[incomplete]",
+        "outcome": "passed",
+        "duration": 0.00014731287956237793
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_old_unknown_or_complete_metadata_keeps_compatibility[metadata0]",
+        "outcome": "passed",
+        "duration": 0.000152587890625
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_old_unknown_or_complete_metadata_keeps_compatibility[metadata1]",
+        "outcome": "passed",
+        "duration": 0.00018268823623657227
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_old_unknown_or_complete_metadata_keeps_compatibility[metadata2]",
+        "outcome": "passed",
+        "duration": 0.00016522593796253204
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_integrity_metadata_cannot_enter_provider_visible_history",
+        "outcome": "passed",
+        "duration": 0.00023972336202859879
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_real_candidate_cache_keeps_raw_and_negative_integrity_without_new_claim",
+        "outcome": "passed",
+        "duration": 0.004753450863063335
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_old_candidate_cache_object_shape_and_noncandidate_claim_are_unchanged",
+        "outcome": "passed",
+        "duration": 0.002025369554758072
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_noncandidate_metadata_does_not_change_existing_skill_claim_accounting",
+        "outcome": "passed",
+        "duration": 0.0019366750493645668
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_invalid_optional_cache_metadata_keeps_original_object_shape[None]",
+        "outcome": "passed",
+        "duration": 0.0019363714382052422
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_invalid_optional_cache_metadata_keeps_original_object_shape[metadata1]",
+        "outcome": "passed",
+        "duration": 0.001972927711904049
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_invalid_optional_cache_metadata_keeps_original_object_shape[metadata2]",
+        "outcome": "passed",
+        "duration": 0.002039860002696514
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_invalid_optional_cache_metadata_keeps_original_object_shape[metadata3]",
+        "outcome": "passed",
+        "duration": 0.0019353823736310005
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_invalid_optional_cache_metadata_keeps_original_object_shape[metadata4]",
+        "outcome": "passed",
+        "duration": 0.0019135018810629845
+      },
+      {
+        "nodeid": "tests/test_cli_generate_integrity.py::test_recovery_result_cache_metadata_roundtrip_never_writes_context",
+        "outcome": "passed",
+        "duration": 0.010323942638933659
+      }
+    ],
+    "failed_nodeids": []
+  },
+  "graph_scenarios": {
+    "interaction-answer": {
+      "provider_stage_counts": {
+        "consultant": 2,
+        "planner": 1,
+        "generate": 5,
+        "planner_plan_impact_review": 1
+      },
+      "synthetic_execution_steps": [
+        "inspect_inputs",
+        "inspect_runtime",
+        "inspect_output_dir",
+        "after_answer"
+      ]
+    },
+    "interaction-restart": {
+      "provider_stage_counts": {
+        "consultant": 2,
+        "planner": 1,
+        "generate": 5,
+        "planner_plan_impact_review": 1
+      },
+      "synthetic_execution_steps": [
+        "inspect_inputs",
+        "inspect_runtime",
+        "inspect_output_dir",
+        "after_answer"
+      ]
+    },
+    "interaction-repair": {
+      "provider_stage_counts": {
+        "consultant": 2,
+        "planner": 1,
+        "generate": 7,
+        "planner_plan_impact_review": 1
+      },
+      "synthetic_execution_steps": [
+        "inspect_inputs",
+        "inspect_runtime",
+        "inspect_output_dir",
+        "after_answer"
+      ]
+    },
+    "interaction-answer-invalid_then_valid": {
+      "provider_stage_counts": {
+        "consultant": 2,
+        "planner": 1,
+        "generate": 5,
+        "planner_plan_impact_review": 2
+      },
+      "synthetic_execution_steps": [
+        "inspect_inputs",
+        "inspect_runtime",
+        "inspect_output_dir",
+        "after_answer"
+      ]
+    },
+    "interaction-answer-budget": {
+      "provider_stage_counts": {
+        "consultant": 2,
+        "planner": 1,
+        "generate": 4,
+        "planner_plan_impact_review": 0
+      },
+      "synthetic_execution_steps": [
+        "inspect_inputs",
+        "inspect_runtime",
+        "inspect_output_dir"
+      ]
+    }
+  },
+  "extended_runs": {
+    "final-worktree-results": {
+      "name": "final-worktree-results",
+      "pytest_summary": "13 failed, 106 passed, 6 subtests passed in 169.69s (0:02:49)",
+      "source_identity": "bc2a9453469d774e93ee7dfc83cfc7821e7f7a8a395d86bcde52a68a5a2999bb",
+      "source_unchanged": true,
+      "cases": [
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_three_commits_then_question_answer_and_next_execution[False]",
+          "outcome": "passed",
+          "duration": 16.915085117332637
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_three_commits_then_question_answer_and_next_execution[True]",
+          "outcome": "passed",
+          "duration": 17.263937301933765
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_local_carrier_repair_preserves_approved_bash_and_reaches_next_request",
+          "outcome": "passed",
+          "duration": 21.139753776602447
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_plan_impact_keeps_existing_rejection_and_call_limit[invalid_then_valid]",
+          "outcome": "passed",
+          "duration": 17.750254535116255
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_plan_impact_keeps_existing_rejection_and_call_limit[budget]",
+          "outcome": "passed",
+          "duration": 12.483072944916785
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[0]",
+          "outcome": "passed",
+          "duration": 0.04882372822612524
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[1]",
+          "outcome": "passed",
+          "duration": 0.004218338057398796
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[2]",
+          "outcome": "passed",
+          "duration": 0.0014415131881833076
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[3]",
+          "outcome": "passed",
+          "duration": 0.004140958189964294
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user--{\"type\":\"ask_user\",\"question\":\"\\u786e\\u8ba4\\u53c2\\u6570\\uff1f\"}-]",
+          "outcome": "passed",
+          "duration": 0.6405867803841829
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[execute--<shell>printf synthetic</shell>-ACTION_CAPABILITY_SCOPE_MISSING]",
+          "outcome": "passed",
+          "duration": 0.47144406568259
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user-unknown.capability-{\"type\":\"ask_user\",\"question\":\"\\u786e\\u8ba4\\u53c2\\u6570\\uff1f\"}-UNKNOWN_EXECUTION_CAPABILITY]",
+          "outcome": "passed",
+          "duration": 0.44328164774924517
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[execute-unknown.capability-<shell>printf synthetic</shell>-UNKNOWN_EXECUTION_CAPABILITY]",
+          "outcome": "passed",
+          "duration": 0.4847742021083832
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user--<shell>printf synthetic</shell>-]",
+          "outcome": "passed",
+          "duration": 0.6969796251505613
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_capability_and_contract_hash_change_plan_semantic_identity",
+          "outcome": "passed",
+          "duration": 0.0011842045933008194
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_legacy_pending_action_requires_regeneration",
+          "outcome": "passed",
+          "duration": 0.0009429119527339935
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_missing_capability_never_falls_back_to_registry",
+          "outcome": "passed",
+          "duration": 0.0012096976861357689
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_planner_cannot_create_optional_binding_id",
+          "outcome": "passed",
+          "duration": 0.001077280379831791
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_provider_projection_has_exact_current_value_and_no_unrelated_bindings",
+          "outcome": "passed",
+          "duration": 0.001311776228249073
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_registry_has_canonical_ids_without_resolved_aliases",
+          "outcome": "passed",
+          "duration": 0.000973900780081749
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_required_unknown_runtime_is_unavailable_and_not_guessed",
+          "outcome": "passed",
+          "duration": 0.0010841349139809608
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_runtime_value_digest_change_invalidates_manifest",
+          "outcome": "passed",
+          "duration": 0.001275653950870037
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_same_skill_capability_without_runtime_never_receives_other_binding",
+          "outcome": "passed",
+          "duration": 0.0012451661750674248
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_sensitive_value_is_not_persisted_in_manifest",
+          "outcome": "passed",
+          "duration": 0.0011797258630394936
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_source_text_cannot_grant_runtime_binding",
+          "outcome": "passed",
+          "duration": 0.0010666316375136375
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_unknown_capability_reports_available_ids",
+          "outcome": "passed",
+          "duration": 0.0010075708851218224
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+          "outcome": "passed",
+          "duration": 0.0005403207615017891
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+          "outcome": "passed",
+          "duration": 0.000282985158264637
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+          "outcome": "failed",
+          "duration": 0.7196386810392141
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+          "outcome": "failed",
+          "duration": 0.4776877108961344
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+          "outcome": "failed",
+          "duration": 0.4691158551722765
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+          "outcome": "failed",
+          "duration": 0.5146061778068542
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+          "outcome": "failed",
+          "duration": 0.6474024103954434
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+          "outcome": "failed",
+          "duration": 0.47959804721176624
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_typed_compaction_failure_does_not_rebuild_the_same_source_epoch",
+          "outcome": "passed",
+          "duration": 0.3831518180668354
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_ask_user_requires_matching_answer_turn_receipt",
+          "outcome": "passed",
+          "duration": 0.003406837582588196
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_classifier_sources_do_not_read_legacy_routes",
+          "outcome": "passed",
+          "duration": 0.007630042731761932
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_exact_non_progress_replay_fails_closed",
+          "outcome": "passed",
+          "duration": 0.0033351927995681763
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_ready_like_state_without_handoff_stays_in_loop",
+          "outcome": "passed",
+          "duration": 0.0022692810744047165
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_real_handoff_shape_and_poison_are_planning_ready",
+          "outcome": "passed",
+          "duration": 0.002177134156227112
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_search_result_continues_before_durable_handoff",
+          "outcome": "passed",
+          "duration": 0.003485267050564289
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_transient_ready_state_cannot_bypass_durable_commit",
+          "outcome": "passed",
+          "duration": 0.002044213004410267
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+          "outcome": "failed",
+          "duration": 0.0020318375900387764
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+          "outcome": "failed",
+          "duration": 0.0020174551755189896
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_explicit_submission_and_normal_continuation",
+          "outcome": "failed",
+          "duration": 0.002028004266321659
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_triage_known_modes_and_route_poison",
+          "outcome": "passed",
+          "duration": 0.003762415610253811
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_execute_ambiguous_legacy_routes_fail_closed",
+          "outcome": "passed",
+          "duration": 0.0023169703781604767
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_generate_legacy_recovery_projection_cannot_prove_repair",
+          "outcome": "passed",
+          "duration": 0.0023985840380191803
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_generate_typed_candidate_receipt_reenters_with_repair_context",
+          "outcome": "passed",
+          "duration": 0.0051003992557525635
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+          "outcome": "failed",
+          "duration": 0.007802439853549004
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "failed",
+          "duration": 0.00035234447568655014
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_initialized_ready_like_task_without_handoff_resumes_consultant",
+          "outcome": "passed",
+          "duration": 0.0013374118134379387
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ProductionGraphTests::test_all_front_half_adapters_have_zero_controller_routing_calls",
+          "outcome": "passed",
+          "duration": 0.003837958909571171
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ProductionGraphTests::test_complete_graph_path_is_invariant_under_legacy_route_poison",
+          "outcome": "passed",
+          "duration": 0.23319439962506294
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ProductionGraphTests::test_typed_ask_user_interrupt_resumes_once",
+          "outcome": "passed",
+          "duration": 0.0471336143091321
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ResumeStateTests::test_resume_is_semantic_and_ignores_all_node_hints",
+          "outcome": "passed",
+          "duration": 0.0010541565716266632
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ResumeStateTests::test_resume_uses_shared_lifecycle_for_needs_evidence",
+          "outcome": "passed",
+          "duration": 0.0010530510917305946
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts0-sides0]",
+          "outcome": "passed",
+          "duration": 0.030826992355287075
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts1-sides1]",
+          "outcome": "passed",
+          "duration": 0.0023337360471487045
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts2-sides2]",
+          "outcome": "passed",
+          "duration": 0.002796437591314316
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts3-sides3]",
+          "outcome": "passed",
+          "duration": 0.002726105973124504
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts4-sides4]",
+          "outcome": "passed",
+          "duration": 0.0032140277326107025
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_original_top_level_side_effect_identity_remains_rejected",
+          "outcome": "passed",
+          "duration": 0.00047671515494585037
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts0]",
+          "outcome": "passed",
+          "duration": 0.00025812815874814987
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts1]",
+          "outcome": "passed",
+          "duration": 0.0002451566979289055
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts2]",
+          "outcome": "passed",
+          "duration": 0.0002451566979289055
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts3]",
+          "outcome": "passed",
+          "duration": 0.00024298205971717834
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts4]",
+          "outcome": "passed",
+          "duration": 0.00024954602122306824
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts5]",
+          "outcome": "passed",
+          "duration": 0.00038936175405979156
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_side_effect_required_fields_and_unapproved_identity",
+          "outcome": "passed",
+          "duration": 0.0006390903145074844
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_approved_revision_and_step_are_exact_not_first_artifact",
+          "outcome": "passed",
+          "duration": 0.001432080753147602
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+          "outcome": "failed",
+          "duration": 1.0344274500384927
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_real_approved_snapshot_reader_uses_updated_pointer_without_extra_load",
+          "outcome": "passed",
+          "duration": 0.004673418588936329
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_transport_refresh_rejects_stale_template_before_fake_provider",
+          "outcome": "passed",
+          "duration": 1.4399118144065142
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[observation_only]",
+          "outcome": "passed",
+          "duration": 3.1663234382867813
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish]",
+          "outcome": "passed",
+          "duration": 8.684927053749561
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish_interrupt]",
+          "outcome": "passed",
+          "duration": 8.336180336773396
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish_archive]",
+          "outcome": "passed",
+          "duration": 8.282955945469439
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[retry_python]",
+          "outcome": "passed",
+          "duration": 9.269248658791184
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[retry_shell]",
+          "outcome": "passed",
+          "duration": 8.700999037362635
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[ordinary]",
+          "outcome": "passed",
+          "duration": 8.33710477873683
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0016]",
+          "outcome": "passed",
+          "duration": 1.766603090800345
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0026]",
+          "outcome": "passed",
+          "duration": 1.5128360874950886
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0027]",
+          "outcome": "passed",
+          "duration": 1.7427009269595146
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0028]",
+          "outcome": "passed",
+          "duration": 1.534131107851863
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_ambiguous_annovar_mention_asks_once_without_replacing_skill",
+          "outcome": "passed",
+          "duration": 0.01601407863199711
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_consultant_typed_context_commits_once_and_changes_next_prompt",
+          "outcome": "passed",
+          "duration": 0.03251993842422962
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_explicit_snpeff_to_annovar_switch_replans_and_stales_old_generate",
+          "outcome": "passed",
+          "duration": 0.017765475437045097
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_generate_search_returns_to_same_node_without_activation",
+          "outcome": "passed",
+          "duration": 0.016682851128280163
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_post_bootstrap_taskspec_change_creates_restricted_plan_impact",
+          "outcome": "passed",
+          "duration": 0.012010074220597744
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_snpeff_first_generate_reads_exact_rules_before_action",
+          "outcome": "passed",
+          "duration": 0.018440754152834415
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_step_scoped_impact_is_stale_not_rebased_after_step_change",
+          "outcome": "passed",
+          "duration": 0.008714653551578522
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_bind_and_resume_is_additive_and_replan_rows_are_strict_objects",
+          "outcome": "passed",
+          "duration": 0.0033123400062322617
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_binding_requires_review_then_activates_and_supersedes_replaced_skill",
+          "outcome": "passed",
+          "duration": 0.012452256865799427
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_binding_requires_same_invocation_excerpt_and_enforces_caller_scope",
+          "outcome": "passed",
+          "duration": 0.010717752389609814
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_candidate_disposition_stays_in_closed_ref_status_vocabulary",
+          "outcome": "passed",
+          "duration": 0.0075834402814507484
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_candidate_evidence_is_visible_only_to_explicit_review_projection",
+          "outcome": "passed",
+          "duration": 0.01078628096729517
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_catalog_marks_invalid_entries_incomplete_and_revision_tracks_content",
+          "outcome": "passed",
+          "duration": 0.0097229965031147
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_confirmed_task_skill_change_advances_revision_and_semantic_hash_once",
+          "outcome": "passed",
+          "duration": 0.0033748121932148933
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_context_request_uses_cache_then_returns_no_progress_without_failure_counts",
+          "outcome": "passed",
+          "duration": 0.00791588332504034
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+          "outcome": "failed",
+          "duration": 0.013779418542981148
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_legacy_reference_and_script_loaders_cannot_follow_outside_symlinks",
+          "outcome": "passed",
+          "duration": 0.005946042947471142
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_plan_impact_rejects_bind_and_resume_for_task_replacement",
+          "outcome": "passed",
+          "duration": 0.008490911684930325
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_plan_impact_requires_explicit_old_and_new_task_revisions",
+          "outcome": "passed",
+          "duration": 0.002873864956200123
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_plan_skill_refs_must_be_canonical_and_match_skill_ids",
+          "outcome": "passed",
+          "duration": 0.004270908422768116
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_projection_rejects_snapshot_ref_excerpt_and_resource_linkage_tampering",
+          "outcome": "passed",
+          "duration": 0.01091674529016018
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_prompts_publish_the_exact_progressive_skill_protocol",
+          "outcome": "passed",
+          "duration": 0.0031448211520910263
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_replan_suffix_carries_passed_prefix_and_retains_superseded_history",
+          "outcome": "passed",
+          "duration": 0.003139241598546505
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_replan_suffix_rejects_noncontiguous_carry_forward",
+          "outcome": "passed",
+          "duration": 0.003049989230930805
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0.01547778956592083
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_reviewed_task_selection_is_exact_and_allows_scope_promotion",
+          "outcome": "passed",
+          "duration": 0.008107333444058895
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_distinguishes_matches_no_match_and_incomplete_catalog",
+          "outcome": "passed",
+          "duration": 0.00786596443504095
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_never_downgrades_active_ref_and_catalog_refresh_is_new_candidate",
+          "outcome": "passed",
+          "duration": 0.01609634794294834
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_revision_and_candidate_snapshot_failures_are_typed_results",
+          "outcome": "passed",
+          "duration": 0.007963071577250957
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_round_budget_is_shared_by_all_callers_on_the_step",
+          "outcome": "passed",
+          "duration": 0.005825765430927277
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_snapshot_keeps_immutable_bytes_when_live_skill_drifts",
+          "outcome": "passed",
+          "duration": 0.005558026023209095
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_stale_node_result_discards_old_revisions_without_counting_failure",
+          "outcome": "passed",
+          "duration": 0.00302972923964262
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_step_refs_are_target_bound_filtered_and_not_upgraded_by_task_migration",
+          "outcome": "passed",
+          "duration": 0.004788300022482872
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0.011311539448797703
+        }
+      ],
+      "failed_nodeids": [
+        "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+        "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_explicit_submission_and_normal_continuation",
+        "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+        "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification"
+      ]
+    },
+    "baseline-regressions": {
+      "name": "baseline-regressions",
+      "pytest_summary": "13 failed in 20.33s",
+      "source_identity": "fde6fa2982cec6f4945295bf560105322fc838d3d09c80d5af860f3a341a481a",
+      "source_unchanged": true,
+      "cases": [
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+          "outcome": "failed",
+          "duration": 0.8231768626719713
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+          "outcome": "failed",
+          "duration": 0.5339977089315653
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+          "outcome": "failed",
+          "duration": 0.45987844187766314
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+          "outcome": "failed",
+          "duration": 0.47167693730443716
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+          "outcome": "failed",
+          "duration": 0.46234639547765255
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+          "outcome": "failed",
+          "duration": 0.47158286068588495
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+          "outcome": "failed",
+          "duration": 0.002168402075767517
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+          "outcome": "failed",
+          "duration": 0.00205029733479023
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_explicit_submission_and_normal_continuation",
+          "outcome": "failed",
+          "duration": 0.0022204192355275154
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+          "outcome": "failed",
+          "duration": 0.007894252426922321
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "failed",
+          "duration": 0.0003340737894177437
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+          "outcome": "failed",
+          "duration": 1.0389067055657506
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+          "outcome": "failed",
+          "duration": 0.014384426176548004
+        }
+      ],
+      "failed_nodeids": [
+        "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+        "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_explicit_submission_and_normal_continuation",
+        "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+        "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification"
+      ]
+    },
+    "isolated-results": {
+      "name": "isolated-results",
+      "pytest_summary": "16 failed, 105 passed, 15 subtests passed in 165.87s (0:02:45)",
+      "source_identity": "019d7b6db0f7c1b2f5eec61c0243a09d806b8d2d57498c0894b0c4994b43330a",
+      "source_unchanged": true,
+      "cases": [
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_three_commits_then_question_answer_and_next_execution[False]",
+          "outcome": "passed",
+          "duration": 16.57986169680953
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_three_commits_then_question_answer_and_next_execution[True]",
+          "outcome": "passed",
+          "duration": 16.71456950902939
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_local_carrier_repair_preserves_approved_bash_and_reaches_next_request",
+          "outcome": "passed",
+          "duration": 21.078077626414597
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_plan_impact_keeps_existing_rejection_and_call_limit[invalid_then_valid]",
+          "outcome": "passed",
+          "duration": 17.3911696029827
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_plan_impact_keeps_existing_rejection_and_call_limit[budget]",
+          "outcome": "passed",
+          "duration": 12.131510071456432
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[0]",
+          "outcome": "passed",
+          "duration": 0.030410592444241047
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[1]",
+          "outcome": "passed",
+          "duration": 0.0027843136340379715
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[2]",
+          "outcome": "passed",
+          "duration": 0.0014396701008081436
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_archived_runtime_carriers_have_precise_materialization_result[3]",
+          "outcome": "passed",
+          "duration": 0.0027433568611741066
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user--{\"type\":\"ask_user\",\"question\":\"\\u786e\\u8ba4\\u53c2\\u6570\\uff1f\"}-]",
+          "outcome": "passed",
+          "duration": 0.6844865567982197
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[execute--<shell>printf synthetic</shell>-ACTION_CAPABILITY_SCOPE_MISSING]",
+          "outcome": "passed",
+          "duration": 0.4837161470204592
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user-unknown.capability-{\"type\":\"ask_user\",\"question\":\"\\u786e\\u8ba4\\u53c2\\u6570\\uff1f\"}-UNKNOWN_EXECUTION_CAPABILITY]",
+          "outcome": "passed",
+          "duration": 0.4519868465140462
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[execute-unknown.capability-<shell>printf synthetic</shell>-UNKNOWN_EXECUTION_CAPABILITY]",
+          "outcome": "passed",
+          "duration": 0.4535595905035734
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_actual_generate_preserves_capability_and_action_boundaries[ask_user--<shell>printf synthetic</shell>-]",
+          "outcome": "passed",
+          "duration": 0.697584006935358
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_impact_uses_planner_provider_and_single_transport_attempt[False]",
+          "outcome": "passed",
+          "duration": 0.4325414737686515
+        },
+        {
+          "nodeid": "tests/test_generate_interaction_entrypoints.py::test_impact_uses_planner_provider_and_single_transport_attempt[True]",
+          "outcome": "passed",
+          "duration": 0.419388048350811
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_capability_and_contract_hash_change_plan_semantic_identity",
+          "outcome": "passed",
+          "duration": 0.0011901743710041046
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_legacy_pending_action_requires_regeneration",
+          "outcome": "passed",
+          "duration": 0.0009125368669629097
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_missing_capability_never_falls_back_to_registry",
+          "outcome": "passed",
+          "duration": 0.0011673606932163239
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_planner_cannot_create_optional_binding_id",
+          "outcome": "passed",
+          "duration": 0.001119622029364109
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_provider_projection_has_exact_current_value_and_no_unrelated_bindings",
+          "outcome": "passed",
+          "duration": 0.0013152910396456718
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_registry_has_canonical_ids_without_resolved_aliases",
+          "outcome": "passed",
+          "duration": 0.0009357398375868797
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_required_unknown_runtime_is_unavailable_and_not_guessed",
+          "outcome": "passed",
+          "duration": 0.0010397415608167648
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_runtime_value_digest_change_invalidates_manifest",
+          "outcome": "passed",
+          "duration": 0.0012296847999095917
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_same_skill_capability_without_runtime_never_receives_other_binding",
+          "outcome": "passed",
+          "duration": 0.0012162476778030396
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_sensitive_value_is_not_persisted_in_manifest",
+          "outcome": "passed",
+          "duration": 0.0012943679466843605
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_source_text_cannot_grant_runtime_binding",
+          "outcome": "passed",
+          "duration": 0.0010387478396296501
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::ActionScopedRuntimeBindingTests::test_unknown_capability_reports_available_ids",
+          "outcome": "passed",
+          "duration": 0.001009737141430378
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+          "outcome": "failed",
+          "duration": 0.0007053101435303688
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+          "outcome": "failed",
+          "duration": 0.0006419187411665916
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+          "outcome": "failed",
+          "duration": 0.7208640277385712
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+          "outcome": "failed",
+          "duration": 0.5159978233277798
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+          "outcome": "failed",
+          "duration": 0.595917422324419
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+          "outcome": "failed",
+          "duration": 0.5200072871521115
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+          "outcome": "failed",
+          "duration": 0.49299083836376667
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+          "outcome": "failed",
+          "duration": 0.4959596460685134
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_typed_compaction_failure_does_not_rebuild_the_same_source_epoch",
+          "outcome": "passed",
+          "duration": 0.39594641141593456
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_ask_user_requires_matching_answer_turn_receipt",
+          "outcome": "passed",
+          "duration": 0.003341241739690304
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_classifier_sources_do_not_read_legacy_routes",
+          "outcome": "passed",
+          "duration": 0.007469164207577705
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_ready_like_state_without_handoff_stays_in_loop",
+          "outcome": "passed",
+          "duration": 0.002582138404250145
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_real_handoff_shape_and_poison_are_planning_ready",
+          "outcome": "passed",
+          "duration": 0.002221234142780304
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_search_result_continues_before_durable_handoff",
+          "outcome": "passed",
+          "duration": 0.003428172320127487
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_consultant_transient_ready_state_cannot_bypass_durable_commit",
+          "outcome": "passed",
+          "duration": 0.0020492682233452797
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+          "outcome": "failed",
+          "duration": 0.0023412397131323814
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+          "outcome": "failed",
+          "duration": 0.002562444657087326
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_success_continuation_and_ambiguous_fallthrough",
+          "outcome": "failed",
+          "duration": 0.0023736022412776947
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_triage_known_modes_and_route_poison",
+          "outcome": "passed",
+          "duration": 0.0037549417465925217
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_execute_ambiguous_legacy_routes_fail_closed",
+          "outcome": "passed",
+          "duration": 0.0024529574438929558
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_generate_legacy_recovery_projection_cannot_prove_repair",
+          "outcome": "passed",
+          "duration": 0.002419707365334034
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+          "outcome": "failed",
+          "duration": 0.0077564409002661705
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "failed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "failed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0.04029767494648695
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_initialized_ready_like_task_without_handoff_resumes_consultant",
+          "outcome": "passed",
+          "duration": 0.0010517118498682976
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ProductionGraphTests::test_all_front_half_adapters_have_zero_controller_routing_calls",
+          "outcome": "passed",
+          "duration": 0.004316524602472782
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ProductionGraphTests::test_complete_graph_path_is_invariant_under_legacy_route_poison",
+          "outcome": "passed",
+          "duration": 0.20675902254879475
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ProductionGraphTests::test_typed_ask_user_interrupt_resumes_once",
+          "outcome": "passed",
+          "duration": 0.054420783184468746
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ResumeStateTests::test_resume_is_semantic_and_ignores_all_node_hints",
+          "outcome": "passed",
+          "duration": 0.0010501518845558167
+        },
+        {
+          "nodeid": "tests/test_schema2_production_graph.py::Schema2ResumeStateTests::test_resume_uses_shared_lifecycle_for_needs_evidence",
+          "outcome": "passed",
+          "duration": 0.0010092854499816895
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts0-sides0]",
+          "outcome": "passed",
+          "duration": 0.0021045804023742676
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts1-sides1]",
+          "outcome": "passed",
+          "duration": 0.0022443756461143494
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts2-sides2]",
+          "outcome": "passed",
+          "duration": 0.002787657082080841
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts3-sides3]",
+          "outcome": "passed",
+          "duration": 0.002711324952542782
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_standalone_serializer_parser_roundtrip[artifacts4-sides4]",
+          "outcome": "passed",
+          "duration": 0.003191908821463585
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_original_top_level_side_effect_identity_remains_rejected",
+          "outcome": "passed",
+          "duration": 0.0004370883107185364
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts0]",
+          "outcome": "passed",
+          "duration": 0.0002452367916703224
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts1]",
+          "outcome": "passed",
+          "duration": 0.0002369498834013939
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts2]",
+          "outcome": "passed",
+          "duration": 0.00023476313799619675
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts3]",
+          "outcome": "passed",
+          "duration": 0.00023935921490192413
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts4]",
+          "outcome": "passed",
+          "duration": 0.00023453868925571442
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_no_facts_or_identity_mismatch_cannot_emit[facts5]",
+          "outcome": "passed",
+          "duration": 0.000874105840921402
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_side_effect_required_fields_and_unapproved_identity",
+          "outcome": "passed",
+          "duration": 0.0006351368501782417
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_approved_revision_and_step_are_exact_not_first_artifact",
+          "outcome": "passed",
+          "duration": 0.0014215679839253426
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+          "outcome": "failed",
+          "duration": 0.9674398647621274
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_real_approved_snapshot_reader_uses_updated_pointer_without_extra_load",
+          "outcome": "passed",
+          "duration": 0.004700841382145882
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_transport_refresh_rejects_stale_template_before_fake_provider",
+          "outcome": "passed",
+          "duration": 0.9420126834884286
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[observation_only]",
+          "outcome": "passed",
+          "duration": 3.515432972460985
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish]",
+          "outcome": "passed",
+          "duration": 7.753377673216164
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish_interrupt]",
+          "outcome": "passed",
+          "duration": 7.851594243198633
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[publish_archive]",
+          "outcome": "passed",
+          "duration": 8.529665160924196
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[retry_python]",
+          "outcome": "passed",
+          "duration": 8.639779832214117
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[retry_shell]",
+          "outcome": "passed",
+          "duration": 8.507482862100005
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[ordinary]",
+          "outcome": "passed",
+          "duration": 7.984999446198344
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0016]",
+          "outcome": "passed",
+          "duration": 1.5937147410586476
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0026]",
+          "outcome": "passed",
+          "duration": 1.5237306049093604
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0027]",
+          "outcome": "passed",
+          "duration": 1.6514506349340081
+        },
+        {
+          "nodeid": "tests/test_preflight_incremental_graph.py::test_actual_graph_preflight_publication_and_helper_continuation[candidate_0028]",
+          "outcome": "passed",
+          "duration": 1.678065948188305
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_ambiguous_annovar_mention_asks_once_without_replacing_skill",
+          "outcome": "passed",
+          "duration": 0.016027254052460194
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_consultant_typed_context_commits_once_and_changes_next_prompt",
+          "outcome": "passed",
+          "duration": 0.03298378549516201
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_explicit_snpeff_to_annovar_switch_replans_and_stales_old_generate",
+          "outcome": "passed",
+          "duration": 0.017694598995149136
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_generate_search_returns_to_same_node_without_activation",
+          "outcome": "passed",
+          "duration": 0.016828938387334347
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_post_bootstrap_taskspec_change_creates_restricted_plan_impact",
+          "outcome": "passed",
+          "duration": 0.012048756703734398
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_snpeff_first_generate_reads_exact_rules_before_action",
+          "outcome": "passed",
+          "duration": 0.021281716413795948
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_acceptance_scenarios.py::ProgressiveSkillAcceptanceScenarios::test_step_scoped_impact_is_stale_not_rebased_after_step_change",
+          "outcome": "passed",
+          "duration": 0.008686020970344543
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_bind_and_resume_is_additive_and_replan_rows_are_strict_objects",
+          "outcome": "passed",
+          "duration": 0.003225131891667843
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_binding_requires_review_then_activates_and_supersedes_replaced_skill",
+          "outcome": "passed",
+          "duration": 0.012401149608194828
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_binding_requires_same_invocation_excerpt_and_enforces_caller_scope",
+          "outcome": "passed",
+          "duration": 0.010858023539185524
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_candidate_disposition_stays_in_closed_ref_status_vocabulary",
+          "outcome": "passed",
+          "duration": 0.007507012225687504
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_candidate_evidence_is_visible_only_to_explicit_review_projection",
+          "outcome": "passed",
+          "duration": 0.010723549872636795
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_catalog_marks_invalid_entries_incomplete_and_revision_tracks_content",
+          "outcome": "passed",
+          "duration": 0.00907076895236969
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_confirmed_task_skill_change_advances_revision_and_semantic_hash_once",
+          "outcome": "passed",
+          "duration": 0.003368917852640152
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_context_request_uses_cache_then_returns_no_progress_without_failure_counts",
+          "outcome": "passed",
+          "duration": 0.007904287427663803
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+          "outcome": "failed",
+          "duration": 0.013938677497208118
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_legacy_reference_and_script_loaders_cannot_follow_outside_symlinks",
+          "outcome": "passed",
+          "duration": 0.0059791384264826775
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_plan_impact_rejects_bind_and_resume_for_task_replacement",
+          "outcome": "passed",
+          "duration": 0.01047652866691351
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_plan_impact_requires_explicit_old_and_new_task_revisions",
+          "outcome": "passed",
+          "duration": 0.0028820866718888283
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_plan_skill_refs_must_be_canonical_and_match_skill_ids",
+          "outcome": "passed",
+          "duration": 0.004294747486710548
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_projection_rejects_snapshot_ref_excerpt_and_resource_linkage_tampering",
+          "outcome": "passed",
+          "duration": 0.011207745410501957
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_prompts_publish_the_exact_progressive_skill_protocol",
+          "outcome": "passed",
+          "duration": 0.003176703117787838
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_replan_suffix_carries_passed_prefix_and_retains_superseded_history",
+          "outcome": "passed",
+          "duration": 0.0031494414433836937
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_replan_suffix_rejects_noncontiguous_carry_forward",
+          "outcome": "passed",
+          "duration": 0.0030590957030653954
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_resource_access_blocks_absolute_parent_and_outside_symlink_paths",
+          "outcome": "passed",
+          "duration": 0.015727659687399864
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_reviewed_task_selection_is_exact_and_allows_scope_promotion",
+          "outcome": "passed",
+          "duration": 0.007044970989227295
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_distinguishes_matches_no_match_and_incomplete_catalog",
+          "outcome": "passed",
+          "duration": 0.008101883344352245
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_never_downgrades_active_ref_and_catalog_refresh_is_new_candidate",
+          "outcome": "passed",
+          "duration": 0.015976962633430958
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_revision_and_candidate_snapshot_failures_are_typed_results",
+          "outcome": "passed",
+          "duration": 0.007974456064403057
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_search_round_budget_is_shared_by_all_callers_on_the_step",
+          "outcome": "passed",
+          "duration": 0.006085352972149849
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_snapshot_keeps_immutable_bytes_when_live_skill_drifts",
+          "outcome": "passed",
+          "duration": 0.005577772855758667
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_stale_node_result_discards_old_revisions_without_counting_failure",
+          "outcome": "passed",
+          "duration": 0.002843785099685192
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_step_refs_are_target_bound_filtered_and_not_upgraded_by_task_migration",
+          "outcome": "passed",
+          "duration": 0.004774351604282856
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_typed_parser_accepts_only_one_complete_top_level_object",
+          "outcome": "passed",
+          "duration": 0.011871790513396263
+        }
+      ],
+      "failed_nodeids": [
+        "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+        "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+        "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+        "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_success_continuation_and_ambiguous_fallthrough",
+        "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+        "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification"
+      ]
+    },
+    "head-baseline-results": {
+      "name": "head-baseline-results",
+      "pytest_summary": "16 failed, 1 passed, 9 subtests passed in 15.19s",
+      "source_identity": "876a49923d3a8240f0c79b564d128a3913d40e6784b6a81164a3bec494c97a16",
+      "source_unchanged": true,
+      "cases": [
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+          "outcome": "failed",
+          "duration": 0.0007945969700813293
+        },
+        {
+          "nodeid": "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+          "outcome": "failed",
+          "duration": 0.0011574756354093552
+        },
+        {
+          "nodeid": "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+          "outcome": "failed",
+          "duration": 1.0378884011879563
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+          "outcome": "failed",
+          "duration": 1.1159619549289346
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+          "outcome": "failed",
+          "duration": 0.4939416702836752
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+          "outcome": "failed",
+          "duration": 0.654926436021924
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+          "outcome": "failed",
+          "duration": 0.5014108130708337
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+          "outcome": "failed",
+          "duration": 0.5265871714800596
+        },
+        {
+          "nodeid": "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+          "outcome": "failed",
+          "duration": 0.5731040136888623
+        },
+        {
+          "nodeid": "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+          "outcome": "failed",
+          "duration": 0.014203792437911034
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+          "outcome": "failed",
+          "duration": 0.0023281602188944817
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+          "outcome": "failed",
+          "duration": 0.002672194503247738
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_success_continuation_and_ambiguous_fallthrough",
+          "outcome": "failed",
+          "duration": 0.002342797815799713
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+          "outcome": "failed",
+          "duration": 0.007797404192388058
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "failed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "failed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0
+        },
+        {
+          "nodeid": "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification",
+          "outcome": "passed",
+          "duration": 0.036065555177628994
+        }
+      ],
+      "failed_nodeids": [
+        "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_current_inspect_and_execute_keep_explicit_optional_runtime_scope",
+        "tests/test_action_scoped_runtime_bindings.py::SnpeffCapabilityContractTests::test_plan_validation_rejects_unknown_and_missing_capabilities",
+        "tests/test_declared_effect_emission.py::test_actual_generate_material_is_provider_visible_and_snapshot_bound",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_committed_compaction_advances_epoch_and_records_only_exact_resident_material",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_same_basis_keeps_prefix_and_appends_candidate_then_feedback",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_skill_result_keeps_exact_material_only_in_message_metadata",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_reuses_the_exact_frozen_provider_request",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_external_authority_change",
+        "tests/test_generate_production_context_wiring.py::ProductionGenerateContextWiringTests::test_transport_retry_stops_after_selected_snapshot_change",
+        "tests/test_progressive_skill_access.py::ProgressiveSkillAccessTests::test_heading_section_search_range_and_full_narrowing",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_install_uses_runtime_or_step_receipt_not_messages",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_plan_review_uses_current_approved_plan_fact",
+        "tests/test_schema2_adapter_semantic_coverage.py::FrontHalfSemanticCoverageTests::test_planner_success_continuation_and_ambiguous_fallthrough",
+        "tests/test_schema2_adapter_semantic_coverage.py::GenerateExecuteSemanticCoverageTests::test_runtime_adapter_sources_do_not_read_legacy_routes",
+        "tests/test_schema2_adapter_semantic_coverage.py::ResumeSemanticCoverageTests::test_every_resume_state_has_one_realistic_durable_classification"
+      ]
+    }
+  },
+  "baseline_comparisons": [
+    {
+      "candidate": "final-worktree-results",
+      "baseline": "baseline-regressions",
+      "same_failed_nodeid_set": true,
+      "unique_failed_nodeids": 13
+    },
+    {
+      "candidate": "isolated-results",
+      "baseline": "head-baseline-results",
+      "same_failed_nodeid_set": true,
+      "unique_failed_nodeids": 15
+    }
+  ],
+  "extended_runs_tree": "c4f22e39f0a6789e9e54f4352f7061611740072b",
+  "later_change": "Restore normal epoch semantics for genuine TaskSpec changes; reran all 59 acceptance cases on final tree.",
+  "counting_note": "pytest summaries include unittest subtests; cases and failed nodeid sets are retained to avoid conflating them.",
+  "earlier_commit_check": {
+    "commit": "81f783eb9b4da4d75d5d35d1279839d855167d01",
+    "ancestor_of_base_head": true
+  }
+}
